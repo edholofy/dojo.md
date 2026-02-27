@@ -3,6 +3,18 @@ import { useMousePosition } from '../hooks/useMousePosition';
 
 const SETUP_COPY = `npm install -g dojo.md
 
+# Browse available courses
+dojo list
+
+# Run a training session
+dojo train stripe-refunds
+
+# Train a specific model
+dojo train ad-copy --model openai/gpt-4o
+
+# Auto-train until target score
+dojo train ad-copy --model openai/gpt-4o --target 90
+
 # Add to Claude Code MCP config (~/.claude.json):
 {
   "mcpServers": {
@@ -11,13 +23,7 @@ const SETUP_COPY = `npm install -g dojo.md
       "args": ["dojo.md", "mcp"]
     }
   }
-}
-
-# Train your first course:
-dojo train stripe-refunds
-
-# Auto-train with target score:
-dojo train ad-copy --model openai/gpt-4o --target 90`;
+}`;
 
 const SKILL_MD = `---
 name: dojo-md
