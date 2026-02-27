@@ -29,7 +29,7 @@ if (userArgs.length === 0) {
     } else {
       const courses = discoverAllCourses();
       console.log();
-      console.log(`  ${chalk.bold('dojo.md')} ${chalk.dim('v0.1.0')}`);
+      console.log(`  ${chalk.bold('dojo.md')} ${chalk.dim('v0.2.0')}`);
       console.log(`  ${chalk.dim(`${courses.length} courses available`)}`);
       console.log();
       console.log(`  ${chalk.white('dojo train <course>')}   ${chalk.dim('Run training session')}`);
