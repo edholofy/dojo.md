@@ -58,8 +58,8 @@ if (userArgs.length === 0) {
     .option('-v, --verbose', 'Show detailed output')
     .option('--db <path>', 'Custom database path')
     .option('--report <path>', 'Save detailed training report to file')
-    .option('-m, --model <model>', 'Agent model (default: claude-sonnet-4-6)')
-    .option('-j, --judge <model>', 'Judge model (default: claude-sonnet-4-6)')
+    .option('-m, --model <model>', 'Agent model (auto-detected from API keys)')
+    .option('-j, --judge <model>', 'Judge model — sonnet-4-6 or opus-4-6 recommended')
     .option('-t, --target <score>', 'Target score — enables auto-training loop', parseInt)
     .option('--max-retrain <number>', 'Max retrain iterations (default: 5)', parseInt)
     .action(trainCommand);
@@ -69,8 +69,8 @@ if (userArgs.length === 0) {
     .description('Retrain with auto-loop (defaults: --target 90 --max-retrain 5)')
     .option('-l, --level <number>', 'Run only a specific level', parseInt)
     .option('-v, --verbose', 'Show detailed output')
-    .option('-m, --model <model>', 'Agent model (default: claude-sonnet-4-6)')
-    .option('-j, --judge <model>', 'Judge model (default: claude-sonnet-4-6)')
+    .option('-m, --model <model>', 'Agent model (auto-detected from API keys)')
+    .option('-j, --judge <model>', 'Judge model — sonnet-4-6 or opus-4-6 recommended')
     .option('-t, --target <score>', 'Target score (default: 90)', parseInt)
     .option('--max-retrain <number>', 'Max retrain iterations (default: 5)', parseInt)
     .action(retrainCommand);

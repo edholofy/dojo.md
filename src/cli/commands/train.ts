@@ -9,7 +9,7 @@ import { AgentBridge } from '../../engine/agent-bridge.js';
 import { Evaluator } from '../../evaluator/judge.js';
 import { SkillGenerator } from '../../generator/skill-generator.js';
 import { createModelClient } from '../../engine/model-client.js';
-import { modelToSlug } from '../../engine/model-utils.js';
+import { modelToSlug, defaultModel } from '../../engine/model-utils.js';
 import { initDatabase } from '../../recorder/db.js';
 import { generateReport } from '../../recorder/report.js';
 import type { TrainingOptions } from '../../types/index.js';
@@ -40,8 +40,8 @@ export async function trainCommand(courseId: string, options: TrainOptions): Pro
   }
 
   // Check API keys before doing anything expensive
-  const agentModel = options.model || 'claude-sonnet-4-6';
-  const judgeModel = options.judge || 'claude-sonnet-4-6';
+  const agentModel = options.model || defaultModel();
+  const judgeModel = options.judge || defaultModel();
 
   const hasAgentKey = await ensureApiKey(agentModel);
   if (!hasAgentKey) process.exit(1);
@@ -69,6 +69,9 @@ export async function trainCommand(courseId: string, options: TrainOptions): Pro
 
     console.log(`  Agent: ${chalk.cyan(agentModel)}`);
     console.log(`  Judge: ${chalk.cyan(judgeModel)}`);
+    if (!options.judge) {
+      console.log(chalk.dim('  Tip: judge quality matters — use --judge claude-sonnet-4-6 or claude-opus-4-6 for best results'));
+    }
     console.log();
 
     const db = initDatabase(options.db);

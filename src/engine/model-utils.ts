@@ -72,9 +72,37 @@ export function defaultModel(): string {
 export function validateApiKey(resolved: ResolvedModel): string {
   const key = process.env[resolved.apiKeyEnvVar];
   if (!key) {
-    throw new Error(
-      `Missing ${resolved.apiKeyEnvVar} environment variable (required for ${resolved.provider} model "${resolved.model}")`,
+    const lines = [
+      `Missing ${resolved.apiKeyEnvVar} environment variable`,
+      '',
+      `Required for ${resolved.provider} model "${resolved.model}"`,
+      '',
+      'Set it in one of these ways:',
+      '',
+    ];
+    if (resolved.apiKeyEnvVar === 'ANTHROPIC_API_KEY') {
+      lines.push(
+        '  1. export ANTHROPIC_API_KEY=sk-ant-...  (in your shell)',
+        '  2. Add to ~/.dojo/.env:  ANTHROPIC_API_KEY=sk-ant-...',
+        '  3. Run: dojo train <course>  (prompts on first run)',
+        '',
+        '  Get a key: https://console.anthropic.com/settings/keys',
+      );
+    } else {
+      lines.push(
+        '  1. export OPENROUTER_API_KEY=sk-or-...  (in your shell)',
+        '  2. Add to ~/.dojo/.env:  OPENROUTER_API_KEY=sk-or-...',
+        '  3. Run: dojo train <course>  (prompts on first run)',
+        '',
+        '  Get a key: https://openrouter.ai/keys',
+      );
+    }
+    lines.push(
+      '',
+      'For MCP servers, add to your config:',
+      '  "env": { "' + resolved.apiKeyEnvVar + '": "your-key" }',
     );
+    throw new Error(lines.join('\n'));
   }
   return key;
 }
