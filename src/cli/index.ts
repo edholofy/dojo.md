@@ -2,8 +2,12 @@
 
 import 'dotenv/config';
 import chalk from 'chalk';
+import { createRequire } from 'node:module';
 import { loadSavedEnv, isFirstRun, showWelcome } from './setup.js';
 import { Command } from 'commander';
+
+const require = createRequire(import.meta.url);
+const { version: PKG_VERSION } = require('../../package.json');
 
 // Load API keys from ~/.dojo/.env (won't overwrite existing env vars)
 loadSavedEnv();
@@ -29,7 +33,7 @@ if (userArgs.length === 0) {
     } else {
       const courses = discoverAllCourses();
       console.log();
-      console.log(`  ${chalk.bold('dojo.md')} ${chalk.dim('v0.2.0')}`);
+      console.log(`  ${chalk.bold('dojo.md')} ${chalk.dim(`v${PKG_VERSION}`)}`);
       console.log(`  ${chalk.dim(`${courses.length} courses available`)}`);
       console.log();
       console.log(`  ${chalk.white('dojo train <course>')}   ${chalk.dim('Run training session')}`);
@@ -45,7 +49,7 @@ if (userArgs.length === 0) {
   program
     .name('dojo')
     .description('Training arena for AI agents')
-    .version('0.2.2');
+    .version(PKG_VERSION);
 
   program
     .command('train <course>')

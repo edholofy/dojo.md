@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -8,13 +9,16 @@ import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from '../engine/model-client.js';
 import { SessionManager } from './session-manager.js';
 
+const require = createRequire(import.meta.url);
+const { version: PKG_VERSION } = require('../../package.json');
+
 /**
  * dojo MCP server — exposes training tools for AI agent integration.
  */
 export async function startMcpServer(): Promise<void> {
   const server = new McpServer({
     name: 'dojo',
-    version: '0.2.2',
+    version: PKG_VERSION,
   });
 
   const sessionManager = new SessionManager();
