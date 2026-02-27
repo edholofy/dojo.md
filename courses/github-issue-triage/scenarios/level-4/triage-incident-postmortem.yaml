@@ -1,0 +1,76 @@
+meta:
+  id: triage-incident-postmortem
+  level: 4
+  course: github-issue-triage
+  type: output
+  description: "Write a triage failure postmortem — analyze a triage process failure that led to a significant business impact and design preventive measures"
+  tags: [github, issue-triage, postmortem, incident, failure-analysis, prevention, expert]
+
+state: {}
+
+trigger: |
+  You're the VP of Engineering writing a blameless postmortem for a
+  triage failure that cost the company $2.3M and led to a public
+  security incident.
+
+  Timeline of events:
+
+  Day 0 (Monday): Security researcher files Issue #4521 titled
+  "Potential data exposure in export API" with a detailed
+  vulnerability report. The auto-labeler classifies it as "bug"
+  instead of "security" because the title doesn't contain security
+  keywords.
+
+  Day 2 (Wednesday): Issue sits in the general triage queue. The
+  on-duty triager (junior engineer on their first triage rotation)
+  labels it P2-medium based on the vague title, doesn't read the
+  full body. Assigns to the API team's backlog.
+
+  Day 7 (Monday): The API team lead reviews their backlog, sees a P2
+  bug, prioritizes it for the next sprint (starting Day 14).
+
+  Day 10 (Thursday): Security researcher, having received no
+  acknowledgment, emails the security@company.com alias. The email
+  goes to a shared inbox that hasn't been checked in 3 weeks.
+
+  Day 14 (Monday): An engineer starts investigating. Realizes it's a
+  critical security vulnerability — the export API exposes other
+  customers' data under specific conditions. Immediately escalates.
+
+  Day 15 (Tuesday): Emergency fix is deployed. Investigation reveals
+  that 12 API calls exploited the vulnerability over the past 2 weeks
+  (unclear if by the researcher or a malicious actor).
+
+  Day 17 (Thursday): Company discloses the data breach. 3,400 customer
+  records were potentially exposed. Customer notification begins.
+  Stock price drops 4%.
+
+  Impact:
+  - 3,400 customer records exposed
+  - $800K in incident response costs
+  - $500K in legal costs
+  - $1M in customer credits/churn
+  - Stock price impact (not quantified in the $2.3M)
+  - Reputational damage
+
+  Task: Write the blameless postmortem. Include: the timeline
+  reconstruction (detailed, timestamped), the root cause analysis
+  (5-whys for each contributing factor: auto-labeler miss, triager
+  training gap, email monitoring failure, no security SLA), the
+  contributing factors (systemic issues vs. individual decisions),
+  the corrective actions (with owners and deadlines), and the
+  process improvements to prevent recurrence.
+
+assertions:
+  - type: llm_judge
+    criteria: "Postmortem is genuinely blameless — systemic failures are identified, individual actions are contextualized (junior triager wasn't trained, auto-labeler had a gap), and corrective actions fix systems not people"
+    weight: 0.35
+    description: "Genuinely blameless postmortem"
+  - type: llm_judge
+    criteria: "Root cause analysis reaches systemic issues — 5-whys goes deeper than 'the triager didn't read the issue' to reach training gaps, process gaps, tooling gaps, and organizational gaps"
+    weight: 0.35
+    description: "Systemic root cause analysis"
+  - type: llm_judge
+    criteria: "Corrective actions prevent recurrence — each contributing factor has a specific fix, actions have owners and deadlines, and the improvements address auto-labeling, security escalation, SLAs, and training"
+    weight: 0.30
+    description: "Recurrence-preventing corrective actions"

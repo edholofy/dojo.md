@@ -1,0 +1,79 @@
+meta:
+  id: payment-fintech-architecture
+  level: 5
+  course: stripe-payment-integration
+  type: output
+  description: "Architect a fintech payment product — design a payment product built on Stripe that serves as infrastructure for other businesses"
+  tags: [stripe, fintech, product, infrastructure, platform, BaaS, master]
+
+state: {}
+
+trigger: |
+  You're the CTO of a fintech startup building "PayStack" — a payment
+  infrastructure product that enables any SaaS company to embed payments
+  into their product (similar to what Stripe is to the internet, you
+  are to vertical SaaS). You're building on top of Stripe Connect.
+
+  Product vision:
+  - Any vertical SaaS company (property management, healthcare, legal)
+    can integrate PayStack to process payments for their customers
+  - PayStack handles: payment processing, compliance, fraud, tax, and
+    payouts
+  - Revenue model: 0.5% on top of Stripe's processing fee + $0.10/txn
+
+  Technical architecture challenge:
+  - Your platform must manage thousands of Stripe Connected Accounts
+    (one per SaaS customer)
+  - Each Connected Account may have hundreds of sub-merchants
+  - Total expected volume: $2B/year across 500 SaaS platforms
+  - Must support all payment methods Stripe supports
+  - Must handle PCI compliance for all platforms (they never see card data)
+
+  Business constraints:
+  - Stripe Connect Express accounts for simplicity
+  - Your margin after Stripe's fees: ~0.3% ($6M at $2B volume)
+  - Must be profitable at $500M volume (break-even analysis needed)
+  - Regulatory: Are you a payment facilitator (PayFac)? If so, what
+    additional licenses are needed?
+
+  Current Stripe Connect challenges at scale:
+  - Account onboarding: 30% of sub-merchants fail KYC verification
+  - Payout timing: Sub-merchants want instant payouts but Stripe
+    charges 1%
+  - Multi-currency: Platform customers are global
+  - Webhook volume: At 500 platforms × 1000 webhooks/day = 500K
+    webhooks/day to route
+  - Refund routing: Customer refund → which Connected Account bears it?
+
+  Tasks:
+  1. Design the PayStack platform architecture. Include: the Stripe
+     Connect account hierarchy (platform → SaaS customer → sub-merchant),
+     the API design for your SaaS customers, the webhook routing system,
+     the multi-tenancy architecture, and the payment flow from end
+     customer through all layers.
+
+  2. Address the regulatory question. Analyze: whether you're operating
+     as a PayFac, the licensing requirements in the US (state by state),
+     EU (PSD2 PI/EMI license), and UK (FCA authorization). Include
+     the compliance architecture that handles KYC/AML at scale for
+     thousands of sub-merchants.
+
+  3. Build the financial model. Include: the unit economics at current
+     and target volume, the break-even analysis, the cost structure
+     (Stripe fees, infrastructure, compliance, support), the pricing
+     strategy (can you charge enough to be profitable?), and the 5-year
+     projection with different growth scenarios.
+
+assertions:
+  - type: llm_judge
+    criteria: "Platform architecture handles the complexity — account hierarchy maps correctly to Stripe Connect, API design is clean for SaaS integrators, webhook routing handles 500K/day, multi-tenancy isolates data, and the payment flow through all layers is clear"
+    weight: 0.35
+    description: "Complex platform architecture"
+  - type: llm_judge
+    criteria: "Regulatory analysis is accurate — correctly identifies PayFac considerations, US money transmitter licensing, EU PSD2 requirements, UK FCA authorization, and the KYC/AML system handles thousands of sub-merchants at scale"
+    weight: 0.35
+    description: "Accurate regulatory analysis"
+  - type: llm_judge
+    criteria: "Financial model is realistic — unit economics at 0.3% margin are tight, break-even analysis identifies the volume needed, cost structure is complete, and the 5-year projection shows a viable (or not) business"
+    weight: 0.30
+    description: "Realistic fintech financial model"

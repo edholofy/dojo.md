@@ -1,0 +1,98 @@
+meta:
+  id: scoring-model-audit
+  level: 2
+  course: lead-qualification-scoring
+  type: output
+  description: "Audit a broken lead scoring model — diagnose why a scoring model is failing and redesign it based on actual conversion data"
+  tags: [sales, leads, scoring, audit, diagnosis, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  You're a RevOps consultant hired to fix the lead scoring model at
+  "ProjectPro" — a B2B SaaS project management platform ($100-2,000/
+  month, 5,000 customers). The CMO told you: "Our lead scoring model
+  is 2 years old and completely broken. Sales ignores the scores. MQLs
+  convert at the same rate as non-MQLs. Fix it."
+
+  Here's the current model and its performance data:
+
+  Current scoring model (100-point scale):
+  Demographic (60 points max):
+  - Title contains "VP" or "C-level": +20 pts
+  - Title contains "Director": +15 pts
+  - Title contains "Manager": +10 pts
+  - Company size 100-500: +15 pts
+  - Company size 500+: +10 pts
+  - Technology industry: +15 pts
+
+  Behavioral (40 points max):
+  - Any form submission: +15 pts
+  - Any email open: +10 pts
+  - Any page visit: +5 pts
+  - Any content download: +10 pts
+
+  MQL threshold: 50 points
+
+  Performance data (last 6 months, 2,400 leads):
+  - Leads scoring 50+ (MQLs): 1,200 (50% of all leads)
+  - MQLs that converted to SQL: 144 (12%)
+  - Leads scoring under 50 that converted to SQL: 96 (8% of 1,200)
+  - Overall SQL rate: 10%
+  - MQL rate is barely better than random (12% vs 8%)
+
+  Detailed conversion analysis:
+  - Leads with "email open" as primary score driver: 6% SQL conversion
+  - Leads with "page visit" as primary score driver: 5% SQL conversion
+  - Leads with demo request (not even in model!): 38% SQL conversion
+  - Leads with pricing page visit (scored same as any page): 28% SQL
+  - Leads with free trial started (not in model!): 32% SQL conversion
+  - VP/C-level title but no behavioral engagement: 3% SQL conversion
+  - Manager title with demo request: 35% SQL conversion
+  - Score decay: None. Leads from 18 months ago still have full scores.
+
+  Additional discoveries:
+  - 200 leads have scores of 50+ based entirely on email opens (no
+    other engagement) — zero of these converted
+  - Competitors and students make up 8% of "MQLs"
+  - The "any form submission" rule includes newsletter signups, which
+    account for 40% of form submissions and convert at 2%
+  - No negative scoring for personal email, unsubscribes, or bad fits
+  - Sales reps say they "look at the lead source, not the score" when
+    deciding who to call
+
+  Tasks:
+  1. Write the "Scoring Model Audit Report" — a diagnosis of everything
+     wrong with the current model. Organize by category: demographic
+     scoring issues, behavioral scoring issues, missing signals, missing
+     negative scoring, and structural problems (threshold, decay, etc.).
+     For each issue, cite the specific data point that proves it's broken.
+
+  2. Design the replacement model — a new scoring system that addresses
+     every issue found in the audit. Show the complete scoring rubric
+     with point values, explain how you weighted each attribute based on
+     the conversion data, include negative scoring, include decay, and
+     set a new MQL threshold. Calculate what the new model's MQL-to-SQL
+     rate would be based on the historical data.
+
+  3. Write the "Model Launch Plan" — how to roll out the new model
+     without disrupting current operations. Include: the parallel-run
+     period (running old and new models simultaneously), the validation
+     methodology (how to prove the new model is better before switching),
+     the sales team communication plan (how to rebuild trust in scoring),
+     and the ongoing governance (who owns the model, review cadence,
+     escalation process when sales disagrees with a score).
+
+assertions:
+  - type: llm_judge
+    criteria: "Audit is thorough and data-backed — identifies email opens as worthless signal, missing demo/trial/pricing signals, over-weighted demographics, no decay, no negative scoring, threshold too low, newsletter form inflation — each with specific data"
+    weight: 0.35
+    description: "Thorough data-backed audit"
+  - type: llm_judge
+    criteria: "Replacement model addresses every issue — demo/trial/pricing signals added with high weights, email opens removed or deprioritized, negative scoring added, decay implemented, new threshold reduces MQL volume but increases quality"
+    weight: 0.35
+    description: "Issue-addressing replacement model"
+  - type: llm_judge
+    criteria: "Launch plan manages risk and change — parallel run, validation methodology, sales communication (rebuilding trust), and ongoing governance that prevents the model from degrading again"
+    weight: 0.30
+    description: "Risk-managing launch plan"

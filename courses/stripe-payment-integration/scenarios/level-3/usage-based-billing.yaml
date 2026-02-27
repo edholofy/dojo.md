@@ -1,0 +1,70 @@
+meta:
+  id: usage-based-billing
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Implement usage-based billing — build metered billing with Stripe that tracks API calls, storage, and compute usage in real-time"
+  tags: [stripe, usage-based, metering, billing, API, consumption, advanced]
+
+state: {}
+
+trigger: |
+  You're building the billing system for a developer platform (like
+  Vercel, Supabase, or Twilio). Your pricing model:
+
+  Base plan: $49/month includes:
+  - 100,000 API calls
+  - 10 GB storage
+  - 100 compute hours
+
+  Overage pricing:
+  - API calls: $0.001 per call over 100K
+  - Storage: $0.10 per GB/month over 10 GB
+  - Compute: $0.05 per hour over 100 hours
+
+  Technical challenges:
+  1. High-volume metering: 500M API calls/day across all customers
+  2. Real-time usage display: customers want to see current usage
+  3. Billing accuracy: usage must be accurate to the individual API
+     call
+  4. Invoice timing: calculate usage at end of billing period and
+     add overage charges to the invoice
+  5. Usage alerts: notify customers at 80% and 100% of included usage
+  6. Prepaid credits: some enterprise customers pre-purchase credits
+
+  Current infrastructure:
+  - API gateway logs every request with customer ID and timestamp
+  - Usage data is in ClickHouse (analytics database)
+  - Billing is on Stripe Subscriptions
+
+  Tasks:
+  1. Design the metering pipeline. Show: how usage events flow from
+     API gateway → aggregation → Stripe. Write the code for: reporting
+     usage to Stripe's Meter API (or usage records on metered billing
+     items), the aggregation strategy (batch vs. real-time), and the
+     end-of-period invoice calculation.
+
+  2. Build the real-time usage dashboard backend. Write: the API
+     endpoint that returns current period usage by meter, the 80%/100%
+     alert system, the cost projection ("at current rate, your bill
+     will be $X"), and the usage history endpoint.
+
+  3. Implement the prepaid credits system. Write: how to create a
+     credit balance on a Stripe Customer, how credits are applied
+     before overage charges, the credit depletion tracking, and the
+     low-credit alert. Handle: what happens when credits run out mid-
+     period, and how to reconcile credits with Stripe invoices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Metering pipeline handles scale — 500M events/day requires batching/aggregation (not per-event Stripe calls), uses Stripe's Meter API or metered subscription items correctly, and end-of-period calculation is accurate"
+    weight: 0.35
+    description: "Scalable metering pipeline"
+  - type: llm_judge
+    criteria: "Usage dashboard is real-time and actionable — shows current period usage per meter, alerts at 80%/100% thresholds, cost projection uses actual usage rate, and history endpoint supports trend analysis"
+    weight: 0.35
+    description: "Real-time usage dashboard"
+  - type: llm_judge
+    criteria: "Credits system integrates with Stripe correctly — uses customer_balance or credit_balance, credits apply before invoiced charges, depletion tracking is real-time, and the credit-to-invoice reconciliation is accurate"
+    weight: 0.30
+    description: "Correct prepaid credits system"

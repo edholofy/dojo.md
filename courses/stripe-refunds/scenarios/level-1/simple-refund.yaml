@@ -1,0 +1,43 @@
+meta:
+  id: simple-refund
+  level: 1
+  course: stripe-refunds
+  description: "Customer requests a full refund for a single charge"
+  tags: [refund, basic]
+  estimated_duration: "30s"
+
+state:
+  customers:
+    - id: "cus_alice123"
+      email: "alice@example.com"
+      name: "Alice Johnson"
+  charges:
+    - id: "ch_abc123"
+      amount: 4999
+      currency: "usd"
+      customer: "cus_alice123"
+      status: "succeeded"
+      refunded: false
+      amount_refunded: 0
+      description: "Premium Plan - Monthly"
+      created: 1706745600
+
+trigger: >
+  Customer alice@example.com is requesting a full refund for their most recent
+  charge. They said the product didn't meet their expectations. Please process
+  the refund.
+
+assertions:
+  - type: api_called
+    tool: stripe_charges_list
+    params:
+      customer: "cus_alice123"
+    description: "Agent should look up the customer's charges"
+  - type: api_called
+    tool: stripe_refunds_create
+    params:
+      charge: "ch_abc123"
+    description: "Agent should create a refund for the charge"
+  - type: outcome
+    expected: "The charge ch_abc123 is fully refunded"
+    description: "The refund should be processed successfully"

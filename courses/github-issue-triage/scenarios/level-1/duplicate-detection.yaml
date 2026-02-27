@@ -1,0 +1,66 @@
+meta:
+  id: duplicate-detection
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "Detect duplicate issues — identify and handle duplicate bug reports in a GitHub repository"
+  tags: [github, issue-triage, duplicates, linking, search, basics]
+
+state: {}
+
+trigger: |
+  You're triaging new issues and suspect some are duplicates. Here
+  are 3 new issues and 3 existing open issues:
+
+  NEW ISSUES:
+
+  Issue #201: "TypeError when calling api.getUser() with no arguments"
+  "Getting TypeError: Cannot read property 'id' of undefined when I
+  call api.getUser() without passing a user ID. Version 2.4.0."
+
+  Issue #202: "Feature: Add dark mode support to the dashboard"
+  "It would be great to have a dark mode toggle in the settings. Many
+  modern apps support this. I work at night and the bright UI is hard
+  on the eyes."
+
+  Issue #203: "getUser crashes if userId is missing"
+  "The getUser function throws an error if you don't provide a userId
+  parameter. It should return null or throw a descriptive error.
+  Stack trace: TypeError: Cannot read property 'id' of undefined
+  at getUser (src/api/users.js:42)"
+
+  EXISTING OPEN ISSUES:
+
+  Issue #156 (opened 2 weeks ago, labeled "bug", "P2-medium"):
+  "api.getUser undefined error" — "When userId is undefined, getUser
+  throws an unhandled TypeError instead of returning an error."
+
+  Issue #178 (opened 1 week ago, labeled "enhancement"):
+  "Support for theming and customization" — "Allow users to customize
+  the dashboard appearance, including colors, fonts, and layout."
+
+  Issue #189 (opened 3 days ago, labeled "feature"):
+  "Add night mode / dark theme" — "Please add a dark theme option.
+  My eyes hurt using the dashboard at night."
+
+  Task: Analyze the 6 issues for duplicates. For each new issue,
+  write: whether it's a duplicate (and of which existing issue), the
+  evidence supporting the duplicate determination (matching symptoms,
+  code references, or feature descriptions), the appropriate GitHub
+  action (close with "Duplicate of #X" comment, or keep open with
+  link), and the triage comment to post (thanking the reporter,
+  explaining the duplicate, and directing them to the existing issue).
+
+assertions:
+  - type: llm_judge
+    criteria: "Duplicate detection is accurate — correctly identifies Issue #201 and #203 as duplicates of #156 (same getUser bug), and #202 as related to #189 (dark mode); provides evidence for each determination"
+    weight: 0.35
+    description: "Accurate duplicate detection"
+  - type: llm_judge
+    criteria: "GitHub actions are appropriate — duplicates are closed with proper linking, related-but-different issues are handled correctly (linked but not closed), and the original issues are updated with new information"
+    weight: 0.35
+    description: "Appropriate GitHub actions"
+  - type: llm_judge
+    criteria: "Triage comments are respectful — thank reporters for filing, explain why the issue is being closed, provide clear links to existing issues, and encourage contributing to the existing discussion"
+    weight: 0.30
+    description: "Respectful triage comments"

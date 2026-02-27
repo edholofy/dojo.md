@@ -1,0 +1,80 @@
+meta:
+  id: enterprise-contract-billing
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Build enterprise contract billing — implement custom contracts with committed spend, custom invoicing, and net payment terms"
+  tags: [stripe, subscription, enterprise, contract, committed-spend, net-terms, advanced]
+
+state: {}
+
+trigger: |
+  You're building the enterprise billing system for a SaaS company.
+  The sales team has closed three enterprise deals that don't fit
+  your standard self-serve billing:
+
+  Deal 1 — Annual commitment with quarterly invoicing:
+  Customer: MegaCorp ($500M revenue company)
+  Contract: $120,000/year ($10,000/month equivalent)
+  Terms: Invoiced quarterly ($30,000 every 3 months)
+  Payment terms: Net 45
+  Start date: April 1st (3-year contract with 5% annual increase)
+
+  Deal 2 — Committed spend with overage:
+  Customer: DataFlow Inc
+  Contract: $60,000/year minimum commit
+  Usage pricing: $0.002/API call
+  If usage exceeds $60K, customer pays actual usage
+  If usage is under $60K, customer still pays $60K
+  Payment terms: Net 30, monthly invoicing
+
+  Deal 3 — Multi-product bundle with custom discounting:
+  Customer: TechGlobal
+  Products: Platform ($5,000/month) + Analytics ($3,000/month) +
+  Support ($2,000/month) = $10,000/month list price
+  Negotiated: 25% bundle discount = $7,500/month
+  Terms: 2-year contract, annual payment upfront ($90,000/year)
+  Cancellation: $45,000 early termination fee
+
+  Current limitation: Your self-serve billing uses standard Stripe
+  subscriptions with card-on-file. Enterprise customers expect
+  invoices sent to AP departments, purchase order numbers, and
+  custom payment terms.
+
+  Tasks:
+  1. Implement each enterprise deal. Write: the Stripe subscription
+     setup for Deal 1 (quarterly invoicing with Net 45 using
+     collection_method: send_invoice and days_until_due), the
+     committed spend with overage for Deal 2 (using subscription
+     with metered billing and minimum floor), the multi-product
+     bundle for Deal 3 (multiple subscription items with custom
+     coupon for 25% discount), and the annual escalation for Deal 1
+     (5% increase at each anniversary using subscription schedules).
+
+  2. Build the enterprise invoicing features. Write: the custom
+     invoice fields (PO number, cost center, billing contact), the
+     payment tracking for Net 30/45 invoices (monitoring for overdue
+     payments), the dunning for invoice-based billing (different from
+     card-based — gentle reminders, not automatic retry), and the
+     collections workflow for severely overdue invoices.
+
+  3. Design the enterprise billing dashboard. Write: the contract
+     management view (active contracts, renewal dates, annual values),
+     the committed spend tracking (actual usage vs. commitment for
+     Deal 2 customers), the revenue schedule (expected invoicing
+     timeline for the next 12 months), and the at-risk contract
+     identification (under-utilized commitments, approaching renewal).
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 deals are correctly implemented — quarterly Net 45 invoicing works, committed spend with usage overage handles the floor correctly, multi-product bundle applies discount, and annual escalation uses subscription schedules"
+    weight: 0.35
+    description: "Correct enterprise deal implementations"
+  - type: llm_judge
+    criteria: "Enterprise invoicing is professional — custom fields support PO numbers, payment tracking monitors Net 30/45, dunning for invoices differs from card-based, and collections workflow handles overdue"
+    weight: 0.35
+    description: "Professional enterprise invoicing"
+  - type: llm_judge
+    criteria: "Enterprise dashboard provides visibility — contract management shows key dates and values, committed spend tracking is real-time, revenue schedule projects future invoicing, and at-risk identification is proactive"
+    weight: 0.30
+    description: "Useful enterprise dashboard"

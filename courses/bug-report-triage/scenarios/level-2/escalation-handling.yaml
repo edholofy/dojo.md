@@ -1,0 +1,73 @@
+meta:
+  id: escalation-handling
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Handle bug escalations from customers, support teams, and executives — know when and how to escalate effectively"
+  tags: [bugs, escalation, communication, management, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior support engineer at "DataSync Pro" (data
+  integration platform, $199-$2,499/mo plans). Three escalations
+  hit your desk simultaneously.
+
+  Escalation 1 — Customer-driven:
+  A VP at a Fortune 500 customer ($2,499/mo, 3-year contract,
+  renewal in 60 days) emails your CEO directly: "Your product has
+  been dropping our data for 2 weeks. We've filed 3 tickets and
+  gotten nothing but canned responses. If this isn't resolved by
+  Friday, we're canceling."
+  The CEO forwarded this to you with: "Handle this. Now."
+
+  Escalation 2 — Support-driven:
+  Your support team escalates a bug: "5 customers have reported the
+  same CSV import failure in the last 24 hours. It's a regression
+  from yesterday's release. All are blocked on importing data."
+  No one from engineering has picked up the ticket yet. It's noon
+  and the release went out at 6 PM yesterday.
+
+  Escalation 3 — Internal-driven:
+  Your monitoring dashboard shows database write latency has
+  increased from 10ms to 200ms over the past 6 hours. No customers
+  have reported issues yet, but at this rate, writes will start
+  timing out within 2-3 hours.
+
+  Tasks:
+
+  1. Prioritize these 3 escalations. Which do you handle first
+     and why?
+
+  2. For Escalation 1 (CEO-forwarded):
+     - Write the response to the customer
+     - Write the internal escalation to engineering (what do you need?)
+     - What's the escalation protocol when a CEO is involved?
+
+  3. For Escalation 2 (regression):
+     - The original developer is on PTO. What do you do?
+     - Write the internal Slack message to the engineering team
+     - Should this block future deployments?
+
+  4. For Escalation 3 (proactive):
+     - How do you escalate a problem that customers haven't noticed
+       yet? What's the urgency argument?
+     - Write the alert to the infrastructure team.
+
+assertions:
+  - type: llm_judge
+    criteria: "Escalation 3 is handled urgently despite no customer reports — recognizes that proactive prevention of a looming outage is more impactful than reactive responses to existing issues"
+    weight: 0.25
+    description: "Proactive escalation prioritized"
+  - type: llm_judge
+    criteria: "CEO customer response is executive-level — professional, acknowledges failures, assigns a named person as single point of contact, commits to specific timeline"
+    weight: 0.25
+    description: "Executive-level customer response"
+  - type: llm_judge
+    criteria: "Developer on PTO is handled properly — doesn't call the developer on PTO, instead finds another engineer or the release owner to investigate the regression"
+    weight: 0.25
+    description: "PTO-respectful handling"
+  - type: llm_judge
+    criteria: "Internal escalation messages are urgent and specific — includes what's broken, impact scope, what's needed, and requested timeline, not vague 'please look into this'"
+    weight: 0.25
+    description: "Specific internal escalations"

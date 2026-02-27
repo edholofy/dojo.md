@@ -1,0 +1,81 @@
+meta:
+  id: subscription-billing-migration
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Migrate a billing system — execute a zero-downtime migration from a legacy billing system to Stripe Billing"
+  tags: [stripe, subscription, migration, billing-system, zero-downtime, legacy, advanced]
+
+state: {}
+
+trigger: |
+  You're leading the migration from Recurly to Stripe Billing for
+  a SaaS company (5,200 active subscriptions, $8.5M ARR). The CTO
+  wants zero revenue disruption — no customer should experience a
+  billing gap, double charge, or service interruption.
+
+  Data to migrate from Recurly:
+  - 5,200 active subscriptions (4,100 monthly, 1,100 annual)
+  - 4,800 stored payment methods (credit cards via Recurly Vault)
+  - 8 product plans with 16 prices (monthly + annual for each)
+  - 320 active coupons applied to subscriptions
+  - 2 years of invoice history (for customer records)
+  - Current billing anchors and next billing dates for all subs
+
+  Key challenges:
+  1. Card vault migration: Recurly stores tokenized cards. You can't
+     simply copy tokens to Stripe. Options: (a) use Recurly's card
+     export (if available), (b) ask customers to re-enter cards,
+     (c) use a migration service like Spreedly.
+  2. Billing continuity: If a customer's next Recurly bill is March
+     15th, their first Stripe bill should also be March 15th — no
+     gap, no overlap.
+  3. Active coupons: 320 subscriptions have active coupons with
+     remaining months. These must transfer to Stripe with the same
+     remaining duration.
+  4. Webhook transition: During migration, you'll receive webhooks
+     from both Recurly and Stripe. Must handle both without
+     double-processing.
+  5. Rollback plan: If something goes wrong mid-migration, you need
+     to be able to reverse course.
+
+  Timeline: 6 weeks (2 weeks planning, 2 weeks development, 1 week
+  testing, 1 week phased rollout).
+
+  Tasks:
+  1. Design the migration plan. Write: the phase-by-phase approach
+     (products/prices first, then cards, then subscriptions in
+     batches), the card vault migration strategy (evaluate all 3
+     options with trade-offs), the billing continuity mechanism
+     (calculating trial_end to align first Stripe billing date
+     with next Recurly billing date), and the coupon migration
+     (creating equivalent Stripe coupons with remaining months).
+
+  2. Write the migration scripts. Write: the product/price creation
+     script (Recurly plans → Stripe products/prices), the card
+     migration script (handling each vault migration option), the
+     subscription creation script (batch processing 5,200 subs with
+     correct billing dates, coupons, and idempotency), and the
+     dual-webhook handler (processing events from both providers
+     during the transition window).
+
+  3. Build the migration validation system. Write: the pre-migration
+     checklist (data integrity checks before starting), the real-time
+     migration dashboard (tracking progress, errors, retries), the
+     post-migration reconciliation (comparing Recurly and Stripe
+     subscription states), and the rollback procedure (what to do
+     if you need to revert mid-migration).
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration plan is comprehensive and phased — products first then cards then subscriptions, card vault strategy evaluates all options, billing continuity uses trial_end alignment, and coupon migration preserves remaining duration"
+    weight: 0.35
+    description: "Comprehensive migration plan"
+  - type: llm_judge
+    criteria: "Migration scripts handle complexity — product mapping is correct, card migration handles the vault challenge, subscription batch processing is idempotent, and dual-webhook handler prevents double-processing"
+    weight: 0.35
+    description: "Robust migration scripts"
+  - type: llm_judge
+    criteria: "Validation system ensures safety — pre-migration checks verify data, real-time dashboard tracks progress, post-migration reconciliation catches discrepancies, and rollback procedure is actionable"
+    weight: 0.30
+    description: "Safe validation system"

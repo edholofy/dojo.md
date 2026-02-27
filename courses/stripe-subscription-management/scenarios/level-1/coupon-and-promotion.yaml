@@ -1,0 +1,71 @@
+meta:
+  id: coupon-and-promotion
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Implement coupons and promotions — create and apply discount codes to subscriptions"
+  tags: [stripe, subscription, coupon, promotion, discount, beginner]
+
+state: {}
+
+trigger: |
+  You're building the promotion system for a SaaS design tool. The
+  marketing team wants to run several discount campaigns:
+
+  Campaign 1 — Launch discount:
+  "LAUNCH50" — 50% off the first month only
+
+  Campaign 2 — Annual commitment:
+  "ANNUAL20" — 20% off every month for 12 months (for monthly
+  subscribers who won't switch to annual billing)
+
+  Campaign 3 — Partner referral:
+  "PARTNER10" — 10% off forever (for customers referred by
+  integration partners)
+
+  Campaign 4 — Win-back:
+  "COMEBACK" — $30 off the first 3 months (for churned customers
+  who return)
+
+  Requirements from marketing:
+  - Each promotion code should be redeemable only once per customer
+  - LAUNCH50 should expire after 1,000 redemptions
+  - PARTNER10 should be restricted to specific referral partners
+    (each partner gets their own unique promotion code tied to the
+    same underlying coupon)
+  - All codes should be redeemable at checkout
+
+  Tasks:
+  1. Create the coupon and promotion code structure. Write: the 4
+     coupons (with correct duration: once, repeating, forever, and
+     duration_in_months), the promotion codes for each, the
+     redemption limits, and explain the relationship between Coupons
+     and Promotion Codes in Stripe (one coupon can have many
+     promotion codes).
+
+  2. Implement the code redemption flow. Write: the endpoint that
+     validates a promotion code before applying it (checks if valid,
+     not expired, not at limit), the subscription creation with
+     promotion_code parameter, and the endpoint to apply a coupon
+     to an existing subscription (for win-back campaigns targeting
+     churned customers).
+
+  3. Build the admin dashboard view. Write: the data model showing
+     active coupons with redemption counts, revenue impact
+     calculation (total discount given per coupon), and the ability
+     to deactivate a promotion code without affecting customers
+     who already have the discount applied.
+
+assertions:
+  - type: llm_judge
+    criteria: "Coupon structure is correct — 4 coupons use proper duration types (once, repeating with duration_in_months, forever), promotion codes have correct redemption limits, partner codes share a coupon, and the Coupon vs Promotion Code relationship is explained"
+    weight: 0.35
+    description: "Correct coupon structure"
+  - type: llm_judge
+    criteria: "Redemption flow works — validation checks code validity/expiry/limits before applying, subscription creation accepts promotion_code, existing subscriptions can have coupons applied, and the win-back flow targets returning customers"
+    weight: 0.35
+    description: "Working redemption flow"
+  - type: llm_judge
+    criteria: "Admin dashboard provides visibility — shows active coupons with redemption counts, revenue impact is calculated, and deactivation doesn't affect existing discount recipients"
+    weight: 0.30
+    description: "Useful admin dashboard"

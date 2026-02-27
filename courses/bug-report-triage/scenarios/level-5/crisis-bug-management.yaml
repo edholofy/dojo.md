@@ -1,0 +1,97 @@
+meta:
+  id: crisis-bug-management
+  level: 5
+  course: bug-report-triage
+  type: output
+  description: "Manage a cascading crisis where multiple critical bugs interact, external pressure is mounting, and every decision has trade-offs with no clear right answer"
+  tags: [bugs, crisis, cascading-failure, decision-making, mastery]
+
+state: {}
+
+trigger: |
+  You're the VP of Engineering at "PayStream" (payment processing
+  platform, $350M ARR, processes $2B in transactions monthly, 15,000
+  merchant customers).
+
+  It's 3:00 PM on Friday before a holiday weekend. You're facing a
+  cascading crisis.
+
+  3:00 PM — First domino:
+  A routine database migration (scheduled and approved) completes.
+  Everything looks normal in monitoring.
+
+  3:45 PM — Second domino:
+  Transaction processing latency spikes from 200ms to 2.5 seconds.
+  10% of transactions are timing out. Merchants start calling.
+
+  4:15 PM — Third domino:
+  The retry logic for timed-out transactions is creating duplicate
+  charges. 500 customers across 50 merchants have been double-charged.
+  Total double-charge amount: ~$180,000.
+
+  4:45 PM — Fourth domino:
+  A merchant's fraud detection system flags the duplicate charges as
+  suspicious. They've frozen their PayStream integration, affecting
+  $500K in pending transactions. Three other large merchants are
+  asking: "Is it safe to keep processing?"
+
+  5:15 PM — External pressure:
+  - Payment card network (Visa/Mastercard) compliance team emails
+    asking about the duplicate charges
+  - Your largest merchant ($40M/year) calls the CEO directly
+  - TechCrunch reporter tweets: "Hearing reports of @PayStream double-
+    charging customers. Anyone else affected?"
+  - Your on-call SRE's shift ended at 5pm (holiday weekend)
+
+  5:30 PM — Discovery:
+  The database migration changed a column index. This caused the
+  payment authorization query to switch from an indexed scan to a
+  full table scan, creating the latency. The latency caused timeouts.
+  The retry logic didn't check for idempotency keys correctly.
+
+  Resources available:
+  - 3 senior engineers (2 willing to cancel holiday plans)
+  - 1 database expert (remote, 6-hour timezone difference)
+  - 1 VP of Customer Success (on a plane, landing in 3 hours)
+  - Standard on-call rotation (junior engineer covers weekend)
+  - $10M in your company's reserve fund for emergencies
+
+  Tasks:
+
+  1. Incident command: Design the minute-by-minute response for the
+     next 4 hours (5:30 PM to 9:30 PM). Who does what?
+
+  2. The technical fix has two options:
+     - Option A: Roll back the migration (30 min, but 2 hours of data
+       in the new schema needs re-migration later)
+     - Option B: Add the missing index (15 min, but risky to apply
+       another migration during an active incident)
+     Which do you choose and why?
+
+  3. Handle the $180K in double charges:
+     - How do you identify all affected customers?
+     - Automatic refund or manual review?
+     - How do you communicate to 50 merchants?
+     - How do you address the TechCrunch reporter?
+
+  4. Monday morning: Write the board-level incident report. What
+     happened, what you did, what it cost, and what changes to prevent
+     recurrence. Include the root cause analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident command assigns clear roles — designates incident commander, communication lead, technical lead, and customer lead with specific responsibilities for the 4-hour window"
+    weight: 0.25
+    description: "Clear incident command structure"
+  - type: llm_judge
+    criteria: "Technical fix choice is well-reasoned — either option is defensible, but the reasoning considers risk tolerance during an active incident, not just speed"
+    weight: 0.25
+    description: "Reasoned technical decision"
+  - type: llm_judge
+    criteria: "Double charge resolution is proactive — proposes automatic refunds for all affected customers rather than waiting for complaints, with merchant-by-merchant communication"
+    weight: 0.25
+    description: "Proactive refund resolution"
+  - type: llm_judge
+    criteria: "Board report identifies systemic failures — goes beyond 'bad index' to address missing idempotency validation, migration testing gaps, retry logic design, and holiday-weekend staffing"
+    weight: 0.25
+    description: "Systemic root cause analysis"

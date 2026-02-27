@@ -1,0 +1,69 @@
+meta:
+  id: issue-quality-assessment
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "Assess issue quality — evaluate bug reports for completeness and actionability"
+  tags: [github, issue-triage, quality, bug-report, assessment, basics]
+
+state: {}
+
+trigger: |
+  You're training a new maintainer on issue quality assessment. Show
+  them how to evaluate 3 bug reports using a quality rubric.
+
+  Quality dimensions:
+  - Clarity (1-5): Is the problem clearly described?
+  - Reproducibility (1-5): Can you reproduce the bug from the info?
+  - Completeness (1-5): Is all necessary context provided?
+  - Actionability (1-5): Can a developer start fixing this immediately?
+
+  Bug Report A:
+  Title: "Error in production"
+  Body: "We're getting errors in production. It started yesterday.
+  Can someone look into this? It's urgent."
+
+  Bug Report B:
+  Title: "CSV export fails for reports with >10,000 rows"
+  Body: "When exporting a report with more than 10,000 rows to CSV,
+  the export fails with a timeout error.
+
+  Steps to reproduce:
+  1. Go to Reports > Sales Report
+  2. Set date range to cover >10,000 transactions
+  3. Click 'Export to CSV'
+  4. Wait 30 seconds — page shows 'Request Timeout'
+
+  Expected: CSV file downloads
+  Actual: 504 Gateway Timeout after 30 seconds
+
+  Version: 4.2.1
+  Browser: Chrome 120
+  Workaround: Export smaller date ranges individually"
+
+  Bug Report C:
+  Title: "Login page broken on mobile Safari"
+  Body: "The login form doesn't submit on iPhone. I tap the login
+  button and nothing happens. Works fine on desktop Chrome. I'm using
+  iOS 17.2 on iPhone 15. I think it might be related to the
+  autofill behavior."
+
+  Task: Score each bug report on the 4 quality dimensions (1-5 each),
+  calculate the total quality score, write what information is missing
+  from each report, draft a follow-up comment requesting the missing
+  information (if needed), and rank the reports from most to least
+  actionable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Scoring is fair and justified — Report A scores lowest (vague, no context), Report B scores highest (complete, reproducible), Report C is in the middle (decent but missing some details); each score is explained"
+    weight: 0.35
+    description: "Fair justified scoring"
+  - type: llm_judge
+    criteria: "Missing information is accurately identified — Report A is missing almost everything, Report C needs specific Safari version and console errors; the follow-up requests are specific and helpful"
+    weight: 0.35
+    description: "Accurately identified missing info"
+  - type: llm_judge
+    criteria: "Actionability ranking is logical — reports are ranked based on whether a developer could start working immediately, with justification connecting quality scores to actionability"
+    weight: 0.30
+    description: "Logical actionability ranking"

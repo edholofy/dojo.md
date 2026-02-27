@@ -1,0 +1,116 @@
+meta:
+  id: api-technical-support
+  level: 4
+  course: saas-support-tickets
+  type: output
+  description: "Provide expert API and technical support — troubleshoot developer-facing issues, guide API implementations, and bridge technical and non-technical communication"
+  tags: [support, api, technical, developer, troubleshooting, expert]
+
+state: {}
+
+trigger: |
+  Developer support requires a unique combination of technical
+  depth and communication clarity. API issues often involve code,
+  authentication, rate limits, and data formats. Expert technical
+  support agents can read error logs, understand API architecture,
+  and guide developers through complex integrations.
+
+  Part 1: API support fundamentals
+  1. Common API issue categories:
+     - Authentication failures (401, 403 errors)
+     - Rate limiting (429 errors)
+     - Request formatting (400 errors, malformed payloads)
+     - Server errors (500, 502, 503 errors)
+     - Webhook failures (delivery, validation, retries)
+     - SDK version issues (deprecation, breaking changes)
+     - Data pagination and filtering problems
+  2. API troubleshooting methodology:
+     - Request/response inspection (headers, body, status)
+     - Authentication verification (tokens, keys, scopes)
+     - Environment isolation (prod vs. staging vs. sandbox)
+     - Reproduction attempt (curl, Postman, SDK)
+     - Log correlation (timestamps, request IDs)
+  3. Developer communication style:
+     - Developers want precision and code examples
+     - Include exact error messages and request IDs
+     - Provide working code snippets
+     - Reference documentation links
+     - Respect their technical level (don't over-explain)
+
+  Part 2: Handle API support scenarios
+  For "DataPipe" — a data pipeline API SaaS:
+
+  1. Authentication troubleshooting:
+     Developer ticket: "Getting 401 Unauthorized on all API calls.
+     My API key is correct — I just regenerated it. Using Python
+     requests library. Here's my code:
+     ```python
+     response = requests.get(
+       'https://api.datapipe.io/v2/pipelines',
+       headers={'Authorization': api_key}
+     )
+     ```
+     Was working yesterday, stopped today."
+     - Identify the issue (missing "Bearer" prefix)
+     - Write a developer-appropriate response with corrected code
+     - Explain the common authentication patterns
+
+  2. Rate limiting confusion:
+     Developer ticket: "Your docs say 1000 requests/minute but I'm
+     hitting 429 errors after ~200 requests. I'm on the Pro plan.
+     Is your rate limiting broken?"
+     - Investigate possible causes (per-endpoint limits, concurrent
+       limits, burst vs. sustained)
+     - Write response explaining the rate limiting model
+     - Provide rate-limiting best practices (exponential backoff,
+       batch endpoints, webhook alternatives)
+
+  3. Webhook delivery failures:
+     Developer ticket: "Webhooks stopped arriving 3 days ago. Our
+     endpoint is up and working — I tested it manually. No changes
+     on our end. Please check your webhook delivery system."
+     - Troubleshoot webhook delivery pipeline
+     - Check: SSL certificate, response codes, timeout handling
+     - Write response with diagnostic steps and resolution
+
+  4. SDK breaking change:
+     Developer ticket: "After updating your Python SDK from v3.2 to
+     v4.0, our pipeline creation code throws TypeError. We have
+     50+ scripts using your SDK. Your changelog doesn't mention
+     breaking changes to the Pipeline.create() method."
+     - Handle the frustration about undocumented breaking change
+     - Provide the specific code migration needed
+     - Escalate internally about changelog documentation
+
+  5. Complex data query optimization:
+     Developer ticket: "Our API queries are taking 30+ seconds for
+     large datasets. We're pulling 100K records with 15 filter
+     conditions. Pagination is set to 1000 per page. Is there
+     a way to optimize this?"
+     - Provide query optimization strategies
+     - Suggest API usage patterns for large datasets
+     - Include code examples for efficient data retrieval
+
+  Part 3: Developer support excellence
+  1. Building developer documentation from support patterns
+  2. Creating SDK troubleshooting guides
+  3. Developer community management (forums, Discord, Stack Overflow)
+  4. API changelog and deprecation communication
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical responses include working code examples — each solution provides copy-paste-ready code that solves the specific problem"
+    weight: 0.30
+    description: "Working code examples"
+  - type: llm_judge
+    criteria: "The authentication fix correctly identifies the specific issue — the missing 'Bearer' prefix is caught and explained clearly"
+    weight: 0.25
+    description: "Precise issue identification"
+  - type: llm_judge
+    criteria: "Developer communication style is appropriate — responses are technically precise without being condescending, with documentation references"
+    weight: 0.25
+    description: "Appropriate developer tone"
+  - type: llm_judge
+    criteria: "The SDK breaking change response handles both the technical fix AND the communication failure — it addresses the customer's frustration about undocumented changes"
+    weight: 0.20
+    description: "Technical fix plus communication repair"

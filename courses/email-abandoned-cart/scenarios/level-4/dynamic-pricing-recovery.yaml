@@ -1,0 +1,48 @@
+meta:
+  id: dynamic-pricing-recovery
+  level: 4
+  course: email-abandoned-cart
+  type: output
+  description: "Handle cart recovery when product prices have changed"
+  tags: [email, abandoned-cart, dynamic-pricing, price-change]
+
+state: {}
+
+trigger: |
+  "FlightDeal" (a flight booking platform) faces a unique cart recovery challenge:
+  prices change constantly.
+
+  Three price change scenarios for the same customer who abandoned a flight booking:
+
+  Scenario A — Price Decreased:
+  Original booking: NYC → London, $780 roundtrip
+  Current price: $650 roundtrip (17% decrease)
+
+  Scenario B — Price Increased:
+  Original booking: NYC → London, $780 roundtrip
+  Current price: $920 roundtrip (18% increase)
+
+  Scenario C — Flight Sold Out:
+  Original booking: NYC → London, $780 roundtrip
+  Flight is now fully booked (no seats available)
+
+  Design a recovery email for EACH scenario. Each email should handle the
+  price change transparently and drive maximum recovery.
+
+assertions:
+  - type: llm_judge
+    criteria: "Price decrease is leveraged positively — the email celebrates the lower price as a reason to act now, creating urgency around the deal before it changes again"
+    weight: 0.25
+    description: "Price decrease leveraged as positive urgency"
+  - type: llm_judge
+    criteria: "Price increase is handled honestly — the email acknowledges the change, frames it as a reason to lock in the current price before it goes higher, without hiding the increase"
+    weight: 0.25
+    description: "Price increase handled with honesty and urgency"
+  - type: llm_judge
+    criteria: "The sold-out scenario offers alternatives — similar flights on different dates or airlines, price alerts for the same route, or flexible date suggestions"
+    weight: 0.25
+    description: "Sold-out scenario offers useful alternatives"
+  - type: llm_judge
+    criteria: "All three emails maintain trust through transparency — the customer's original price is referenced alongside the current price so there's no perception of bait-and-switch"
+    weight: 0.25
+    description: "Transparent price comparison in all scenarios"

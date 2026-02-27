@@ -1,0 +1,85 @@
+meta:
+  id: subscription-ma-integration
+  level: 5
+  course: stripe-subscription-management
+  type: output
+  description: "Manage subscription billing through M&A — integrate two subscription systems after a SaaS acquisition"
+  tags: [stripe, subscription, M&A, acquisition, integration, billing-merge, master]
+
+state: {}
+
+trigger: |
+  You're the VP of Billing at "AcquireCo" ($300M ARR SaaS company)
+  that just acquired "TargetCo" ($45M ARR SaaS company) for $400M.
+  The CEO expects: "Full integration within 12 months. Customers
+  should see one company, one bill."
+
+  AcquireCo billing stack:
+  - Stripe Billing (35,000 subscriptions)
+  - Custom subscription management layer
+  - NetSuite for revenue recognition
+  - Well-documented SOX controls
+  - 4 plans: Starter $29, Pro $79, Business $199, Enterprise custom
+
+  TargetCo billing stack:
+  - Chargebee (8,000 subscriptions)
+  - Minimal custom code (mostly Chargebee's hosted pages)
+  - QuickBooks for accounting
+  - No SOX controls (was private)
+  - 3 plans: Basic $19, Standard $49, Premium $99
+  - 1,200 annual customers with varying renewal dates
+
+  Integration challenges:
+  1. Platform consolidation: Move 8,000 subscriptions from Chargebee
+     to Stripe without disrupting billing
+  2. Plan mapping: TargetCo's plans don't map 1:1 to AcquireCo's.
+     Basic→Starter is close, but Standard→Pro is a $30/month
+     increase. Premium→Business is a $100/month increase.
+  3. Card vault migration: 8,000 stored payment methods need to
+     move from Chargebee's vault to Stripe
+  4. Customer communication: 8,000 customers need to know their
+     billing provider is changing (legally required in many states)
+  5. Revenue continuity: Can't have a billing gap during migration
+     (would affect combined revenue reporting)
+  6. SOX compliance: TargetCo's billing must become SOX-compliant
+     immediately (AcquireCo is public)
+
+  Budget: $2M for the integration (engineering + migration costs)
+
+  Tasks:
+  1. Design the integration plan. Include: the platform
+     consolidation strategy (Chargebee → Stripe migration plan),
+     the plan mapping decision (grandfather TargetCo prices, force
+     migration to AcquireCo prices, or create a hybrid plan set),
+     the migration timeline (phased by customer segment — annual
+     customers at renewal, monthly customers in batches), and the
+     risk mitigation (rollback plan, monitoring, support readiness).
+
+  2. Implement the card vault migration. Include: the Chargebee
+     card export process, the Stripe card import (using the payment
+     method migration API or Spreedly as intermediary), the
+     validation process (test charging $0 to verify each card
+     works in Stripe), and the failure handling (cards that can't
+     migrate — customer must re-enter).
+
+  3. Write the Day 1 integration playbook. Include: the customer
+     communication plan (email sequences, FAQ, support scripts),
+     the SOX control implementation for TargetCo subscriptions,
+     the revenue reporting integration (combined MRR, combined
+     financials for quarterly reporting), and the success metrics
+     (migration completion rate, customer satisfaction, revenue
+     continuity, zero billing gaps).
+
+assertions:
+  - type: llm_judge
+    criteria: "Integration plan is comprehensive — platform consolidation from Chargebee to Stripe is phased, plan mapping decision is justified with pricing analysis, migration timeline is realistic, and rollback plan exists"
+    weight: 0.35
+    description: "Comprehensive integration plan"
+  - type: llm_judge
+    criteria: "Card vault migration is technically sound — export/import process is defined, validation ensures cards work, failure handling has a customer re-entry fallback, and the chosen intermediary (if any) is justified"
+    weight: 0.35
+    description: "Sound card vault migration"
+  - type: llm_judge
+    criteria: "Day 1 playbook is execution-ready — customer communication is planned in detail, SOX controls are applied to TargetCo, revenue reporting shows combined view, and success metrics ensure zero billing gaps"
+    weight: 0.30
+    description: "Execution-ready playbook"

@@ -1,0 +1,80 @@
+meta:
+  id: ml-ai-bug-triage
+  level: 4
+  course: bug-report-triage
+  type: output
+  description: "Triage and manage bugs in ML/AI systems where 'correct behavior' is probabilistic, models degrade over time, and traditional testing approaches don't apply"
+  tags: [bugs, ml, ai, model-drift, probabilistic, expert]
+
+state: {}
+
+trigger: |
+  "SmartPrice" (dynamic pricing engine, serves 200 retail customers)
+  uses ML models to set optimal prices for 50 million products daily.
+
+  The QA team is struggling because traditional bug definitions don't
+  work for ML systems:
+
+  Issue 1: Model drift
+  - The pricing model was trained on 2024 data
+  - Predictions are 15% less accurate than at launch (measured by MAPE)
+  - No code changed — the world changed
+  - Is this a "bug"?
+
+  Issue 2: Fairness complaint
+  - A customer noticed that the model recommends higher prices in
+    zip codes with predominantly minority populations
+  - The model has no zip code feature, but uses correlated features
+  - The pricing is "technically correct" by the model's objective
+  - But it raises ethical and legal concerns
+
+  Issue 3: Edge case hallucination
+  - For products with very little historical data (<10 transactions),
+    the model occasionally recommends prices that are 10x reasonable
+  - Affects <0.1% of pricing decisions
+  - But when it happens, it's catastrophic for that customer
+
+  Issue 4: A/B test conflict
+  - Two models are being A/B tested
+  - Model A optimizes for revenue, Model B for conversion rate
+  - They recommend opposite pricing strategies for the same products
+  - Support tickets are coming in about "inconsistent pricing"
+
+  Tasks:
+
+  1. Define the bug taxonomy for ML systems:
+     - How is an ML "bug" different from a traditional software bug?
+     - What severity/priority framework works for probabilistic systems?
+     - How do you triage "the model is technically correct but wrong"?
+
+  2. For each of the 4 issues above:
+     - Is it a bug, a feature gap, a data issue, or a model limitation?
+     - What's the triage decision? (Fix model, add guardrails, retrain,
+       manual override?)
+     - What's the timeline and urgency?
+
+  3. Design the ML monitoring and alerting system:
+     - What metrics trigger a "model bug" alert?
+     - How do you detect drift before customers complain?
+     - How do you set thresholds for probabilistic systems?
+
+  4. How do you handle the fairness issue (Issue 2)? This is both
+     a technical and ethical challenge.
+
+assertions:
+  - type: llm_judge
+    criteria: "ML bug taxonomy distinguishes categories — separates model drift, data quality, edge case failures, fairness issues, and integration bugs as distinct categories requiring different responses"
+    weight: 0.25
+    description: "ML-specific bug taxonomy"
+  - type: llm_judge
+    criteria: "Fairness issue gets urgency — treats Issue 2 as high priority regardless of technical correctness, proposes immediate guardrails plus model audit, acknowledging legal and ethical dimensions"
+    weight: 0.25
+    description: "Fairness urgency recognized"
+  - type: llm_judge
+    criteria: "Monitoring includes drift detection — proposes statistical tests (PSI, KL divergence, or similar) to detect distribution shift and model degradation before accuracy drops significantly"
+    weight: 0.25
+    description: "Statistical drift detection"
+  - type: llm_judge
+    criteria: "Edge case handling uses guardrails — proposes output validation bounds, confidence thresholds, and human-in-the-loop for low-confidence predictions rather than trying to fix the model for 0.1% of cases"
+    weight: 0.25
+    description: "Guardrail approach for edge cases"

@@ -1,0 +1,80 @@
+meta:
+  id: tiered-volume-pricing
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Implement complex pricing models — build tiered, volume, graduated, and package pricing using Stripe's pricing tiers"
+  tags: [stripe, subscription, tiered, volume, graduated, pricing-model, advanced]
+
+state: {}
+
+trigger: |
+  You're the billing architect at a cloud infrastructure company.
+  The pricing team has designed four pricing models for different
+  product lines, and you need to implement all of them:
+
+  Model 1 — Graduated tiering (compute hours):
+  - First 100 hours: $0.10/hour
+  - Next 400 hours (101-500): $0.08/hour
+  - Next 500 hours (501-1000): $0.06/hour
+  - Over 1000 hours: $0.04/hour
+  (Each tier applies to the units within that tier only)
+
+  Model 2 — Volume pricing (API calls):
+  - 0-10,000 calls: $0.005/call (all calls at this rate)
+  - 10,001-100,000: $0.003/call (all calls at this rate)
+  - 100,001+: $0.001/call (all calls at this rate)
+  (The rate for ALL units is determined by the total volume)
+
+  Model 3 — Package pricing (storage):
+  - 100 GB package: $10/month
+  - 500 GB package: $40/month
+  - 1 TB package: $70/month
+  - 5 TB package: $200/month
+  (Customer buys packages, can't buy partial packages)
+
+  Model 4 — Hybrid (base + graduated overage):
+  - Base platform fee: $299/month (includes 50 seats + 10,000
+    API calls)
+  - Extra seats: $8/seat/month (graduated: first 50 extra at $8,
+    next 100 at $6, over 200 at $4)
+  - Extra API calls: $0.003/call (volume: rate drops at thresholds)
+
+  Customer example — "CloudScale Inc":
+  - 720 compute hours
+  - 85,000 API calls
+  - 1.2 TB storage (needs 500GB + 1TB packages)
+  - 120 seats + 45,000 API calls on the platform
+
+  Tasks:
+  1. Implement each pricing model in Stripe. Write: the price
+     creation with tiers_mode (graduated vs volume), the tier
+     definitions for each model, the package pricing implementation
+     (using licensed pricing with predefined quantities), and the
+     hybrid model (combining flat-rate base with metered overage
+     tiers on the same subscription).
+
+  2. Calculate CloudScale Inc's monthly invoice with exact numbers.
+     For each model: show the tier breakdown, the math at each tier,
+     and the total. Then show the combined invoice across all
+     products.
+
+  3. Build the pricing calculator for the sales team. Write: the
+     endpoint that takes projected usage and returns the estimated
+     monthly cost for each product line, the comparison view (how
+     cost changes at different usage levels), and the margin analysis
+     (your cost to serve vs. customer charge at each tier).
+
+assertions:
+  - type: llm_judge
+    criteria: "All 4 pricing models are correctly implemented — graduated tiering applies rates per-tier, volume pricing applies single rate based on total, package pricing uses licensed quantities, and hybrid combines flat + metered correctly"
+    weight: 0.35
+    description: "Correct pricing model implementations"
+  - type: llm_judge
+    criteria: "CloudScale invoice calculation is mathematically accurate — each tier breakdown shows correct units and rates, totals are correct, and the combined invoice sums all products"
+    weight: 0.35
+    description: "Accurate invoice calculation"
+  - type: llm_judge
+    criteria: "Pricing calculator is useful — takes usage inputs, returns costs per product, shows cost at different usage levels, and margin analysis provides internal cost visibility"
+    weight: 0.30
+    description: "Useful pricing calculator"

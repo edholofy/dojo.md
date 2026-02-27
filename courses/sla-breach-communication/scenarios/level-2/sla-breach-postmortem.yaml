@@ -1,0 +1,75 @@
+meta:
+  id: sla-breach-postmortem
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Write and deliver a customer-facing incident postmortem after an SLA breach that builds trust through transparency"
+  tags: [SLA, postmortem, incident-report, transparency, intermediate]
+
+state: {}
+
+trigger: |
+  You're a customer success manager at "SecureCloud" (security SaaS,
+  $80M ARR). A major incident last week breached SLAs for 500
+  enterprise customers. Engineering has completed the internal
+  postmortem. Now you need to create the customer-facing version.
+
+  Internal postmortem (confidential):
+  - Incident: Authentication service failed for 3 hours
+  - Root cause: An engineer accidentally deleted a production database
+    table while running a script intended for staging
+  - Contributing factors: No environment separation between staging
+    and production databases, no confirmation prompt on destructive
+    commands, junior engineer without proper training
+  - Detection: 12 minutes (automated monitoring)
+  - Response: 18 minutes (on-call engineer paged)
+  - Resolution: 2 hours 30 minutes (restored from backup, verified)
+  - Impact: 500 enterprise customers couldn't authenticate; their
+    end-users were locked out
+  - Data loss: None (backup was 6 minutes old)
+
+  Internal recommendations (confidential):
+  - Separate staging and production database access
+  - Add confirmation prompts for destructive operations
+  - Implement "break glass" procedure for emergency database access
+  - Require senior engineer approval for production database changes
+  - Increase backup frequency from hourly to every 5 minutes
+  - Additional training for junior engineers on production access
+
+  The challenge: How much of the internal postmortem do you share?
+  "An engineer accidentally deleted a production table" is
+  embarrassing but honest. "A configuration issue caused service
+  disruption" is vague but less embarrassing.
+
+  Tasks:
+  1. Write the customer-facing postmortem. Decide what to include and
+     what to omit from the internal version.
+
+  2. How transparent should you be about human error? Write two
+     versions: one that names the root cause as human error and one
+     that abstracts it.
+
+  3. The customer-facing postmortem will be published publicly. 500
+     enterprise security companies will read it. How does this
+     audience affect what you write?
+
+  4. Design the postmortem template that SecureCloud should use for
+     all future incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Customer postmortem is transparent about human error — either explicitly mentions it or describes the process gap (lack of environment separation) that enabled the error, without naming the individual"
+    weight: 0.25
+    description: "Transparent about human error"
+  - type: llm_judge
+    criteria: "Prevention measures are specific — lists concrete improvements (environment separation, confirmation prompts, increased backups) rather than vague 'we'll do better' promises"
+    weight: 0.25
+    description: "Specific prevention measures"
+  - type: llm_judge
+    criteria: "Security audience is considered — for a security company's customers, the lack of environment separation is particularly concerning and must be addressed directly with the remediation plan"
+    weight: 0.25
+    description: "Audience-aware communication"
+  - type: llm_judge
+    criteria: "Postmortem template has standard sections — includes summary, timeline, impact, root cause, contributing factors, remediation actions with owners and deadlines"
+    weight: 0.25
+    description: "Standardized postmortem template"

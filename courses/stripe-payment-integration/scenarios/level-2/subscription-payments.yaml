@@ -1,0 +1,66 @@
+meta:
+  id: subscription-payments
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Handle subscription payment flows — implement recurring billing, failed payment recovery, and proration for plan changes"
+  tags: [stripe, subscriptions, recurring, billing, proration, dunning, intermediate]
+
+state: {}
+
+trigger: |
+  You're building the billing system for a SaaS platform with 3 plans:
+  - Starter: $29/month
+  - Pro: $99/month
+  - Enterprise: $299/month
+
+  All plans have: monthly and annual billing (20% annual discount),
+  a 14-day free trial, and the ability to upgrade/downgrade.
+
+  Your product manager's requirements:
+  1. Free trial → first payment after 14 days
+  2. Upgrade from Starter to Pro mid-cycle: charge prorated amount now
+  3. Downgrade from Pro to Starter mid-cycle: credit applied to next
+     invoice
+  4. Failed payment: retry 3 times (day 1, day 3, day 7), then cancel
+  5. Show upcoming invoice preview before plan changes
+
+  Current issues:
+  - Trial users whose card declines on day 14 get stuck in limbo
+  - Upgrades are charging the full amount instead of prorated
+  - Downgrades aren't crediting the unused time
+
+  Tech stack: Node.js, Stripe Billing
+
+  Tasks:
+  1. Write the subscription creation code with free trial. Include:
+     creating the subscription with trial_period_days, handling the
+     trial-to-paid transition via webhooks (customer.subscription.
+     updated), and the failed payment at trial end (invoice.payment_
+     failed).
+
+  2. Write the upgrade/downgrade code with proper proration. Show:
+     how to update the subscription with proration_behavior, how to
+     preview the upcoming invoice before the change (so the customer
+     knows what they'll pay), and how to handle the credit from
+     downgrades. Include the frontend confirmation flow.
+
+  3. Implement the dunning (failed payment recovery) system. Configure:
+     Stripe's Smart Retries, your custom retry schedule via webhooks,
+     the customer notification emails at each retry, and the
+     subscription cancellation after final failure. Show the webhook
+     events to listen for and the logic for each.
+
+assertions:
+  - type: llm_judge
+    criteria: "Trial-to-paid flow is correct — creates subscription with trial_period_days, listens for trial-end webhooks, handles successful payment (activate) and failed payment (notify customer), manages the limbo state"
+    weight: 0.35
+    description: "Correct trial-to-paid flow"
+  - type: llm_judge
+    criteria: "Proration is handled correctly — upgrades use create_prorations or always_invoice, downgrades use credit, invoice preview shows customer the exact amount before confirming; code uses stripe.subscriptions.update with proration_behavior"
+    weight: 0.35
+    description: "Correct proration handling"
+  - type: llm_judge
+    criteria: "Dunning system is complete — configures retry schedule, sends notifications at each stage, handles final failure with graceful cancellation, and preserves the ability for customers to reactivate"
+    weight: 0.30
+    description: "Complete dunning system"

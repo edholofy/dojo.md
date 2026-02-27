@@ -1,0 +1,73 @@
+meta:
+  id: flaky-bug-investigation
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Investigate and resolve flaky, intermittent bugs that can't be reliably reproduced"
+  tags: [bugs, flaky, intermittent, investigation, intermediate]
+
+state: {}
+
+trigger: |
+  "ChatFlow" (team messaging platform) has 3 frustrating intermittent
+  bugs that the team has been unable to reliably reproduce. Each has
+  been reported multiple times but no one can trigger them on demand.
+
+  Flaky Bug 1: "Messages occasionally appear out of order"
+  - 15 reports over 3 months
+  - More common when multiple users post within seconds of each other
+  - Never reproduced in development environment
+  - Only seen on the production WebSocket cluster
+
+  Flaky Bug 2: "Search returns empty results for queries that
+  should have matches"
+  - 8 reports over 2 months
+  - Seems to happen more during peak hours (10 AM - 2 PM)
+  - Works correctly when the user searches again immediately
+  - No pattern to which search queries fail
+
+  Flaky Bug 3: "User profile image randomly shows the default
+  avatar instead of their uploaded photo"
+  - 20+ reports over 4 months
+  - Affects different users each time
+  - Clears after browser cache refresh
+  - CDN logs show 200 responses for the image URL
+
+  Tasks:
+
+  1. For each flaky bug, propose a hypothesis for the root cause:
+     - Bug 1: What could cause message ordering issues?
+     - Bug 2: What could cause intermittent search failures?
+     - Bug 3: What could cause image display issues despite 200 OK?
+
+  2. For each, design an investigation plan that doesn't require
+     reproducing the bug on demand:
+     - What logs or data would you collect?
+     - What monitoring or instrumentation would you add?
+     - How would you confirm your hypothesis?
+
+  3. Bug 2 is being escalated by a major customer. Write the
+     response that honestly communicates the challenge of
+     intermittent bugs without sounding incompetent.
+
+  4. When should you invest significant time in flaky bugs vs.
+     accepting some level of flakiness? What's the decision
+     framework?
+
+assertions:
+  - type: llm_judge
+    criteria: "Hypotheses are technically sound — message ordering suggests race condition/clock skew, search suggests Elasticsearch replica lag or cache invalidation, image suggests CDN cache serving stale content"
+    weight: 0.25
+    description: "Technically sound hypotheses"
+  - type: llm_judge
+    criteria: "Investigation plans use instrumentation — proposes adding logging, distributed tracing, or monitoring to capture the bug in production rather than trying to reproduce locally"
+    weight: 0.25
+    description: "Instrumentation-based investigation"
+  - type: llm_judge
+    criteria: "Customer response is honest and confident — acknowledges the intermittent nature, explains why it's harder to fix, and commits to a specific investigation approach and timeline"
+    weight: 0.25
+    description: "Honest confident customer response"
+  - type: llm_judge
+    criteria: "Flakiness decision framework considers impact — evaluates frequency, customer impact, workaround availability, and investigation cost to decide when flaky bugs warrant investment"
+    weight: 0.25
+    description: "Impact-based decision framework"

@@ -1,0 +1,76 @@
+meta:
+  id: sla-breach-handling
+  level: 3
+  course: bug-report-triage
+  type: output
+  description: "Handle bugs that breach SLA commitments — escalate appropriately, communicate to stakeholders, and prevent future breaches"
+  tags: [bugs, sla, breach, escalation, advanced]
+
+state: {}
+
+trigger: |
+  "IntegrationHub" (API integration platform) has SLA commitments
+  to enterprise customers:
+  - Critical bugs: 1-hour response, 4-hour resolution
+  - Major bugs: 4-hour response, 24-hour resolution
+  - Minor bugs: 24-hour response, 1-week resolution
+
+  Three SLA breaches occurred this week:
+
+  Breach 1: Critical bug — "API gateway returning 502 for 30% of
+  requests"
+  - Customer: DataCorp ($8,000/mo, 99.9% uptime SLA)
+  - Filed: Tuesday 2 PM
+  - Response: Tuesday 2:15 PM (within SLA)
+  - Resolution: Wednesday 10 AM (20 hours, SLA: 4 hours)
+  - Cause: Complex distributed systems bug requiring 3 teams
+  - Impact: Customer's downstream services were degraded
+
+  Breach 2: Major bug — "Webhook payloads missing required fields"
+  - Customer: LogisticsFlow ($3,000/mo)
+  - Filed: Monday 9 AM
+  - Response: Monday 4 PM (7 hours, SLA: 4 hours)
+  - Resolution: Wednesday 3 PM (54 hours, SLA: 24 hours)
+  - Cause: Sat in queue over a holiday weekend, then assigned to
+    wrong team
+
+  Breach 3: Minor bug — "Dashboard pagination shows wrong page count"
+  - Customer: SmallCo ($500/mo)
+  - Filed: 2 weeks ago
+  - Response: Same day
+  - Resolution: Still open (SLA: 1 week, now at 2 weeks)
+  - Cause: Deprioritized for higher-priority work
+
+  Tasks:
+
+  1. For each breach, write:
+     - The customer communication acknowledging the SLA miss
+     - What remediation should be offered (SLA credits, etc.)
+     - Internal postmortem on what process failed
+
+  2. Breach 1 is the most serious (99.9% SLA). Calculate the SLA
+     credit owed and write the formal SLA breach notification.
+
+  3. Breach 2 was caused by process failure (holiday queue,
+     wrong team). Design the process fix to prevent this.
+
+  4. How do you track and prevent SLA breaches proactively?
+     Design the monitoring and alerting system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Customer communications acknowledge the SLA miss explicitly — doesn't hide that the SLA was breached, apologizes and explains what happened"
+    weight: 0.25
+    description: "Explicit SLA acknowledgment"
+  - type: llm_judge
+    criteria: "SLA credit calculation for Breach 1 is specific — references the 99.9% uptime SLA contract terms and calculates appropriate credits based on downtime duration"
+    weight: 0.25
+    description: "Specific SLA credit calculation"
+  - type: llm_judge
+    criteria: "Process fix for Breach 2 addresses holiday coverage — proposes on-call rotation for holidays, auto-escalation for aging tickets, and routing verification"
+    weight: 0.25
+    description: "Holiday coverage process fix"
+  - type: llm_judge
+    criteria: "Proactive monitoring includes SLA countdown alerts — triggers warnings when SLA deadlines are approaching, not just after they're breached"
+    weight: 0.25
+    description: "Proactive SLA monitoring"

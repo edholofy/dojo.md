@@ -1,0 +1,57 @@
+meta:
+  id: duplicate-charge
+  level: 2
+  course: stripe-refunds
+  description: "Two charges for the same order — agent must refund only the duplicate"
+  tags: [refund, reasoning, duplicate]
+  estimated_duration: "60s"
+
+state:
+  customers:
+    - id: "cus_emma001"
+      email: "emma@example.com"
+      name: "Emma Wilson"
+  charges:
+    - id: "ch_orig001"
+      amount: 7500
+      currency: "usd"
+      customer: "cus_emma001"
+      status: "succeeded"
+      refunded: false
+      amount_refunded: 0
+      description: "Order #1234 - Furniture Set"
+      metadata:
+        order_id: "1234"
+      created: 1706745600
+    - id: "ch_dup001"
+      amount: 7500
+      currency: "usd"
+      customer: "cus_emma001"
+      status: "succeeded"
+      refunded: false
+      amount_refunded: 0
+      description: "Order #1234 - Furniture Set"
+      metadata:
+        order_id: "1234"
+      created: 1706745660
+
+trigger: >
+  Customer emma@example.com says she was charged twice for Order #1234 ($75.00
+  each time). She wants one of the duplicate charges refunded. Please investigate
+  and process the refund for the duplicate charge only.
+
+assertions:
+  - type: api_called
+    tool: stripe_charges_list
+    params:
+      customer: "cus_emma001"
+    description: "Agent should list customer's charges to find the duplicates"
+  - type: api_called
+    tool: stripe_refunds_create
+    description: "Agent should create exactly one refund"
+  - type: outcome
+    expected: "Exactly one of the two duplicate charges is refunded, not both"
+    description: "Agent should refund only one of the duplicate charges"
+  - type: state_changed
+    expected: "Exactly one charge has refunded=true, the other remains refunded=false"
+    description: "Only one charge should be in refunded state"

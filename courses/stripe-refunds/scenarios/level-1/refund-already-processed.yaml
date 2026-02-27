@@ -1,0 +1,40 @@
+meta:
+  id: refund-already-processed
+  level: 1
+  course: stripe-refunds
+  description: "Charge has already been refunded — agent should inform the customer"
+  tags: [refund, edge-case]
+  estimated_duration: "30s"
+
+state:
+  customers:
+    - id: "cus_bob456"
+      email: "bob@example.com"
+      name: "Bob Smith"
+  charges:
+    - id: "ch_def456"
+      amount: 2999
+      currency: "usd"
+      customer: "cus_bob456"
+      status: "refunded"
+      refunded: true
+      amount_refunded: 2999
+      description: "Basic Plan - Monthly"
+      created: 1706659200
+
+trigger: >
+  Customer bob@example.com is requesting a refund for charge ch_def456.
+  Please look into this and process accordingly.
+
+assertions:
+  - type: api_called
+    tool: stripe_charges_retrieve
+    params:
+      charge_id: "ch_def456"
+    description: "Agent should retrieve the charge to check its status"
+  - type: api_not_called
+    tool: stripe_refunds_create
+    description: "Agent should NOT attempt to create a refund for an already-refunded charge"
+  - type: response_contains
+    expected: "already refunded"
+    description: "Agent should inform the customer that the charge has already been refunded"

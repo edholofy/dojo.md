@@ -1,0 +1,69 @@
+meta:
+  id: sla-basics
+  level: 1
+  course: sla-breach-communication
+  type: output
+  description: "Learn the fundamentals of SLAs — what they are, what they contain, and why they matter for customer relationships"
+  tags: [SLA, basics, definitions, fundamentals]
+
+state: {}
+
+trigger: |
+  You're a junior customer success associate at "CloudHost" (cloud
+  hosting provider, 2,000 customers). Your manager asks you to review
+  a customer's SLA and explain it to the team. You've never worked
+  with SLAs before.
+
+  Here's the customer's SLA (simplified):
+
+  Service Level Agreement — Enterprise Tier
+  - Uptime commitment: 99.9% monthly (max 43.8 minutes downtime/month)
+  - Response time: P1 incidents within 15 minutes, P2 within 1 hour,
+    P3 within 4 hours, P4 within 24 hours
+  - Resolution time: P1 within 4 hours, P2 within 8 hours, P3 within
+    48 hours, P4 within 5 business days
+  - Service credits: 10% monthly fee for 99.0%-99.9% uptime, 25% for
+    98.0%-99.0%, 50% for <98.0%
+  - Exclusions: Scheduled maintenance (with 72-hour notice), force
+    majeure, customer-caused issues
+  - Measurement: Uptime measured by external monitoring every 60
+    seconds from 5 geographic locations
+
+  This month's performance:
+  - Total downtime: 52 minutes (over 2 incidents)
+  - Incident 1: 35 minutes during business hours (server crash)
+  - Incident 2: 17 minutes at 3 AM (database failover)
+  - Response time: All incidents responded within SLA
+  - Resolution time: All incidents resolved within SLA
+
+  Tasks:
+  1. Calculate the uptime percentage for this month. Did the SLA
+     breach? Show your math.
+
+  2. If the SLA was breached, what service credit is owed? The
+     customer pays $5,000/month.
+
+  3. The customer asks: "You were down for 52 minutes. That means
+     you missed your 99.9% target, right?" Write a response that
+     is accurate and honest.
+
+  4. Explain in simple terms: What's the difference between response
+     time SLA and resolution time SLA? Why do both matter?
+
+assertions:
+  - type: llm_judge
+    criteria: "Uptime calculation is correct — 52 minutes of 43,200 minutes in a 30-day month = 99.88% uptime, which breaches the 99.9% SLA (43.8 minutes maximum)"
+    weight: 0.25
+    description: "Correct uptime calculation"
+  - type: llm_judge
+    criteria: "Service credit is correctly calculated — 99.88% falls in the 99.0%-99.9% bracket, so 10% of $5,000 = $500 credit"
+    weight: 0.25
+    description: "Correct service credit"
+  - type: llm_judge
+    criteria: "Customer response is honest — confirms the breach without defensive language, explains the credit process, and briefly describes what caused the downtime"
+    weight: 0.25
+    description: "Honest customer response"
+  - type: llm_judge
+    criteria: "Response vs resolution distinction is clear — explains that response time is how fast you acknowledge the problem, while resolution time is how fast you actually fix it"
+    weight: 0.25
+    description: "Clear SLA component distinction"

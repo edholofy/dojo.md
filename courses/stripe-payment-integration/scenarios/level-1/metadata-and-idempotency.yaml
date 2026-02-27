@@ -1,0 +1,64 @@
+meta:
+  id: metadata-and-idempotency
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Use Stripe metadata and idempotency keys — store custom data on Stripe objects and ensure safe API retries"
+  tags: [stripe, metadata, idempotency, retry, best-practices, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer who just had two production incidents:
+
+  Incident 1 — Double Charge:
+  A customer was charged twice for the same order. What happened: the
+  user clicked "Pay", the network timed out, the frontend retried the
+  request, and your server created two PaymentIntents for the same
+  order. The customer's card was charged $149.99 twice.
+
+  Incident 2 — Lost Context:
+  A customer dispute came in. Support couldn't figure out which order
+  the payment was for because the Stripe PaymentIntent had no metadata
+  linking it to your system. Support spent 2 hours cross-referencing
+  timestamps.
+
+  Your tech lead's post-incident action items:
+  1. "Add idempotency keys to ALL Stripe API calls that create objects"
+  2. "Add metadata to every Stripe object that links it to our system"
+  3. "Build a reconciliation system that catches mismatches"
+
+  Tech stack: Node.js, PostgreSQL
+
+  Tasks:
+  1. Fix the double-charge bug. Write the code that uses idempotency
+     keys to prevent duplicate PaymentIntents. Show: how to generate
+     a deterministic idempotency key (based on order ID), how to pass
+     it to the Stripe API, what happens when Stripe receives a
+     duplicate key, and how to handle the IdempotencyError if the
+     parameters don't match.
+
+  2. Implement a comprehensive metadata strategy. Show what metadata
+     to attach to: PaymentIntents (order_id, user_id, product_ids),
+     Customers (user_id, plan, signup_date), Refunds (reason, admin_id,
+     ticket_id), and Subscriptions (plan_name, trial_end, feature_flags).
+     Include the metadata size limits and best practices.
+
+  3. Build the reconciliation check. Write a script that runs daily to
+     compare: Stripe PaymentIntents (succeeded) vs. your orders table,
+     Stripe Customers vs. your users table, and Stripe Refunds vs. your
+     refunds table. Flag mismatches and generate an alert.
+
+assertions:
+  - type: llm_judge
+    criteria: "Idempotency implementation is correct — uses deterministic key based on order ID (not random), passes as Stripe-Idempotency-Key header or options parameter, explains 24-hour key expiry, handles IdempotencyError for parameter mismatch"
+    weight: 0.35
+    description: "Correct idempotency implementation"
+  - type: llm_judge
+    criteria: "Metadata strategy is comprehensive — attaches relevant identifiers to all Stripe objects, respects the 500-character value limit and 50-key limit, uses consistent naming conventions, includes queryable metadata"
+    weight: 0.35
+    description: "Comprehensive metadata strategy"
+  - type: llm_judge
+    criteria: "Reconciliation script catches real mismatches — compares Stripe and local data, identifies orphaned payments, missing refunds, and customer sync issues; generates actionable alerts"
+    weight: 0.30
+    description: "Effective reconciliation script"

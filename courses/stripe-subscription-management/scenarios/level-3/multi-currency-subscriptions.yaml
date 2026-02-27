@@ -1,0 +1,74 @@
+meta:
+  id: multi-currency-subscriptions
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Handle multi-currency subscriptions — implement localized pricing, currency switching, and FX management for global subscribers"
+  tags: [stripe, subscription, multi-currency, localized-pricing, FX, global, advanced]
+
+state: {}
+
+trigger: |
+  You're the billing engineer at a SaaS company expanding from US-only
+  to 6 markets. The growth team wants localized pricing because "a
+  $49 USD subscription in Brazil converts at half the rate of $99 BRL
+  (which is roughly $20 USD)."
+
+  Markets and localized pricing:
+  - United States: $49 USD/month, $470 USD/year
+  - European Union: €45/month, €430/year
+  - United Kingdom: £39/month, £370/year
+  - Brazil: R$99/month, R$950/year
+  - Japan: ¥4,900/month, ¥47,000/year
+  - India: ₹999/month, ₹9,500/year
+
+  Challenges:
+  1. Stripe requires separate Price objects for each currency. Each
+     product needs 12 prices (6 currencies × 2 intervals).
+  2. JPY is a zero-decimal currency — ¥4,900 is passed as 4900, not
+     490000. Your code currently multiplies all amounts by 100.
+  3. A customer in the EU paid in EUR but is relocating to the UK.
+     They want to switch to GBP billing. Can you change the currency
+     on an existing subscription?
+  4. Your CFO wants all revenue reported in USD regardless of the
+     payment currency. You need to track both the customer's payment
+     amount and the USD equivalent at the exchange rate on the
+     payment date.
+  5. Brazilian customers paying with Boleto (local payment method)
+     need special invoice handling — Boleto has a 3-day payment
+     window.
+
+  Tasks:
+  1. Set up the multi-currency pricing. Write: the product/price
+     creation for all 6 currencies and both intervals (12 prices),
+     the currency detection logic (based on customer's billing
+     address), the zero-decimal currency handling (JPY, KRW, etc.),
+     and the subscription creation with the correct localized price.
+
+  2. Handle the currency switch scenario. Write: the process for
+     changing a subscription's currency (create new subscription
+     in new currency, cancel old — cannot simply change currency),
+     the proration handling during the switch (credit for unused
+     time in old currency), the data migration (preserving billing
+     history in both currencies), and the customer communication.
+
+  3. Build the FX reporting. Write: the USD-equivalent revenue
+     tracking (using Stripe's automatic conversion or storing
+     exchange rates), the multi-currency MRR calculation (converting
+     all currencies to USD using consistent rates), the FX impact
+     analysis (how currency fluctuations affect reported revenue),
+     and the Brazilian Boleto handling for subscriptions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-currency setup is correct — 12 prices cover all currencies and intervals, currency detection uses billing address, zero-decimal currencies (JPY) are handled, and subscription creation selects the right price"
+    weight: 0.35
+    description: "Correct multi-currency setup"
+  - type: llm_judge
+    criteria: "Currency switch is handled properly — creates new subscription in new currency rather than modifying existing, proration credits unused time, billing history is preserved, and customer communication is clear"
+    weight: 0.35
+    description: "Proper currency switch handling"
+  - type: llm_judge
+    criteria: "FX reporting is accurate — USD equivalents are tracked, multi-currency MRR converts consistently, FX impact analysis identifies currency exposure, and Boleto handling supports Brazilian subscriptions"
+    weight: 0.30
+    description: "Accurate FX reporting"

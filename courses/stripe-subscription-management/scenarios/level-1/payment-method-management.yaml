@@ -1,0 +1,71 @@
+meta:
+  id: payment-method-management
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Manage payment methods for subscriptions — implement adding, updating, and setting default payment methods for recurring billing"
+  tags: [stripe, subscription, payment-method, card-update, default-method, beginner]
+
+state: {}
+
+trigger: |
+  You're building the billing settings page for a SaaS helpdesk tool.
+  Customers need to manage their payment methods for their monthly
+  subscription. Three user stories from the backlog:
+
+  User Story 1: "As a customer, I want to add a new credit card so
+  I can update my expiring card before it fails."
+
+  User Story 2: "As a customer, I want to see all my saved payment
+  methods and choose which one is used for my subscription."
+
+  User Story 3: "As a customer, I want to remove old payment methods
+  I no longer use."
+
+  Bug report from support:
+  "Customer added a new card via our billing page, but their
+  subscription still charged the old card. They had to contact support
+  to switch the payment method."
+
+  Investigation shows the code adds the payment method to the
+  customer but doesn't set it as the subscription's default:
+  ```javascript
+  await stripe.paymentMethods.attach(pmId, { customer: custId });
+  // Missing: set as default for subscription
+  ```
+
+  Tasks:
+  1. Implement all three user stories. Write: the add-payment-method
+     flow using SetupIntent (for SCA compliance), the list-payment-
+     methods endpoint (returning card brand, last4, expiry, and
+     whether it's the default), the set-default-payment-method
+     endpoint (updating the subscription's default_payment_method),
+     and the remove-payment-method endpoint (with guard against
+     removing the only payment method on an active subscription).
+
+  2. Fix the bug. Explain: the difference between
+     customer.invoice_settings.default_payment_method (customer-level
+     default) and subscription.default_payment_method (subscription-
+     level default), when each is used during billing, and the
+     correct approach for ensuring the new card is used for the
+     subscription.
+
+  3. Handle expiring cards. Write: a check that identifies cards
+     expiring within 30 days, the notification email to the customer,
+     and the webhook handler for customer.source.expiring (or
+     payment_method.automatically_updated for networks that support
+     automatic card updater).
+
+assertions:
+  - type: llm_judge
+    criteria: "All three user stories are implemented — SetupIntent flow for SCA-compliant card addition, list endpoint shows card details with default indicator, set-default updates the subscription-level default, and remove has active-subscription guard"
+    weight: 0.35
+    description: "Complete payment method management"
+  - type: llm_judge
+    criteria: "Bug explanation is accurate — customer-level vs subscription-level default distinction is correct, billing lookup order is explained, and the fix ensures new card becomes the subscription default"
+    weight: 0.35
+    description: "Accurate default payment method explanation"
+  - type: llm_judge
+    criteria: "Expiring card handling is proactive — identifies cards expiring soon, notification email is sent in advance, and automatic card updater webhook is handled for supported networks"
+    weight: 0.30
+    description: "Proactive expiring card handling"

@@ -1,0 +1,68 @@
+meta:
+  id: metered-billing-basics
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Implement metered/usage-based billing — build a system that charges customers based on actual usage rather than flat fees"
+  tags: [stripe, subscription, metered, usage-based, billing, API-calls, intermediate]
+
+state: {}
+
+trigger: |
+  You're building the billing system for an API-as-a-service company.
+  The pricing model is usage-based:
+
+  - Free tier: 1,000 API calls/month (no charge)
+  - Growth: $0.002 per API call (after the first 1,000 free)
+  - Enterprise: $0.001 per API call with $500/month minimum commit
+
+  Current month usage for a test customer:
+  - Total API calls: 47,283
+  - Free tier: 1,000 calls
+  - Billable calls: 46,283
+  - Expected charge: 46,283 × $0.002 = $92.57
+
+  Your tech lead's requirements:
+  1. "Usage must be reported to Stripe in near-real-time (within 5
+     minutes of the API call). We can't wait until month-end."
+  2. "Customers need a usage dashboard showing their current month's
+     consumption and projected invoice."
+  3. "We need to handle the free tier correctly — first 1,000 calls
+     are not billed."
+  4. "Enterprise customers with minimum commits: if their usage is
+     below $500, they still pay $500. If above, they pay actual usage."
+
+  Tasks:
+  1. Set up the metered billing in Stripe. Write: the product and
+     price creation for metered billing (using usage_type: metered),
+     the usage record reporting (stripe.subscriptionItems
+     .createUsageRecord), the billing thresholds configuration,
+     and how Stripe aggregates usage records into the invoice.
+
+  2. Build the usage reporting pipeline. Write: the middleware that
+     counts API calls per customer, the batch reporter that sends
+     usage records to Stripe every 5 minutes (not per-call, to avoid
+     API rate limits), the free tier handling (report only billable
+     usage, or report all and use tiered pricing), and the idempotency
+     strategy for usage records (preventing double-counting).
+
+  3. Implement the customer dashboard data. Write: the endpoint
+     that returns current period usage (calls made, calls remaining
+     in free tier, current charges, projected end-of-month charge),
+     the usage chart data (daily usage over the current period), and
+     the alert system (notify when approaching 80% and 100% of a
+     usage budget the customer can set).
+
+assertions:
+  - type: llm_judge
+    criteria: "Metered billing setup is correct — uses usage_type: metered, usage records are created with correct API, billing thresholds are configured, and invoice aggregation is explained accurately"
+    weight: 0.35
+    description: "Correct metered billing setup"
+  - type: llm_judge
+    criteria: "Usage pipeline is reliable — batch reporting every 5 minutes avoids rate limits, free tier is handled correctly (either via tiered pricing or filtered reporting), idempotency prevents double-counting, and the pipeline handles failures gracefully"
+    weight: 0.35
+    description: "Reliable usage pipeline"
+  - type: llm_judge
+    criteria: "Customer dashboard is useful — shows current usage and charges in real-time, projected charges help customers budget, daily usage chart provides trend visibility, and budget alerts prevent surprise bills"
+    weight: 0.30
+    description: "Useful customer dashboard"

@@ -1,0 +1,70 @@
+meta:
+  id: stripe-connect-basics
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Get started with Stripe Connect — implement marketplace payments where customers pay sellers through your platform"
+  tags: [stripe, Connect, marketplace, platform, onboarding, payouts, intermediate]
+
+state: {}
+
+trigger: |
+  You're building a freelancer marketplace like Upwork. Customers hire
+  freelancers through your platform. You need to:
+
+  1. Onboard freelancers as Stripe Connected Accounts
+  2. Accept payments from customers
+  3. Split payments: 85% to freelancer, 15% platform fee
+  4. Handle freelancer payouts
+
+  Tech stack: Node.js/Express, React, PostgreSQL
+
+  Business rules:
+  - Minimum payout: $25
+  - Platform fee: 15% of each transaction
+  - Payout schedule: Weekly (every Monday)
+  - Freelancers must verify their identity before receiving payouts
+  - Customers pay upfront, funds held until work is approved
+
+  Your CEO asked: "Standard accounts, Express accounts, or Custom
+  accounts? What's the difference and which should we use?"
+
+  Current flow to implement:
+  1. Freelancer signs up → Create Connected Account → Onboarding
+  2. Customer hires freelancer → Payment captured, held by platform
+  3. Customer approves work → Transfer funds to freelancer
+  4. Weekly → Freelancer receives payout to their bank
+
+  Tasks:
+  1. Implement the freelancer onboarding flow. Choose the account type
+     and justify your choice. Write: the account creation code, the
+     onboarding link generation (Account Links), the return/refresh URL
+     handlers, and the webhook handler for account.updated to track
+     onboarding status.
+
+  2. Implement the payment and transfer flow. Write: the PaymentIntent
+     creation with application_fee_amount for the platform fee, the
+     transfer to the connected account when work is approved, and the
+     escrow-like hold pattern (capture later). Handle: what happens if
+     the transfer fails, and what happens if the customer requests a
+     refund after transfer.
+
+  3. Explain the financial flows. Draw the money flow diagram: Customer
+     → Platform → Connected Account → Freelancer's Bank. Explain: who
+     pays the Stripe processing fee, how the platform fee is collected,
+     the difference between destination charges and direct charges, and
+     the tax reporting implications (1099-K in the US).
+
+assertions:
+  - type: llm_judge
+    criteria: "Onboarding uses the right account type (Express recommended for most marketplaces) with correct justification, creates accounts with proper capabilities, generates Account Links for onboarding, handles return/refresh URLs, and tracks onboarding via webhooks"
+    weight: 0.35
+    description: "Correct Connect onboarding flow"
+  - type: llm_judge
+    criteria: "Payment flow handles escrow pattern — creates PaymentIntent with application_fee_amount, implements hold-until-approved (manual capture or separate transfer), handles failed transfers and post-transfer refunds"
+    weight: 0.35
+    description: "Correct escrow-like payment flow"
+  - type: llm_judge
+    criteria: "Financial explanation is accurate — money flow is clear, correctly explains who pays Stripe fees, platform fee collection mechanism, destination vs direct charges trade-offs, and mentions 1099-K reporting"
+    weight: 0.30
+    description: "Accurate financial flow explanation"

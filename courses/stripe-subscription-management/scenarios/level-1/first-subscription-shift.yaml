@@ -1,0 +1,79 @@
+meta:
+  id: first-subscription-shift
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "First subscription management shift — handle three simultaneous subscription issues as an on-call developer"
+  tags: [stripe, subscription, shift-simulation, debugging, on-call, beginner]
+
+state: {}
+
+trigger: |
+  You're the on-call developer at a SaaS company. It's Monday morning
+  and three subscription-related incidents arrived over the weekend:
+
+  Incident 1 — Double billing:
+  Customer "TechFlow Inc" was charged twice in one day ($79 each).
+  They have one subscription on the Pro plan. Support ticket says:
+  "We were charged $79 on Saturday and another $79 on Sunday. We
+  should only be charged once per month!"
+
+  Looking at Stripe, you see:
+  - Subscription billing_cycle_anchor: February 1st
+  - Two invoices created February 22nd, both for $79
+  - One invoice has line item "Remaining time on Pro after upgrade"
+  - The other has line item "Pro plan — February 22 to March 1"
+
+  Incident 2 — Trial customers locked out:
+  5 customers who signed up for a 14-day trial on February 8th were
+  locked out of the app on February 15th (day 7 of 14). Your
+  application's access check code:
+  ```javascript
+  const sub = await stripe.subscriptions.retrieve(subId);
+  if (sub.status !== 'active') {
+    return { access: false };
+  }
+  ```
+
+  Incident 3 — Cancelled but still charged:
+  Customer "DesignHub" cancelled their subscription on February 10th
+  but was charged $149 on February 15th. They're demanding a refund.
+  Looking at the subscription:
+  - cancel_at_period_end: false
+  - status: active
+  - current_period_end: March 1st
+
+  Wait — cancel_at_period_end is false but they say they cancelled?
+
+  Tasks:
+  1. Diagnose and resolve each incident. For each: identify the root
+     cause, explain what happened, fix the immediate issue (refund,
+     restore access, etc.), and implement the code fix to prevent
+     recurrence.
+
+  2. For Incident 1: explain why an upgrade caused two charges and
+     how to prevent this with proration_behavior and billing anchor
+     management. For Incident 2: fix the access check to include
+     'trialing' status. For Incident 3: determine what went wrong
+     with the cancellation (likely used cancel() instead of update
+     with cancel_at_period_end, then customer re-subscribed, or the
+     cancellation failed silently).
+
+  3. Write a post-incident summary for your team. Include: what
+     happened, root cause for each incident, the fixes applied, and
+     preventive measures (better status checking, proration defaults,
+     cancellation confirmation flow).
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 incidents are correctly diagnosed — double billing identified as upgrade proration, trial lockout traced to missing 'trialing' status check, and cancellation issue root cause is plausible and specific"
+    weight: 0.35
+    description: "Correct incident diagnosis"
+  - type: llm_judge
+    criteria: "Fixes are appropriate — double billing resolved with proration handling and refund if needed, trial access check includes 'trialing' and 'active' statuses, cancellation flow is fixed to properly set cancel_at_period_end"
+    weight: 0.35
+    description: "Appropriate incident fixes"
+  - type: llm_judge
+    criteria: "Post-incident summary is useful — clearly documents what happened, root causes, fixes applied, and preventive measures that would prevent recurrence"
+    weight: 0.30
+    description: "Useful post-incident summary"

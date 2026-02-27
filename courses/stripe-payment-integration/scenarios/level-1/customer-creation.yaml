@@ -1,0 +1,72 @@
+meta:
+  id: customer-creation
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Create and manage Stripe customers — link payment methods to customers, store customer data, and manage the customer lifecycle"
+  tags: [stripe, customers, payment-methods, storage, lifecycle, beginner]
+
+state: {}
+
+trigger: |
+  You're building a SaaS app where users need to save payment methods
+  for future charges. Your product requirement: "Users should be able
+  to add a credit card during signup, and we charge them monthly without
+  asking for the card again."
+
+  Tech stack: Node.js backend, PostgreSQL database
+
+  Current database schema:
+  ```sql
+  CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    stripe_customer_id VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW()
+  );
+  ```
+
+  Requirements:
+  1. Create a Stripe Customer when a user signs up
+  2. Attach a payment method (credit card) to the customer
+  3. Set the payment method as the default for the customer
+  4. Store the stripe_customer_id in your database
+  5. List a customer's saved payment methods
+  6. Allow customers to update or remove payment methods
+
+  Your app also needs to handle:
+  - What if the user already exists in Stripe? (idempotency)
+  - What if the card is invalid when attaching?
+  - What if the user wants to switch their default card?
+
+  Tasks:
+  1. Write the complete customer lifecycle code: create customer,
+     attach payment method, set default, list methods, update default,
+     and remove a method. Include proper error handling for each
+     operation.
+
+  2. Write the database synchronization logic. How do you keep your
+     local users table in sync with Stripe? Handle: creating a
+     customer in Stripe and storing the ID, what happens if the Stripe
+     call succeeds but the database update fails, and how to recover
+     from a partial failure.
+
+  3. Explain the relationship between Customers, PaymentMethods, and
+     SetupIntents. When should you use a SetupIntent vs. directly
+     attaching a PaymentMethod? Write the SetupIntent flow for saving
+     a card for future use without charging immediately.
+
+assertions:
+  - type: llm_judge
+    criteria: "Customer lifecycle code is complete — creates customer with email and metadata, attaches PaymentMethod with customer ID, sets invoice_settings.default_payment_method, lists methods with type filter, handles card removal; error handling covers invalid cards and missing customers"
+    weight: 0.35
+    description: "Complete customer lifecycle code"
+  - type: llm_judge
+    criteria: "Database sync addresses failure scenarios — handles Stripe-success-DB-failure case (retry or reconciliation), uses transactions where appropriate, and idempotency prevents duplicate Stripe customers"
+    weight: 0.35
+    description: "Resilient database synchronization"
+  - type: llm_judge
+    criteria: "SetupIntent explanation is accurate — explains that SetupIntents authorize without charging, are needed for SCA compliance on saved cards, and shows the correct flow (create SetupIntent → confirm on frontend → attach method)"
+    weight: 0.30
+    description: "Accurate SetupIntent explanation"

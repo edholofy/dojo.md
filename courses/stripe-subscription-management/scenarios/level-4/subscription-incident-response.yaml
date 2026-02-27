@@ -1,0 +1,78 @@
+meta:
+  id: subscription-incident-response
+  level: 4
+  course: stripe-subscription-management
+  type: output
+  description: "Design subscription incident response — build runbooks, monitoring, and recovery procedures for billing system failures"
+  tags: [stripe, subscription, incident-response, monitoring, runbooks, SRE, expert]
+
+state: {}
+
+trigger: |
+  You're the Billing SRE Lead at a SaaS company ($60M ARR). After
+  three major billing incidents in the past year, the CTO has mandated
+  a formal incident response system for the billing infrastructure.
+
+  Past incidents:
+  1. "The $2.3M Incident" (6 months ago): A Stripe webhook endpoint
+     SSL certificate expired on a Friday evening. All webhooks failed
+     for 48 hours. 12,000 subscription renewals were processed by
+     Stripe but not reflected in the app. Customers with successful
+     payments were locked out.
+
+  2. "The Double-Charge" (3 months ago): A deployment introduced a
+     race condition in the subscription upgrade flow. 340 customers
+     were charged both the old and new price. Total overcharge: $47K.
+     Took 5 days to identify all affected customers.
+
+  3. "The Silent Churn" (1 month ago): A dunning configuration change
+     accidentally set the final retry to "cancel immediately" instead
+     of "cancel after 7 days." 89 subscriptions were cancelled that
+     should have had another week of recovery time. $14K in lost MRR.
+
+  Current monitoring:
+  - Basic uptime check on the webhook endpoint (every 5 minutes)
+  - Daily revenue report emailed to finance (checked manually)
+  - No real-time billing anomaly detection
+  - No runbooks — incidents are handled ad-hoc
+
+  Tasks:
+  1. Design the monitoring and alerting system. Include: the billing
+     health metrics (webhook success rate, invoice creation rate,
+     payment success rate, subscription status distribution), the
+     anomaly detection rules (sudden spike in failures, unusual
+     cancellation rate, revenue deviation from forecast), the alert
+     severity levels (P1 through P4 with response times), and the
+     on-call rotation for the billing team.
+
+  2. Write runbooks for the 3 past incidents and 5 additional
+     high-probability scenarios. For each: the detection criteria,
+     the immediate triage steps, the resolution procedure, the
+     customer communication template, and the post-incident
+     verification. The 5 additional scenarios: Stripe API outage,
+     mass payment failure (bank processor issue), billing migration
+     regression, currency conversion error, and subscription data
+     corruption.
+
+  3. Build the incident response infrastructure. Include: the
+     billing circuit breaker (automatically pause billing operations
+     when error rate exceeds threshold), the automated recovery
+     scripts (re-process failed webhooks, reconcile subscription
+     states, identify and refund overcharges), the incident
+     communication system (status page updates, customer
+     notifications, internal escalation), and the post-incident
+     review template.
+
+assertions:
+  - type: llm_judge
+    criteria: "Monitoring catches billing anomalies — health metrics cover webhooks, invoices, payments, and subscription status; anomaly detection rules would have caught all 3 past incidents; alert severity is tiered with appropriate response times"
+    weight: 0.35
+    description: "Anomaly-catching monitoring"
+  - type: llm_judge
+    criteria: "Runbooks are detailed and actionable — each of 8 scenarios has specific detection criteria, step-by-step resolution, customer communication, and verification; runbooks are usable by an on-call engineer unfamiliar with the specific issue"
+    weight: 0.35
+    description: "Actionable runbooks"
+  - type: llm_judge
+    criteria: "Incident infrastructure enables fast recovery — circuit breaker prevents cascading failures, automated recovery scripts handle common fixes, communication system keeps stakeholders informed, and post-incident reviews drive improvement"
+    weight: 0.30
+    description: "Fast recovery infrastructure"

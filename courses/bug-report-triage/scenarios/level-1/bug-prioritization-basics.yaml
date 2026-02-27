@@ -1,0 +1,64 @@
+meta:
+  id: bug-prioritization-basics
+  level: 1
+  course: bug-report-triage
+  type: output
+  description: "Learn the difference between severity and priority, and how to assign priority levels based on business impact, user reach, and available workarounds"
+  tags: [bugs, prioritization, severity, priority, fundamentals]
+
+state: {}
+
+trigger: |
+  You're a junior QA engineer at "TaskFlow" (project management SaaS,
+  5,000 users). Your team lead explains: "Severity describes how broken
+  something is technically. Priority describes how urgently we need to
+  fix it. They're different — a cosmetic bug on the login page might be
+  low severity but high priority because every user sees it."
+
+  Here are 6 bugs that just came in. For each one, assign both a
+  severity (Critical / Major / Minor / Trivial) and a priority
+  (P0-Immediate / P1-High / P2-Medium / P3-Low), then explain your
+  reasoning:
+
+  Bug A: The CEO's profile photo appears pixelated on the "About Us"
+  public marketing page. No functionality is affected.
+
+  Bug B: When users export a project to PDF, the last page is always
+  blank. The actual content exports correctly.
+
+  Bug C: The password reset flow sends the email but the reset link
+  returns a 404 error. Users cannot reset their passwords.
+
+  Bug D: On Safari mobile, the dropdown menu for project status overlaps
+  with the save button, making it hard (but not impossible) to save.
+
+  Bug E: When exactly 100 tasks exist in a project, the task counter
+  displays "99+" instead of "100". Over 100 shows correctly.
+
+  Bug F: The search function returns no results when a query contains
+  an apostrophe (e.g., searching for "John's tasks" returns nothing,
+  but "Johns tasks" works fine).
+
+  Tasks:
+  1. Classify each bug with severity AND priority, with reasoning
+  2. Explain a situation where severity and priority would diverge
+     (high severity but low priority, or low severity but high priority)
+  3. Rank these 6 bugs in the order you'd fix them
+
+assertions:
+  - type: llm_judge
+    criteria: "Severity and priority are treated as distinct dimensions — Bug C should be high severity AND high priority, while Bug A should be low severity but potentially medium priority due to visibility"
+    weight: 0.25
+    description: "Distinct severity vs priority"
+  - type: llm_judge
+    criteria: "Classifications are reasonable — Bug C is Critical/P0, Bug F is Major/P1-P2 (functionality broken), Bug D is Minor/P2, Bug E is Trivial/P3, Bug B is Minor/P3, Bug A is Trivial but elevated priority"
+    weight: 0.25
+    description: "Reasonable classifications"
+  - type: llm_judge
+    criteria: "Divergence example is clear — explains a scenario where a severe bug has low priority (e.g., crash in admin-only feature used by 2 people) or a trivial bug has high priority (e.g., typo on pricing page)"
+    weight: 0.25
+    description: "Clear divergence example"
+  - type: llm_judge
+    criteria: "Fix ordering prioritizes user impact — Bug C (password reset broken) comes first, followed by bugs affecting core functionality, with cosmetic issues last"
+    weight: 0.25
+    description: "Impact-based fix ordering"

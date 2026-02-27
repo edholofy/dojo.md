@@ -1,0 +1,67 @@
+meta:
+  id: invoice-basics
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Understand subscription invoicing — work with Stripe's automatic invoicing for subscriptions including line items, finalization, and payment"
+  tags: [stripe, subscription, invoice, billing, line-items, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer at a SaaS company and the finance team has
+  questions about how Stripe invoices work with subscriptions. They're
+  confused because:
+
+  1. "We see invoices in Stripe that say $0.00 — why are there
+     invoices with no charge?"
+  2. "A customer was charged $127.33 but their plan is $99/month.
+     Where did the extra $28.33 come from?"
+  3. "We need to add a one-time setup fee of $250 to a customer's
+     first invoice. How do we do that without creating a separate
+     charge?"
+  4. "Can we show customers a preview of their next invoice before
+     they're charged?"
+
+  The subscription in question:
+  - Customer: DataSync Corp
+  - Plan: Professional at $99/month
+  - Billing anchor: 1st of each month
+  - Recently upgraded mid-cycle (which explains the $127.33)
+
+  Tasks:
+  1. Answer each of the finance team's 4 questions with detailed
+     explanations. For question 1: explain when $0 invoices are
+     created (trial start, 100% coupon, plan change credit).
+     For question 2: break down the $127.33 invoice line by line
+     (proration credit for unused old plan + charge for new plan
+     remaining days). For question 3: show how to use invoice items
+     to add the $250 setup fee. For question 4: show the upcoming
+     invoice API.
+
+  2. Write a guide to Stripe's invoice lifecycle for the team.
+     Include: the stages (draft → open → paid/void/uncollectible),
+     when each status transition happens, the difference between
+     invoice.created, invoice.finalized, invoice.paid, and
+     invoice.payment_succeeded webhooks, and when automatic vs.
+     manual invoicing applies.
+
+  3. Implement two practical features: (a) an endpoint that returns
+     the upcoming invoice for a customer (so they can see what
+     they'll be charged next), and (b) an endpoint that adds a
+     one-time line item to the next invoice (for usage charges,
+     overages, or setup fees). Include proper error handling.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 4 finance questions are answered accurately — $0 invoices explained with correct examples, $127.33 breakdown shows proration math, setup fee uses invoice items correctly, and upcoming invoice API is demonstrated"
+    weight: 0.35
+    description: "Accurate finance answers"
+  - type: llm_judge
+    criteria: "Invoice lifecycle guide is complete — all status transitions are mapped, webhook events are distinguished correctly (especially invoice.paid vs invoice.payment_succeeded), and automatic vs manual invoicing is explained"
+    weight: 0.35
+    description: "Complete invoice lifecycle guide"
+  - type: llm_judge
+    criteria: "Both endpoints are implemented correctly — upcoming invoice endpoint uses the retrieve upcoming API, one-time line item endpoint uses invoice items with the customer's subscription, and error handling covers common cases"
+    weight: 0.30
+    description: "Correct endpoint implementations"

@@ -1,0 +1,69 @@
+meta:
+  id: regression-bug-handling
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Identify and handle regression bugs — determine when a working feature broke and trace it to the responsible change"
+  tags: [bugs, regression, bisect, root-cause, intermediate]
+
+state: {}
+
+trigger: |
+  You're a QA lead at "PaymentGate" (payment processing SaaS).
+  Three regression bugs were reported after last week's release
+  (v3.2.0). Each requires different investigation approaches.
+
+  Regression 1: "Credit card validation rejects valid Amex cards"
+  - Worked in v3.1.0, broken in v3.2.0
+  - 12 commits between versions
+  - Affects 8% of transactions
+  - Customer reports started 2 days after release
+
+  Regression 2: "Webhook delivery delay increased from <1s to 15-30s"
+  - Unclear when it started (no one noticed initially)
+  - Last known good: ~6 weeks ago
+  - Could be any of 85 commits across 3 sprints
+  - Intermittent: only affects high-volume merchants
+
+  Regression 3: "Invoice PDF layout broken — company logo overlaps
+  address"
+  - Definitely new in v3.2.0
+  - Only affects invoices with logos wider than 200px
+  - Low severity but high visibility (customers see it)
+
+  Tasks:
+
+  1. For Regression 1, walk through the git bisect strategy:
+     - How does git bisect work to find the breaking commit?
+     - With 12 commits, how many tests do you need? (efficiency)
+     - What test would you run at each bisect step?
+
+  2. Regression 2 is harder — 85 commits over 6 weeks. How do you
+     narrow it down efficiently? Propose a strategy that doesn't
+     require testing all 85 commits.
+
+  3. For each regression, write:
+     - The bug report filed to engineering
+     - The customer communication (if customer-facing)
+     - The recommended fix approach (revert vs. forward-fix)
+
+  4. What processes could have caught these regressions before
+     release?
+
+assertions:
+  - type: llm_judge
+    criteria: "Git bisect efficiency is correct — with 12 commits, approximately 4 tests are needed (log2(12)), demonstrating understanding of binary search approach"
+    weight: 0.25
+    description: "Correct bisect efficiency"
+  - type: llm_judge
+    criteria: "85-commit regression uses a narrowing strategy — proposes testing at wider intervals first (every 10-15 commits) to narrow the window before bisecting"
+    weight: 0.25
+    description: "Efficient narrowing strategy"
+  - type: llm_judge
+    criteria: "Fix approaches are appropriate — Amex rejection likely needs revert (critical), webhook may need forward-fix (complex), PDF could be forward-fix (low severity)"
+    weight: 0.25
+    description: "Appropriate fix approaches"
+  - type: llm_judge
+    criteria: "Prevention measures include automated regression tests — suggests tests for payment validation, performance benchmarks for webhooks, and visual regression testing for PDFs"
+    weight: 0.25
+    description: "Prevention measures identified"

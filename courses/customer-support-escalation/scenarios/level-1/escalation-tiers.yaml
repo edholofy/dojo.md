@@ -1,0 +1,77 @@
+meta:
+  id: escalation-tiers
+  level: 1
+  course: customer-support-escalation
+  type: output
+  description: "Understand multi-tier escalation paths — learn the L1, L2, L3, and management escalation hierarchy and when each tier is appropriate"
+  tags: [support, escalation, tiers, hierarchy, routing, beginner]
+
+state: {}
+
+trigger: |
+  Most support organizations use a tiered escalation structure.
+  Understanding each tier's capabilities and responsibilities
+  helps you route issues to the right level the first time.
+
+  Part 1: Standard escalation tiers
+  1. L1 (Tier 1) — Front-line support:
+     - Handles 70-80% of all inquiries
+     - Scope: known issues, standard processes, FAQ answers
+     - Authority: password resets, basic refunds, account updates
+     - Escalation trigger: issue outside knowledge base or authority
+
+  2. L2 (Tier 2) — Specialist support:
+     - Handles 15-20% of inquiries (escalated from L1)
+     - Scope: complex troubleshooting, billing disputes, advanced
+       product issues
+     - Authority: larger refunds, account modifications, workarounds
+     - Escalation trigger: bug confirmed, systemic issue, legal threat
+
+  3. L3 (Tier 3) — Expert/Engineering:
+     - Handles 3-5% of inquiries
+     - Scope: bugs, infrastructure issues, code-level investigation
+     - Authority: code fixes, configuration changes, data recovery
+     - Escalation trigger: production incident, data loss, security
+
+  4. Management escalation:
+     - Parallel path for customer relationship issues
+     - Scope: policy exceptions, customer retention, PR sensitivity
+     - When: customer insists, authority needed, strategic decision
+
+  Part 2: Route these tickets to the correct tier
+
+  Ticket 1: "How do I change my email address on my account?"
+  Ticket 2: "I was charged $500 instead of $50 for my plan."
+  Ticket 3: "My dashboard is showing data from another customer's
+  account. I can see their name and email addresses."
+  Ticket 4: "Your chat widget is causing our website to crash.
+  We need this fixed immediately or we'll have to remove it."
+  Ticket 5: "I've been a customer for 5 years and I just learned
+  new customers get a 30% discount I never received."
+  Ticket 6: "I'm the CISO of a Fortune 500 company. We found a
+  security vulnerability in your API. Who do I report this to?"
+  Ticket 7: "My team of 200 can't log in. We think it's an SSO
+  issue on your end."
+  Ticket 8: "I want to cancel unless I can speak to someone who
+  can discuss enterprise pricing for my team."
+
+  For each: identify the tier, explain why, and note any special
+  handling considerations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tier routing is correct — data leak goes to L3/security, pricing complaint to L1/L2, mass SSO outage to L2/L3, security vulnerability to L3/security team"
+    weight: 0.30
+    description: "Correct tier routing"
+  - type: llm_judge
+    criteria: "The data leak (Ticket 3) is treated as a critical security incident — it's routed to the highest urgency with immediate escalation, not treated as a standard bug"
+    weight: 0.25
+    description: "Critical security incident recognition"
+  - type: llm_judge
+    criteria: "The CISO security report (Ticket 6) is handled with appropriate gravity — a Fortune 500 CISO reporting a vulnerability gets VIP treatment and direct security team routing"
+    weight: 0.25
+    description: "VIP security report handling"
+  - type: llm_judge
+    criteria: "Each routing decision includes reasoning — the explanation shows understanding of why each tier is appropriate, not just the destination"
+    weight: 0.20
+    description: "Reasoned routing decisions"

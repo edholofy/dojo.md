@@ -1,0 +1,76 @@
+meta:
+  id: webhook-reliability
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Build reliable webhook processing — handle retries, ordering, failures, and build a dead letter queue for Stripe webhooks"
+  tags: [stripe, webhooks, reliability, queue, dead-letter, retries, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior developer at a SaaS company processing 50,000 Stripe
+  webhooks per day. Your webhook system is unreliable:
+
+  Recent incidents:
+  1. Database deadlock caused webhook processing to fail for 45 minutes.
+     Stripe retried but events arrived out of order — a subscription
+     cancellation was processed before the subscription creation.
+  2. A deployment took down the webhook endpoint for 3 minutes. Stripe
+     retried but 200+ events arrived simultaneously, overwhelming your
+     database connection pool.
+  3. A bug in the checkout.session.completed handler caused a crash.
+     Stripe retried the event 8 times, each time crashing the endpoint,
+     creating a cascade failure that affected ALL webhook processing.
+
+  Current webhook architecture (fragile):
+  ```
+  Stripe → POST /webhooks → Verify Signature → Process Event
+                                                    → Direct DB Write
+                                                    → External API Call
+                                                    → Email Send
+  ```
+  Everything happens synchronously in the webhook handler. If any step
+  fails, the entire webhook fails and Stripe retries.
+
+  Requirements:
+  - Process 50,000 webhooks/day reliably
+  - Handle Stripe retries without duplicate processing
+  - Event ordering shouldn't matter (eventual consistency)
+  - A failure in one event type shouldn't affect others
+  - Dead letter queue for events that fail repeatedly
+  - Monitoring and alerting for webhook health
+
+  Tasks:
+  1. Redesign the webhook architecture. Replace the synchronous
+     processing with an async queue-based approach: Stripe → Verify
+     → Enqueue → Return 200 → Workers Process Events. Show the code
+     for: the lightweight webhook receiver, the queue producer, and
+     the queue consumer. Use a queue technology (Bull/BullMQ with
+     Redis, or SQS, or your recommendation).
+
+  2. Implement the reliability features: idempotency (track processed
+     event IDs), out-of-order handling (use event timestamps and
+     object versions), retry with backoff (for transient failures),
+     dead letter queue (for permanent failures), and circuit breaker
+     (stop processing if downstream services are down).
+
+  3. Build the webhook monitoring dashboard specification. Include:
+     the key metrics to track (processing rate, failure rate, queue
+     depth, processing latency, retry count), the alert thresholds,
+     and the runbook for common failure scenarios (queue backing up,
+     high failure rate, Stripe endpoint verification failing).
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture is async and resilient — webhook receiver only verifies and enqueues (returns 200 quickly), workers process from queue, event types are isolated so one failure doesn't cascade, and the overall design handles 50K events/day"
+    weight: 0.35
+    description: "Resilient async webhook architecture"
+  - type: llm_judge
+    criteria: "Reliability features are comprehensive — idempotency uses event ID tracking, out-of-order handling uses timestamps or created field, retry uses exponential backoff, DLQ captures permanent failures, circuit breaker prevents cascade"
+    weight: 0.35
+    description: "Comprehensive reliability features"
+  - type: llm_judge
+    criteria: "Monitoring covers the critical metrics — processing rate, failure rate by event type, queue depth trends, latency percentiles, retry frequency, and alert thresholds are specific and actionable"
+    weight: 0.30
+    description: "Critical webhook monitoring"

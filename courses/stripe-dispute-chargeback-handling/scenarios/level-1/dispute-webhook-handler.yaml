@@ -1,0 +1,67 @@
+meta:
+  id: dispute-webhook-handler
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Build a dispute webhook handler — implement automated dispute notification and tracking when chargebacks arrive"
+  tags: [stripe, dispute, webhook, automation, notification, tracking, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer at a SaaS company. Last month, the company
+  lost 3 disputes because nobody noticed them in time — the evidence
+  deadline passed before anyone checked the Stripe dashboard. Your
+  manager says: "Build an automated system so we never miss a
+  dispute again."
+
+  Requirements:
+  1. When a dispute is created, immediately: send a Slack alert to
+     #billing-alerts, email the finance team, and create a record
+     in your database with the deadline.
+  2. If a dispute is 48 hours from deadline and still unresolved,
+     send an urgent alert.
+  3. When a dispute is resolved (won or lost), update the record
+     and notify the team.
+  4. Track all disputes in a dashboard showing: open disputes,
+     total amount at risk, win/loss record, and average response time.
+
+  Relevant Stripe webhook events:
+  - charge.dispute.created: A new dispute is opened
+  - charge.dispute.updated: Evidence was submitted or status changed
+  - charge.dispute.closed: Dispute was resolved (won/lost)
+  - charge.dispute.funds_reinstated: Won — funds returned
+  - charge.dispute.funds_withdrawn: Lost — funds taken
+
+  Tasks:
+  1. Implement the webhook handler. Write: the handler for each of
+     the 5 dispute webhook events, the database schema for tracking
+     disputes (id, stripe_dispute_id, charge_id, amount, reason,
+     status, evidence_due_by, responded_at, outcome, created_at),
+     the Slack notification with dispute details (amount, reason,
+     customer, deadline), and the email notification to finance.
+
+  2. Implement the deadline monitoring. Write: the cron job that
+     checks for disputes approaching their deadline (48 hours,
+     24 hours, 4 hours), the escalation logic (who gets notified
+     at each threshold), and the auto-assignment system (round-robin
+     disputes to team members).
+
+  3. Build the dispute tracking dashboard data. Write: the endpoints
+     for open disputes (sorted by deadline), total amount at risk,
+     win/loss statistics (overall and by reason code), average
+     response time, and the monthly trend chart.
+
+assertions:
+  - type: llm_judge
+    criteria: "Webhook handler covers all events — all 5 dispute events are handled, database schema tracks essential fields including deadline, Slack and email notifications include useful dispute details"
+    weight: 0.35
+    description: "Complete webhook handler"
+  - type: llm_judge
+    criteria: "Deadline monitoring prevents missed disputes — cron job checks at multiple intervals, escalation reaches the right people, and auto-assignment distributes workload"
+    weight: 0.35
+    description: "Effective deadline monitoring"
+  - type: llm_judge
+    criteria: "Dashboard provides visibility — open disputes sorted by urgency, financial exposure is tracked, win/loss stats enable improvement, and trends show whether dispute management is getting better"
+    weight: 0.30
+    description: "Useful dispute dashboard"

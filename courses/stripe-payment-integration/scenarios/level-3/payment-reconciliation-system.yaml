@@ -1,0 +1,83 @@
+meta:
+  id: payment-reconciliation-system
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Build a payment reconciliation system — design automated matching between Stripe transactions, bank settlements, and your internal ledger"
+  tags: [stripe, reconciliation, ledger, settlement, accounting, automation, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior payment engineer at a B2B SaaS company ($120M ARR,
+  15,000 customers). Your finance team spends 3 full days at the end
+  of each month manually reconciling Stripe data with bank statements
+  and the general ledger. The CFO wants this reduced to same-day
+  automated reconciliation.
+
+  Current problems:
+  1. Stripe payouts bundle hundreds of transactions into single bank
+     deposits. Matching individual charges to the bundled payout
+     requires downloading CSVs and manual lookup.
+  2. Timing differences: Stripe processes a charge on Day 1 but the
+     payout arrives on Day 3-4. This creates "float" discrepancies
+     that confuse month-end close.
+  3. Currency conversion: 20% of revenue is international. Stripe's
+     FX rate differs from the bank's booking rate, creating small
+     discrepancies on every international transaction.
+  4. Refunds and disputes: Partial refunds, dispute fees, and
+     chargeback reversals create negative line items that are hard
+     to match back to original transactions.
+  5. Failed reconciliation items: ~2% of transactions don't match
+     cleanly, requiring manual investigation. These currently pile
+     up and are resolved in bulk at month-end.
+
+  Example data:
+  - Stripe payout $47,283.16 (March 15) contains 312 charges,
+    8 refunds, 2 dispute fees
+  - Bank deposit shows $47,283.16 on March 17
+  - GL shows $48,100.00 in receivables for those transactions
+    (difference: $816.84 in Stripe fees not yet booked)
+
+  Available Stripe APIs:
+  - Balance Transactions API (itemized list of all money movements)
+  - Payouts API (payout details and status)
+  - Transfers API (Connect platform transfers)
+  - Reporting API (financial reports, payout reconciliation)
+  - Sigma (SQL access to Stripe data)
+
+  Tasks:
+  1. Design the automated reconciliation system architecture. Include:
+     the data pipeline (Stripe → staging → matching → GL), the
+     three-way matching algorithm (Stripe transaction ↔ bank deposit
+     ↔ GL entry), the handling of timing differences (accrual-based
+     matching vs. cash-based), and the FX discrepancy resolution
+     (tolerance thresholds, automatic adjustment entries).
+
+  2. Implement the core reconciliation logic. Write: the Stripe
+     Balance Transaction ingestion (webhook-driven + daily batch),
+     the payout decomposition (breaking bundled payouts into individual
+     transactions), the matching rules engine (exact match, fuzzy
+     match with tolerances, manual review queue), and the exception
+     handling for the 2% that don't match.
+
+  3. Build the reconciliation dashboard and reporting. Include: the
+     daily reconciliation status (matched, unmatched, pending), the
+     month-end close checklist (automated pre-checks before close),
+     the audit trail (every matching decision logged with reason),
+     and the CFO summary (cash position, outstanding receivables,
+     reconciliation health score).
+
+assertions:
+  - type: llm_judge
+    criteria: "Reconciliation architecture is sound — three-way matching covers Stripe, bank, and GL; timing differences are handled with accrual logic; FX tolerance thresholds are defined; and the data pipeline is webhook-driven with batch fallback"
+    weight: 0.35
+    description: "Sound reconciliation architecture"
+  - type: llm_judge
+    criteria: "Core logic handles real complexity — payout decomposition uses Balance Transactions API correctly, matching rules engine has exact/fuzzy/manual tiers, exception handling addresses the 2% unmatched with investigation workflow, and fee booking is automated"
+    weight: 0.35
+    description: "Complete reconciliation logic"
+  - type: llm_judge
+    criteria: "Dashboard and reporting serve finance needs — daily status enables same-day reconciliation, month-end checklist reduces close time, audit trail satisfies auditor requirements, and CFO summary provides real-time cash visibility"
+    weight: 0.30
+    description: "Finance-ready dashboard and reporting"

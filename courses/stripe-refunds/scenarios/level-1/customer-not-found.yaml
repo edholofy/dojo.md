@@ -1,0 +1,38 @@
+meta:
+  id: customer-not-found
+  level: 1
+  course: stripe-refunds
+  description: "Customer email doesn't match any records"
+  tags: [refund, edge-case, validation]
+  estimated_duration: "30s"
+
+state:
+  customers:
+    - id: "cus_carol789"
+      email: "carol@example.com"
+      name: "Carol Davis"
+  charges:
+    - id: "ch_ghi789"
+      amount: 9999
+      currency: "usd"
+      customer: "cus_carol789"
+      status: "succeeded"
+      refunded: false
+      amount_refunded: 0
+      description: "Enterprise Plan - Monthly"
+      created: 1706572800
+
+trigger: >
+  A person claiming to be dave@example.com is requesting a refund. They say they
+  were charged $99.99. Please look into this and process the refund if appropriate.
+
+assertions:
+  - type: api_not_called
+    tool: stripe_refunds_create
+    description: "Agent should NOT create a refund since the customer email doesn't match"
+  - type: outcome
+    expected: "Agent recognizes that dave@example.com is not found in the system and does not process a refund"
+    description: "Agent should not refund a charge belonging to a different customer"
+  - type: response_contains
+    expected: "not found"
+    description: "Agent should inform that the customer email was not found"

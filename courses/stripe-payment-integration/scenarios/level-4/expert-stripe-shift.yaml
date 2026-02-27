@@ -1,0 +1,79 @@
+meta:
+  id: expert-stripe-shift
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Expert Stripe shift — handle a complete payment platform outage, a PCI compliance breach, and a Stripe account suspension simultaneously"
+  tags: [stripe, outage, PCI-breach, suspension, crisis, shift-simulation, expert]
+
+state: {}
+
+trigger: |
+  You're the VP of Engineering at an e-commerce company ($150M GMV).
+  Three payment catastrophes hit within 24 hours.
+
+  Catastrophe 1 — Complete Payment Outage (Hour 0):
+  Your payment service is down. Error: "Stripe API key invalid." Your
+  monitoring shows 100% payment failure rate starting 15 minutes ago.
+  Investigation reveals: your key rotation script ran in production
+  and rotated the live API key, but the new key wasn't propagated to
+  all services. 3 microservices still have the old (now revoked) key.
+  Revenue impact: $45,000/hour in lost sales.
+
+  Catastrophe 2 — PCI Compliance Breach Discovery (Hour 6):
+  During the outage investigation, an engineer discovered that debug
+  logging was enabled on the payment service. The debug logs contain
+  full card numbers (PANs) for the last 72 hours. These logs are stored
+  in CloudWatch, backed up to S3, and accessible to 15 engineers.
+  This is a PCI DSS breach — card data was stored in violation of your
+  SAQ-A compliance.
+
+  Estimated exposure: 12,000 card numbers over 72 hours. Your PCI QSA
+  (assessor) requires notification within 24 hours of discovery.
+
+  Catastrophe 3 — Stripe Account Review (Hour 12):
+  Stripe's Risk team sent an email: "We've placed your account under
+  review due to unusual activity patterns detected during the outage
+  period. All payouts are paused until the review is complete."
+
+  The "unusual activity" was the failed transactions during the outage
+  causing a spike in decline rates (from 3% to 100%), followed by a
+  burst of retry traffic when services came back online (which looked
+  like a card testing attack to Stripe's automated systems).
+
+  Payout pause impact: $890,000 in pending payouts to marketplace
+  sellers.
+
+  Tasks:
+  1. Address the payment outage. Write: the immediate fix (propagate
+     the new key to all services), the root cause analysis (why did
+     key rotation affect production without safeguards?), the
+     prevention measures (key rotation procedure with validation,
+     gradual rollout, canary deployment for config changes), and the
+     customer communication.
+
+  2. Address the PCI breach. Write: the incident response plan (contain,
+     assess, notify, remediate), the PCI QSA notification letter, the
+     customer notification (if required), the log purge procedure
+     (CloudWatch, S3 backups), and the prevention system (log scrubbing
+     that detects and redacts card numbers before they're stored).
+
+  3. Address the Stripe account review. Write: the response to Stripe
+     explaining the unusual activity, the evidence package showing it
+     was an outage not fraud, the plan to prevent retry storms in the
+     future (circuit breaker, gradual ramp-up), and the seller
+     communication about paused payouts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Outage fix is comprehensive — immediate key propagation restores payments, root cause identifies missing validation in key rotation, prevention includes canary deployment and rollback capability, and customer communication is appropriate"
+    weight: 0.35
+    description: "Comprehensive outage resolution"
+  - type: llm_judge
+    criteria: "PCI breach response follows proper procedure — contains the breach (stop logging, restrict access), assesses scope (12K cards, 72 hours), notifies QSA within 24 hours, purges data from all stores (CloudWatch, S3), and implements log scrubbing prevention"
+    weight: 0.35
+    description: "Proper PCI breach response"
+  - type: llm_judge
+    criteria: "Stripe review response is credible — clearly explains the outage caused the unusual patterns, provides evidence (timeline, logs showing key rotation as root cause), proposes circuit breaker for retry storms, and addresses seller payout communication"
+    weight: 0.30
+    description: "Credible Stripe review response"

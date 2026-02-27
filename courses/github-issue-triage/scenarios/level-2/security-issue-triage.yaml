@@ -1,0 +1,58 @@
+meta:
+  id: security-issue-triage
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Triage security vulnerability reports — handle public and private security disclosures appropriately"
+  tags: [github, issue-triage, security, vulnerability, GHSA, CVE, intermediate]
+
+state: {}
+
+trigger: |
+  You're a maintainer of a popular npm package (500K weekly downloads).
+  Three security-related reports arrived this week:
+
+  Report 1 — Private vulnerability report (via GitHub's PVR):
+  "I found an XSS vulnerability in the HTML sanitizer. When user input
+  contains a specific Unicode sequence followed by a script tag, the
+  sanitizer fails to catch it. PoC: `﻿<script>alert(1)</script>`
+  This affects all versions since 2.0. CVSS estimate: 7.5 (High)."
+  Reporter: Security researcher with responsible disclosure track record
+
+  Report 2 — Public issue (filed as regular bug report):
+  Title: "SQL injection in query builder"
+  Body: "Found that the query builder doesn't properly escape backtick
+  characters. You can inject arbitrary SQL: `db.query('users', {name:
+  '`; DROP TABLE users; --'})`"
+  Reporter: New contributor, clearly doesn't know about private reporting
+
+  Report 3 — Dependency vulnerability alert from Dependabot:
+  "lodash version 4.17.20 has a prototype pollution vulnerability
+  (CVE-2021-23337). Your package.json pins lodash@4.17.20. Severity:
+  High. A fix is available in lodash@4.17.21."
+
+  GitHub security features available:
+  - Private vulnerability reporting (PVR) enabled
+  - GitHub Security Advisories (GHSA) for disclosure
+  - Dependabot alerts and security updates enabled
+  - SECURITY.md file exists with disclosure instructions
+
+  Task: Handle all 3 reports. For each, write: the immediate triage
+  actions (within 1 hour), the severity assessment, the communication
+  plan (reporter, users, public), the fix timeline, and the disclosure
+  strategy. Also write the general security triage protocol that these
+  reports reveal you need.
+
+assertions:
+  - type: llm_judge
+    criteria: "Private report is handled correctly — acknowledged to reporter, GHSA draft advisory created, temporary private fork for fix, CVE requested, coordinated disclosure timeline agreed"
+    weight: 0.35
+    description: "Correctly handled private report"
+  - type: llm_judge
+    criteria: "Public disclosure is mitigated urgently — the SQL injection issue is hidden/deleted or details redacted immediately, reporter is thanked and redirected to private reporting, and the vulnerability is treated as zero-day since it's now public"
+    weight: 0.35
+    description: "Urgently mitigated public disclosure"
+  - type: llm_judge
+    criteria: "Dependency vulnerability is addressed systematically — Dependabot PR is reviewed, lodash is updated, and the general security triage protocol covers all three disclosure channels with appropriate escalation"
+    weight: 0.30
+    description: "Systematically addressed dependency vuln"

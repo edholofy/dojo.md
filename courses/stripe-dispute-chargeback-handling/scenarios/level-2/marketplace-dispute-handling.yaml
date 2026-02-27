@@ -1,0 +1,75 @@
+meta:
+  id: marketplace-dispute-handling
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Handle marketplace disputes — manage chargebacks in a multi-party marketplace where the platform, seller, and buyer are all involved"
+  tags: [stripe, dispute, marketplace, Connect, multi-party, seller, intermediate]
+
+state: {}
+
+trigger: |
+  You're the trust & safety engineer at "CraftMarket" — an online
+  marketplace for handmade goods (3,000 sellers, 50,000 buyers,
+  $8M monthly GMV). You use Stripe Connect with Express accounts.
+
+  Marketplace dispute complexity:
+  When a buyer disputes a charge, who is responsible? The platform
+  (CraftMarket), the seller, or Stripe? The answer depends on your
+  Connect configuration and dispute liability settings.
+
+  Three dispute scenarios:
+
+  Scenario 1 — Buyer disputes, seller is wrong ($125.00):
+  A buyer purchased a handmade vase. The seller shipped a damaged
+  item (cracked in transit, no protective packaging). Buyer asked
+  for a refund, seller refused. Buyer filed "product unacceptable."
+  The dispute lands on CraftMarket's Stripe account because you
+  use destination charges.
+
+  Scenario 2 — Buyer disputes, seller is right ($89.00):
+  A buyer purchased a custom portrait. The seller delivered the
+  digital portrait as described. The buyer filed "fraudulent" because
+  they didn't recognize "CRAFTMARKET" on their statement. This is
+  a descriptor confusion dispute. The seller did nothing wrong.
+
+  Scenario 3 — Seller fraud ($450.00):
+  A seller accepted payment for a luxury handbag but never shipped
+  the item. 5 buyers have filed disputes. The seller has gone
+  silent and their account shows suspicious activity (created 2
+  weeks ago, all high-value items, no reviews).
+
+  Tasks:
+  1. Handle each dispute scenario. For each: determine who bears
+     liability (platform vs. seller), write the evidence submission,
+     decide the financial resolution (refund, debit seller, absorb
+     loss), and communicate with all parties.
+
+  2. Design the marketplace dispute policy. Write: the liability
+     framework (when the platform pays, when the seller pays, when
+     it's shared), the seller dispute debit mechanism (using Stripe
+     Connect's application_fee_amount or direct debits), the seller
+     dispute rate monitoring (track per-seller dispute rates), and
+     the seller suspension policy (at what dispute rate do you
+     deactivate a seller?).
+
+  3. Build the fraud seller detection system. Write: the indicators
+     of fraudulent sellers (new account + high-value + no reviews +
+     no shipping), the automated flags (triggered at account creation
+     and first sale), the payment hold policy (hold payouts until
+     delivery confirmed for new sellers), and the dispute-triggered
+     review process.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 scenarios are handled correctly — liability is assigned appropriately, evidence addresses each dispute's specifics, financial resolution is fair to all parties, and communication is professional"
+    weight: 0.35
+    description: "Correctly handled scenarios"
+  - type: llm_judge
+    criteria: "Marketplace policy is comprehensive — liability framework covers common situations, seller debit mechanism uses Stripe Connect features, per-seller monitoring catches problems, and suspension policy is proportionate"
+    weight: 0.35
+    description: "Comprehensive marketplace policy"
+  - type: llm_judge
+    criteria: "Fraud detection catches bad sellers early — indicators are relevant, automated flags trigger at key moments, payment holds protect buyers, and dispute-triggered reviews investigate systematically"
+    weight: 0.30
+    description: "Effective fraud seller detection"

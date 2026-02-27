@@ -1,0 +1,61 @@
+meta:
+  id: payment-intent-basics
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Implement basic PaymentIntents — learn the core Stripe payment flow including creating, confirming, and handling PaymentIntent lifecycle states"
+  tags: [stripe, payments, PaymentIntent, basics, API, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior backend developer at a B2B SaaS company building a
+  new checkout flow. Your tech lead said: "We need to accept credit
+  card payments using Stripe's PaymentIntent API. No legacy Charges
+  API — PaymentIntents only."
+
+  Your tech stack: Node.js/Express backend, React frontend.
+
+  Requirements:
+  1. Create a PaymentIntent on the server when the user clicks "Pay"
+  2. Return the client_secret to the frontend
+  3. Use Stripe.js on the frontend to confirm the payment
+  4. Handle the PaymentIntent status on the server side
+
+  The customer is paying $99.00 for a monthly SaaS subscription
+  (one-time charge for now, not recurring).
+
+  You have access to these Stripe test card numbers:
+  - 4242424242424242 (succeeds)
+  - 4000000000000002 (card declined)
+  - 4000002500003155 (requires 3D Secure)
+
+  Tasks:
+  1. Write the server-side code to create a PaymentIntent with the
+     correct amount (in cents), currency, and metadata. Include error
+     handling for common Stripe errors (invalid amount, invalid
+     currency, API key issues).
+
+  2. Write the frontend code to confirm the payment using Stripe.js
+     and Stripe Elements. Show the complete flow: mount the card
+     element, handle form submission, call confirmCardPayment, and
+     handle success/error states.
+
+  3. Explain the PaymentIntent lifecycle (created → requires_payment_
+     method → requires_confirmation → requires_action → processing →
+     succeeded/canceled). For each state, explain what triggers the
+     transition and what your code should do.
+
+assertions:
+  - type: llm_judge
+    criteria: "Server code is correct — creates PaymentIntent with amount in cents (9900 not 99), USD currency, proper metadata, returns client_secret, handles Stripe errors with appropriate HTTP status codes"
+    weight: 0.35
+    description: "Correct server-side PaymentIntent creation"
+  - type: llm_judge
+    criteria: "Frontend code follows Stripe best practices — loads Stripe.js, mounts Elements, uses confirmCardPayment with client_secret, handles success and error states, doesn't expose secret key on frontend"
+    weight: 0.35
+    description: "Best-practice frontend integration"
+  - type: llm_judge
+    criteria: "Lifecycle explanation is accurate — covers all states, correctly explains transitions (especially requires_action for 3D Secure), and explains what code should do at each state"
+    weight: 0.30
+    description: "Accurate PaymentIntent lifecycle explanation"

@@ -1,0 +1,90 @@
+meta:
+  id: negative-scoring
+  level: 1
+  course: lead-qualification-scoring
+  type: output
+  description: "Implement negative lead scoring — learn to deduct points for signals that indicate a lead is NOT a good fit, preventing false positives"
+  tags: [sales, leads, scoring, negative, deduction, accuracy, beginner]
+
+state: {}
+
+trigger: |
+  You're a RevOps analyst at "CloudHR" — a B2B SaaS HR platform for
+  mid-market companies ($200-2,000/month). Your lead scoring model
+  was built 6 months ago and only uses positive signals (adding points).
+  The problem: leads with high scores are often terrible fits.
+
+  Examples of false positives from last month:
+  - Score 85: College student downloading every ebook for a school project
+  - Score 78: Competitor's product manager attending all your webinars
+  - Score 72: Freelance HR consultant downloading resources for clients
+  - Score 70: Company with 5 employees (your minimum is 50)
+  - Score 68: Lead who engaged heavily 6 months ago but went silent
+  - Score 65: Person who unsubscribed from emails but still has a high
+    historical score
+
+  Current model (positive only):
+  - Ebook download: +10 points
+  - Webinar attendance: +15 points
+  - Pricing page visit: +20 points
+  - Demo request: +25 points
+  - Case study download: +10 points
+  - Blog visit: +5 points
+  - Company size 50-500: +15 points
+  - Company size 500+: +10 points
+  - HR/People title: +15 points
+  - C-suite title: +10 points
+
+  There are currently NO negative signals, NO score decay, and NO
+  disqualification triggers.
+
+  Your sales team reports:
+  - 30% of "high score" leads are false positives
+  - SDRs waste an average of 25 minutes per false positive
+  - The #1 complaint: "The scoring system doesn't tell me who NOT to call"
+
+  Tasks:
+  1. Design negative scoring rules for CloudHR. For each rule, specify:
+     the negative signal, the point deduction (or disqualification), and
+     the reasoning. Cover at minimum: bad-fit demographics, competitor
+     behavior, engagement decay, unsubscribe/bounce signals, and
+     fake/low-quality data indicators (personal email, fake company
+     names, etc.).
+
+  2. Design a score decay model — how lead scores should decrease over
+     time if a lead stops engaging. Specify: the decay rate (e.g., lose
+     X points per week of inactivity), when decay starts (after how many
+     days of no engagement), a floor score (the minimum a score can
+     decay to), and which activities reset the decay clock.
+
+  3. Apply the complete model (positive + negative + decay) to these
+     3 leads and calculate their adjusted scores:
+
+     Lead A: Score was 75 six months ago. Activity: 3 ebook downloads,
+     1 webinar. No activity in last 4 months. Company has 200 employees
+     in healthcare. HR Director title. Uses company email.
+
+     Lead B: Score is 82 today. Activity: attended 4 webinars, downloaded
+     6 ebooks, visited pricing page twice. But: uses gmail.com email,
+     company field says "consultant," title is "independent advisor,"
+     no company size listed.
+
+     Lead C: Score is 60 today. Activity: 1 ebook download, 1 pricing
+     page visit, 1 demo request last week. Company has 150 employees,
+     VP of People title, company email, manufacturing industry.
+
+     Who should the SDR call first? Why?
+
+assertions:
+  - type: llm_judge
+    criteria: "Negative scoring rules are comprehensive — covers personal email deduction, competitor signals, small company size, engagement decay, unsubscribes, fake data indicators, and consultant/freelancer signals"
+    weight: 0.35
+    description: "Comprehensive negative scoring"
+  - type: llm_judge
+    criteria: "Decay model is reasonable — starts after 2-4 weeks of inactivity, loses a reasonable amount per period, has a floor, and specific activities reset the clock"
+    weight: 0.30
+    description: "Reasonable decay model"
+  - type: llm_judge
+    criteria: "Adjusted scores correctly reorder leads — Lead C should rank highest (recent demo request, good fit despite lower raw score), Lead A drops significantly (4 months inactive), Lead B drops due to negative signals (personal email, consultant)"
+    weight: 0.35
+    description: "Correctly reordered adjusted scores"

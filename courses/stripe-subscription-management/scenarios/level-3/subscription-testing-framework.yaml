@@ -1,0 +1,73 @@
+meta:
+  id: subscription-testing-framework
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Build a subscription testing framework — design comprehensive test suites for subscription billing logic including edge cases"
+  tags: [stripe, subscription, testing, test-framework, edge-cases, QA, advanced]
+
+state: {}
+
+trigger: |
+  You're the billing QA lead at a SaaS company. After three billing
+  incidents in the past quarter (double-charging, incorrect proration,
+  failed dunning), the CTO mandated: "Build a comprehensive test
+  framework for our subscription system. Every billing scenario must
+  be tested before it reaches production."
+
+  Current testing state:
+  - 12 unit tests for subscription creation (basic happy path only)
+  - No integration tests with Stripe's test mode
+  - No tests for proration, dunning, webhooks, or edge cases
+  - Manual testing by developers before deploy (inconsistent)
+
+  Billing scenarios that have caused production incidents:
+  1. Upgrade on the last day of a billing period (proration of 0 days)
+  2. Downgrade during a trial (should not create a proration invoice)
+  3. Cancellation of an annual plan with a coupon (credit calculation
+     was wrong — coupon discount was applied to the credit amount)
+  4. Leap year billing anchor on February 29th
+  5. Concurrent plan changes (two API calls to change the same
+     subscription at the same time — race condition)
+
+  Test environment:
+  - Stripe test mode API keys available
+  - Stripe test clocks for simulating time progression
+  - CI/CD pipeline runs tests on every PR
+
+  Tasks:
+  1. Design the test framework architecture. Include: the test
+     categories (unit, integration, end-to-end, billing simulation),
+     the Stripe test clock setup for time-dependent scenarios, the
+     test data factories (creating consistent test customers,
+     subscriptions, payment methods), and the assertion helpers
+     (verify invoice amounts, subscription status, proration
+     calculations).
+
+  2. Write the test cases for the 5 incident scenarios. For each:
+     the test setup (using Stripe test mode), the action being
+     tested, the expected outcome, and the assertions that catch
+     the bug. Use Stripe test clocks to advance time for billing
+     cycle tests.
+
+  3. Write the comprehensive test matrix. Include: the billing
+     lifecycle tests (create, upgrade, downgrade, cancel, pause,
+     resume), the payment method tests (card success, decline,
+     expiry, 3DS), the edge case tests (timezone boundaries, short
+     months, concurrent modifications), the webhook delivery tests
+     (out-of-order, duplicate, missing), and the load test plan
+     (bulk subscription operations).
+
+assertions:
+  - type: llm_judge
+    criteria: "Test framework is well-architected — categories are clearly separated, test clocks enable time simulation, data factories create consistent test data, and assertion helpers simplify verification"
+    weight: 0.35
+    description: "Well-architected test framework"
+  - type: llm_judge
+    criteria: "Incident test cases are specific — each of the 5 scenarios has correct setup, action, expected outcome, and assertions that would have caught the original bug"
+    weight: 0.35
+    description: "Specific incident test cases"
+  - type: llm_judge
+    criteria: "Test matrix is comprehensive — covers the full billing lifecycle, payment method variations, edge cases (timezone, short months, concurrency), webhook scenarios, and load testing"
+    weight: 0.30
+    description: "Comprehensive test matrix"

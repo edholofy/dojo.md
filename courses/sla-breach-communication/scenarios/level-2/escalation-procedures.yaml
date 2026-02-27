@@ -1,0 +1,71 @@
+meta:
+  id: escalation-procedures
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Design and execute escalation procedures for SLA breaches by severity"
+  tags: [escalation, procedures, severity-levels, incident-management]
+
+state: {}
+
+trigger: |
+  You're building the incident escalation framework for "PaymentHub" (payment
+  processing SaaS). You need to define the escalation matrix, timing, and
+  communication protocol for each severity level.
+
+  Industry Standard Severity Definitions (adopt/adapt):
+  - P1/Critical: Complete service unavailable OR data loss OR security breach
+    Response time: 15 minutes
+  - P2/High: Significant degradation (>25% of features unavailable/slow)
+    Response time: 1 hour
+  - P3/Medium: Partial degradation (<25% impact) OR minor bugs
+    Response time: 8 hours
+  - P4/Low: Cosmetic issues OR feature requests
+    Response time: 48 hours
+
+  Current Issues with Escalation:
+  - Critical incidents escalate too slowly (average 40 minutes to war room)
+  - Manager escalation sometimes goes unacked (10% of P1s not reaching manager in 15 min)
+  - No clear war room protocol (people unsure who's responsible for what)
+  - Executives only learn about breaches via customer calls
+
+  Your escalation design must:
+  1. Define ON-CALL rotation (primary, secondary, tertiary)
+  2. Define escalation timing (when does P2 escalate to manager?)
+  3. Define war room triggers (what makes you spin up a war room?)
+  4. Define communication protocol (Slack vs phone vs email for each level)
+  5. Define executive notification (when and how do execs get involved?)
+
+  Specific Scenarios:
+  1. Outage detected at 2:15 AM (P1 - payment processing down 15 minutes)
+     - Primary on-call not responding after 10 minutes
+     - What happens at minute 15? 20? 30?
+     - Who's accountable for war room?
+     - When does VP Engineering get called?
+
+  2. API latency degradation detected (P2 - 35% slower, not down)
+     - Detected at 2:45 PM (business hours)
+     - When does this escalate to manager?
+     - Does this trigger a war room?
+     - Who owns communication with Enterprise tier customers?
+
+assertions:
+  - type: llm_judge
+    criteria: "P1 escalation timeline defined: immediate page (0-2 min) → manager escalation (10 min no-ack) → war room spin-up (15 min) → VP escalation (30 min if unresolved)"
+    weight: 0.3
+    description: "P1 escalation timing crisp"
+
+  - type: llm_judge
+    criteria: "P2 escalation escalates to manager at 30-45 minute mark if not resolved, with war room optional"
+    weight: 0.2
+    description: "P2 escalation progression clear"
+
+  - type: llm_judge
+    criteria: "War room protocol defines: incident commander role, communication channel, update frequency (every 5-10 min), and exec briefing every 15 min for critical issues"
+    weight: 0.25
+    description: "War room structure documented"
+
+  - type: llm_judge
+    criteria: "Executive notification includes: what triggers exec notification (P1 or unresolved P2 >15 min), who notifies, and what info executives receive"
+    weight: 0.25
+    description: "Executive communication defined"

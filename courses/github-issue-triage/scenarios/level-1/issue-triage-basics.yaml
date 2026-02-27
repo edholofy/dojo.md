@@ -1,0 +1,70 @@
+meta:
+  id: issue-triage-basics
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "Learn issue triage basics — read a new GitHub issue, classify it, and apply appropriate labels"
+  tags: [github, issue-triage, labeling, classification, basics]
+
+state: {}
+
+trigger: |
+  You're a maintainer of an open source Node.js web framework. A new
+  issue was just filed:
+
+  Title: "App crashes when using middleware with async functions"
+  Body:
+  "I'm using version 3.2.1 of the framework. When I add an async
+  middleware function, the app crashes with an unhandled promise
+  rejection. Here's my code:
+
+  ```js
+  app.use(async (req, res, next) => {
+    const user = await getUserFromDB(req.headers.authorization);
+    req.user = user;
+    next();
+  });
+  ```
+
+  Error: UnhandledPromiseRejectionWarning: TypeError: Cannot read
+  property 'id' of null
+
+  Steps to reproduce:
+  1. Create a new app
+  2. Add the middleware above
+  3. Send a request without an authorization header
+  4. App crashes
+
+  Expected: The middleware should handle the error gracefully
+  Actual: Unhandled promise rejection crashes the app
+
+  Node version: 18.17.0
+  OS: Ubuntu 22.04"
+
+  Available labels in the repository:
+  - Type: bug, feature, question, documentation, enhancement
+  - Priority: P0-critical, P1-high, P2-medium, P3-low
+  - Area: core, middleware, routing, CLI, docs
+  - Status: needs-triage, confirmed, in-progress, blocked, wontfix
+  - Community: good-first-issue, help-wanted
+
+  Task: Triage this issue. Write: the classification (what type of
+  issue is this), the labels to apply (select from the available
+  labels with justification for each), the priority assessment (using
+  the impact and likelihood of the bug), and a brief triage response
+  comment to post on the issue (acknowledging, confirming
+  reproducibility needs, and next steps).
+
+assertions:
+  - type: llm_judge
+    criteria: "Classification is correct — identifies this as a bug (not feature/question), and labels include bug type, appropriate priority, middleware area, and correct status"
+    weight: 0.35
+    description: "Correct classification and labeling"
+  - type: llm_judge
+    criteria: "Priority assessment considers impact — evaluates severity (crash), scope (affects all async middleware users), and workaround availability to assign an appropriate priority level"
+    weight: 0.35
+    description: "Impact-considered priority"
+  - type: llm_judge
+    criteria: "Triage response is professional — acknowledges the issue, thanks the reporter, confirms next steps (reproduction attempt or investigation), and sets expectations for timeline"
+    weight: 0.30
+    description: "Professional triage response"

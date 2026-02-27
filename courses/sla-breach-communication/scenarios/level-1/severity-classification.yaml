@@ -1,0 +1,85 @@
+meta:
+  id: severity-classification
+  level: 1
+  course: sla-breach-communication
+  type: output
+  description: "Learn to classify incidents by severity level and understand how severity determines SLA response and resolution timeframes"
+  tags: [SLA, severity, classification, incidents, fundamentals]
+
+state: {}
+
+trigger: |
+  You're a support agent at "SecureNet" (cybersecurity platform, 1,000
+  enterprise customers). Your SLA defines 4 severity levels:
+
+  P1 - Critical: Complete service outage or security breach. Response:
+  15 min. Resolution: 4 hours. Escalation: VP Engineering + CISO.
+
+  P2 - High: Major feature unavailable, significant performance
+  degradation, or security vulnerability. Response: 1 hour. Resolution:
+  8 hours. Escalation: Engineering Manager.
+
+  P3 - Medium: Non-critical feature unavailable, workaround exists.
+  Response: 4 hours. Resolution: 48 hours. Escalation: Team Lead.
+
+  P4 - Low: Minor issue, cosmetic bug, documentation question.
+  Response: 24 hours. Resolution: 5 business days. No escalation.
+
+  8 incidents just came in. Classify each one:
+
+  Incident 1: "Our entire dashboard is down. We can't see any security
+  alerts. We're flying blind." (From a hospital, 10,000 endpoints)
+
+  Incident 2: "The PDF report export is showing an error. I can still
+  see the data in the dashboard, just can't export it."
+
+  Incident 3: "We think we found a vulnerability in your API
+  authentication. We can bypass the API key check with a specific
+  header injection."
+
+  Incident 4: "Your logo on the login page looks blurry on our 4K
+  monitors."
+
+  Incident 5: "Our real-time alerts are delayed by 30 minutes. We're
+  supposed to get them instantly."
+
+  Incident 6: "We can't add new users to our account. The 'Add User'
+  button returns an error."
+
+  Incident 7: "Your documentation says the API supports XML, but it
+  only accepts JSON."
+
+  Incident 8: "Three of our branch offices can't connect to the
+  platform. Main office works fine."
+
+  Tasks:
+  1. Classify each incident (P1-P4) and explain your reasoning.
+
+  2. Incident 3 (API vulnerability) is tricky — it's not causing
+     downtime but it's a security issue. What severity does it get?
+
+  3. Incident 5 (delayed alerts) — the platform is "working" but
+     30-minute alert delays in a security product could mean an
+     attack goes undetected. How does the product's purpose affect
+     severity classification?
+
+  4. For each severity level, what information should the customer
+     expect in the initial response?
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident 1 is P1 — complete dashboard outage at a hospital means no security visibility for 10,000 endpoints; this is critical for a security product"
+    weight: 0.25
+    description: "Critical incident correctly classified"
+  - type: llm_judge
+    criteria: "Incident 3 (API vulnerability) gets P1 or P2 — a security bypass in a security product is at minimum P2, and a strong case for P1 given the product's purpose"
+    weight: 0.25
+    description: "Security vulnerability elevated"
+  - type: llm_judge
+    criteria: "Product context affects classification — recognizes that 30-minute alert delays in a security product are more severe than the same delay in a marketing tool"
+    weight: 0.25
+    description: "Product-context-aware classification"
+  - type: llm_judge
+    criteria: "Initial response content varies by severity — P1 gets immediate acknowledgment with assigned engineer and ETA, while P4 gets acknowledgment with expected timeline"
+    weight: 0.25
+    description: "Severity-appropriate response content"

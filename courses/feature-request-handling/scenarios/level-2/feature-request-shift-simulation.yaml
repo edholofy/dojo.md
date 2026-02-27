@@ -1,0 +1,80 @@
+meta:
+  id: feature-request-shift-simulation
+  level: 2
+  course: feature-request-handling
+  type: output
+  description: "Handle a realistic day of feature request triage with time pressure, competing priorities, and incomplete information"
+  tags: [feature-requests, simulation, triage, time-pressure, intermediate]
+
+state: {}
+
+trigger: |
+  You're the PM on feature request triage duty at "ShopFlow"
+  (e-commerce platform, 12,000 merchants). You have 4 hours this
+  morning to process the incoming request queue before sprint planning
+  at 1 PM. You need to triage each request and prepare your
+  recommendations.
+
+  Queue (18 requests in order received):
+
+  9:00 AM batch:
+  1. "Add Apple Pay support" — from 3 merchants this week
+  2. "Allow negative inventory (for pre-orders)" — from 1 merchant
+  3. "Multi-currency checkout" — from enterprise prospect ($100K/yr)
+  4. "Fix the search — searching for 'women's shoes' returns men's" —
+     sounds like a bug, filed as feature request
+
+  9:30 AM batch:
+  5. "Add a TikTok Shop integration" — from merchant and VP Sales
+  6. "Custom checkout fields (gift messages, etc.)" — from 8 merchants
+  7. "Our checkout page needs to be faster" — no specifics given
+  8. "Add product bundles" — from 12 merchants over past 3 months
+
+  10:00 AM batch:
+  9. "URGENT: We need volume discounts NOW" — angry merchant ($50K/yr)
+  10. "Add a customer loyalty program" — from small merchant ($1K/yr)
+  11. "Support for digital product delivery (e-books, courses)" — new
+      market segment, 5 requests this month
+  12. "Make the admin dashboard mobile-friendly" — from 6 merchants
+
+  10:30 AM batch:
+  13. "AI product descriptions" — CEO saw a competitor announce this
+  14. "Subscription/recurring billing" — from 4 merchants
+  15. "Better shipping rate calculator" — from 20+ merchants (top req)
+  16. "Integration with [obscure inventory tool]" — from 1 merchant
+  17. "Our customer wants to pay with cryptocurrency" — from 1 merchant
+  18. "URGENT: duplicate order bug — customer charged twice" — from
+      merchant with screenshot evidence
+
+  Tasks:
+  1. Triage all 18 items: For each, decide — feature request (prioritize
+     for sprint planning), bug (route to engineering), need more info
+     (what questions?), decline (not on strategy), or merge with
+     existing.
+
+  2. From the feature requests, pick your top 3 recommendations for
+     sprint planning. Justify with data from the queue.
+
+  3. Items #9 and #18 are marked URGENT. How do you handle each?
+     (One is genuinely urgent, one is customer frustration.)
+
+  4. You have 18 requests in 4 hours. What's your process for
+     efficient triage without sacrificing quality?
+
+assertions:
+  - type: llm_judge
+    criteria: "Bug vs feature distinction is correct — #4 (search returning wrong results) and #18 (duplicate charges) are routed to engineering as bugs, not kept in the feature queue"
+    weight: 0.25
+    description: "Correct bug routing"
+  - type: llm_judge
+    criteria: "URGENT handling differentiates — #18 (duplicate charges) is a genuine emergency requiring immediate engineering escalation, while #9 (volume discounts) is frustration, not urgency"
+    weight: 0.25
+    description: "Urgency differentiation"
+  - type: llm_judge
+    criteria: "Sprint recommendations are data-backed — top picks reference request volume (shipping calculator: 20+), revenue potential (multi-currency: $100K prospect), or market timing (TikTok Shop)"
+    weight: 0.25
+    description: "Data-backed sprint recommendations"
+  - type: llm_judge
+    criteria: "Triage process is time-efficient — proposes a quick-scan approach (categorize in 2 minutes each, deep-dive only on the top candidates) to handle 18 items in 4 hours"
+    weight: 0.25
+    description: "Efficient triage process"

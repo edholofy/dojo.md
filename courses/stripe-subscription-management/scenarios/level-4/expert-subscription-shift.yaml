@@ -1,0 +1,88 @@
+meta:
+  id: expert-subscription-shift
+  level: 4
+  course: stripe-subscription-management
+  type: output
+  description: "Expert subscription shift — handle a SOX audit failure, a mass billing error during a pricing migration, and a Stripe contract renegotiation simultaneously"
+  tags: [stripe, subscription, shift-simulation, SOX, pricing-crisis, negotiation, expert]
+
+state: {}
+
+trigger: |
+  You're the VP of Billing Engineering. Three crises converge in
+  the same week:
+
+  Crisis 1 — SOX audit material weakness:
+  Your external auditor just issued a preliminary finding of
+  "material weakness" in internal controls over financial reporting.
+  The specific issue: subscription revenue is being recognized based
+  on Stripe payment dates, not service delivery dates. For your
+  $200M ARR, this means approximately $18M in revenue needs
+  restatement for the current fiscal year. Your stock price dropped
+  4% on the news. The CFO says: "Fix this or we risk delisting."
+
+  The 30-day remediation plan needs:
+  - Immediate: Manual adjustment for current quarter filing
+  - Short-term: Automated deferred revenue calculation
+  - Long-term: Revenue recognition system that prevents recurrence
+
+  Crisis 2 — Pricing migration catastrophe:
+  Your pricing migration (moving 15,000 customers to new plans)
+  had a cascading failure. The migration script encountered an
+  unhandled error at customer #8,247 and:
+  - 8,246 customers were successfully migrated to new prices
+  - Customer #8,247 was left in a corrupt state (subscription has
+    items from both old and new pricing)
+  - Customers #8,248 through #15,000 were not migrated
+  - The script set a flag that prevents re-running (idempotency key)
+
+  Now you have: 8,246 on new pricing, 6,753 on old pricing, and 1
+  corrupted subscription. The migration was supposed to be invisible
+  to customers, but the 8,246 who were migrated will see new prices
+  on their next invoice (some are higher, some are lower depending
+  on the plan).
+
+  Crisis 3 — Stripe contract renegotiation:
+  Your Stripe contract renewal is in 15 days. Stripe's account
+  executive has proposed a 3-year renewal at your current rate
+  (2.9% + $0.30). You know from industry contacts that at $200M ARR
+  through Stripe, you should be getting 2.4-2.6% + $0.25.
+
+  Complication: Crises 1 and 2 make this a terrible time to threaten
+  to leave Stripe. But the contract expires in 15 days.
+
+  Tasks:
+  1. Address Crisis 1. Write: the manual adjustment methodology
+     for the current quarter (how to calculate deferred revenue for
+     $200M in annual and monthly subscriptions), the automated
+     system design (Stripe subscription data → deferred revenue
+     schedule → GL journal entries), and the remediation letter to
+     the auditor explaining the fix timeline.
+
+  2. Address Crisis 2. Write: the recovery plan (fix the corrupted
+     subscription, complete the migration for remaining 6,753
+     customers, handle the idempotency key issue), the decision
+     on the 8,246 already-migrated customers (roll back or proceed?),
+     the customer communication (if any), and the testing plan to
+     prevent future migration failures.
+
+  3. Address Crisis 3. Write: the negotiation strategy (despite
+     the terrible timing, what leverage do you have?), the target
+     pricing (specific rates with justification), the competitive
+     analysis to present (Adyen, Checkout.com rates at $200M volume),
+     and the 3-year deal structure (volume commitments, rate
+     reductions at growth milestones, SLA terms).
+
+assertions:
+  - type: llm_judge
+    criteria: "SOX remediation is credible — manual adjustment methodology calculates deferred revenue correctly, automated system connects Stripe to GL, and the auditor letter demonstrates commitment to sustainable fix"
+    weight: 0.35
+    description: "Credible SOX remediation"
+  - type: llm_judge
+    criteria: "Migration recovery is sound — corrupted subscription is fixed, remaining migration completes safely, idempotency issue is resolved, rollback decision is analyzed, and testing prevents recurrence"
+    weight: 0.35
+    description: "Sound migration recovery"
+  - type: llm_judge
+    criteria: "Negotiation strategy is realistic — acknowledges the weak position but identifies real leverage, target pricing is market-appropriate, competitive analysis is data-based, and deal structure creates future flexibility"
+    weight: 0.30
+    description: "Realistic negotiation strategy"

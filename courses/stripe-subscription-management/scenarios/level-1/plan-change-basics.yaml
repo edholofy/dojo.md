@@ -1,0 +1,70 @@
+meta:
+  id: plan-change-basics
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Handle basic plan changes — implement subscription upgrades and downgrades with proper proration"
+  tags: [stripe, subscription, upgrade, downgrade, proration, plan-change, beginner]
+
+state: {}
+
+trigger: |
+  You're working on the billing page for a SaaS CRM tool. Customers
+  need the ability to change their plan. The three plans are:
+
+  - Basic: $29/month
+  - Pro: $79/month
+  - Enterprise: $199/month
+
+  A customer (Acme Corp) is on the Pro plan, and they've been billed
+  on the 1st of each month. Today is the 15th, and they want to:
+  - Scenario 1: Upgrade from Pro to Enterprise (mid-cycle)
+  - Scenario 2: Downgrade from Pro to Basic (mid-cycle)
+
+  Your PM asks: "What happens to the billing when they switch
+  mid-cycle? Do we charge them right away? Do we give them credit?
+  Make sure whatever we build is fair to the customer."
+
+  The current code just does:
+  ```javascript
+  await stripe.subscriptions.update(subId, {
+    items: [{ id: itemId, price: newPriceId }],
+  });
+  ```
+
+  But your PM says customers have complained about unexpected charges.
+
+  Tasks:
+  1. Explain Stripe's proration behavior with concrete numbers.
+     Using Acme Corp's scenario (Pro at $79, day 15 of 30-day cycle):
+     calculate the exact proration amounts for both the upgrade to
+     Enterprise and the downgrade to Basic. Show the math: unused
+     time credit, new plan charge for remaining days, and the net
+     amount. Explain what Stripe does by default vs. the options.
+
+  2. Implement the plan change endpoint with proper proration
+     handling. Include: the 3 proration_behavior options
+     (create_prorations, always_invoice, none) and when to use each,
+     the code for both upgrade (invoice immediately) and downgrade
+     (credit applied to next invoice), the preview endpoint that
+     shows the customer what they'll be charged BEFORE confirming,
+     and the webhook handling for invoice.created during proration.
+
+  3. Build the customer-facing plan change UI copy. Write: the
+     confirmation message shown before the change ("You'll be
+     charged/credited $X today"), the receipt email after the change,
+     and the explanation of how the billing cycle adjusts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Proration math is correct — unused Pro time credit and new plan charge for remaining days are calculated accurately for both upgrade and downgrade scenarios, and default vs. optional proration behaviors are explained"
+    weight: 0.35
+    description: "Correct proration calculations"
+  - type: llm_judge
+    criteria: "Plan change endpoint handles both directions — upgrade triggers immediate invoice, downgrade applies credit, preview endpoint uses upcoming invoice API, proration_behavior options are explained with use cases, and webhooks handle proration invoices"
+    weight: 0.35
+    description: "Complete plan change endpoint"
+  - type: llm_judge
+    criteria: "Customer-facing copy is clear and transparent — confirmation message shows exact amounts, receipt email explains the proration, and billing cycle adjustment is communicated in plain language"
+    weight: 0.30
+    description: "Clear customer-facing copy"

@@ -1,0 +1,80 @@
+meta:
+  id: subscription-webhooks
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Handle subscription webhooks — implement reliable webhook processing for key subscription lifecycle events"
+  tags: [stripe, subscription, webhooks, events, lifecycle, beginner]
+
+state: {}
+
+trigger: |
+  You're building webhook handling for a SaaS project management tool
+  with Stripe subscriptions. Your application needs to respond to
+  subscription lifecycle events to keep the local database in sync
+  with Stripe.
+
+  Current problem: Your app's database frequently gets out of sync
+  with Stripe. Customers report issues like:
+  - "I upgraded but still see the old plan features"
+  - "My subscription shows active but Stripe says it failed"
+  - "I was charged twice but the app only shows one payment"
+
+  The root cause: Your webhook handler is a single function that
+  tries to handle all events but has race conditions, no idempotency,
+  and misses some event types entirely.
+
+  Current (broken) code:
+  ```javascript
+  app.post('/webhook', (req, res) => {
+    const event = req.body; // No signature verification!
+    if (event.type === 'invoice.paid') {
+      db.updateSubscription(event.data.object.subscription, 'active');
+    }
+    res.sendStatus(200);
+  });
+  ```
+
+  Key subscription events to handle:
+  - customer.subscription.created
+  - customer.subscription.updated
+  - customer.subscription.deleted
+  - invoice.payment_succeeded
+  - invoice.payment_failed
+  - customer.subscription.trial_will_end
+  - invoice.upcoming (not a real event — explain the alternative)
+
+  Tasks:
+  1. Fix the webhook handler. Write: proper signature verification
+     (using raw body), individual handlers for each of the 6 key
+     event types, idempotent processing (track processed event IDs),
+     and proper HTTP response codes (200 for processed, 200 for
+     already-processed, appropriate handling for unknown events).
+
+  2. For each event type, explain: what triggers it, what data is
+     in the event payload, what your application should do in
+     response, and what happens if you miss or fail to process it.
+     Create a decision flowchart showing how events relate to each
+     other (e.g., subscription.created → invoice.payment_succeeded
+     → subscription.updated with status: active).
+
+  3. Handle edge cases. Include: out-of-order event delivery (what
+     if invoice.payment_succeeded arrives before subscription.created),
+     duplicate events (same event delivered twice), events for
+     deleted/unknown customers, and the invoice.upcoming misconception
+     (explain that it's not a webhook — you use the upcoming invoice
+     API or listen for invoice.created with status: draft).
+
+assertions:
+  - type: llm_judge
+    criteria: "Webhook handler is properly built — signature verification uses raw body, all 6 event types have individual handlers with correct business logic, idempotency tracking prevents duplicate processing, and response codes are appropriate"
+    weight: 0.35
+    description: "Properly built webhook handler"
+  - type: llm_judge
+    criteria: "Event explanations are accurate — each event's trigger, payload, application action, and failure impact are described correctly, and the event flow/dependency between events is mapped"
+    weight: 0.35
+    description: "Accurate event explanations"
+  - type: llm_judge
+    criteria: "Edge cases are handled — out-of-order delivery has a resolution strategy, duplicate events are idempotently processed, unknown customers don't crash the handler, and the invoice.upcoming misconception is correctly addressed"
+    weight: 0.30
+    description: "Edge cases handled"

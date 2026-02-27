@@ -1,0 +1,82 @@
+meta:
+  id: first-sla-breach-shift
+  level: 1
+  course: sla-breach-communication
+  type: output
+  description: "Handle your first shift managing SLA breaches — triaging incoming reports, sending notifications, and coordinating with engineering"
+  tags: [SLA, shift-simulation, triage, first-shift, fundamentals]
+
+state: {}
+
+trigger: |
+  You're a customer success associate on your first SLA monitoring
+  shift at "NetGuard" (network security SaaS, 1,500 enterprise
+  customers). Your shift is 9 AM to 5 PM. Your job: monitor SLA
+  compliance, communicate breaches, and coordinate with engineering.
+
+  SLA commitments:
+  - Uptime: 99.95% (max 21.6 min downtime/month)
+  - P1 response: 15 min | P2: 1 hour | P3: 4 hours
+  - Month-to-date downtime: 12 minutes (10.6 minutes remaining)
+
+  9:00 AM — Shift handoff
+  The night shift engineer says: "Quiet night. One P3 ticket came in
+  at 2 AM, auto-acknowledged at 2:05 AM. Engineer picks it up at 9."
+
+  9:30 AM — Alert: Performance degradation
+  Monitoring shows dashboard load times increased from 2s to 8s for
+  customers in the EU region. Not a complete outage. Engineering says:
+  "We're looking into it."
+
+  10:15 AM — Customer call
+  An enterprise customer ($100K/year) calls: "My dashboard is really
+  slow this morning. Is something going on? We have a board meeting
+  at 11 and need our security reports."
+
+  10:45 AM — Engineering update
+  "Found the issue — EU CDN provider is having problems. We've failed
+  over to a backup CDN. Performance should normalize in 15-20 minutes."
+
+  11:15 AM — Performance normalized
+  Dashboard load times back to 2s. Total degradation period: 1 hour
+  45 minutes.
+
+  2:00 PM — New incident
+  A customer reports they can't log in. Investigation reveals: their
+  SSO provider made a configuration change, not a NetGuard issue. But
+  the customer believes it's your problem.
+
+  3:30 PM — SLA question
+  A customer asks: "This morning's slow performance — does that count
+  against our uptime SLA?"
+
+  Tasks:
+  1. Handle each event in the timeline. What actions do you take at
+     each point?
+
+  2. The 10:15 AM customer needs reports for an 11 AM board meeting.
+     How do you help them with urgency given the degradation?
+
+  3. At 3:30 PM, the customer asks if performance degradation counts
+     as downtime. Review the SLA terms and provide an honest answer.
+
+  4. End-of-shift summary: Write the handoff notes for the evening
+     shift team.
+
+assertions:
+  - type: llm_judge
+    criteria: "Performance degradation is treated as potential SLA event — doesn't dismiss slow performance as 'not a real outage' but evaluates whether the SLA terms include degradation"
+    weight: 0.25
+    description: "Degradation as SLA event"
+  - type: llm_judge
+    criteria: "Board meeting customer gets urgent help — proposes workarounds like generating reports from cache, offering to pull data manually, or providing an ETA they can share with their board"
+    weight: 0.25
+    description: "Urgent customer assistance"
+  - type: llm_judge
+    criteria: "SSO issue is handled correctly — explains to the customer that the root cause is their SSO provider's configuration change, not NetGuard, while still helping them resolve it"
+    weight: 0.25
+    description: "Third-party issue correctly identified"
+  - type: llm_judge
+    criteria: "Shift handoff is complete — includes all incidents, current SLA status (remaining downtime budget), open tickets, and anything the evening shift needs to watch"
+    weight: 0.25
+    description: "Complete shift handoff"

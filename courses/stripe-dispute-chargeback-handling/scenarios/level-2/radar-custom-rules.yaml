@@ -1,0 +1,75 @@
+meta:
+  id: radar-custom-rules
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Build custom Radar rules — design and implement Stripe Radar rules tailored to your business's specific fraud patterns"
+  tags: [stripe, dispute, Radar, custom-rules, fraud-patterns, prevention, intermediate]
+
+state: {}
+
+trigger: |
+  You're the fraud analyst at a SaaS + e-commerce hybrid company.
+  Stripe Radar's default ML catches obvious fraud, but you're seeing
+  patterns that require custom rules. Your dispute rate: 0.72%.
+
+  Fraud patterns identified (last 90 days):
+  Pattern 1 — Card testing: Attackers make small $1-$5 charges to
+  test if stolen cards work, then make large purchases. You see
+  50+ $1 charges from different cards but the same IP address in
+  bursts.
+
+  Pattern 2 — New account fraud: 70% of disputes come from accounts
+  less than 24 hours old. Legitimate customers rarely dispute, but
+  fraudsters create accounts, make purchases, and disappear.
+
+  Pattern 3 — High-value international: Orders over $300 from
+  non-US cards have a 12% dispute rate (vs. 0.5% for US cards under
+  $300). But you have legitimate international customers too.
+
+  Pattern 4 — Email patterns: Fraudulent orders often use emails
+  with random strings (e.g., xk7m9@tempmail.com). Legitimate
+  customers have recognizable email patterns.
+
+  Pattern 5 — Velocity: The same email placing 3+ orders in 1 hour
+  is almost always fraud (but your enterprise customers sometimes
+  place bulk orders).
+
+  Available Radar rule attributes:
+  - :card_country:, :ip_country:, :is_disposable_email:
+  - :risk_score:, :charge_amount:, :customer_lifetime_value:
+  - :total_charges_per_email:, :total_charges_per_card:
+  - :card_bin:, :is_prepaid_card:, :has_cryptowallet:
+
+  Tasks:
+  1. Write Radar rules for each pattern. For each: the rule syntax,
+     the action (block, review, or request 3DS), the expected false
+     positive rate, and the testing approach (use Stripe's rule
+     simulation before enabling).
+
+  2. Design the rule testing and rollout process. Include: how to
+     test rules with Stripe's simulation mode, the gradual rollout
+     (start with "review" action, analyze results, then switch to
+     "block"), the false positive monitoring (how to detect when
+     rules block legitimate customers), and the rule performance
+     dashboard (match rate, block rate, false positive rate per rule).
+
+  3. Handle the enterprise customer exception (Pattern 5). Write:
+     the allow-list strategy for enterprise customers, the Stripe
+     metadata approach (tagging enterprise accounts so velocity rules
+     don't apply), and the alternative fraud detection for enterprise
+     orders (different rules for known vs. unknown customers).
+
+assertions:
+  - type: llm_judge
+    criteria: "Radar rules address all 5 patterns — card testing is detected by velocity, new account fraud uses account age, international high-value uses country + amount, email patterns use disposable email detection, and velocity rules have appropriate thresholds"
+    weight: 0.35
+    description: "Pattern-addressing Radar rules"
+  - type: llm_judge
+    criteria: "Testing and rollout process is safe — simulation mode validates rules, gradual rollout starts with review, false positive monitoring catches over-blocking, and performance dashboard tracks effectiveness"
+    weight: 0.35
+    description: "Safe testing and rollout"
+  - type: llm_judge
+    criteria: "Enterprise exceptions are handled — allow-list or metadata tagging prevents false positives, alternative detection maintains security, and the approach is scalable"
+    weight: 0.30
+    description: "Handled enterprise exceptions"

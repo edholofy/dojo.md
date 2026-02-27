@@ -1,0 +1,62 @@
+meta:
+  id: intermediate-triage-shift
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Intermediate triage shift — handle complex triage scenarios including cross-repo issues, security reports, and release-blocking bugs"
+  tags: [github, issue-triage, shift-simulation, cross-repo, security, release, intermediate]
+
+state: {}
+
+trigger: |
+  You're on triage duty during a busy week. The v2.0 release is
+  3 days away, and 8 issues need your attention:
+
+  Issue #801: A P1 bug blocking the release — the new authentication
+  flow fails when users have special characters in their password.
+  The fix PR is open but tests are failing.
+
+  Issue #802: A security researcher emailed (not filed on GitHub)
+  about a CSRF vulnerability in the password reset flow. They want
+  to know your disclosure timeline.
+
+  Issue #803: An issue filed in the frontend repo that's actually a
+  backend API bug — the search API returns stale cached results.
+
+  Issue #804: A well-written feature request (35 thumbs up) for
+  WebAuthn/passkey support. The community is excited.
+
+  Issue #805: A duplicate of Issue #801 but from a different user
+  who also found a workaround — base64-encoding the password.
+
+  Issue #806: The CI/CD pipeline for the mobile app repo is broken.
+  All PRs are blocked from merging. Not directly related to v2.0 but
+  blocking the mobile team.
+
+  Issue #807: A contributor's PR was auto-closed by the stale bot
+  after the maintainer reviewer went on vacation. The contributor
+  is frustrated.
+
+  Issue #808: A legal concern — a user filed an issue saying the
+  project's license file is missing from the npm package published
+  to the registry.
+
+  Task: Triage all 8 issues. For each, write: the priority, the
+  immediate action, and the response. Then write: the release impact
+  assessment (which issues affect the v2.0 release), the escalation
+  list (which issues need someone else's attention), and the handoff
+  notes for the next triager.
+
+assertions:
+  - type: llm_judge
+    criteria: "Release-blocking issues are prioritized — the auth bug (#801) and its duplicate (#805, which provides a workaround) are handled with urgency, and the release impact assessment is accurate"
+    weight: 0.35
+    description: "Release-blocking prioritization"
+  - type: llm_judge
+    criteria: "Sensitive issues are handled correctly — security report (#802) gets private response with timeline, legal concern (#808) is escalated, and the frustrated contributor (#807) gets empathy and action"
+    weight: 0.35
+    description: "Correctly handled sensitive issues"
+  - type: llm_judge
+    criteria: "Handoff notes enable continuity — all 8 issues are summarized with current status, pending actions are clear, and escalations identify who needs to be contacted"
+    weight: 0.30
+    description: "Continuity-enabling handoff notes"

@@ -1,0 +1,73 @@
+meta:
+  id: payment-analytics-reporting
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Build payment analytics — extract, transform, and visualize Stripe data for business intelligence and financial reporting"
+  tags: [stripe, analytics, reporting, data-pipeline, BI, financial, advanced]
+
+state: {}
+
+trigger: |
+  You're a data engineer at a SaaS company ($20M ARR). Your CFO wants
+  a payment analytics system that answers these questions daily:
+
+  1. "What's our real-time MRR?" (not from CRM — from actual Stripe
+     charges)
+  2. "What's our payment failure rate by card type, country, and plan?"
+  3. "How much revenue did we lose to involuntary churn this month?"
+  4. "What's our effective take rate after all processing fees?"
+  5. "How do our Stripe costs break down by fee type?"
+
+  Current state: Finance manually exports Stripe CSV reports weekly.
+  This takes 4 hours and is always 2 days behind.
+
+  Data volume:
+  - 10,000 subscriptions
+  - 15,000 payments/month
+  - 500 refunds/month
+  - 50 disputes/month
+  - Data needed: last 24 months of history
+
+  Requirements:
+  - Real-time (within 15 minutes of transaction)
+  - Historical backfill (24 months)
+  - Automated daily reports to the CFO
+  - Queryable data warehouse for ad-hoc analysis
+  - Revenue recognition compliance (ASC 606 deferred revenue)
+
+  Tech stack: PostgreSQL (primary DB), Stripe API, Python
+
+  Tasks:
+  1. Design the data pipeline. Include: the Stripe webhook events to
+     capture (invoice, charge, subscription, refund, dispute, payout,
+     balance_transaction), the data model in your warehouse (star
+     schema with fact and dimension tables), the historical backfill
+     strategy using the Stripe List API with pagination, and the
+     incremental sync for ongoing data.
+
+  2. Write the MRR calculation query. Include: how to calculate MRR
+     from active subscriptions (not just sum of plan prices — account
+     for discounts, trials, and paused subscriptions), the MRR movement
+     categories (new, expansion, contraction, churn, reactivation),
+     and the month-over-month comparison.
+
+  3. Build the financial dashboard specification. Define: the 10 key
+     metrics (MRR, net revenue, failure rate, effective processing cost,
+     etc.), the visualizations for each, the drill-down capabilities
+     (click on failure rate → see by country → see by card type), and
+     the automated email report format.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data pipeline is complete — captures all relevant Stripe events, data model supports analytical queries (star schema or equivalent), historical backfill uses pagination correctly, and incremental sync is event-driven via webhooks"
+    weight: 0.35
+    description: "Complete Stripe data pipeline"
+  - type: llm_judge
+    criteria: "MRR calculation is accurate — accounts for discounts, trials (excluded from MRR), paused subscriptions, and correctly categorizes movements (new, expansion, contraction, churn, reactivation)"
+    weight: 0.35
+    description: "Accurate MRR calculation"
+  - type: llm_judge
+    criteria: "Dashboard spec answers the CFO's 5 questions — real-time MRR, failure rate drill-downs, involuntary churn revenue, effective take rate, and Stripe cost breakdown; visualizations are appropriate for financial reporting"
+    weight: 0.30
+    description: "CFO-answering dashboard spec"

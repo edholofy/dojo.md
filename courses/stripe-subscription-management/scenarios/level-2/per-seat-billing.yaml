@@ -1,0 +1,67 @@
+meta:
+  id: per-seat-billing
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Implement per-seat billing — build a subscription system that charges based on the number of users with mid-cycle seat adjustments"
+  tags: [stripe, subscription, per-seat, quantity, billing-model, intermediate]
+
+state: {}
+
+trigger: |
+  You're building the billing system for a SaaS collaboration tool
+  that uses per-seat pricing:
+
+  - Starter: $12/seat/month (minimum 1 seat)
+  - Team: $25/seat/month (minimum 5 seats)
+  - Enterprise: $40/seat/month (minimum 20 seats)
+
+  A customer (GlobalDesign LLC) is on the Team plan with 12 seats
+  ($300/month). Their billing cycle is the 1st of each month. Today
+  is February 15th, and:
+
+  Scenario 1: They want to add 3 seats immediately (12 → 15 seats)
+  Scenario 2: They want to remove 2 seats (but those users still
+  need access until the end of the billing period)
+  Scenario 3: At quarter-end, they want to do a "true-up" — they've
+  been adding users throughout the quarter without adjusting seats,
+  and now have 18 actual users on 12 seats
+
+  Your PM says: "We need to support all three scenarios. For adding
+  seats, charge prorated immediately. For removing seats, keep access
+  until period end but reduce the next invoice. For true-ups, let
+  admins reconcile quarterly."
+
+  Tasks:
+  1. Implement seat management. Write: the add-seats endpoint
+     (updating subscription item quantity with proration), the
+     remove-seats endpoint (scheduling reduction at period end
+     using subscription schedules or pending updates), the true-up
+     endpoint (calculating the difference between actual users and
+     paid seats, creating a one-time invoice item for the gap), and
+     the automatic seat count sync that runs daily.
+
+  2. Calculate the billing for each scenario with exact numbers.
+     For adding 3 seats mid-cycle: the prorated charge for 15 days
+     remaining. For removing 2 seats: what appears on the next
+     invoice. For the true-up: the retroactive charge for 6 extra
+     seats over the quarter.
+
+  3. Build the admin seat management UI data. Write: the endpoint
+     that returns current seat count, active users, available seats,
+     projected next invoice amount, and seat usage history (a chart
+     of seats used over time vs. seats paid for).
+
+assertions:
+  - type: llm_judge
+    criteria: "Seat management handles all 3 scenarios — adding seats prorates correctly, removing seats schedules reduction without losing access, true-up calculates retroactive charges, and daily sync keeps counts accurate"
+    weight: 0.35
+    description: "Complete seat management"
+  - type: llm_judge
+    criteria: "Billing calculations are correct — prorated add-seat charge is mathematically accurate for mid-cycle, removal credit appears correctly on next invoice, and quarterly true-up charge accounts for usage gaps"
+    weight: 0.35
+    description: "Correct billing calculations"
+  - type: llm_judge
+    criteria: "Admin UI data is useful — current vs active seat counts, projected invoice amount, and seat usage history provide admins with the visibility they need to manage costs"
+    weight: 0.30
+    description: "Useful admin seat data"

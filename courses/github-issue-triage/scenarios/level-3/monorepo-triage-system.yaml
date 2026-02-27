@@ -1,0 +1,67 @@
+meta:
+  id: monorepo-triage-system
+  level: 3
+  course: github-issue-triage
+  type: output
+  description: "Design triage for a monorepo — handle issue management for a large monorepo with multiple teams, packages, and release cycles"
+  tags: [github, issue-triage, monorepo, packages, CODEOWNERS, routing, advanced]
+
+state: {}
+
+trigger: |
+  You're the Platform Engineer for a company that migrated to a
+  monorepo containing 8 packages, owned by 6 different teams. The
+  migration consolidated 8 separate repos into one, and the existing
+  triage processes no longer work.
+
+  Monorepo structure:
+  ```
+  monorepo/
+  ├── packages/
+  │   ├── api/            (Team: Backend, 3 engineers)
+  │   ├── web-app/        (Team: Frontend, 4 engineers)
+  │   ├── mobile-app/     (Team: Mobile, 3 engineers)
+  │   ├── shared-ui/      (Team: Design System, 2 engineers)
+  │   ├── auth/           (Team: Security, 2 engineers)
+  │   ├── analytics/      (Team: Data, 2 engineers)
+  │   ├── cli/            (Team: DevEx, 2 engineers)
+  │   └── infrastructure/ (Team: Platform, 3 engineers)
+  ├── .github/
+  │   ├── CODEOWNERS
+  │   └── ISSUE_TEMPLATE/
+  └── docs/
+  ```
+
+  Problems since migration:
+  1. All issues go to a single issue tracker — no team routing
+  2. CODEOWNERS works for PRs but not for issues
+  3. Teams can't filter to "their" issues easily
+  4. Cross-package issues have unclear ownership
+  5. Different packages have different release cycles (api: weekly,
+     web-app: bi-weekly, mobile-app: monthly)
+  6. Issue volume went from manageable (per-repo) to overwhelming
+     (300+ issues in one tracker)
+
+  Task: Design the monorepo triage system. Write: the issue routing
+  mechanism (how to automatically assign issues to the right team
+  based on issue content, labels, or template selection), the label
+  scheme that supports package-level filtering (package:api,
+  package:web-app, etc.), the CODEOWNERS-equivalent for issues
+  (auto-assigning team leads based on affected package), the cross-
+  package issue handling (how to manage issues spanning api + web-app),
+  and the team-specific views (GitHub Project views filtered to each
+  team's packages).
+
+assertions:
+  - type: llm_judge
+    criteria: "Routing mechanism identifies the right team — uses issue templates, labels, or content analysis to route to the correct package team; handles ambiguous cases with fallback to platform team"
+    weight: 0.35
+    description: "Right-team routing mechanism"
+  - type: llm_judge
+    criteria: "Label scheme supports monorepo complexity — package labels enable team-level filtering, cross-cutting labels (priority, type) work across packages, and the scheme doesn't create label explosion"
+    weight: 0.35
+    description: "Complexity-supporting label scheme"
+  - type: llm_judge
+    criteria: "Team views enable focused work — each team can see only their issues, cross-package issues appear in relevant teams' views, and the system reduces the 300+ issue overwhelm to manageable per-team queues"
+    weight: 0.30
+    description: "Focused-work-enabling team views"

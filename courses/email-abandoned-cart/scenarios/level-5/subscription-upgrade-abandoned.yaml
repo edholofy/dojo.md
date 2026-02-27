@@ -1,0 +1,50 @@
+meta:
+  id: subscription-upgrade-abandoned
+  level: 5
+  course: email-abandoned-cart
+  type: output
+  description: "Recover abandoned subscription upgrade flows"
+  tags: [email, abandoned-cart, subscription, upgrade, saas]
+
+state: {}
+
+trigger: |
+  "StreamMax" (a video streaming platform, 8M subscribers) has a unique
+  abandonment problem: users who start but don't complete a plan upgrade.
+
+  Three upgrade abandonment scenarios:
+
+  Scenario A — Free to Basic ($7.99/month):
+  User watched 3 shows during free trial, hit the content limit, clicked
+  "Upgrade," selected Basic plan, but left before payment.
+  Context: price-sensitive audience, testing the waters.
+
+  Scenario B — Basic to Premium ($14.99/month):
+  Existing Basic subscriber (6 months, watches 4hrs/week), explored Premium
+  features (4K, downloads, multiple profiles), selected Premium, left at payment.
+  Context: already paying, considering more investment.
+
+  Scenario C — Monthly to Annual ($99.99/year, saving $96):
+  Premium subscriber (monthly at $14.99), saw annual plan savings, clicked
+  through to switch, but abandoned.
+  Context: committed user, $96 savings should be compelling.
+
+  Design recovery strategies and emails for all three scenarios.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each scenario gets a distinct recovery approach — free-to-paid focuses on content value, basic-to-premium focuses on feature value, monthly-to-annual focuses on savings math"
+    weight: 0.30
+    description: "Distinct approach per upgrade type"
+  - type: llm_judge
+    criteria: "The free-to-paid recovery leverages their specific viewing history — reminding them of the shows they watched and what they'll miss without upgrading"
+    weight: 0.25
+    description: "Viewing history leveraged for free-to-paid"
+  - type: llm_judge
+    criteria: "The monthly-to-annual recovery addresses the likely objection — commitment anxiety about a full year, despite the savings. The email de-risks the annual commitment"
+    weight: 0.25
+    description: "Annual commitment anxiety addressed"
+  - type: llm_judge
+    criteria: "The basic-to-premium recovery uses personalized feature highlights — showing which Premium features are most relevant to THIS user's actual viewing habits"
+    weight: 0.20
+    description: "Personalized feature highlights for upsell"

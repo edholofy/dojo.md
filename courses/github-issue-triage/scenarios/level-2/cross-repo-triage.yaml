@@ -1,0 +1,56 @@
+meta:
+  id: cross-repo-triage
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Triage across multiple repositories — manage issues that span a multi-repo project or organization"
+  tags: [github, issue-triage, multi-repo, organization, transfer, intermediate]
+
+state: {}
+
+trigger: |
+  You're the triage lead for an organization with 5 repositories that
+  form a single product:
+
+  1. app-frontend (React SPA) — 45 open issues
+  2. app-backend (Node.js API) — 62 open issues
+  3. app-mobile (React Native) — 28 open issues
+  4. shared-components (UI library used by frontend and mobile) — 15 issues
+  5. infrastructure (Terraform, CI/CD) — 8 open issues
+
+  Problems:
+  - Users file issues in the wrong repo (backend bug reported in
+    frontend, shared component issue reported in app-frontend)
+  - Some bugs span multiple repos (e.g., a feature requires frontend
+    + backend + mobile changes)
+  - No unified view of all open issues across repos
+  - Different repos have different label schemes (inconsistent naming)
+  - Transfer between repos loses context (comments, assignees)
+
+  Current misfilings in the queue:
+  Issue #201 in app-frontend: "API returns 500 on /api/users" (backend)
+  Issue #89 in app-mobile: "Shared button component needs loading state"
+    (shared-components)
+  Issue #34 in app-backend: "Deploy script fails on staging" (infra)
+
+  Task: Design the cross-repo triage system. Write: the unified label
+  taxonomy (consistent labels across all 5 repos), the issue transfer
+  protocol (how to move issues between repos while preserving context),
+  the cross-repo issue tracking strategy (how to handle features that
+  span multiple repos — parent issues, task lists, linked issues), the
+  organization-level project board (unified view across all repos), and
+  how to handle the 3 misfiled issues above.
+
+assertions:
+  - type: llm_judge
+    criteria: "Label taxonomy is consistent and practical — same label names, colors, and conventions across all 5 repos; accounts for repo-specific labels where needed (e.g., 'platform:ios' only in mobile)"
+    weight: 0.35
+    description: "Consistent practical taxonomy"
+  - type: llm_judge
+    criteria: "Cross-repo tracking handles multi-repo features — parent/child issue structure or task lists link related issues, organization project provides unified view, and the system scales to the 5-repo setup"
+    weight: 0.35
+    description: "Multi-repo feature tracking"
+  - type: llm_judge
+    criteria: "Issue transfers preserve context — transfer protocol includes communication template, context preservation strategy, and practical handling of the 3 specific misfiled issues"
+    weight: 0.30
+    description: "Context-preserving transfers"

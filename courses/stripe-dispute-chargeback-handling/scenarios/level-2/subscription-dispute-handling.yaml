@@ -1,0 +1,77 @@
+meta:
+  id: subscription-dispute-handling
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Handle subscription-specific disputes — manage chargebacks for recurring charges including cancellation disputes and trial conversion complaints"
+  tags: [stripe, dispute, subscription, recurring, cancellation, trial, intermediate]
+
+state: {}
+
+trigger: |
+  You're the billing manager at a SaaS company ($10M ARR, 5,000
+  subscribers). Subscription disputes are your #1 chargeback source
+  — 65% of all disputes are subscription-related.
+
+  Top subscription dispute patterns:
+  1. "I cancelled but was still charged" (35% of disputes)
+  2. "I didn't know the trial would convert to paid" (20%)
+  3. "I don't recognize this recurring charge" (25%)
+  4. "I was charged after the service went down" (10%)
+  5. "The price increased without notice" (10%)
+
+  Recent cases:
+
+  Case A — Cancelled but charged ($79/month):
+  Customer emailed "cancel my account" on March 1st. Your support
+  team replied asking the customer to cancel via the settings page.
+  Customer never cancelled via settings. Charged on March 15th.
+  Customer filed dispute.
+
+  Case B — Trial conversion ($49/month):
+  Customer signed up for 14-day trial on February 1st. Trial ended
+  February 15th. Charged $49 on February 15th. Customer says they
+  didn't know it would auto-convert. Your trial sign-up page shows
+  "Free for 14 days, then $49/month" in small gray text below the
+  button.
+
+  Case C — Unrecognized recurring ($199/month):
+  Customer has been charged $199/month for 8 months without dispute.
+  Filed "fraudulent" on month 9. Statement descriptor shows "STRIPE*
+  SAAS CO" which doesn't match your product name "DataVault Pro."
+
+  Tasks:
+  1. Respond to each case with evidence. For Case A: address the
+     cancellation communication gap (email request vs. self-serve
+     requirement). For Case B: address the trial disclosure concern
+     (is the small gray text sufficient?). For Case C: use 8 months
+     of successful payments and account activity as evidence of
+     recognition.
+
+  2. Fix the root causes. Write: the cancellation flow fix (honor
+     email cancellation requests, or make self-serve cancellation
+     easier), the trial disclosure fix (make conversion terms
+     prominent and require explicit acknowledgment), the billing
+     descriptor fix (change to "DATAVAULT*PRO"), and the pre-renewal
+     notification (email customers 3 days before each charge).
+
+  3. Build the subscription dispute prevention dashboard. Include:
+     the churn-to-dispute ratio (how many cancellation attempts
+     lead to disputes), the trial conversion dispute rate, the
+     descriptor recognition score, and the early warning system
+     (detect when a customer contacts support about billing — they
+     may file a dispute next).
+
+assertions:
+  - type: llm_judge
+    criteria: "Evidence addresses each case's specific weakness — Case A acknowledges the communication gap, Case B addresses disclosure adequacy, Case C leverages 8-month payment history, and narratives are honest about weaknesses"
+    weight: 0.35
+    description: "Case-specific evidence"
+  - type: llm_judge
+    criteria: "Root cause fixes prevent recurrence — cancellation honors email or simplifies self-serve, trial disclosure becomes prominent with explicit consent, descriptor is recognizable, and pre-renewal notifications reduce surprise charges"
+    weight: 0.35
+    description: "Root cause prevention fixes"
+  - type: llm_judge
+    criteria: "Dashboard enables proactive management — churn-to-dispute ratio identifies cancellation process problems, trial dispute rate monitors conversion transparency, and early warning catches at-risk customers"
+    weight: 0.30
+    description: "Proactive subscription dashboard"

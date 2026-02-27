@@ -1,0 +1,70 @@
+meta:
+  id: dispute-testing-simulation
+  level: 3
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Build a dispute testing and simulation system — create test suites for dispute handling code and simulate dispute scenarios"
+  tags: [stripe, dispute, testing, simulation, test-mode, QA, advanced]
+
+state: {}
+
+trigger: |
+  You're the QA lead for the payments team. After a bug in the
+  dispute webhook handler caused 34 disputes to go unanswered (all
+  lost, $4,800 in losses), the CTO mandates comprehensive testing.
+
+  The bug: The webhook handler silently failed when the dispute
+  object had a null evidence_details field (which happens for
+  some card networks). No error was logged, no alert was sent,
+  and 34 disputes sat unnoticed until the deadlines passed.
+
+  Current test coverage:
+  - 3 unit tests for the webhook handler (all happy path)
+  - 0 integration tests with Stripe test mode
+  - 0 simulation tests for dispute scenarios
+  - 0 monitoring tests for alert delivery
+
+  Stripe's test mode capabilities:
+  - Create test disputes using specific test card numbers
+  - Simulate different dispute reasons
+  - Test evidence submission flow
+  - Simulate dispute resolution (won/lost)
+  - Test Radar rules with test transactions
+
+  Tasks:
+  1. Design the dispute test framework. Include: the unit test suite
+     (webhook handler with all dispute reasons, null fields, malformed
+     events), the integration test suite (creating test disputes in
+     Stripe test mode, submitting evidence, verifying outcomes), the
+     end-to-end test (full dispute lifecycle from creation to
+     resolution), and the chaos tests (webhook delivery failures,
+     timeout, duplicate events).
+
+  2. Write the test cases that would have caught the bug. Include:
+     the null evidence_details test, the missing webhook field tests
+     (what other fields could be null?), the alert delivery
+     verification (does the team actually get notified?), and the
+     deadline monitoring test (does the system catch approaching
+     deadlines?).
+
+  3. Build the dispute simulation environment. Write: the load
+     testing plan (simulate 100 disputes arriving simultaneously
+     during a card testing attack), the scenario simulation
+     (simulating a VDMP breach scenario to test the monitoring
+     alerts), the evidence quality scoring (automated check that
+     submitted evidence meets minimum quality thresholds), and the
+     CI/CD integration (dispute tests run on every deployment).
+
+assertions:
+  - type: llm_judge
+    criteria: "Test framework is comprehensive — unit tests cover edge cases, integration tests use Stripe test mode, end-to-end tests verify the lifecycle, and chaos tests simulate failures"
+    weight: 0.35
+    description: "Comprehensive test framework"
+  - type: llm_judge
+    criteria: "Bug-catching tests are specific — null field handling, missing webhook fields, alert delivery verification, and deadline monitoring tests would all prevent the incident that caused $4,800 in losses"
+    weight: 0.35
+    description: "Specific bug-catching tests"
+  - type: llm_judge
+    criteria: "Simulation environment enables preparation — load testing handles burst scenarios, VDMP simulation tests monitoring, evidence quality scoring automates review, and CI/CD integration prevents regression"
+    weight: 0.30
+    description: "Preparation-enabling simulation"

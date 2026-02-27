@@ -1,0 +1,75 @@
+meta:
+  id: subscription-cancellation
+  level: 1
+  course: refund-cancellation-handling
+  type: output
+  description: "Handle subscription cancellation — process SaaS and subscription service cancellations including prorating, billing cycles, and data handling"
+  tags: [support, cancellation, subscription, saas, billing, beginner]
+
+state: {}
+
+trigger: |
+  Subscription cancellation has unique considerations: billing
+  cycles, prorated refunds, data retention, team accounts, and
+  the difference between cancelling immediately vs. at the end
+  of the billing period.
+
+  Part 1: Subscription cancellation types
+  1. End-of-period: cancel but keep access until billing period ends
+  2. Immediate: cancel now, prorated refund for unused time
+  3. Downgrade: move to a lower tier instead of cancelling
+  4. Pause: temporarily suspend billing and access
+  5. Team/organization: cancelling with multiple users affected
+
+  Company: "ProjectHub" SaaS project management tool
+  - Plans: Basic ($9/mo), Pro ($29/mo), Team ($79/mo), Enterprise
+  - Billing: monthly or annual (20% discount for annual)
+  - Annual plans: prorated refund minus 2-month early termination
+  - Monthly plans: cancels at end of current billing period
+  - Data retention: 30 days after cancellation, then deleted
+  - Data export: available for 30 days post-cancellation
+
+  Part 2: Handle subscription cancellation scenarios
+
+  Scenario 1 — Monthly plan, simple cancellation:
+  "Please cancel my Pro plan. I'll finish the current month."
+  (Pro plan, monthly, next billing date in 12 days.)
+  Process the end-of-period cancellation.
+
+  Scenario 2 — Annual plan, wants immediate refund:
+  "I need to cancel my Team plan immediately. I paid annual 4
+  months ago. I want a refund for the remaining 8 months."
+  (Team plan, annual, paid $758.40 upfront — $79 × 12 × 0.8.)
+  Calculate the prorated refund and communicate clearly.
+
+  Scenario 3 — Team account with multiple users:
+  "I'm the admin and I need to cancel our Team plan. We have 15
+  users. What happens to everyone's data?"
+  Process the team cancellation with clear communication about
+  data handling for all team members.
+
+  Scenario 4 — Pause request:
+  "I don't want to cancel, but I'm going on maternity leave for
+  3 months. Can I pause my subscription?"
+  Handle the pause request (if available) or suggest alternatives.
+
+  For each: write the customer response, confirm all details,
+  and explain data handling/timeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "The monthly cancellation correctly processes at end-of-period — the customer keeps access for 12 more days without being charged again"
+    weight: 0.25
+    description: "Correct end-of-period processing"
+  - type: llm_judge
+    criteria: "The annual prorated refund is calculated correctly — 8 remaining months of discounted annual rate minus early termination fee"
+    weight: 0.25
+    description: "Correct annual prorated calculation"
+  - type: llm_judge
+    criteria: "Team cancellation addresses all 15 users — data export reminders and timeline are communicated for every affected team member"
+    weight: 0.25
+    description: "Team-wide data handling"
+  - type: llm_judge
+    criteria: "The pause option is explored genuinely — maternity leave is a legitimate reason to pause, and the response accommodates the situation"
+    weight: 0.25
+    description: "Genuine pause accommodation"

@@ -1,0 +1,70 @@
+meta:
+  id: triage-meeting-basics
+  level: 1
+  course: bug-report-triage
+  type: output
+  description: "Understand how bug triage meetings work and make basic triage decisions on a queue of incoming bugs"
+  tags: [bugs, triage, meeting, process, basics]
+
+state: {}
+
+trigger: |
+  You're attending your first bug triage meeting at "InvoicePro"
+  (invoicing SaaS). The team reviews new bugs and decides what to
+  do with each one. Your lead explains the possible outcomes:
+
+  - Fix now: Assign to current sprint
+  - Fix next: Add to next sprint backlog
+  - Fix later: Add to backlog, not prioritized
+  - Need more info: Send back for clarification
+  - Won't fix: Close with explanation
+  - Duplicate: Link to existing issue and close
+
+  Here are 8 new bugs to triage:
+
+  1. "Invoice PDF generation fails for invoices over $1M"
+     Severity: Major | Reported by: Enterprise customer
+  2. "Typo in the footer of invoice emails: 'Thankyou' instead
+     of 'Thank you'"
+     Severity: Trivial | Reported by: Internal QA
+  3. "Dashboard shows revenue as negative when refunds exceed
+     sales in a given month"
+     Severity: Major | Reported by: Customer support
+  4. "Can't reproduce: 'App freezes when editing line items'"
+     Severity: Unknown | Reported by: Customer (no details)
+  5. "Tax calculation shows 0% for Canadian provinces"
+     Severity: Critical | Reported by: Accounting team
+  6. "Same as #5 — Canadian tax issue"
+     Severity: Critical | Reported by: Customer
+  7. "Would be nice to have dark mode on invoices"
+     Severity: N/A (feature request) | Reported by: Customer
+  8. "Password reset emails take 15+ minutes to arrive"
+     Severity: Minor | Reported by: Multiple customers
+
+  Tasks:
+
+  1. Assign a triage outcome to each of the 8 items. Explain
+     your reasoning.
+  2. What information do you need for item #4 before making a
+     triage decision?
+  3. How do you handle item #7 (feature request in the bug queue)?
+  4. Write a brief summary of triage decisions that could be shared
+     with the team after the meeting.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tax calculation bug (#5) is triaged as 'Fix now' — incorrect tax calculations for an entire country is a critical business issue affecting compliance"
+    weight: 0.25
+    description: "Critical tax bug prioritized"
+  - type: llm_judge
+    criteria: "Duplicate (#6) is correctly identified — linked to #5 and closed as duplicate, not treated as a separate issue to fix"
+    weight: 0.25
+    description: "Duplicate correctly identified"
+  - type: llm_judge
+    criteria: "Feature request (#7) is redirected — moved out of the bug queue to a feature request tracker or product backlog, not triaged as a bug"
+    weight: 0.25
+    description: "Feature request redirected"
+  - type: llm_judge
+    criteria: "Unreproducible bug (#4) gets 'Need more info' — sent back with specific questions rather than closed or assigned without sufficient information"
+    weight: 0.25
+    description: "Unreproducible bug handled"

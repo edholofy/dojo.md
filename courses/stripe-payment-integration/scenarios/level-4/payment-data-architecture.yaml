@@ -1,0 +1,74 @@
+meta:
+  id: payment-data-architecture
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Design payment data architecture — build event-sourced payment systems with CQRS, audit trails, and cross-system reconciliation"
+  tags: [stripe, data-architecture, event-sourcing, CQRS, reconciliation, audit, expert]
+
+state: {}
+
+trigger: |
+  You're a Principal Engineer tasked with redesigning the payment data
+  architecture for a marketplace ($800M GMV, 200K transactions/day).
+  The current system has data integrity issues that cost $2M/year in
+  reconciliation corrections.
+
+  Current problems:
+  1. State mutation: Payment records are updated in place. When a refund
+     partially fails, the record is in an inconsistent state. Nobody
+     can tell what happened.
+  2. Cross-system drift: Stripe's view of a payment and your database's
+     view diverge. Example: Stripe shows a payment as refunded but your
+     DB shows it as paid (webhook was lost).
+  3. Audit gaps: When regulators ask "show me every state change for
+     payment X," you can only show the current state, not the history.
+  4. Race conditions: Concurrent refund requests for the same payment
+     sometimes both succeed, creating a double refund.
+  5. Reporting inconsistency: Finance reports from the database don't
+     match Stripe's reports. Monthly reconciliation takes 3 days.
+
+  Requirements:
+  - Full audit trail for every payment state change
+  - Eventual consistency with Stripe as source of truth
+  - Concurrent operation safety (no double refunds)
+  - Sub-second read performance for payment status
+  - Historical querying (what was the state at time T?)
+  - Real-time analytics on payment events
+
+  Tech constraints: PostgreSQL (primary), Redis (cache), Kafka (events)
+
+  Tasks:
+  1. Design the event-sourced payment system. Include: the payment
+     aggregate with events (PaymentCreated, PaymentAuthorized,
+     PaymentCaptured, PaymentRefundRequested, PaymentRefunded,
+     PaymentDisputed), the event store schema, the projection for
+     current state (CQRS read model), and the concurrency control
+     (optimistic locking with version numbers to prevent double refunds).
+
+  2. Build the Stripe synchronization layer. Design: how webhook events
+     are translated into domain events, the reconciliation process that
+     detects drift between your event store and Stripe, the conflict
+     resolution strategy (Stripe is source of truth), and the self-
+     healing mechanism that corrects inconsistencies automatically.
+
+  3. Write the reconciliation system. Include: the daily reconciliation
+     job that compares your event store with Stripe's records, the
+     discrepancy detection and categorization (missing events, amount
+     mismatches, status mismatches), the automatic correction for simple
+     discrepancies, and the alerting for complex discrepancies requiring
+     human review.
+
+assertions:
+  - type: llm_judge
+    criteria: "Event-sourced design is correct — events are immutable facts, aggregate rebuilds from events, CQRS separates read and write models, optimistic locking with version numbers prevents concurrent double refunds, and historical querying is supported"
+    weight: 0.35
+    description: "Correct event-sourced payment design"
+  - type: llm_judge
+    criteria: "Stripe synchronization handles real drift — webhook events map to domain events, reconciliation detects the specific problems listed (lost webhooks, state mismatches), Stripe-as-truth conflict resolution is clear, and self-healing corrects simple issues"
+    weight: 0.35
+    description: "Drift-handling Stripe synchronization"
+  - type: llm_judge
+    criteria: "Reconciliation system is operationally viable — daily job compares at scale, discrepancy categories match real-world issues, auto-correction reduces the 3-day manual process, and alerting catches issues requiring human judgment"
+    weight: 0.30
+    description: "Operationally viable reconciliation"

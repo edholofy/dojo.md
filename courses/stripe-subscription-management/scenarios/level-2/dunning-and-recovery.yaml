@@ -1,0 +1,73 @@
+meta:
+  id: dunning-and-recovery
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Build a dunning system — implement failed payment recovery to reduce involuntary churn from declined cards and insufficient funds"
+  tags: [stripe, subscription, dunning, failed-payment, recovery, churn, intermediate]
+
+state: {}
+
+trigger: |
+  You're the billing engineer at a SaaS company ($15M ARR, 8,000
+  subscribers). Your involuntary churn rate is 5.2% annually — meaning
+  ~416 customers per year are lost to failed payments, not because
+  they wanted to leave. This costs approximately $780K in lost ARR.
+
+  Current state:
+  - Stripe's default retry schedule: 3 retries over ~3 weeks
+  - Smart Retries: enabled but not configured optimally
+  - No in-app notifications for failed payments
+  - No email sequences for failed payments (relying on Stripe's
+    default emails, which have low open rates)
+  - Subscription goes to past_due → unpaid → canceled automatically
+
+  Your data shows:
+  - 62% of failed payments recover on first retry
+  - 18% recover on second retry
+  - 8% recover on third retry
+  - 12% never recover (these become churned customers)
+  - Top decline codes: insufficient_funds (45%), expired_card (25%),
+    card_declined (generic, 20%), other (10%)
+
+  Target: Reduce involuntary churn from 5.2% to under 2.5%
+  (recover 50%+ of the currently unrecovered 12%).
+
+  Tasks:
+  1. Design the comprehensive dunning system. Include: the retry
+     strategy (optimize timing based on decline codes — e.g.,
+     insufficient_funds should retry on paydays), the in-app payment
+     update banner (shown when subscription is past_due), the email
+     sequence (4 emails: immediate notification, 3-day reminder,
+     7-day urgency, 14-day final warning), and the Stripe Smart
+     Retries configuration.
+
+  2. Implement the technical components. Write: the webhook handler
+     for invoice.payment_failed (triggering the dunning flow), the
+     decline-code-specific retry logic (when to retry based on the
+     specific reason), the in-app banner component that detects
+     past_due status and shows a payment update form, and the
+     subscription status transition handling (past_due → active
+     when payment recovers, past_due → canceled after exhausting
+     retries).
+
+  3. Build the recovery analytics. Write: the metrics to track
+     (recovery rate by decline code, recovery rate by retry attempt,
+     recovery rate by email in sequence, time-to-recovery), the
+     monthly recovery report for leadership (recovered ARR, still
+     at-risk ARR, permanently lost ARR), and the A/B testing
+     framework for dunning email copy and retry timing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dunning system is comprehensive — retry strategy varies by decline code, in-app banner prompts payment update, email sequence has 4 stages with escalating urgency, and Smart Retries configuration is optimized"
+    weight: 0.35
+    description: "Comprehensive dunning system"
+  - type: llm_judge
+    criteria: "Technical implementation is correct — webhook handler triggers the right flows, decline-code-specific retry logic is sound (e.g., retry insufficient_funds on different days), in-app banner detects status correctly, and status transitions are handled"
+    weight: 0.35
+    description: "Correct technical implementation"
+  - type: llm_judge
+    criteria: "Recovery analytics provide actionable insights — metrics are tracked by decline code and retry attempt, monthly report quantifies recovered/at-risk/lost ARR, and A/B testing framework enables optimization"
+    weight: 0.30
+    description: "Actionable recovery analytics"

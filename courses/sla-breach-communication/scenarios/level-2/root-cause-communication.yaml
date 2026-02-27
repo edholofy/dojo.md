@@ -1,0 +1,72 @@
+meta:
+  id: root-cause-communication
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Communicate root cause analysis findings to customers after SLA breaches — translating technical details into business-relevant explanations"
+  tags: [SLA, RCA, postmortem, communication, intermediate]
+
+state: {}
+
+trigger: |
+  You're a customer success manager at "CloudVault" (cloud storage,
+  $50M ARR). Last week's major outage lasted 4 hours and breached
+  SLAs for 2,000 customers. Engineering has completed the root cause
+  analysis. Now you need to communicate it.
+
+  Technical RCA (from engineering):
+  - Root cause: A routine database vacuum operation on the primary
+    PostgreSQL cluster triggered an unexpected lock escalation that
+    blocked all write operations
+  - Contributing factors: The vacuum was scheduled during peak hours
+    (should have been off-peak), the lock timeout was set to the
+    default value (too high for production), and the monitoring alert
+    for lock contention had been accidentally disabled 3 weeks ago
+  - Impact: All file uploads and edits were unavailable for 4 hours.
+    File downloads (read operations) continued working.
+  - Timeline: Detected at 25 minutes (delayed because monitoring was
+    disabled). Fix applied at 3 hours 20 minutes. Verification and
+    all-clear at 4 hours.
+  - Prevention: Vacuum rescheduled to off-peak, lock timeout reduced,
+    monitoring re-enabled with additional alerts, database maintenance
+    runbook updated
+
+  You need to communicate this to 3 different audiences:
+
+  Audience 1: All 2,000 affected customers (general communication)
+  Audience 2: 50 enterprise customers ($10K+/month) — they expect
+  detailed technical transparency
+  Audience 3: The CIO of your largest customer ($200K/year) — they
+  want a private briefing
+
+  Tasks:
+  1. Write the general customer communication (Audience 1) that
+     translates the technical RCA into terms any customer can understand.
+
+  2. Write the detailed technical postmortem for enterprise customers
+     (Audience 2) that satisfies their need for transparency.
+
+  3. Prepare talking points for the CIO briefing (Audience 3). What
+     should you say, and what questions should you anticipate?
+
+  4. The RCA reveals that monitoring was accidentally disabled 3 weeks
+     ago. This is embarrassing. Do you include this detail? Why or
+     why not?
+
+assertions:
+  - type: llm_judge
+    criteria: "General communication is jargon-free — explains the outage without PostgreSQL, vacuum, lock escalation terminology; uses plain language like 'routine maintenance task' and 'file upload and editing'"
+    weight: 0.25
+    description: "Jargon-free general communication"
+  - type: llm_judge
+    criteria: "Enterprise postmortem includes technical detail — provides the timeline, root cause chain, contributing factors, and prevention measures at a level that satisfies technical stakeholders"
+    weight: 0.25
+    description: "Detailed enterprise postmortem"
+  - type: llm_judge
+    criteria: "CIO briefing anticipates questions — prepares for 'how do we know this won't happen again?', 'why did it take 25 minutes to detect?', and 'what's the service credit?'"
+    weight: 0.25
+    description: "Question-prepared CIO briefing"
+  - type: llm_judge
+    criteria: "Disabled monitoring is included — transparency about the embarrassing detail builds more trust than hiding it, and the enterprise audience will find it anyway"
+    weight: 0.25
+    description: "Transparent about embarrassing detail"

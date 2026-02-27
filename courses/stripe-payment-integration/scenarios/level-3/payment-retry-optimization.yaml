@@ -1,0 +1,79 @@
+meta:
+  id: payment-retry-optimization
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Optimize payment retry strategies — build intelligent retry systems that recover failed payments while minimizing customer friction"
+  tags: [stripe, retry, dunning, recovery, optimization, revenue, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior engineer at a SaaS company ($30M ARR, 15,000
+  subscribers). Your failed payment recovery rate is 45% — meaning
+  55% of failed first-attempt payments are never recovered, leading
+  to involuntary churn.
+
+  Current data:
+  - Monthly billing attempts: 15,000
+  - First-attempt success rate: 88%
+  - Failed first attempts: 1,800/month
+  - Current recovery rate: 45% (810 recovered)
+  - Unrecovered = involuntary churn: 990 customers/month
+  - Average revenue per customer: $167/month
+  - Monthly revenue lost to involuntary churn: $165,330
+
+  Current retry schedule (basic):
+  - Day 1: First attempt (automatic)
+  - Day 3: Retry 1
+  - Day 7: Retry 2
+  - Day 14: Retry 3 (final)
+  - Day 15: Cancel subscription
+
+  Industry benchmark data:
+  - Best-in-class recovery rate: 70-80%
+  - Optimal retry times: vary by decline code
+  - Card updater services recover 15-20% of expired cards automatically
+  - Smart retries at different times of day improve rates by 10-15%
+
+  Decline code breakdown from failed payments:
+  - generic_decline: 40% (often temporary, bank-side issue)
+  - insufficient_funds: 25% (may succeed on payday)
+  - card_declined: 15% (various reasons)
+  - expired_card: 10% (card updater can fix)
+  - authentication_required: 5% (needs customer action)
+  - do_not_honor: 5% (rarely recovers)
+
+  Tasks:
+  1. Design the intelligent retry engine. For each decline code:
+     define the optimal retry strategy (timing, frequency, and whether
+     to retry at all). Include: time-of-day optimization (retry at 10
+     AM in customer's timezone), day-of-week optimization (retry on
+     paydays — 1st and 15th), and decline-code-specific logic (don't
+     retry "do_not_honor", retry "insufficient_funds" on payday).
+
+  2. Implement the customer communication sequence. For each stage:
+     the email/notification, the tone (helpful not threatening), the
+     self-service card update link, and the escalation to human outreach
+     for high-value customers. Include the "pre-dunning" email sent
+     before the card expires.
+
+  3. Build the analytics dashboard for payment recovery. Track: recovery
+     rate by decline code, optimal retry time analysis, revenue impact
+     of each retry attempt, card updater effectiveness, and the overall
+     involuntary churn reduction. Calculate the expected revenue impact
+     of improving from 45% to 70% recovery.
+
+assertions:
+  - type: llm_judge
+    criteria: "Retry engine is decline-code-aware — different strategies for each code (retry insufficient_funds on paydays, don't retry do_not_honor, send customer action for authentication_required), uses time-of-day and day-of-week optimization"
+    weight: 0.35
+    description: "Decline-code-aware retry engine"
+  - type: llm_judge
+    criteria: "Customer communication is helpful — tone is empathetic not threatening, includes easy self-service card update, escalates high-value customers to human outreach, and pre-dunning email warns before card expiry"
+    weight: 0.35
+    description: "Helpful recovery communication"
+  - type: llm_judge
+    criteria: "Analytics calculates revenue impact — tracks recovery by decline code, shows which retry attempts have highest ROI, and correctly calculates that improving from 45% to 70% saves ~$68K/month (990→540 churned × $167)"
+    weight: 0.30
+    description: "Revenue-impact recovery analytics"

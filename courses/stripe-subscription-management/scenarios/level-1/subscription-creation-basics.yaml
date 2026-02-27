@@ -1,0 +1,64 @@
+meta:
+  id: subscription-creation-basics
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Create a basic Stripe subscription — implement the complete flow from product/price creation to customer subscription activation"
+  tags: [stripe, subscription, creation, product, price, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior developer at a SaaS startup building a project
+  management tool. Your tech lead has asked you to implement the
+  subscription system using Stripe. The product has three plans:
+
+  - Starter: $19/month (up to 5 users)
+  - Professional: $49/month (up to 25 users)
+  - Business: $99/month (unlimited users)
+
+  All plans also have annual pricing with a 20% discount:
+  - Starter: $182/year ($15.17/month effective)
+  - Professional: $470/year ($39.17/month effective)
+  - Business: $950/year ($79.17/month effective)
+
+  Your tech lead left these notes:
+  "Set up the Stripe products and prices first. Remember: one Product
+  per plan, multiple Prices per product (monthly + annual). Use
+  lookup_keys on prices so our frontend doesn't need to hardcode
+  price IDs. Then write the subscription creation endpoint — it
+  needs to handle both new customers and existing customers who
+  already have a payment method on file."
+
+  Tasks:
+  1. Write the Stripe product and price setup code. Include: the 3
+     products with metadata (feature limits, plan tier), the 6 prices
+     (3 monthly + 3 annual) with lookup_keys, and explain the
+     relationship between Products and Prices in Stripe's data model.
+
+  2. Write the subscription creation endpoint (Node.js/Express or
+     equivalent). Handle: new customer creation with payment method,
+     existing customer with stored payment method, selecting monthly
+     vs. annual billing, and proper error handling for declined cards
+     or invalid parameters. Include the webhook handler for
+     customer.subscription.created.
+
+  3. Write a brief explanation for the tech lead covering: when to
+     use Subscriptions vs. recurring PaymentIntents, how Stripe's
+     billing cycle works (anchor dates, proration), and what happens
+     under the hood when a subscription is created (Invoice →
+     PaymentIntent → Charge flow).
+
+assertions:
+  - type: llm_judge
+    criteria: "Product/price setup is correct — 3 products with appropriate metadata, 6 prices with lookup_keys for frontend flexibility, annual prices use correct 20% discount amounts, and the data model explanation distinguishes Products from Prices clearly"
+    weight: 0.35
+    description: "Correct product and price setup"
+  - type: llm_judge
+    criteria: "Subscription creation endpoint handles both paths — new customer with payment method attachment, existing customer lookup, monthly/annual selection via price lookup_key, proper error handling (card declined, missing fields), and webhook handler processes subscription.created"
+    weight: 0.35
+    description: "Complete subscription creation endpoint"
+  - type: llm_judge
+    criteria: "Technical explanation is accurate — Subscriptions vs recurring PaymentIntents distinction is correct, billing cycle mechanics are explained (anchor date, proration default), and the Invoice → PaymentIntent → Charge flow is described accurately"
+    weight: 0.30
+    description: "Accurate technical explanation"

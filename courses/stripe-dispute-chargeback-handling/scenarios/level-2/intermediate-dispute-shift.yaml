@@ -1,0 +1,76 @@
+meta:
+  id: intermediate-dispute-shift
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Intermediate dispute shift — handle a card testing attack, a dispute rate spike, and a high-value evidence deadline simultaneously"
+  tags: [stripe, dispute, shift-simulation, card-testing, rate-spike, intermediate]
+
+state: {}
+
+trigger: |
+  You're the on-call payments engineer. Three crises arrive in a
+  single morning:
+
+  Crisis 1 — Card testing attack (8:00 AM):
+  Your monitoring alerts show 847 attempted charges in the last
+  hour, all for $1.00, from 847 different cards, all from the same
+  IP address range (185.234.x.x). Of these, 312 succeeded. The
+  attacker is testing stolen cards on your site. If these test
+  charges lead to disputes, your dispute rate will skyrocket.
+
+  Your current Radar configuration: Default rules only. No custom
+  rules for card testing.
+
+  Crisis 2 — Dispute rate crossed threshold (8:30 AM):
+  Stripe sent an automated alert: "Your dispute rate for the
+  current month has reached 0.92%, exceeding Visa's 0.90% VDMP
+  threshold." You have 15 days remaining in the month.
+
+  Current month stats: 4,200 transactions, 39 disputes.
+  You need to either: increase transaction volume (dilute the rate)
+  or reduce disputes (resolve some before they count).
+
+  Crisis 3 — High-value evidence deadline (9:00 AM):
+  A $4,500 dispute evidence deadline is TODAY at 5 PM. The dispute
+  reason is "product not received" for a custom-built server rack
+  shipped to an enterprise customer. Shipping shows "delivered" but
+  the customer claims they never received it. The shipper (freight
+  carrier) says they delivered to the loading dock and got a
+  signature, but the name on the signature doesn't match the
+  customer's contact name.
+
+  Tasks:
+  1. Stop the card testing attack (Crisis 1). Write: the immediate
+     actions (block the IP range, refund the 312 test charges before
+     disputes are filed), the Radar rules to prevent future card
+     testing (velocity rules, small amount blocking, IP-based
+     blocking), and the assessment of whether to proactively refund
+     all 312 charges or wait.
+
+  2. Address the VDMP threshold breach (Crisis 2). Write: the
+     immediate actions (which of the 39 disputes can you resolve
+     before month-end?), the dispute rate math (how many more
+     transactions vs. disputes change the rate), the medium-term
+     plan to get back under 0.65%, and the communication to Stripe.
+
+  3. Submit evidence for the $4,500 dispute (Crisis 3). Write: the
+     evidence strategy (delivery signature even though name doesn't
+     match, freight carrier documentation, enterprise purchase order),
+     the narrative explaining the loading dock delivery process, and
+     the additional evidence to strengthen the case (PO, invoice,
+     prior communication, account activity).
+
+assertions:
+  - type: llm_judge
+    criteria: "Card testing response is fast and effective — IP blocking stops the attack, proactive refunds prevent disputes, Radar rules prevent recurrence, and the 312 charge decision is well-reasoned"
+    weight: 0.35
+    description: "Fast card testing response"
+  - type: llm_judge
+    criteria: "VDMP response addresses the math — dispute resolution options are identified, rate dilution is analyzed, medium-term plan targets 0.65%, and communication to Stripe is appropriate"
+    weight: 0.35
+    description: "VDMP-addressing response"
+  - type: llm_judge
+    criteria: "High-value evidence is submitted before deadline — addresses the signature mismatch, uses freight documentation, leverages enterprise purchasing evidence, and the narrative is compelling despite the weakness"
+    weight: 0.30
+    description: "Timely high-value evidence"

@@ -1,0 +1,70 @@
+meta:
+  id: payment-method-types
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Support multiple payment methods — implement cards, bank debits, wallets, and regional payment methods with the Payment Element"
+  tags: [stripe, payment-methods, ACH, SEPA, wallets, Apple-Pay, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at an e-commerce platform. Currently you only
+  accept credit cards. Your product manager has requests from 3 markets:
+
+  US customers: "We want Apple Pay and Google Pay for faster checkout.
+  Also, some B2B customers want to pay via ACH bank transfer for large
+  orders (>$1,000) to avoid credit card processing fees."
+
+  EU customers: "SEPA Direct Debit is standard here. Many of our
+  customers prefer bank-to-bank payments."
+
+  All customers: "Some customers want to pay later — support Klarna
+  or Afterpay for orders under $500."
+
+  Current checkout: Only supports card payments via the Card Element.
+
+  Tech stack: Node.js, React
+
+  Requirements:
+  - Apple Pay and Google Pay on supported devices
+  - ACH Direct Debit for US B2B orders >$1,000
+  - SEPA Direct Debit for EU customers
+  - Klarna for "pay later" on orders <$500
+  - Graceful degradation: if a payment method isn't available (e.g.,
+    Apple Pay on Android), don't show it
+
+  Tasks:
+  1. Migrate from the Card Element to the Payment Element and configure
+     it to support all requested payment methods. Show: the server-side
+     PaymentIntent creation with multiple payment_method_types, the
+     frontend Payment Element setup that auto-shows available methods,
+     and the conditional display logic.
+
+  2. Implement ACH Direct Debit for B2B orders. This is different from
+     card payments — explain the flow (customer authorizes, payment is
+     pending for days, then succeeds or fails). Write the code for:
+     creating the PaymentIntent, handling the microdeposit verification
+     (if needed), and managing the delayed settlement. How do you handle
+     a payment that takes 5 business days to confirm?
+
+  3. Write the payment method comparison guide for your product team.
+     For each method (card, Apple Pay, ACH, SEPA, Klarna): the
+     processing fee, the settlement timeline, the refund behavior,
+     the geographic availability, and the customer experience. Include
+     a decision matrix for which method to recommend based on order
+     size and customer location.
+
+assertions:
+  - type: llm_judge
+    criteria: "Payment Element migration is correct — PaymentIntent includes payment_method_types array, Payment Element auto-detects and shows available methods, graceful degradation works (e.g., no Apple Pay on non-Apple devices)"
+    weight: 0.35
+    description: "Correct Payment Element migration"
+  - type: llm_judge
+    criteria: "ACH implementation handles async flow — explains the multi-day settlement, microdeposit verification for new bank accounts, pending state management in the database, and webhook-based confirmation; doesn't assume instant settlement"
+    weight: 0.35
+    description: "Correct ACH async implementation"
+  - type: llm_judge
+    criteria: "Payment method comparison is accurate — correct processing fees, settlement timelines, refund behaviors, and the decision matrix makes sensible recommendations based on geography and order size"
+    weight: 0.30
+    description: "Accurate payment method comparison"

@@ -1,0 +1,83 @@
+meta:
+  id: bug-deduplication
+  level: 1
+  course: bug-report-triage
+  type: output
+  description: "Identify duplicate and related bug reports and learn to link them effectively for efficient triage"
+  tags: [bugs, deduplication, organization, triage, basics]
+
+state: {}
+
+trigger: |
+  Your bug tracker at "TaskManager" (task management SaaS) has 10
+  new reports from the last 48 hours. Several look like they might
+  be duplicates or related. Your job is to sort them out.
+
+  Reports:
+
+  #201: "Drag and drop doesn't work on the board view"
+    Reporter: QA, Chrome 120, Windows 11
+
+  #202: "Can't move tasks between columns on Kanban board"
+    Reporter: Customer, Safari 17, macOS
+
+  #203: "Board view tasks are stuck, can't rearrange them"
+    Reporter: Customer, Firefox 121, Ubuntu
+
+  #204: "The search function returns no results for tasks I know exist"
+    Reporter: Customer, Chrome 120, macOS
+
+  #205: "Search is broken — nothing comes up when I search"
+    Reporter: Internal team, Chrome 120, Windows 11
+
+  #206: "I searched for 'Q4 report' and got zero results even though
+    the task exists"
+    Reporter: Customer, mobile app (iOS)
+
+  #207: "Task notifications aren't being sent"
+    Reporter: Customer, N/A (email issue)
+
+  #208: "I'm not getting email alerts when tasks are assigned to me"
+    Reporter: Customer, N/A (email issue)
+
+  #209: "The API returns 500 when creating tasks with special
+    characters in the title (e.g., &, <, >)"
+    Reporter: Developer, API v2
+
+  #210: "Drag and drop is broken but only in the timeline view,
+    works fine on the board"
+    Reporter: QA, Chrome 120, Windows 11
+
+  Tasks:
+
+  1. Group these reports into clusters of duplicates and related
+     issues. Which reports describe the same bug?
+
+  2. For each cluster, identify the "canonical" report (the one
+     with the best quality/most information) that should be the
+     primary tracking issue.
+
+  3. #210 mentions drag-and-drop but in a different view than
+     #201-#203. Is this a duplicate or a separate issue? Explain
+     your reasoning.
+
+  4. Write the comment you'd add to a duplicate issue before closing
+     it, linking to the canonical issue.
+
+assertions:
+  - type: llm_judge
+    criteria: "Board drag-and-drop cluster is identified — #201, #202, #203 are grouped as the same bug across different browsers, while #210 is a separate issue in a different view"
+    weight: 0.25
+    description: "Board drag-drop cluster identified"
+  - type: llm_judge
+    criteria: "Search cluster is identified — #204, #205, #206 are grouped as the same search bug, with #206 noting it also affects mobile"
+    weight: 0.25
+    description: "Search cluster identified"
+  - type: llm_judge
+    criteria: "#210 is correctly separated from #201-203 — recognizes that timeline view drag-and-drop is likely a different code path than board view, making it a related but separate bug"
+    weight: 0.25
+    description: "Timeline bug correctly separated"
+  - type: llm_judge
+    criteria: "Duplicate close comment is professional — explains why the issue is being closed, links to the canonical issue, and assures the reporter their report is valued"
+    weight: 0.25
+    description: "Professional duplicate comment"

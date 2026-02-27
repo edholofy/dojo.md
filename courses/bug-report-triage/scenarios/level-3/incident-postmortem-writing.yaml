@@ -1,0 +1,88 @@
+meta:
+  id: incident-postmortem-writing
+  level: 3
+  course: bug-report-triage
+  type: output
+  description: "Write effective incident postmortems that drive learning and systemic improvement without blame"
+  tags: [bugs, postmortem, incident, blameless, advanced]
+
+state: {}
+
+trigger: |
+  "PaymentFlow" (payment processing SaaS) just recovered from a
+  4-hour outage. Write the incident postmortem.
+
+  Incident timeline:
+  - 2:00 PM: Deploy v4.12.0 (includes database schema change for
+    new currency support)
+  - 2:05 PM: Schema migration starts running
+  - 2:12 PM: Migration locks the transactions table for ALTER TABLE
+  - 2:12 PM: All payment processing stops (table locked)
+  - 2:15 PM: Monitoring alerts fire (payment error rate 100%)
+  - 2:18 PM: On-call engineer acknowledges alert
+  - 2:25 PM: Engineer identifies table lock as cause
+  - 2:30 PM: Attempts to kill the migration process
+  - 2:35 PM: Migration process killed but table is in inconsistent
+    state
+  - 2:40 PM: Decision to rollback database to pre-migration backup
+  - 3:15 PM: Database restored from backup (35 minutes for 2TB)
+  - 3:20 PM: Payment processing resumes
+  - 3:20 PM - 6:00 PM: Engineering replays 2,500 transactions that
+    occurred during the outage window but weren't processed
+  - 6:00 PM: All transactions reconciled, incident resolved
+
+  Impact:
+  - 4 hours of degraded/no payment processing
+  - 2,500 transactions delayed (average delay 3 hours)
+  - 150 merchants affected
+  - Estimated merchant revenue impact: $180,000 in delayed processing
+  - 0 transactions lost (all eventually processed)
+  - 85 support tickets filed
+  - 12 social media complaints
+
+  Contributing factors:
+  - Migration was tested on staging (10GB DB) but not on production
+    scale (2TB DB)
+  - ALTER TABLE on a 2TB table takes ~10 minutes (not tested)
+  - Deployment runbook didn't include migration impact assessment
+  - No maintenance window was scheduled
+  - On-call engineer didn't have DBA access to kill the migration
+
+  Tasks:
+
+  1. Write the full incident postmortem document:
+     - Summary
+     - Impact
+     - Timeline
+     - Root cause analysis
+     - Contributing factors
+     - What went well
+     - What went wrong
+     - Action items (with owners and deadlines)
+
+  2. The postmortem must be blameless. The engineer who wrote the
+     migration did test it — just not at production scale. How do
+     you discuss this failure without blaming the individual?
+
+  3. What are the top 5 action items that would prevent a recurrence?
+     Prioritize by impact.
+
+  4. Write the customer communication for affected merchants.
+
+assertions:
+  - type: llm_judge
+    criteria: "Postmortem is blameless — discusses the migration failure in terms of process gaps (no production-scale testing, no maintenance window) not individual failure"
+    weight: 0.25
+    description: "Blameless postmortem"
+  - type: llm_judge
+    criteria: "Action items address systemic issues — includes migration testing at scale, maintenance windows, runbook updates, and DBA access for on-call, not just 'be more careful'"
+    weight: 0.25
+    description: "Systemic action items"
+  - type: llm_judge
+    criteria: "What went well section exists — identifies positive aspects like quick detection (3 min), successful rollback, transaction replay, and zero data loss"
+    weight: 0.25
+    description: "What went well included"
+  - type: llm_judge
+    criteria: "Customer communication is transparent — explains the impact, confirms no data was lost, describes prevention measures, without excessive technical jargon"
+    weight: 0.25
+    description: "Transparent customer communication"

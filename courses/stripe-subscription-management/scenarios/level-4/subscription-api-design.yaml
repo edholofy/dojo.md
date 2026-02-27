@@ -1,0 +1,81 @@
+meta:
+  id: subscription-api-design
+  level: 4
+  course: stripe-subscription-management
+  type: output
+  description: "Design a subscription management API — architect the public-facing API for a billing platform that wraps Stripe with additional capabilities"
+  tags: [stripe, subscription, API-design, developer-experience, platform, expert]
+
+state: {}
+
+trigger: |
+  You're the API architect at a billing platform company that sits
+  on top of Stripe. Your platform serves 500 SaaS companies, and
+  they interact with subscriptions through your API (not Stripe's
+  directly). The current API was built ad-hoc and has major problems:
+
+  Developer complaints (from NPS survey, score: 32):
+  1. "Your API has 47 endpoints for subscriptions. Stripe has 8.
+     Why is yours so complex?"
+  2. "Creating a subscription requires 4 API calls in sequence.
+     Stripe does it in 1."
+  3. "Your error messages are useless. I get 'SUBSCRIPTION_ERROR'
+     with no details."
+  4. "There's no way to test webhooks locally. We're debugging in
+     production."
+  5. "Your API versioning is broken. You changed the response format
+     without a version bump and broke our integration."
+  6. "Pagination is inconsistent — some endpoints use offset, others
+     use cursor. Rate limits aren't documented."
+
+  Current API surface:
+  - 47 endpoints (many overlapping or rarely used)
+  - No versioning scheme
+  - Inconsistent error format
+  - No webhook testing tools
+  - 3 different authentication methods depending on the endpoint
+  - No idempotency support
+
+  Target: Redesign the API to achieve NPS 60+ (matching Stripe's
+  developer experience benchmark).
+
+  Tasks:
+  1. Design the new subscription API surface. Include: the resource
+     model (subscriptions, plans, customers, invoices, usage —
+     reducing from 47 to ~15 core endpoints), the subscription
+     lifecycle operations (create, update, cancel, pause, resume
+     as clean REST operations), the batch operations (bulk plan
+     changes, bulk migrations), and the real-time subscription
+     events (webhook schema matching the API resource model).
+
+  2. Define the API standards. Include: the versioning strategy
+     (URL path vs. header vs. date-based — with Stripe's approach
+     as reference), the error response format (structured errors
+     with code, message, parameter, documentation URL), the
+     authentication (API keys with scoped permissions), the
+     pagination (cursor-based, consistent across all list endpoints),
+     the rate limiting (documented limits, retry-after headers),
+     and the idempotency (idempotency keys for all mutating
+     operations).
+
+  3. Design the developer experience layer. Include: the API
+     documentation structure (interactive docs like Stripe's), the
+     webhook testing tool (local webhook forwarding, event replay),
+     the SDKs (Node, Python, Ruby — auto-generated from OpenAPI
+     spec), the sandbox environment (isolated test data per API key),
+     and the migration guide from old API to new API (with
+     compatibility shim during transition).
+
+assertions:
+  - type: llm_judge
+    criteria: "API surface is clean — reduced from 47 to ~15 core endpoints, subscription lifecycle is RESTful, batch operations handle bulk scenarios, and webhooks match the API resource model"
+    weight: 0.35
+    description: "Clean API surface"
+  - type: llm_judge
+    criteria: "API standards are consistent — versioning strategy is justified, error format is structured and useful, authentication uses scoped keys, pagination is cursor-based everywhere, rate limits are documented, and idempotency is supported"
+    weight: 0.35
+    description: "Consistent API standards"
+  - type: llm_judge
+    criteria: "Developer experience matches Stripe quality — documentation is interactive, webhook testing works locally, SDKs are generated from spec, sandbox provides isolation, and migration guide smooths the transition"
+    weight: 0.30
+    description: "Stripe-quality developer experience"

@@ -1,0 +1,77 @@
+meta:
+  id: connect-marketplace-advanced
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Build advanced Stripe Connect flows — implement multi-party payments, split payments, instant payouts, and complex fee structures"
+  tags: [stripe, Connect, marketplace, multi-party, splits, payouts, advanced]
+
+state: {}
+
+trigger: |
+  You're the lead engineer at a food delivery marketplace (like DoorDash
+  or Uber Eats). Your payment flow involves 4 parties:
+
+  1. Customer pays for food + delivery fee + tip
+  2. Restaurant receives food payment minus platform fee
+  3. Driver receives delivery fee + tip
+  4. Platform keeps the platform fee
+
+  Example order:
+  - Food: $35.00
+  - Delivery fee: $5.99
+  - Tip (for driver): $7.00
+  - Platform fee: 20% of food = $7.00
+  - Total customer charge: $47.99
+
+  Money distribution:
+  - Restaurant gets: $35.00 - $7.00 (platform fee) = $28.00
+  - Driver gets: $5.99 + $7.00 (tip) = $12.99
+  - Platform gets: $7.00
+
+  Technical requirements:
+  1. Single charge to the customer, split to 2+ connected accounts
+  2. Driver tip must go 100% to driver (labor law requirement)
+  3. Instant payouts for drivers after each delivery (Express Payout)
+  4. Weekly payouts for restaurants
+  5. Handle: order cancellations, partial refunds (wrong item), and
+     tip adjustments after delivery
+
+  Complications:
+  - Customer can update tip up to 1 hour after delivery
+  - If restaurant is closed but order was placed, full refund
+  - If food is wrong, partial refund from restaurant portion only
+  - Restaurants in different countries (US, Canada, UK)
+  - Tax withholding requirements differ by country
+
+  Tasks:
+  1. Implement the multi-party payment split. Show: the PaymentIntent
+     creation with transfer_group, the separate transfers to restaurant
+     and driver accounts, the tip handling as a separate transfer, and
+     the fee calculation. Handle the timing: when does each transfer
+     happen (immediately vs. after delivery confirmation)?
+
+  2. Implement the instant payout for drivers. Show: how to trigger
+     an instant payout after delivery confirmation, the fee for instant
+     payouts, the fallback to standard payout if instant fails, and
+     the driver's payout history view.
+
+  3. Handle the edge cases. Write the code for: order cancellation
+     (reverse all transfers), partial refund for wrong item (reverse
+     only restaurant transfer partially), tip adjustment after delivery
+     (create additional transfer or reverse and recreate), and the
+     accounting reconciliation that tracks all money movements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-party split is correct — uses transfer_group to link transfers, separate transfers to restaurant and driver, tip is a separate transfer (100% to driver), platform fee is captured via application_fee_amount or retained balance; timing is logical"
+    weight: 0.35
+    description: "Correct multi-party payment split"
+  - type: llm_judge
+    criteria: "Instant payouts use Stripe's payout API correctly — triggers after delivery, uses method: 'instant', handles the fee (1% or $0.50 min), fallback logic for bank accounts that don't support instant, and driver history is tracked"
+    weight: 0.35
+    description: "Correct instant payout implementation"
+  - type: llm_judge
+    criteria: "Edge cases handle money correctly — cancellation reverses all transfers, partial refund only affects restaurant portion, tip adjustment creates a new transfer for the difference, and reconciliation tracks every money movement"
+    weight: 0.30
+    description: "Correct edge case money handling"

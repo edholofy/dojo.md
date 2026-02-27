@@ -1,0 +1,74 @@
+meta:
+  id: payment-incident-management
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Build payment incident management — design runbooks, monitoring, and response procedures for payment system outages and failures"
+  tags: [stripe, incident-management, monitoring, runbooks, outage, SRE, expert]
+
+state: {}
+
+trigger: |
+  You're the SRE Lead responsible for payment systems at a large
+  e-commerce platform ($300M GMV). After a catastrophic payment outage
+  that lasted 2.5 hours on Black Friday (estimated $1.2M in lost
+  revenue), the CTO mandated: "Build a world-class payment incident
+  management system. I never want us to be blind to payment issues
+  again."
+
+  The Black Friday incident timeline:
+  - 10:00 AM: Stripe API latency increased from 200ms to 2,000ms
+  - 10:15 AM: First customer complaints on Twitter
+  - 10:30 AM: Engineering noticed (no alerts fired!)
+  - 10:45 AM: On-call engineer found the issue but didn't know the
+    runbook for Stripe degradation
+  - 11:00 AM: Engineer tried to switch to backup processor — the
+    failover hadn't been tested and failed
+  - 11:30 AM: Stripe confirmed the issue on their status page
+  - 12:00 PM: Quick fix — increased timeout + added retry logic
+  - 12:30 PM: Full recovery
+
+  Gaps identified in the postmortem:
+  1. No payment-specific monitoring (used generic API monitoring)
+  2. No alerts for Stripe latency or error rate changes
+  3. No payment-specific runbooks
+  4. Failover to backup processor never tested
+  5. No communication plan for payment outages
+  6. 30 minutes between first symptoms and engineering awareness
+  7. On-call rotation didn't include payment-domain expertise
+
+  Current monitoring: Datadog for application monitoring, PagerDuty for
+  alerting, generic HTTP status checks.
+
+  Tasks:
+  1. Design the payment monitoring system. Include: the specific metrics
+     to monitor for Stripe (API latency by endpoint, error rate by type,
+     webhook delivery rate, authorization rate, 3DS success rate), the
+     alert thresholds (warning vs. critical), the dashboard layout, and
+     the synthetic checks (test transaction every 5 minutes).
+
+  2. Write the payment incident runbooks. Create runbooks for: Stripe
+     API degradation (high latency), Stripe webhook delivery failure,
+     payment authorization rate drop, complete Stripe outage, and
+     internal payment service failure. Each runbook should include:
+     detection, triage, mitigation, escalation, and communication steps.
+
+  3. Design the payment incident response process. Include: the on-call
+     rotation (payment-specific vs. general), the escalation matrix
+     (who to call at what severity), the communication plan (customers,
+     internal stakeholders, executives), the failover testing schedule,
+     and the post-incident review template.
+
+assertions:
+  - type: llm_judge
+    criteria: "Monitoring system catches the Black Friday scenario — Stripe latency monitoring would detect 200ms→2000ms within minutes, authorization rate alerts would fire before customers complain, and synthetic checks provide early warning"
+    weight: 0.35
+    description: "Black-Friday-catching monitoring"
+  - type: llm_judge
+    criteria: "Runbooks are actionable — each covers detection through resolution, Stripe degradation runbook includes specific mitigation steps (increase timeout, enable retry, activate failover), and each has clear escalation criteria"
+    weight: 0.35
+    description: "Actionable payment runbooks"
+  - type: llm_judge
+    criteria: "Incident response process addresses all 7 gaps — payment-specific monitoring, proper alerts, runbooks exist, failover is tested regularly, communication plan is pre-written, detection time target is set, and on-call includes payment expertise"
+    weight: 0.30
+    description: "Gap-addressing incident process"

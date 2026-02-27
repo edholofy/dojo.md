@@ -1,0 +1,84 @@
+meta:
+  id: complex-triage-shift
+  level: 4
+  course: bug-report-triage
+  type: output
+  description: "Handle a high-stakes triage shift where multiple critical issues compete for limited resources, requiring strategic trade-offs and executive communication"
+  tags: [bugs, triage, shift-simulation, crisis, expert]
+
+state: {}
+
+trigger: |
+  You're the senior triage lead at "HealthBridge" (healthcare data
+  platform, 800 hospitals, $250M ARR, SOC 2 + HIPAA compliant).
+  It's Monday 9 AM and you're starting a triage shift that will test
+  every skill you have.
+
+  Your resources: 2 senior engineers, 3 mid-level engineers, 1 DevOps
+  engineer available for the next 8 hours.
+
+  9:00 AM — Bug Queue Review:
+  28 new bugs from the weekend, including:
+  - 3 marked "Critical" by weekend on-call
+  - 8 marked "High" by automated severity classifier
+  - 17 marked "Medium" or "Low"
+
+  9:15 AM — Critical Bug 1: Data Integrity
+  A hospital reports patient medication data is showing incorrect
+  dosages in their interface. They've manually verified 5 patients
+  with wrong data. No patient harm reported yet but they've switched
+  to paper records as a precaution.
+
+  9:45 AM — Critical Bug 2: Compliance Alert
+  Automated monitoring detected that audit logs for one data center
+  have a 4-hour gap from Saturday night. HIPAA requires complete
+  audit trails. If a compliance audit happens, this is a finding.
+
+  10:30 AM — Critical Bug 3: Integration Failure
+  A major EHR integration (serving 200 hospitals) is intermittently
+  failing, causing data sync delays of 2-6 hours. Not data loss, but
+  clinicians are seeing stale patient data.
+
+  11:00 AM — Surprise: Executive Escalation
+  The CEO forwards an email from the CIO of your largest customer
+  ($5M/year): "We're evaluating alternatives. Your platform has had
+  3 issues in the past month. I need to see your incident response
+  within the hour."
+
+  2:00 PM — Surprise: Security Report
+  The security team informs you that the audit log gap (Bug 2) may
+  have been caused by an unauthorized access attempt. What was a
+  compliance bug may be a security incident.
+
+  Tasks:
+  1. Triage all three critical bugs — assign resources, set timelines,
+     and justify your prioritization given limited staff.
+
+  2. Handle the CEO escalation — draft the response to the CIO that
+     the CEO can send within the hour. What do you commit to?
+
+  3. When the audit log gap becomes a potential security incident at
+     2 PM, how does this change your triage? What new actions are
+     required under HIPAA?
+
+  4. End-of-shift handoff — what does your handoff document look like
+     at 5 PM? What's resolved, in progress, and needs overnight
+     monitoring?
+
+assertions:
+  - type: llm_judge
+    criteria: "Patient safety is prioritized — Bug 1 (medication dosages) gets top priority because incorrect medical data could cause patient harm, regardless of the other bugs' business impact"
+    weight: 0.25
+    description: "Patient safety first"
+  - type: llm_judge
+    criteria: "Security escalation triggers HIPAA procedures — when the audit log gap becomes a potential security incident, proposes breach assessment, 60-day notification timeline evaluation, and security team engagement"
+    weight: 0.25
+    description: "HIPAA incident response"
+  - type: llm_judge
+    criteria: "CIO response is specific and time-bound — commits to concrete actions with deadlines, not vague assurances, and demonstrates understanding of the customer's frustration pattern"
+    weight: 0.25
+    description: "Concrete CIO response"
+  - type: llm_judge
+    criteria: "Shift handoff is thorough — covers status of all 3 critical bugs plus the 28-bug queue, overnight monitoring alerts, escalation contacts, and next-day action items"
+    weight: 0.25
+    description: "Thorough shift handoff"

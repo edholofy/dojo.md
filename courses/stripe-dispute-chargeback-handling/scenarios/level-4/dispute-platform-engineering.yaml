@@ -1,0 +1,78 @@
+meta:
+  id: dispute-platform-engineering
+  level: 4
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Engineer the dispute management platform — design the technical architecture for an automated, scalable dispute handling system on Stripe"
+  tags: [stripe, dispute, platform-engineering, architecture, API, automation, expert]
+
+state: {}
+
+trigger: |
+  You're the Staff Engineer leading the dispute platform rebuild.
+  The current system is a monolithic Django app that handles disputes
+  synchronously — it receives a webhook, queries 5 internal services,
+  compiles evidence, and submits to Stripe, all in a single request.
+  This worked at 200 disputes/month but fails catastrophically at
+  the current 3,500/month (timeouts, dropped webhooks, race conditions).
+
+  Current system problems:
+  - Webhook processing timeout: 30-second webhook handler tries to do
+    everything synchronously; Stripe retries create duplicates
+  - Evidence assembly bottleneck: Fetching shipping data, customer
+    comms, and order history takes 8-15 seconds per dispute
+  - No retry logic: If Stripe API returns 429 or 500, evidence
+    submission silently fails
+  - No observability: When disputes are missed, nobody knows until
+    the deadline passes
+  - Monolithic coupling: Dispute logic is tangled with order management
+    and customer service code
+  - Database contention: Dispute queries compete with order processing
+    on the same PostgreSQL instance
+
+  Technical constraints:
+  - Must maintain zero-downtime during migration
+  - Must process the existing backlog of 147 disputes while rebuilding
+  - Must integrate with Stripe's Dispute API, Evidence API, and Radar
+  - Must support future integration with Verifi RDR and Ethoca
+  - Team: 3 backend engineers, 1 frontend engineer, 6-month timeline
+
+  Tasks:
+  1. Design the dispute platform architecture. Include: the event-driven
+     webhook processing (async queue with exactly-once semantics,
+     dead letter queue, retry with exponential backoff), the evidence
+     assembly service (parallel data fetching with circuit breakers,
+     caching layer, fallback to manual when automated sources fail),
+     the Stripe API integration layer (rate limiting, retry logic,
+     idempotency keys, webhook signature verification), and the data
+     model (dispute lifecycle states, evidence tracking, audit trail).
+
+  2. Plan the migration strategy. Include: the strangler fig pattern
+     (gradually routing disputes from old to new system), the parallel
+     processing phase (new system shadows old system, comparing
+     outcomes), the cutover plan (how to switch without losing any
+     disputes), and the rollback strategy (how to revert if the new
+     system has critical bugs).
+
+  3. Design the observability and reliability layer. Include: the
+     monitoring stack (dispute processing latency, evidence submission
+     success rate, API error rates, queue depth), the alerting rules
+     (SLA breach prediction, evidence deadline approaching without
+     submission, unusual dispute volume), the distributed tracing
+     (following a dispute from webhook receipt to evidence submission
+     to resolution), and the SLA enforcement (99.9% evidence
+     submission before deadline, <5-minute webhook-to-acknowledgment).
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture solves the scaling problems — event-driven processing eliminates timeouts, evidence assembly is parallelized, Stripe integration handles failures gracefully, and data model supports the full lifecycle"
+    weight: 0.35
+    description: "Scaling-problem-solving architecture"
+  - type: llm_judge
+    criteria: "Migration strategy ensures zero disruption — strangler fig enables gradual transition, parallel processing validates correctness, cutover plan prevents dispute loss, and rollback is possible"
+    weight: 0.35
+    description: "Zero-disruption migration strategy"
+  - type: llm_judge
+    criteria: "Observability ensures reliability — monitoring covers all critical paths, alerts predict failures before they impact SLAs, tracing enables debugging, and SLAs are measurable"
+    weight: 0.30
+    description: "Reliability-ensuring observability"

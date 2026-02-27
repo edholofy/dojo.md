@@ -1,0 +1,72 @@
+meta:
+  id: billing-cycle-management
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Manage billing cycles — handle billing anchors, cycle alignment, and timing edge cases in subscription billing"
+  tags: [stripe, subscription, billing-cycle, anchor, timing, proration, intermediate]
+
+state: {}
+
+trigger: |
+  You're the billing engineer at a SaaS company, and you're
+  discovering that billing cycle timing causes more issues than
+  expected. Three problems this week:
+
+  Problem 1 — Misaligned billing dates:
+  Your sales team signed an enterprise customer who insists on
+  being billed on the 1st of each month (for their internal
+  accounting). But the customer signed up on February 15th. If you
+  create the subscription normally, their anchor date will be
+  February 15th and they'll be billed on the 15th of each month.
+
+  Problem 2 — February billing bug:
+  Customers with billing anchors on the 29th, 30th, or 31st of the
+  month are seeing inconsistent billing in February. A customer
+  anchored on January 31st expected to be billed on February 28th
+  but claims they were billed on February 28th AND March 3rd.
+
+  Problem 3 — Timezone confusion:
+  A customer in Tokyo (JST, UTC+9) signed up at 11:30 PM JST on
+  March 31st. But Stripe recorded the subscription start as April 1st
+  UTC. Now the customer's billing anchor is April 1st, not March 31st,
+  and their first invoice was for a "partial month" of 0 days with
+  a $0 charge.
+
+  Tasks:
+  1. Solve each problem. For Problem 1: implement custom billing
+     anchor dates using billing_cycle_anchor, calculate the prorated
+     first invoice (Feb 15 → Mar 1), and explain the backdate vs.
+     prorate approaches. For Problem 2: explain how Stripe handles
+     billing anchors on dates that don't exist in short months, and
+     write the code to detect and handle this edge case. For Problem
+     3: explain Stripe's UTC-based billing and write the customer
+     communication explaining the timezone behavior.
+
+  2. Write a billing cycle best practices guide for your team.
+     Include: when to use custom billing anchors (enterprise
+     alignment, cohort billing on the 1st), how prorated first
+     periods work, the short-month anchor problem and how to avoid
+     it, timezone considerations, and the billing_cycle_anchor_config
+     option for rounding behavior.
+
+  3. Implement a billing date alignment tool. Write: an endpoint
+     that takes a desired billing date and customer's signup date,
+     calculates the prorated first period amount, creates the
+     subscription with the correct anchor, and returns the billing
+     schedule for the next 12 months (accounting for short months
+     and anchor date adjustments).
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 problems are solved correctly — custom anchor with prorated first period, short-month anchor behavior is explained and handled, and timezone/UTC billing is properly communicated"
+    weight: 0.35
+    description: "Correct problem solutions"
+  - type: llm_judge
+    criteria: "Best practices guide is practical — covers custom anchors, first-period proration, short-month handling, timezone behavior, and anchor config options with actionable advice"
+    weight: 0.35
+    description: "Practical best practices guide"
+  - type: llm_judge
+    criteria: "Billing date alignment tool works — calculates prorated first period, sets correct anchor, and projects 12-month schedule accounting for edge cases"
+    weight: 0.30
+    description: "Working alignment tool"

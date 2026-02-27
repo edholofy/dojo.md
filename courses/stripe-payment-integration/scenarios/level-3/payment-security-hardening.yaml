@@ -1,0 +1,72 @@
+meta:
+  id: payment-security-hardening
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Harden payment security — implement fraud detection, rate limiting, and security monitoring for Stripe payment endpoints"
+  tags: [stripe, security, fraud, rate-limiting, monitoring, hardening, advanced]
+
+state: {}
+
+trigger: |
+  You're a security engineer at an e-commerce platform. Your payment
+  system was attacked last week:
+
+  Attack 1 — Card Testing:
+  An attacker used your checkout to test 5,000 stolen card numbers in
+  2 hours. They made $0.50 charges to validate which cards are active,
+  then used the valid cards on other sites. Stripe flagged your account
+  for "excessive test charges." You received 200 disputes.
+
+  Attack 2 — API Key Exposure:
+  A developer accidentally committed the Stripe secret key to a public
+  GitHub repository. Although rotated within 4 hours, suspicious charges
+  appeared during that window: 12 charges totaling $8,500 from IP
+  addresses in Eastern Europe.
+
+  Attack 3 — Coupon Abuse:
+  A sophisticated attacker found your promo code endpoint and brute-
+  forced coupon codes, finding a 100% discount code meant for internal
+  testing. They shared it on social media and 300 orders were placed
+  with the code before you noticed.
+
+  Current security posture (weak):
+  - No rate limiting on payment endpoints
+  - No velocity checks on card testing
+  - API keys in environment variables (good) but no key rotation policy
+  - No monitoring for unusual payment patterns
+  - Promo codes are simple strings with no usage limits
+
+  Tasks:
+  1. Implement anti-card-testing measures. Write: rate limiting on the
+     payment endpoint (per IP and per customer), velocity checks that
+     detect card testing patterns (many small charges, many different
+     cards from same IP), CAPTCHA integration for guest checkout, and
+     Stripe Radar rules to block suspicious patterns.
+
+  2. Build the API key security system. Write: the key rotation
+     procedure (automated quarterly rotation), the key exposure
+     detection (GitHub secret scanning webhook), the incident response
+     for a compromised key (immediate rotation + audit of charges made
+     during exposure window), and the least-privilege key strategy
+     (restricted keys for different services).
+
+  3. Design the payment security monitoring dashboard. Include: the
+     real-time alerting rules (unusual volume, geographic anomalies,
+     decline rate spikes, Radar risk score distribution), the automated
+     response actions (block IP, pause endpoint, escalate to on-call),
+     and the weekly security review process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Anti-card-testing measures are comprehensive — rate limiting per IP/customer is implemented, velocity detection catches many-small-charges pattern, CAPTCHA adds friction for guest checkout, and Radar rules block automated testing"
+    weight: 0.35
+    description: "Comprehensive anti-card-testing"
+  - type: llm_judge
+    criteria: "Key security system is robust — rotation is automated, exposure detection uses GitHub webhooks or scanning, incident response includes immediate rotation + charge audit + customer notification, and restricted keys follow least-privilege"
+    weight: 0.35
+    description: "Robust API key security"
+  - type: llm_judge
+    criteria: "Monitoring dashboard catches real attacks — alerting rules would detect all 3 attack types from the scenario (volume anomaly, geographic anomaly, discount abuse), automated responses limit blast radius"
+    weight: 0.30
+    description: "Attack-detecting monitoring"

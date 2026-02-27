@@ -1,0 +1,49 @@
+meta:
+  id: multichannel-cart-recovery
+  level: 4
+  course: email-abandoned-cart
+  type: output
+  description: "Design multi-channel cart recovery (email + SMS + push)"
+  tags: [email, sms, push, abandoned-cart, multichannel]
+
+state: {}
+
+trigger: |
+  "QuickShop" (a grocery delivery app) wants to implement multi-channel cart
+  recovery across email, SMS, and push notifications.
+
+  Abandoned cart:
+  - Customer: Robin, has the app installed, opted into email + SMS + push
+  - Cart: weekly groceries ($87.50, 23 items)
+  - Delivery time slot selected: Tomorrow 10am-12pm
+  - Abandoned: 30 minutes ago (still within delivery slot availability)
+
+  Channel costs:
+  - Email: $0.001 per send
+  - SMS: $0.015 per send
+  - Push notification: Free (in-app)
+
+  Constraints:
+  - Max 3 total touches in 24 hours across ALL channels
+  - The delivery slot could be taken by another customer
+  - Grocery carts are perishable — items may go out of stock
+
+  Design the complete multi-channel flow with timing, channel selection, and content.
+
+assertions:
+  - type: llm_judge
+    criteria: "Channel selection is strategic — push notification first (free, immediate), then SMS for urgency (delivery slot), email for detailed cart recap. Each channel plays to its strengths"
+    weight: 0.30
+    description: "Strategic channel selection"
+  - type: llm_judge
+    criteria: "The delivery slot urgency is used effectively — the fact that their preferred time slot could be taken creates genuine, time-sensitive urgency across channels"
+    weight: 0.25
+    description: "Delivery slot urgency leveraged"
+  - type: llm_judge
+    criteria: "The 3-touch limit is respected — the plan stays within budget and frequency constraints while maximizing recovery across the 24-hour window"
+    weight: 0.25
+    description: "Respects 3-touch frequency limit"
+  - type: llm_judge
+    criteria: "Suppression logic is defined — when the customer completes the order, all pending messages are immediately cancelled across all channels"
+    weight: 0.20
+    description: "Cross-channel suppression on conversion"

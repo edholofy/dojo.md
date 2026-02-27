@@ -1,0 +1,70 @@
+import type { ResolvedModel } from '../types/index.js';
+
+/**
+ * Parse a model string into provider + model + API key env var.
+ *
+ * Rules:
+ * - "openai/gpt-4o" (contains `/`) → OpenRouter
+ * - "claude-sonnet-4-6" (starts with `claude-`) → Anthropic direct
+ * - "openrouter:anthropic/claude-sonnet-4-6" (explicit prefix) → force OpenRouter
+ * - Fallback: if OPENROUTER_API_KEY set → OpenRouter, else → Anthropic
+ */
+export function resolveModel(modelString: string): ResolvedModel {
+  // Explicit openrouter: prefix
+  if (modelString.startsWith('openrouter:')) {
+    const model = modelString.slice('openrouter:'.length);
+    return { provider: 'openrouter', model, apiKeyEnvVar: 'OPENROUTER_API_KEY' };
+  }
+
+  // Contains `/` → OpenRouter (e.g. "openai/gpt-4o", "meta-llama/llama-3.1-70b")
+  if (modelString.includes('/')) {
+    return { provider: 'openrouter', model: modelString, apiKeyEnvVar: 'OPENROUTER_API_KEY' };
+  }
+
+  // Starts with `claude-` → Anthropic direct
+  if (modelString.startsWith('claude-')) {
+    return { provider: 'anthropic', model: modelString, apiKeyEnvVar: 'ANTHROPIC_API_KEY' };
+  }
+
+  // Fallback: check if OpenRouter key is available
+  if (process.env.OPENROUTER_API_KEY) {
+    return { provider: 'openrouter', model: modelString, apiKeyEnvVar: 'OPENROUTER_API_KEY' };
+  }
+
+  // Default to Anthropic
+  return { provider: 'anthropic', model: modelString, apiKeyEnvVar: 'ANTHROPIC_API_KEY' };
+}
+
+/**
+ * Convert a model string to a filesystem-safe slug.
+ *
+ * "openai/gpt-4o" → "openai--gpt-4o"
+ * "claude-sonnet-4-6" → "anthropic--claude-sonnet-4-6"
+ * "meta-llama/llama-3.1-70b" → "meta-llama--llama-3.1-70b"
+ */
+export function modelToSlug(modelString: string): string {
+  const resolved = resolveModel(modelString);
+
+  if (resolved.provider === 'anthropic') {
+    // Prefix with "anthropic--" for Anthropic models
+    const sanitized = resolved.model.replace(/[^a-zA-Z0-9._-]/g, '-');
+    return `anthropic--${sanitized}`;
+  }
+
+  // OpenRouter models already have org/model format
+  return resolved.model.replace(/\//g, '--').replace(/[^a-zA-Z0-9._-]/g, '-');
+}
+
+/**
+ * Validate that the required API key for a model is available.
+ * Throws with a helpful message if missing.
+ */
+export function validateApiKey(resolved: ResolvedModel): string {
+  const key = process.env[resolved.apiKeyEnvVar];
+  if (!key) {
+    throw new Error(
+      `Missing ${resolved.apiKeyEnvVar} environment variable (required for ${resolved.provider} model "${resolved.model}")`,
+    );
+  }
+  return key;
+}

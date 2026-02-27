@@ -1,0 +1,68 @@
+meta:
+  id: pci-compliance
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Implement PCI-compliant payment handling — understand PCI DSS requirements, minimize scope, and avoid common compliance mistakes"
+  tags: [stripe, PCI, compliance, security, SAQ, data-handling, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at a B2B SaaS company that just received its
+  first enterprise customer. Their security team sent a questionnaire
+  that includes: "Provide your PCI DSS compliance certification and
+  describe how you handle payment card data."
+
+  Your current setup:
+  - Using Stripe Elements (Payment Element) for card collection
+  - No card numbers ever touch your servers
+  - Payments processed via Stripe API with publishable key on frontend
+    and secret key on backend
+  - Using HTTPS everywhere
+
+  Questions from the enterprise security team:
+  1. "What is your PCI compliance level and SAQ type?"
+  2. "Do card numbers ever touch your servers or logs?"
+  3. "How do you store payment method references?"
+  4. "What happens if an employee accidentally logs a card number?"
+  5. "How do you handle tokenization?"
+  6. "Where are your Stripe API keys stored?"
+  7. "Do you have a data breach response plan for payment data?"
+
+  A developer on your team also raised a concern: "I found card numbers
+  in our server logs. The old checkout used a form that POSTed card
+  details to our server before sending to Stripe. We migrated to
+  Elements 6 months ago but the old endpoint is still in the code."
+
+  Tasks:
+  1. Answer all 7 security questionnaire questions accurately for your
+     Stripe Elements setup. Explain: your SAQ type (A vs. A-EP vs.
+     D), why Stripe Elements minimizes PCI scope, how tokenization
+     works (card number → PaymentMethod token → never on your server),
+     and your key management approach.
+
+  2. Remediate the card-in-logs issue. Write: the investigation plan
+     (find all instances of card data in logs), the cleanup process
+     (purge card data from logs, databases, backups), the code fix
+     (remove the old endpoint, add log scrubbing), and the prevention
+     measures (log filtering rules that detect and redact card numbers).
+
+  3. Write the PCI compliance documentation for your company. Include:
+     a network diagram showing where card data flows (and doesn't flow)
+     in your architecture, the annual SAQ-A self-assessment checklist,
+     and the incident response plan for a suspected payment data breach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Security answers are accurate — correctly identifies SAQ-A for Stripe Elements, explains tokenization flow, confirms cards never touch the server, describes key management (environment variables, not code), and provides honest answers about the log issue"
+    weight: 0.35
+    description: "Accurate PCI security answers"
+  - type: llm_judge
+    criteria: "Log remediation is thorough — investigation covers all log stores, cleanup includes backups, code fix removes the legacy endpoint, and prevention uses regex pattern matching to detect and redact card numbers (pattern: 4[0-9]{12}(?:[0-9]{3})? etc.)"
+    weight: 0.35
+    description: "Thorough log remediation"
+  - type: llm_judge
+    criteria: "PCI documentation is enterprise-quality — network diagram clearly shows card data flow stopping at Stripe.js, SAQ-A checklist covers the actual requirements, and breach response plan is actionable"
+    weight: 0.30
+    description: "Enterprise-quality PCI documentation"

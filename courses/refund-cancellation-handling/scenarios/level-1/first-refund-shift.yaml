@@ -1,0 +1,70 @@
+meta:
+  id: first-refund-shift
+  level: 1
+  course: refund-cancellation-handling
+  type: output
+  description: "Simulate your first shift handling refunds and cancellations — manage a queue of mixed requests requiring different responses"
+  tags: [support, refund, cancellation, simulation, shift, beginner]
+
+state: {}
+
+trigger: |
+  It's your first week handling refund and cancellation requests.
+  You work for "CloudStore" — a SaaS + e-commerce hybrid that
+  sells both physical products and software subscriptions.
+
+  Your authority: refunds up to $75, store credit up to $150.
+  Policy: 30-day returns for products, prorated for subscriptions,
+  no refund on digital downloads.
+
+  Handle this queue of 8 tickets:
+
+  Ticket 1: "I want to cancel my monthly subscription ($19/mo).
+  I've found a better alternative."
+
+  Ticket 2: "I received the wrong color phone case. I ordered
+  black, got white. Want a refund." ($25 case.)
+
+  Ticket 3: "I bought a digital course 2 days ago and it's not
+  what I expected. I want my $149 back."
+  (Digital download, no refund policy. But it's only 2 days.)
+
+  Ticket 4: "Your website charged me twice for the same order!
+  I need one charge of $62 reversed immediately."
+
+  Ticket 5: "I've been a subscriber for 2 years. I want to cancel
+  and I'd like a refund for this month since I barely used it."
+  ($39/mo plan, 18 days into the billing cycle.)
+
+  Ticket 6: "I want to return a laptop I bought 45 days ago. I
+  know your policy is 30 days but it stopped working properly."
+  ($599 laptop, outside return window, potentially defective.)
+
+  Ticket 7: "Thanks for the quick shipping! Just wanted to say
+  your customer service is great." (Not a refund request.)
+
+  Ticket 8: "I want a full refund for my annual plan ($228). I
+  signed up yesterday and realized I don't need it."
+  (Annual plan, 1 day old.)
+
+  For each ticket: process the request, write the response, and
+  note any escalation needed. After handling all 8, write a brief
+  shift summary.
+
+assertions:
+  - type: llm_judge
+    criteria: "The digital course denial is handled sensitively — the policy says no refund, but a 2-day-old purchase may warrant an exception or alternative"
+    weight: 0.25
+    description: "Sensitive digital download handling"
+  - type: llm_judge
+    criteria: "The 45-day laptop gets special treatment as potentially defective — outside the return window but if it's broken, warranty or defective policies may apply"
+    weight: 0.25
+    description: "Defective product exception consideration"
+  - type: llm_judge
+    criteria: "The 1-day-old annual plan gets a full refund — a plan purchased yesterday should always get a full refund regardless of standard policy"
+    weight: 0.25
+    description: "Same-day full refund"
+  - type: llm_judge
+    criteria: "The positive feedback ticket gets a warm response — it's not a refund but deserves acknowledgment"
+    weight: 0.25
+    description: "Positive feedback acknowledgment"

@@ -1,0 +1,49 @@
+meta:
+  id: abandoned-checkout-form
+  level: 3
+  course: email-abandoned-cart
+  type: output
+  description: "Recover a customer who abandoned during the checkout form"
+  tags: [email, abandoned-cart, checkout, form-abandonment]
+
+state: {}
+
+trigger: |
+  "HealthFirst" (an online pharmacy/supplements store) tracks where in the checkout
+  process customers abandon. This customer dropped off at a specific point.
+
+  Abandonment data:
+  - Customer: Taylor
+  - Cart: Vitamin D3 + K2 ($24.99), Omega-3 Fish Oil ($32.99), Probiotic ($28.99)
+  - Cart total: $86.97
+  - Abandoned at: Payment information step (after entering shipping address)
+  - Session data: spent 45 seconds on the payment page before leaving
+  - Device: Desktop, Chrome browser
+  - Previous behavior: first-time visitor, arrived from Google search
+
+  The 45-second pause suggests they had a specific concern. Common payment-step
+  concerns for health products from unknown brands:
+  1. Is this site secure? (first-time visitor from Google)
+  2. Is this a legitimate pharmacy?
+  3. Will my credit card be safe?
+  4. What's the return policy if products don't work?
+
+  Design a recovery email specifically for payment-step abandonment.
+
+assertions:
+  - type: llm_judge
+    criteria: "The email specifically addresses payment-step trust concerns — security badges, SSL encryption mentions, payment processor trust signals, and possibly alternative payment methods (PayPal, Apple Pay)"
+    weight: 0.30
+    description: "Payment-step trust concerns addressed"
+  - type: llm_judge
+    criteria: "Pharmacy legitimacy is established — mentions of licensing, regulatory compliance, third-party verification, or customer trust signals specific to health products"
+    weight: 0.25
+    description: "Pharmacy legitimacy established"
+  - type: llm_judge
+    criteria: "Alternative payment methods are offered — PayPal or similar trusted third-party payment that eliminates the need to enter credit card details on an unfamiliar site"
+    weight: 0.25
+    description: "Alternative payment methods offered"
+  - type: llm_judge
+    criteria: "The return/satisfaction policy is prominently featured — for health products, knowing you can return if they don't work reduces the perceived risk of the purchase"
+    weight: 0.20
+    description: "Return policy reduces perceived risk"

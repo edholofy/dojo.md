@@ -1,0 +1,77 @@
+meta:
+  id: payment-failure-recovery
+  level: 1
+  course: customer-churn-prevention
+  type: output
+  description: "Handle involuntary churn from payment failures with appropriate dunning communication sequences"
+  tags: [churn, payment-failure, dunning, involuntary, beginner]
+
+state: {}
+
+trigger: |
+  You're a customer success associate at "DesignTool" (design SaaS,
+  $12M ARR, 8,000 customers). The billing system flagged 3 customers
+  with payment failures. Your job is to handle the communication.
+
+  Payment failure types:
+
+  Customer 1: "CreativeAgency" ($100/month, 2-year customer)
+  Failure reason: Expired credit card
+  Retry attempts: 3 (all failed)
+  Status: 7 days past due
+  Account usage: Active (logged in yesterday)
+  Previous payment issues: None
+
+  Customer 2: "FreelanceJoe" ($25/month, 4-month customer)
+  Failure reason: Insufficient funds
+  Retry attempts: 2 (all failed)
+  Status: 3 days past due
+  Account usage: Active
+  Previous payment issues: 1 failed payment 2 months ago (resolved)
+
+  Customer 3: "StartupCo" ($200/month, 8-month customer)
+  Failure reason: Card declined (fraud block by bank)
+  Retry attempts: 1
+  Status: 1 day past due
+  Account usage: Very active (team of 15)
+  Previous payment issues: None
+
+  Dunning sequence policy:
+  - Day 1: Friendly notification
+  - Day 3: Reminder with urgency
+  - Day 7: Warning — service interruption in 3 days
+  - Day 10: Account suspended (read-only mode)
+  - Day 14: Final notice — data deletion in 30 days
+  - Day 44: Account deleted
+
+  Tasks:
+  1. Write the appropriate dunning email for each customer based on
+     where they are in the sequence.
+
+  2. Customer 1 is a 2-year loyal customer with an expired card.
+     Should you follow the standard dunning sequence or modify it?
+
+  3. Customer 2 has had payment issues before. Does this change your
+     communication approach?
+
+  4. Customer 3's card was fraud-blocked. This isn't their fault.
+     How should your communication differ from a standard payment
+     failure?
+
+assertions:
+  - type: llm_judge
+    criteria: "Dunning emails match sequence stage — Customer 1 gets Day 7 warning, Customer 2 gets Day 3 reminder, Customer 3 gets Day 1 friendly notification"
+    weight: 0.25
+    description: "Stage-appropriate dunning"
+  - type: llm_judge
+    criteria: "Loyal customer gets special treatment — suggests extended grace period, personal outreach, or VIP handling for the 2-year customer"
+    weight: 0.25
+    description: "Loyal customer consideration"
+  - type: llm_judge
+    criteria: "Repeat failure gets appropriate attention — recognizes the pattern and adjusts communication to be more proactive about long-term payment solution"
+    weight: 0.25
+    description: "Pattern-aware repeat failure"
+  - type: llm_judge
+    criteria: "Fraud-block communication is empathetic — explains the issue is likely a bank security measure, doesn't blame the customer, and provides specific steps to resolve"
+    weight: 0.25
+    description: "Empathetic fraud-block handling"

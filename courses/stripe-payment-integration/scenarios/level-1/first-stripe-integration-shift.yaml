@@ -1,0 +1,99 @@
+meta:
+  id: first-stripe-integration-shift
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "First Stripe integration shift — debug a broken checkout flow, fix webhook failures, and handle a customer double-charge simultaneously"
+  tags: [stripe, debugging, integration, multi-issue, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  You're on-call for a SaaS startup. It's Friday afternoon and 3
+  Stripe-related issues hit at once. Your senior developer is on
+  vacation. You need to triage and fix them.
+
+  Issue 1 — Checkout is Broken (P0):
+  Customers are reporting: "I click Pay and nothing happens." The
+  console shows:
+  ```
+  IntegrationError: Invalid value for stripe.confirmPayment():
+  elements should have a mounted Payment Element.
+  ```
+  The code was working yesterday. A frontend developer pushed a change
+  this morning that refactored the checkout page into a new component
+  structure.
+
+  Relevant code snippet (React):
+  ```jsx
+  function CheckoutPage() {
+    const stripe = useStripe();
+    const elements = useElements();
+
+    return (
+      <div>
+        <Elements stripe={stripePromise}>
+          <PaymentElement />
+        </Elements>
+        <button onClick={() => {
+          stripe.confirmPayment({
+            elements,
+            confirmParams: { return_url: 'https://example.com/success' }
+          });
+        }}>Pay</button>
+      </div>
+    );
+  }
+  ```
+
+  Issue 2 — Webhooks are Failing (P1):
+  The Stripe dashboard shows 47 failed webhook events in the last 2
+  hours. All returning 500. The server logs show:
+  ```
+  TypeError: Cannot read properties of undefined (reading 'id')
+  ```
+  The webhook endpoint code:
+  ```javascript
+  app.post('/webhooks/stripe', express.json(), (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const event = stripe.webhooks.constructEvent(
+      req.body, sig, webhookSecret
+    );
+    const paymentIntent = event.data.object;
+    await db.orders.update({ stripe_id: paymentIntent.id }, { status: 'paid' });
+    res.json({ received: true });
+  });
+  ```
+
+  Issue 3 — Double Charge Report (P1):
+  A customer emailed: "I was charged twice for order #4521. Please
+  refund one of the charges." You look in Stripe and see two
+  PaymentIntents for $299 from the same customer, created 3 seconds
+  apart. Both succeeded.
+
+  Tasks:
+  1. Diagnose and fix all 3 issues. For each: explain the root cause,
+     write the corrected code, and explain how to prevent the issue
+     from recurring.
+
+  2. Prioritize the issues. Which do you fix first and why? Write the
+     triage communication to your team (Slack message format): what's
+     happening, the impact, your fix plan, and the ETA.
+
+  3. Write the post-incident action items. For each issue: the
+     permanent fix, the monitoring/alerting to add, and the code review
+     checklist item that would have caught it.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 root causes are correctly identified — Issue 1: Elements provider wraps PaymentElement but useStripe/useElements is outside the provider, Issue 2: express.json() breaks signature verification (needs raw body) AND missing async/await, Issue 3: no idempotency key on PaymentIntent creation"
+    weight: 0.35
+    description: "Correct root cause identification"
+  - type: llm_judge
+    criteria: "Fixes are correct — Issue 1: move button inside Elements provider or restructure components, Issue 2: use express.raw() and add async, Issue 3: refund the duplicate and add idempotency keys; code is working"
+    weight: 0.35
+    description: "Correct code fixes"
+  - type: llm_judge
+    criteria: "Triage and post-incident are practical — prioritizes checkout broken as P0 (revenue impact), communication is clear, post-incident items include monitoring (webhook failure alerts, duplicate payment detection) and prevention (code review checklist)"
+    weight: 0.30
+    description: "Practical triage and post-incident"

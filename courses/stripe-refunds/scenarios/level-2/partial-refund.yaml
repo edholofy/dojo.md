@@ -1,0 +1,39 @@
+meta:
+  id: partial-refund
+  level: 2
+  course: stripe-refunds
+  description: "Customer wants a partial refund — agent must calculate the correct amount"
+  tags: [refund, partial, calculation]
+  estimated_duration: "60s"
+
+state:
+  customers:
+    - id: "cus_frank002"
+      email: "frank@example.com"
+      name: "Frank Miller"
+  charges:
+    - id: "ch_frank001"
+      amount: 12000
+      currency: "usd"
+      customer: "cus_frank002"
+      status: "succeeded"
+      refunded: false
+      amount_refunded: 0
+      description: "3-item bundle: Widget A ($40), Widget B ($50), Widget C ($30)"
+      created: 1706745600
+
+trigger: >
+  Customer frank@example.com purchased a 3-item bundle for $120.00 (Widget A $40,
+  Widget B $50, Widget C $30). He wants to return Widget B only and get a partial
+  refund of $50.00. Please process this partial refund.
+
+assertions:
+  - type: api_called
+    tool: stripe_refunds_create
+    params:
+      charge: "ch_frank001"
+      amount: 5000
+    description: "Agent should create a partial refund for exactly $50.00 (5000 cents)"
+  - type: outcome
+    expected: "A partial refund of $50.00 (5000 cents) is created for charge ch_frank001"
+    description: "Refund amount should be exactly 5000 cents, not the full charge"

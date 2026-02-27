@@ -1,0 +1,79 @@
+meta:
+  id: service-credit-basics
+  level: 1
+  course: sla-breach-communication
+  type: output
+  description: "Learn how to calculate and communicate service credits when SLA commitments are missed"
+  tags: [SLA, service-credits, calculation, fundamentals]
+
+state: {}
+
+trigger: |
+  You're a billing support specialist at "AppCloud" (PaaS provider,
+  5,000 customers). Customers are asking about service credits after
+  last week's major outage (90 minutes across all regions).
+
+  AppCloud's SLA credit schedule:
+  | Monthly Uptime    | Credit (% of monthly fee) |
+  |-------------------|---------------------------|
+  | 99.9% - 99.95%    | 10%                       |
+  | 99.0% - 99.9%     | 25%                       |
+  | 95.0% - 99.0%     | 50%                       |
+  | Below 95.0%       | 100%                      |
+
+  Last month had 30 days (43,200 minutes).
+  Total downtime: 90 minutes across all customers.
+
+  5 customers have contacted you:
+
+  Customer A: Enterprise plan ($20,000/month)
+  "What credit do I get? We also had a 15-minute outage earlier this
+  month, so our total downtime is 105 minutes."
+
+  Customer B: Pro plan ($2,000/month)
+  "I didn't even notice the outage. But my monitoring shows 90 minutes
+  of downtime. Am I eligible for a credit?"
+
+  Customer C: Starter plan ($200/month)
+  "I demand a full refund. 90 minutes is unacceptable. I lost $10,000
+  in sales because my app was down."
+
+  Customer D: Enterprise plan ($50,000/month)
+  "Your SLA says credits must be claimed within 30 days. It's day 28.
+  Am I still eligible?"
+
+  Customer E: Pro plan ($1,500/month)
+  "I want my credit applied automatically. I shouldn't have to ask
+  for something your contract guarantees."
+
+  Tasks:
+  1. Calculate the credit for each customer. Show the uptime percentage
+     and applicable credit tier.
+
+  2. Customer B didn't notice the outage. Should they still receive
+     a credit? Why or why not?
+
+  3. Customer C wants a full refund ($200) plus compensation for
+     $10,000 in lost sales. Your SLA limits credits to the percentage
+     schedule. Write the response.
+
+  4. Customer E wants automatic credits. Is this reasonable? What are
+     the pros and cons of automatic vs. claim-based credits?
+
+assertions:
+  - type: llm_judge
+    criteria: "Credit calculations are correct — 90 minutes of 43,200 = 99.79% uptime (25% credit tier); Customer A with 105 minutes = 99.76% (also 25% tier)"
+    weight: 0.25
+    description: "Correct credit calculations"
+  - type: llm_judge
+    criteria: "Customer B still gets credit — the SLA commitment was breached regardless of whether the customer noticed; they're entitled to the credit per the contract"
+    weight: 0.25
+    description: "Credit regardless of awareness"
+  - type: llm_judge
+    criteria: "Customer C response is empathetic but clear — acknowledges the business impact, explains that the SLA credit is the contractual remedy, and doesn't promise additional compensation beyond the SLA terms"
+    weight: 0.25
+    description: "Empathetic but bounded response"
+  - type: llm_judge
+    criteria: "Automatic vs claim-based analysis is balanced — recognizes that automatic credits build trust and save support time, while claim-based reduces financial exposure"
+    weight: 0.25
+    description: "Balanced auto vs claim analysis"

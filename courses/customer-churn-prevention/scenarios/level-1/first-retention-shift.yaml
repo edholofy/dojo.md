@@ -1,0 +1,72 @@
+meta:
+  id: first-retention-shift
+  level: 1
+  course: customer-churn-prevention
+  type: output
+  description: "Handle a realistic first day managing at-risk customer accounts — triaging signals, writing outreach, and making retention decisions"
+  tags: [churn, shift-simulation, triage, beginner]
+
+state: {}
+
+trigger: |
+  It's your first day as the sole customer success associate at
+  "QuickInvoice" (invoicing SaaS, $3M ARR, 1,500 customers). The
+  previous CSA left 2 weeks ago. Your manager hands you the queue.
+
+  Morning queue (9 AM):
+
+  Item 1: Cancellation request
+  "BakeryShop" ($30/month, 8 months): "Please cancel. We switched
+  to Square for invoicing."
+  Action needed: Respond today.
+
+  Item 2: At-risk alert
+  System flag: "LawOffice" ($120/month, 14 months) — logins dropped
+  from 20/month to 2/month over the last 60 days.
+  Action needed: Outreach this week.
+
+  Item 3: Payment failure
+  "PhotographerJane" ($50/month, 6 months) — card declined 5 days
+  ago. 2 retry attempts failed. No response to automated dunning
+  email.
+  Action needed: Personal follow-up.
+
+  Item 4: Angry customer
+  "ConstructionCo" ($80/month, 10 months): Left a 1-star app store
+  review: "Terrible product. Invoices look unprofessional and
+  customer support is nonexistent."
+  Action needed: Respond and attempt to retain.
+
+  Item 5: Renewal coming
+  "AccountingFirm" ($200/month, 11 months): Renewal in 30 days.
+  Health score: 65 (yellow). No recent communication.
+  Action needed: Start renewal process.
+
+  Tasks:
+  1. Prioritize these 5 items. What order do you tackle them and why?
+
+  2. Handle each item: Write the response or outreach for all 5.
+
+  3. It's now 3 PM and you've only handled 3 of 5. Which 2 can
+     wait until tomorrow?
+
+  4. At end of day, summarize what you accomplished and what's still
+     open for your manager.
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization is sound — handles the cancellation and angry review first (time-sensitive), then payment failure, then renewal and at-risk alert"
+    weight: 0.25
+    description: "Sound prioritization"
+  - type: llm_judge
+    criteria: "Responses are appropriate per scenario — cancellation gets a save attempt, at-risk gets a check-in, payment failure gets a personal follow-up, angry review gets empathetic resolution, renewal gets a health check"
+    weight: 0.25
+    description: "Appropriate scenario responses"
+  - type: llm_judge
+    criteria: "Deferral decisions are reasonable — identifies which items can safely wait 24 hours based on urgency and consequence of delay"
+    weight: 0.25
+    description: "Reasonable deferral decisions"
+  - type: llm_judge
+    criteria: "End-of-day summary is clear — lists actions taken, outcomes, and outstanding items with next steps and deadlines"
+    weight: 0.25
+    description: "Clear end-of-day summary"

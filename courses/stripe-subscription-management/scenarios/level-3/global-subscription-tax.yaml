@@ -1,0 +1,76 @@
+meta:
+  id: global-subscription-tax
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Handle global subscription taxation — implement tax calculation, collection, and remittance for subscriptions across multiple jurisdictions"
+  tags: [stripe, subscription, tax, VAT, GST, sales-tax, global, advanced]
+
+state: {}
+
+trigger: |
+  You're building the tax system for a SaaS company that sells
+  subscriptions in 40+ countries. The CFO received a letter from
+  the German tax authority: "Your company has been supplying digital
+  services to consumers in Germany without charging and remitting
+  VAT. Please provide records of all sales and submit unpaid VAT
+  for the past 3 years."
+
+  This triggered an urgent project to implement proper tax handling.
+
+  Current state:
+  - No tax is collected on any subscription (global)
+  - 12,000 subscribers across 40+ countries
+  - Revenue breakdown: US 55%, EU 25%, UK 5%, Canada 5%, Australia
+    3%, rest of world 7%
+
+  Tax requirements by region:
+  - US: Sales tax varies by state (nexus established in 15 states).
+    SaaS is taxable in some states, exempt in others.
+  - EU: VAT at customer's country rate (19-27%). B2B reverse charge
+    applies if customer provides VAT ID. Must register for OSS
+    (One-Stop Shop) or register in each country.
+  - UK: 20% VAT. Post-Brexit, separate registration from EU.
+  - Canada: GST/HST (5-15% depending on province). Digital services
+    to Canadian consumers require registration.
+  - Australia: 10% GST on digital supplies to Australian consumers.
+
+  B2B vs B2C distinction:
+  - B2B sales in the EU: reverse charge mechanism (0% VAT, customer
+    self-accounts). Requires valid VAT ID validation.
+  - B2C sales in the EU: VAT at customer's country rate.
+  - Your customer base: ~60% B2B (have company info), ~40% B2C
+
+  Tasks:
+  1. Design the tax implementation using Stripe Tax. Include: the
+     Stripe Tax configuration for each region, the customer data
+     requirements (address, tax ID for B2B), the tax ID validation
+     using Stripe's tax_id API, the reverse charge handling for
+     EU B2B, and the invoice display requirements (showing tax
+     separately, tax ID on invoice, reverse charge notice).
+
+  2. Handle the German back-tax situation. Write: the analysis of
+     3 years of German sales (estimating back-tax owed), the
+     voluntary disclosure approach to the German tax authority, the
+     technical solution to calculate and pay the back-tax, and the
+     process to prevent this in other jurisdictions.
+
+  3. Build the tax reporting and remittance system. Write: the
+     monthly tax report by jurisdiction (tax collected, tax rate,
+     number of transactions), the VAT return data for EU OSS filing,
+     the US sales tax return data by state, and the reconciliation
+     between Stripe Tax amounts and actual remittance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tax implementation covers all regions — Stripe Tax is configured for US/EU/UK/Canada/Australia, B2B reverse charge is handled with VAT ID validation, customer data collection is complete, and invoices display tax correctly"
+    weight: 0.35
+    description: "Complete multi-region tax implementation"
+  - type: llm_judge
+    criteria: "German back-tax situation is handled responsibly — back-tax estimate is calculated from historical data, voluntary disclosure approach is outlined, technical solution enables calculation, and preventive measures cover other jurisdictions"
+    weight: 0.35
+    description: "Responsible back-tax handling"
+  - type: llm_judge
+    criteria: "Tax reporting is actionable — monthly reports by jurisdiction are detailed, EU OSS filing data is structured correctly, US state reports are separated, and reconciliation ensures accuracy"
+    weight: 0.30
+    description: "Actionable tax reporting"

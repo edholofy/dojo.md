@@ -1,0 +1,85 @@
+meta:
+  id: subscription-data-pipeline
+  level: 4
+  course: stripe-subscription-management
+  type: output
+  description: "Build a subscription data pipeline — design the data architecture for real-time subscription analytics, revenue reporting, and business intelligence"
+  tags: [stripe, subscription, data-pipeline, analytics, BI, real-time, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Data Engineering at a SaaS company ($80M ARR,
+  35,000 subscribers). The CFO and VP of Sales are frustrated:
+
+  CFO: "I can't get accurate MRR numbers until 5 days after month-end.
+  The board wants real-time revenue metrics. Our Stripe dashboard
+  shows one number, our database shows another, and the ERP shows a
+  third. None of them match."
+
+  VP of Sales: "I need to know which sales cohorts have the best
+  retention. Which pricing plan has the highest LTV? Which lead
+  source produces customers that expand? I can't get any of this
+  from our current systems."
+
+  Current state:
+  - Stripe Sigma: Available but queries are slow (30+ seconds for
+    complex reports) and limited to Stripe data only
+  - Application database: Has subscription records but no historical
+    snapshots (only current state, no point-in-time queries)
+  - ERP (NetSuite): Revenue recognition data, but 2-week lag from
+    manual data entry
+  - No data warehouse. Reports are built from ad-hoc SQL queries.
+
+  Data sources to integrate:
+  - Stripe: Subscriptions, invoices, payments, refunds, disputes
+  - Application DB: Customer metadata, feature usage, plan details
+  - Salesforce: Lead source, deal size, sales rep, cohort
+  - NetSuite: Revenue recognition, deferred revenue
+  - Product analytics (Mixpanel): Feature adoption, engagement
+
+  Requirements:
+  - Real-time MRR (updated within 5 minutes of any subscription change)
+  - Historical snapshots (MRR as of any past date)
+  - Cohort analysis by any dimension (signup date, lead source, plan,
+    geography)
+  - Revenue reconciliation (Stripe ↔ application ↔ NetSuite must match)
+
+  Tasks:
+  1. Design the subscription data pipeline architecture. Include: the
+     data ingestion layer (real-time from Stripe webhooks + batch
+     from Stripe Reporting API), the transformation layer (raw Stripe
+     events → subscription facts and dimensions), the storage layer
+     (data warehouse choice — Snowflake/BigQuery/Redshift with
+     schema design), and the serving layer (real-time dashboard vs.
+     batch reports vs. ad-hoc queries).
+
+  2. Build the core subscription data models. Write: the subscription
+     facts table (one row per subscription-day with MRR, status,
+     plan), the MRR movement table (new, expansion, contraction,
+     churn, reactivation by day), the cohort dimensions (signup
+     date, lead source, plan, geography, sales rep), and the
+     reconciliation table (Stripe amount, app amount, ERP amount,
+     discrepancy flag).
+
+  3. Implement the key reports. Write: the real-time MRR dashboard
+     (current MRR, MRR trend, MRR waterfall), the cohort retention
+     analysis (retention curves by lead source, plan, and geography),
+     the revenue reconciliation report (three-way match with
+     discrepancy investigation), and the executive summary for the
+     board (ARR, NRR, GRR, ARPU, LTV:CAC with month-over-month
+     trends).
+
+assertions:
+  - type: llm_judge
+    criteria: "Pipeline architecture is well-designed — real-time ingestion handles Stripe webhooks, batch ingestion covers gaps, transformation creates clean subscription models, warehouse choice is justified, and serving layer supports all report types"
+    weight: 0.35
+    description: "Well-designed pipeline architecture"
+  - type: llm_judge
+    criteria: "Data models are analytically powerful — subscription facts enable point-in-time queries, MRR movements are individually tracked, cohort dimensions allow multi-dimensional analysis, and reconciliation catches discrepancies"
+    weight: 0.35
+    description: "Analytically powerful data models"
+  - type: llm_judge
+    criteria: "Reports answer stakeholder needs — real-time MRR satisfies the CFO, cohort analysis answers the VP of Sales, reconciliation ensures data integrity, and the board summary is executive-ready"
+    weight: 0.30
+    description: "Stakeholder-focused reports"

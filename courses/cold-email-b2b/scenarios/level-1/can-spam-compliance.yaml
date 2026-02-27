@@ -1,0 +1,62 @@
+meta:
+  id: can-spam-compliance
+  level: 1
+  course: cold-email-b2b
+  type: output
+  description: "Audit a cold email for CAN-SPAM compliance"
+  tags: [cold-email, compliance, can-spam, legal]
+
+state: {}
+
+trigger: |
+  Audit the following cold email for CAN-SPAM compliance. For each
+  requirement, indicate if the email passes or fails, and explain why.
+
+  ---
+  From: sales@growthtools.io
+  Subject: Quick question about your marketing stack
+  Reply-To: noreply@growthtools.io
+
+  Hi Marcus,
+
+  I noticed TechStart is growing quickly — congrats on the Series A!
+
+  We help scaling SaaS companies cut their marketing tool costs by 30%.
+  Our platform replaces 5+ tools with one dashboard.
+
+  Would you be open to a 10-minute call this week?
+
+  Cheers,
+  Lisa Park
+  Growth Tools
+  ---
+
+  CAN-SPAM requirements to check:
+  1. Accurate "From" information
+  2. Non-deceptive subject line
+  3. Identification as an advertisement (if applicable)
+  4. Physical postal address
+  5. Clear opt-out mechanism
+  6. Opt-out requests honored within 10 business days
+  7. Monitoring of third-party compliance
+
+  Also explain: What's the penalty for CAN-SPAM violations, and how
+  does this email need to be fixed to be fully compliant?
+
+assertions:
+  - type: llm_judge
+    criteria: "Each CAN-SPAM requirement is individually assessed — pass or fail with specific reasoning, not a blanket 'it's fine' or 'it's bad'"
+    weight: 0.30
+    description: "Individual requirement assessment"
+  - type: llm_judge
+    criteria: "The missing physical address and unsubscribe mechanism are flagged as violations — these are the two most common cold email compliance failures"
+    weight: 0.30
+    description: "Key violations correctly identified"
+  - type: llm_judge
+    criteria: "The noreply@ reply-to address is flagged as problematic — while not strictly a CAN-SPAM violation, it's a best practice issue that affects both compliance spirit and deliverability"
+    weight: 0.20
+    description: "Reply-to best practice flagged"
+  - type: llm_judge
+    criteria: "Penalty information is accurate — up to $50,120 per email violation, and the explanation of how to fix the email is specific and actionable"
+    weight: 0.20
+    description: "Accurate penalty and fix guidance"

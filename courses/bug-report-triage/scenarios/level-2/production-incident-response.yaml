@@ -1,0 +1,67 @@
+meta:
+  id: production-incident-response
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Handle bugs that become production incidents — make rollback vs. hotfix decisions under pressure"
+  tags: [bugs, production, incident, hotfix, rollback, intermediate]
+
+state: {}
+
+trigger: |
+  It's 2:15 PM on a Wednesday at "AnalyticsHub" (analytics platform).
+  A deployment went out at 1:00 PM and monitoring now shows:
+
+  - Error rate: jumped from 0.1% to 12%
+  - Affected endpoint: /api/v2/reports/generate
+  - Customer impact: ~2,000 users getting 500 errors when generating
+    reports
+  - The deployment included 8 commits from 3 developers
+  - Your on-call rotation: You're the incident commander
+
+  Timeline:
+  - 1:00 PM: Deployment completed
+  - 1:45 PM: First customer reports via support
+  - 2:00 PM: Monitoring alert fires
+  - 2:15 PM: You're now assessing the situation
+
+  Available options:
+  A) Rollback the entire deployment (5 minutes, loses all 8 commits)
+  B) Hotfix the specific issue (unknown time, keeps other commits)
+  C) Feature-flag the broken change (3 minutes if the change uses
+     a flag, but you need to check)
+
+  Tasks:
+
+  1. What's your first 5 minutes? List your immediate actions in
+     order.
+
+  2. When should you rollback vs. hotfix? What factors influence
+     this decision? Apply them to this scenario.
+
+  3. You decided to rollback. The rollback completes at 2:22 PM.
+     Write:
+     - The internal incident Slack message to engineering
+     - The customer-facing status page update
+     - The post-incident summary for tomorrow's review
+
+  4. After the rollback, how do you investigate which of the 8
+     commits caused the issue before redeploying?
+
+assertions:
+  - type: llm_judge
+    criteria: "First 5 minutes are structured — confirms the issue, assesses blast radius, communicates to the team, and makes a rollback/hotfix decision, not just 'look at logs'"
+    weight: 0.25
+    description: "Structured first 5 minutes"
+  - type: llm_judge
+    criteria: "Rollback decision is justified — with 12% error rate affecting 2,000 users and unknown hotfix time, rollback is the right call, explained in terms of customer impact vs. time"
+    weight: 0.25
+    description: "Justified rollback decision"
+  - type: llm_judge
+    criteria: "Internal and external communications differ appropriately — internal is technical and detailed, customer-facing is simple, empathetic, and focused on status/resolution"
+    weight: 0.25
+    description: "Appropriate communication split"
+  - type: llm_judge
+    criteria: "Post-rollback investigation is systematic — proposes deploying commits individually or in smaller batches, or using feature flags to isolate the problematic change"
+    weight: 0.25
+    description: "Systematic post-rollback investigation"

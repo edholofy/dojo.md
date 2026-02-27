@@ -1,0 +1,80 @@
+meta:
+  id: subscription-revenue-recognition
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Handle subscription revenue recognition — implement ASC 606 compliant revenue recognition for complex subscription structures"
+  tags: [stripe, subscription, revenue-recognition, ASC-606, deferred-revenue, accounting, advanced]
+
+state: {}
+
+trigger: |
+  You're the billing systems lead at a SaaS company preparing for
+  an audit. The finance team needs the subscription billing system
+  to support proper revenue recognition under ASC 606. Three issues
+  were flagged by the external auditor:
+
+  Issue 1 — Annual subscription recognition:
+  A customer pays $1,200 upfront for an annual subscription (January
+  1 - December 31). Current system recognizes all $1,200 as revenue
+  in January. Correct treatment: recognize $100/month over 12 months.
+  Deferred revenue at January 31: $1,100.
+
+  Issue 2 — Multi-element arrangements:
+  An enterprise deal includes:
+  - Software subscription: $5,000/month (12-month contract)
+  - Implementation services: $15,000 one-time fee
+  - Training: $3,000 one-time fee
+  - Total contract: $78,000
+
+  The auditor says: "Implementation and training are distinct
+  performance obligations. You need to allocate the transaction
+  price to each obligation based on standalone selling prices and
+  recognize revenue as each obligation is satisfied."
+
+  Issue 3 — Subscription modifications:
+  A customer upgraded from $49/month to $99/month mid-contract
+  (month 6 of 12). The auditor asks: "Is this a modification or
+  a separate contract? How do you account for the revenue change?"
+
+  Available data from Stripe:
+  - Subscription start/end dates
+  - Invoice line items with period start/end
+  - Proration credit and debit amounts
+  - Payment dates and amounts
+
+  Tasks:
+  1. Design the revenue recognition system. Write: the deferred
+     revenue calculation for annual subscriptions (spreading payment
+     over service period), the multi-element arrangement allocation
+     (transaction price allocated to performance obligations based
+     on relative standalone selling prices), and the modification
+     accounting (prospective vs. cumulative catch-up treatment).
+
+  2. Build the technical integration. Write: the data pipeline from
+     Stripe subscriptions/invoices to the revenue recognition engine,
+     the monthly journal entry generation (debit deferred revenue,
+     credit recognized revenue), the reconciliation between Stripe
+     cash receipts and recognized revenue, and the integration
+     with the general ledger/ERP.
+
+  3. Create the audit-ready reports. Write: the deferred revenue
+     schedule (opening balance, additions, recognition, ending
+     balance by month), the revenue waterfall by contract, the
+     ASC 606 disclosure notes (disaggregation of revenue, contract
+     balances, performance obligations), and the reconciliation
+     between Stripe payments and GAAP revenue.
+
+assertions:
+  - type: llm_judge
+    criteria: "Revenue recognition logic is ASC 606 compliant — annual subscriptions are spread over service period, multi-element arrangements allocate by standalone selling price, and modifications use correct accounting treatment (prospective or cumulative)"
+    weight: 0.35
+    description: "ASC 606 compliant recognition"
+  - type: llm_judge
+    criteria: "Technical integration connects Stripe to accounting — data pipeline extracts correct subscription/invoice data, journal entries are generated monthly, Stripe cash reconciles to recognized revenue, and GL integration is designed"
+    weight: 0.35
+    description: "Complete technical integration"
+  - type: llm_judge
+    criteria: "Audit reports are complete — deferred revenue schedule shows monthly movements, revenue waterfall tracks by contract, disclosure notes meet ASC 606 requirements, and Stripe-to-GAAP reconciliation is clean"
+    weight: 0.30
+    description: "Complete audit reports"

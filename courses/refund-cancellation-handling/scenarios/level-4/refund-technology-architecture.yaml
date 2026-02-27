@@ -1,0 +1,87 @@
+meta:
+  id: refund-technology-architecture
+  level: 4
+  course: refund-cancellation-handling
+  type: output
+  description: "Architect refund technology systems — design payment integration, rules engines, ML fraud detection, and multi-processor refund orchestration"
+  tags: [support, refund, technology, architecture, integration, expert]
+
+state: {}
+
+trigger: |
+  Modern refund operations require sophisticated technology that
+  integrates payment processors, fraud detection, CRM systems,
+  and customer-facing portals into a cohesive platform.
+
+  Part 1: System architecture design
+
+  "PayFlow" needs a unified refund management platform:
+
+  Current landscape:
+  - 3 payment processors (Stripe, Adyen, PayPal)
+  - Legacy refund system (10 years old, monolithic)
+  - CRM (Salesforce) with manual refund notes
+  - Accounting system (NetSuite) with manual reconciliation
+  - Fraud detection: separate vendor (Signifyd)
+  - No central refund rules engine
+  - Customer portal: basic, no self-service refunds
+
+  Requirements:
+  - Process refunds across all 3 processors from single interface
+  - Real-time fraud scoring before refund approval
+  - Automated routing based on configurable business rules
+  - Full audit trail for compliance
+  - Self-service portal for eligible refunds
+  - Real-time reporting and analytics
+  - Multi-currency support (12 currencies)
+
+  1. Design the system architecture:
+     - Component diagram (what systems, how they connect)
+     - Data flow (refund request → approval → processing → settlement)
+     - API design (key endpoints and contracts)
+     - Event-driven vs. synchronous decisions
+     - Error handling and retry strategies
+     - Multi-processor abstraction layer
+
+  2. Design the rules engine:
+     - Rule types (amount-based, customer-based, product-based,
+       pattern-based, jurisdiction-based)
+     - Rule composition (AND/OR logic, priority ordering)
+     - Rule versioning and audit trail
+     - A/B testing capability for rule changes
+     - Performance requirements (sub-100ms evaluation)
+
+  3. ML fraud detection integration:
+     - Feature engineering (what signals feed the model)
+     - Real-time scoring architecture
+     - Model serving and latency requirements
+     - Feedback loop design (confirmed fraud → model retraining)
+     - Human-in-the-loop for uncertain scores
+     - Bias monitoring and fairness metrics
+
+  4. Migration strategy:
+     Design the migration from legacy to new platform:
+     - Parallel running approach
+     - Data migration plan
+     - Feature parity checklist
+     - Rollback strategy
+     - Team training and adoption
+     - Success criteria for cutover
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture handles multi-processor complexity — the abstraction layer normalizes differences between Stripe, Adyen, and PayPal so the business logic layer doesn't need to know which processor is used"
+    weight: 0.25
+    description: "Multi-processor abstraction"
+  - type: llm_judge
+    criteria: "Rules engine design supports operational agility — business users can modify rules without engineering deployments, with proper versioning and testing"
+    weight: 0.25
+    description: "Operationally agile rules engine"
+  - type: llm_judge
+    criteria: "ML integration includes feedback loops — confirmed fraud outcomes feed back into model retraining, and there's monitoring for model drift and bias"
+    weight: 0.25
+    description: "ML feedback loop design"
+  - type: llm_judge
+    criteria: "Migration strategy is risk-aware — parallel running, rollback capability, and clear success criteria prevent the new system from causing production issues"
+    weight: 0.25
+    description: "Risk-aware migration"

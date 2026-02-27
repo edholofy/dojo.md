@@ -1,0 +1,77 @@
+meta:
+  id: 3d-secure-authentication
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Implement 3D Secure and SCA — handle Strong Customer Authentication requirements for European payments and cards requiring additional verification"
+  tags: [stripe, 3D-Secure, SCA, authentication, PSD2, Europe, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at a SaaS company expanding to European customers.
+  Your payments are failing at a high rate for EU cards. The error:
+  "This payment requires additional authentication."
+
+  Your product manager says: "20% of our EU payment attempts are failing.
+  Our US checkout works fine. Fix the EU experience."
+
+  Current failure data:
+  - US card success rate: 97%
+  - EU card success rate: 78%
+  - Most common error: payment_intent.requires_action (not handled)
+  - Customers see a blank screen when 3D Secure is triggered
+
+  Your current checkout flow (broken for 3DS):
+  ```javascript
+  // Server
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: 4999,
+    currency: 'eur',
+    payment_method: req.body.paymentMethodId,
+    confirm: true
+  });
+  res.json({ success: true }); // Always assumes success!
+
+  // Frontend
+  const response = await fetch('/api/pay', { method: 'POST', body });
+  if (response.ok) showSuccess(); // Never handles 3DS redirect
+  ```
+
+  Your company processes payments in:
+  - USD (US customers, no SCA required)
+  - EUR (EU customers, SCA required under PSD2)
+  - GBP (UK customers, SCA required)
+
+  Tasks:
+  1. Rewrite the payment flow to handle 3D Secure correctly. Server
+     side: create the PaymentIntent but handle the requires_action
+     status. Frontend side: detect when 3DS is needed, trigger the
+     authentication modal/redirect, and handle the result. Show the
+     complete flow for both 3DS and non-3DS payments.
+
+  2. Explain the SCA (Strong Customer Authentication) rules. Cover:
+     what PSD2 requires, which transactions are exempt (under €30,
+     merchant-initiated, recurring after first), how Stripe handles
+     exemption requests automatically, and how to request exemptions
+     via the API when applicable.
+
+  3. Write the monitoring and optimization plan. Include: how to track
+     3DS success/failure rates, how to identify cards that consistently
+     fail 3DS, how to reduce unnecessary 3DS challenges (using
+     payment_method_options.card.request_three_d_secure), and the
+     metrics to track for EU payment health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Payment flow handles 3DS correctly — server returns client_secret when requires_action, frontend uses handleNextAction or confirmPayment which opens 3DS modal, handles success and failure after authentication, works for both 3DS and non-3DS"
+    weight: 0.35
+    description: "Correct 3D Secure payment flow"
+  - type: llm_judge
+    criteria: "SCA explanation is accurate — correctly describes PSD2 requirements, exemption types (low-value, TRA, merchant-initiated), how Stripe's built-in optimization works, and API-level exemption requests"
+    weight: 0.35
+    description: "Accurate SCA rules explanation"
+  - type: llm_judge
+    criteria: "Monitoring plan tracks actionable metrics — 3DS success rates by country/bank, failure reasons, exemption application rates, and optimization strategies to reduce friction"
+    weight: 0.30
+    description: "Actionable 3DS monitoring plan"

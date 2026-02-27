@@ -1,0 +1,71 @@
+meta:
+  id: radar-basics
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Set up Stripe Radar basics — configure fraud prevention rules to block fraudulent transactions before they become disputes"
+  tags: [stripe, dispute, Radar, fraud-prevention, rules, risk-score, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer at an e-commerce company. Your dispute rate
+  has been climbing — 0.6% last month, up from 0.3% three months
+  ago. Your manager says: "We need to prevent fraud before it
+  happens, not just fight disputes after. Set up Stripe Radar."
+
+  Current fraud patterns (from analyzing recent disputes):
+  - 40% are from cards with non-matching CVC
+  - 25% are from high-risk countries (Nigeria, India, Pakistan —
+    where you don't ship)
+  - 15% are orders over $500 from new customers with no previous
+    purchase history
+  - 10% are rapid-fire purchases (3+ orders in 10 minutes from
+    the same email)
+  - 10% are miscellaneous
+
+  Stripe Radar features available:
+  - Built-in machine learning (risk score 0-100 for each charge)
+  - Default rules (already blocking some obvious fraud)
+  - Custom rules (you can write rules based on card, customer,
+    and charge attributes)
+  - Allow/block lists (whitelist trusted customers, blacklist
+    known fraudsters)
+  - 3D Secure requests (can request 3DS for risky transactions)
+
+  Tasks:
+  1. Configure Radar rules to address the fraud patterns. Write:
+     the rule to block charges with failed CVC checks, the rule
+     to block charges from countries where you don't ship, the
+     rule to review (not block) orders over $500 from first-time
+     customers, the rule to block rapid-fire purchases, and the
+     3DS request rule for medium-risk transactions (risk score
+     between 50-75).
+
+  2. Explain how Stripe Radar's risk scoring works. Include: what
+     factors influence the risk score, how the ML model learns from
+     your transaction history, the difference between "block,"
+     "review," and "allow" actions, and how to interpret risk scores
+     for decision-making.
+
+  3. Set up the allow/block lists and monitoring. Write: how to add
+     known fraudulent emails and cards to the block list, how to
+     whitelist your enterprise customers (so they're never blocked),
+     the webhook handler for radar.early_fraud_warning (Stripe
+     detected fraud before a dispute was filed), and the monitoring
+     dashboard showing: block rate, review rate, false positive
+     rate, and overall fraud rate trend.
+
+assertions:
+  - type: llm_judge
+    criteria: "Radar rules address all fraud patterns — CVC failure blocking, country restrictions, high-value first-timer review, rapid-fire blocking, and 3DS for medium risk; rules use correct Radar rule syntax"
+    weight: 0.35
+    description: "Pattern-addressing Radar rules"
+  - type: llm_judge
+    criteria: "Risk scoring explanation is accurate — factors are correctly described, ML learning is explained, block/review/allow distinction is clear, and risk score interpretation is practical"
+    weight: 0.35
+    description: "Accurate risk scoring explanation"
+  - type: llm_judge
+    criteria: "Lists and monitoring are set up — block list handles known fraudsters, allow list protects enterprise customers, early fraud warning webhook is handled, and monitoring tracks key fraud metrics"
+    weight: 0.30
+    description: "Complete lists and monitoring"

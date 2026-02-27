@@ -1,0 +1,53 @@
+meta:
+  id: triage-automation-actions
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Automate triage with GitHub Actions — design workflows that auto-label, auto-assign, and auto-respond to new issues"
+  tags: [github, issue-triage, automation, GitHub-Actions, workflows, intermediate]
+
+state: {}
+
+trigger: |
+  You're a DevOps engineer for a project that receives 40 new issues
+  per week. Manual triage takes 5 hours/week and is often delayed on
+  weekends. The team wants to automate the routine parts of triage.
+
+  Current manual steps that could be automated:
+  1. Apply "needs-triage" label to every new issue
+  2. Auto-label based on issue title keywords (e.g., "crash" → bug,
+     "request" → feature, "docs" → documentation)
+  3. Assign issues to the on-call triager based on a weekly rotation
+  4. Post a welcome comment on first-time contributor issues
+  5. Auto-close issues that don't use the issue template
+  6. Add issues to the "Triage" GitHub Project board
+
+  GitHub Actions context:
+  - Trigger events: issues.opened, issues.labeled, issues.assigned
+  - Available actions: actions/github-script, dessant/label-actions
+  - Can use the GitHub API via the github context in workflows
+  - GITHUB_TOKEN has write access to issues and projects
+
+  Task: Design the GitHub Actions automation suite. Write: the
+  auto-labeling workflow (trigger on issues.opened, analyze title and
+  body with keyword matching, apply appropriate labels), the
+  auto-assignment workflow (rotate assignment among 3 maintainers
+  based on day of week or round-robin), the welcome bot workflow
+  (detect first-time contributors and post a welcome message with
+  contributing guidelines), and the template enforcement workflow
+  (check if the issue body matches a template, comment asking for
+  required info if not). Include the YAML workflow definitions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Auto-labeling is effective — keyword matching covers common patterns, multiple labels can be applied, false positive handling exists, and the workflow is triggered correctly on issues.opened"
+    weight: 0.35
+    description: "Effective auto-labeling"
+  - type: llm_judge
+    criteria: "Auto-assignment distributes workload fairly — rotation logic is clear, handles edge cases (weekends, vacations), and the assignment mechanism uses GitHub's assignee API"
+    weight: 0.35
+    description: "Fair auto-assignment"
+  - type: llm_judge
+    criteria: "Welcome bot and template enforcement improve contributor experience — welcome message is friendly and informative, template check is helpful not punitive, and enforcement doesn't discourage valid reports"
+    weight: 0.30
+    description: "Experience-improving automation"

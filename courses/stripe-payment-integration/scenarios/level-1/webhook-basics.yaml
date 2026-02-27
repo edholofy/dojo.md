@@ -1,0 +1,61 @@
+meta:
+  id: webhook-basics
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Handle Stripe webhooks — implement a webhook endpoint that receives, verifies, and processes Stripe events securely"
+  tags: [stripe, webhooks, events, signature-verification, security, beginner]
+
+state: {}
+
+trigger: |
+  You're adding webhook handling to your Stripe integration. Your tech
+  lead said: "Never rely on the redirect URL to confirm payment. Always
+  use webhooks as the source of truth."
+
+  Tech stack: Node.js/Express
+
+  Requirements:
+  1. Create a POST endpoint at /api/webhooks/stripe
+  2. Verify the webhook signature using the signing secret
+  3. Handle these events:
+     - payment_intent.succeeded
+     - payment_intent.payment_failed
+     - checkout.session.completed
+  4. Return 200 quickly (within 5 seconds) to avoid retries
+  5. Make the event processing idempotent
+
+  Your current bug: The previous developer used express.json() middleware
+  globally, which parses the request body before you can verify the
+  signature. The signature verification keeps failing with:
+  "No signatures found matching the expected signature for payload."
+
+  Tasks:
+  1. Write the webhook endpoint with proper signature verification.
+     Fix the body parsing issue (hint: you need the raw body, not the
+     parsed JSON). Show the complete Express setup including the
+     middleware configuration.
+
+  2. Write the event handlers for the 3 event types. For each: extract
+     the relevant data from the event object, perform the business
+     logic (e.g., activate subscription, send failure email, fulfill
+     order), and handle errors without crashing the endpoint.
+
+  3. Explain: What happens if your webhook endpoint is down? How does
+     Stripe retry? What is idempotency in the context of webhooks and
+     why does it matter? Write the idempotency check code (using a
+     database to track processed event IDs).
+
+assertions:
+  - type: llm_judge
+    criteria: "Webhook endpoint is secure — uses raw body for signature verification (express.raw or custom middleware), correctly calls stripe.webhooks.constructEvent, returns 200 status, handles signature verification errors with 400"
+    weight: 0.35
+    description: "Secure webhook signature verification"
+  - type: llm_judge
+    criteria: "Event handlers extract correct data — payment_intent.succeeded gets payment details, payment_failed gets failure reason, checkout.session.completed gets session and customer data; business logic is reasonable"
+    weight: 0.35
+    description: "Correct event data extraction"
+  - type: llm_judge
+    criteria: "Idempotency explanation is accurate — explains Stripe's retry schedule (up to 3 days), why duplicate processing is dangerous, and the idempotency check stores event IDs to prevent double-processing"
+    weight: 0.30
+    description: "Accurate idempotency implementation"

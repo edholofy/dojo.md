@@ -1,0 +1,77 @@
+meta:
+  id: scheduled-maintenance-sla
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Manage the intersection of scheduled maintenance and SLA commitments — planning windows, customer communication, and handling maintenance that runs over"
+  tags: [SLA, maintenance, planning, communication, intermediate]
+
+state: {}
+
+trigger: |
+  You're the operations manager at "CloudDB" (managed database service,
+  3,000 customers). You need to perform a critical infrastructure
+  upgrade that requires 4 hours of downtime.
+
+  SLA terms for scheduled maintenance:
+  - 72-hour advance notice required
+  - Scheduled maintenance doesn't count against uptime SLA
+  - Maximum 8 hours of scheduled maintenance per month
+  - Must occur between 10 PM and 6 AM in customer's timezone
+  - You've already used 2 hours this month (6 remaining)
+
+  Complications:
+  - Your customers span 5 timezones. "10 PM to 6 AM" in San Francisco
+    is business hours in Tokyo
+  - The upgrade is security-critical (patching a known vulnerability)
+  - 200 enterprise customers have custom maintenance windows in their
+    contracts (some restrict maintenance to weekends only)
+  - 3 customers are in the middle of critical data migrations and
+    asked to be excluded from any maintenance this month
+
+  Scenario 1: The planned maintenance
+  Write the maintenance notification, schedule the window, and handle
+  customer objections.
+
+  Scenario 2: Maintenance runs over
+  The 4-hour window expires but the upgrade isn't complete. You need
+  2 more hours. The extra time would:
+  - Exceed the 6-hour remaining monthly maintenance budget
+  - Extend into business hours for European customers
+  - Mean the maintenance now counts against the SLA
+
+  Scenario 3: Emergency maintenance
+  Before the planned maintenance, a zero-day vulnerability is
+  discovered that requires an immediate 30-minute patch. There's no
+  time for 72-hour notice.
+
+  Tasks:
+  1. Write the maintenance notification for Scenario 1. Include timing
+     for all 5 timezones.
+
+  2. Handle the 3 customers requesting exclusion from maintenance.
+     Can you accommodate them? What are the options?
+
+  3. When maintenance runs over (Scenario 2), how do you communicate
+     the extension in real-time? Does the extra time count as downtime?
+
+  4. For the emergency maintenance (Scenario 3), how do you handle
+     the 72-hour notice requirement? Write the emergency notification.
+
+assertions:
+  - type: llm_judge
+    criteria: "Maintenance notification includes all timezones — presents the window in each customer's local time so no one has to do math"
+    weight: 0.25
+    description: "Timezone-inclusive notification"
+  - type: llm_judge
+    criteria: "Exclusion requests are handled practically — proposes alternatives like scheduling those customers separately, offering rolling upgrades, or explaining why exclusion isn't possible"
+    weight: 0.25
+    description: "Practical exclusion handling"
+  - type: llm_judge
+    criteria: "Overrun communication is real-time and honest — provides live updates as the maintenance extends, clearly states that the extension may count as unplanned downtime"
+    weight: 0.25
+    description: "Honest overrun communication"
+  - type: llm_judge
+    criteria: "Emergency maintenance justification is clear — explains why the zero-day vulnerability overrides the 72-hour notice requirement, citing the security risk of waiting"
+    weight: 0.25
+    description: "Clear emergency justification"

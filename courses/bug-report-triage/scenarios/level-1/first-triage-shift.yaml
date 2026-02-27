@@ -1,0 +1,66 @@
+meta:
+  id: first-triage-shift
+  level: 1
+  course: bug-report-triage
+  type: output
+  description: "Handle your first day of bug triage — process a queue of reports, classify, respond, and escalate appropriately"
+  tags: [bugs, simulation, first-day, triage, basics]
+
+state: {}
+
+trigger: |
+  It's your first day handling bug triage at "DataDash" (analytics
+  dashboard SaaS). You have 2 hours before the daily standup and
+  10 bugs in the queue. Process them all.
+
+  Your toolkit:
+  - Bug tracker (Jira)
+  - Severity scale: Critical, Major, Minor, Trivial
+  - Priority: P0 (immediate), P1 (this sprint), P2 (next sprint),
+    P3 (backlog)
+  - You can: classify, acknowledge, request info, mark as duplicate,
+    escalate, or assign
+
+  The queue:
+
+  1. "Dashboard blank page after login" — Critical alert from
+     monitoring, affecting 15% of users, started 20 minutes ago
+  2. "Chart colors don't match brand guide" — From design team
+  3. "Data export times out for date ranges > 1 year" — Customer
+  4. "SQL injection possible via custom filter input" — From
+     security audit
+  5. "Tooltip shows wrong date format (MM/DD vs DD/MM)" — Customer
+     in UK
+  6. "Same as #1 — blank dashboard" — From customer support team
+  7. "Can you add a 'compare periods' feature?" — Customer request
+  8. "Charts render incorrectly on Internet Explorer 11" — Customer
+  9. "Refresh rate on real-time dashboard is 60s, should be 10s" —
+     Enterprise customer
+  10. "Memory leak in chart rendering — page crashes after 4 hours
+      open" — From internal monitoring
+
+  Tasks:
+  1. Process all 10 items: classify severity/priority, decide action,
+     and write a one-sentence plan for each.
+  2. Write full acknowledgment responses for your top 3 priorities.
+  3. Which items require escalation, and to whom?
+  4. After processing, write the standup update summarizing today's
+     triage queue.
+
+assertions:
+  - type: llm_judge
+    criteria: "SQL injection (#4) and blank page (#1) are top priorities — security vulnerability and active incident affecting 15% of users are both P0 requiring immediate escalation"
+    weight: 0.25
+    description: "Critical items prioritized"
+  - type: llm_judge
+    criteria: "Feature request (#7) and IE11 bug (#8) are handled appropriately — feature request redirected out of bug queue, IE11 assessed for support status (likely won't fix if EOL)"
+    weight: 0.25
+    description: "Non-bugs handled correctly"
+  - type: llm_judge
+    criteria: "Duplicate (#6) is linked to #1 — identified as the same blank dashboard issue and linked rather than treated as separate"
+    weight: 0.25
+    description: "Duplicate identified"
+  - type: llm_judge
+    criteria: "Standup update is concise and actionable — summarizes the queue status, highlights the active incident and security issue, and communicates what needs attention"
+    weight: 0.25
+    description: "Concise standup update"

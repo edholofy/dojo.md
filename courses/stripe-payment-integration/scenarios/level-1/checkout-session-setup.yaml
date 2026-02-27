@@ -1,0 +1,58 @@
+meta:
+  id: checkout-session-setup
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Set up Stripe Checkout Sessions — implement the hosted checkout page for a simple product purchase with success and cancel URLs"
+  tags: [stripe, checkout, sessions, hosted-page, redirect, beginner]
+
+state: {}
+
+trigger: |
+  You're building an e-commerce site that sells digital products. Your
+  product manager wants the simplest possible checkout: "Use Stripe's
+  hosted checkout page. I don't want us building custom payment forms."
+
+  Product: "Pro Template Pack" — $49.99, one-time purchase
+  Tech stack: Next.js with API routes
+
+  Requirements:
+  1. Create a Checkout Session when the user clicks "Buy Now"
+  2. Redirect the user to Stripe's hosted checkout page
+  3. Handle the success URL (with the session ID)
+  4. Handle the cancel URL
+  5. Retrieve the session details after payment to confirm the purchase
+
+  The product manager also wants:
+  - Customer email to be pre-filled if they're logged in
+  - The checkout page to show the product name and image
+  - A 10% discount code "SAVE10" to work at checkout
+
+  Tasks:
+  1. Write the API route that creates the Checkout Session. Include:
+     line_items with the product details, success_url and cancel_url
+     with proper query parameters, customer_email pre-fill, and the
+     promotion code configuration.
+
+  2. Write the success page that retrieves the session details and
+     confirms the purchase. Show how to use the session_id from the
+     URL to fetch payment details and display a confirmation.
+
+  3. Explain: When should you use Checkout Sessions vs. PaymentIntents
+     with custom Elements? List the trade-offs (customization vs.
+     simplicity, PCI compliance scope, conversion optimization,
+     feature availability).
+
+assertions:
+  - type: llm_judge
+    criteria: "Checkout Session creation is correct — line_items with proper price_data (amount 4999), mode 'payment', success/cancel URLs with session_id parameter, customer_email pre-fill, allow_promotion_codes enabled"
+    weight: 0.35
+    description: "Correct Checkout Session creation"
+  - type: llm_judge
+    criteria: "Success page properly retrieves session — uses session_id from URL, calls stripe.checkout.sessions.retrieve on the server, displays relevant payment confirmation data, handles edge cases"
+    weight: 0.35
+    description: "Proper session retrieval and confirmation"
+  - type: llm_judge
+    criteria: "Trade-off explanation is accurate — correctly identifies when to use Checkout (simplicity, lower PCI scope, built-in optimization) vs. Elements (customization, embedded flow, full control)"
+    weight: 0.30
+    description: "Accurate Checkout vs Elements comparison"

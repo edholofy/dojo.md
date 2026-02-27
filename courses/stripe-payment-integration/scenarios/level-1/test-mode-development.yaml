@@ -1,0 +1,61 @@
+meta:
+  id: test-mode-development
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Develop with Stripe test mode — use test cards, test clocks, and the Stripe CLI to develop and debug payment integrations locally"
+  tags: [stripe, testing, test-mode, CLI, development, debugging, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer starting a new Stripe integration. Your tech lead
+  said: "I don't want to see a single real card number in our codebase
+  or logs. Set up proper test mode development."
+
+  You need to set up your local development environment for Stripe.
+
+  Your app: A SaaS platform with monthly billing ($29/month, $99/month,
+  $299/month plans)
+
+  Issues from the previous developer:
+  1. They hardcoded the Stripe secret key in the source code (committed
+     to git!)
+  2. They used their personal Stripe account for testing
+  3. They never tested webhook handling locally
+  4. They didn't write any automated tests for payment flows
+
+  Tasks:
+  1. Write the environment setup guide. Include: how to manage API keys
+     securely (environment variables, .env files, secret managers), how
+     to use test mode vs. live mode keys, the Stripe CLI setup for
+     local webhook testing (stripe listen --forward-to), and how to
+     trigger test events from the CLI.
+
+  2. Create a test matrix using Stripe's test card numbers. Cover:
+     successful payments (4242...), declined cards (4000000000000002),
+     3D Secure required (4000002500003155), specific decline codes
+     (insufficient funds, expired card, processing error), and
+     international cards. For each: the card number, what it tests,
+     and the expected behavior.
+
+  3. Write automated tests for your payment flow using a testing
+     framework (Jest/Vitest). Test: creating a PaymentIntent, handling
+     a successful payment webhook, handling a failed payment webhook,
+     and customer creation. Use Stripe's test mode API — not mocks —
+     for integration tests. Explain the trade-offs of testing against
+     real Stripe test API vs. mocking.
+
+assertions:
+  - type: llm_judge
+    criteria: "Environment setup is secure — uses environment variables (not hardcoded keys), .env is in .gitignore, explains test vs live key prefixes (sk_test_ vs sk_live_), Stripe CLI setup with webhook forwarding is correct"
+    weight: 0.35
+    description: "Secure environment setup"
+  - type: llm_judge
+    criteria: "Test matrix is comprehensive — covers at least 8 test cards with correct numbers, expected behaviors, and use cases; includes both positive and negative scenarios; explains when to use each"
+    weight: 0.35
+    description: "Comprehensive test card matrix"
+  - type: llm_judge
+    criteria: "Automated tests are practical — tests create real Stripe objects in test mode, verify webhook handling, clean up test data, and the trade-off discussion covers speed vs. accuracy of mocks vs. real API"
+    weight: 0.30
+    description: "Practical automated payment tests"

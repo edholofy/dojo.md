@@ -1,0 +1,78 @@
+meta:
+  id: refund-basics
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Process Stripe refunds — implement full and partial refunds, handle refund webhooks, and manage refund states"
+  tags: [stripe, refunds, partial-refunds, webhooks, customer-service, beginner]
+
+state: {}
+
+trigger: |
+  You're building the admin panel for an e-commerce site. The customer
+  service team needs the ability to process refunds. They want:
+
+  1. Full refunds (return the entire amount)
+  2. Partial refunds (return a specific amount)
+  3. Refund status tracking
+  4. Automatic email notification to the customer when refunded
+
+  Tech stack: Node.js/Express, PostgreSQL
+
+  Current orders table:
+  ```sql
+  CREATE TABLE orders (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    stripe_payment_intent_id VARCHAR(255),
+    amount INTEGER NOT NULL, -- in cents
+    status VARCHAR(50) DEFAULT 'paid',
+    refund_amount INTEGER DEFAULT 0,
+    refunded_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+  );
+  ```
+
+  Business rules:
+  - Full refunds allowed within 30 days of purchase
+  - Partial refunds allowed within 60 days
+  - No refunds after 60 days
+  - Maximum 3 partial refunds per order
+  - Refund amount cannot exceed the original charge minus previous
+    refunds
+
+  Edge cases to handle:
+  - What if the customer's card has been canceled?
+  - What if a refund fails (e.g., the charge was disputed)?
+  - What if the network fails during the refund API call?
+
+  Tasks:
+  1. Write the refund API endpoint (POST /api/orders/:id/refund).
+     Accept full or partial refund requests. Validate against business
+     rules. Call the Stripe Refund API. Update the database. Handle
+     errors.
+
+  2. Write the webhook handler for refund events: charge.refunded and
+     charge.refund.updated. Update the order status in your database
+     based on the webhook (not just the API response — webhooks are
+     the source of truth).
+
+  3. Explain: What's the difference between a refund and a void? When
+     should you use each? What happens to the Stripe processing fee
+     when you refund? Write the code to detect whether a charge can
+     be voided instead of refunded (hint: check if the charge has been
+     captured).
+
+assertions:
+  - type: llm_judge
+    criteria: "Refund endpoint is correct — validates business rules (30/60 day windows, max 3 partial refunds, amount validation), calls stripe.refunds.create with payment_intent and amount, updates database, handles Stripe errors"
+    weight: 0.35
+    description: "Correct refund endpoint with business rules"
+  - type: llm_judge
+    criteria: "Webhook handlers update database as source of truth — processes charge.refunded to update order status, handles partial vs full refund distinction, and is idempotent"
+    weight: 0.35
+    description: "Source-of-truth webhook handling"
+  - type: llm_judge
+    criteria: "Refund vs void explanation is accurate — voids cancel uncaptured charges without fees, refunds return captured funds but Stripe keeps the processing fee (as of current policy), code checks capture status correctly"
+    weight: 0.30
+    description: "Accurate refund vs void explanation"

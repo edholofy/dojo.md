@@ -1,0 +1,79 @@
+meta:
+  id: intermediate-subscription-shift
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Intermediate subscription shift — handle three simultaneous billing crises involving dunning failures, pricing migration errors, and metered billing discrepancies"
+  tags: [stripe, subscription, shift-simulation, billing-crisis, dunning, intermediate]
+
+state: {}
+
+trigger: |
+  You're the senior billing engineer, and it's the first business day
+  after a long holiday weekend. Three crises are waiting:
+
+  Crisis 1 — Dunning disaster:
+  During the holiday, 47 subscriptions were automatically cancelled
+  due to failed payments. Normally, your dunning system sends 4
+  warning emails before cancellation. But the email service was down
+  for maintenance over the weekend, so customers received NO warnings
+  — they went from active to past_due to cancelled with no
+  notification. Affected customers are calling in angry.
+
+  Revenue impact: $8,400/month in MRR from 47 cancelled subscriptions.
+  Challenge: You need to reactivate these subscriptions without
+  double-charging (some cards may work now that the holiday is over).
+
+  Crisis 2 — Migration script error:
+  Your pricing migration script (moving 2,400 customers to new
+  pricing) ran over the weekend. It was supposed to schedule changes
+  for July 1st. But a bug in the date calculation caused 340 customers
+  to be immediately switched to the new (higher) pricing. They were
+  charged the new rate yesterday instead of keeping their old rate
+  for 3 more months.
+
+  Affected: 340 customers, average overcharge of $15/customer = $5,100
+  total overcharge. Some customers have already seen the charge and
+  contacted support.
+
+  Crisis 3 — Metered billing discrepancy:
+  Your usage-based billing system reported incorrect usage for 23
+  enterprise customers. A timezone bug caused API calls made between
+  midnight and 1 AM UTC to be counted in both the current and
+  previous billing period, resulting in double-counted usage.
+
+  Impact: 23 customers overbilled by an average of $340 each = $7,820
+  total overbilling.
+
+  Tasks:
+  1. Prioritize and triage. Rank the 3 crises by urgency and
+     customer impact. For each: the immediate action (first 2 hours),
+     the resolution plan (same day), and the customer communication.
+
+  2. Implement the technical fixes. For Crisis 1: write the
+     reactivation script that creates new subscriptions for cancelled
+     customers at their previous rate, with payment retry (not
+     immediate charge). For Crisis 2: write the rollback script that
+     reverts the 340 customers to old pricing and issues prorated
+     refunds for the overcharge. For Crisis 3: write the usage
+     correction script that recalculates invoices and issues credits.
+
+  3. Write the post-incident report. Include: root cause analysis
+     for each crisis, the preventive measures (email service
+     monitoring for dunning, staging environment for migration
+     scripts, usage deduplication for metered billing), and the
+     testing checklist for future billing operations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage is sensible — crises are prioritized by urgency and customer impact, immediate actions are achievable in 2 hours, resolution plans are same-day, and customer communications are appropriate for each situation"
+    weight: 0.35
+    description: "Sensible triage and prioritization"
+  - type: llm_judge
+    criteria: "Technical fixes are correct — reactivation avoids double-charging, rollback reverts pricing and issues accurate refunds, and usage correction recalculates with proper deduplication"
+    weight: 0.35
+    description: "Correct technical fixes"
+  - type: llm_judge
+    criteria: "Post-incident report is thorough — root causes are identified, preventive measures would actually prevent recurrence, and testing checklist covers billing operations"
+    weight: 0.30
+    description: "Thorough post-incident report"

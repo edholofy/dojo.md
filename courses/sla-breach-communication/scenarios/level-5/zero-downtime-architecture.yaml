@@ -1,0 +1,72 @@
+meta:
+  id: zero-downtime-architecture
+  level: 5
+  course: sla-breach-communication
+  type: output
+  description: "Design and communicate a zero-downtime architecture strategy — achieving five-nines reliability while managing customer expectations and the SLA implications"
+  tags: [SLA, architecture, five-nines, zero-downtime, master]
+
+state: {}
+
+trigger: |
+  You're the CTO of "CriticalPath" ($400M ARR, financial
+  infrastructure). Your largest customer segment (banks) is
+  demanding 99.999% uptime (5.26 minutes downtime per year). You
+  currently deliver 99.95% (4.38 hours per year).
+
+  The gap: From 99.95% to 99.999% — reducing downtime from
+  4.38 hours/year to 5.26 minutes/year.
+
+  Current architecture:
+  - Single-region primary with cross-region DR (warm standby)
+  - Failover: manual, takes 15-30 minutes
+  - Deployment: Blue-green with 5-minute switchover
+  - Database: Single-primary with async replication (RPO: 30 sec)
+  - External dependencies: 5 vendors, none with 99.999% SLAs
+  - Mean time to detect: 3 minutes
+  - Mean time to resolve: 45 minutes
+
+  Proposed architecture changes:
+  1. Multi-region active-active ($15M investment)
+  2. Automated failover (<30 second switchover)
+  3. Multi-primary database with synchronous replication
+  4. Zero-downtime deployment pipeline
+  5. Redundant vendor strategy (2 providers for each dependency)
+
+  Challenges:
+  - Active-active at financial-grade consistency is extremely hard
+  - Sync replication adds 50ms latency (banks care about latency)
+  - 5 vendors need to either match 99.999% or be fully redundant
+  - Testing five-nines is nearly impossible (you can't wait a year)
+  - The cost of five-nines is estimated at $30M over 3 years
+
+  Tasks:
+  1. Design the technical architecture for five-nines. How do you
+     handle the consistency vs. latency trade-off?
+
+  2. How do you contractually guarantee 99.999% when your vendors
+     don't offer it? Design the vendor redundancy SLA.
+
+  3. How do you validate five-nines before committing it contractually?
+     You can't prove it with historical data.
+
+  4. Design the SLA communication strategy: How do you announce
+     five-nines to customers? What if you offer it and then miss it?
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture addresses consistency-latency trade-off — proposes practical solutions like tiered consistency levels, regional routing, or async-with-reconciliation"
+    weight: 0.25
+    description: "Practical consistency-latency architecture"
+  - type: llm_judge
+    criteria: "Vendor redundancy SLA is realistic — designs composite reliability from redundant vendors with failover architecture that exceeds any single vendor's SLA"
+    weight: 0.25
+    description: "Realistic vendor redundancy"
+  - type: llm_judge
+    criteria: "Validation approach is credible — proposes chaos engineering, statistical modeling, progressive rollout, or phased commitment rather than waiting for real-world proof"
+    weight: 0.25
+    description: "Credible validation approach"
+  - type: llm_judge
+    criteria: "SLA announcement strategy manages risk — phases the commitment, includes appropriate caveats, and has a contingency plan if the target is missed"
+    weight: 0.25
+    description: "Risk-managed SLA announcement"

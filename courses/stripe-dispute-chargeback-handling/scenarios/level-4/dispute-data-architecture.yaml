@@ -1,0 +1,78 @@
+meta:
+  id: dispute-data-architecture
+  level: 4
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Architect the dispute data platform — design the data pipeline, analytics infrastructure, and ML feature store for enterprise dispute intelligence"
+  tags: [stripe, dispute, data-architecture, pipeline, analytics, ML, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Data Engineering for the payments division. The
+  dispute team relies on manual spreadsheet analysis, and leadership
+  wants a real-time dispute intelligence platform. Your company
+  processes 3M transactions/month through Stripe with ~6,000 disputes.
+
+  Data sources to integrate:
+  1. Stripe webhooks: dispute.created, dispute.updated, dispute.closed,
+     charge.dispute.created, plus associated charge and customer objects
+  2. Internal systems: order management (line items, shipping), CRM
+     (customer interactions, support tickets), product catalog
+  3. Third-party: Verifi RDR alerts, Ethoca alerts, Address Verification
+     Service results, 3DS authentication results
+  4. External: BIN databases, IP geolocation, device fingerprinting
+
+  Current problems:
+  - Dispute data lives in Stripe, order data in the OMS, customer data
+    in the CRM — no single view
+  - Historical analysis requires manually exporting CSVs from Stripe
+    Dashboard and joining in spreadsheets
+  - No way to correlate disputes with pre-transaction signals (AVS
+    failures, 3DS challenges, Radar scores)
+  - Win/loss analysis is done quarterly instead of continuously
+  - No feature store for ML models (fraud detection, dispute outcome
+    prediction)
+
+  Tasks:
+  1. Design the dispute data platform architecture. Include: the data
+     ingestion layer (Stripe webhook consumer with exactly-once
+     processing, OMS/CRM change data capture, third-party API polling),
+     the data modeling layer (the dispute fact table, dimension tables
+     for customers/products/reasons, the transaction-to-dispute linkage
+     model), the storage architecture (hot storage for real-time
+     dashboards, warm storage for analytics, cold storage for
+     compliance), and the data quality framework (completeness checks,
+     freshness monitoring, anomaly detection on dispute volumes).
+
+  2. Build the analytics and reporting layer. Include: the real-time
+     operational dashboard (dispute queue, SLA countdown, evidence
+     status), the analytical views (dispute rate trends by segment,
+     win rate by evidence type, reason code distribution, seasonal
+     patterns), the cohort analysis framework (how do disputes vary
+     by customer acquisition channel, product category, payment method,
+     geography), and the automated alerting (threshold breaches,
+     anomalous patterns, emerging fraud trends).
+
+  3. Design the ML feature store and model serving. Include: the
+     feature engineering pipeline (transaction features, customer
+     features, behavioral features, velocity features), the dispute
+     outcome prediction model (features that predict whether a dispute
+     will be won or lost — informing fight/accept decisions), the
+     dispute probability model (pre-transaction scoring that predicts
+     dispute likelihood), and the model monitoring framework (feature
+     drift, prediction accuracy, A/B testing of model versions).
+
+assertions:
+  - type: llm_judge
+    criteria: "Data platform is production-grade — ingestion handles exactly-once processing, data model links transactions to disputes, storage tiers balance performance and cost, and data quality is monitored"
+    weight: 0.35
+    description: "Production-grade data platform"
+  - type: llm_judge
+    criteria: "Analytics layer enables operational and strategic decisions — real-time dashboards support daily operations, analytical views surface insights, cohort analysis identifies root causes, and alerts catch problems early"
+    weight: 0.35
+    description: "Decision-enabling analytics layer"
+  - type: llm_judge
+    criteria: "ML infrastructure supports dispute intelligence — features are well-engineered, outcome prediction informs fight/accept, probability scoring enables prevention, and model monitoring catches degradation"
+    weight: 0.30
+    description: "Intelligence-supporting ML infrastructure"

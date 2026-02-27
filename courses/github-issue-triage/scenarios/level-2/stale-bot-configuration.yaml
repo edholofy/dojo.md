@@ -1,0 +1,62 @@
+meta:
+  id: stale-bot-configuration
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Configure stale issue management — set up and tune automated stale issue detection and closure"
+  tags: [github, issue-triage, stale-bot, automation, housekeeping, intermediate]
+
+state: {}
+
+trigger: |
+  You're setting up the actions/stale GitHub Action for a project
+  with 450 open issues. The previous stale bot configuration was too
+  aggressive — it closed 80 valid issues in one month, causing a
+  community backlash. You need to redesign the configuration.
+
+  Project characteristics:
+  - 450 open issues (mix of bugs, features, discussions)
+  - 15 issues/week new, 10 issues/week closed (growing backlog)
+  - Some valid issues sit for months waiting for a maintainer who
+    specializes in that area
+  - Feature requests often have no activity but remain relevant
+  - Issues with many thumbs up should never be auto-closed
+  - Security-labeled issues must never be auto-closed
+  - Issues assigned to a maintainer should not be marked stale
+
+  Problems from previous configuration:
+  - Stale after 30 days (too aggressive for this project)
+  - Close after 7 days of stale label (too fast)
+  - No exemptions for popular issues
+  - No exemptions for assigned issues
+  - Generic stale message felt robotic and dismissive
+
+  Available configuration options (actions/stale):
+  - days-before-stale, days-before-close
+  - exempt-issue-labels, exempt-assignees
+  - stale-issue-label, stale-issue-message, close-issue-message
+  - operations-per-run (rate limiting)
+  - remove-stale-when-updated
+
+  Task: Design the stale issue management system. Write: the
+  actions/stale configuration YAML (with appropriate timings,
+  exemptions, and messages), the stale issue message text (friendly,
+  explains the policy, invites re-engagement), the close message text
+  (acknowledges the issue, explains it can be reopened), the
+  exemption policy (which labels, milestones, and assignees are
+  exempt and why), and the community communication (how to announce
+  the new policy without repeating the previous backlash).
+
+assertions:
+  - type: llm_judge
+    criteria: "Configuration is appropriately tuned — timing is longer than previous (60+ days), exemptions cover security/popular/assigned issues, and operations-per-run prevents mass closures"
+    weight: 0.35
+    description: "Appropriately tuned configuration"
+  - type: llm_judge
+    criteria: "Messages are community-friendly — stale message explains the policy kindly, invites re-engagement, and doesn't feel robotic; close message assures the issue can be reopened and the contribution is valued"
+    weight: 0.35
+    description: "Community-friendly messages"
+  - type: llm_judge
+    criteria: "Community communication prevents backlash — announcement explains why the policy exists, how it's improved from before, how to get issues exempted, and invites feedback"
+    weight: 0.30
+    description: "Backlash-preventing communication"

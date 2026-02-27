@@ -1,0 +1,72 @@
+meta:
+  id: dispute-ml-system
+  level: 3
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Build a dispute prediction ML system — design machine learning models that predict which transactions will result in disputes and which disputes you can win"
+  tags: [stripe, dispute, ML, prediction, fraud-scoring, win-prediction, advanced]
+
+state: {}
+
+trigger: |
+  You're the Head of Fraud Analytics at an e-commerce company ($50M
+  annual revenue, 2,000+ disputes per year). You're building two ML
+  models: one to predict which transactions will become disputes
+  (prevention), and one to predict which disputes you can win
+  (optimization).
+
+  Available training data (3 years):
+  - 1.2 million transactions with outcomes (dispute/no dispute)
+  - 6,200 disputes with outcomes (won/lost/accepted)
+  - Features: transaction amount, product category, customer age,
+    payment method, card country, CVC/AVS results, Radar risk score,
+    device fingerprint, time of day, shipping address match, customer
+    lifetime value, number of prior orders
+
+  Model 1 — Dispute Prediction:
+  - Target: Will this transaction result in a dispute? (binary)
+  - Class imbalance: ~0.5% dispute rate (995 non-disputes per dispute)
+  - Required latency: <100ms (must score before authorization)
+  - Use case: Flag high-risk transactions for 3DS or review
+
+  Model 2 — Win Prediction:
+  - Target: If we fight this dispute, will we win? (binary)
+  - Class imbalance: 35% win rate (65% losses)
+  - Required latency: Not real-time (can batch process)
+  - Use case: Decide whether to fight or accept each dispute
+
+  Tasks:
+  1. Design the dispute prediction model. Include: the feature
+     engineering (which features are most predictive, interaction
+     features, temporal features), the model selection (logistic
+     regression vs. gradient boosted trees vs. neural network with
+     trade-offs), the class imbalance handling (SMOTE, undersampling,
+     focal loss), and the deployment architecture (<100ms scoring).
+
+  2. Design the win prediction model. Include: the feature set
+     (dispute reason, evidence available, customer history, amount,
+     product category, prior win rates for similar cases), the model
+     architecture, the decision threshold (at what predicted win
+     probability do you fight vs. accept?), and the expected ROI
+     (fighting more winnable cases, accepting unwinnable ones).
+
+  3. Build the integration plan. Write: how the dispute prediction
+     model integrates with Stripe Radar (as a supplementary signal),
+     how the win prediction model integrates with your dispute
+     workflow (auto-triage), the model monitoring system (drift
+     detection, performance degradation), and the A/B testing
+     framework for model improvements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dispute prediction model is well-designed — features are relevant, model type handles the constraints, class imbalance is properly addressed, and deployment meets <100ms latency requirement"
+    weight: 0.35
+    description: "Well-designed dispute prediction"
+  - type: llm_judge
+    criteria: "Win prediction model optimizes decisions — features include evidence availability, decision threshold is justified, and expected ROI shows the value of intelligent fight-vs-accept decisions"
+    weight: 0.35
+    description: "Decision-optimizing win prediction"
+  - type: llm_judge
+    criteria: "Integration plan is practical — Radar integration adds value, workflow triage is automated, monitoring catches degradation, and A/B testing enables continuous improvement"
+    weight: 0.30
+    description: "Practical integration plan"

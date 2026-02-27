@@ -1,0 +1,76 @@
+meta:
+  id: payment-orchestration
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Build a payment orchestration layer — design a system that routes payments across processors, handles failovers, and optimizes authorization rates"
+  tags: [stripe, orchestration, routing, failover, authorization, architecture, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior engineer at a high-volume e-commerce platform
+  processing $50M/month through Stripe. Your VP of Engineering wants
+  to reduce payment processing costs and improve authorization rates
+  by adding a second payment processor alongside Stripe.
+
+  Current metrics:
+  - Monthly volume: $50M across 500,000 transactions
+  - Stripe processing fee: 2.9% + $0.30 per transaction
+  - Authorization rate: 92% (industry best-in-class is 96%)
+  - Chargebacks: 0.4% of transactions
+  - International transactions: 25% of volume
+
+  Optimization targets:
+  - Reduce processing costs by 15-20%
+  - Improve authorization rate to 95%+
+  - Add failover capability (if Stripe goes down)
+  - Route European transactions to an EU processor for lower fees
+
+  Proposed architecture:
+  ```
+  Checkout → Payment Router → Stripe (primary)
+                            → Adyen (secondary/EU)
+                            → Retry Engine
+                            → Failover Logic
+  ```
+
+  Constraints:
+  - Cannot disrupt existing Stripe integrations
+  - Must maintain PCI compliance across both processors
+  - Webhook handling must work for both processors
+  - Customer-facing experience must be identical regardless of processor
+  - Need to support Stripe-specific features (Connect, Radar) where used
+
+  Tasks:
+  1. Design the payment routing engine. Include: the routing rules
+     (by geography, transaction amount, card BIN, payment method,
+     merchant category), the decision algorithm, the fallback logic
+     (retry on a different processor if the primary declines), and
+     the configuration system for A/B testing routes.
+
+  2. Write the abstraction layer that normalizes the payment interface
+     across Stripe and a second processor. Show: the unified payment
+     interface (create, capture, refund, void), how to translate
+     between Stripe and Adyen data models, how to handle processor-
+     specific features, and the webhook normalization layer.
+
+  3. Build the analytics and optimization system. Include: the
+     authorization rate tracking by processor/geography/card-type,
+     the cost comparison dashboard, the automated routing optimization
+     (shift traffic to the higher-auth-rate processor), and the
+     alerting system for processor degradation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Routing engine uses meaningful criteria — geography-based for EU transactions, BIN-based for card network optimization, amount-based for fee optimization, with fallback/retry on decline; A/B testing capability is built in"
+    weight: 0.35
+    description: "Meaningful payment routing engine"
+  - type: llm_judge
+    criteria: "Abstraction layer properly normalizes — unified interface handles create/capture/refund/void across processors, data model translation is accurate, processor-specific features are accessible through extensions, webhook normalization maps events correctly"
+    weight: 0.35
+    description: "Proper cross-processor abstraction"
+  - type: llm_judge
+    criteria: "Analytics tracks actionable metrics — authorization rates by multiple dimensions, cost comparison is per-transaction accurate, automated optimization shifts traffic intelligently, and degradation alerts catch issues before they affect revenue"
+    weight: 0.30
+    description: "Actionable payment analytics"

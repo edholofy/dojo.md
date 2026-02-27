@@ -1,0 +1,70 @@
+meta:
+  id: dispute-basics
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Understand dispute fundamentals — learn how Stripe disputes work, the lifecycle, statuses, and what happens when a customer files a chargeback"
+  tags: [stripe, dispute, chargeback, lifecycle, basics, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior developer at a small e-commerce company. Your
+  first dispute just arrived and you have no idea what to do. The
+  Stripe dashboard shows:
+
+  Dispute details:
+  - Amount: $147.99
+  - Reason: "Fraudulent"
+  - Status: "Needs response"
+  - Evidence due by: March 15th (12 days from now)
+  - Dispute fee: $15.00 (already deducted from your balance)
+
+  Original charge:
+  - Customer: sarah.jones@email.com
+  - Date: February 1st
+  - Product: Wireless headphones (shipped February 3rd)
+  - Tracking: USPS 9400111899223456789012 (delivered February 7th)
+  - CVC check: Pass
+  - AVS check: Pass (zip and street match)
+
+  Your manager says: "Figure out how disputes work and respond to
+  this one. Also explain the process to me so I can handle the next
+  one."
+
+  Tasks:
+  1. Explain the dispute lifecycle. Include: what happens when a
+     customer contacts their bank, how Stripe notifies you (the
+     charge.dispute.created webhook), what the $15 fee is and
+     whether it's refundable, the dispute statuses (needs_response,
+     under_review, won, lost, warning_needs_response), the timeline
+     for responding, and what happens if you don't respond.
+
+  2. Submit evidence for this specific dispute. Write: which
+     evidence fields to fill in (customer_email_address,
+     shipping_tracking_number, shipping_carrier, shipping_date,
+     service_date, product_description, receipt), what to include
+     in the uncategorized_text field (a narrative explaining why
+     this is a legitimate purchase), and format the evidence
+     submission API call.
+
+  3. Write a guide for your manager on handling future disputes.
+     Include: the 8 dispute reason codes and what each means, the
+     general evidence strategy for each reason code, the webhook
+     handler code for charge.dispute.created that alerts the team,
+     and the response SLA (always respond before the deadline, even
+     for weak cases, because non-response = automatic loss).
+
+assertions:
+  - type: llm_judge
+    criteria: "Dispute lifecycle explanation is accurate — covers the bank→network→Stripe flow, webhook notification, $15 fee (non-refundable unless won), all statuses are described, timeline is correct, and non-response consequence is stated"
+    weight: 0.35
+    description: "Accurate lifecycle explanation"
+  - type: llm_judge
+    criteria: "Evidence submission is compelling — uses correct evidence fields for a 'fraudulent' dispute with delivery proof, tracking number, CVC/AVS pass results, and the narrative in uncategorized_text makes a clear case"
+    weight: 0.35
+    description: "Compelling evidence submission"
+  - type: llm_judge
+    criteria: "Manager guide is practical — all 8 reason codes are explained, evidence strategies are reason-specific, webhook handler alerts the team, and the SLA emphasizes always responding"
+    weight: 0.30
+    description: "Practical manager guide"

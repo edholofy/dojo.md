@@ -1,0 +1,84 @@
+meta:
+  id: intermediate-stripe-shift
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Intermediate Stripe shift — handle a subscription billing failure cascade, a 3DS authentication outage, and a disputed high-value transaction simultaneously"
+  tags: [stripe, debugging, billing, 3DS, disputes, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  You're on-call at a SaaS company ($5M ARR, 2,000 paying customers).
+  Three Stripe-related incidents hit on the same Monday morning.
+
+  Incident 1 — Billing Cycle Failure (P0):
+  It's the 1st of the month and your billing cycle just ran. But instead
+  of processing 2,000 subscriptions, only 1,200 succeeded. Your Stripe
+  dashboard shows 800 invoice.payment_failed events. The failures are
+  all returning:
+
+  ```json
+  {
+    "error": {
+      "code": "card_declined",
+      "decline_code": "generic_decline"
+    }
+  }
+  ```
+
+  But these same customers were charged successfully last month. Your
+  support team is being flooded. A check of Stripe's status page shows:
+  "We are investigating increased decline rates for certain card
+  networks." It appears to be a Stripe/issuer issue, not your customers'
+  cards.
+
+  Incident 2 — 3DS Outage for EU Customers (P1):
+  European customers are reporting they can't complete checkout. The 3D
+  Secure authentication window is loading but then timing out after 30
+  seconds. Stripe's status page doesn't mention this. Your logs show:
+
+  ```
+  Payment requires authentication but handleNextAction failed:
+  timeout after 30000ms
+  ```
+
+  This is affecting all new EU signups (about 20 per day).
+
+  Incident 3 — $15,000 Dispute (P1):
+  A customer filed a dispute for $15,000 on an Enterprise annual
+  payment. The reason: "I didn't authorize this charge." But you have:
+  a signed order form, email confirmation, 6 months of product usage
+  logs, and the customer's CFO approved the purchase in an email chain.
+  Evidence submission deadline: 5 days.
+
+  Tasks:
+  1. Triage and prioritize the 3 incidents. For each: assess the
+     business impact, determine the root cause (is it your code, Stripe,
+     or the card network?), and write the immediate response plan.
+
+  2. For the billing failure: write the recovery plan. How do you
+     retry the 800 failed subscriptions? Should you retry immediately
+     or wait? How do you communicate to affected customers? Write the
+     Stripe API code to schedule retries and the customer notification
+     email.
+
+  3. For the dispute: submit the evidence. Write the complete evidence
+     submission using Stripe's API, including: the billing address,
+     customer communication, product description, access logs proving
+     usage, and the signed order form. Explain what makes strong
+     evidence for a "not authorized" dispute.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage is correct — billing failure is P0 (800 customers affected, revenue impact), correctly identifies Stripe/issuer issue vs code bug, 3DS outage affects new signups (P1), dispute has 5-day deadline (P1); response plans are appropriate for each"
+    weight: 0.35
+    description: "Correct incident triage"
+  - type: llm_judge
+    criteria: "Billing recovery plan is sound — waits for Stripe issue to resolve before mass retry, uses Stripe's retry mechanism or manual invoice.pay, communicates proactively to customers, tracks recovery rate"
+    weight: 0.35
+    description: "Sound billing recovery plan"
+  - type: llm_judge
+    criteria: "Dispute evidence is comprehensive — includes signed order form, customer email confirmation, 6 months of access logs, billing address match, and product usage data; explains why these counter the 'not authorized' claim"
+    weight: 0.30
+    description: "Comprehensive dispute evidence"

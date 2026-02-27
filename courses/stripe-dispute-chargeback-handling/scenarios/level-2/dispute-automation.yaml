@@ -1,0 +1,73 @@
+meta:
+  id: dispute-automation
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Automate dispute management — build systems that automatically gather evidence and respond to disputes"
+  tags: [stripe, dispute, automation, evidence-gathering, workflow, intermediate]
+
+state: {}
+
+trigger: |
+  You're the billing engineer at an e-commerce company handling 80+
+  disputes per month. Your team of 2 people spends ~3 hours per
+  dispute manually gathering evidence. That's 240 hours/month — more
+  than both people can handle. Disputes are being missed.
+
+  Current manual process (per dispute):
+  1. Check Stripe dashboard for dispute details (5 min)
+  2. Look up the order in your system (5 min)
+  3. Find the shipping tracking and delivery proof (15 min)
+  4. Search email for customer communication (20 min)
+  5. Screenshot the customer's account activity (10 min)
+  6. Write the evidence narrative (30 min)
+  7. Upload everything to Stripe (15 min)
+  8. Total: ~100 minutes per dispute (not 3 hours — the rest is
+     context switching and waiting for data)
+
+  Automation opportunities:
+  - Order data: Available via your order management API
+  - Shipping: Available via carrier APIs (FedEx, UPS, USPS)
+  - Customer emails: Searchable via your helpdesk API (Zendesk)
+  - Account activity: Available via your application's user events API
+  - Evidence narrative: Can be templated based on dispute reason
+
+  Stripe's Smart Disputes feature is available (30% success fee,
+  no dispute counter fee) but you want to evaluate build vs. buy.
+
+  Tasks:
+  1. Design the automated evidence gathering system. Write: the
+     architecture (dispute webhook → evidence collector → evidence
+     assembler → Stripe submit), the integration with each data
+     source (order API, carrier API, helpdesk API, user events),
+     the evidence template engine (generates narratives based on
+     dispute reason and available data), and the auto-submit logic
+     (when confidence is high enough to submit without human review).
+
+  2. Evaluate build vs. buy (custom automation vs. Stripe Smart
+     Disputes). Write: the cost comparison (engineering time to build
+     + maintain vs. 30% success fee on Smart Disputes), the quality
+     comparison (custom evidence with your specific data vs. Stripe's
+     automated evidence), the coverage comparison (what dispute types
+     Smart Disputes handles well vs. poorly), and the recommendation.
+
+  3. Implement the hybrid approach. Write: which disputes to handle
+     with Smart Disputes (low-value, high-volume, clear-cut), which
+     to handle with custom automation (medium-value with good data),
+     which require human review (high-value, complex, CE 3.0
+     eligible), and the routing logic that sends each dispute to
+     the right path.
+
+assertions:
+  - type: llm_judge
+    criteria: "Automation architecture is well-designed — webhook triggers evidence collection, all data sources are integrated, template engine generates reason-specific narratives, and auto-submit has confidence thresholds"
+    weight: 0.35
+    description: "Well-designed automation"
+  - type: llm_judge
+    criteria: "Build vs. buy analysis is balanced — cost comparison accounts for engineering and maintenance, quality comparison is honest about trade-offs, and the recommendation is justified"
+    weight: 0.35
+    description: "Balanced build vs. buy"
+  - type: llm_judge
+    criteria: "Hybrid routing is practical — dispute categories are appropriate for each path, routing logic considers value and complexity, and the approach maximizes efficiency without sacrificing win rate"
+    weight: 0.30
+    description: "Practical hybrid routing"

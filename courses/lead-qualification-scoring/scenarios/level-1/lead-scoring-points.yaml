@@ -1,0 +1,78 @@
+meta:
+  id: lead-scoring-points
+  level: 1
+  course: lead-qualification-scoring
+  type: output
+  description: "Build a basic lead scoring model — assign point values to demographic and behavioral attributes to create a simple scoring system"
+  tags: [sales, leads, scoring, points, model, beginner]
+
+state: {}
+
+trigger: |
+  You're a marketing operations coordinator at "FormStack" — a B2B SaaS
+  form builder for mid-market companies ($100-800/month). Your marketing
+  team generates 500 inbound leads per month but the sales team complains
+  that "most of the leads are junk." Currently, all leads go directly to
+  sales with no scoring.
+
+  Your manager has asked you to build a simple lead scoring model to
+  separate the good leads from the noise. You have a 100-point scale.
+
+  Here's what you know about your best customers (from a win analysis of
+  your last 50 closed deals):
+  - Company size: 80% were 50-500 employees, 15% were 500-2000, 5% were
+    under 50
+  - Title: 60% were Director or VP level, 25% were Manager, 15% were
+    individual contributors
+  - Industry: 40% were technology, 25% financial services, 20% healthcare,
+    15% other
+  - Geographic: 70% were US-based, 20% EMEA, 10% APAC
+
+  Behavioral data from your marketing automation tool shows:
+  - Leads who visited the pricing page converted to SQL at 3x the average
+  - Leads who downloaded case studies converted at 2.5x the average
+  - Leads who attended a webinar converted at 2x the average
+  - Leads who only read blog posts converted at 0.5x the average
+  - Leads who requested a demo converted at 5x the average
+  - Leads who visited 5+ pages in a single session converted at 2x average
+  - Leads using personal email (gmail, yahoo) closed at 0.2x the average
+
+  Your sales team has time to work 100 leads per month (20% of the total).
+  You need a scoring model that surfaces the best 100.
+
+  Tasks:
+  1. Design the lead scoring model. Split the 100 points between
+     demographic attributes (who they are) and behavioral attributes
+     (what they've done). Specify the exact point values for each
+     attribute. Explain why you chose the split ratio and the specific
+     values.
+
+  2. Apply your model to these 5 test leads and calculate their scores:
+     - Lead A: Director of IT, financial services, 200 employees, US,
+       visited pricing page, downloaded 2 case studies, company email
+     - Lead B: Intern, technology, 5,000 employees, US, read 3 blog
+       posts, personal email (gmail)
+     - Lead C: VP of Operations, healthcare, 100 employees, EMEA,
+       requested demo, attended webinar, company email
+     - Lead D: Manager, retail, 30 employees, APAC, visited pricing
+       page, visited 8 pages in one session, company email
+     - Lead E: CEO, technology, 75 employees, US, downloaded 1 case
+       study, visited pricing page, requested demo, company email
+
+  3. Set a threshold score for "MQL" (ready for sales). Explain where
+     you set the line and why. How would you handle leads that score
+     just below the threshold?
+
+assertions:
+  - type: llm_judge
+    criteria: "Scoring model is logical — behavioral attributes get more weight than demographics (behavior predicts intent better), demo requests get highest behavioral points, personal email gets negative points, point values reflect the conversion multipliers"
+    weight: 0.35
+    description: "Logical scoring model design"
+  - type: llm_judge
+    criteria: "Test lead scores differentiate correctly — Lead E and Lead C should score highest (strong signals), Lead B should score lowest (intern, personal email, blog-only), with reasonable scores for A and D"
+    weight: 0.35
+    description: "Correctly differentiated test scores"
+  - type: llm_judge
+    criteria: "Threshold is reasonable and justified — set to capture roughly top 100 of 500 leads (~top 20%), with a plan for near-threshold leads (nurture, time-based re-evaluation)"
+    weight: 0.30
+    description: "Reasonable MQL threshold"

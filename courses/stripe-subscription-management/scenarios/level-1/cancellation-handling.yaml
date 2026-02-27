@@ -1,0 +1,71 @@
+meta:
+  id: cancellation-handling
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Implement subscription cancellation — handle immediate and end-of-period cancellation with proper customer communication"
+  tags: [stripe, subscription, cancellation, churn, end-of-period, beginner]
+
+state: {}
+
+trigger: |
+  You're building the cancellation flow for a SaaS email marketing
+  platform ($29/month Starter, $79/month Growth, $149/month Scale).
+  The product team wants two cancellation options:
+
+  Option 1 — Cancel at end of billing period:
+  The customer keeps access until their current period ends, then
+  the subscription cancels. This is the default and recommended
+  approach.
+
+  Option 2 — Cancel immediately:
+  The customer loses access right away. The PM wants this available
+  for specific cases (e.g., customer requests immediate data deletion
+  for GDPR compliance).
+
+  Current bug report from a customer:
+  "I clicked 'Cancel Subscription' and was immediately locked out of
+  my account. I paid for the full month and should have access until
+  March 31st. Your cancellation is broken."
+
+  Investigation reveals the current code does:
+  ```javascript
+  await stripe.subscriptions.cancel(subscriptionId);
+  ```
+  This immediately cancels instead of at period end.
+
+  Tasks:
+  1. Fix the cancellation flow. Write: the correct implementation
+     for cancel-at-period-end (using cancel_at_period_end: true on
+     update, NOT cancel()), the immediate cancellation for special
+     cases, the webhook handlers for customer.subscription.updated
+     (when cancel_at_period_end is set) and customer.subscription
+     .deleted (when actually canceled), and the logic that checks
+     subscription status to gate feature access.
+
+  2. Build the cancellation experience. Include: the cancellation
+     confirmation page (showing when access ends, what they'll lose),
+     a save attempt (offer a discount or pause instead of cancel),
+     the cancellation email (confirming the date, offering to
+     resubscribe), and the reactivation flow (customer changes
+     their mind before period ends — remove cancel_at_period_end).
+
+  3. Write the status-checking logic for your application. Include:
+     how to check if a subscription is active, in a cancellation
+     grace period (cancel_at_period_end is true but period hasn't
+     ended), or fully canceled. Map each status to what the customer
+     can and cannot do in the application.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cancellation implementation is correct — end-of-period uses update with cancel_at_period_end (not cancel()), immediate cancellation uses cancel() for GDPR cases, webhook handlers distinguish between scheduled and actual cancellation, and the original bug is fixed"
+    weight: 0.35
+    description: "Correct cancellation implementation"
+  - type: llm_judge
+    criteria: "Cancellation experience reduces churn — confirmation page shows clear timeline, save attempt offers discount or pause, cancellation email is professional with resubscribe option, and reactivation flow works before period ends"
+    weight: 0.35
+    description: "Churn-reducing cancellation experience"
+  - type: llm_judge
+    criteria: "Status-checking logic is accurate — correctly maps subscription statuses (active, past_due, canceled, trialing, paused) and cancel_at_period_end flag to application access decisions"
+    weight: 0.30
+    description: "Accurate status-checking logic"

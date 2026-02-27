@@ -1,0 +1,74 @@
+meta:
+  id: escalation-shift-simulation
+  level: 2
+  course: customer-support-escalation
+  type: output
+  description: "Simulate a high-escalation shift — manage a queue with multiple simultaneous escalation needs, prioritize under pressure, and maintain quality"
+  tags: [support, escalation, simulation, shift, pressure, intermediate]
+
+state: {}
+
+trigger: |
+  It's a Monday morning and you're the escalation lead for the
+  shift. Your job is to manage the escalation queue, coordinate
+  with specialist teams, and ensure SLAs are met.
+
+  Your resources:
+  - 2 L2 specialists (one billing, one technical)
+  - 1 team lead available for management escalations
+  - Engineering on-call with 30-minute response SLA
+  - You can pull one L1 agent for overflow if needed
+
+  The escalation queue (all arrive within 30 minutes):
+
+  Escalation 1 (9:00 AM):
+  Enterprise customer ($100K ARR) reports their entire team (50
+  users) can't access the platform. SSO authentication is failing.
+  SLA: 1-hour response for Enterprise.
+
+  Escalation 2 (9:05 AM):
+  Customer threatening BBB complaint about a $200 charge they
+  dispute. Previously escalated once and told it would be resolved
+  last week. It wasn't.
+
+  Escalation 3 (9:10 AM):
+  L1 agent requests manager escalation. Customer is yelling on
+  the phone about a shipping delay and has used profanity twice.
+
+  Escalation 4 (9:15 AM):
+  Security team alerts: a customer reported potential unauthorized
+  access to their account. Suspicious login from a foreign IP.
+
+  Escalation 5 (9:20 AM):
+  Product team asks support to reach out to 10 customers affected
+  by a known bug that was fixed overnight. The fix requires
+  customers to clear their cache.
+
+  Escalation 6 (9:25 AM):
+  A customer's attorney has emailed requesting all communication
+  records related to their client's account.
+
+  Handle the full queue:
+  1. Prioritize all 6 escalations with reasoning
+  2. Assign each to the appropriate resource
+  3. Write the initial response or action for each
+  4. Identify any resource conflicts and how you'd resolve them
+  5. Write the end-of-shift handoff summary
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization is correct — the SSO outage (50 users, enterprise SLA) and security breach are highest priority, the attorney letter needs immediate legal routing"
+    weight: 0.30
+    description: "Correct prioritization under pressure"
+  - type: llm_judge
+    criteria: "Resource allocation is realistic — the billing specialist gets the $200 dispute, technical specialist gets SSO, team lead handles the angry caller"
+    weight: 0.25
+    description: "Realistic resource allocation"
+  - type: llm_judge
+    criteria: "The attorney letter is routed to legal immediately — support doesn't try to handle it themselves or delay"
+    weight: 0.25
+    description: "Immediate legal routing"
+  - type: llm_judge
+    criteria: "The handoff summary captures status of all 6 escalations — the next shift knows exactly where each stands"
+    weight: 0.20
+    description: "Complete handoff summary"

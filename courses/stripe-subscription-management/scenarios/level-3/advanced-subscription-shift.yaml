@@ -1,0 +1,82 @@
+meta:
+  id: advanced-subscription-shift
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Advanced subscription shift — handle a billing system outage, a pricing exploitation, and a churn spike simultaneously"
+  tags: [stripe, subscription, shift-simulation, billing-outage, exploitation, churn, advanced]
+
+state: {}
+
+trigger: |
+  You're the lead billing engineer. Three crises hit simultaneously:
+
+  Crisis 1 — Billing system outage:
+  Your webhook processing service went down for 6 hours overnight
+  (2 AM - 8 AM UTC). During this time, Stripe continued billing
+  customers normally, but your application didn't process any of the
+  following webhook events:
+  - 847 invoice.payment_succeeded events (renewals that went through)
+  - 23 invoice.payment_failed events (failed renewals)
+  - 15 customer.subscription.deleted events (subscriptions that
+    expired during the outage)
+  - 3 customer.subscription.updated events (customers who made
+    changes via Customer Portal)
+
+  Your application's local database is now stale. Some customers
+  whose subscriptions renewed are showing "expired" in the app.
+  Others whose payments failed still have full access.
+
+  Crisis 2 — Pricing exploitation:
+  A blog post went viral showing how to exploit your plan change
+  system: "Sign up for the Enterprise plan ($299/month), create all
+  the projects you want (Enterprise allows unlimited), then downgrade
+  to Basic ($29/month) within 5 minutes. You keep all the Enterprise
+  projects on the Basic plan and only pay $29."
+
+  In the past 24 hours, 89 customers have followed this pattern.
+  Revenue impact: 89 × ($299 - $29) × proration credit = significant.
+
+  Crisis 3 — Churn spike:
+  Your monthly churn rate jumped from 3.1% to 5.8% this month. The
+  cancellation reasons show: 72% cite "price increase" — last month
+  you raised prices 15% for all monthly subscribers. The save offer
+  (10% discount coupon) is only being accepted by 4% of cancelling
+  customers (industry benchmark: 15-25%).
+
+  Tasks:
+  1. Resolve the outage (Crisis 1). Write: the recovery procedure
+     (list all Stripe events from the outage window using the
+     Events API with created filter, process them in chronological
+     order, reconcile with current Stripe state), the script to
+     identify and fix stale subscription states in your database,
+     and the customer communication for affected users.
+
+  2. Fix the pricing exploitation (Crisis 2). Write: the immediate
+     fix (enforce feature limits based on current plan, not
+     historical usage), the plan-change validation that prevents
+     abuse (cooldown period, feature usage audit on downgrade), the
+     decision on the 89 affected customers (honor the loophole or
+     enforce limits retroactively — with trade-off analysis), and
+     the longer-term access control design.
+
+  3. Address the churn spike (Crisis 3). Write: the improved save
+     offer strategy (15% off instead of 10%, offer plan downgrade
+     as alternative, offer pause), the pricing rollback analysis
+     (should you reverse the 15% increase for existing customers?),
+     the win-back campaign for already-churned customers, and the
+     communication to the CEO about the churn impact and remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Outage recovery is methodical — Events API with time filter retrieves missed events, chronological processing prevents state corruption, reconciliation verifies correctness, and customer communication is timely"
+    weight: 0.35
+    description: "Methodical outage recovery"
+  - type: llm_judge
+    criteria: "Exploitation fix is fair and effective — immediate fix enforces current-plan limits, plan-change validation prevents future abuse, the 89-customer decision is analyzed with trade-offs, and long-term access control is designed"
+    weight: 0.35
+    description: "Fair and effective exploitation fix"
+  - type: llm_judge
+    criteria: "Churn response is strategic — improved save offers are calibrated to industry benchmarks, pricing rollback analysis weighs revenue vs retention, win-back campaign targets churned customers, and CEO communication is honest about impact"
+    weight: 0.30
+    description: "Strategic churn response"

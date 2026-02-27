@@ -1,0 +1,46 @@
+meta:
+  id: real-time-inventory-recovery
+  level: 4
+  course: email-abandoned-cart
+  type: output
+  description: "Design recovery emails with real-time inventory data"
+  tags: [email, abandoned-cart, inventory, real-time, scarcity]
+
+state: {}
+
+trigger: |
+  "SneakerDrop" (a limited-edition sneaker marketplace) wants to use real-time
+  inventory data in their cart recovery emails.
+
+  Context:
+  - Limited-edition sneakers often have <50 pairs available
+  - Inventory changes rapidly (items can sell out in hours)
+  - Customer: Marcus
+  - Abandoned: Air Jordan Retro "Galaxy" (Size 10) — $289.00
+  - At time of abandonment: 8 pairs of Size 10 remaining
+  - Current inventory (2 hours later): 3 pairs of Size 10 remaining
+
+  Design:
+  1. A cart recovery email that uses live inventory count
+  2. Rules for when to show inventory numbers (and when NOT to)
+  3. What happens when inventory hits 0 during the sequence
+  4. How to prevent false scarcity (maintaining trust)
+  5. Email variants for different inventory levels (plenty, low, critical, sold out)
+
+assertions:
+  - type: llm_judge
+    criteria: "Inventory counts are used to create genuine urgency — '3 pairs left in your size' is factual and compelling, creating real FOMO based on actual data"
+    weight: 0.25
+    description: "Genuine inventory-based urgency"
+  - type: llm_judge
+    criteria: "Rules for showing inventory are sensible — show when stock is genuinely low (under 10), don't show when stock is high (showing '200 available' kills urgency)"
+    weight: 0.25
+    description: "Sensible inventory display rules"
+  - type: llm_judge
+    criteria: "The sold-out scenario is handled gracefully — offers waitlist, size alternatives, or similar styles rather than a dead-end 'sorry, sold out' message"
+    weight: 0.25
+    description: "Graceful sold-out handling"
+  - type: llm_judge
+    criteria: "Trust maintenance is addressed — the plan explicitly avoids fake scarcity tactics and explains how to maintain credibility when stock numbers are dynamic"
+    weight: 0.25
+    description: "False scarcity prevention and trust"

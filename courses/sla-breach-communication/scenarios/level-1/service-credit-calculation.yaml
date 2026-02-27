@@ -1,0 +1,72 @@
+meta:
+  id: service-credit-calculation
+  level: 1
+  course: sla-breach-communication
+  type: output
+  description: "Calculate service credits for SLA breaches using industry formulas"
+  tags: [service-credits, calculations, formulas, compensation]
+
+state: {}
+
+trigger: |
+  You're a operations manager at "DataFlow" (data analytics SaaS). Three
+  separate SLA breaches occurred this month. Calculate the service credits
+  owed to each customer using industry-standard formulas.
+
+  Standard Credit Formula:
+  Monthly Recurring Charge × SLA Credit Percentage = Credit Amount
+
+  Hourly Credit Formula:
+  (Monthly Recurring Charge ÷ 730 hours) × Credited Hours = Credit Amount
+
+  Constraints (Industry Standards):
+  - Monthly cap: 50% of monthly service fees
+  - Annual cap: 4 months of service fees
+  - Credits apply only to affected service component
+
+  Breach 1: Premium Tier Customer
+  - Monthly service fee: $10,000
+  - Downtime: 3.5 hours
+  - SLA guarantee: 99.9% uptime (allows 43 minutes/month)
+  - Breach severity: Exceeded by 3 hours 7 minutes
+  - SLA credit schedule: 1% credit per hour of downtime
+
+  Breach 2: Standard Tier Customer
+  - Monthly service fee: $2,500
+  - Downtime: 8 hours
+  - SLA guarantee: 99% uptime (allows 7.2 hours/month)
+  - Breach severity: Exceeded by 48 minutes
+  - SLA credit schedule: 5% credit per hour of downtime (capped at 25%)
+
+  Breach 3: Starter Tier Customer
+  - Monthly service fee: $500
+  - Downtime: 2 hours
+  - SLA guarantee: 95% uptime (allows 36 hours/month)
+  - Breach severity: Under allowance (no breach)
+  - Question: Is a credit due?
+
+  For each breach, calculate:
+  1. The exact credit amount owed
+  2. How much credit remains available under monthly and annual caps
+  3. What payment method you'd recommend (credit, refund, or service upgrade)
+
+assertions:
+  - type: llm_judge
+    criteria: "Breach 1 calculates correctly: 3.5 hours × ($10,000 ÷ 730) × 1% per hour = ~$48 credit, within 50% monthly cap"
+    weight: 0.3
+    description: "Premium tier calculation accurate"
+
+  - type: llm_judge
+    criteria: "Breach 2 calculates correctly: 8 hours breaching by 48 min, 5% credit per hour capped at 25% = $625 credit (25% of $2,500)"
+    weight: 0.3
+    description: "Standard tier calculation respects caps"
+
+  - type: llm_judge
+    criteria: "Breach 3 correctly identifies no breach occurred (2 hours well within 36-hour monthly allowance for 95% SLA)"
+    weight: 0.2
+    description: "Starter tier correctly no-breach determination"
+
+  - type: llm_judge
+    criteria: "Response explains monthly and annual cap implications and recommends appropriate remedy for each tier"
+    weight: 0.2
+    description: "Cap constraints and remedies explained"

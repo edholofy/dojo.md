@@ -1,0 +1,66 @@
+meta:
+  id: dispute-handling
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Handle Stripe disputes and chargebacks — implement dispute detection, evidence submission, and chargeback prevention strategies"
+  tags: [stripe, disputes, chargebacks, evidence, fraud, prevention, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at an e-commerce company. Your chargeback rate
+  just hit 0.9% — dangerously close to the 1% threshold where card
+  networks flag you. Above 1%, you could face: higher processing fees,
+  mandatory fraud prevention programs, or account termination.
+
+  Last month's dispute breakdown:
+  - Fraudulent (stolen cards): 12 disputes, $3,400 total
+  - Product not received: 8 disputes, $1,200 total
+  - Product not as described: 5 disputes, $800 total
+  - Duplicate charge: 3 disputes, $450 total
+  - Subscription cancellation: 7 disputes, $2,100 total
+
+  Current handling: Nothing. When a dispute comes in, nobody responds.
+  You auto-lose every dispute because you never submit evidence. Stripe
+  charges the $15 dispute fee plus the disputed amount.
+
+  Your system captures: order details, shipping tracking, customer
+  email, IP address, browser fingerprint, and download logs (for
+  digital products).
+
+  Tasks:
+  1. Build the dispute webhook handler. Listen for charge.dispute.
+     created, process the dispute, and auto-submit evidence where
+     possible. For each dispute reason: identify the evidence to
+     submit (tracking number for "not received", access logs for
+     digital products, cancellation policy for subscriptions), and
+     write the evidence submission code using Stripe's API.
+
+  2. Implement fraud prevention. Write: Stripe Radar rule
+     configurations to block high-risk payments (velocity checks,
+     country blocks, amount limits), the Radar review queue integration,
+     and the customer verification flow for suspicious orders (email
+     verification, address verification). Show how to reduce the
+     fraudulent dispute category.
+
+  3. Create the chargeback reduction plan. For each of the 5 dispute
+     categories: explain the root cause, the prevention measure, and
+     the expected impact. Include: clear billing descriptors, proactive
+     refund policy (refund before dispute), subscription cancellation
+     flow improvement, and the target chargeback rate. Calculate the
+     financial impact of reducing from 0.9% to 0.3%.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dispute handler submits appropriate evidence — uses the correct evidence fields for each reason (shipping_documentation for not received, access_activity_log for digital, cancellation_policy for subscriptions), submits automatically where evidence is available"
+    weight: 0.35
+    description: "Correct evidence submission by dispute type"
+  - type: llm_judge
+    criteria: "Fraud prevention uses Stripe Radar effectively — configures rules for velocity, geography, and amount; integrates the review queue for medium-risk payments; customer verification adds friction only for suspicious orders"
+    weight: 0.35
+    description: "Effective Radar fraud prevention"
+  - type: llm_judge
+    criteria: "Reduction plan addresses all 5 categories — root causes are correctly identified, prevention measures are specific and actionable, financial impact calculation shows the savings from reducing chargebacks"
+    weight: 0.30
+    description: "Comprehensive chargeback reduction plan"

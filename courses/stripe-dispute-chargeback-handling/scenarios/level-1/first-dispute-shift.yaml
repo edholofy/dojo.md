@@ -1,0 +1,77 @@
+meta:
+  id: first-dispute-shift
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "First dispute handling shift — manage three disputes with different reasons and urgency levels as an on-call support agent"
+  tags: [stripe, dispute, shift-simulation, on-call, triage, beginner]
+
+state: {}
+
+trigger: |
+  You're the on-call billing support agent. Three disputes arrived
+  today. You need to handle all three before end of day.
+
+  Dispute 1 — URGENT (evidence due tomorrow):
+  Amount: $299.00
+  Reason: "Fraudulent"
+  Customer: mike.chen@gmail.com
+  Date: January 15th
+  Product: Premium software license (digital delivery)
+  Evidence due: Tomorrow at 5 PM
+  Records: Customer account created January 15th, email verified,
+  license key activated same day. 14 logins since purchase. IP
+  address matches billing zip code. CVC passed, AVS passed.
+  No prior contact from customer.
+
+  Dispute 2 — Normal priority (evidence due in 8 days):
+  Amount: $67.50
+  Reason: "Duplicate"
+  Customer: anna.smith@company.com
+  Date: February 1st
+  Records: Looking at Stripe, there ARE two charges for $67.50 on
+  the same day, 3 minutes apart. Same customer, same product. This
+  appears to be a legitimate duplicate charge. Your checkout code
+  might have a bug.
+
+  Dispute 3 — Normal priority (evidence due in 10 days):
+  Amount: $449.99
+  Reason: "Product not received"
+  Customer: james.wilson@email.com
+  Date: January 20th
+  Product: High-end wireless earbuds
+  Shipping: USPS tracking shows "In Transit" since January 25th.
+  No delivery confirmation. Insurance was not purchased.
+  Customer emailed on February 5th: "Where's my order?" Your team
+  replied: "Still in transit, please wait." No follow-up.
+
+  Tasks:
+  1. Triage and prioritize the three disputes. For each: assign the
+     urgency level, determine whether to fight or accept, and
+     outline the evidence strategy. Explain your reasoning.
+
+  2. Handle Dispute 1 (urgent). Write: the complete evidence
+     submission including all relevant fields, the narrative for
+     uncategorized_text proving this is friendly fraud, and submit
+     it before the deadline.
+
+  3. Handle Disputes 2 and 3. For Dispute 2: explain why you should
+     accept this dispute (it's a real duplicate), refund the
+     duplicate charge, and investigate the checkout bug. For Dispute
+     3: assess the win probability without delivery confirmation,
+     decide whether to fight or refund, and write either the
+     evidence submission or the refund rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage is correct — Dispute 1 is prioritized (deadline), Dispute 2 is identified as legitimate (accept), Dispute 3 win probability is honestly assessed (weak case without delivery), and fight/accept decisions are justified"
+    weight: 0.35
+    description: "Correct triage and prioritization"
+  - type: llm_judge
+    criteria: "Dispute 1 evidence is strong — uses login history, IP matching, email verification, CVC/AVS pass, and the narrative makes a clear case for friendly fraud on a digital product"
+    weight: 0.35
+    description: "Strong urgent dispute evidence"
+  - type: llm_judge
+    criteria: "Disputes 2 and 3 are handled appropriately — Dispute 2 is accepted with bug investigation initiated, Dispute 3 decision is well-reasoned given missing delivery proof, and customer communication is professional"
+    weight: 0.30
+    description: "Appropriate handling of remaining disputes"

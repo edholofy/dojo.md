@@ -1,0 +1,75 @@
+meta:
+  id: subscription-platform-architecture
+  level: 4
+  course: stripe-subscription-management
+  type: output
+  description: "Architect a subscription billing platform — design a scalable, multi-tenant subscription management system for a platform serving thousands of merchants"
+  tags: [stripe, subscription, platform, architecture, multi-tenant, scalability, expert]
+
+state: {}
+
+trigger: |
+  You're the VP of Billing Engineering at "SubStack Pro" — a
+  platform-as-a-service company that provides subscription billing
+  capabilities to 3,000 SaaS merchants. Each merchant uses your
+  platform to manage their own customers' subscriptions.
+
+  Scale:
+  - 3,000 merchants (growing 30% YoY)
+  - 2.1 million end-subscriber accounts
+  - $1.8B in annual GMV processed through the platform
+  - 400,000 invoices generated per month
+  - Peak: 12,000 subscription events per minute during month-end billing
+
+  Current architecture problems:
+  1. Single Stripe account: All merchants share one Stripe account.
+     Merchant A's webhook affects Merchant B's processing queue.
+  2. No billing isolation: A merchant with 100,000 subscribers
+     creates a billing storm at month-end that slows down all others.
+  3. Schema bloat: The subscription table has 47 columns with
+     merchant-specific custom fields crammed into a JSON column.
+  4. No self-service: Merchants can't configure their own pricing,
+     dunning, or invoice templates. Every change requires engineering.
+  5. Reliability: 99.7% uptime (target: 99.99%). Month-end billing
+     runs cause cascading failures.
+
+  Budget: $4M over 18 months to rebuild.
+  Team: 22 billing engineers + 8 platform engineers.
+
+  Tasks:
+  1. Design the platform architecture. Include: the multi-tenancy
+     strategy (Stripe Connect with separate accounts per merchant
+     vs. shared account with metadata isolation), the billing
+     pipeline architecture (queue-based, merchant-isolated billing
+     runs), the data model (tenant-aware subscription schema,
+     handling custom fields), and the scalability design (handling
+     12,000 events/minute at month-end).
+
+  2. Design the merchant self-service system. Include: the pricing
+     configuration UI (merchants define their own plans, tiers, and
+     coupons), the dunning configuration (each merchant sets their
+     own retry schedule and emails), the invoice template
+     customization, and the webhook forwarding (your platform
+     receives Stripe webhooks and forwards relevant events to each
+     merchant).
+
+  3. Write the migration plan from the monolithic system to the
+     platform architecture. Include: the phased rollout (migrate
+     merchants in cohorts by size), the data migration strategy
+     (moving subscriptions to new schema without disruption), the
+     Stripe account migration (if moving to Connect), the rollback
+     strategy, and the SLA guarantees during migration.
+
+assertions:
+  - type: llm_judge
+    criteria: "Platform architecture solves the 5 problems — multi-tenancy isolates merchants, billing pipeline prevents month-end storms, data model handles custom fields cleanly, scalability achieves 12K events/minute, and the approach reaches 99.99% uptime"
+    weight: 0.35
+    description: "Architecture solves platform problems"
+  - type: llm_judge
+    criteria: "Self-service system empowers merchants — pricing configuration is flexible, dunning is configurable, invoice templates are customizable, and webhook forwarding is reliable"
+    weight: 0.35
+    description: "Empowering self-service system"
+  - type: llm_judge
+    criteria: "Migration plan is realistic — phased rollout minimizes risk, data migration preserves continuity, Stripe migration is planned, rollback strategy exists, and SLA guarantees protect merchants"
+    weight: 0.30
+    description: "Realistic migration plan"

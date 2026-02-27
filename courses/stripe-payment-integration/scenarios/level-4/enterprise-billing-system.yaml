@@ -1,0 +1,72 @@
+meta:
+  id: enterprise-billing-system
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Build an enterprise billing system — design complex billing with tiered pricing, commitments, overage, and revenue recognition on Stripe"
+  tags: [stripe, billing, enterprise, tiered-pricing, revenue-recognition, ASC-606, expert]
+
+state: {}
+
+trigger: |
+  You're the billing systems architect at a cloud infrastructure company
+  (like AWS or Vercel). You need to build a billing system on Stripe
+  that handles enterprise-grade complexity.
+
+  Pricing structure:
+  1. Committed spend: Enterprise customers commit to $X/month minimum
+  2. Tiered usage: First 1M API calls at $0.001, next 9M at $0.0008,
+     next 90M at $0.0005 (volume discount tiers)
+  3. Multiple products: Compute ($0.05/hour), Storage ($0.10/GB/month),
+     API calls (tiered), Support ($X fixed)
+  4. Committed vs. on-demand: Committed capacity at 40% discount,
+     on-demand for bursting
+  5. Annual contracts with monthly billing
+  6. Multi-entity: Some customers have 3-5 billing entities under one
+     master account
+
+  Revenue recognition requirements (ASC 606):
+  - Annual commitments must be recognized ratably (monthly)
+  - Usage revenue recognized when consumed
+  - Professional services recognized over delivery period
+  - Free trials create no revenue until conversion
+  - Discounts applied proportionally across performance obligations
+
+  Current volume:
+  - 500 enterprise customers
+  - $80M ARR
+  - 2 billion metered events per day
+  - Invoices average $13,500/month with 15-20 line items
+
+  Tasks:
+  1. Design the billing data model and Stripe integration. Include:
+     how to represent committed spend (Stripe subscriptions with
+     minimum), tiered usage (Stripe's tiered billing or custom
+     calculation), multi-product invoicing (invoice items), and multi-
+     entity billing (separate Stripe customers under one organization).
+
+  2. Implement the metering-to-billing pipeline. Write: how 2B events/
+     day are aggregated per customer, how aggregated usage is reported
+     to Stripe (Meter API or usage records), how tiered pricing is
+     calculated, and how committed vs. on-demand is split on the
+     invoice.
+
+  3. Design the revenue recognition system. Include: how to extract
+     Stripe invoice data for ASC 606 reporting, the journal entry
+     generation for committed spend (deferred → recognized monthly),
+     usage revenue recognition, and the integration with your ERP
+     (NetSuite/SAP). Show the month-end close process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Billing model handles enterprise complexity — committed spend uses subscriptions with minimum, tiered usage calculates correct tier boundaries, multi-product invoicing combines line items, and multi-entity structure is workable"
+    weight: 0.35
+    description: "Enterprise-grade billing model"
+  - type: llm_judge
+    criteria: "Metering pipeline handles scale — 2B events/day are aggregated before Stripe API calls, usage reporting is batched efficiently, tiered pricing calculation is mathematically correct, and committed vs. on-demand split is clear"
+    weight: 0.35
+    description: "Scalable metering pipeline"
+  - type: llm_judge
+    criteria: "Revenue recognition is ASC 606 compliant — committed spend is deferred and recognized ratably, usage is recognized on consumption, discounts are allocated, and the ERP integration and month-end process are practical"
+    weight: 0.30
+    description: "ASC 606 compliant revenue recognition"

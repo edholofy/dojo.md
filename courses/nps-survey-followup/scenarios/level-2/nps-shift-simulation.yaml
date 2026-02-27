@@ -1,0 +1,79 @@
+meta:
+  id: nps-shift-simulation
+  level: 2
+  course: nps-survey-followup
+  type: output
+  description: "Handle a complex day of NPS follow-ups with competing priorities, escalations, and limited time"
+  tags: [nps, simulation, shift, prioritization, intermediate]
+
+state: {}
+
+trigger: |
+  It's a busy Wednesday at "PaymentHub" (payment processing SaaS).
+  You have 4 hours before a team meeting and 12 NPS responses to
+  handle. But today has complications.
+
+  Your follow-up queue:
+
+  URGENT (flagged by system):
+  1. Score: 1, "Your system double-charged 50 of our customers.
+     This is a disaster."
+     Enterprise: MegaRetail, $4,800/mo, 3 years
+  2. Score: 2, "PCI compliance audit failed because of your platform.
+     We could face fines."
+     Mid-market: HealthPay, $1,200/mo, 18 months
+
+  HIGH PRIORITY:
+  3. Score: 10, "Love PaymentHub! Would happily do a case study."
+     Enterprise: TechStore, $3,600/mo, 2 years
+  4. Score: 3, "Switching to Stripe next month. Support is terrible."
+     SMB: CraftShop, $299/mo, 8 months
+  5. Score: 4, "Reporting is broken. Can't reconcile transactions."
+     Mid-market: FoodChain, $899/mo, 14 months
+
+  STANDARD:
+  6. Score: 9, "Solid platform." (no further comment)
+     SMB: QuickBuy, $199/mo, 6 months
+  7. Score: 7, "Could use better documentation."
+     SMB: BookStore, $149/mo, 12 months
+  8. Score: 8, "Good but mobile app needs work."
+     Mid-market: TravelDeals, $599/mo, 9 months
+  9. Score: 5, "Fees are too high compared to competitors."
+     SMB: ArtSells, $249/mo, 4 months
+  10. Score: 6, "It's fine." (no further comment)
+      SMB: PetSupply, $179/mo, 15 months
+  11. Score: 10, "Best payment platform we've used!"
+      Mid-market: GameZone, $799/mo, 20 months
+  12. Score: 7, "Onboarding was rough but product is decent now."
+      SMB: FlowerCo, $199/mo, 3 months
+
+  Complications:
+  - Response #1 (MegaRetail) requires immediate engineering
+    escalation — the double-charge issue is still active
+  - Response #3 (TechStore case study offer) — your marketing team
+    needs a warm intro by end of day
+  - Your CSM colleague is out sick and their 3 responses (#5, #8, #12)
+    landed in your queue
+
+  Tasks:
+  1. Plan your 4-hour block: what order, how much time per response?
+  2. Write the follow-up for responses #1 and #2 (the urgent ones)
+  3. For responses you can't get to in 4 hours, what's your plan?
+
+assertions:
+  - type: llm_judge
+    criteria: "Urgent responses are handled first — MegaRetail double-charge (#1) and PCI compliance failure (#2) are addressed in the first hour with immediate escalation"
+    weight: 0.25
+    description: "Urgent-first handling"
+  - type: llm_judge
+    criteria: "Time allocation is realistic — doesn't try to give 20 minutes to each of 12 responses, acknowledges some will get shorter follow-ups or be deferred"
+    weight: 0.25
+    description: "Realistic time allocation"
+  - type: llm_judge
+    criteria: "Double-charge follow-up includes engineering escalation — the MegaRetail response coordinates with engineering to stop the active issue, not just apologizes"
+    weight: 0.25
+    description: "Engineering escalation included"
+  - type: llm_judge
+    criteria: "Deferred responses have a plan — responses that can't be handled in 4 hours get at minimum an acknowledgment email with a timeline, not silence"
+    weight: 0.25
+    description: "Deferred response plan"

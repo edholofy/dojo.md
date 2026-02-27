@@ -1,0 +1,71 @@
+meta:
+  id: stripe-billing-migration
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Migrate billing systems to Stripe — plan and execute a migration from a legacy payment processor with zero downtime and no lost subscriptions"
+  tags: [stripe, migration, billing, legacy, zero-downtime, planning, advanced]
+
+state: {}
+
+trigger: |
+  You're the lead engineer tasked with migrating your SaaS company's
+  billing from Braintree to Stripe. The migration must be zero-downtime
+  with no customer impact.
+
+  Current state (Braintree):
+  - 8,500 active subscriptions
+  - 12,000 stored payment methods (vaulted cards)
+  - 3 subscription plans (Basic $29, Pro $99, Enterprise $299)
+  - 450 customers on annual plans (various renewal dates)
+  - Net 30 invoice billing for 120 enterprise customers
+  - $2.1M monthly recurring revenue at risk
+
+  Migration challenges:
+  1. Card data: You cannot export raw card numbers from Braintree. You
+     need to use Stripe's card migration tool or ask customers to
+     re-enter their cards.
+  2. Subscription continuity: Customers must not be double-charged or
+     miss a billing cycle during migration.
+  3. Webhook transition: Both systems will be active during migration
+     — webhook handlers must work for both.
+  4. Annual plan alignment: Annual customers have different renewal
+     dates. Their billing must continue on the same schedule.
+  5. Reporting continuity: Finance needs to reconcile revenue across
+     both systems during the transition.
+
+  Timeline: CEO wants this done in 8 weeks. Finance needs 2 weeks
+  of parallel running for reconciliation.
+
+  Tasks:
+  1. Write the migration plan. Include: the phased approach (parallel
+     setup, shadow billing, cutover, cleanup), the customer
+     communication plan, the rollback strategy, and the week-by-week
+     timeline. Identify which customers to migrate first and why.
+
+  2. Write the technical migration code. Include: creating Stripe
+     Products and Prices matching your Braintree plans, migrating
+     customer records (using Stripe's migration API or manual creation),
+     handling the card vault transfer (via network tokenization or
+     customer re-entry), and creating subscriptions with billing cycle
+     alignment (billing_cycle_anchor).
+
+  3. Build the dual-system reconciliation. Write: the webhook handlers
+     that work for both Braintree and Stripe during the parallel period,
+     the daily reconciliation script that compares charges across both
+     systems, the alerting for discrepancies, and the final cutover
+     verification checklist.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration plan is low-risk — phases from least to most critical (new customers first, then monthly, then annual, then enterprise), includes rollback strategy, customer communication is proactive, and timeline is realistic for 8 weeks"
+    weight: 0.35
+    description: "Low-risk phased migration plan"
+  - type: llm_judge
+    criteria: "Technical code handles key challenges — creates matching Products/Prices, uses billing_cycle_anchor for subscription alignment, handles card migration (via Stripe's migration or PAN network token or customer re-entry), and maintains billing continuity"
+    weight: 0.35
+    description: "Correct technical migration code"
+  - type: llm_judge
+    criteria: "Reconciliation system prevents revenue loss — dual webhook handling works for both processors, daily comparison catches discrepancies, alerting is automatic, and the cutover checklist is comprehensive"
+    weight: 0.30
+    description: "Revenue-protecting reconciliation"

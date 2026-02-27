@@ -1,0 +1,75 @@
+meta:
+  id: dispute-incident-response
+  level: 4
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Manage dispute incidents — handle surge events, system failures, and compliance breaches with structured incident response"
+  tags: [stripe, dispute, incident-response, surge, system-failure, compliance-breach, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Payment Operations. Three separate incidents
+  occurred in the past week, each requiring structured incident
+  response. You need to handle the immediate crisis, conduct root
+  cause analysis, and build the incident response playbook.
+
+  Incident 1 — Dispute surge (card testing attack aftermath):
+  A card testing attack occurred 3 weeks ago. Despite blocking the
+  attack within 2 hours, 1,200 micro-authorizations ($1-5 each)
+  succeeded before detection. Now, the issuing banks are filing
+  disputes on all 1,200 charges. Your normal monthly dispute volume
+  is 800. This surge will push your Visa dispute rate from 0.65%
+  to 2.1% this month, well into VDMP Excessive territory.
+
+  Incident 2 — Webhook processing failure:
+  Your Stripe webhook endpoint experienced 4 hours of downtime due
+  to a Kubernetes pod crash loop. During that window, 23 dispute
+  webhooks were missed. Stripe retried them, but your idempotency
+  logic had a bug — 8 disputes were ingested twice (duplicate
+  evidence submissions) and 4 disputes were never processed (stuck
+  in a dead letter queue). Evidence deadlines for 3 of the 4 missed
+  disputes are in 48 hours.
+
+  Incident 3 — VDMP notification from Stripe:
+  Stripe forwarded a notification from Visa: your account has been
+  flagged for VDMP Standard monitoring due to last month's dispute
+  rate of 0.92%. You have 90 days to bring the rate below 0.9% or
+  face fines ($50/dispute for months 5-9, $100/dispute for months
+  10+) and potential account termination.
+
+  Tasks:
+  1. Handle each incident with structured response. For each incident,
+     write: the severity classification (P1/P2/P3), the immediate
+     response actions (first 2 hours), the communication plan (who
+     needs to know — internal stakeholders, Stripe support, card
+     networks), and the timeline for resolution.
+
+  2. Conduct root cause analysis for each incident. Include: the
+     timeline reconstruction (what happened, when, and why), the
+     contributing factors (technical, process, and human), the
+     5-whys analysis for the deepest root cause, and the corrective
+     actions (immediate fixes + systemic improvements).
+
+  3. Build the dispute incident response playbook. Include: the
+     incident classification matrix (what constitutes a P1/P2/P3
+     dispute incident — volume surge, system failure, compliance
+     breach, fraud ring), the on-call rotation and escalation paths,
+     the response templates (Stripe communication, internal
+     stakeholder updates, card network remediation plans), and the
+     post-incident review process (blameless retrospective format,
+     action item tracking, recurrence prevention).
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident response is structured and decisive — each incident has appropriate severity, immediate actions are achievable, communications reach the right stakeholders, and timelines are realistic"
+    weight: 0.35
+    description: "Structured decisive incident response"
+  - type: llm_judge
+    criteria: "Root cause analysis is thorough — timelines are reconstructed, contributing factors span technical/process/human, 5-whys reaches systemic causes, and corrective actions prevent recurrence"
+    weight: 0.35
+    description: "Thorough root cause analysis"
+  - type: llm_judge
+    criteria: "Playbook enables consistent response — classification matrix covers all incident types, escalation paths are clear, templates accelerate communication, and retrospective process captures learning"
+    weight: 0.30
+    description: "Consistency-enabling response playbook"

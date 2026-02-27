@@ -1,0 +1,68 @@
+meta:
+  id: refund-shift-simulation
+  level: 2
+  course: refund-cancellation-handling
+  type: output
+  description: "Simulate a shift handling mixed refund and cancellation requests — process a queue with varied complexity, urgency, and policy requirements"
+  tags: [support, refund, cancellation, simulation, shift, intermediate]
+
+state: {}
+
+trigger: |
+  You're handling the refund and cancellation queue for "MultiShop"
+  — a company that sells both physical products and SaaS
+  subscriptions. Your authority: refunds up to $150.
+
+  Queue of 10 requests (handle in priority order):
+
+  1. Enterprise customer ($5K/mo) requesting immediate cancellation
+     due to security concern — they believe their data was exposed.
+
+  2. Chargeback notification: $289 charge disputed as "unauthorized."
+     Customer has purchase history and delivery confirmation.
+
+  3. EU customer requesting refund 13 days after purchase. "Changed
+     my mind." Product is a $45 gadget. Policy says 30 days.
+
+  4. Annual subscriber ($228/year) forgot to cancel before renewal
+     yesterday. Wants full refund.
+
+  5. Customer wants to return shoes ($79) received 3 days ago.
+     "Wrong size." Standard return.
+
+  6. SaaS customer wants to downgrade from Pro to Basic mid-billing
+     cycle. Wants prorated credit for the difference.
+
+  7. Customer claims product arrived broken (mixer, $120). Wants
+     refund AND a replacement. Photos show damage.
+
+  8. "I want to cancel but only if I can get a refund for the
+     last 6 months." (Monthly SaaS, $29/mo, no refund for past use.)
+
+  9. Customer's PayPal payment failed 3 days ago. They want to
+     update payment, but also want a credit for the 3 days without
+     service.
+
+  10. VIP customer (top 1% spender) requesting exception to return
+      a custom-engraved item. Policy: custom items non-returnable.
+
+  Handle all 10: prioritize, process, write responses, and note
+  any escalations needed. End with a shift summary.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority ordering is correct — the security concern (enterprise customer) is highest priority, followed by the chargeback with deadline"
+    weight: 0.25
+    description: "Correct priority ordering"
+  - type: llm_judge
+    criteria: "EU customer gets the refund regardless of your policy — 13 days is within the 14-day right of withdrawal"
+    weight: 0.25
+    description: "EU compliance applied"
+  - type: llm_judge
+    criteria: "The 6-month retroactive refund request is denied appropriately — past service consumed is not refundable, but future cancellation is processed"
+    weight: 0.25
+    description: "Appropriate retroactive denial"
+  - type: llm_judge
+    criteria: "The VIP custom item gets careful consideration — policy says non-returnable but the customer's value warrants exploring a goodwill exception"
+    weight: 0.25
+    description: "VIP exception consideration"

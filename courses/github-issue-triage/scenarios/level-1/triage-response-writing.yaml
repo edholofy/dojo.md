@@ -1,0 +1,60 @@
+meta:
+  id: triage-response-writing
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "Write triage responses — craft appropriate responses for different issue types and situations"
+  tags: [github, issue-triage, communication, responses, etiquette, basics]
+
+state: {}
+
+trigger: |
+  You're a maintainer who needs to respond to 4 different issues.
+  Each requires a different tone and approach.
+
+  Issue #301 — Incomplete bug report:
+  Title: "It doesn't work"
+  Body: "I installed the package and it doesn't work. Please fix."
+  Reporter: New account, first issue ever filed on GitHub.
+
+  Issue #302 — Well-written feature request you'll decline:
+  Title: "Add GraphQL support alongside REST API"
+  Body: (Detailed 500-word proposal with architecture diagrams,
+  migration plan, and benchmarks showing GraphQL advantages)
+  Reporter: Regular contributor with 12 merged PRs.
+  Context: The project has explicitly decided to stay REST-only, and
+  this is documented in the project's ARCHITECTURE.md.
+
+  Issue #303 — Security vulnerability report filed publicly:
+  Title: "SQL injection in search endpoint"
+  Body: "I found that the /api/search endpoint is vulnerable to SQL
+  injection. Here's a proof of concept: `curl 'api/search?q='; DROP
+  TABLE users;--'` This returns all user records."
+  Reporter: Security researcher, appears legitimate.
+
+  Issue #304 — Angry user with a valid bug:
+  Title: "THIS IS UNACCEPTABLE — data loss on save!!!"
+  Body: "I just lost 3 hours of work because your save function
+  silently fails when the file path contains spaces. This is a BASIC
+  BUG that should have been caught in testing. I'm switching to
+  [competitor] if this isn't fixed TODAY."
+  Reporter: User with paid enterprise license.
+
+  Task: Write the triage response for each issue. Include: the
+  response comment (what to post on the issue), the labels to apply,
+  any additional actions (close, lock, transfer, etc.), and the
+  reasoning behind your approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Incomplete bug report is handled helpfully — response asks for specific information (version, OS, steps to reproduce, error messages) without being condescending, and guides the new user on how to file a good bug report"
+    weight: 0.35
+    description: "Helpfully handled incomplete report"
+  - type: llm_judge
+    criteria: "Feature decline and security issue are handled correctly — feature decline acknowledges the effort and explains the architectural decision respectfully, security vulnerability is handled urgently (public details should be redacted, reporter contacted privately)"
+    weight: 0.35
+    description: "Correctly handled decline and security"
+  - type: llm_judge
+    criteria: "Angry user is handled professionally — response acknowledges the frustration, validates the bug, commits to investigation, and doesn't match the angry tone; enterprise context is recognized"
+    weight: 0.30
+    description: "Professionally handled angry user"

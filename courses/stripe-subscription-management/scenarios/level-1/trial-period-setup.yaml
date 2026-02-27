@@ -1,0 +1,66 @@
+meta:
+  id: trial-period-setup
+  level: 1
+  course: stripe-subscription-management
+  type: output
+  description: "Implement free trial periods — set up trial subscriptions with and without payment method collection upfront"
+  tags: [stripe, subscription, trial, free-trial, onboarding, beginner]
+
+state: {}
+
+trigger: |
+  You're building the trial experience for a SaaS analytics platform.
+  The product manager wants two trial strategies tested:
+
+  Strategy A — "Credit card upfront" trial:
+  - 14-day free trial
+  - Customer provides payment method at signup
+  - Automatically converts to paid ($39/month) after trial ends
+  - Customer receives email 3 days before trial ends
+
+  Strategy B — "No credit card" trial:
+  - 14-day free trial
+  - No payment method required at signup
+  - Customer must add payment method to continue after trial
+  - Subscription is created in "incomplete" state until payment added
+
+  Current problem the PM flagged:
+  "We launched Strategy A last month and got complaints. Three
+  customers say they were charged without warning when the trial
+  ended. One filed a chargeback. We need to fix the trial-end
+  notification and also build Strategy B as an alternative."
+
+  Tasks:
+  1. Implement Strategy A (card-upfront trial). Write: the
+     subscription creation with trial_period_days, the trial-end
+     warning system using the customer.subscription.trial_will_end
+     webhook (fires 3 days before), the email notification to
+     customers, and the option for customers to cancel before
+     trial ends.
+
+  2. Implement Strategy B (no-card trial). Write: the subscription
+     creation with trial_end and payment_behavior: 'default_incomplete',
+     the flow for collecting payment method when trial ends, the
+     handling of what happens if the customer doesn't add a payment
+     method (subscription cancels), and the nudge emails during
+     the trial.
+
+  3. Compare both strategies. Write a brief analysis for the PM:
+     the trade-offs (conversion rate vs. signup friction), how
+     Stripe handles each behind the scenes (invoice generation,
+     $0 invoice for trial start), and your recommendation for
+     which strategy to use with justification.
+
+assertions:
+  - type: llm_judge
+    criteria: "Strategy A is correctly implemented — trial_period_days is set, trial_will_end webhook handler sends 3-day warning, email notification is customer-friendly, cancellation before trial end is supported, and the chargeback issue is addressed"
+    weight: 0.35
+    description: "Correct card-upfront trial"
+  - type: llm_judge
+    criteria: "Strategy B is correctly implemented — no payment method required at creation, payment_behavior handles incomplete state, payment collection flow after trial works, timeout/cancellation is handled, and nudge emails during trial are designed"
+    weight: 0.35
+    description: "Correct no-card trial"
+  - type: llm_judge
+    criteria: "Strategy comparison is balanced and practical — trade-offs between conversion and friction are analyzed, Stripe's behind-the-scenes behavior is accurate (trial invoices, status transitions), and the recommendation is justified"
+    weight: 0.30
+    description: "Balanced trial strategy comparison"

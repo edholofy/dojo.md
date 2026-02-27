@@ -1,0 +1,74 @@
+meta:
+  id: 3ds-fraud-prevention
+  level: 2
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Use 3D Secure for dispute prevention — implement strategic 3DS authentication to shift liability and prevent fraudulent disputes"
+  tags: [stripe, dispute, 3DS, authentication, liability-shift, SCA, intermediate]
+
+state: {}
+
+trigger: |
+  You're the payments engineer at an e-commerce company. Your CEO
+  heard that 3D Secure "eliminates fraud disputes" and wants you to
+  enable it on every transaction. Your data tells a more nuanced
+  story.
+
+  Current data:
+  - Monthly transactions: 12,000
+  - With 3DS: 1,200 (EU customers, SCA-mandated) — dispute rate: 0.1%
+  - Without 3DS: 10,800 (US/other customers) — dispute rate: 0.8%
+  - Cart abandonment with 3DS: 12% higher than without
+  - Authorization rate with 3DS: 4% lower than without
+
+  The trade-off is clear: 3DS reduces disputes but increases
+  abandonment and reduces authorization rates.
+
+  Your challenge: Use 3DS strategically — not on every transaction,
+  but on the right transactions.
+
+  Risk tiers in your business:
+  - Low risk (60% of transactions): Returning customer, domestic
+    card, order under $100 → 0.2% dispute rate
+  - Medium risk (25%): New customer OR international card OR order
+    $100-$500 → 1.2% dispute rate
+  - High risk (15%): New customer AND (international card OR order
+    over $500 OR failed AVS) → 4.8% dispute rate
+
+  Tasks:
+  1. Design the 3DS strategy. Write: which transactions should
+     require 3DS (risk-based approach, not blanket), the Stripe
+     Radar rules that request 3DS for specific risk tiers, the
+     expected impact on dispute rate (modeling the reduction), and
+     the expected impact on conversion rate (modeling the increased
+     abandonment).
+
+  2. Explain 3DS liability shift. Write: what liability shift means
+     (when 3DS is used and the cardholder authenticated, the issuing
+     bank — not you — is liable for fraud chargebacks), when liability
+     shift applies (and when it doesn't — e.g., when 3DS is
+     attempted but the issuer doesn't support it), how to verify
+     liability shift in Stripe's API response, and the financial
+     impact calculation.
+
+  3. Implement the 3DS configuration. Write: the Stripe Payment
+     Intent creation with request_three_d_secure based on risk tier,
+     the Radar rule for automatic 3DS requests, the handling of 3DS
+     failure (what happens if the customer fails authentication —
+     block or allow?), and the monitoring dashboard (3DS request
+     rate, completion rate, abandonment rate, dispute rate by 3DS
+     status).
+
+assertions:
+  - type: llm_judge
+    criteria: "3DS strategy is risk-based — not blanket application, targets high-risk transactions, expected dispute reduction is modeled, and conversion impact is honestly assessed"
+    weight: 0.35
+    description: "Risk-based 3DS strategy"
+  - type: llm_judge
+    criteria: "Liability shift explanation is accurate — when it applies, when it doesn't, how to verify in Stripe API, and financial impact is calculated correctly"
+    weight: 0.35
+    description: "Accurate liability shift explanation"
+  - type: llm_judge
+    criteria: "Implementation is correct — PaymentIntent uses request_three_d_secure per risk tier, Radar rules automate 3DS requests, authentication failure handling is defined, and monitoring tracks all relevant metrics"
+    weight: 0.30
+    description: "Correct 3DS implementation"

@@ -1,0 +1,78 @@
+meta:
+  id: subscription-migration
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Migrate subscription plans — handle bulk plan changes, grandfather pricing, and pricing model transitions without disrupting customers"
+  tags: [stripe, subscription, migration, grandfather, pricing-change, bulk, intermediate]
+
+state: {}
+
+trigger: |
+  You're the billing engineer at a SaaS company that's changing its
+  pricing model. The CEO announced new pricing effective April 1st:
+
+  Old pricing (currently active for 3,200 customers):
+  - Basic: $29/month
+  - Pro: $49/month
+  - Enterprise: $99/month
+
+  New pricing:
+  - Starter: $39/month (replaces Basic, includes more features)
+  - Growth: $69/month (replaces Pro, includes more features)
+  - Scale: $149/month (replaces Enterprise, includes more features)
+
+  Business rules:
+  1. Existing customers on annual plans keep their current pricing
+     until their annual renewal date ("grandfathered")
+  2. Existing customers on monthly plans get 3 months at current
+     pricing, then transition to new pricing at their next renewal
+     after July 1st
+  3. New customers starting April 1st or later get new pricing only
+  4. Grandfathered enterprise customers ($99/month) who are happy
+     should receive a "loyalty discount" — $129/month instead of
+     $149/month when they eventually transition
+
+  Customer counts:
+  - Annual plans (grandfathered until renewal): 800 customers
+  - Monthly Basic → Starter migration: 1,400 customers
+  - Monthly Pro → Growth migration: 700 customers
+  - Monthly Enterprise → Scale migration: 300 customers
+
+  Tasks:
+  1. Design the migration plan. Write: how to handle the Stripe
+     product/price setup (keep old prices active, create new prices,
+     archive old prices for new signups), the migration timeline
+     (phased approach for 2,400 monthly customers), the technical
+     implementation using subscription schedules to schedule the
+     price change at the right time for each customer, and the
+     rollback plan if something goes wrong.
+
+  2. Implement the migration script. Write: the batch migration
+     code that creates subscription schedules for each customer
+     (transitioning from old price to new price at their
+     post-July-1st renewal), the grandfathering logic for annual
+     customers (no changes until renewal), the loyalty discount
+     application for enterprise customers, and the idempotency
+     handling (safe to re-run if interrupted).
+
+  3. Write the customer communications. Write: the email announcing
+     the pricing change (what's changing, when, and what they get
+     for the higher price), the FAQ for the support team, the
+     in-app banner explaining upcoming changes, and the special
+     communication for grandfathered annual customers (thanking
+     them for their commitment).
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration plan is comprehensive — Stripe product/price setup preserves old prices while introducing new ones, phased timeline is realistic for 2,400 customers, subscription schedules handle future-dated changes, and rollback plan exists"
+    weight: 0.35
+    description: "Comprehensive migration plan"
+  - type: llm_judge
+    criteria: "Migration script is technically sound — batch processing handles 2,400 customers safely, grandfathering respects annual renewal dates, loyalty discount is applied correctly, and idempotency allows safe re-runs"
+    weight: 0.35
+    description: "Sound migration script"
+  - type: llm_judge
+    criteria: "Customer communications are professional — announcement email is honest about the increase and emphasizes added value, FAQ covers likely questions, and grandfathered customer communication builds loyalty"
+    weight: 0.30
+    description: "Professional customer communications"

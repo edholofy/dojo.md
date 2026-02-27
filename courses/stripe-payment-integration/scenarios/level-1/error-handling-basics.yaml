@@ -1,0 +1,103 @@
+meta:
+  id: error-handling-basics
+  level: 1
+  course: stripe-payment-integration
+  type: output
+  description: "Handle Stripe errors properly — understand error types, decline codes, and implement user-friendly error messaging for payment failures"
+  tags: [stripe, errors, decline-codes, error-handling, user-experience, beginner]
+
+state: {}
+
+trigger: |
+  You're a developer working on an e-commerce checkout. Users are
+  reporting confusing error messages when their payments fail. Currently,
+  your code just shows: "Payment failed. Please try again." for every
+  error, which isn't helpful.
+
+  Your support team forwarded these recent complaints:
+  - "It just says payment failed but my card is fine"
+  - "I keep getting an error but it doesn't tell me what to do"
+  - "My bank requires me to authorize the payment but your site doesn't
+    let me"
+
+  Tech stack: Node.js/Express backend, React frontend
+
+  Here are the Stripe error responses your server is receiving:
+
+  Error 1:
+  ```json
+  {
+    "type": "StripeCardError",
+    "code": "card_declined",
+    "decline_code": "insufficient_funds",
+    "message": "Your card has insufficient funds."
+  }
+  ```
+
+  Error 2:
+  ```json
+  {
+    "type": "StripeCardError",
+    "code": "card_declined",
+    "decline_code": "lost_card",
+    "message": "Your card has been declined."
+  }
+  ```
+
+  Error 3:
+  ```json
+  {
+    "type": "StripeInvalidRequestError",
+    "code": "amount_too_small",
+    "message": "Amount must be at least 50 cents."
+  }
+  ```
+
+  Error 4:
+  ```json
+  {
+    "type": "StripeCardError",
+    "code": "expired_card",
+    "message": "Your card has expired."
+  }
+  ```
+
+  Error 5:
+  ```json
+  {
+    "type": "StripeAuthenticationError",
+    "message": "Invalid API Key provided."
+  }
+  ```
+
+  Tasks:
+  1. Write a comprehensive error handling function that catches all
+     Stripe error types (StripeCardError, StripeInvalidRequestError,
+     StripeAPIError, StripeConnectionError, StripeAuthenticationError,
+     StripeRateLimitError). For each type: log appropriately, return
+     the right HTTP status code, and provide a user-friendly message.
+
+  2. Create a decline code mapping that translates Stripe decline codes
+     into user-friendly messages with actionable advice. Cover at least
+     10 common decline codes. Include: what to show the user, what to
+     log internally, and whether to allow retry.
+
+  3. Write the frontend error display component. Show different UI
+     treatments for: recoverable errors (try another card), action-
+     required errors (3D Secure authentication), and non-recoverable
+     errors (fraudulent card). Include the retry logic with
+     exponential backoff for transient errors.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error handling function covers all Stripe error types — catches each type separately, logs with appropriate detail (not exposing sensitive data), returns correct HTTP codes (402 for card errors, 400 for invalid request, 500 for API/connection errors, 429 for rate limit)"
+    weight: 0.35
+    description: "Comprehensive Stripe error handling"
+  - type: llm_judge
+    criteria: "Decline code mapping covers 10+ codes with user-friendly messages — insufficient_funds gets 'Try a different card', expired_card gets 'Update your card expiration', lost_card doesn't reveal the reason (security); actionable advice for each"
+    weight: 0.35
+    description: "User-friendly decline code mapping"
+  - type: llm_judge
+    criteria: "Frontend component handles error categories differently — recoverable shows retry with alternate card, 3D Secure triggers authentication flow, non-recoverable shows clear stop message; retry logic uses appropriate backoff"
+    weight: 0.30
+    description: "Category-aware frontend error handling"

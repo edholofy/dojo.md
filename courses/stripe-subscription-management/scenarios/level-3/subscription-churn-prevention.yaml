@@ -1,0 +1,75 @@
+meta:
+  id: subscription-churn-prevention
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Build a churn prevention system — implement predictive churn scoring, retention offers, and cancellation flows that reduce voluntary churn"
+  tags: [stripe, subscription, churn, retention, cancellation-flow, prevention, advanced]
+
+state: {}
+
+trigger: |
+  You're the growth engineer at a SaaS company ($20M ARR, 10,000
+  subscribers). Monthly voluntary churn is 3.2% — well above the
+  SaaS benchmark of 1.5-2.0%. The CEO says: "Every 0.1% reduction
+  in churn is worth $240K in annual revenue. Build a system."
+
+  Current cancellation data (last 6 months, 1,920 cancellations):
+  - "Too expensive": 28% (538 customers)
+  - "Not using it enough": 24% (461 customers)
+  - "Missing features": 18% (346 customers)
+  - "Switching to competitor": 14% (269 customers)
+  - "Business closed/downsized": 10% (192 customers)
+  - "Other": 6% (115 customers)
+
+  Behavioral signals available:
+  - Login frequency (daily, weekly, monthly, inactive)
+  - Feature usage (which features, how many, depth of use)
+  - Support ticket history (volume, sentiment, resolution)
+  - Billing history (failed payments, downgrades, coupon usage)
+  - Account age and plan type
+  - NPS score (collected quarterly)
+
+  Current cancellation flow: One-click cancel → subscription ends.
+  No save attempt, no feedback collection, no retention offer.
+
+  Tasks:
+  1. Build the predictive churn scoring model. Write: the feature
+     engineering (which behavioral signals predict churn — declining
+     logins, support tickets with negative sentiment, coupon expiry),
+     the scoring algorithm (logistic regression or gradient boosted
+     tree with Stripe + product data), the risk segments (low,
+     medium, high, critical), and the proactive intervention triggers
+     (when a customer enters "high risk," what happens automatically).
+
+  2. Design the retention cancellation flow. Write: the multi-step
+     cancellation page (reason collection → retention offer based
+     on reason → final confirmation), the retention offers by
+     reason ("too expensive" → discount or downgrade, "not using
+     it" → feature recommendation, "missing feature" → product
+     roadmap, "switching" → competitive comparison), the Stripe
+     implementation of each offer (applying coupon, changing plan,
+     pausing subscription), and the metrics framework (save rate
+     by reason, save rate by offer type).
+
+  3. Build the proactive retention system. Write: the automated
+     email sequences for at-risk customers (triggered by churn score
+     entering "high"), the in-app engagement nudges (highlighting
+     unused features, showing value received), the customer success
+     team alerts (high-value accounts entering risk zone), and the
+     A/B testing framework for retention offers (which discounts
+     and messaging work best).
+
+assertions:
+  - type: llm_judge
+    criteria: "Churn scoring uses appropriate signals — feature engineering combines behavioral, billing, and sentiment data; scoring algorithm is appropriate for the data; risk segments are actionable; and proactive triggers automate intervention"
+    weight: 0.35
+    description: "Appropriate churn scoring model"
+  - type: llm_judge
+    criteria: "Cancellation flow is designed to save — multi-step flow collects reasons, offers match reasons, Stripe implementation is correct (coupons, plan changes, pauses), and metrics track save rates"
+    weight: 0.35
+    description: "Effective cancellation flow"
+  - type: llm_judge
+    criteria: "Proactive system addresses at-risk customers early — automated emails engage before cancellation attempt, in-app nudges show value, CS team gets high-value alerts, and A/B testing optimizes offers"
+    weight: 0.30
+    description: "Proactive retention system"

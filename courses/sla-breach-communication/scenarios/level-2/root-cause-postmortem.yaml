@@ -1,0 +1,71 @@
+meta:
+  id: root-cause-postmortem
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Conduct blameless root cause analysis and postmortem after SLA breach"
+  tags: [postmortem, root-cause-analysis, blameless, learning, 5-whys]
+
+state: {}
+
+trigger: |
+  You're running the postmortem for a critical SLA breach at "VideoStream"
+  (video hosting platform). An outage lasted 4 hours (2 AM - 6 AM PST),
+  affecting 250,000 active viewers. The timeline shows:
+
+  2:15 AM - Automated alerts show database connection pool exhaustion
+  2:22 AM - On-call engineer pages incident commander
+  2:28 AM - War room created with database team + ops + product leads
+  2:45 AM - Root cause hypothesis: New video transcoding job consuming all DB connections
+  3:12 AM - Engineering confirms: Transcoding job configuration changed at 2:00 AM
+  3:15 AM - Database team discovers 2,000+ idle connections not timing out
+  4:00 AM - Configuration rollback attempted, takes 30 minutes (fail at 4:15)
+  4:45 AM - Restart database service (manually kill idle connections)
+  5:00 AM - Service restored, 85% of viewers back within 5 minutes
+  5:30 AM - Full recovery
+
+  Timeline Details:
+  - Engineer who deployed transcoding change: (fresh hire, 2 weeks in)
+  - Change deployed: 2:00 AM (unusual - wasn't in deployment window)
+  - Deployment approval: Used auto-approval since change "touched only config"
+  - Monitoring alert: Triggered at 2:15 AM (database team didn't see it immediately)
+  - Rollback process: Complex, requiring manual connection kill
+  - Escalation: 13 minutes to war room (close to SLA)
+
+  The postmortem must:
+  1. Use blameless format (no finger-pointing, focus on systems)
+  2. Define the timeline clearly
+  3. Identify root causes (use 5 Whys technique)
+  4. Document impact
+  5. List immediate and preventive actions
+  6. Assign owners with deadlines
+  7. Extract lessons learned
+
+  Write the postmortem covering:
+  - What happened? (1 paragraph executive summary)
+  - Impact? (quantified: users, revenue, duration)
+  - Why did it happen? (5 Whys root cause analysis)
+  - What did we do? (timeline of resolution)
+  - What changes prevent this? (preventive actions)
+  - What do we need to learn? (process improvements)
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause analysis identifies multiple contributing factors WITHOUT blaming engineer: (1) new hire process insufficient, (2) auto-approval for config changes too permissive, (3) connection timeout not configured, (4) deployment window not enforced"
+    weight: 0.3
+    description: "Root cause blameless and systemic"
+
+  - type: llm_judge
+    criteria: "5 Whys technique applied: Why deploy at 2 AM? → Unclear deployment window process. Why did alert not escalate faster? → Alert routing rules don't prioritize database team. Why no connection timeout? → Not in deployment checklist."
+    weight: 0.25
+    description: "5 Whys analysis complete"
+
+  - type: llm_judge
+    criteria: "Action items include: (1) Mandatory code review for config changes (owner: Tech Lead, deadline: 1 week), (2) Add database connection timeout config (owner: DBA, deadline: 3 days), (3) Train new hires on deployment windows (owner: Eng Manager, deadline: ongoing)"
+    weight: 0.25
+    description: "Action items specific and owned"
+
+  - type: llm_judge
+    criteria: "Postmortem acknowledges team's excellent response time (13 min to war room) and effort, even while identifying process improvements"
+    weight: 0.2
+    description: "Blameless culture evident"

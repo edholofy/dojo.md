@@ -1,0 +1,60 @@
+meta:
+  id: priority-assignment
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "Assign issue priority — evaluate five issues and assign priority levels using a structured framework"
+  tags: [github, issue-triage, priority, severity, impact, basics]
+
+state: {}
+
+trigger: |
+  You're triaging a backlog of 5 new issues for an e-commerce API.
+  Your priority framework uses:
+  - P0 (Critical): Service down, data loss, security vulnerability
+  - P1 (High): Major feature broken, affects >20% of users, no workaround
+  - P2 (Medium): Feature partially broken, affects <20%, workaround exists
+  - P3 (Low): Cosmetic issue, minor inconvenience, edge case
+  - P4 (Minimal): Nice-to-have, no user impact currently
+
+  The 5 issues:
+
+  Issue #142: "Checkout endpoint returns 500 when cart has >50 items"
+  Reporter: enterprise customer
+  Impact: 3 enterprise customers affected, workaround is splitting orders
+
+  Issue #143: "API docs show wrong parameter name for search endpoint"
+  Reporter: community contributor
+  Impact: Developers get confused, but correct parameter is in the
+  code examples below
+
+  Issue #144: "Payment webhook doesn't retry on timeout"
+  Reporter: internal team
+  Impact: ~2% of payments silently fail to update order status
+
+  Issue #145: "Rate limiting returns 403 instead of 429"
+  Reporter: API partner
+  Impact: Client libraries don't auto-retry because they expect 429
+
+  Issue #146: "Admin dashboard loads slowly with >1000 orders"
+  Reporter: internal operations team
+  Impact: Takes 30 seconds to load, affects 5 internal users
+
+  Task: Triage all 5 issues. For each, write: the priority level
+  (P0-P4), the justification (using severity, scope of impact, and
+  workaround availability), any additional labels to apply, and the
+  recommended response (immediate fix, next sprint, backlog, etc.).
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority assignments are justified — each issue has a clear severity/impact/workaround analysis, priorities reflect the relative importance correctly, and no obvious mis-prioritizations"
+    weight: 0.35
+    description: "Justified priority assignments"
+  - type: llm_judge
+    criteria: "Framework is applied consistently — the same criteria (severity, scope, workaround) are evaluated for each issue, and similar issues would receive similar priorities"
+    weight: 0.35
+    description: "Consistently applied framework"
+  - type: llm_judge
+    criteria: "Recommended responses match priorities — higher-priority issues get more urgent response recommendations, and the recommended timeline is realistic"
+    weight: 0.30
+    description: "Priority-matched responses"

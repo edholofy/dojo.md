@@ -1,0 +1,72 @@
+meta:
+  id: tax-calculation-integration
+  level: 3
+  course: stripe-payment-integration
+  type: output
+  description: "Integrate tax calculations with Stripe — implement Stripe Tax or external tax engines for multi-jurisdiction tax compliance"
+  tags: [stripe, tax, compliance, multi-jurisdiction, VAT, sales-tax, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior engineer at a SaaS company selling globally. You
+  need to implement tax calculation for payments processed through
+  Stripe. Your CFO says: "We're selling in 40 countries and 50 US
+  states. Tax compliance is a legal requirement, not a nice-to-have."
+
+  Current state: No tax is being collected. Your legal team says you
+  have nexus (tax obligation) in 15 US states, all EU countries, UK,
+  Canada, and Australia.
+
+  Tax complexity:
+  - US: Sales tax varies by state, county, and city (10,000+ tax
+    jurisdictions). Some states exempt SaaS, others don't.
+  - EU: VAT at country rates (19-27%). B2B reverse charge mechanism.
+    Digital Services regulations.
+  - UK: 20% VAT. Separate post-Brexit rules.
+  - Canada: GST/HST varies by province.
+  - Australia: 10% GST for B2C. Reverse charge for B2B.
+
+  Options being evaluated:
+  1. Stripe Tax (built-in, $0.50 per transaction)
+  2. External tax engine (Avalara/TaxJar) + Stripe integration
+  3. Build your own tax tables (CFO says "absolutely not")
+
+  Requirements:
+  - Calculate tax at checkout (show customer the tax before payment)
+  - Apply correct tax rate based on customer location
+  - Handle tax-exempt customers (B2B in EU with valid VAT ID)
+  - Generate tax-compliant invoices
+  - Support tax reporting for quarterly/annual filings
+
+  Tasks:
+  1. Implement Stripe Tax integration. Write: the Checkout Session or
+     PaymentIntent creation with automatic_tax enabled, the customer
+     tax location detection, the tax-exempt customer handling (VAT ID
+     validation), and the invoice generation with tax breakdown.
+
+  2. Handle the B2B tax exemption flow. Write: the VAT ID collection
+     and validation (using Stripe's Tax ID API or VIES validation), the
+     reverse charge mechanism for EU B2B transactions, the tax-exempt
+     certificate handling for US customers, and the audit trail for
+     exemption claims.
+
+  3. Design the tax reporting system. Include: how to extract tax data
+     from Stripe for quarterly filings, the reporting format by
+     jurisdiction, the reconciliation between Stripe tax collected and
+     amounts owed, and the integration with accounting software
+     (QuickBooks, Xero).
+
+assertions:
+  - type: llm_judge
+    criteria: "Stripe Tax integration is correct — enables automatic_tax on PaymentIntents or Checkout Sessions, sets customer tax location, handles zero-rate for valid VAT IDs, and generates tax-compliant invoices with line-item tax breakdown"
+    weight: 0.35
+    description: "Correct Stripe Tax integration"
+  - type: llm_judge
+    criteria: "B2B exemption flow handles EU reverse charge — validates VAT IDs, applies zero-rate VAT for valid B2B intra-EU, handles US tax-exempt certificates, and maintains audit trail for compliance"
+    weight: 0.35
+    description: "Correct B2B tax exemption handling"
+  - type: llm_judge
+    criteria: "Tax reporting is jurisdiction-aware — extracts data by jurisdiction, formats for quarterly filings, reconciles Stripe-collected vs. owed amounts, and addresses the integration with accounting software"
+    weight: 0.30
+    description: "Jurisdiction-aware tax reporting"

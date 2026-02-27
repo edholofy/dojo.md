@@ -1,0 +1,64 @@
+meta:
+  id: bug-triage-shift-simulation
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Handle a complex triage shift with competing priorities, limited information, and time pressure"
+  tags: [bugs, simulation, triage, shift, intermediate]
+
+state: {}
+
+trigger: |
+  It's Monday morning at "CodeDeploy" (CI/CD platform SaaS). You're
+  the triage lead for the week. Over the weekend, 18 bugs were
+  filed. You have the morning standup in 1 hour and need to have a
+  plan.
+
+  Weekend bug queue (sorted by time filed):
+
+  Saturday:
+  1. P?: "Build pipelines hang indefinitely for Go projects" — 3 customers
+  2. P?: "Dashboard chart tooltip shows wrong date" — Internal QA
+  3. P?: "API key displayed in plain text in webhook logs" — Customer
+  4. P?: "Mobile app crashes on Android 14" — 2 customers
+  5. P?: "Documentation link on settings page is broken" — Customer
+  6. P?: "Deploy button unresponsive after failed build" — Customer
+  7. P?: "Can't add team members — invite email never arrives" — Enterprise
+
+  Sunday:
+  8. P?: "Same as #1 — Go builds hanging" — Different customer
+  9. P?: "Build logs not loading for builds older than 30 days" — Customer
+  10. P?: "Pipeline triggers on wrong branch when PR is merged" — Customer
+  11. P?: "Same as #4 — Android crash on project list" — Customer
+  12. P?: "Integration with Bitbucket broken after their API update" — 5 customers
+
+  Just now (Monday morning):
+  13. P?: "All builds failing with 'insufficient resources' error" — 8 customers and counting
+  14. P?: "Typo in email subject: 'Buid Completed'" — Internal
+  15. P?: "Same as #13 — can't build anything" — Multiple reports incoming
+
+  Tasks:
+  1. Assign priority (P0-P3) to all 15 items and identify duplicates.
+  2. Group items by urgency tier: "handle now," "handle today,"
+     "handle this week," "handle later."
+  3. Write your standup update covering the weekend queue.
+  4. Bug #3 (API key in logs) — is this a bug or a security incident?
+     How does your handling change?
+
+assertions:
+  - type: llm_judge
+    criteria: "Build failure (#13/#15) is P0 — active outage affecting 8+ customers with more reports incoming is the top priority"
+    weight: 0.25
+    description: "Active outage is P0"
+  - type: llm_judge
+    criteria: "API key exposure (#3) is treated as security incident — recognizes this requires immediate security response, not just a bug fix, potentially requiring key rotation"
+    weight: 0.25
+    description: "Security incident recognized"
+  - type: llm_judge
+    criteria: "Duplicates correctly identified — #8 is duplicate of #1 (Go builds), #11 is duplicate of #4 (Android crash), #15 is duplicate of #13 (build failures)"
+    weight: 0.25
+    description: "Duplicates correctly identified"
+  - type: llm_judge
+    criteria: "Standup update is concise and actionable — summarizes the weekend queue, highlights the active incidents, and states what help is needed, in under 2 minutes"
+    weight: 0.25
+    description: "Concise standup update"

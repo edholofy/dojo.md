@@ -1,0 +1,67 @@
+meta:
+  id: bug-reproduction-triage
+  level: 2
+  course: github-issue-triage
+  type: output
+  description: "Reproduce and verify bugs during triage — determine if reported bugs are valid, reproducible, and correctly categorized"
+  tags: [github, issue-triage, bug-reproduction, verification, debugging, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior maintainer responsible for bug verification. Before
+  assigning bugs to developers, you verify they're reproducible and
+  correctly categorized. You have 4 bug reports to verify today.
+
+  Bug #601: "Dark mode colors are wrong on Safari"
+  Reporter: "The background color in dark mode shows as #1a1a2e
+  instead of #16213e on Safari 17. Chrome shows the correct color."
+  Steps: Enable dark mode, observe background color
+  Your investigation: You check the CSS and find the color is set via
+  CSS custom properties. Safari 17 renders oklch() colors differently.
+
+  Bug #602: "API rate limiter counts OPTIONS requests"
+  Reporter: "Our CORS preflight OPTIONS requests are counting against
+  the API rate limit. We hit the 100 req/min limit after only 50
+  actual API calls because each call sends a preflight first."
+  Steps: Make CORS requests, observe rate limit headers
+  Your investigation: You check the rate limiter middleware. OPTIONS
+  requests are indeed counted because the middleware runs before the
+  CORS handler.
+
+  Bug #603: "Memory leak on the dashboard page"
+  Reporter: "The dashboard page slowly leaks memory. After 2 hours,
+  the tab uses 2GB of RAM. I think it's the real-time chart."
+  Steps: Open dashboard, wait 2 hours, check Chrome task manager
+  Your investigation: You open the dashboard. After 30 minutes, memory
+  usage is stable at 120MB. You notice the reporter has 15 browser
+  extensions installed (mentioned in a screenshot).
+
+  Bug #604: "Can't upload files larger than 10MB"
+  Reporter: "When I try to upload a 15MB CSV file, I get 'Request
+  Entity Too Large'. The docs say the limit is 100MB."
+  Steps: Upload a 15MB file
+  Your investigation: The application limit is 100MB, but the
+  reverse proxy (nginx) has a default 10MB client_max_body_size.
+  This is a deployment configuration issue, not an application bug.
+
+  Task: Triage all 4 bugs after verification. For each, write: the
+  verification result (confirmed, cannot reproduce, user error, or
+  configuration issue), the root cause analysis (what's actually
+  happening), the updated labels and priority, the response to the
+  reporter (verification result, next steps), and whether to keep
+  open, close, or reclassify the issue.
+
+assertions:
+  - type: llm_judge
+    criteria: "Verification results are accurate — each bug is correctly classified (Safari color = confirmed browser issue, rate limiter = confirmed bug, memory leak = cannot reproduce/user environment, upload = configuration issue)"
+    weight: 0.35
+    description: "Accurate verification results"
+  - type: llm_judge
+    criteria: "Root cause analysis goes beyond symptoms — identifies the underlying technical reason for each issue, not just confirming the reporter's description"
+    weight: 0.35
+    description: "Root-cause-reaching analysis"
+  - type: llm_judge
+    criteria: "Responses respect the reporter's effort — confirmed bugs acknowledge the good report, non-reproducible issues ask for more information politely, and reclassified issues explain why without dismissing the reporter"
+    weight: 0.30
+    description: "Effort-respecting responses"

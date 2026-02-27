@@ -1,0 +1,74 @@
+meta:
+  id: first-triage-shift
+  level: 1
+  course: github-issue-triage
+  type: output
+  description: "First triage shift — handle a batch of 6 incoming issues with different types, priorities, and required actions"
+  tags: [github, issue-triage, shift-simulation, batch-processing, basics]
+
+state: {}
+
+trigger: |
+  You're doing your first solo triage shift for an open source
+  database driver library. You have 6 new issues to process in the
+  next hour.
+
+  Issue #501: "Connection timeout not configurable"
+  Type: Feature request
+  Body: "The default 30s connection timeout is too short for my use
+  case. I'm connecting to a remote DB over slow VPN. Can we add a
+  timeout configuration option?"
+  Reporter: Active user (5 previous issues, all valid)
+
+  Issue #502: "Segfault when using prepared statements with NULL"
+  Type: Bug
+  Body: "Using prepared statements with NULL parameters causes a
+  segfault. This crashes our production server. Affects v3.1.0.
+  Core dump attached."
+  Reporter: Enterprise user
+
+  Issue #503: "How do I use connection pooling?"
+  Type: Question
+  Body: "I'm trying to set up connection pooling but the docs don't
+  explain it clearly. Can someone help me configure max connections?"
+  Reporter: New user
+
+  Issue #504: "Update CI to use Node 20"
+  Type: Chore
+  Body: "Node 18 reaches EOL in April. We should update our CI matrix
+  to test against Node 20 and 22."
+  Reporter: Project maintainer
+
+  Issue #505: "Data corruption when concurrent writes exceed pool size"
+  Type: Bug
+  Body: "Under heavy concurrent writes (>100 simultaneous), data
+  occasionally gets corrupted — wrong values in wrong columns. Only
+  happens when connection pool is exhausted. Reproduction script
+  attached."
+  Reporter: Different enterprise user, references Issue #502
+
+  Issue #506: "Add MongoDB-compatible API layer"
+  Type: Feature request
+  Body: "Would be great to have a MongoDB-compatible query syntax
+  on top of the PostgreSQL driver."
+  Reporter: New account, no other activity
+
+  Task: Triage all 6 issues. For each, write: the labels to apply,
+  the priority (P0-P3), the response comment, and the next action
+  (assign, request info, close, redirect, etc.). At the end, write
+  a brief summary of your triage shift (what you processed, any
+  patterns noticed, anything to escalate).
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage decisions are appropriate for each issue type — bugs get priority based on severity, features are evaluated on merit, questions are redirected to appropriate channels, and chores are handled efficiently"
+    weight: 0.35
+    description: "Type-appropriate triage decisions"
+  - type: llm_judge
+    criteria: "Critical issues are identified — the segfault (#502) and data corruption (#505) are prioritized highest, their relationship is noted, and the response reflects urgency"
+    weight: 0.35
+    description: "Critical issues identified"
+  - type: llm_judge
+    criteria: "Shift summary captures patterns — notes the connection between #502 and #505, identifies any issues that need escalation, and provides a useful handoff for the next triager"
+    weight: 0.30
+    description: "Pattern-capturing shift summary"

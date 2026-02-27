@@ -1,0 +1,76 @@
+meta:
+  id: first-escalation-shift
+  level: 1
+  course: customer-support-escalation
+  type: output
+  description: "Simulate your first shift handling escalations — manage a queue of tickets that require escalation decisions, documentation, and customer communication"
+  tags: [support, escalation, simulation, shift, practice, beginner]
+
+state: {}
+
+trigger: |
+  It's your first week on a support team. You're handling tickets
+  and need to decide which ones you can resolve yourself and which
+  need escalation. Your team uses this structure:
+  - L1 (you): basic inquiries, known issues, standard refunds up to $25
+  - L2 (specialist): complex issues, refunds up to $200, account mods
+  - L3 (engineering): bugs, outages, data issues
+  - Management: policy exceptions, VIP issues, complaint patterns
+
+  Handle this queue of 8 tickets. For each, decide: resolve yourself
+  OR escalate (and to whom). If resolving, write the customer response.
+  If escalating, write both the customer message and the internal note.
+
+  Ticket 1 (email, 30 min old):
+  "Hi, how do I change my password? I can't find the option."
+
+  Ticket 2 (chat, live now):
+  "I was charged $89 for a feature I didn't sign up for. I want
+  my money back immediately."
+
+  Ticket 3 (email, 2 hours old):
+  "We've noticed our reports are showing incorrect numbers since
+  yesterday's update. Multiple team members are affected."
+
+  Ticket 4 (chat, live now):
+  "I'm the IT director at Acme Corp. We're your biggest customer
+  and I need to speak to someone senior about our contract renewal."
+
+  Ticket 5 (email, 1 hour old):
+  "Thanks for the quick delivery! Just wanted to say the product
+  is great."
+
+  Ticket 6 (chat, live now):
+  "Your system just charged me 5 times for the same order. That's
+  $500 in charges on my credit card. I need this fixed NOW."
+
+  Ticket 7 (email, 4 hours old):
+  "Can you tell me if you offer a student discount?"
+
+  Ticket 8 (email, 3 hours old):
+  "This is the fourth time I've contacted support about the same
+  issue. Each time I'm told it will be fixed. I want a full refund
+  of my annual subscription ($1,200) or I'm filing a complaint
+  with the BBB."
+
+  After handling all 8, write a brief summary of your shift
+  including: tickets resolved, tickets escalated, and any
+  patterns you noticed.
+
+assertions:
+  - type: llm_judge
+    criteria: "Escalation decisions are appropriate — password help and student discount are self-handled, quintuple charge and annual refund need escalation, VIP contract renewal goes to management/sales"
+    weight: 0.30
+    description: "Appropriate escalation decisions"
+  - type: llm_judge
+    criteria: "The quintuple charge is treated as urgent — $500 in erroneous charges gets immediate escalation with empathy and urgency"
+    weight: 0.25
+    description: "Urgent financial issue handling"
+  - type: llm_judge
+    criteria: "The positive feedback ticket is handled appropriately — it's acknowledged warmly and not just ignored or auto-closed"
+    weight: 0.20
+    description: "Positive feedback acknowledgment"
+  - type: llm_judge
+    criteria: "The shift summary identifies patterns — the repeated contact customer and the data issue both suggest systemic problems worth flagging"
+    weight: 0.25
+    description: "Pattern identification in summary"

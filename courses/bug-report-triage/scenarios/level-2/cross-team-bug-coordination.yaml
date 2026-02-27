@@ -1,0 +1,72 @@
+meta:
+  id: cross-team-bug-coordination
+  level: 2
+  course: bug-report-triage
+  type: output
+  description: "Coordinate bug investigation and resolution across multiple engineering teams — frontend, backend, mobile, and infrastructure"
+  tags: [bugs, cross-team, coordination, investigation, intermediate]
+
+state: {}
+
+trigger: |
+  "ShopStream" (e-commerce platform) has a bug that crosses team
+  boundaries. Customers report: "Orders placed on mobile sometimes
+  show the wrong total. The cart shows $85 but the confirmation
+  email says $92."
+
+  Teams involved:
+  - Mobile team: Builds the iOS/Android app
+  - Backend API team: Handles order processing and pricing
+  - Infrastructure team: Manages the database and caching layer
+  - Email service team: Sends confirmation emails
+
+  Investigation so far:
+  - Mobile team: "Cart total is calculated client-side from API
+    prices. We display what the API returns."
+  - Backend team: "Order totals are calculated server-side. The API
+    response includes correct prices at time of request."
+  - Infrastructure team: "We recently updated the Redis cache TTL
+    from 5 minutes to 30 minutes for pricing data."
+  - Email team: "We pull the order total from the orders database
+    table, not from the API."
+
+  This means:
+  - Mobile sees cached prices (from API, which may use Redis cache)
+  - Backend calculates final total using real-time prices
+  - If a price changes during the session, the cart total (cached)
+    won't match the order total (real-time)
+
+  Tasks:
+
+  1. Trace the bug through the system: What's the root cause? Which
+     team's change most likely introduced it?
+
+  2. This bug spans 4 teams. Who should own the fix? How do you
+     decide ownership when a bug crosses team boundaries?
+
+  3. Write the cross-team bug report that goes to all 4 teams:
+     - Root cause analysis
+     - Proposed fix options
+     - Who needs to do what
+     - Timeline for resolution
+
+  4. Design a process to catch cross-team bugs like this in the
+     future. What testing or monitoring would help?
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause traces to caching change — identifies the Redis TTL increase from 5 to 30 minutes as the primary cause of price staleness during sessions"
+    weight: 0.25
+    description: "Root cause identified"
+  - type: llm_judge
+    criteria: "Ownership is logically assigned — either Backend (price consistency) or Infrastructure (caching change) owns the fix, with clear reasoning for the choice"
+    weight: 0.25
+    description: "Logical ownership assignment"
+  - type: llm_judge
+    criteria: "Cross-team report is actionable — includes specific tasks for each team rather than just describing the problem and hoping someone picks it up"
+    weight: 0.25
+    description: "Actionable cross-team report"
+  - type: llm_judge
+    criteria: "Prevention includes integration testing — suggests end-to-end tests that validate price consistency across the mobile→API→database→email chain"
+    weight: 0.25
+    description: "Integration testing prevention"

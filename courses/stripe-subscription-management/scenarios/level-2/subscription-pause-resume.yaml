@@ -1,0 +1,73 @@
+meta:
+  id: subscription-pause-resume
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Implement subscription pausing — allow customers to temporarily pause their subscription instead of canceling"
+  tags: [stripe, subscription, pause, resume, churn-prevention, retention, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at a SaaS fitness coaching platform ($49/month).
+  The product team noticed that 30% of cancellations come with
+  reasons like "traveling for a month," "taking a break," or "budget
+  tight this quarter." These customers want to return but cancel
+  because there's no pause option.
+
+  Requirements:
+  1. Customers can pause for 1, 2, or 3 months maximum
+  2. While paused, customers retain read-only access to their data
+     (workout history, meal plans) but can't create new content
+  3. Subscription automatically resumes after the pause period
+  4. Customers can resume early at any time
+  5. No charge during the pause period
+  6. Limit: Maximum 2 pauses per year per customer
+
+  Stripe's pause behavior:
+  Stripe supports pause_collection on subscriptions with two behaviors:
+  - keep_as_draft: Invoices are still generated but kept as drafts
+    (not charged). When resumed, drafts are voided.
+  - void: Invoices are voided during the pause period. Cleanest
+    option for "no charge during pause."
+
+  Complication: A customer on an annual plan (paid upfront $470/year)
+  asks to pause. They've already paid for the year. How do you handle
+  this? Extend their subscription end date? No refund during pause?
+
+  Tasks:
+  1. Implement the pause system. Write: the pause endpoint (using
+     stripe.subscriptions.update with pause_collection, setting
+     resumes_at for automatic resumption), the resume endpoint
+     (clearing pause_collection), the pause limit enforcement (max
+     2 per year, tracked in your database), and the webhook handler
+     for subscription status changes during pause.
+
+  2. Handle the annual plan complication. Write: the logic for
+     determining whether to extend the subscription period by the
+     pause duration (preferred) or offer a prorated credit, the
+     implementation using subscription schedules to extend the
+     current phase, and the customer communication explaining
+     how pause affects their annual plan.
+
+  3. Build the feature access control. Write: the middleware that
+     checks subscription status and pause state to determine
+     feature access (full access for active, read-only for paused,
+     no access for canceled), the customer-facing pause management
+     page (showing pause status, resume date, pauses remaining),
+     and the analytics to measure pause-to-resume conversion rate
+     and impact on churn.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pause system is correctly implemented — uses pause_collection with appropriate behavior, resumes_at is set for automatic resumption, resume endpoint clears pause, pause limit is enforced, and webhooks handle status changes"
+    weight: 0.35
+    description: "Correct pause implementation"
+  - type: llm_judge
+    criteria: "Annual plan handling is fair — either extends subscription period or provides credit, implementation is technically sound, and customer communication is clear about the impact"
+    weight: 0.35
+    description: "Fair annual plan handling"
+  - type: llm_judge
+    criteria: "Feature access and analytics are complete — middleware correctly gates features by status, pause management page shows relevant info, and analytics track the churn prevention impact"
+    weight: 0.30
+    description: "Complete access control and analytics"

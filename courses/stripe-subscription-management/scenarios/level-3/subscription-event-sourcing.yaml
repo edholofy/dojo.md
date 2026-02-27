@@ -1,0 +1,82 @@
+meta:
+  id: subscription-event-sourcing
+  level: 3
+  course: stripe-subscription-management
+  type: output
+  description: "Build an event-sourced subscription system — implement a reliable subscription state machine using event sourcing for audit and debugging"
+  tags: [stripe, subscription, event-sourcing, state-machine, audit, reliability, advanced]
+
+state: {}
+
+trigger: |
+  You're rebuilding the subscription management system for a SaaS
+  company that has been plagued by state inconsistencies between
+  Stripe and the local database. The CTO wants an event-sourced
+  architecture.
+
+  Problems with the current system:
+  1. Database says subscription is active, Stripe says it's canceled
+  2. Customer was charged but database wasn't updated (webhook
+     delivery gap)
+  3. Support can't tell WHEN a subscription was upgraded — only
+     the current state is stored
+  4. Debugging billing issues requires piecing together Stripe
+     dashboard events, application logs, and database queries
+
+  The CTO's vision:
+  "Every subscription change — creation, upgrade, downgrade, payment
+  success, payment failure, cancellation — should be an immutable
+  event. The subscription's current state should be derived from
+  replaying these events. If there's ever a discrepancy, we can
+  rebuild state from events."
+
+  Event types to model:
+  - SubscriptionCreated
+  - SubscriptionTrialStarted
+  - SubscriptionActivated (first payment succeeded)
+  - SubscriptionPlanChanged (upgrade/downgrade)
+  - SubscriptionPaymentSucceeded
+  - SubscriptionPaymentFailed
+  - SubscriptionPastDue
+  - SubscriptionPaused
+  - SubscriptionResumed
+  - SubscriptionCancellationScheduled
+  - SubscriptionCanceled
+
+  Tasks:
+  1. Design the event-sourced subscription model. Write: the event
+     schema for each event type (what data each event carries), the
+     state machine that derives current subscription state from
+     events, the event store schema (immutable append-only table),
+     and the projection logic that builds the current-state read
+     model from events.
+
+  2. Implement the Stripe webhook-to-event bridge. Write: the
+     mapping from Stripe webhook events to your domain events
+     (customer.subscription.created → SubscriptionCreated, etc.),
+     the idempotent event ingestion (same Stripe event ID → same
+     domain event, no duplicates), the out-of-order handling (what
+     if PaymentSucceeded arrives before SubscriptionCreated), and
+     the periodic Stripe-to-local reconciliation (detect drift).
+
+  3. Build the debugging and audit tools. Write: the subscription
+     timeline view (all events for a subscription in chronological
+     order), the state-at-time query (what was the subscription
+     state on any given date), the anomaly detection (events that
+     shouldn't happen given the current state, e.g., PaymentSucceeded
+     for a canceled subscription), and the state rebuild command
+     (reconstruct current state from events to fix inconsistencies).
+
+assertions:
+  - type: llm_judge
+    criteria: "Event-sourced model is well-designed — event schemas carry appropriate data, state machine has valid transitions, event store is append-only, and projections build accurate current state"
+    weight: 0.35
+    description: "Well-designed event model"
+  - type: llm_judge
+    criteria: "Stripe bridge is reliable — webhook-to-domain mapping is correct, event ingestion is idempotent, out-of-order events are handled, and periodic reconciliation detects drift"
+    weight: 0.35
+    description: "Reliable Stripe bridge"
+  - type: llm_judge
+    criteria: "Debugging tools are practical — timeline view shows full history, point-in-time queries work, anomaly detection flags impossible transitions, and state rebuild fixes inconsistencies"
+    weight: 0.30
+    description: "Practical debugging tools"

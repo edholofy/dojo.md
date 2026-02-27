@@ -1,0 +1,70 @@
+meta:
+  id: subscription-analytics-basics
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Build subscription analytics — calculate MRR, churn, expansion revenue, and other key SaaS metrics from Stripe data"
+  tags: [stripe, subscription, analytics, MRR, churn, SaaS-metrics, intermediate]
+
+state: {}
+
+trigger: |
+  You're building the analytics dashboard for a SaaS company. The
+  CFO needs accurate subscription metrics for the board report, but
+  the current numbers are "directionally correct but not trustworthy."
+
+  The CFO's specific complaints:
+  1. "Our MRR calculation is wrong. We're counting annual subscribers
+     at their full annual payment in the month they pay, instead of
+     spreading it over 12 months."
+  2. "We can't distinguish between voluntary churn (customer chose to
+     leave) and involuntary churn (payment failed)."
+  3. "When a customer upgrades mid-month, we don't know if our MRR
+     grew because of new customers or existing customer expansion."
+
+  Current Stripe data (February snapshot):
+  - Total active subscriptions: 2,847
+  - Monthly subscriptions: 2,100 (various prices from $19-$299)
+  - Annual subscriptions: 747 (various prices from $190-$2,990)
+  - New subscriptions this month: 312
+  - Cancelled subscriptions this month: 89
+  - Upgraded subscriptions this month: 45
+  - Downgraded subscriptions this month: 12
+  - Failed payment cancellations this month: 34
+
+  Tasks:
+  1. Build the MRR calculation engine. Write: the correct MRR
+     formula (annualizing monthly, monthlyizing annual), the MRR
+     components (new MRR, expansion MRR, contraction MRR, churned
+     MRR, reactivation MRR), the net new MRR calculation, and the
+     code that computes each from Stripe subscription data (handling
+     both monthly and annual subscriptions correctly).
+
+  2. Build the churn analysis. Write: the voluntary vs. involuntary
+     churn separation logic (using cancellation reason, subscription
+     status transitions, and whether invoice.payment_failed preceded
+     the cancellation), the churn rate calculation (customer churn
+     vs. revenue churn), the cohort-based retention curve (month-
+     over-month retention by signup cohort), and the at-risk
+     subscriber identification (past_due status, declining usage).
+
+  3. Create the board-ready metrics dashboard data. Write: the
+     endpoints that return monthly MRR trend (12-month chart),
+     MRR waterfall (new + expansion - contraction - churn),
+     customer count by plan, ARPU trend, LTV estimate (ARPU /
+     monthly churn rate), and net revenue retention rate. All
+     numbers must reconcile with Stripe's data.
+
+assertions:
+  - type: llm_judge
+    criteria: "MRR calculation is correct — annual subscriptions are monthlyized, MRR components (new, expansion, contraction, churned, reactivation) are individually calculated, and net new MRR accounts for all movements"
+    weight: 0.35
+    description: "Correct MRR calculation"
+  - type: llm_judge
+    criteria: "Churn analysis distinguishes types — voluntary vs involuntary separation uses appropriate signals, both customer and revenue churn rates are calculated, cohort retention is tracked, and at-risk identification is useful"
+    weight: 0.35
+    description: "Typed churn analysis"
+  - type: llm_judge
+    criteria: "Board metrics are complete and reconcilable — MRR trend, waterfall, customer counts, ARPU, LTV, and NRR are all present, calculations are sound, and the data reconciles with Stripe"
+    weight: 0.30
+    description: "Complete board metrics"

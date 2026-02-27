@@ -1,0 +1,71 @@
+meta:
+  id: multi-currency-payments
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Handle multi-currency payments — implement currency detection, conversion display, and settlement for international customers"
+  tags: [stripe, multi-currency, international, conversion, settlement, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer at a global SaaS company. Your product is priced
+  in USD but customers want to pay in their local currency. The product
+  manager's request: "Show prices in the customer's local currency and
+  charge them in that currency. Our pricing: $49/month, $99/month,
+  $299/month."
+
+  Current situation:
+  - All payments are in USD
+  - International customers see unexpected amounts on their credit card
+    statements due to bank conversion fees
+  - Customer complaints: "You charged me €52 for a $49 plan — that's
+    more than the exchange rate"
+
+  Supported currencies: USD, EUR, GBP, CAD, AUD, JPY
+
+  Technical considerations:
+  - JPY is a zero-decimal currency (no cents)
+  - Exchange rates fluctuate — when do you lock the rate?
+  - Stripe settles in your default currency — how does this work?
+  - Presentment currency vs. settlement currency
+
+  Price table (manually set to round numbers):
+  | Plan    | USD  | EUR  | GBP  | CAD  | AUD  | JPY    |
+  |---------|------|------|------|------|------|--------|
+  | Basic   | $49  | €45  | £39  | C$65 | A$75 | ¥7,500 |
+  | Pro     | $99  | €89  | £79  | C$129| A$149| ¥14,900|
+  | Enterprise| $299| €269 | £239 | C$389| A$449| ¥44,900|
+
+  Tasks:
+  1. Write the backend code to handle multi-currency pricing. Include:
+     detecting the customer's currency (from IP, browser locale, or
+     explicit selection), looking up the correct price, creating the
+     PaymentIntent in the customer's currency, and handling the JPY
+     zero-decimal case.
+
+  2. Write the frontend price display component. Show: the currency
+     selector, the formatted price display (correct symbol placement,
+     decimal handling for JPY), and the checkout flow that passes the
+     selected currency to the backend.
+
+  3. Explain the financial implications. Cover: presentment vs.
+     settlement currency, how Stripe handles FX conversion, the FX fee
+     Stripe charges, how to track revenue by currency, and the
+     accounting implications of receiving payments in multiple
+     currencies. Include a recommendation on whether to use fixed
+     prices (your approach) vs. dynamic conversion.
+
+assertions:
+  - type: llm_judge
+    criteria: "Backend handles multi-currency correctly — maps currency to pre-set prices, creates PaymentIntent with correct currency code, handles JPY as zero-decimal (7500 not 750000), validates supported currencies"
+    weight: 0.35
+    description: "Correct multi-currency backend"
+  - type: llm_judge
+    criteria: "Frontend displays currencies properly — correct symbol placement (€45 not 45€ for EUR, but ¥7,500 for JPY), no decimal places for JPY, currency selector updates prices, passes currency to backend"
+    weight: 0.35
+    description: "Proper currency display and selection"
+  - type: llm_judge
+    criteria: "Financial explanation covers key concepts — presentment vs settlement distinction, Stripe FX fees (~1-2%), revenue tracking by currency, accounting considerations, and sound recommendation on fixed vs dynamic pricing"
+    weight: 0.30
+    description: "Complete financial implications"

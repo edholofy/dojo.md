@@ -1,0 +1,87 @@
+meta:
+  id: sla-breach-shift-simulation
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Handle a realistic SLA management shift with multiple incidents, customer communications, and escalations"
+  tags: [SLA, shift-simulation, incidents, multi-tasking, intermediate]
+
+state: {}
+
+trigger: |
+  You're the SLA operations manager on shift at "AppPlatform" (PaaS
+  provider, 10,000 customers). Your shift: 8 AM to 4 PM.
+
+  Current SLA status at shift start:
+  - Month-to-date: 99.97% uptime (13 minutes downtime of 43.2 max
+    for 99.9% SLA)
+  - 3 open P2 tickets approaching resolution SLA deadline
+  - 1 enterprise customer waiting for a postmortem from last week
+
+  8:15 AM — Ticket escalation
+  P2 ticket #1234 filed 7 hours ago. Resolution SLA: 8 hours. Engineer
+  says: "I'm close but need 2 more hours." The customer hasn't asked
+  for an update yet.
+
+  9:00 AM — New incident
+  Monitoring: API error rates spike to 5% (normally <0.1%). Affects
+  all regions. Engineering is investigating.
+
+  9:30 AM — Customer calls
+  Enterprise customer ($200K/year): "My API calls are failing. What's
+  going on? I have a product launch in 2 hours."
+
+  10:00 AM — Engineering update
+  "Found the cause — a bad config push. Rolling back. ETA: 30 minutes."
+
+  10:45 AM — Incident resolved
+  Total API degradation: 1 hour 45 minutes. Error rates back to normal.
+
+  11:00 AM — Financial assessment
+  You calculate: 1h 45m = 105 minutes. Month-to-date is now: 13 + 105
+  = 118 minutes. SLA: breached (99.9% = max 43.2 min). Current uptime:
+  99.73%.
+
+  12:00 PM — Customer flood
+  200 customers have opened support tickets about the morning incident.
+  50 are asking about service credits.
+
+  1:00 PM — Postmortem request
+  The enterprise customer from last week's incident emails again:
+  "It's been 7 days and I still don't have a postmortem. This is
+  unacceptable."
+
+  2:00 PM — Escalation
+  Ticket #1234 from 8:15 AM: it's now 13 hours old. Resolution SLA
+  (8 hours) was breached 5 hours ago. The customer just noticed.
+
+  Tasks:
+  1. Prioritize and handle each event. What do you do at each
+     timestamp?
+
+  2. At 11:00 AM, you realize the monthly SLA is breached for ALL
+     customers. Write the internal notification to leadership.
+
+  3. 200 customers are asking about credits. Design the bulk
+     communication plan — you can't write 200 individual emails.
+
+  4. End-of-shift report: Summarize the day's SLA events, actions
+     taken, and outstanding items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Ticket #1234 gets proactive communication before the customer notices — at 8:15 AM, the SLA is about to breach and the customer should be updated before the deadline passes"
+    weight: 0.25
+    description: "Proactive ticket SLA management"
+  - type: llm_judge
+    criteria: "Enterprise customer with product launch gets priority — the $200K customer launching in 2 hours gets personal attention and a direct line to engineering"
+    weight: 0.25
+    description: "Priority customer handling"
+  - type: llm_judge
+    criteria: "Bulk credit communication is efficient — proposes a template-based approach that still feels personal, with automatic credit calculation and opt-in for additional details"
+    weight: 0.25
+    description: "Efficient bulk credit communication"
+  - type: llm_judge
+    criteria: "End-of-shift report is comprehensive — covers all incidents, SLA status, outstanding postmortems, ticket #1234 resolution, credit exposure, and next-day action items"
+    weight: 0.25
+    description: "Comprehensive shift report"

@@ -1,0 +1,68 @@
+meta:
+  id: cascading-breach-management
+  level: 2
+  course: sla-breach-communication
+  type: output
+  description: "Handle cascading SLA breaches where your vendor's SLA failure causes you to breach your SLA to your customers"
+  tags: [SLA, cascading, vendor, third-party, intermediate]
+
+state: {}
+
+trigger: |
+  You're a customer success manager at "MailPro" (email delivery
+  platform, 8,000 customers). Your infrastructure depends on AWS
+  for hosting and Twilio for SMS notifications.
+
+  Incident: AWS us-east-1 experiences a 90-minute outage that takes
+  down your entire platform. Meanwhile, Twilio has a separate
+  30-minute SMS delivery delay.
+
+  The cascade:
+  - AWS SLA to MailPro: 99.99% uptime — AWS breached their SLA to you
+  - MailPro SLA to customers: 99.9% uptime — you breached your SLA
+  - Twilio SLA to MailPro: 99.95% uptime — Twilio breached for SMS
+  - Customer expectations: "I don't care about your vendors. YOU
+    promised ME 99.9% uptime."
+
+  Financial situation:
+  - AWS service credits you'll receive: ~$5,000 (based on their SLA)
+  - MailPro service credits you owe customers: ~$80,000 (based on
+    your SLA)
+  - Gap: $75,000 that comes out of your pocket
+
+  Customer reactions:
+  - 200 enterprise customers demand postmortems
+  - 50 customers ask: "Why are you hosted on a single cloud provider?"
+  - 15 customers ask: "Can you guarantee this won't happen again?"
+  - 5 customers threaten to leave: "Twice in 6 months is too many"
+
+  Tasks:
+  1. Write the customer communication for this incident. Do you blame
+     AWS? Do you mention the third-party dependency? How much detail?
+
+  2. Handle the $75,000 gap between AWS credits and customer credits.
+     How do you present this to your CFO?
+
+  3. 15 customers ask for guarantees. You can't promise AWS won't have
+     another outage. What CAN you promise?
+
+  4. Post-incident: Should you diversify to multi-cloud to prevent
+     this? What are the trade-offs?
+
+assertions:
+  - type: llm_judge
+    criteria: "Communication owns the failure — doesn't blame AWS or hide behind 'our vendor had an outage'; takes responsibility for the customer's experience while being transparent about the cause"
+    weight: 0.25
+    description: "Ownership without blame-shifting"
+  - type: llm_judge
+    criteria: "Financial gap is presented with a plan — explains the $75K gap to the CFO with context (customer retention value exceeds credit cost) and proposes long-term mitigation"
+    weight: 0.25
+    description: "CFO-ready financial presentation"
+  - type: llm_judge
+    criteria: "Guarantees are honest — instead of promising zero future outages, commits to specific improvements (multi-region failover, faster detection, better communication)"
+    weight: 0.25
+    description: "Honest guarantee alternatives"
+  - type: llm_judge
+    criteria: "Multi-cloud analysis is balanced — considers the engineering complexity and cost of multi-cloud against the risk reduction, rather than knee-jerk committing to it"
+    weight: 0.25
+    description: "Balanced multi-cloud analysis"

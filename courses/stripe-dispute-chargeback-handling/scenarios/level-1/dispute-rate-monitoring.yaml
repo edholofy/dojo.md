@@ -1,0 +1,72 @@
+meta:
+  id: dispute-rate-monitoring
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Monitor dispute rates — understand card network thresholds and build monitoring to prevent entering dispute monitoring programs"
+  tags: [stripe, dispute, monitoring, thresholds, VDMP, EFM, prevention, beginner]
+
+state: {}
+
+trigger: |
+  You're the finance lead at an e-commerce company. Stripe sent you
+  an alert: "Your dispute rate for February was 0.82%. Visa's
+  dispute monitoring program (VDMP) threshold is 0.9%. You are at
+  risk of entering the monitoring program."
+
+  Your data (February):
+  - Total transactions: 8,500
+  - Total disputes: 70
+  - Dispute rate: 70 / 8,500 = 0.82%
+  - Won: 18 (26% win rate)
+  - Lost: 42
+  - Pending: 10
+  - Dispute fees: 70 × $15 = $1,050
+  - Total disputed amount: $8,890
+
+  What you know about monitoring programs:
+  - Visa VDMP: Standard threshold 0.9%, Early Warning at 0.65%.
+    Penalties: monthly monitoring fees ($25K+), required action plan,
+    and potential fines up to $100/dispute.
+  - Mastercard EFM: Threshold 1.0%, with escalating consequences.
+  - Both programs: If you don't improve within 3-6 months, you can
+    be fined or lose the ability to accept that card network.
+
+  Your manager says: "This is a five-alarm fire. If we enter VDMP,
+  we could lose Visa processing entirely. I need a monitoring system
+  and an action plan."
+
+  Tasks:
+  1. Build the dispute rate monitoring system. Write: the daily
+     dispute rate calculation (rolling 30-day window matching how
+     card networks calculate it), the alert thresholds (warning at
+     0.5%, critical at 0.7%, emergency at 0.85%), the Stripe API
+     query to pull dispute data for monitoring, and the dashboard
+     showing the dispute rate trend with the 0.9% threshold line.
+
+  2. Create the immediate action plan to reduce from 0.82% to under
+     0.65%. Include: the quick wins (improve billing descriptors,
+     proactively refund obvious fraud, enable 3DS for risky
+     transactions), the medium-term fixes (implement Radar rules,
+     improve customer support response time, add self-service refund
+     portal), and the timeline for each action with projected impact.
+
+  3. Write the VDMP-prevention memo for leadership. Include: what
+     VDMP/EFM are and why they matter, the financial risk (monthly
+     fees, fines, potential loss of card processing), the current
+     trajectory (if nothing changes, when you'll cross 0.9%), and
+     the investment needed for the action plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Monitoring system is correct — dispute rate uses rolling window matching network methodology, alert thresholds are appropriate, Stripe API query pulls correct data, and dashboard shows trend with threshold"
+    weight: 0.35
+    description: "Correct monitoring system"
+  - type: llm_judge
+    criteria: "Action plan is practical — quick wins can be implemented immediately, medium-term fixes address root causes, timeline is realistic, and projected impact per action is estimated"
+    weight: 0.35
+    description: "Practical action plan"
+  - type: llm_judge
+    criteria: "Leadership memo conveys urgency — VDMP/EFM consequences are clearly stated, financial risk is quantified, trajectory shows the deadline, and investment ask is justified"
+    weight: 0.30
+    description: "Urgent leadership memo"

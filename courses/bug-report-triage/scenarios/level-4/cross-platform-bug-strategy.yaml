@@ -1,0 +1,85 @@
+meta:
+  id: cross-platform-bug-strategy
+  level: 4
+  course: bug-report-triage
+  type: output
+  description: "Manage bug triage across web, iOS, Android, and API platforms with different release cycles, testing constraints, and user expectations"
+  tags: [bugs, cross-platform, mobile, web, api, expert]
+
+state: {}
+
+trigger: |
+  "TravelHub" (travel booking platform, $300M ARR) has 4 client
+  platforms, each with different bug characteristics:
+
+  Web (React SPA):
+  - 60% of traffic, deploy daily
+  - 200 bugs/month, mostly UI/JavaScript
+  - Can hotfix in minutes
+  - Bug: "Price display shows wrong currency after switching regions"
+
+  iOS (Swift):
+  - 25% of traffic, release every 2 weeks (App Store review: 2-3 days)
+  - 80 bugs/month, mix of UI and native crashes
+  - Hotfix requires emergency review (24-48 hours minimum)
+  - Bug: "App crashes when viewing hotel photos in landscape mode"
+
+  Android (Kotlin):
+  - 15% of traffic, release every 2 weeks
+  - 60 bugs/month, device fragmentation issues
+  - Hotfix via staged rollout (can reach 100% in 24 hours)
+  - Bug: "Booking confirmation email not triggered on Samsung devices
+    running Android 12"
+
+  API (REST + GraphQL):
+  - Powers all clients + 500 partner integrations
+  - 40 bugs/month, mostly data consistency issues
+  - Breaking changes require 90-day deprecation notice
+  - Bug: "Search API returns stale pricing for 30 seconds after a
+    price update"
+
+  A critical booking flow bug is found that affects all 4 platforms
+  differently: users can complete a booking but the confirmation is
+  delayed by 5-15 minutes on web, doesn't appear at all on iOS, shows
+  incorrect details on Android, and the API returns success but the
+  booking object is missing fields.
+
+  Tasks:
+
+  1. Design the cross-platform triage process:
+     - Unified severity taxonomy that works across all platforms
+     - Platform-specific SLAs (accounting for release constraints)
+     - Cross-platform bug linking (same root cause, different symptoms)
+     - Escalation criteria per platform
+
+  2. For the critical booking flow bug:
+     - Triage the 4 platform manifestations
+     - What's the fix strategy? (Server-side fix vs. client fixes?)
+     - What's the rollout plan given different release cycles?
+     - How do you communicate to users on each platform?
+
+  3. Design the device/browser fragmentation testing strategy:
+     - How do you prioritize which devices/browsers to test?
+     - What automated vs. manual testing mix for each platform?
+     - How do you handle "works on my machine" bugs?
+
+  4. How do you handle the API's 90-day deprecation constraint when
+     a bug fix requires a breaking change?
+
+assertions:
+  - type: llm_judge
+    criteria: "Severity taxonomy is unified but SLAs vary — same bug gets the same severity across platforms, but resolution timelines differ based on platform release constraints"
+    weight: 0.25
+    description: "Unified taxonomy with platform SLAs"
+  - type: llm_judge
+    criteria: "Booking bug strategy identifies the root cause as likely server-side — proposes fixing the API/backend first since it powers all platforms, then addressing client-specific symptoms"
+    weight: 0.25
+    description: "Root cause focus for cross-platform bug"
+  - type: llm_judge
+    criteria: "Device testing strategy is data-driven — prioritizes devices/browsers by actual usage analytics, not trying to test everything"
+    weight: 0.25
+    description: "Data-driven device testing"
+  - type: llm_judge
+    criteria: "API breaking change handling is thoughtful — proposes versioning, feature flags, or backwards-compatible changes as alternatives to breaking the 90-day contract"
+    weight: 0.25
+    description: "API breaking change handling"

@@ -1,0 +1,78 @@
+meta:
+  id: payment-system-reliability
+  level: 5
+  course: stripe-payment-integration
+  type: output
+  description: "Design payment system reliability engineering — build systems that achieve 99.999% uptime for payment processing with chaos engineering and fault tolerance"
+  tags: [stripe, reliability, SRE, chaos-engineering, fault-tolerance, five-nines, master]
+
+state: {}
+
+trigger: |
+  You're the Distinguished Engineer for Payment Reliability at a global
+  e-commerce company ($50B GMV). The board mandated 99.999% uptime for
+  payment processing after a series of outages cost $45M in lost revenue
+  last year.
+
+  99.999% uptime = 5.26 minutes of downtime per year.
+
+  Current architecture:
+  - 3 payment processors: Stripe (primary, 70%), Adyen (secondary, 25%),
+    Worldpay (fallback, 5%)
+  - 5 global regions: US-East, US-West, EU-West, APAC-Singapore,
+    APAC-Tokyo
+  - Peak traffic: 50,000 transactions per second (TPS) during flash sales
+  - Average: 5,000 TPS
+  - Current uptime: 99.95% (26 minutes downtime/year — 5x worse than target)
+
+  Last year's outages:
+  1. Stripe API outage (45 min): Failover to Adyen took 12 minutes to
+     activate. During those 12 minutes, all payments failed.
+  2. Database deadlock (15 min): Payment state table locked during a
+     migration. No payments could complete.
+  3. Configuration error (8 min): Wrong API key deployed to production.
+     Auth rate dropped to 0% until rollback.
+  4. DNS failure (5 min): DNS provider had an outage affecting webhook
+     delivery. Payments succeeded but fulfillment was delayed.
+  5. Network partition (3 min): US-East lost connectivity to Stripe.
+     Regional failover wasn't configured.
+
+  Reliability engineering challenges:
+  - Multi-processor failover must be instant (<30 seconds)
+  - Payment state must be consistent across regions
+  - Webhook processing must survive regional outages
+  - Configuration changes must be rolled out with canary deployment
+  - Database operations must never lock payment processing
+
+  Tasks:
+  1. Design the five-nines payment architecture. Include: the multi-
+     processor routing with instant failover, the multi-region
+     deployment with regional independence, the payment state
+     replication strategy, and the architecture that makes each
+     of last year's 5 outages either impossible or self-healing.
+
+  2. Design the chaos engineering program for payments. Include: the
+     chaos experiments to run (processor failure simulation, region
+     failure, database failure, network partition, webhook delivery
+     failure), the safety controls (blast radius limits, kill switch),
+     the experiment schedule, and the success criteria.
+
+  3. Write the Payment Reliability SLA document. Include: the SLA
+     definition (what counts as downtime), the measurement methodology,
+     the error budget (5.26 minutes/year — how do you spend it?), the
+     incident severity classification, and the consequences when SLA
+     is breached.
+
+assertions:
+  - type: llm_judge
+    criteria: "Five-nines architecture addresses all 5 outages — instant processor failover (<30s), database isolation from migrations, canary deployment for config, DNS redundancy, and regional independence; each outage scenario is either prevented or auto-healed"
+    weight: 0.35
+    description: "All-outage-addressing five-nines architecture"
+  - type: llm_judge
+    criteria: "Chaos engineering program is comprehensive — experiments cover all failure modes (processor, region, database, network, webhook), safety controls prevent chaos from becoming a real outage, schedule is realistic, and success criteria are measurable"
+    weight: 0.35
+    description: "Comprehensive chaos engineering program"
+  - type: llm_judge
+    criteria: "SLA document is operationally sound — downtime definition is precise, measurement is automated, error budget creates the right incentives (don't waste it on planned maintenance), severity classification drives appropriate response, and breach consequences are defined"
+    weight: 0.30
+    description: "Operationally sound SLA document"

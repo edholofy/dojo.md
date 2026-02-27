@@ -1,0 +1,71 @@
+meta:
+  id: dispute-financial-impact
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Calculate dispute financial impact — understand the true cost of chargebacks including fees, lost revenue, and operational costs"
+  tags: [stripe, dispute, financial-impact, cost-analysis, fees, beginner]
+
+state: {}
+
+trigger: |
+  You're preparing a financial analysis of your company's dispute
+  problem for the CFO. She asked: "What is our total cost of
+  disputes? I know we pay $15 per dispute, but I suspect the real
+  cost is much higher."
+
+  Monthly dispute data:
+  - Disputes filed: 45
+  - Average dispute amount: $134
+  - Win rate: 30% (win 13, lose 32)
+  - Dispute fee: $15 per dispute (non-refundable even if you win)
+  - Total disputed amount: $6,030
+
+  Hidden costs to account for:
+  1. Dispute fees: $15 × 45 = $675/month
+  2. Lost revenue from lost disputes: 32 × $134 = $4,288
+  3. Frozen funds during disputes: Average dispute takes 60 days to
+     resolve. During this time, the disputed amount is frozen.
+  4. Processing fees on original charge: You paid ~2.9% + $0.30 on
+     the original charge and don't get it back when you lose.
+  5. Operational cost: Your team spends ~2 hours per dispute
+     gathering evidence. At $50/hour loaded cost = $100/dispute.
+  6. Shipping costs: For physical goods disputes, you've already
+     shipped the product (average shipping cost: $8.50).
+  7. Product cost: Cost of goods for lost disputes (average COGS:
+     $45 per item).
+  8. Chargeback protection fee: If you use Stripe's chargeback
+     protection, there's an additional fee.
+
+  Tasks:
+  1. Calculate the true monthly cost of disputes. Include: every
+     cost component listed above, the calculation for each, and
+     the total. Compare the "obvious cost" ($675 in fees) to the
+     "true cost" including all hidden expenses.
+
+  2. Calculate the break-even win rate. At what win rate do disputes
+     become cheaper to fight than to proactively refund? Include:
+     the cost of fighting (fees + operational time) vs. the cost
+     of proactive refund (lost revenue but no fee, no operational
+     time), and the decision framework based on dispute amount.
+
+  3. Write the CFO memo with the financial analysis. Include: the
+     true monthly and annual cost, the ROI of investing in dispute
+     prevention (what would reducing disputes by 50% save?), the
+     comparison of dispute cost vs. prevention investment (Stripe
+     Radar, better descriptors, customer service improvements), and
+     the recommended budget for dispute prevention.
+
+assertions:
+  - type: llm_judge
+    criteria: "True cost calculation includes all components — dispute fees, lost revenue, frozen funds opportunity cost, processing fees, operational cost, shipping, COGS, and the total is correctly summed"
+    weight: 0.35
+    description: "Complete cost calculation"
+  - type: llm_judge
+    criteria: "Break-even analysis is mathematically correct — fight vs. refund costs are compared, the threshold win rate is calculated, and the decision framework varies by dispute amount"
+    weight: 0.35
+    description: "Correct break-even analysis"
+  - type: llm_judge
+    criteria: "CFO memo is persuasive — true cost surprises vs. obvious cost, prevention ROI is calculated, and the prevention investment recommendation is justified by the savings"
+    weight: 0.30
+    description: "Persuasive CFO memo"

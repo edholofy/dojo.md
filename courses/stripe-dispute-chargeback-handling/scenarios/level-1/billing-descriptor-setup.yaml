@@ -1,0 +1,69 @@
+meta:
+  id: billing-descriptor-setup
+  level: 1
+  course: stripe-dispute-chargeback-handling
+  type: output
+  description: "Configure billing descriptors — set up clear statement descriptors to prevent 'unrecognized charge' disputes"
+  tags: [stripe, dispute, billing-descriptor, statement-descriptor, prevention, beginner]
+
+state: {}
+
+trigger: |
+  You're investigating why your dispute rate jumped to 0.7% last
+  month. Analyzing the disputes, you find a surprising pattern:
+
+  - 45% of disputes cite reason: "Unrecognized" or "Fraudulent"
+  - But when you contact these customers, 80% of them say: "Oh,
+    that's from YOUR company? I didn't recognize the charge on
+    my statement."
+
+  Your current Stripe billing descriptor: "STRIPE* WEB PYMT"
+
+  That's the default — it tells the customer nothing about who
+  charged them. When they see "STRIPE* WEB PYMT $49.99" on their
+  credit card statement, they assume it's fraud and call their bank.
+
+  Your company name: "CloudTask Pro"
+  Your product names: "Starter Plan," "Pro Plan," "Enterprise Plan"
+  Your support phone: (555) 123-4567
+  Your support URL: help.cloudtaskpro.com
+
+  Additional complication: You also sell through 3 reseller partners
+  who white-label your product. Their customers see your descriptor,
+  not the reseller's name, which causes even more confusion.
+
+  Tasks:
+  1. Fix the billing descriptors. Write: the Stripe dashboard
+     configuration for the static statement descriptor (22 character
+     limit, must be recognizable), the dynamic statement descriptor
+     suffix for each plan (so "CLOUDTASK* STARTER" appears on the
+     statement), the configuration for the support phone and URL
+     in Stripe settings, and the API code for setting statement_
+     descriptor_suffix on each charge.
+
+  2. Handle the reseller complication. Write: how to set different
+     descriptors for reseller charges (using statement_descriptor
+     per charge or per connected account), the reseller descriptor
+     strategy (should it show the reseller name or your company
+     name?), and the customer confusion prevention plan.
+
+  3. Calculate the impact. Write: the projected dispute rate
+     reduction from fixing descriptors (industry data: 20-40% of
+     "unrecognized" disputes are preventable with clear descriptors),
+     the before/after descriptor examples as they appear on bank
+     statements, and the email notification plan (inform customers
+     what the new descriptor will look like on their next statement).
+
+assertions:
+  - type: llm_judge
+    criteria: "Billing descriptors are correctly configured — static descriptor is within 22 chars and recognizable, dynamic suffixes differentiate plans, support phone/URL are included, and API code sets descriptor_suffix per charge"
+    weight: 0.35
+    description: "Correctly configured descriptors"
+  - type: llm_judge
+    criteria: "Reseller handling is practical — different descriptors per reseller are implemented, the strategy for whose name appears is reasoned, and customer confusion is addressed"
+    weight: 0.35
+    description: "Practical reseller handling"
+  - type: llm_judge
+    criteria: "Impact projection is data-based — dispute reduction estimate uses industry benchmarks, before/after examples are clear, and customer notification prevents new confusion"
+    weight: 0.30
+    description: "Data-based impact projection"

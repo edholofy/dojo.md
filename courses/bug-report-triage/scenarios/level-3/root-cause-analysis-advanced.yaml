@@ -1,0 +1,79 @@
+meta:
+  id: root-cause-analysis-advanced
+  level: 3
+  course: bug-report-triage
+  type: output
+  description: "Conduct deep root cause analysis on complex bugs using 5 Whys, fishbone diagrams, and blast radius assessment"
+  tags: [bugs, root-cause, analysis, 5-whys, advanced]
+
+state: {}
+
+trigger: |
+  "FinancePro" (accounting SaaS) had a severe bug: customers'
+  financial reports showed incorrect revenue numbers for 48 hours
+  before anyone noticed. 200 customers may have made business
+  decisions based on wrong data.
+
+  What happened (timeline):
+  - Monday 9 AM: Deployment includes a database migration that adds
+    a new index to the transactions table
+  - Monday 9:15 AM: Migration completes but a trigger function that
+    recalculates report caches was accidentally disabled during
+    migration
+  - Monday 9:15 AM - Wednesday 9 AM: Reports serve stale cached
+    data instead of live calculations
+  - Wednesday 9 AM: A customer notices their Q4 revenue is $0
+    (cache expired and recalculation failed)
+  - Wednesday 10 AM: Engineering confirms the issue and re-enables
+    the trigger
+
+  Investigation data:
+  - The migration script was code-reviewed by 1 developer (usual: 2)
+  - The staging environment doesn't have the same trigger setup
+  - No automated test verifies report accuracy post-deployment
+  - The monitoring dashboard shows cache hit rates but not cache
+    staleness
+  - The deployment checklist doesn't include report verification
+
+  Tasks:
+
+  1. Perform a 5 Whys analysis:
+     Starting with: "Why were financial reports incorrect for 48 hours?"
+     Trace through at least 5 levels to the systemic root causes.
+
+  2. Create a fishbone diagram (describe the categories and causes):
+     - People: What human factors contributed?
+     - Process: What process gaps existed?
+     - Technology: What technical safeguards were missing?
+     - Environment: What environmental differences contributed?
+
+  3. Assess the blast radius:
+     - How many customers were affected?
+     - What decisions might have been made on bad data?
+     - What's the legal/compliance exposure?
+     - What's the reputational risk?
+
+  4. Write the incident postmortem with:
+     - Timeline
+     - Root cause analysis
+     - Blast radius assessment
+     - Corrective actions (immediate, short-term, long-term)
+     - Action items with owners
+
+assertions:
+  - type: llm_judge
+    criteria: "5 Whys reaches systemic causes — doesn't stop at 'trigger was disabled' but traces to process gaps (single reviewer, no staging parity, no post-deploy verification)"
+    weight: 0.25
+    description: "Systemic root causes found"
+  - type: llm_judge
+    criteria: "Fishbone covers multiple dimensions — identifies contributing factors across people, process, technology, and environment, not just the technical failure"
+    weight: 0.25
+    description: "Multi-dimensional fishbone"
+  - type: llm_judge
+    criteria: "Blast radius includes compliance risk — recognizes that incorrect financial data in an accounting product creates potential regulatory and legal exposure"
+    weight: 0.25
+    description: "Compliance risk in blast radius"
+  - type: llm_judge
+    criteria: "Postmortem includes blameless corrective actions — proposes staging environment parity, automated report verification tests, cache staleness monitoring, and 2-reviewer requirement"
+    weight: 0.25
+    description: "Blameless corrective actions"

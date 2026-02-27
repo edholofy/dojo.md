@@ -1,0 +1,87 @@
+meta:
+  id: ai-augmented-triage
+  level: 5
+  course: bug-report-triage
+  type: output
+  description: "Design an AI-augmented bug triage system that uses LLMs and ML to automate classification, routing, deduplication, and resolution prediction while keeping humans in the loop"
+  tags: [bugs, ai, ml, automation, future, mastery]
+
+state: {}
+
+trigger: |
+  "DevPlatform" ($600M ARR, 800 engineers, 3,500 bugs/month) wants to
+  build an AI-augmented triage system. The CTO says: "I want AI to
+  handle 80% of triage decisions, with humans reviewing the remaining
+  20%."
+
+  Current triage consumes 60 hours/week of senior engineer time.
+  The AI team has built prototypes for 4 capabilities:
+
+  Capability 1: Auto-classification
+  - LLM reads bug description and assigns severity, component, type
+  - Current accuracy: 72% on severity, 65% on component
+  - Target: 90%+ to trust auto-assignment
+
+  Capability 2: Duplicate detection
+  - Embedding-based similarity search against existing bugs
+  - Current precision: 80% (20% false positives — real bugs marked dup)
+  - Current recall: 60% (40% of true duplicates missed)
+  - A false positive means a legitimate bug gets closed as duplicate
+
+  Capability 3: Auto-routing
+  - Historical pattern matching: bug → most likely team to fix
+  - Current accuracy: 68% (right team on first assignment)
+  - Target: 90% first-assignment accuracy
+
+  Capability 4: Resolution prediction
+  - Predicts: resolution time, fix complexity, likely root cause
+  - Resolution time prediction: ±40% accuracy
+  - Customer-facing bugs get resolution time shown in status page
+
+  Challenges:
+  - Engineers don't trust the AI (20% override rate on correct decisions)
+  - Customers complain when their bug is auto-closed as duplicate
+  - AI misclassifies edge cases (novel bug types it hasn't seen)
+  - Privacy concerns: bug reports contain customer data, stack traces
+    include credentials — what does the LLM see?
+  - Fairness: AI routes bugs from enterprise customers faster (trained
+    on historical data where enterprise bugs were prioritized)
+
+  Tasks:
+
+  1. Design the AI-human collaboration model:
+     - What confidence thresholds determine auto-action vs. human review?
+     - How do you handle AI mistakes gracefully?
+     - How do you build engineer trust in the system?
+     - What's the feedback loop to improve accuracy over time?
+
+  2. For each of the 4 capabilities, design the deployment strategy:
+     - What accuracy threshold is needed before production deployment?
+     - What's the rollout plan (shadow mode → suggestions → auto)?
+     - What safeguards prevent AI errors from affecting customers?
+
+  3. Address the ethical and privacy concerns:
+     - How do you handle PII in bug reports processed by LLMs?
+     - How do you fix the enterprise prioritization bias?
+     - How do you ensure the AI doesn't create a two-tier support system?
+
+  4. Calculate the ROI: If the system achieves its targets, how many
+     engineering hours does it save? What's the build vs. buy analysis?
+
+assertions:
+  - type: llm_judge
+    criteria: "Confidence thresholds are calibrated — proposes different thresholds for different actions (e.g., 95% for auto-close, 85% for auto-route, 75% for severity suggestion) based on cost of errors"
+    weight: 0.25
+    description: "Calibrated confidence thresholds"
+  - type: llm_judge
+    criteria: "Deployment follows shadow→suggest→automate — proposes a graduated rollout where AI runs alongside humans before taking autonomous action, with metrics gates at each stage"
+    weight: 0.25
+    description: "Graduated deployment strategy"
+  - type: llm_judge
+    criteria: "Privacy design is specific — proposes PII redaction before LLM processing, on-premise or private model options, and data retention policies for bug report embeddings"
+    weight: 0.25
+    description: "Specific privacy design"
+  - type: llm_judge
+    criteria: "Bias mitigation is addressed — proposes auditing the training data for enterprise prioritization bias and implementing fairness constraints or rebalancing"
+    weight: 0.25
+    description: "Bias mitigation addressed"

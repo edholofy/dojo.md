@@ -1,0 +1,67 @@
+meta:
+  id: invoice-generation
+  level: 2
+  course: stripe-payment-integration
+  type: output
+  description: "Generate and manage Stripe invoices — create, customize, and automate invoices for B2B SaaS billing"
+  tags: [stripe, invoices, billing, B2B, PDF, automation, intermediate]
+
+state: {}
+
+trigger: |
+  You're building B2B billing for a SaaS platform. Enterprise customers
+  don't want to use credit cards — they want invoices with Net 30
+  payment terms. Your finance team requires:
+
+  1. Professional invoices with your company branding
+  2. Net 30 payment terms (auto-charge after 30 days if card on file)
+  3. Line items showing the subscription, add-ons, and any usage charges
+  4. Invoice PDF generation for customer records
+  5. Automated payment reminders (7 days before due, on due date, 7
+     days after due)
+  6. Tax calculation (or at least tax line items)
+
+  Current setup: All customers pay via credit card at checkout. No
+  invoice system exists.
+
+  Example invoice needed:
+  - Customer: Acme Corp
+  - Subscription: Enterprise Plan — $299/month
+  - Add-on: API Access — $99/month
+  - Usage: 150,000 API calls × $0.001 = $150
+  - Subtotal: $548
+  - Tax (8.5%): $46.58
+  - Total: $594.58
+  - Due: Net 30
+
+  Tasks:
+  1. Write the code to create a Stripe Invoice with line items. Include:
+     creating the invoice with the customer, adding subscription line
+     items, adding one-off line items (usage charges), setting payment
+     terms (days_until_due), and finalizing the invoice. Handle the
+     auto-advance setting and manual vs. automatic collection.
+
+  2. Implement the invoice lifecycle management. Write webhook handlers
+     for: invoice.created, invoice.finalized, invoice.payment_succeeded,
+     invoice.payment_failed, and invoice.overdue. For each: what
+     business logic to trigger (send email, update database, escalate
+     to collections).
+
+  3. Set up the automated reminder system. Configure: the reminder
+     schedule, the email templates for each stage (upcoming, due today,
+     overdue), and the escalation path when payment is 30+ days overdue.
+     Explain how Stripe's built-in reminders work vs. building your own.
+
+assertions:
+  - type: llm_judge
+    criteria: "Invoice creation is correct — creates invoice with customer, adds line items with correct amounts, sets days_until_due for Net 30, handles the finalize step, explains auto-advance vs manual collection"
+    weight: 0.35
+    description: "Correct invoice creation"
+  - type: llm_judge
+    criteria: "Lifecycle webhook handlers are complete — handles all 5 invoice events with appropriate business logic, tracks invoice status in local database, and payment_failed triggers dunning process"
+    weight: 0.35
+    description: "Complete invoice lifecycle handling"
+  - type: llm_judge
+    criteria: "Reminder system is practical — reminder schedule is reasonable, explains Stripe's built-in reminders vs custom, and escalation for overdue invoices includes concrete steps"
+    weight: 0.30
+    description: "Practical invoice reminder system"

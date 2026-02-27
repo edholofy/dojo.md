@@ -1,0 +1,72 @@
+meta:
+  id: multi-product-subscriptions
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Handle multi-product subscriptions — build subscriptions with multiple line items, add-ons, and bundled products"
+  tags: [stripe, subscription, multi-product, add-ons, bundle, line-items, intermediate]
+
+state: {}
+
+trigger: |
+  You're building the billing system for a SaaS marketing platform
+  that offers a base plan plus add-on products:
+
+  Base plans:
+  - Starter: $49/month (email marketing only)
+  - Growth: $129/month (email + social media)
+  - Enterprise: $299/month (email + social + analytics)
+
+  Add-ons (can be added to any base plan):
+  - SMS messaging: $25/month + $0.01 per SMS sent (hybrid pricing)
+  - Landing pages: $39/month (flat rate)
+  - AI copywriter: $59/month (flat rate)
+  - Extra email sends: $15 per 10,000 emails (usage-based)
+
+  Customer scenario — "MarketPro Agency":
+  - Base plan: Growth ($129/month)
+  - Add-ons: SMS messaging ($25/month base) + AI copywriter ($59/month)
+  - Total before usage: $213/month
+  - Last month's SMS usage: 3,400 messages = $34 in usage fees
+  - Total last month: $247
+
+  Requirements:
+  1. One subscription with multiple items (not separate subscriptions)
+  2. Add-ons can be added/removed mid-cycle with proration
+  3. Usage-based add-ons (SMS, extra emails) combine metered and
+     flat pricing on the same subscription
+  4. Customers see a single invoice with all items itemized
+
+  Tasks:
+  1. Set up the multi-product subscription structure. Write: the
+     product and price definitions for all base plans and add-ons,
+     the subscription creation with multiple items (base plan + any
+     add-ons), how to combine flat-rate and metered pricing on the
+     same subscription, and the invoice that shows itemized charges.
+
+  2. Implement add-on management. Write: the add-addon endpoint
+     (adding a new subscription item mid-cycle with proration), the
+     remove-addon endpoint (removing an item with credit for unused
+     time), the upgrade-addon endpoint (e.g., changing from 10K to
+     50K email tier), and the preview endpoint (showing what the
+     next invoice will look like after changes).
+
+  3. Handle the hybrid pricing for SMS. Write: the subscription
+     item setup for SMS (flat $25/month base as licensed price +
+     $0.01/message as metered price), the usage reporting for SMS
+     messages, and the invoice that shows both the flat fee and
+     the usage charges as separate line items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-product structure is correct — single subscription with multiple items, base plan and add-ons as separate subscription items, flat and metered pricing coexist, and invoice shows itemized charges"
+    weight: 0.35
+    description: "Correct multi-product structure"
+  - type: llm_judge
+    criteria: "Add-on management handles all operations — adding creates new subscription item with proration, removing credits unused time, upgrading changes price, and preview shows projected invoice"
+    weight: 0.35
+    description: "Complete add-on management"
+  - type: llm_judge
+    criteria: "Hybrid SMS pricing works — flat base fee and metered usage are separate line items, usage reporting is correct, and the invoice clearly shows both components"
+    weight: 0.30
+    description: "Working hybrid pricing"

@@ -1,0 +1,99 @@
+meta:
+  id: technical-meeting-documentation
+  level: 2
+  course: meeting-summary-next-steps
+  type: output
+  description: "Document technical meetings — capture architecture discussions, integration requirements, and technical evaluation outcomes for non-technical stakeholders"
+  tags: [sales, meetings, technical, documentation, SE, translation, intermediate]
+
+state: {}
+
+trigger: |
+  You're a Sales Engineer at "APIStack" — a B2B SaaS API management
+  platform ($3K-30K/month). You just completed a 75-minute technical
+  deep dive with a prospect's engineering team. The AE on the account
+  didn't attend (she was in another meeting). You need to document this
+  for both the AE and the customer's non-technical decision makers.
+
+  Account: LogiTech Systems, $180K ACV, Enterprise evaluation
+
+  Technical attendees:
+  - Raj Patel (VP of Engineering) — asking architecture questions
+  - Samantha Lee (Lead Backend Developer) — hands-on evaluator
+  - Carlos Mendes (DevOps Lead) — infrastructure concerns
+  - From your side: You (SE)
+
+  Technical discussion:
+
+  1. Architecture review (20 min):
+     - Raj asked about multi-tenancy model. You showed shared-nothing
+       architecture. Raj approved: "That's what we need for data
+       isolation."
+     - Samantha asked about API versioning strategy. You showed semantic
+       versioning with backward compatibility. She said "We've been
+       burned by breaking changes before."
+     - Carlos asked about deployment model. You showed Kubernetes-native
+       with Helm charts. Carlos: "Perfect — that's our stack."
+
+  2. Integration deep dive (25 min):
+     - They have 47 internal APIs and 12 external partner APIs
+     - Current API gateway: Kong (open source, self-managed)
+     - Migration concern: Samantha asked "Can we migrate incrementally
+       or is it all-or-nothing?" You confirmed incremental is supported.
+     - Carlos needs custom rate limiting rules per API consumer
+     - Samantha wants OpenAPI spec auto-generation from existing code
+     - Performance requirement: <50ms latency at p99 for their payment
+       APIs. You shared benchmarks: 23ms p99 in similar deployments.
+     - Raj asked about failover: "What happens when your service goes
+       down?" You showed the offline mode and local caching. Raj: "That's
+       clever but I want to test it."
+
+  3. Security review (15 min):
+     - mTLS support: confirmed
+     - OAuth 2.0 / OIDC integration: confirmed, showed SSO with their
+       Okta instance
+     - API key rotation: automated, configurable
+     - Carlos asked about audit logging — you showed the compliance
+       dashboard. Carlos was impressed.
+     - PCI DSS question: Raj asked if your platform can handle PCI
+       scope reduction. You weren't sure — flagged for follow-up.
+
+  4. POC planning (15 min):
+     - Agreed to a 2-week POC with 5 of their 47 APIs
+     - Samantha will choose the 5 APIs (mix of internal and partner)
+     - Carlos needs a staging environment provisioned
+     - Success criteria discussed: latency <50ms p99, zero-downtime
+       migration, and their Okta SSO working
+     - POC start: next Monday
+
+  Tasks:
+  1. Write the technical meeting summary for your AE. Translate the
+     technical discussion into deal-relevant language. Include: what
+     excited them (and why it matters for the deal), technical risks
+     (and what they mean for timeline/close), competitive implications
+     (Kong migration = switching cost concern), and the POC plan.
+
+  2. Write the customer-facing technical summary for Raj to share with
+     his non-technical CEO. This should: confirm technical fit without
+     jargon, highlight the business benefits of each capability
+     discussed, flag the one open item (PCI DSS), and outline the POC
+     with success criteria.
+
+  3. Create a POC preparation checklist. Include: pre-POC tasks (your
+     side and their side), the 2-week POC schedule with milestones,
+     success/failure criteria, and a risk register for things that could
+     derail the POC.
+
+assertions:
+  - type: llm_judge
+    criteria: "AE summary translates technical to deal language — explains why architecture approval matters, frames Kong migration as switching cost risk, highlights performance benchmarks as competitive advantage, and positions POC success criteria as close conditions"
+    weight: 0.35
+    description: "Technical-to-deal translation"
+  - type: llm_judge
+    criteria: "CEO-friendly summary avoids jargon while being accurate — explains data isolation as security benefit, migration flexibility as lower risk, performance as reliability, and POC as a structured proof; flags PCI as the open item"
+    weight: 0.35
+    description: "Jargon-free executive summary"
+  - type: llm_judge
+    criteria: "POC checklist is comprehensive — pre-POC tasks for both sides (staging environment, API selection, Okta config), 2-week schedule, measurable success criteria (latency, migration, SSO), and realistic risk register"
+    weight: 0.30
+    description: "Comprehensive POC preparation"

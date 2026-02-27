@@ -1,0 +1,70 @@
+meta:
+  id: subscription-schedules
+  level: 2
+  course: stripe-subscription-management
+  type: output
+  description: "Use subscription schedules — implement future-dated plan changes, multi-phase subscriptions, and scheduled migrations"
+  tags: [stripe, subscription, schedule, future-dated, multi-phase, migration, intermediate]
+
+state: {}
+
+trigger: |
+  You're building advanced subscription features for a SaaS platform.
+  Three scenarios require subscription schedules:
+
+  Scenario 1 — Promotional pricing then regular rate:
+  New customers get 3 months at $19/month (promotional), then
+  automatically switch to $49/month (regular) at month 4. No manual
+  intervention needed.
+
+  Scenario 2 — Scheduled upgrade at renewal:
+  A customer on the Pro plan ($79/month) wants to upgrade to Business
+  ($149/month) but only starting at their next billing cycle (March
+  1st), not mid-cycle. They don't want any proration — just a clean
+  switch at renewal.
+
+  Scenario 3 — Annual contract with quarterly step-ups:
+  An enterprise customer signed a 12-month contract:
+  - Q1: $500/month (onboarding rate)
+  - Q2-Q4: $800/month (full rate)
+  - After 12 months: auto-renew at $800/month or cancel
+
+  Current limitation: Your code only uses stripe.subscriptions.update()
+  which changes the plan immediately. You need subscription schedules
+  to handle future-dated changes.
+
+  Tasks:
+  1. Implement all three scenarios using subscription schedules.
+     Write: the schedule creation for Scenario 1 (two phases —
+     promotional then regular), the schedule creation for Scenario 2
+     (current phase then upgrade phase, starting at next period),
+     and the schedule creation for Scenario 3 (three phases with
+     different prices). Include the webhook handling for
+     subscription_schedule.updated and subscription_schedule.completed.
+
+  2. Explain how subscription schedules work vs. regular subscription
+     updates. Include: when to use schedules vs. immediate updates,
+     how phases work (start_date, end_date, items, proration_behavior),
+     the release vs. cancel behavior when a schedule completes, and
+     the limitations (what you can't do with schedules).
+
+  3. Build the schedule management endpoints. Write: the endpoint to
+     view a customer's upcoming schedule changes (what's changing
+     and when), the endpoint to modify a scheduled change before it
+     takes effect (customer changes their mind about the upgrade),
+     and the endpoint to cancel a schedule (reverting to the current
+     plan indefinitely).
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 scenarios are correctly implemented — promotional-to-regular uses two phases with correct timing, scheduled upgrade starts at next period without proration, and enterprise contract has three phases with quarterly step-ups and renewal behavior"
+    weight: 0.35
+    description: "Correct schedule implementations"
+  - type: llm_judge
+    criteria: "Schedule explanation is accurate — schedules vs immediate updates distinction is clear, phase mechanics (start_date, items, proration) are correct, release vs cancel behavior is explained, and limitations are honest"
+    weight: 0.35
+    description: "Accurate schedule explanation"
+  - type: llm_judge
+    criteria: "Management endpoints are practical — view endpoint shows upcoming changes clearly, modify endpoint handles pre-execution changes, and cancel endpoint safely reverts to current plan"
+    weight: 0.30
+    description: "Practical management endpoints"

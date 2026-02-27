@@ -1,0 +1,77 @@
+meta:
+  id: payment-fraud-ml-system
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Build a payment fraud detection system — combine Stripe Radar with custom ML models for advanced fraud prevention"
+  tags: [stripe, fraud, ML, Radar, detection, prevention, risk, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Risk Engineering at a high-volume e-commerce
+  platform ($500M GMV, 5M transactions/year). Stripe Radar catches
+  most fraud but your fraud rate is still 0.8% — costing $4M/year
+  in chargebacks and $2M in manual review costs.
+
+  Current fraud landscape:
+  - Stripe Radar blocks: 2.1% of transactions (good catches)
+  - Stripe Radar false positives: 0.3% (legitimate orders blocked)
+  - Fraud that gets through Radar: 0.8% ($4M in chargebacks)
+  - Manual review queue: 1.2% of transactions reviewed by humans
+
+  Fraud patterns Radar misses:
+  1. Account takeover (ATO): Legitimate customers' accounts compromised.
+     Card on file is valid, purchase history exists, but the real
+     customer didn't make the order.
+  2. Return fraud: Customers buy, receive product, file chargeback
+     claiming "not received." Repeat offenders use different cards
+     but same shipping address.
+  3. Synthetic identity: Fraudsters create accounts that look legitimate
+     over months, then make large purchases.
+  4. Friendly fraud: Real customers dispute legitimate charges because
+     they don't recognize the billing descriptor.
+
+  Available data for ML model:
+  - Transaction data: amount, time, IP, device fingerprint, card BIN
+  - Customer behavior: account age, purchase history, login patterns
+  - Shipping data: address, name match, delivery confirmation
+  - Device data: browser, OS, screen resolution, timezone
+  - Stripe Radar risk score (0-100)
+  - Historical fraud labels (18 months of dispute data)
+
+  Budget: $500K for the ML system, 3-engineer team
+
+  Tasks:
+  1. Design the ML fraud detection system. Include: the feature
+     engineering (what signals to extract from the available data), the
+     model architecture (real-time scoring for each transaction), the
+     integration with Stripe Radar (use Radar score as a feature, not
+     a replacement), and the human review workflow for medium-risk
+     transactions.
+
+  2. Write the Stripe Radar custom rules to complement the ML model.
+     Create rules for each fraud pattern: ATO detection (login from
+     new device + high-value order), return fraud (same shipping address
+     with multiple disputes), and friendly fraud prevention (clear
+     billing descriptor, pre-charge email). Show the Radar rule syntax.
+
+  3. Build the fraud operations dashboard. Include: real-time fraud
+     rate tracking, the review queue with ML risk scores, the false
+     positive rate tracking, the financial impact dashboard (fraud
+     losses, blocked revenue, review costs), and the A/B testing
+     framework for new rules.
+
+assertions:
+  - type: llm_judge
+    criteria: "ML system is well-designed — features capture the 4 fraud patterns, model architecture supports real-time scoring, integration with Radar is additive (not replacing), and human review workflow prioritizes by risk score"
+    weight: 0.35
+    description: "Well-designed ML fraud system"
+  - type: llm_judge
+    criteria: "Radar rules address specific patterns — ATO rule checks device + behavior anomaly, return fraud rule uses address + dispute history, friendly fraud prevention uses clear descriptors and communication; rules are practical Radar syntax"
+    weight: 0.35
+    description: "Pattern-specific Radar rules"
+  - type: llm_judge
+    criteria: "Dashboard tracks actionable metrics — real-time fraud rate, review queue efficiency, false positive rate (blocked legitimate revenue), financial impact quantification, and A/B testing for rule changes"
+    weight: 0.30
+    description: "Actionable fraud operations dashboard"

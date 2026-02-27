@@ -1,0 +1,49 @@
+meta:
+  id: welcome-cart-priority-conflict
+  level: 4
+  course: email-abandoned-cart
+  type: output
+  description: "Resolve conflict between welcome sequence and cart abandonment flow"
+  tags: [email, abandoned-cart, welcome, priority, conflict-resolution]
+
+state: {}
+
+trigger: |
+  "FreshFace" (a skincare DTC brand) has a conflict: a new subscriber who just
+  entered the 5-email welcome sequence also abandoned a cart.
+
+  Timeline:
+  - Day 0, 10am: Subscriber signs up (enters welcome sequence)
+  - Day 0, 10:05am: Welcome Email #1 sent
+  - Day 0, 11:30am: Subscriber browses site, adds $85 of products to cart
+  - Day 0, 11:45am: Subscriber abandons cart at checkout
+  - Day 0, 12:45pm: Cart abandonment Email #1 should fire (1 hour trigger)
+  - Day 2: Welcome Email #2 scheduled
+  - Day 3: Cart abandonment Email #2 should fire (24 hour trigger)
+  - Day 5: Welcome Email #3 scheduled
+
+  Problem: The subscriber could receive 8+ emails in 5 days from two overlapping flows.
+
+  Design:
+  1. Priority rules: which flow takes precedence?
+  2. Suppression logic: what gets paused or cancelled?
+  3. A merged approach: can the flows be combined?
+  4. What happens after the cart situation resolves (purchased or expired)?
+
+assertions:
+  - type: llm_judge
+    criteria: "Cart abandonment takes priority — the response correctly identifies that cart recovery has higher revenue potential and urgency than the welcome sequence"
+    weight: 0.25
+    description: "Cart takes priority over welcome"
+  - type: llm_judge
+    criteria: "The welcome sequence is paused, not cancelled — after the cart situation resolves (purchase or 72-hour expiry), the subscriber re-enters the welcome flow at the appropriate point"
+    weight: 0.25
+    description: "Welcome paused and resumed appropriately"
+  - type: llm_judge
+    criteria: "Over-messaging is prevented — a clear maximum daily/weekly email limit ensures the subscriber never receives an overwhelming number of emails regardless of flow overlap"
+    weight: 0.25
+    description: "Over-messaging prevented"
+  - type: llm_judge
+    criteria: "The merged approach is considered — perhaps the cart recovery email can incorporate welcome elements (brand trust signals) since this is a new subscriber who doesn't know the brand yet"
+    weight: 0.25
+    description: "Merged approach considered"

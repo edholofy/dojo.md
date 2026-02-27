@@ -1,0 +1,74 @@
+meta:
+  id: payment-platform-architecture
+  level: 4
+  course: stripe-payment-integration
+  type: output
+  description: "Architect a payment platform — design a scalable, resilient payment system handling millions of transactions with Stripe as the primary processor"
+  tags: [stripe, architecture, platform, scalability, resilience, design, expert]
+
+state: {}
+
+trigger: |
+  You're the Staff Engineer at a high-growth e-commerce company. You're
+  tasked with redesigning the payment platform to handle 10x growth
+  (from $100M to $1B in annual GMV) over the next 3 years.
+
+  Current architecture (hitting limits):
+  - Monolithic Node.js app makes Stripe API calls directly
+  - Single Stripe account for all business lines
+  - Webhook processing in the main application
+  - PostgreSQL stores payment state alongside product data
+  - No payment-specific retry or failover logic
+  - No payment event sourcing or audit trail
+
+  Current pain points:
+  - Stripe API rate limits hit during peak hours (Black Friday)
+  - Webhook processing delays cause order fulfillment delays
+  - No way to audit what happened to a specific payment
+  - Refund processing takes hours because it's in a queue with
+    everything else
+  - Database lock contention between payment and product writes
+  - No way to add a second payment processor without major refactor
+
+  Requirements for the new platform:
+  1. Handle 1M+ transactions/day at peak
+  2. 99.99% availability for payment processing
+  3. Sub-second payment creation latency (p99)
+  4. Full payment event audit trail
+  5. Multi-processor support (Stripe primary, Adyen fallback)
+  6. Separate payment database from product database
+  7. Idempotent everything — safe to retry any operation
+  8. Real-time payment analytics
+
+  Tasks:
+  1. Design the payment platform architecture. Include: the service
+     decomposition (payment service, webhook service, reconciliation
+     service, analytics service), the data model (event-sourced payment
+     aggregate), the API design (internal payment API that abstracts
+     Stripe), and the infrastructure (queues, databases, caches).
+
+  2. Design the resilience layer. Include: the circuit breaker for
+     Stripe API calls, the retry strategy with idempotency, the
+     failover to Adyen when Stripe is degraded, the webhook processing
+     guarantee (at-least-once with idempotent handlers), and the
+     disaster recovery plan.
+
+  3. Write the capacity planning document. Include: the throughput
+     calculations (1M transactions/day = X TPS), the Stripe API rate
+     limit strategy (request queuing, multiple API keys), the database
+     sizing (event store growth), and the cost model (Stripe fees +
+     infrastructure at $1B GMV).
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture is well-decomposed — payment service is separate from product, event sourcing provides full audit trail, internal API abstracts processor, webhook service scales independently, and the data model supports the 8 requirements"
+    weight: 0.35
+    description: "Well-decomposed payment architecture"
+  - type: llm_judge
+    criteria: "Resilience layer handles real failure modes — circuit breaker prevents cascade, failover routing is automatic, idempotency is built into every operation, webhook processing guarantees delivery, and DR plan covers Stripe outage scenarios"
+    weight: 0.35
+    description: "Real-failure-mode resilience"
+  - type: llm_judge
+    criteria: "Capacity plan is math-driven — TPS calculations are correct (1M/day ≈ 12 TPS average, 120+ TPS peak), rate limit strategy uses queuing or multiple keys, storage estimates are realistic, and cost model at $1B GMV is accurate"
+    weight: 0.30
+    description: "Math-driven capacity plan"
