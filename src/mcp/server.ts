@@ -7,17 +7,11 @@ import { TrainingSession } from '../engine/training.js';
 import { initDatabase, getLatestRun } from '../recorder/db.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from '../engine/model-client.js';
+import { defaultModel } from '../engine/model-utils.js';
 import { SessionManager } from './session-manager.js';
 
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../../package.json');
-
-/** Pick default model based on available API keys */
-function defaultModel(): string {
-  if (process.env.ANTHROPIC_API_KEY) return 'claude-sonnet-4-6';
-  if (process.env.OPENROUTER_API_KEY) return 'anthropic/claude-sonnet-4-6';
-  return 'claude-sonnet-4-6';
-}
 
 /**
  * dojo MCP server — exposes training tools for AI agent integration.

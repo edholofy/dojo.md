@@ -16,6 +16,7 @@ import { findCoursePath, loadCourse, loadCourseScenarios } from '../engine/loade
 import { Evaluator } from '../evaluator/judge.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from '../engine/model-client.js';
+import { defaultModel } from '../engine/model-utils.js';
 import { initDatabase, createRun, recordAction, recordFailurePatterns, completeRun } from '../recorder/db.js';
 
 /**
@@ -29,17 +30,10 @@ export class SessionManager {
   private _skillGenerator: SkillGenerator | null = null;
   private _db: Database.Database | null = null;
 
-  /** Pick default model based on available API keys */
-  private get defaultModel(): string {
-    if (process.env.ANTHROPIC_API_KEY) return 'claude-sonnet-4-6';
-    if (process.env.OPENROUTER_API_KEY) return 'anthropic/claude-sonnet-4-6';
-    return 'claude-sonnet-4-6'; // will error with helpful message
-  }
-
   /** Lazy — only created when a session actually needs evaluation */
   private get evaluator(): Evaluator {
     if (!this._evaluator) {
-      const client = createModelClient(this.defaultModel);
+      const client = createModelClient(defaultModel());
       this._evaluator = new Evaluator(client);
     }
     return this._evaluator;
@@ -47,7 +41,7 @@ export class SessionManager {
 
   private get skillGenerator(): SkillGenerator {
     if (!this._skillGenerator) {
-      const client = createModelClient(this.defaultModel);
+      const client = createModelClient(defaultModel());
       this._skillGenerator = new SkillGenerator(client);
     }
     return this._skillGenerator;

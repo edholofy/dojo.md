@@ -14,6 +14,7 @@ import { ScenarioRunner } from '../engine/runner.js';
 import { Evaluator } from '../evaluator/judge.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from '../engine/model-client.js';
+import { defaultModel } from '../engine/model-utils.js';
 import type { ScenarioResult, LevelResult, FailurePattern } from '../types/index.js';
 
 // ─── Parse args ─────────────────────────────────────────────
@@ -52,7 +53,7 @@ async function main() {
   console.log(`  Scenarios: ${scenarios.length}`);
   console.log(`  Model: claude-sonnet-4-6`);
 
-  const defaultClient = createModelClient('claude-sonnet-4-6');
+  const defaultClient = createModelClient(defaultModel());
   const agentBridge = new AgentBridge(defaultClient);
   agentBridge.setCourseContext(course);
   const evaluator = new Evaluator(defaultClient);

@@ -56,6 +56,16 @@ export function modelToSlug(modelString: string): string {
 }
 
 /**
+ * Default model string based on available API keys.
+ * Prefer Anthropic direct if key is set, else route through OpenRouter.
+ */
+export function defaultModel(): string {
+  if (process.env.ANTHROPIC_API_KEY) return 'claude-sonnet-4-6';
+  if (process.env.OPENROUTER_API_KEY) return 'anthropic/claude-sonnet-4-6';
+  return 'claude-sonnet-4-6';
+}
+
+/**
  * Validate that the required API key for a model is available.
  * Throws with a helpful message if missing.
  */

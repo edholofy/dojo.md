@@ -5,6 +5,7 @@ import { AgentBridge } from './agent-bridge.js';
 import { Evaluator } from '../evaluator/judge.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from './model-client.js';
+import { defaultModel } from './model-utils.js';
 import { createRun, recordAction, recordFailurePatterns, completeRun, failRun } from '../recorder/db.js';
 
 const LEVEL_PASS_THRESHOLD = 0.7; // 70% pass rate to advance
@@ -67,7 +68,7 @@ export class TrainingSession {
     if (components?.agentBridge) {
       this.agentBridge = components.agentBridge;
     } else {
-      const defaultClient = createModelClient('claude-sonnet-4-6');
+      const defaultClient = createModelClient(defaultModel());
       this.agentBridge = new AgentBridge(defaultClient);
     }
     this.agentBridge.setCourseContext(course);
@@ -75,14 +76,14 @@ export class TrainingSession {
     if (components?.evaluator) {
       this.evaluator = components.evaluator;
     } else {
-      const defaultClient = createModelClient('claude-sonnet-4-6');
+      const defaultClient = createModelClient(defaultModel());
       this.evaluator = new Evaluator(defaultClient);
     }
 
     if (components?.skillGenerator) {
       this.skillGenerator = components.skillGenerator;
     } else {
-      const defaultClient = createModelClient('claude-sonnet-4-6');
+      const defaultClient = createModelClient(defaultModel());
       this.skillGenerator = new SkillGenerator(defaultClient);
     }
   }

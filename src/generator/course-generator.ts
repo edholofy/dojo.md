@@ -7,6 +7,7 @@ import { scenarioSchema, courseMetaSchema } from '../types/schemas.js';
 import type { Scenario, CourseMeta } from '../types/index.js';
 import { Evaluator } from '../evaluator/judge.js';
 import { createModelClient } from '../engine/model-client.js';
+import { defaultModel } from '../engine/model-utils.js';
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -551,7 +552,7 @@ Return ONLY a valid JSON array of scenario objects. No markdown, no explanation.
    * Returns the average weighted score (0-100).
    */
   private async validateLevel(scenarios: Scenario[]): Promise<number> {
-    const evaluator = new Evaluator(createModelClient('claude-sonnet-4-6'));
+    const evaluator = new Evaluator(createModelClient(defaultModel()));
     const agentModel = 'claude-sonnet-4-6';
     const scenario = scenarios[0];
 
