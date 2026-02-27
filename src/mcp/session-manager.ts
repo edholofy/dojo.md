@@ -29,10 +29,17 @@ export class SessionManager {
   private _skillGenerator: SkillGenerator | null = null;
   private _db: Database.Database | null = null;
 
+  /** Pick default model based on available API keys */
+  private get defaultModel(): string {
+    if (process.env.ANTHROPIC_API_KEY) return 'claude-sonnet-4-6';
+    if (process.env.OPENROUTER_API_KEY) return 'anthropic/claude-sonnet-4-6';
+    return 'claude-sonnet-4-6'; // will error with helpful message
+  }
+
   /** Lazy — only created when a session actually needs evaluation */
   private get evaluator(): Evaluator {
     if (!this._evaluator) {
-      const client = createModelClient('claude-sonnet-4-6');
+      const client = createModelClient(this.defaultModel);
       this._evaluator = new Evaluator(client);
     }
     return this._evaluator;
@@ -40,7 +47,7 @@ export class SessionManager {
 
   private get skillGenerator(): SkillGenerator {
     if (!this._skillGenerator) {
-      const client = createModelClient('claude-sonnet-4-6');
+      const client = createModelClient(this.defaultModel);
       this._skillGenerator = new SkillGenerator(client);
     }
     return this._skillGenerator;
