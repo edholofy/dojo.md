@@ -219,6 +219,28 @@ export function MachineView({ isTouch }) {
           flexDirection: 'column',
         }}
       >
+        <div
+          onClick={handleCopy}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '6px 14px',
+            border: `1px solid ${copied ? '#4ade80' : '#ddd'}`,
+            borderRadius: 4,
+            cursor: isTouch ? 'pointer' : 'none',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.68rem',
+            color: copied ? '#4ade80' : '#888',
+            transition: 'border-color 0.2s, color 0.2s',
+            userSelect: 'none',
+            alignSelf: 'flex-start',
+            marginBottom: 20,
+          }}
+        >
+          {copied ? '\u2713 copied' : 'copy'}
+        </div>
+
         <pre
           style={{
             flex: 1,
@@ -248,33 +270,6 @@ export function MachineView({ isTouch }) {
           )}
         </pre>
 
-        {/* Copy setup button — appears after typewriter finishes */}
-        {visibleLines >= LINES.length && (
-          <div
-            onClick={handleCopy}
-            style={{
-              marginTop: 24,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 18px',
-              border: `1px solid ${copied ? '#4ade80' : '#ddd'}`,
-              borderRadius: 4,
-              cursor: isTouch ? 'pointer' : 'none',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.72rem',
-              color: copied ? '#4ade80' : '#666',
-              transition: 'border-color 0.2s, color 0.2s',
-              userSelect: 'none',
-              alignSelf: 'flex-start',
-            }}
-          >
-            <span style={{ color: copied ? '#4ade80' : '#999' }}>
-              {copied ? '\u2713' : '\u2398'}
-            </span>
-            <span>{copied ? 'copied setup instructions' : 'copy setup for claude code'}</span>
-          </div>
-        )}
       </div>
 
       {/* Bottom telemetry bar */}
