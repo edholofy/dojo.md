@@ -136,7 +136,8 @@ export type FailureCategory =
   | 'missed_edge_case'
   | 'wrong_order'
   | 'hallucinated_data'
-  | 'incomplete_resolution';
+  | 'incomplete_resolution'
+  | 'quality_gap';
 
 export interface FailurePattern {
   id: string;

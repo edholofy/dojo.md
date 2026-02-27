@@ -243,35 +243,84 @@ Respond with ONLY a number (0-100) on the first line, followed by a brief explan
   // ─── Failure Pattern Extraction ─────────────────────────────────
 
   /**
-   * Analyze failed scenarios and extract structured failure patterns.
+   * Analyze scenario results and extract structured failure/improvement patterns.
+   * Includes both failed scenarios AND passing scenarios with sub-perfect scores.
    */
   async extractFailurePatterns(results: ScenarioResult[]): Promise<FailurePattern[]> {
     const failedResults = results.filter((r) => !r.passed);
-    if (failedResults.length === 0) return [];
+    const weakResults = results.filter((r) => r.passed && r.assertions.some((a) => a.score !== undefined && a.score < 90));
 
-    const failureSummary = failedResults.map((r) => {
-      const failedAssertions = r.assertions.filter((a) => !a.passed);
+    if (failedResults.length === 0 && weakResults.length === 0) return [];
+
+    const patterns: FailurePattern[] = [];
+
+    // Extract patterns from failed scenarios
+    if (failedResults.length > 0) {
+      const failurePatterns = await this.extractFromResults(failedResults, 'failures');
+      patterns.push(...failurePatterns);
+    }
+
+    // Extract improvement patterns from passing-but-imperfect scenarios
+    if (weakResults.length > 0) {
+      const improvementPatterns = await this.extractFromResults(weakResults, 'improvements');
+      patterns.push(...improvementPatterns);
+    }
+
+    return patterns;
+  }
+
+  /**
+   * Extract patterns from a set of results.
+   * Mode 'failures' focuses on what went wrong, 'improvements' on quality gaps.
+   */
+  private async extractFromResults(
+    results: ScenarioResult[],
+    mode: 'failures' | 'improvements',
+  ): Promise<FailurePattern[]> {
+    const summary = results.map((r) => {
+      const relevantAssertions = mode === 'failures'
+        ? r.assertions.filter((a) => !a.passed)
+        : r.assertions.filter((a) => a.score !== undefined && a.score < 90);
       return {
         scenario: r.scenarioId,
-        failures: failedAssertions.map((a) => ({
+        [mode]: relevantAssertions.map((a) => ({
           type: a.assertion.type,
           description: a.assertion.description,
           reasoning: a.reasoning,
+          score: a.score,
         })),
         actionTrace: r.actionTrace.map((a) => `${a.tool}(${JSON.stringify(a.params)})`),
       };
     });
 
-    const prompt = `Analyze these AI agent failures and extract structured failure patterns.
+    const categories = mode === 'failures'
+      ? 'wrong_tool, missing_validation, incorrect_params, unnecessary_action, missed_edge_case, wrong_order, hallucinated_data, incomplete_resolution'
+      : 'quality_gap, missed_edge_case, incomplete_resolution';
+
+    const prompt = mode === 'failures'
+      ? `Analyze these AI agent failures and extract structured failure patterns.
 
 Failures:
-${JSON.stringify(failureSummary, null, 2)}
+${JSON.stringify(summary, null, 2)}
 
 For each distinct failure pattern, provide:
-1. category: one of: wrong_tool, missing_validation, incorrect_params, unnecessary_action, missed_edge_case, wrong_order, hallucinated_data, incomplete_resolution
+1. category: one of: ${categories}
 2. description: what the agent did wrong
 3. severity: low, medium, high, or critical
 4. suggestedFix: what the agent should do differently
+
+Respond as a JSON array of patterns. Each pattern should have: category, description, severity, suggestedFix, scenarioIds (array of affected scenario IDs).
+Return ONLY valid JSON, no other text.`
+      : `Analyze these AI agent responses that passed but scored below 90/100. Extract improvement patterns.
+
+Weak areas:
+${JSON.stringify(summary, null, 2)}
+
+For each distinct quality gap, provide:
+1. category: one of: ${categories}
+2. description: what specific aspect was weak or could be improved
+3. severity: "low" for scores 80-89, "medium" for 70-79
+4. suggestedFix: concrete advice on how to improve this area
 
 Respond as a JSON array of patterns. Each pattern should have: category, description, severity, suggestedFix, scenarioIds (array of affected scenario IDs).
 Return ONLY valid JSON, no other text.`;
@@ -283,10 +332,8 @@ Return ONLY valid JSON, no other text.`;
       });
 
       const text = response.text;
-
-      // Extract JSON from response (handle markdown code blocks)
       const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) return this.fallbackPatterns(failedResults);
+      if (!jsonMatch) return mode === 'failures' ? this.fallbackPatterns(results) : [];
 
       const rawPatterns = JSON.parse(jsonMatch[0]) as Array<{
         category: string;
@@ -306,7 +353,7 @@ Return ONLY valid JSON, no other text.`;
         suggestedFix: p.suggestedFix,
       }));
     } catch {
-      return this.fallbackPatterns(failedResults);
+      return mode === 'failures' ? this.fallbackPatterns(results) : [];
     }
   }
 
