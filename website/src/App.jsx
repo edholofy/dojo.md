@@ -5,7 +5,7 @@ import { MachineView } from './components/MachineView';
 import { HumanView } from './components/HumanView';
 
 function App() {
-  const [mode, setMode] = useState('human');
+  const [mode, setMode] = useState('machine');
   const [transitioning, setTransitioning] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
 

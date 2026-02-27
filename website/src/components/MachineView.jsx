@@ -1,5 +1,23 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMousePosition } from '../hooks/useMousePosition';
+
+const SETUP_COPY = `npm install -g dojo.md
+
+# Add to Claude Code MCP config (~/.claude.json):
+{
+  "mcpServers": {
+    "dojo": {
+      "command": "npx",
+      "args": ["dojo.md", "mcp"]
+    }
+  }
+}
+
+# Train your first course:
+dojo train stripe-refunds
+
+# Auto-train with target score:
+dojo train ad-copy --model openai/gpt-4o --target 90`;
 
 const SKILL_MD = `---
 name: dojo-md
@@ -80,6 +98,14 @@ export function MachineView({ isTouch }) {
   const [visibleLines, setVisibleLines] = useState(0);
   const [blinkCursor, setBlinkCursor] = useState(true);
   const [renderMs, setRenderMs] = useState('0.0');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(SETUP_COPY).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
 
   // Typewriter effect
   useEffect(() => {
@@ -221,6 +247,34 @@ export function MachineView({ isTouch }) {
             </span>
           )}
         </pre>
+
+        {/* Copy setup button — appears after typewriter finishes */}
+        {visibleLines >= LINES.length && (
+          <div
+            onClick={handleCopy}
+            style={{
+              marginTop: 24,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 18px',
+              border: `1px solid ${copied ? '#4ade80' : '#ddd'}`,
+              borderRadius: 4,
+              cursor: isTouch ? 'pointer' : 'none',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.72rem',
+              color: copied ? '#4ade80' : '#666',
+              transition: 'border-color 0.2s, color 0.2s',
+              userSelect: 'none',
+              alignSelf: 'flex-start',
+            }}
+          >
+            <span style={{ color: copied ? '#4ade80' : '#999' }}>
+              {copied ? '\u2713' : '\u2398'}
+            </span>
+            <span>{copied ? 'copied setup instructions' : 'copy setup for claude code'}</span>
+          </div>
+        )}
       </div>
 
       {/* Bottom telemetry bar */}

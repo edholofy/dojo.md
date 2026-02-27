@@ -442,7 +442,7 @@ export function HumanView({ isTouch }) {
           style={{ maxWidth: 'var(--max-w)', margin: '0 auto' }}
         >
           {[
-            { num: '47', label: 'Courses' },
+            { num: '53', label: 'Courses' },
             { num: '2,200+', label: 'Scenarios' },
             { num: '5', label: 'Difficulty Levels' },
             { num: '\u221E', label: 'Models via OpenRouter' },
@@ -668,7 +668,7 @@ export function HumanView({ isTouch }) {
               textAlign: 'right',
             }}
           >
-            v0.1.0 &middot; MIT License
+            v0.2.0 &middot; MIT License
             <br />
             &copy; 2026 Eduard Cristea
           </div>
@@ -695,7 +695,7 @@ export function HumanView({ isTouch }) {
             borderTop: '1px solid var(--border)',
           }}
         >
-          <span>dojo.md v0.1.0</span>
+          <span>dojo.md v0.2.0</span>
           <span>
             RENDER: {renderMs}ms &middot; X: {mouse.x} Y: {mouse.y}
           </span>
