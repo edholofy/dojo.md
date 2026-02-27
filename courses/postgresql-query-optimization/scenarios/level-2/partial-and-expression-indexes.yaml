@@ -1,0 +1,75 @@
+meta:
+  id: partial-and-expression-indexes
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Use partial and expression indexes — create targeted indexes for specific query patterns with reduced storage and maintenance cost"
+  tags: [PostgreSQL, partial-index, expression-index, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  Your e-commerce platform has a products table (10M rows) with
+  skewed data distribution. Full indexes are too large and slow
+  to maintain.
+
+  Table statistics:
+  - 10M total products
+  - 9.5M have status = 'archived' (95%)
+  - 300K have status = 'active' (3%)
+  - 200K have status = 'draft' (2%)
+  - Only active products appear in search results
+  - Only draft products appear in the admin editor
+
+  Current indexes:
+  CREATE INDEX idx_products_status ON products(status);
+  -- This index is 400MB but 95% of it covers 'archived' rows
+  -- that are almost never queried
+
+  Problematic queries:
+
+  Q1: Case-insensitive email search:
+  SELECT * FROM users WHERE LOWER(email) = LOWER($1);
+  -- Index on email doesn't help (function applied)
+
+  Q2: Active product search:
+  SELECT * FROM products WHERE status = 'active' AND category = $1
+  ORDER BY price;
+  -- Full index scans 10M entries to find 300K active ones
+
+  Q3: Soft-deleted records cleanup:
+  SELECT * FROM orders WHERE deleted_at IS NOT NULL
+  AND deleted_at < NOW() - INTERVAL '90 days';
+  -- Only 0.1% of orders are soft-deleted, but full index is huge
+
+  Q4: JSON field query:
+  SELECT * FROM products WHERE (metadata->>'brand') = 'Nike';
+  -- No index on JSON fields
+
+  Q5: Computed date query:
+  SELECT * FROM subscriptions
+  WHERE DATE(expires_at) = CURRENT_DATE;
+  -- Function on column prevents index use
+
+  Q6: Trigram search:
+  SELECT * FROM products WHERE name ILIKE '%wireless%mouse%';
+  -- Leading wildcard with case-insensitive match
+
+  Task: Design the optimal index for each query using partial indexes,
+  expression indexes, or specialized index types. For each, show:
+  the CREATE INDEX statement, the size compared to a full index, and
+  the EXPLAIN output showing the index is used.
+
+assertions:
+  - type: llm_judge
+    criteria: "Partial indexes are used correctly — index on products WHERE status = 'active' covers only 3% of rows (300K vs 10M), index on orders WHERE deleted_at IS NOT NULL covers only 0.1%. Each partial index is dramatically smaller than the full equivalent"
+    weight: 0.35
+    description: "Correct partial index usage"
+  - type: llm_judge
+    criteria: "Expression indexes handle function-on-column — LOWER(email) expression index enables case-insensitive search, JSON expression index on (metadata->>'brand') enables JSON field queries, DATE(expires_at) expression index enables computed date queries. Each eliminates the need for full table scans"
+    weight: 0.35
+    description: "Expression indexes for functions"
+  - type: llm_judge
+    criteria: "Specialized indexes are recommended where appropriate — pg_trgm GIN index for ILIKE wildcard search, citext extension as alternative to LOWER() expression index, and the trade-offs of each approach (storage, maintenance, query compatibility)"
+    weight: 0.30
+    description: "Appropriate specialized indexes"

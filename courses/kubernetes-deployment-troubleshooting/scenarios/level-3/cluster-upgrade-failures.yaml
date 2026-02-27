@@ -1,0 +1,71 @@
+meta:
+  id: cluster-upgrade-failures
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Kubernetes cluster upgrade failures — diagnose API deprecations, node rotation issues, and workload disruptions during upgrades"
+  tags: [Kubernetes, cluster-upgrade, API-deprecation, node-rotation, advanced]
+
+state: {}
+
+trigger: |
+  Your team is upgrading a Kubernetes cluster from 1.28 to 1.30 and
+  encountering multiple failures:
+
+  Phase 1 — Control plane upgrade:
+  Pre-upgrade validation shows deprecated API usage:
+
+  $ kubectl get --raw /metrics | grep apiserver_requested_deprecated_apis
+  apiserver_requested_deprecated_apis{group="extensions",version="v1beta1",
+  resource="ingresses"} 47
+  apiserver_requested_deprecated_apis{group="policy",version="v1beta1",
+  resource="podsecuritypolicies"} 12
+
+  47 Ingress resources still use extensions/v1beta1 (removed in 1.22)
+  and 12 PodSecurityPolicy resources use policy/v1beta1 (removed in 1.25).
+
+  Phase 2 — Node rotation:
+  After control plane upgrade, worker node drain fails:
+
+  $ kubectl drain worker-1 --ignore-daemonsets
+  error: unable to drain node "worker-1": cannot evict pod
+  "critical-db-0": disruption budget prevents eviction
+
+  PDB blocks eviction. After increasing replicas to allow drain:
+
+  $ kubectl get nodes
+  NAME       STATUS                     VERSION
+  master-1   Ready                      v1.30.0
+  worker-1   Ready,SchedulingDisabled   v1.28.5
+  worker-2   Ready                      v1.30.0
+  worker-3   Ready                      v1.28.5
+
+  Mixed version cluster! The skew policy allows at most 1 minor version
+  between control plane and nodes. 1.30 to 1.28 is 2 versions — worker-1
+  and worker-3 are out of skew support.
+
+  Phase 3 — Workload issues post-upgrade:
+  After all nodes upgraded, some DaemonSets fail because they use
+  privileged containers and the new Pod Security Standards enforce
+  restricted profile on certain namespaces.
+
+  Task: Explain Kubernetes cluster upgrade process and troubleshooting.
+  Write: the upgrade sequence (control plane first, then nodes), API
+  deprecation checking and migration, version skew policy (kubelet can
+  be at most N-1 relative to API server), PDB considerations during
+  node drain, Pod Security Standards/Admission replacing PodSecurityPolicy,
+  and upgrade planning best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Upgrade sequence is explained — always upgrade control plane first (API server, controller manager, scheduler, etcd), then worker nodes one by one. Version skew policy: kubelet can be at most 1 minor version behind API server. Cannot skip minor versions (must go 1.28→1.29→1.30). Check deprecated API usage before upgrade with metrics or kubectl commands"
+    weight: 0.35
+    description: "Upgrade sequence"
+  - type: llm_judge
+    criteria: "API deprecation and migration are covered — deprecated APIs continue working until removed. Track deprecations with apiserver_requested_deprecated_apis metric. Use kubectl convert or manual manifest updates to migrate (e.g., extensions/v1beta1 Ingress → networking.k8s.io/v1). PodSecurityPolicy removed in 1.25, replaced by Pod Security Standards/Admission. Plan migration before upgrading"
+    weight: 0.35
+    description: "API deprecation"
+  - type: llm_judge
+    criteria: "Operational considerations are practical — pre-upgrade checklist: check API deprecations, review PDBs for drain compatibility, backup etcd, test in staging first. During upgrade: drain nodes one at a time, monitor workload health, use surge capacity for zero-downtime. Post-upgrade: verify all nodes at new version, run integration tests, check for Pod Security Standard violations. Use managed Kubernetes (EKS/GKE/AKS) to simplify"
+    weight: 0.30
+    description: "Operational considerations"

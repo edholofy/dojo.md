@@ -1,0 +1,69 @@
+meta:
+  id: container-networking-basics
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug basic Docker networking — diagnose container-to-container communication failures and DNS resolution issues"
+  tags: [Docker, networking, bridge, DNS, container-communication, beginner]
+
+state: {}
+
+trigger: |
+  You have two containers that need to communicate but can't reach
+  each other:
+
+  $ docker run -d --name database postgres:16
+  $ docker run -d --name api -e DATABASE_HOST=database myapp:v1
+
+  $ docker logs api
+  Error: getaddrinfo ENOTFOUND database
+  Error: Cannot resolve hostname 'database'
+
+  The api container can't resolve the hostname "database". Why?
+
+  $ docker network ls
+  NETWORK ID     NAME      DRIVER    SCOPE
+  abc123def456   bridge    bridge    local
+  ...
+
+  Both containers are on the default bridge network, but the default
+  bridge network does NOT support automatic DNS resolution. Container
+  names can't be used as hostnames on the default bridge.
+
+  Fix: Create a custom network:
+  $ docker network create myapp-network
+  $ docker run -d --name database --network myapp-network postgres:16
+  $ docker run -d --name api --network myapp-network -e DATABASE_HOST=database myapp:v1
+
+  $ docker logs api
+  Connected to database at database:5432
+
+  Custom bridge networks provide:
+  - Automatic DNS resolution (container names as hostnames)
+  - Network isolation (containers on different networks can't communicate)
+  - Better security than the default bridge
+
+  Additional test:
+  $ docker exec api ping database
+  PING database (172.18.0.2): 56 data bytes
+  64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.089 ms
+
+  Task: Explain Docker networking basics. Write: the network drivers
+  (bridge, host, none, overlay), why the default bridge doesn't support
+  DNS, how custom networks enable service discovery, how to connect
+  containers across networks, common networking mistakes, and how to
+  inspect network configuration.
+
+assertions:
+  - type: llm_judge
+    criteria: "Docker network drivers are explained — bridge (default, isolated network on single host), host (shares host network namespace, no isolation), none (no networking), overlay (multi-host networking for Swarm). Default bridge does NOT support automatic DNS resolution between containers — only custom bridge networks do. This is the most common networking mistake for beginners"
+    weight: 0.35
+    description: "Network drivers"
+  - type: llm_judge
+    criteria: "DNS and service discovery are covered — on custom bridge networks, Docker runs an embedded DNS server (127.0.0.11). Containers can resolve each other by name. Network aliases (--network-alias) provide additional DNS names. Containers on different networks are isolated by default. Use docker network connect to add a container to a second network for cross-network communication"
+    weight: 0.35
+    description: "DNS and discovery"
+  - type: llm_judge
+    criteria: "Debugging and inspection are practical — docker network inspect <network> shows connected containers and their IPs, docker exec <container> ping <target> tests connectivity, docker exec <container> nslookup <hostname> tests DNS. Common mistakes: using default bridge (no DNS), hardcoding IPs (change on restart), forgetting to put containers on the same network, port conflicts when using host network"
+    weight: 0.30
+    description: "Debugging and inspection"

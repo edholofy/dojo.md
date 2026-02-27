@@ -1,0 +1,59 @@
+meta:
+  id: platform-engineering
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design an internal developer platform on Kubernetes — self-service deployment, golden paths, and developer experience optimization"
+  tags: [Kubernetes, platform-engineering, developer-experience, IDP, self-service, expert]
+
+state: {}
+
+trigger: |
+  Your VP of Engineering asks: "Developers spend 40% of their time on
+  Kubernetes YAML, debugging deployments, and waiting for platform
+  tickets. How do we fix this?"
+
+  Current developer experience survey results:
+  - "Writing Kubernetes manifests is my least favorite part of the job"
+  - "I don't understand why my deployment failed, the error messages are cryptic"
+  - "I need to wait 3 days for a platform team ticket to create a new namespace"
+  - "Every team has different deployment patterns, no consistency"
+  - "I can't run my service locally in a way that mimics production"
+
+  Current state:
+  - 50 developers, 12 teams
+  - Each team writes raw Kubernetes YAML
+  - No standardized CI/CD pipeline
+  - Manual namespace provisioning (platform team ticket)
+  - No local development environment that mirrors Kubernetes
+  - Average time from code merge to production: 4 hours
+  - 30% of deployments require rollback
+
+  Target state:
+  - Developers focus on code, not Kubernetes primitives
+  - Self-service for common operations (new namespace, new service)
+  - Standardized deployment pipeline with guardrails
+  - Local development parity with production
+  - Merge to production in 15 minutes
+  - Rollback rate < 5%
+
+  Task: Design an internal developer platform (IDP) on Kubernetes.
+  Write: the abstraction layers (what developers see vs what Kubernetes
+  sees), golden paths for common patterns (web service, worker, cron job),
+  self-service capabilities (Backstage/Port catalog), CI/CD standardization,
+  local development approach (Tilt/Skaffold/DevSpace), and how to measure
+  developer productivity improvements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Abstraction layers are defined — developers interact with simplified service definitions (not raw YAML), platform team maintains templates/operators that translate to Kubernetes resources. Options: Backstage service catalog with templates, Crossplane compositions, custom CRDs with operators, or Helm chart library. Developer writes: service name, image, port, resources, env vars. Platform generates: Deployment, Service, Ingress, HPA, PDB, NetworkPolicy, ServiceMonitor"
+    weight: 0.35
+    description: "Abstraction layers"
+  - type: llm_judge
+    criteria: "Golden paths and CI/CD are practical — standardized templates for web service (Deployment + HPA + Ingress), worker (Deployment without Ingress), cron job (CronJob with monitoring), stateful service (StatefulSet + PVC). CI/CD pipeline: build → test → security scan → deploy to staging → automated tests → deploy to production. Progressive delivery with canary deployments. Rollback automation on error rate increase"
+    weight: 0.35
+    description: "Golden paths and CI/CD"
+  - type: llm_judge
+    criteria: "Local development and metrics are covered — local development: Tilt (live reload Kubernetes dev), DevSpace, or Telepresence (route cluster traffic to local machine). Developer productivity metrics: DORA metrics (deployment frequency, lead time, change failure rate, MTTR), developer satisfaction surveys, time-to-first-deployment for new services, percentage of deployments using golden paths"
+    weight: 0.30
+    description: "Local dev and metrics"

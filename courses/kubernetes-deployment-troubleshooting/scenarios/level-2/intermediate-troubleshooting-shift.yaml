@@ -1,0 +1,66 @@
+meta:
+  id: intermediate-troubleshooting-shift
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Combined intermediate troubleshooting shift — diagnose interconnected failures involving storage, networking, RBAC, and scaling"
+  tags: [Kubernetes, troubleshooting, combined, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  You're investigating a complex outage in the "ecommerce" namespace.
+  A Helm upgrade was deployed 30 minutes ago and multiple things broke:
+
+  $ kubectl get pods -n ecommerce
+  NAME                          READY   STATUS             RESTARTS   AGE
+  catalog-svc-new-7a8b-c9d0   0/1     Pending            0          30m
+  catalog-svc-old-1e2f-g3h4   1/1     Running            0          2d
+  cart-svc-5i6j7k8l-m9n0      0/1     CrashLoopBackOff   8          30m
+  search-svc-1o2p3q4r-s5t6    1/1     Running            0          30m
+  payment-svc-7u8v9w0x-y1z2   1/1     Running            0          2d
+
+  $ kubectl get hpa -n ecommerce
+  NAME          TARGETS         MINPODS   MAXPODS   REPLICAS
+  catalog-svc   <unknown>/80%   2         20        1
+
+  $ kubectl get ingress -n ecommerce
+  NAME          HOSTS              ADDRESS   PORTS     AGE
+  ecommerce     shop.example.com             80, 443   30m
+
+  Investigation reveals four interconnected issues:
+
+  1. catalog-svc — new pod Pending, PVC can't bind. The Helm upgrade
+     changed StorageClass from "standard" to "premium-ssd" which doesn't
+     exist. Old pod still running because Deployment strategy is
+     RollingUpdate with maxUnavailable=0.
+
+  2. cart-svc — CrashLoopBackOff, logs show "FORBIDDEN: cannot list
+     endpoints in namespace ecommerce." The new version uses Kubernetes
+     API for service discovery but the ServiceAccount lacks RBAC.
+
+  3. HPA — showing <unknown> targets because the Helm upgrade removed
+     resource requests from the catalog-svc Deployment spec.
+
+  4. Ingress — no ADDRESS assigned. The Ingress resource was recreated
+     with an invalid ingressClassName that doesn't match any controller.
+
+  Task: Walk through diagnosing and fixing all four issues. Write:
+  the triage approach for a Helm-triggered multi-failure incident,
+  how to identify the Helm upgrade as the common cause, the fix for
+  each issue, whether to rollback the entire Helm release or fix
+  forward, and the post-incident review process.
+
+assertions:
+  - type: llm_judge
+    criteria: "All four issues are diagnosed — (1) PVC binding failure from non-existent StorageClass, (2) RBAC Forbidden error for cart-svc ServiceAccount, (3) HPA <unknown> from missing CPU requests, (4) Ingress no address from wrong ingressClassName. The root cause is identified as the Helm upgrade introducing multiple configuration errors"
+    weight: 0.35
+    description: "All issues diagnosed"
+  - type: llm_judge
+    criteria: "Rollback vs fix-forward decision is analyzed — helm rollback is faster and safer when multiple issues exist (reverts all changes at once), but may lose legitimate improvements in the new version. Fix-forward makes sense for single, well-understood issues. In this case with 4 issues, rollback to last good revision is recommended, then fix the chart and re-deploy"
+    weight: 0.35
+    description: "Rollback decision"
+  - type: llm_judge
+    criteria: "Post-incident process is covered — review the Helm chart diff (helm diff), add validation checks (helm lint, --dry-run, OPA policies), implement staging environment that mirrors production, use helm test for post-deploy verification, add monitoring alerts for HPA issues and Ingress health, consider GitOps with ArgoCD for change review"
+    weight: 0.30
+    description: "Post-incident process"

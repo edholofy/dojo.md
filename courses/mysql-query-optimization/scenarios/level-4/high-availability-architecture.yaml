@@ -1,0 +1,60 @@
+meta:
+  id: high-availability-architecture
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL high availability — architect InnoDB Cluster, Group Replication, and multi-region deployments for 99.99% uptime"
+  tags: [MySQL, high-availability, InnoDB-Cluster, Group-Replication, failover, expert]
+
+state: {}
+
+trigger: |
+  Your company's SLA requires 99.99% database availability (52 minutes
+  of downtime per year). Currently you have a single MySQL primary with
+  two asynchronous replicas. Last year's downtime: 22 hours.
+
+  Past incidents:
+  1. Primary disk failure (6 hours): Promoted replica manually, lost
+     45 seconds of data (async replication lag at time of failure)
+  2. Failed MySQL upgrade (8 hours): Upgraded primary, application
+     broke on MySQL 8.0 incompatibility, had to roll back
+  3. Network partition (4 hours): Primary lost connection to replicas,
+     split-brain risk, manually stopped writes until resolved
+  4. Connection storm (4 hours): 15K connections overwhelmed primary,
+     OOM kill, cascading failure to replicas
+
+  Architecture options:
+  A. InnoDB Cluster (Group Replication + MySQL Router + MySQL Shell)
+  B. Galera Cluster (synchronous multi-master)
+  C. Orchestrator + async replication (automated failover)
+  D. AWS Aurora MySQL (managed, distributed storage)
+  E. ProxySQL + async replication (read/write split, manual failover)
+
+  Requirements:
+  - 99.99% availability (<52 min/year downtime)
+  - RPO <5 seconds (max data loss)
+  - RTO <30 seconds (time to recover)
+  - Multi-AZ deployment
+  - Read scaling for analytics
+  - Zero-downtime upgrades
+
+  Current infrastructure: AWS, 3 AZs, single region.
+
+  Task: Design the HA architecture. Write: the architecture
+  recommendation with justification, the failover mechanism (automatic
+  detection and promotion), the replication topology, the zero-downtime
+  upgrade strategy, and the DR plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture is well-justified — evaluates all 5 options against requirements (availability, RPO, RTO, zero-downtime upgrades, read scaling), recommends InnoDB Cluster or Aurora with clear reasoning, and explains why async replication alone can't meet RPO <5 seconds reliably. Addresses how each past incident would be handled"
+    weight: 0.35
+    description: "Well-justified architecture"
+  - type: llm_judge
+    criteria: "Failover achieves RTO <30 seconds — automatic failure detection (health checks, consensus), automatic promotion (InnoDB Cluster election or Aurora failover), application routing (MySQL Router or Aurora endpoints), and explains the quorum mechanism that prevents split-brain (requires majority of nodes for writes)"
+    weight: 0.35
+    description: "Fast automatic failover"
+  - type: llm_judge
+    criteria: "Zero-downtime upgrades and DR are addressed — rolling upgrade strategy (upgrade secondaries, failover, upgrade old primary), or blue-green with replication. Cross-AZ deployment for local HA, with cross-region async replica for DR. RPO and RTO quantified for both local failures and regional disasters"
+    weight: 0.30
+    description: "Upgrades and DR"

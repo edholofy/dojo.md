@@ -1,0 +1,68 @@
+meta:
+  id: select-star-problems
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Understand why SELECT * hurts performance — learn about unnecessary I/O, buffer pool waste, and covering index defeat in MySQL"
+  tags: [MySQL, SELECT-star, InnoDB, buffer-pool, covering-index, beginner]
+
+state: {}
+
+trigger: |
+  Your team's API is consuming excessive memory and the MySQL server's
+  buffer pool hit ratio has dropped from 99% to 85%. Investigation
+  reveals that almost every query uses SELECT *. A senior DBA says
+  "SELECT * is killing our buffer pool." You need to understand why.
+
+  Example queries and their impact:
+
+  1. User list endpoint:
+     SELECT * FROM users WHERE status = 'active' LIMIT 50;
+     -- users table has 45 columns including a TEXT bio and BLOB avatar
+     -- Only the API needs: id, name, email, avatar_url (4 columns)
+     -- Result: 50 rows × 45 columns instead of 50 × 4
+
+  2. Order count:
+     SELECT * FROM orders WHERE customer_id = 123;
+     -- Then the application does: orders.length
+     -- The application only needs COUNT(*), not the actual rows
+     -- Result: transfers 500 rows (with JSON payload column) just to count
+
+  3. Existence check:
+     SELECT * FROM users WHERE email = 'john@example.com';
+     -- Then: if (result) { ... }
+     -- Only needs SELECT 1 or SELECT EXISTS
+     -- Result: loads entire row with all 45 columns to check existence
+
+  4. Covering index defeat:
+     -- Index exists: idx_status_email (status, email)
+     SELECT * FROM users WHERE status = 'active';
+     -- EXPLAIN: type=ref, Extra=NULL (reads full rows from clustered index)
+     SELECT status, email FROM users WHERE status = 'active';
+     -- EXPLAIN: type=ref, Extra=Using index (index-only scan!)
+
+  InnoDB buffer pool stats:
+  - Buffer pool size: 8GB
+  - Pages read from disk: 50K/hour (was 5K/hour before traffic growth)
+  - Buffer pool hit ratio: 85% (target: 99%+)
+  - Average row size: 2.4KB (would be 200 bytes with explicit columns)
+
+  Task: Explain why SELECT * is a performance problem. Write: how it
+  wastes I/O and memory (InnoDB buffer pool impact), how it defeats
+  covering indexes, when it prevents query optimization, what the
+  correct practice is (explicit column lists), and exceptions where
+  SELECT * is acceptable.
+
+assertions:
+  - type: llm_judge
+    criteria: "I/O and buffer pool impact is explained — SELECT * reads entire rows from the clustered index including large columns (TEXT, BLOB, JSON), filling the buffer pool with unnecessary data and evicting hot pages. With explicit columns, InnoDB may satisfy the query from a smaller secondary index (covering index), keeping the buffer pool efficient"
+    weight: 0.35
+    description: "Buffer pool impact explained"
+  - type: llm_judge
+    criteria: "Covering index defeat is explained — when SELECT * is used, MySQL must read the full row from the clustered index even if a secondary index matches the WHERE clause. With explicit columns that are all in the index, MySQL can use an index-only scan (Using index in EXPLAIN), avoiding the clustered index entirely"
+    weight: 0.35
+    description: "Covering index defeat explained"
+  - type: llm_judge
+    criteria: "Practical guidance is provided — always specify needed columns, use COUNT(*) for counts, use SELECT EXISTS or SELECT 1 ... LIMIT 1 for existence checks, and notes exceptions (ad-hoc debugging queries, tables with few small columns, ORM code that needs all fields for object hydration)"
+    weight: 0.30
+    description: "Practical guidance"

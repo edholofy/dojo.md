@@ -1,0 +1,71 @@
+meta:
+  id: partitioning-strategies
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Design partitioning strategies — partition large tables for query performance, maintenance efficiency, and data lifecycle management"
+  tags: [PostgreSQL, partitioning, range, list, hash, advanced]
+
+state: {}
+
+trigger: |
+  Your IoT platform stores sensor data in a single events table that
+  has grown to 5 billion rows (2TB). Performance has degraded to the
+  point where even simple queries take minutes.
+
+  Table:
+  CREATE TABLE events (
+    id BIGSERIAL,
+    device_id INTEGER NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    payload JSONB NOT NULL,
+    region VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP NOT NULL
+  );
+
+  Current indexes: (device_id, created_at), (event_type, created_at)
+  Index sizes: 800GB total (larger than the data!)
+
+  Query patterns:
+  Q1 (80% of queries): Recent events for a device
+      WHERE device_id = ? AND created_at >= NOW() - INTERVAL '7 days'
+  Q2 (10%): Regional aggregation
+      WHERE region = ? AND created_at BETWEEN ? AND ?
+  Q3 (5%): Event type analysis
+      WHERE event_type = ? AND created_at >= ?
+  Q4 (5%): Data archival
+      DELETE FROM events WHERE created_at < NOW() - INTERVAL '2 years'
+
+  Partitioning options to evaluate:
+  A. Range partition by created_at (monthly)
+  B. List partition by region (5 regions)
+  C. Hash partition by device_id (64 partitions)
+  D. Composite: Range by created_at, then List by region
+  E. Composite: Range by created_at, then Hash by device_id
+
+  Constraints:
+  - Q1 must be < 100ms
+  - Monthly archival must be < 1 minute (currently takes 6 hours)
+  - No more than 500 total partitions (planner overhead)
+  - Must migrate from monolithic table with < 1 hour downtime
+
+  Task: Evaluate all 5 partitioning options. Recommend the best one
+  with justification. Write: the CREATE TABLE DDL, the partition
+  creation automation (pg_partman or custom), the migration plan from
+  the monolithic table, the impact on each query pattern, and the
+  ongoing maintenance (partition creation, archival, VACUUM per
+  partition).
+
+assertions:
+  - type: llm_judge
+    criteria: "Partitioning evaluation analyzes all 5 options — range by date enables fast archival (DROP PARTITION) and prunes for time-based queries, hash by device_id distributes load evenly, composite enables multi-dimensional pruning. The chosen strategy balances all 4 query patterns, not just Q1"
+    weight: 0.35
+    description: "Thorough option evaluation"
+  - type: llm_judge
+    criteria: "Migration plan minimizes downtime — uses pg_partman or logical replication to migrate data, creates partitions in advance, uses concurrent index builds on partitions, and handles the transition from monolithic to partitioned with <1 hour downtime"
+    weight: 0.35
+    description: "Low-downtime migration plan"
+  - type: llm_judge
+    criteria: "Ongoing maintenance is automated — partition creation for future months/weeks, old partition archival via DROP (instead of DELETE), per-partition VACUUM (much faster than table-wide), and monitoring for partition imbalance or missing partitions"
+    weight: 0.30
+    description: "Automated ongoing maintenance"

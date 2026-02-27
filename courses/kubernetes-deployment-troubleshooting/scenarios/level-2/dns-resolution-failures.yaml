@@ -1,0 +1,63 @@
+meta:
+  id: dns-resolution-failures
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug DNS resolution failures — diagnose CoreDNS issues, service discovery problems, and cross-namespace resolution"
+  tags: [Kubernetes, DNS, CoreDNS, service-discovery, networking, intermediate]
+
+state: {}
+
+trigger: |
+  Your microservices can't discover each other. Applications report DNS
+  resolution failures:
+
+  $ kubectl exec -it frontend-pod -- nslookup api-service
+  ;; connection timed out; no servers could be reached
+
+  $ kubectl exec -it frontend-pod -- cat /etc/resolv.conf
+  nameserver 10.96.0.10
+  search default.svc.cluster.local svc.cluster.local cluster.local
+  options ndots:5
+
+  $ kubectl get pods -n kube-system -l k8s-app=kube-dns
+  NAME                       READY   STATUS             RESTARTS   AGE
+  coredns-5d78c9869d-abc12   0/1     CrashLoopBackOff   8          1h
+  coredns-5d78c9869d-def34   0/1     CrashLoopBackOff   8          1h
+
+  Both CoreDNS pods are crashing! Without DNS, no service can resolve
+  any other service by name.
+
+  $ kubectl logs coredns-5d78c9869d-abc12 -n kube-system
+  [FATAL] plugin/loop: Loop detected for zone ".", forwarding to
+  "10.96.0.10", aborting.
+
+  CoreDNS detected a DNS loop — it's forwarding queries to itself.
+  The node's /etc/resolv.conf points to the cluster DNS IP (10.96.0.10),
+  so CoreDNS tries to forward to itself, creating an infinite loop.
+
+  Additionally, even after fixing CoreDNS, a service in the "backend"
+  namespace can't be reached from the "frontend" namespace using just
+  the service name — cross-namespace resolution requires the full DNS
+  name: <service>.<namespace>.svc.cluster.local
+
+  Task: Explain Kubernetes DNS and how to debug resolution failures.
+  Write: how CoreDNS provides service discovery, the DNS name format
+  (<svc>.<ns>.svc.cluster.local), the search domains in resolv.conf
+  and ndots setting, common CoreDNS failures (loop detection, resource
+  exhaustion, network policy blocking), cross-namespace resolution,
+  and how to test DNS from inside pods.
+
+assertions:
+  - type: llm_judge
+    criteria: "Kubernetes DNS architecture is explained — CoreDNS runs as a Deployment in kube-system, provides DNS for all services. DNS format: <service>.<namespace>.svc.cluster.local. The search domains in /etc/resolv.conf allow short names within the same namespace. ndots:5 means names with fewer than 5 dots get the search domains appended first. Cross-namespace requires at least <service>.<namespace>"
+    weight: 0.35
+    description: "DNS architecture explained"
+  - type: llm_judge
+    criteria: "CoreDNS failure modes are covered — loop detection (forwarding to itself, common when node resolv.conf points to cluster DNS), OOMKilled (too many DNS queries), CrashLoopBackOff (configuration errors), NetworkPolicy blocking DNS traffic on port 53. The loop detection fix: edit CoreDNS ConfigMap to forward to upstream DNS (e.g., 8.8.8.8) instead of /etc/resolv.conf"
+    weight: 0.35
+    description: "CoreDNS failures covered"
+  - type: llm_judge
+    criteria: "Debugging and testing are practical — test with kubectl exec nslookup/dig, check CoreDNS pods and logs, inspect CoreDNS ConfigMap (kubectl get cm coredns -n kube-system), verify the kube-dns Service exists (kubectl get svc kube-dns -n kube-system), use a debug pod with networking tools (nicolaka/netshoot). Headless services (clusterIP: None) return pod IPs directly instead of cluster IP"
+    weight: 0.30
+    description: "Debugging and testing"

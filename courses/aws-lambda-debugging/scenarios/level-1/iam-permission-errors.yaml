@@ -1,0 +1,68 @@
+meta:
+  id: iam-permission-errors
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda IAM permission errors — diagnose AccessDenied errors from missing or incorrect IAM policies"
+  tags: [AWS, Lambda, IAM, permissions, AccessDenied, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails when trying to read from S3:
+
+  {
+    "errorType": "AccessDeniedException",
+    "errorMessage": "User: arn:aws:sts::123456789012:assumed-role/
+    process-order-role/process-order is not authorized to perform:
+    s3:GetObject on resource: arn:aws:s3:::my-bucket/orders/*"
+  }
+
+  The error clearly states what's missing: s3:GetObject permission on
+  the specific S3 bucket and path.
+
+  Checking the Lambda's execution role:
+  $ aws iam get-role --role-name process-order-role
+  $ aws iam list-attached-role-policies --role-name process-order-role
+
+  The role only has AWSLambdaBasicExecutionRole (CloudWatch Logs).
+  It needs an additional policy for S3 access.
+
+  Fix:
+  $ aws iam put-role-policy --role-name process-order-role \
+    --policy-name S3ReadAccess \
+    --policy-document '{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::my-bucket/orders/*"
+      }]
+    }'
+
+  Common IAM mistakes with Lambda:
+  1. Using s3:* instead of specific actions (security risk)
+  2. Using Resource: "*" instead of specific ARNs
+  3. Forgetting that Lambda needs TWO types of permissions:
+     - Execution role: what the function CAN DO (call S3, DynamoDB)
+     - Resource policy: who can INVOKE the function (API GW, S3 events)
+  4. Policy changes take a few seconds to propagate
+
+  Task: Explain Lambda IAM debugging. Write: how to read AccessDenied
+  errors (they tell you exactly what's missing), the execution role
+  vs resource policy distinction, principle of least privilege for
+  Lambda, common IAM mistakes, and how to test permissions.
+
+assertions:
+  - type: llm_judge
+    criteria: "IAM error reading is explained — AccessDenied errors include: the principal (Lambda execution role ARN), the action attempted (s3:GetObject), and the resource ARN. This tells you exactly what permission to add. Two permission types: execution role (attached IAM role — what Lambda can do: read S3, write DynamoDB, publish SNS) and resource-based policy (who can invoke Lambda: API Gateway, S3 event notifications, CloudWatch Events). Both must be correct"
+    weight: 0.35
+    description: "IAM error reading"
+  - type: llm_judge
+    criteria: "Common mistakes and fixes are covered — overly broad permissions (s3:* on Resource: * is dangerous). Always specify exact actions and resource ARNs. Forgetting to add AWSLambdaBasicExecutionRole (needed for CloudWatch Logs). VPC Lambda needs AWSLambdaVPCAccessExecutionRole. Policy propagation delay (wait a few seconds after policy changes). KMS permissions needed when using encrypted resources. Cross-account access requires both resource policy and execution role permissions"
+    weight: 0.35
+    description: "Common mistakes"
+  - type: llm_judge
+    criteria: "Testing and best practices are practical — test permissions: aws iam simulate-principal-policy. Use AWS IAM Access Analyzer to identify overly permissive policies. Start with no permissions, add as needed (least privilege). Use managed policies for common patterns (AmazonDynamoDBReadOnlyAccess). CloudTrail logs every API call — search for AccessDenied events. Use IAM policy conditions for additional security (restrict by source IP, time, VPC). Tag Lambda roles for identification"
+    weight: 0.30
+    description: "Testing and practices"

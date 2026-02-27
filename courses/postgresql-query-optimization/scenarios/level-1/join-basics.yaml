@@ -1,0 +1,73 @@
+meta:
+  id: join-basics
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Understand JOIN performance — learn how PostgreSQL executes different JOIN types and when each is appropriate"
+  tags: [PostgreSQL, JOIN, nested-loop, hash-join, merge-join, beginner]
+
+state: {}
+
+trigger: |
+  You're building a reporting dashboard for a school management
+  system. The queries are slow and you need to understand how JOINs
+  work in PostgreSQL to fix them.
+
+  Tables:
+  - students (10,000 rows): id, name, grade_level, enrollment_date
+  - courses (500 rows): id, name, department, credits
+  - enrollments (100,000 rows): id, student_id, course_id, semester,
+    grade (references students and courses)
+  - teachers (200 rows): id, name, department
+  - course_assignments (600 rows): course_id, teacher_id, semester
+
+  Slow queries:
+
+  Query 1 — Student transcript (Nested Loop is fine here):
+  SELECT c.name, e.grade, e.semester
+  FROM enrollments e
+  JOIN courses c ON c.id = e.course_id
+  WHERE e.student_id = 42;
+  (Returns ~40 rows, but takes 2 seconds)
+
+  Query 2 — Department report (Hash Join expected):
+  SELECT s.name, c.name, e.grade
+  FROM students s
+  JOIN enrollments e ON e.student_id = s.id
+  JOIN courses c ON c.id = e.course_id
+  WHERE c.department = 'Mathematics';
+  (Returns ~5,000 rows, takes 8 seconds)
+
+  Query 3 — Full grade export (Merge Join might help):
+  SELECT s.name, c.name, e.grade
+  FROM students s
+  JOIN enrollments e ON e.student_id = s.id
+  JOIN courses c ON c.id = e.course_id
+  ORDER BY s.name, c.name;
+  (Returns 100,000 rows, takes 30 seconds)
+
+  Query 4 — Students without enrollments:
+  SELECT s.* FROM students s
+  LEFT JOIN enrollments e ON e.student_id = s.id
+  WHERE e.id IS NULL;
+  (Checking for unenrolled students)
+
+  Task: For each query, explain: which JOIN algorithm PostgreSQL
+  should choose and why, what indexes are needed, the expected
+  execution plan after optimization, and any query rewrites that
+  would help. Then write a general guide for when each JOIN
+  algorithm (Nested Loop, Hash Join, Merge Join) is appropriate.
+
+assertions:
+  - type: llm_judge
+    criteria: "JOIN algorithm selection is correct — Nested Loop is good for small outer sets (Query 1: student_id = 42 returns few rows), Hash Join for medium sets with equality conditions (Query 2), Merge Join for large pre-sorted datasets (Query 3 with ORDER BY). Each selection is justified by data sizes and access patterns"
+    weight: 0.35
+    description: "Correct JOIN algorithm selection"
+  - type: llm_judge
+    criteria: "Index recommendations are specific — enrollments needs index on student_id (for Query 1 and 3), courses may need index on department (Query 2), and the indexes support the JOIN algorithms (index for Nested Loop inner table, or pre-sorting for Merge Join)"
+    weight: 0.35
+    description: "Specific index recommendations"
+  - type: llm_judge
+    criteria: "General JOIN guide is clear — explains when each algorithm is best (Nested Loop: small outer × indexed inner, Hash Join: medium tables with equality, Merge Join: large pre-sorted tables), how to read the execution plan to see which was chosen, and how work_mem affects Hash Join behavior"
+    weight: 0.30
+    description: "Clear general JOIN guide"

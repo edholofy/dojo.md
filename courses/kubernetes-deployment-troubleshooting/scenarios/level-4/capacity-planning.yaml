@@ -1,0 +1,65 @@
+meta:
+  id: capacity-planning
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes capacity planning strategy — right-sizing workloads, cost optimization, and scaling architecture for growth"
+  tags: [Kubernetes, capacity-planning, cost-optimization, right-sizing, scaling, expert]
+
+state: {}
+
+trigger: |
+  Your CTO wants a capacity planning review. The Kubernetes platform
+  serves 50 microservices with monthly cloud costs of $180,000. Key
+  metrics from the past quarter:
+
+  Resource Utilization Summary:
+  | Metric                  | Current | Target |
+  |------------------------|---------|--------|
+  | Avg CPU utilization    | 23%     | 65%    |
+  | Avg Memory utilization | 34%     | 70%    |
+  | Node count             | 85      | ???    |
+  | Monthly cost           | $180K   | $120K  |
+  | Overprovisioned pods   | 72%     | <20%   |
+
+  Analysis reveals:
+  1. 72% of pods request 3-5x more CPU/memory than they actually use.
+     Example: order-svc requests 2 CPU, 4Gi memory but averages 200m
+     CPU and 800Mi memory.
+
+  2. No VPA is configured — all requests were set by developers during
+     initial deployment and never adjusted.
+
+  3. HPA min/max are set too conservatively — several services have
+     minReplicas=5 but traffic analysis shows they need only 2 during
+     off-peak (midnight-6am).
+
+  4. Spot/preemptible nodes are not used at all — everything runs on
+     on-demand instances.
+
+  5. No cluster autoscaler — nodes are manually provisioned. Some nodes
+     run at 90%+ while others sit at 15%.
+
+  6. The team is planning for 3x growth in the next year (Black Friday
+     peak expected to be 10x normal traffic).
+
+  Task: Design a comprehensive capacity planning strategy. Write:
+  right-sizing methodology (VPA recommendations, historical analysis),
+  cost optimization techniques (spot instances, bin-packing, reserved
+  instances), autoscaling architecture (HPA + cluster autoscaler +
+  Karpenter), capacity modeling for growth, and how to present the
+  business case for optimization investment.
+
+assertions:
+  - type: llm_judge
+    criteria: "Right-sizing methodology is explained — use VPA in recommendation mode to analyze actual usage vs requests, review P95/P99 usage (not average) for requests, set limits at 2x requests for burstable workloads. Start with non-critical services, measure for 2 weeks minimum. Expected savings: reducing from 3-5x overprovisioning to 1.5x can cut costs 40-60%"
+    weight: 0.35
+    description: "Right-sizing methodology"
+  - type: llm_judge
+    criteria: "Cost optimization techniques are comprehensive — spot/preemptible instances for stateless workloads (60-90% savings), Karpenter for intelligent node provisioning (right-sizes node types automatically), bin-packing optimization (consolidate workloads to fewer nodes), reserved instances for baseline capacity, scheduled scaling for predictable traffic patterns, namespace-level budgets with ResourceQuotas"
+    weight: 0.35
+    description: "Cost optimization"
+  - type: llm_judge
+    criteria: "Growth planning is practical — capacity model: current baseline × growth factor × headroom (1.5x) for peak. Autoscaling architecture: HPA for pod-level scaling, cluster autoscaler/Karpenter for node-level. Load testing to validate scaling limits. Black Friday planning: pre-scale 24h before, warm caches, increase HPA limits, pre-provision spot capacity. Business case: $60K/month savings pays for 2 FTE platform engineers"
+    weight: 0.30
+    description: "Growth planning"

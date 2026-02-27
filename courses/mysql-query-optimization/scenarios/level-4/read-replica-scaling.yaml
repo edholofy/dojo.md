@@ -1,0 +1,51 @@
+meta:
+  id: read-replica-scaling
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Scale MySQL reads — design read replica topology, implement intelligent routing, and manage replication lag for consistency"
+  tags: [MySQL, read-replicas, replication, routing, consistency, scaling, expert]
+
+state: {}
+
+trigger: |
+  Your platform serves 100K read QPS and the primary is at 90% CPU.
+  You have 3 read replicas but they're not helping enough — load is
+  uneven, some replicas are lagging, and users see stale data after
+  updates.
+
+  Current architecture:
+  - Primary: db.r6g.4xlarge, 100K QPS total (30K writes, 70K reads)
+  - Replica 1: db.r6g.4xlarge — API reads (overloaded)
+  - Replica 2: db.r6g.2xlarge — analytics (lagging 60s)
+  - Replica 3: db.r6g.2xlarge — mostly idle (recently added)
+
+  Problems:
+  1. Stale reads: User updates profile, refreshes, sees old data
+     (read went to replica lagging 5 seconds)
+  2. Uneven load: Round-robin routing sends equal traffic to all
+     replicas despite different sizes
+  3. Replica 2 lag: Analytics queries consume all CPU, SQL applier
+     can't keep up, lag grows to 60 seconds
+  4. No lag-aware routing: Application connects to replicas regardless
+     of their lag
+  5. Failover: When primary fails, which replica to promote?
+
+  Task: Design the read replica scaling architecture. Write: the
+  replica topology, the routing strategy (ProxySQL or MySQL Router),
+  the read-after-write consistency solution, the lag monitoring and
+  management, and the promotion criteria for failover.
+
+assertions:
+  - type: llm_judge
+    criteria: "Routing strategy is intelligent — uses ProxySQL or MySQL Router with weighted distribution (larger instances get more traffic), lag-aware routing (remove replicas exceeding lag threshold from pool), and workload separation (dedicated replicas for analytics vs OLTP reads)"
+    weight: 0.35
+    description: "Intelligent routing"
+  - type: llm_judge
+    criteria: "Read-after-write consistency is solved — implements session-based routing (reads after a write go to primary for N seconds), or GTID-based routing (route to replica only if it has applied the GTID from the user's last write), or application-level cache invalidation. Explains trade-offs of each approach"
+    weight: 0.35
+    description: "Read-after-write consistency"
+  - type: llm_judge
+    criteria: "Lag management and failover are addressed — monitors Seconds_Behind_Source per replica, auto-removes lagging replicas from read pool, separates analytics to prevent lag on OLTP replicas, and defines promotion criteria (lowest lag, same instance size as primary, sync replica if available)"
+    weight: 0.30
+    description: "Lag and failover management"

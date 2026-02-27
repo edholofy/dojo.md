@@ -1,0 +1,71 @@
+meta:
+  id: industry-container-patterns
+  level: 5
+  course: docker-container-debugging
+  type: output
+  description: "Analyze industry container patterns — evaluate container adoption patterns, anti-patterns, and maturity models across different industries and organization sizes"
+  tags: [Docker, industry, patterns, maturity-model, adoption, benchmarks, master]
+
+state: {}
+
+trigger: |
+  You're presenting at a container conference on "Container Adoption:
+  What We've Learned From 1,000 Deployments." Your research across
+  companies of all sizes reveals common patterns:
+
+  Maturity Model — Container Adoption Stages:
+
+  Stage 1 — Exploration (6-12 months):
+  - Docker on developer laptops for consistent environments
+  - One team pilots containerization for a single service
+  - Pain point: "it works on my machine" solved immediately
+  - Risk: containers treated as "lightweight VMs" (anti-pattern)
+
+  Stage 2 — Foundation (6-12 months):
+  - CI/CD pipeline builds container images
+  - Private registry, basic security scanning
+  - Docker Compose for staging environments
+  - Pain point: deployment consistency, environment parity
+  - Risk: lack of orchestration, manual scaling
+
+  Stage 3 — Scaling (12-18 months):
+  - Container orchestration (Kubernetes/Swarm) in production
+  - Centralized logging and monitoring
+  - Multiple teams containerizing services
+  - Pain point: operational complexity, skill gaps
+  - Risk: over-engineering, premature microservice decomposition
+
+  Stage 4 — Optimization (ongoing):
+  - Platform team provides self-service container platform
+  - GitOps, automated security, cost optimization
+  - Containers are default deployment target
+  - Pain point: legacy applications, cultural resistance
+  - Risk: platform team becomes bottleneck
+
+  Common anti-patterns observed:
+  - "Docker as a package manager" — complex Dockerfiles that replicate
+    system configuration instead of building cloud-native apps
+  - "Pet containers" — treating containers like servers (ssh in, fix,
+    don't restart)
+  - "Premature Kubernetes" — choosing K8s when 10 containers on
+    Compose would suffice
+
+  Task: Analyze industry container patterns. Write: the maturity model
+  stages with indicators, common anti-patterns and how to avoid them,
+  industry-specific considerations (healthcare, finance, government),
+  organization size impact on container strategy, and predictions for
+  container technology evolution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Maturity model is actionable — each stage should have: indicators (how to know you're at this stage), goals (what to achieve before moving on), risks (what goes wrong at this stage), timeline expectations. Key insight: companies that skip stages fail — you can't adopt Kubernetes effectively without first mastering Docker and CI/CD. Maturity assessment should drive investment decisions. Most organizations are at Stage 2-3, even those who think they're at Stage 4"
+    weight: 0.35
+    description: "Maturity model"
+  - type: llm_judge
+    criteria: "Anti-patterns are explained with solutions — pet containers: treat containers as cattle, not pets (immutable infrastructure). Docker as VM: refactor applications for container-native patterns (12-factor, health checks, graceful shutdown). Premature Kubernetes: match orchestration complexity to actual needs. Monolith-in-a-container: valid first step, but plan decomposition. YAML engineering: spending more time on deployment config than application code. Tool sprawl: standardize on a curated set of tools"
+    weight: 0.35
+    description: "Anti-patterns"
+  - type: llm_judge
+    criteria: "Industry and evolution perspectives are insightful — healthcare: HIPAA requires encryption at rest/in transit, audit logging, access controls. Finance: PCI-DSS, SOX compliance, air-gapped environments. Government: FedRAMP, data sovereignty, FIPS-validated cryptography. Small companies (< 50 engineers): Docker Compose is often sufficient, don't over-engineer. Enterprise (500+ engineers): platform team is essential. Evolution: WebAssembly (Wasm) containers, serverless containers (Fargate, Cloud Run), eBPF for container networking/security, Unikernels for specialized workloads"
+    weight: 0.30
+    description: "Industry and evolution"

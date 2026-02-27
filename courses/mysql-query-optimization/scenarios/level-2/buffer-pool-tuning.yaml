@@ -1,0 +1,64 @@
+meta:
+  id: buffer-pool-tuning
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Tune InnoDB buffer pool — configure pool size, instances, and flushing for optimal read/write performance"
+  tags: [MySQL, InnoDB, buffer-pool, tuning, memory, intermediate]
+
+state: {}
+
+trigger: |
+  You've been asked to tune a MySQL 8.0 server that's performing poorly.
+  The server has 128GB RAM but was set up with default settings. You
+  need to configure the buffer pool and related settings for a mixed
+  OLTP/reporting workload.
+
+  Server specs:
+  - RAM: 128GB
+  - CPU: 32 cores
+  - Storage: NVMe SSD (500K IOPS)
+  - MySQL data size: 200GB (data + indexes)
+  - Workload: 70% reads, 30% writes, 50K QPS peak
+
+  Current settings (defaults):
+  innodb_buffer_pool_size = 128M  (0.1% of RAM!)
+  innodb_buffer_pool_instances = 1
+  innodb_buffer_pool_chunk_size = 128M
+  innodb_log_file_size = 48M
+  innodb_io_capacity = 200
+  innodb_io_capacity_max = 2000
+  innodb_flush_log_at_trx_commit = 1
+  innodb_flush_method = fsync
+
+  Current symptoms:
+  - Buffer pool hit ratio: 65% (terrible)
+  - Innodb_buffer_pool_reads: 500K/hour (disk reads)
+  - Innodb_buffer_pool_pages_dirty: fluctuates wildly (200 to 8000)
+  - Innodb_log_waits: 50K/hour (log writes stalling)
+  - CPU usage: 20% (mostly waiting on I/O)
+  - Disk read latency: 0.5ms (NVMe is fast, but too many reads)
+
+  The data team runs nightly reports (full table scans on 50GB tables)
+  that flush the buffer pool, causing morning performance degradation.
+
+  Task: Design the buffer pool tuning configuration. Write: the
+  recommended innodb_buffer_pool_size (with calculation), the instance
+  and chunk size configuration, the flushing strategy (io_capacity,
+  flush_method, log_file_size), how to handle the nightly report
+  buffer pool pollution, and the monitoring queries to validate
+  improvements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Buffer pool sizing is correct — recommends 70-80% of RAM (90-100GB) for this dedicated MySQL server, explains why it can't cache the full 200GB dataset but should cache the hot working set, configures innodb_buffer_pool_instances to 8-16 for multi-core concurrency, and sets chunk_size appropriately (size must be multiple of chunk × instances)"
+    weight: 0.35
+    description: "Buffer pool sizing"
+  - type: llm_judge
+    criteria: "Flushing and logging are tuned — increases innodb_log_file_size to 1-4GB (reduces checkpoint frequency, eliminates log_waits), sets innodb_io_capacity to match NVMe capability (10K-50K), uses O_DIRECT flush method (avoids OS double-buffering), and explains the trade-off of innodb_flush_log_at_trx_commit=2 for the reporting workload"
+    weight: 0.35
+    description: "Flushing and logging tuned"
+  - type: llm_judge
+    criteria: "Buffer pool pollution from reports is addressed — explains InnoDB's midpoint insertion strategy (innodb_old_blocks_pct, innodb_old_blocks_time), how full table scans pollute the buffer pool by evicting hot pages, and solutions: tuning old_blocks_time to prevent scan pages from moving to young list, or running reports on a read replica"
+    weight: 0.30
+    description: "Buffer pool pollution addressed"

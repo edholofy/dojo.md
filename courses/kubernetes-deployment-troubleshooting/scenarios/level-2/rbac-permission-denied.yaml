@@ -1,0 +1,57 @@
+meta:
+  id: rbac-permission-denied
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug RBAC permission issues — diagnose Forbidden errors when pods or users can't access Kubernetes API resources"
+  tags: [Kubernetes, RBAC, ServiceAccount, permissions, security, intermediate]
+
+state: {}
+
+trigger: |
+  Your application pod needs to list other pods for service discovery,
+  but it's getting Forbidden errors:
+
+  $ kubectl logs discovery-agent-pod
+  Error: pods is forbidden: User "system:serviceaccount:app:default"
+  cannot list resource "pods" in API group "" in the namespace "app"
+
+  The application uses the Kubernetes API client to discover peer pods
+  for cluster coordination. It's using the default ServiceAccount which
+  has no permissions beyond the basics.
+
+  $ kubectl auth can-i list pods --as=system:serviceaccount:app:default -n app
+  no
+
+  You need to create proper RBAC resources. But which combination?
+
+  Current state of RBAC resources:
+  - A Role "pod-reader" exists but only grants "get" (not "list" or "watch")
+  - A RoleBinding exists but binds to ServiceAccount "discovery-agent"
+    (which doesn't exist) instead of "default"
+  - The pod is using the "default" ServiceAccount
+
+  Multiple issues:
+  1. Role needs "list" and "watch" verbs, not just "get"
+  2. RoleBinding references wrong ServiceAccount name
+  3. Should create a dedicated ServiceAccount instead of using default
+
+  Task: Explain Kubernetes RBAC and how to debug permission issues.
+  Write: the RBAC model (Role, ClusterRole, RoleBinding, ClusterRoleBinding),
+  how ServiceAccounts work (pods authenticate as their SA), how to
+  check permissions (kubectl auth can-i), common RBAC mistakes, and
+  the principle of least privilege.
+
+assertions:
+  - type: llm_judge
+    criteria: "RBAC model is explained — Role defines permissions (verbs on resources) within a namespace, ClusterRole defines cluster-wide permissions, RoleBinding grants a Role to a subject (User, Group, ServiceAccount) within a namespace, ClusterRoleBinding grants cluster-wide. Pods authenticate to the API server using their ServiceAccount token mounted at /var/run/secrets/kubernetes.io/serviceaccount/"
+    weight: 0.35
+    description: "RBAC model explained"
+  - type: llm_judge
+    criteria: "Debugging permission issues is systematic — use kubectl auth can-i to test specific permissions, check which ServiceAccount the pod uses (kubectl get pod -o yaml | grep serviceAccountName), verify Role has correct verbs and resources, verify RoleBinding references correct Role and ServiceAccount, check namespace scope (Role vs ClusterRole). The 'system:serviceaccount:<namespace>:<name>' format identifies ServiceAccounts"
+    weight: 0.35
+    description: "Permission debugging"
+  - type: llm_judge
+    criteria: "Best practices and fixes are covered — create dedicated ServiceAccounts per application (don't use default), grant minimum required permissions (least privilege), use Role/RoleBinding for namespace-scoped access (prefer over ClusterRole), audit permissions regularly (kubectl auth can-i --list), never use cluster-admin for application ServiceAccounts"
+    weight: 0.30
+    description: "Best practices"

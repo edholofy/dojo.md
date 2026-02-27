@@ -1,0 +1,66 @@
+meta:
+  id: replication-optimization
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL replication — tune source-replica lag, implement parallel replication, and design read scaling topology"
+  tags: [MySQL, replication, source-replica, parallel-replication, lag, advanced]
+
+state: {}
+
+trigger: |
+  Your MySQL replication is falling behind. The replica consistently
+  lags 30-60 seconds behind the source during peak hours, causing stale
+  reads in your read-heavy application. The analytics team's queries on
+  the replica further increase the lag.
+
+  Current topology:
+  - Source: MySQL 8.0, db.r6g.4xlarge (16 vCPU, 128GB)
+  - Replica 1: db.r6g.2xlarge (8 vCPU, 64GB) — application reads
+  - Replica 2: db.r6g.2xlarge (8 vCPU, 64GB) — analytics
+  - Binlog format: ROW
+  - replica_parallel_workers = 0 (single-threaded replay!)
+
+  Replication lag investigation:
+  SHOW REPLICA STATUS:
+  - Seconds_Behind_Source: 45
+  - Relay_Log_Space: 2GB (large backlog)
+  - Replica_SQL_Running_State: "Applying batch of row changes"
+
+  Source write patterns:
+  - 10K writes/second peak
+  - Large transactions: nightly ETL process writes 5M rows in one txn
+  - DDL operations: weekly ALTER TABLE on 100M-row table
+  - Binlog output: 500MB/hour
+
+  Issues:
+  1. Single-threaded SQL applier can't keep up with multi-threaded source
+  2. Large transactions block all other replication until complete
+  3. Analytics queries on Replica 2 compete for CPU with SQL applier
+  4. No parallel replication configured
+  5. ROW format binlog is large (every changed column for every row)
+
+  MySQL 8.0 parallel replication options:
+  A. LOGICAL_CLOCK: parallel replay based on commit timestamps
+  B. DATABASE: parallel replay per database (limited if single database)
+  C. WRITESET: track row-level dependencies (most parallel, MySQL 8.0.14+)
+
+  Task: Design the replication optimization. Write: the parallel
+  replication configuration (which mode, how many workers), the large
+  transaction handling strategy, the replica sizing (match source
+  capacity), the binlog format trade-offs (ROW vs MIXED vs STATEMENT),
+  and the lag monitoring and alerting approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Parallel replication is correctly configured — enables replica_parallel_workers=16 (matching source CPU), sets replica_parallel_type=LOGICAL_CLOCK or WRITESET for MySQL 8.0, explains why DATABASE mode doesn't help with single database, and notes that WRITESET provides the most parallelism by tracking row-level dependencies"
+    weight: 0.35
+    description: "Parallel replication configured"
+  - type: llm_judge
+    criteria: "Large transaction and sizing issues are addressed — recommends breaking large ETL transactions into smaller batches (50K rows per commit), explains that a single large transaction serializes all replication (blocks other workers), and recommends matching replica hardware to source (8 vCPU replica can't keep up with 16 vCPU source)"
+    weight: 0.35
+    description: "Large transactions and sizing"
+  - type: llm_judge
+    criteria: "Binlog format and monitoring are explained — ROW format: largest binlog but safest (deterministic), STATEMENT: smallest but non-deterministic risk, MIXED: auto-selects. Monitoring: Seconds_Behind_Source, Relay_Log_Space, performance_schema.replication_applier_status_by_worker for per-worker lag, and alerting when lag exceeds application tolerance (e.g., 10 seconds)"
+    weight: 0.30
+    description: "Binlog format and monitoring"

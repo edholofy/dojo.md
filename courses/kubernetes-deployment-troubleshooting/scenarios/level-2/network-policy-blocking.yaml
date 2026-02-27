@@ -1,0 +1,67 @@
+meta:
+  id: network-policy-blocking
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug NetworkPolicy issues — diagnose why pods can't communicate when network policies restrict traffic"
+  tags: [Kubernetes, NetworkPolicy, networking, security, traffic, intermediate]
+
+state: {}
+
+trigger: |
+  After a security team applied NetworkPolicies, your microservices
+  stopped communicating:
+
+  $ kubectl exec -it frontend-pod -- curl -s http://api-service:8080/health
+  curl: (7) Failed to connect to api-service port 8080: Connection timed out
+
+  Before the NetworkPolicies, this worked fine. The services are in the
+  same namespace.
+
+  $ kubectl get networkpolicy -n app
+  NAME             POD-SELECTOR    AGE
+  deny-all         <none>          5m
+  allow-frontend   app=frontend    5m
+
+  $ kubectl describe networkpolicy deny-all
+  Spec:
+    PodSelector:     <none> (applies to all pods)
+    Allowing ingress traffic: <none> (deny all ingress)
+    Allowing egress traffic: <none> (deny all egress)
+
+  $ kubectl describe networkpolicy allow-frontend
+  Spec:
+    PodSelector: app=frontend
+    Allowing ingress traffic:
+      From: <any> (allow all ingress to frontend)
+    Allowing egress traffic: <none> (not specified)
+
+  The deny-all policy blocks all ingress AND egress for every pod.
+  The allow-frontend policy allows ingress TO frontend but doesn't
+  allow egress FROM frontend. And there's no policy allowing ingress
+  to the api-service.
+
+  Problems:
+  1. Frontend can't send requests (egress blocked by deny-all)
+  2. API service can't receive requests (ingress blocked by deny-all)
+  3. DNS resolution also blocked (egress to kube-dns on port 53)
+
+  Task: Explain NetworkPolicies and how to debug them. Write: how
+  NetworkPolicies work (default allow-all, additive when applied),
+  ingress vs egress rules, how to read policy selectors (podSelector,
+  namespaceSelector, ipBlock), why DNS breaks when egress is blocked,
+  how to write a working zero-trust policy set, and debugging techniques.
+
+assertions:
+  - type: llm_judge
+    criteria: "NetworkPolicy behavior is explained — by default all traffic allowed, applying any policy to a pod makes it deny-all for that direction (ingress/egress), then rules are additive (allow specific traffic). A deny-all policy with empty podSelector applies to ALL pods in namespace. Policies are namespace-scoped. Must explicitly allow both directions — if frontend needs to talk to API, frontend needs egress rule AND API needs ingress rule"
+    weight: 0.35
+    description: "NetworkPolicy behavior"
+  - type: llm_judge
+    criteria: "DNS and common pitfalls are addressed — when egress is denied, DNS resolution breaks (CoreDNS runs in kube-system on port 53 UDP/TCP). Must add egress rule allowing port 53 to kube-system namespace. Common pitfall: forget to allow DNS, forget both directions needed, label selectors don't match pods, missing namespaceSelector for cross-namespace policies"
+    weight: 0.35
+    description: "DNS and pitfalls"
+  - type: llm_judge
+    criteria: "Debugging workflow is practical — check what policies apply to a pod (kubectl get netpol, match podSelector to pod labels), verify traffic is blocked vs application error (test with kubectl exec curl/nc), check if CNI plugin supports NetworkPolicy (not all do — e.g., Flannel doesn't by default, Calico does), use packet capture or logging to trace blocked connections"
+    weight: 0.30
+    description: "Debugging workflow"

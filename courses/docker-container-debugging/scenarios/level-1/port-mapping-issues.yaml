@@ -1,0 +1,67 @@
+meta:
+  id: port-mapping-issues
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker port mapping issues — diagnose why you can't connect to a containerized service"
+  tags: [Docker, port-mapping, networking, EXPOSE, publish, beginner]
+
+state: {}
+
+trigger: |
+  You started your web application container but can't reach it:
+
+  $ docker run -d --name webapp myapp:latest
+  $ curl http://localhost:3000
+  curl: (7) Failed to connect to localhost port 3000: Connection refused
+
+  The Dockerfile has EXPOSE 3000, so why isn't it accessible?
+
+  $ docker ps
+  CONTAINER ID   IMAGE         STATUS       PORTS     NAMES
+  a1b2c3d4e5f6   myapp:latest  Up 1 min               webapp
+
+  The PORTS column is empty! EXPOSE in the Dockerfile is just
+  documentation — it doesn't actually publish the port. You need -p:
+
+  $ docker run -d --name webapp -p 3000:3000 myapp:latest
+
+  Now another issue:
+  $ curl http://localhost:3000
+  curl: (7) Failed to connect to localhost port 3000: Connection refused
+
+  $ docker logs webapp
+  Server listening on 127.0.0.1:3000
+
+  The app is listening on 127.0.0.1 (localhost inside the container),
+  not 0.0.0.0. Inside the container, 127.0.0.1 means the container's
+  own loopback — it's not accessible from outside the container.
+
+  Fix: configure the app to listen on 0.0.0.0:3000.
+
+  After fixing:
+  $ docker run -d --name webapp -p 8080:3000 myapp:latest
+  $ curl http://localhost:8080
+  {"status": "ok"}
+
+  Port mapping: host port 8080 → container port 3000.
+
+  Task: Explain Docker port mapping. Write: the difference between
+  EXPOSE and -p/--publish, how port mapping works (host:container),
+  why apps must listen on 0.0.0.0 not 127.0.0.1, the -P flag for
+  random ports, binding to specific interfaces (-p 127.0.0.1:8080:3000),
+  and common port mapping mistakes.
+
+assertions:
+  - type: llm_judge
+    criteria: "EXPOSE vs -p is clearly explained — EXPOSE is metadata/documentation in the Dockerfile, it does NOT actually publish the port. -p (--publish) creates the actual port mapping at runtime. Format: -p <host-port>:<container-port>. -P (capital P) publishes all EXPOSE'd ports to random host ports. You can run containers without EXPOSE and still use -p"
+    weight: 0.35
+    description: "EXPOSE vs publish"
+  - type: llm_judge
+    criteria: "The 0.0.0.0 vs 127.0.0.1 issue is explained — containers have their own network namespace. 127.0.0.1 inside a container is the container's loopback, not the host's. Apps must bind to 0.0.0.0 (all interfaces) to be accessible from outside the container. This is the most common port mapping debugging issue. Some frameworks default to 127.0.0.1 (Rails, Flask) and need explicit configuration"
+    weight: 0.35
+    description: "Bind address explained"
+  - type: llm_judge
+    criteria: "Port mapping variations and mistakes are covered — -p 8080:3000 (host 8080 → container 3000), -p 127.0.0.1:8080:3000 (only accessible from host localhost), -p 3000 (random host port → container 3000). Common mistakes: forgetting -p entirely, app binding to wrong address, port already in use on host (docker: bind: address already in use), confusing host and container ports"
+    weight: 0.30
+    description: "Variations and mistakes"

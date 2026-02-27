@@ -1,0 +1,61 @@
+meta:
+  id: aurora-vs-rds-evaluation
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Evaluate Aurora vs RDS MySQL — compare performance, cost, features, and operational trade-offs for enterprise workloads"
+  tags: [MySQL, Aurora, RDS, AWS, vendor-evaluation, TCO, expert]
+
+state: {}
+
+trigger: |
+  Your company runs 10 MySQL RDS instances and the CTO wants to
+  evaluate migrating to Aurora MySQL. The AWS sales team claims
+  "5x performance improvement and lower TCO." You need to validate
+  these claims with real analysis.
+
+  Current state (RDS MySQL):
+  - 10 instances: 5 primary + 5 read replicas
+  - Instance type: db.r6g.4xlarge ($2.46/hr per instance)
+  - Storage: 5TB gp3 across all instances
+  - IOPS: 16,000 provisioned per primary
+  - Monthly cost: $22K (compute) + $3K (storage) + $1K (IOPS) = $26K
+  - Replication lag: 5-30 seconds (async)
+  - Failover time: 60-120 seconds
+  - Backup: automated daily, 7-day retention
+
+  Aurora proposal (AWS sales):
+  - 5 instances: 1 writer + 4 readers (Aurora needs fewer due to
+    shared storage)
+  - Instance type: db.r6g.4xlarge ($3.28/hr per instance)
+  - Storage: auto-scaling, pay per GB-month ($0.10/GB)
+  - I/O: pay per million requests ($0.20 per million)
+  - Estimated monthly cost: $12K (compute) + $0.5K (storage) + $4K (I/O) = $16.5K
+  - Replication lag: <100ms (shared storage, no log replay)
+  - Failover time: <30 seconds
+  - Backup: continuous, 35-day retention
+
+  Concerns raised by the team:
+  1. Aurora's "5x faster" claim — is it real for our workload?
+  2. I/O costs are unpredictable — could they spike?
+  3. Lock-in: Aurora has proprietary storage, can we migrate away?
+  4. MySQL compatibility: are there breaking differences?
+  5. The 4-reader setup: can it handle our analytics workload?
+
+  Task: Write the evaluation report. Include: the TCO comparison (with
+  hidden costs), the performance benchmark plan, the compatibility
+  assessment, the lock-in risk analysis, and the recommendation.
+
+assertions:
+  - type: llm_judge
+    criteria: "TCO comparison includes hidden costs — accounts for I/O costs (which can be significant and unpredictable for write-heavy workloads), data transfer costs, backup storage beyond included, and the cost of migration itself. 3-year projection shows when each option is cheaper. Validates or refutes the $26K vs $16.5K estimate"
+    weight: 0.35
+    description: "TCO with hidden costs"
+  - type: llm_judge
+    criteria: "Performance claims are critically analyzed — the '5x faster' claim applies to specific workloads (Aurora's distributed storage eliminates checkpoint stalls), not universally. Recommends benchmarking with actual workload, identifies where Aurora is genuinely faster (failover, replication lag, crash recovery) and where it may not be (single-query latency for simple queries)"
+    weight: 0.35
+    description: "Performance claims analyzed"
+  - type: llm_judge
+    criteria: "Lock-in and compatibility are honestly assessed — Aurora's proprietary storage means you can't simply pg_dump/restore back to RDS MySQL. Compatibility differences (minor SQL behavior, parameter differences, Aurora-specific features). Migration path back to RDS exists but requires downtime. Lock-in risk is quantified in terms of migration effort and cost"
+    weight: 0.30
+    description: "Lock-in and compatibility"

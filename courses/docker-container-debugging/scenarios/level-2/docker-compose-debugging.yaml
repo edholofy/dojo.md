@@ -1,0 +1,66 @@
+meta:
+  id: docker-compose-debugging
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker Compose issues — diagnose service dependency failures, health check misconfigurations, and environment variable problems"
+  tags: [Docker, Docker-Compose, dependencies, health-checks, services, intermediate]
+
+state: {}
+
+trigger: |
+  Your Docker Compose application has 4 services but only 2 start
+  correctly:
+
+  $ docker compose up -d
+  $ docker compose ps
+  NAME          SERVICE    STATUS              PORTS
+  api           api        Up (unhealthy)      0.0.0.0:8080->8080/tcp
+  db            db         Up (healthy)        5432/tcp
+  redis         redis      exited (1)
+  worker        worker     waiting
+
+  Problems:
+  1. redis exited with code 1:
+  $ docker compose logs redis
+  Fatal: Could not read config file '/etc/redis/custom.conf': No such file
+
+  The compose file mounts a config file that doesn't exist:
+  volumes:
+    - ./redis.conf:/etc/redis/custom.conf
+
+  2. worker is waiting because depends_on has condition: service_healthy
+  for redis, which exited (never became healthy).
+
+  3. api shows "unhealthy" — the health check fails:
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  But curl isn't installed in the API image. The health endpoint works
+  fine — the health CHECK command fails.
+
+  4. Hidden issue: the API reads REDIS_URL from environment but the
+  compose file sets REDIS_HOST instead:
+  environment:
+    - REDIS_HOST=redis
+    - REDIS_PORT=6379
+
+  Task: Explain Docker Compose debugging. Write: how depends_on with
+  health checks works (condition: service_healthy vs service_started),
+  how to debug health check failures, environment variable patterns in
+  Compose (environment, env_file, variable substitution), common
+  Compose configuration mistakes, and the docker compose debugging
+  commands (logs, ps, config, exec).
+
+assertions:
+  - type: llm_judge
+    criteria: "Service dependencies are explained — depends_on with condition: service_started only waits for container to start (not ready), condition: service_healthy waits for health check to pass. If a dependency exits or stays unhealthy, dependent services won't start. Health checks need: test command, interval, timeout, retries, start_period. The test command must work inside the container (tools must be installed)"
+    weight: 0.35
+    description: "Service dependencies"
+  - type: llm_judge
+    criteria: "Debugging workflow is practical — docker compose config validates and shows the resolved YAML (catches syntax errors, shows interpolated variables), docker compose logs <service> shows service logs, docker compose ps shows health status, docker compose exec <service> sh for interactive debugging, docker compose up --build to rebuild images, docker compose down -v for clean restart"
+    weight: 0.35
+    description: "Debugging workflow"
+  - type: llm_judge
+    criteria: "Environment and common mistakes are covered — Compose environment sources: environment key (inline), env_file (.env file reference), shell variables with ${VAR} substitution, .env file auto-loaded for Compose variables. Common mistakes: wrong env var name, missing env file, volume mount source doesn't exist (Docker creates directory), health check command not available in image, circular dependencies"
+    weight: 0.30
+    description: "Environment and mistakes"

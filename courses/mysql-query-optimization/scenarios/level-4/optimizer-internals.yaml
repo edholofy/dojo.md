@@ -1,0 +1,62 @@
+meta:
+  id: optimizer-internals
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Understand MySQL optimizer internals — learn cost-based optimization, join order selection, and how to diagnose plan instability"
+  tags: [MySQL, optimizer, cost-model, statistics, planner, expert]
+
+state: {}
+
+trigger: |
+  Your team has a critical query that sometimes runs in 5ms and
+  sometimes in 30 seconds. The plan switches unpredictably between an
+  index scan and a full table scan. The team wants to "force" the fast
+  plan with FORCE INDEX but you want to understand root cause.
+
+  The query:
+  SELECT * FROM orders
+  WHERE status = ? AND customer_id = ?
+  ORDER BY created_at DESC LIMIT 10;
+
+  Indexes: idx_status (status), idx_customer (customer_id),
+           idx_status_customer (status, customer_id)
+
+  Fast plan (status='pending', customer_id=42):
+  - Index scan on idx_status_customer
+  - Rows examined: 15
+  - Time: 5ms
+
+  Slow plan (status='completed', customer_id=42):
+  - Full table scan with filesort
+  - Rows examined: 5,000,000
+  - Time: 30 seconds
+
+  Why the difference: 'pending' has 500 rows (0.01%), 'completed'
+  has 5M rows (50%). The optimizer estimates that scanning the index
+  for 5M rows + sorting is more expensive than a full table scan.
+
+  Additional mysteries:
+  1. ANALYZE TABLE sometimes changes the plan — why?
+  2. Histogram statistics (MySQL 8.0) — when do they help?
+  3. Optimizer trace shows different cost estimates each time — why?
+  4. Prepared statements get different plans than ad-hoc SQL — why?
+
+  Task: Explain MySQL's optimizer decision-making. Write: the cost
+  model (how MySQL estimates query cost), how statistics influence
+  estimates, why the plan switches for different parameter values,
+  when to use histograms, and best practices for plan stability.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cost model is explained — MySQL estimates cost based on disk I/O (pages to read, sequential vs random), CPU (comparisons, sorting), and memory. seq_scan cost is proportional to table size, index scan cost includes random I/O per row. When the optimizer estimates >20-30% of table rows match, it prefers full table scan over index scan because random I/O cost exceeds sequential scan cost"
+    weight: 0.35
+    description: "Cost model explained"
+  - type: llm_judge
+    criteria: "Statistics and plan instability are addressed — ANALYZE TABLE updates index cardinality estimates (InnoDB samples random pages, so estimates vary). Histograms (MySQL 8.0) provide value distribution for non-indexed columns, helping the optimizer estimate selectivity for skewed data. The plan switches because 'pending' (0.01%) vs 'completed' (50%) have vastly different selectivity"
+    weight: 0.35
+    description: "Statistics and instability"
+  - type: llm_judge
+    criteria: "Practical stability recommendations are provided — a composite index (status, customer_id, created_at) handles both cases efficiently, histogram on status column helps optimizer with skewed distributions, optimizer hints as short-term fix, and ANALYZE TABLE schedule for up-to-date statistics"
+    weight: 0.30
+    description: "Stability recommendations"

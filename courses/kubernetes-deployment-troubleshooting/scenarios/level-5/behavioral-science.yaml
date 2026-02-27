@@ -1,0 +1,62 @@
+meta:
+  id: behavioral-science
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Behavioral science of Kubernetes troubleshooting — cognitive biases in incident response, team dynamics under pressure, and building a learning organization"
+  tags: [Kubernetes, behavioral-science, cognitive-bias, incident-response, learning-organization, master]
+
+state: {}
+
+trigger: |
+  Your post-incident reviews reveal recurring human factors that
+  contribute to incident severity and duration:
+
+  Pattern 1 — Anchoring Bias:
+  During a cascading failure, the on-call engineer focused on a
+  CrashLoopBackOff pod (the most visible symptom) for 45 minutes,
+  ignoring the root cause: a network partition isolating the database.
+  They anchored on the first symptom they saw.
+
+  Pattern 2 — Escalation Commitment:
+  An engineer spent 2 hours manually patching pods during a cluster
+  upgrade failure instead of rolling back. They had already invested
+  time and didn't want to "lose progress." The rollback would have
+  taken 5 minutes.
+
+  Pattern 3 — Diffusion of Responsibility:
+  With 8 people in the incident channel, nobody took ownership.
+  Everyone assumed someone else was investigating. The MTTR was 3x
+  longer than incidents with a clear owner.
+
+  Pattern 4 — Confirmation Bias:
+  The team suspected a recent deployment caused an outage. They spent
+  an hour analyzing the deployment diff. The actual cause was a node
+  hardware failure unrelated to any deployment. They only looked for
+  evidence that confirmed their initial hypothesis.
+
+  Pattern 5 — Normalcy Bias:
+  Warning alerts fired for disk pressure for 3 days before the node
+  went down. The team ignored them because "it always warns and never
+  actually fails." Until it did.
+
+  Task: Analyze the behavioral science of Kubernetes troubleshooting.
+  Write: the cognitive biases most common in incident response, how
+  each manifests in Kubernetes contexts, countermeasures for each bias
+  (checklists, structured investigation, time-boxing), how to build a
+  blameless learning culture, and how incident command structure
+  mitigates human factors.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cognitive biases are identified with K8s context — anchoring (focus on first symptom not root cause), escalation commitment (continuing failing approach instead of rollback), diffusion of responsibility (no clear owner in group incidents), confirmation bias (seeking evidence for initial hypothesis only), normalcy bias (ignoring recurring warnings). Each pattern maps to specific Kubernetes troubleshooting scenarios"
+    weight: 0.35
+    description: "Biases identified"
+  - type: llm_judge
+    criteria: "Countermeasures are practical and specific — anchoring: use structured investigation checklist (always check events, logs, nodes, network before deep-diving), time-box symptom investigation (15 min max before stepping back). Escalation commitment: establish rollback thresholds upfront ('if not fixed in 20 min, rollback'). Diffusion: incident commander assigns explicit owners. Confirmation bias: devil's advocate role, check alternative hypotheses. Normalcy: auto-escalate warnings that persist > threshold"
+    weight: 0.35
+    description: "Countermeasures"
+  - type: llm_judge
+    criteria: "Learning organization culture is addressed — blameless postmortems (focus on systemic factors, not individual blame), share incident learnings broadly (incident review meetings), celebrate good catches (not just response), invest in simulation and game days (practice under controlled stress), create psychological safety so engineers escalate early rather than hiding problems. Incident command: clear roles reduce cognitive load during high-stress situations"
+    weight: 0.30
+    description: "Learning culture"

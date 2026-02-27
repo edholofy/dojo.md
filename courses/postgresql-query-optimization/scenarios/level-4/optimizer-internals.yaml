@@ -1,0 +1,69 @@
+meta:
+  id: optimizer-internals
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Understand the cost-based optimizer — learn how PostgreSQL estimates query costs and how to influence plan choices"
+  tags: [PostgreSQL, optimizer, cost-model, statistics, planner, expert]
+
+state: {}
+
+trigger: |
+  Your team has a critical query that occasionally switches from a
+  fast plan (Index Scan, 5ms) to a slow plan (Seq Scan, 15 seconds).
+  It seems random. The team wants to "force" the fast plan, but you
+  need to understand why the planner sometimes picks the slow one.
+
+  The query:
+  SELECT o.*, c.name
+  FROM orders o
+  JOIN customers c ON c.id = o.customer_id
+  WHERE o.status = $1 AND o.created_at >= $2;
+
+  Fast plan (when status = 'pending', 500 rows estimated):
+  Nested Loop Join
+    → Index Scan on orders using idx_orders_status_date
+    → Index Scan on customers (pk)
+  Cost: 1500, Time: 5ms
+
+  Slow plan (when status = 'completed', 5M rows estimated):
+  Hash Join
+    → Seq Scan on orders (filter: status = 'completed')
+    → Hash on customers
+  Cost: 45000, Time: 15 seconds
+
+  The problem: With prepared statements, PostgreSQL eventually
+  switches to a generic plan that must work for ALL parameter values.
+  If 'completed' is the most common value, the generic plan chooses
+  Seq Scan (because it's better for 5M rows), even when the actual
+  parameter is 'pending' (500 rows).
+
+  Additional optimizer mysteries:
+  1. Why does the planner sometimes choose Hash Join over Merge Join
+     even when data is sorted?
+  2. Why does increasing work_mem from 4MB to 256MB make some queries
+     slower? (Hash Join replaces Index Scan)
+  3. The planner estimates 100 rows but actual is 50,000 — why are
+     statistics wrong?
+  4. Two identical queries with different literal values get different
+     plans — what's happening?
+
+  Task: Explain the optimizer's decision-making process. Write: how
+  cost estimation works (the formula), how statistics influence
+  estimates, why prepared statement plans differ from ad-hoc plans,
+  how to fix the plan instability for the critical query, and when
+  it's appropriate to influence the planner.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cost model is correctly explained — explains the cost formula (startup_cost + total_cost), how seq_page_cost and random_page_cost affect scan choice, how row estimates come from statistics (histograms, MCVs, distinct values), and why the planner's choice is rational given its estimates"
+    weight: 0.35
+    description: "Correct cost model explanation"
+  - type: llm_judge
+    criteria: "Prepared statement plan instability is addressed — explains custom vs generic plan switching (threshold after ~5 executions), how plan_cache_mode can force custom plans, and alternative solutions (partition by status, partial indexes, or restructuring the query to avoid the problem)"
+    weight: 0.35
+    description: "Plan instability addressed"
+  - type: llm_judge
+    criteria: "All 4 mysteries are explained — Hash vs Merge Join cost comparison, work_mem increase changing plan choice (hash now fits in memory so Hash Join replaces Index Scan), statistics accuracy (insufficient samples, correlated columns), and parameterized query plans using different statistics for different literal values"
+    weight: 0.30
+    description: "All mysteries explained"

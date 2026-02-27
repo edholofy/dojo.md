@@ -1,0 +1,64 @@
+meta:
+  id: service-mesh-debugging
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug service mesh issues — diagnose Istio/Linkerd sidecar injection failures, mTLS errors, and traffic routing problems"
+  tags: [Kubernetes, service-mesh, Istio, Linkerd, sidecar, mTLS, advanced]
+
+state: {}
+
+trigger: |
+  After enabling Istio service mesh, several services are broken:
+
+  $ kubectl get pods -n bookstore
+  NAME                          READY   STATUS    RESTARTS   AGE
+  catalog-svc-7a8b9c-d0e1     2/2     Running   0          10m
+  order-svc-2f3g4h-i5j6       1/1     Running   0          10m
+  payment-svc-7k8l9m-n0p1     2/2     Running   0          10m
+
+  Notice: catalog-svc and payment-svc show 2/2 (app + istio-proxy
+  sidecar), but order-svc shows 1/1 — the sidecar wasn't injected.
+
+  $ kubectl get namespace bookstore --show-labels
+  NAME        STATUS   AGE   LABELS
+  bookstore   Active   1d    istio-injection=enabled
+
+  The namespace has automatic injection enabled, so why didn't order-svc
+  get a sidecar?
+
+  $ kubectl get deployment order-svc -o yaml | grep -A2 annotations
+  annotations:
+    sidecar.istio.io/inject: "false"
+
+  Someone explicitly disabled injection for order-svc. Now there's a
+  connectivity problem:
+
+  $ kubectl logs catalog-svc-7a8b9c-d0e1 -c istio-proxy
+  upstream connect error or disconnect/reset before headers. reset
+  reason: connection failure, transport failure reason: TLS error:
+  268435581:SSL routines:OPENSSL_internal:CERTIFICATE_VERIFY_FAILED
+
+  catalog-svc (with mTLS via sidecar) can't talk to order-svc (no
+  sidecar, no mTLS). Strict mTLS mode requires both sides to have the
+  proxy.
+
+  Task: Explain service mesh troubleshooting. Write: how sidecar
+  injection works (namespace label, annotation override), mTLS between
+  services (what happens when one side lacks a sidecar), traffic routing
+  with VirtualService/DestinationRule, how to debug with istioctl
+  analyze and proxy logs, and common service mesh issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Sidecar injection is explained — automatic injection via namespace label (istio-injection=enabled), per-pod override via annotation (sidecar.istio.io/inject: true/false). The mutating webhook intercepts pod creation and adds the sidecar container. Pods created before labeling the namespace need restart. Injection can fail if webhook is misconfigured or the annotation explicitly disables it"
+    weight: 0.35
+    description: "Sidecar injection"
+  - type: llm_judge
+    criteria: "mTLS issues are diagnosed — strict mTLS mode requires both client and server to have Istio sidecar proxies for mutual TLS authentication. If one pod lacks a sidecar, the TLS handshake fails (CERTIFICATE_VERIFY_FAILED). Solutions: enable sidecar on all services, or use permissive mode (PeerAuthentication) to allow both plaintext and mTLS during migration"
+    weight: 0.35
+    description: "mTLS issues"
+  - type: llm_judge
+    criteria: "Debugging tools are covered — istioctl analyze checks configuration for issues, istioctl proxy-status shows sync status between control plane and proxies, istioctl proxy-config shows proxy configuration, kubectl logs -c istio-proxy for proxy errors. VirtualService/DestinationRule for traffic routing, retries, timeouts. Common issues: port naming conventions (http-, grpc-), protocol detection failures"
+    weight: 0.30
+    description: "Debugging tools"

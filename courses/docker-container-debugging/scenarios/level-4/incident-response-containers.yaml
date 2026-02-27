@@ -1,0 +1,70 @@
+meta:
+  id: incident-response-containers
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design container incident response — implement forensic procedures, evidence preservation, root cause analysis, and post-incident improvements for container security events"
+  tags: [Docker, incident-response, forensics, security, post-incident, expert]
+
+state: {}
+
+trigger: |
+  Your security team detects anomalous behavior from a production
+  container: unexpected outbound connections to an unknown IP,
+  unusual processes running, and a spike in CPU usage.
+
+  Alert timeline:
+  10:15 — Falco alert: "Shell spawned in container api-prod-3"
+  10:16 — Network alert: Outbound connection to 198.51.100.42:4444
+  10:17 — Falco alert: "Sensitive file opened: /etc/shadow"
+  10:18 — CPU spike to 400% in api-prod-3
+
+  You are the incident commander. What do you do?
+
+  WRONG approach:
+  $ docker stop api-prod-3
+  $ docker rm api-prod-3
+  # Evidence destroyed! Can't determine what happened.
+
+  CORRECT approach:
+
+  Step 1 — Isolate without destroying:
+  $ docker network disconnect production-net api-prod-3
+  # Container still running but network-isolated
+
+  Step 2 — Preserve evidence:
+  $ docker export api-prod-3 > api-prod-3-filesystem.tar
+  $ docker logs api-prod-3 > api-prod-3-logs.txt
+  $ docker inspect api-prod-3 > api-prod-3-inspect.json
+  $ docker diff api-prod-3 > api-prod-3-diff.txt
+  $ docker top api-prod-3 > api-prod-3-processes.txt
+
+  Step 3 — Analyze:
+  $ docker exec api-prod-3 cat /proc/net/tcp  # active connections
+  $ docker exec api-prod-3 find / -newer /app/server.js  # recently modified files
+  $ docker exec api-prod-3 cat /proc/1/environ  # check for injected env vars
+
+  Step 4 — Determine blast radius:
+  - What other containers could this container reach?
+  - Were any secrets or tokens accessible?
+  - What data was in the container's network segment?
+
+  Task: Design container incident response procedures. Write: the
+  isolation strategy (network disconnect vs stop), evidence collection
+  (export, logs, inspect, diff), forensic analysis techniques, blast
+  radius assessment, communication plan (who to notify), and
+  post-incident improvements to prevent recurrence.
+
+assertions:
+  - type: llm_judge
+    criteria: "Isolation and evidence preservation are explained — ISOLATE FIRST: docker network disconnect removes network access while keeping container running for investigation. Do NOT docker rm — this destroys the writable layer and all evidence. Preserve: docker export (full filesystem tar), docker logs (stdout/stderr), docker inspect (full container config including env vars, mounts, network), docker diff (filesystem changes), docker top (running processes). Chain of custody: hash all evidence files, timestamp collection"
+    weight: 0.35
+    description: "Isolation and evidence"
+  - type: llm_judge
+    criteria: "Forensic analysis is covered — analyze filesystem changes: docker diff shows what was modified/added. Look for: new binaries, modified configs, dropped tools, cryptocurrency miners. Check /proc: /proc/net/tcp for connections, /proc/*/cmdline for processes, /proc/*/environ for environment. Network forensics: captured packets if tcpdump was running. Image comparison: diff the running container against the original image to find all attacker modifications. Timeline reconstruction from logs and filesystem timestamps"
+    weight: 0.35
+    description: "Forensic analysis"
+  - type: llm_judge
+    criteria: "Blast radius and post-incident are practical — blast radius: check what networks the container was on (docker network inspect), what secrets it had access to (docker inspect environment), what volumes were shared, what other services it could reach. Rotate all credentials the container had access to. Post-incident: add runtime monitoring (Falco), implement network segmentation, remove unnecessary capabilities, add read-only filesystem, review image for vulnerabilities that enabled the initial compromise. Write an incident report with timeline, impact, root cause, and remediation actions"
+    weight: 0.30
+    description: "Blast radius and post-incident"

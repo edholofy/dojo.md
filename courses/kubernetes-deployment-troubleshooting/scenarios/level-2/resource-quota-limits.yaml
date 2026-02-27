@@ -1,0 +1,64 @@
+meta:
+  id: resource-quota-limits
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug ResourceQuota and LimitRange issues — diagnose why deployments fail due to namespace resource constraints"
+  tags: [Kubernetes, ResourceQuota, LimitRange, QoS, resource-management, intermediate]
+
+state: {}
+
+trigger: |
+  Your team's deployment suddenly fails to create new pods:
+
+  $ kubectl apply -f deployment.yaml
+  Error from server (Forbidden): error when creating "deployment.yaml":
+  pods "cache-svc-7a8b9c0d-e1f2" is forbidden: exceeded quota:
+  team-alpha-quota, requested: cpu=500m,memory=512Mi,
+  used: cpu=3500m,memory=7Gi, limited: cpu=4,memory=8Gi
+
+  $ kubectl get resourcequota -n team-alpha
+  NAME               AGE   REQUEST                          LIMIT
+  team-alpha-quota   30d   cpu: 3500m/4, memory: 7Gi/8Gi   cpu: 8/8, memory: 16Gi/16Gi
+
+  The namespace has a ResourceQuota and you're hitting the ceiling.
+  But wait — your deployment doesn't specify resource requests:
+
+  $ kubectl get deployment cache-svc -o yaml | grep -A5 resources
+      resources: {}
+
+  Yet the error says it's requesting 500m CPU and 512Mi memory. Why?
+
+  $ kubectl get limitrange -n team-alpha
+  NAME              CREATED AT
+  default-limits    2025-11-01T00:00:00Z
+
+  $ kubectl describe limitrange default-limits
+  Type        Resource  Min    Max    Default Request  Default Limit
+  Container   cpu       100m   2      500m             1
+  Container   memory    128Mi  4Gi    512Mi            1Gi
+
+  The LimitRange is automatically injecting default requests! The pod
+  gets 500m CPU and 512Mi memory even though the deployment doesn't
+  specify them.
+
+  Task: Explain ResourceQuotas and LimitRanges. Write: how ResourceQuotas
+  enforce namespace-level limits, how LimitRanges set per-container
+  defaults and min/max, how they interact (when quota exists, all pods
+  must have requests — LimitRange provides defaults), QoS classes
+  (Guaranteed, Burstable, BestEffort) and eviction priority, and how
+  to right-size resource settings.
+
+assertions:
+  - type: llm_judge
+    criteria: "ResourceQuota and LimitRange interaction is explained — ResourceQuota sets total namespace limits (aggregate CPU, memory, pod count). When ResourceQuota exists, every pod MUST specify resource requests — if not set, LimitRange provides defaults. LimitRange also enforces min/max per container. If no LimitRange default and no request specified, pod creation fails with quota enabled"
+    weight: 0.35
+    description: "Quota and LimitRange interaction"
+  - type: llm_judge
+    criteria: "QoS classes are explained — Guaranteed (requests=limits for all containers, highest priority, last evicted), Burstable (requests<limits or partial specification, medium priority), BestEffort (no requests or limits, first evicted under pressure). Understanding QoS helps prioritize which pods survive during resource contention"
+    weight: 0.35
+    description: "QoS classes explained"
+  - type: llm_judge
+    criteria: "Right-sizing and debugging are practical — check quota usage (kubectl describe quota), check LimitRange defaults (kubectl describe limitrange), use kubectl top pod for actual usage vs requests, review QoS class with kubectl get pod -o yaml. Right-sizing: set requests to P95 usage, limits to peak + buffer. Avoid BestEffort for production workloads"
+    weight: 0.30
+    description: "Right-sizing and debugging"

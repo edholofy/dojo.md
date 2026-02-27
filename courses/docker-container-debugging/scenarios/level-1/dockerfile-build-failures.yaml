@@ -1,0 +1,71 @@
+meta:
+  id: dockerfile-build-failures
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Dockerfile build failures — diagnose COPY errors, missing dependencies, and common Dockerfile mistakes"
+  tags: [Docker, Dockerfile, build, COPY, dependencies, beginner]
+
+state: {}
+
+trigger: |
+  Your Docker build keeps failing with different errors:
+
+  $ docker build -t myapp .
+
+  Attempt 1:
+  Step 5/10: COPY package.json ./
+  COPY failed: file not found in build context or excluded by .dockerignore
+
+  The file exists in the project but the build context is wrong. You're
+  running docker build from the wrong directory, or .dockerignore is
+  excluding package.json.
+
+  After fixing the context:
+
+  Attempt 2:
+  Step 7/10: RUN npm install
+  npm ERR! code ENOENT
+  npm ERR! syscall open
+  npm ERR! path /app/package.json
+  npm ERR! No such file or directory
+
+  COPY succeeded but the WORKDIR wasn't set — files were copied to /
+  but npm install runs in /app.
+
+  After adding WORKDIR /app:
+
+  Attempt 3:
+  Step 8/10: RUN npm run build
+  sh: 1: node: not found
+
+  The base image doesn't have Node.js. The Dockerfile uses FROM ubuntu
+  instead of FROM node:20.
+
+  The problematic Dockerfile:
+  FROM ubuntu:22.04
+  RUN apt-get update
+  COPY . .
+  RUN npm install
+  RUN npm run build
+  CMD ["node", "dist/server.js"]
+
+  Task: Explain common Dockerfile build failures. Write: how the build
+  context works (what files are available during build), the role of
+  .dockerignore, common COPY/ADD errors, the importance of WORKDIR,
+  choosing the right base image, the order of Dockerfile instructions
+  for layer caching, and how to debug build failures step by step.
+
+assertions:
+  - type: llm_judge
+    criteria: "Build context is explained — the build context is the directory sent to the Docker daemon (specified in docker build <path>). COPY and ADD can only access files in the build context. .dockerignore excludes files from the context (like .gitignore). Common mistakes: running docker build from wrong directory, .dockerignore excluding needed files, trying to COPY files outside the build context (../file is not allowed)"
+    weight: 0.35
+    description: "Build context explained"
+  - type: llm_judge
+    criteria: "Common Dockerfile mistakes are covered — missing WORKDIR (files end up in /), wrong base image (missing runtime), COPY before dependency install (breaks layer caching — COPY package.json first, then npm install, then COPY . .), missing RUN apt-get install for dependencies, using ADD when COPY suffices (ADD does tar extraction and URL fetching), not cleaning up apt cache (bloats image)"
+    weight: 0.35
+    description: "Common mistakes"
+  - type: llm_judge
+    criteria: "Debugging approach is practical — read error messages carefully (they indicate the step that failed), use docker build --progress=plain for detailed output, inspect intermediate layers (build with --target or use BuildKit debug), check .dockerignore contents, verify build context with docker build --file and --context flags, use RUN ls to verify file locations during debugging"
+    weight: 0.30
+    description: "Debugging approach"

@@ -1,0 +1,67 @@
+meta:
+  id: join-optimization
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL JOIN execution — understand join buffer, block nested loop, hash join, and how to choose the right join strategy"
+  tags: [MySQL, JOIN, hash-join, block-nested-loop, join-buffer, intermediate]
+
+state: {}
+
+trigger: |
+  Your analytics report query joins 5 tables and takes 45 seconds.
+  The EXPLAIN output reveals a mix of efficient and inefficient join
+  methods:
+
+  SELECT o.id, c.name, p.name, cat.name, s.tracking_number
+  FROM orders o
+  JOIN customers c ON c.id = o.customer_id
+  JOIN order_items oi ON oi.order_id = o.id
+  JOIN products p ON p.id = oi.product_id
+  JOIN categories cat ON cat.code = p.category_code
+  JOIN shipments s ON s.order_id = o.id AND s.status = 'shipped'
+  WHERE o.created_at >= '2025-01-01'
+    AND o.created_at < '2025-02-01';
+
+  EXPLAIN:
+  | table | type    | key               | rows   | Extra                       |
+  |-------|---------|-------------------|--------|-----------------------------|
+  | o     | range   | idx_created_at    | 500000 | Using index condition        |
+  | c     | eq_ref  | PRIMARY           | 1      |                             |
+  | oi    | ref     | idx_order_id      | 3      |                             |
+  | p     | eq_ref  | PRIMARY           | 1      |                             |
+  | cat   | ALL     | NULL              | 500    | Using where; Using join buf |
+  | s     | ref     | idx_order_id      | 1      | Using where                 |
+
+  Problems identified:
+  1. categories table uses ALL (full table scan per join iteration) even
+     though it's only 500 rows — no index on categories.code
+  2. The join buffer (block nested-loop) is being used for categories
+  3. With 500K orders × 3 items × 500 categories = many iterations
+  4. join_buffer_size is default 256KB
+
+  MySQL 8.0 changes:
+  - MySQL 8.0.18+ uses hash join instead of block nested-loop for
+    equi-joins without indexes
+  - MySQL 8.0.20+ removed block nested-loop entirely
+  - Hash join performance depends on join_buffer_size
+
+  Task: Optimize this join query. Write: why the categories join is
+  slow (missing index + join strategy), the difference between nested-
+  loop, block nested-loop, and hash join, how join_buffer_size affects
+  performance, the optimal indexes for this query, and how to read the
+  join-related EXPLAIN output.
+
+assertions:
+  - type: llm_judge
+    criteria: "Categories join fix is correct — ADD INDEX idx_code(code) on categories table eliminates the full table scan, changing type from ALL to eq_ref. Explains that even though categories is small (500 rows), the full scan is repeated for each row from the products join (1.5M iterations)"
+    weight: 0.35
+    description: "Categories join fix"
+  - type: llm_judge
+    criteria: "Join algorithms are explained — nested-loop (for each outer row, scan inner table using index), block nested-loop (buffer outer rows, scan inner table once per buffer-full, pre-8.0.20), hash join (build hash table on smaller table, probe with larger table, 8.0.18+). Hash join is used when no index available on join column. join_buffer_size controls how much memory for hash/block-NL"
+    weight: 0.35
+    description: "Join algorithms explained"
+  - type: llm_judge
+    criteria: "EXPLAIN join-related output is decoded — 'Using join buffer (Block Nested Loop)' or 'Using join buffer (hash join)' in Extra, how the rows column estimates are multiplied across joins (500K × 3 × 1 × 1 × 500 × 1 for this query), and how eq_ref vs ref vs ALL determines the join strategy per table"
+    weight: 0.30
+    description: "EXPLAIN join output decoded"

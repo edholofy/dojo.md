@@ -1,0 +1,61 @@
+meta:
+  id: regulatory-compliance-containers
+  level: 5
+  course: docker-container-debugging
+  type: output
+  description: "Design regulatory compliance for containers — implement controls for SOC2, PCI-DSS, HIPAA, and FedRAMP in containerized environments"
+  tags: [Docker, compliance, SOC2, PCI-DSS, HIPAA, FedRAMP, regulation, master]
+
+state: {}
+
+trigger: |
+  Your company is pursuing SOC2 Type II certification and PCI-DSS
+  compliance. The auditor has questions about your container platform:
+
+  Auditor question 1: "How do you ensure only authorized images
+  run in production?"
+  Current answer: "We trust our developers." (Not acceptable)
+  Required: Image signing, admission control, approved registry list.
+
+  Auditor question 2: "How do you track who deployed what and when?"
+  Current answer: "We can check git history." (Insufficient)
+  Required: Immutable audit logs of all deployment actions with
+  identity, timestamp, image digest, and approval chain.
+
+  Auditor question 3: "How do you ensure containers don't contain
+  known vulnerabilities?"
+  Current answer: "We scan periodically." (When? How? What's the SLA?)
+  Required: Automated scanning in CI/CD with defined severity thresholds,
+  documented exception process, SLA for patching (CRITICAL: 24h,
+  HIGH: 7d, MEDIUM: 30d).
+
+  Auditor question 4: "How do you isolate cardholder data environments?"
+  Current answer: "Different Docker network." (Insufficient for PCI)
+  Required: Network segmentation with documented firewall rules,
+  encrypted communication (mTLS), access logging, separate
+  infrastructure for CDE.
+
+  Auditor question 5: "How do you handle secrets and encryption keys?"
+  Current answer: "Environment variables in Docker Compose."
+  Required: Dedicated secrets manager (Vault), encryption at rest,
+  rotation policy, access auditing.
+
+  Task: Design compliance controls for containerized environments.
+  Write: control mappings for SOC2 and PCI-DSS, image governance
+  (signing, scanning, admission), audit logging architecture,
+  network segmentation for compliance, secrets management, and the
+  continuous compliance monitoring approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Control mappings are specific — SOC2: CC6.1 (logical access) → RBAC, namespace isolation, registry access control. CC7.1 (monitoring) → container runtime monitoring, audit logs. CC8.1 (change management) → GitOps, immutable images, deployment approvals. PCI-DSS: Requirement 2 (secure configuration) → hardened container images, CIS benchmarks. Requirement 6 (secure development) → image scanning in CI. Requirement 10 (logging) → centralized audit logs with tamper protection. Requirement 11 (testing) → regular vulnerability scanning"
+    weight: 0.35
+    description: "Control mappings"
+  - type: llm_judge
+    criteria: "Image governance and audit are covered — image lifecycle: build → scan → sign → approve → deploy. Admission controller (OPA/Kyverno) rejects unsigned or unscanned images. Approved registry allowlist prevents pulling from public registries. Audit logging: every docker/kubectl command logged with identity (who), action (what), resource (which container/image), timestamp (when), result (success/fail). Logs must be immutable (append-only, shipped to SIEM). Retention: 1 year minimum for SOC2, as defined by PCI-DSS"
+    weight: 0.35
+    description: "Governance and audit"
+  - type: llm_judge
+    criteria: "Network and secrets compliance are practical — PCI CDE isolation: separate cluster or namespace with strict network policies. mTLS between all services in CDE (service mesh). No direct internet access from CDE containers. Secrets: HashiCorp Vault or cloud KMS, automatic rotation, access auditing, encryption at rest. Never in environment variables, Docker Compose files, or image layers. Continuous compliance: automated scanning against CIS Docker Benchmark, regular penetration testing, compliance dashboards for auditors, automated evidence collection"
+    weight: 0.30
+    description: "Network and secrets"

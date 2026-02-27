@@ -1,0 +1,62 @@
+meta:
+  id: consulting-engagement
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Kubernetes consulting engagement — assess a client's troubled Kubernetes migration, design remediation roadmap, and present recommendations to their leadership"
+  tags: [Kubernetes, consulting, migration, assessment, remediation, master]
+
+state: {}
+
+trigger: |
+  You're a Kubernetes platform consultant hired by a mid-size fintech
+  company (500 engineers, $200M revenue). Their Kubernetes migration
+  started 18 months ago and is "failing." The CTO says: "We spent $3M
+  on this migration and we're worse off than before."
+
+  Your assessment findings after 2 weeks:
+
+  Technical:
+  - 30% of services migrated to Kubernetes, 70% still on EC2
+  - The 30% on Kubernetes have MORE downtime than EC2 services
+  - 15 critical incidents in the last quarter (vs 3 for EC2 services)
+  - No centralized monitoring (each team runs their own Prometheus)
+  - No standardized deployment pipeline (each team deploys differently)
+  - RBAC is cluster-admin for everyone
+  - No network policies, no pod security enforcement
+  - 85% of pods have no resource limits
+  - Persistent storage on local SSDs (no replication, no backup)
+
+  Organizational:
+  - No platform team exists — "everyone owns Kubernetes"
+  - Each of 8 dev teams learned Kubernetes independently
+  - No internal documentation or runbooks
+  - Engineers spend ~30% of time on Kubernetes ops instead of features
+  - Leadership measured success by "% of services migrated" not outcomes
+  - The migration was mandated top-down without training plan
+
+  Cultural:
+  - Engineers are frustrated and some are leaving
+  - "Kubernetes is too complex" sentiment is growing
+  - Shadow IT: some teams secretly running new services on EC2
+
+  Task: Write the consulting report and remediation roadmap. Include:
+  root cause analysis (why the migration is failing), the immediate
+  stabilization plan (first 30 days), the 90-day remediation roadmap,
+  the 12-month platform maturity plan, organizational changes needed
+  (form platform team, training program), success metrics, and the
+  executive presentation framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause analysis is accurate — the migration failed because of organizational and process gaps, not Kubernetes itself. Key failures: no platform team to provide expertise, no standardization (each team reinvented), no training (mandated without enablement), wrong success metric (% migrated vs reliability), no shared infrastructure (monitoring, CI/CD, security). Technical debt compounded because nobody owned the platform"
+    weight: 0.35
+    description: "Root cause analysis"
+  - type: llm_judge
+    criteria: "Stabilization and remediation are phased — 30-day stabilization: fix the worst reliability issues (add resource limits, deploy centralized monitoring, create incident response process, pause migration of new services). 90-day remediation: form platform team (3-4 engineers), deploy standardized CI/CD, implement RBAC and network policies, centralize logging. 12-month maturity: complete migration with golden paths, implement DR, achieve SLO targets"
+    weight: 0.35
+    description: "Phased remediation"
+  - type: llm_judge
+    criteria: "Organizational and metrics recommendations are practical — form a dedicated platform team (hire or reassign), invest in training program (certifications, workshops, pair programming with platform team), redefine success metrics (availability, MTTR, developer satisfaction, deployment frequency — not % migrated), create internal documentation and runbooks, establish architecture review board. Executive framing: this is a recovery, not a restart — the $3M invested built valuable experience"
+    weight: 0.30
+    description: "Organizational recommendations"

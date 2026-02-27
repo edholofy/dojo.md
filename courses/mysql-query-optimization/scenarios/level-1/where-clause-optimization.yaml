@@ -1,0 +1,65 @@
+meta:
+  id: where-clause-optimization
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize WHERE clauses in MySQL — write SARGable conditions, avoid function wrapping, and understand how MySQL uses indexes for filtering"
+  tags: [MySQL, WHERE, SARGable, index-usage, filtering, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing slow queries found in the slow query log. Several
+  queries have indexes available but MySQL isn't using them. The
+  EXPLAIN output shows type=ALL (full table scan) despite relevant
+  indexes existing.
+
+  Problematic queries (all have indexes on the filtered columns):
+
+  1. Date range query (index on created_at):
+     SELECT * FROM orders
+     WHERE YEAR(created_at) = 2025 AND MONTH(created_at) = 12;
+     -- EXPLAIN: type=ALL, rows=5M (ignores index)
+
+  2. Case-insensitive search (index on email):
+     SELECT * FROM users WHERE LOWER(email) = 'john@example.com';
+     -- EXPLAIN: type=ALL, rows=2M (ignores index)
+
+  3. String pattern search (index on name):
+     SELECT * FROM products WHERE name LIKE '%widget%';
+     -- EXPLAIN: type=ALL, rows=1M (ignores index)
+
+  4. Math on column (index on price):
+     SELECT * FROM products WHERE price * 1.1 > 50;
+     -- EXPLAIN: type=ALL, rows=1M (ignores index)
+
+  5. Implicit type conversion (index on phone VARCHAR):
+     SELECT * FROM customers WHERE phone = 5551234567;
+     -- EXPLAIN: type=ALL, rows=500K (ignores index)
+
+  6. OR with different columns (indexes on status and priority):
+     SELECT * FROM tickets
+     WHERE status = 'open' OR priority = 'high';
+     -- EXPLAIN: type=ALL, rows=2M (ignores both indexes)
+
+  Each query has an appropriate index, but the WHERE clause is written
+  in a way that prevents MySQL from using it.
+
+  Task: Explain why each query can't use its index and how to rewrite
+  it. Write: what "SARGable" means, why functions on indexed columns
+  prevent index usage, the correct rewrite for each of the 6 queries,
+  and general rules for writing index-friendly WHERE clauses.
+
+assertions:
+  - type: llm_judge
+    criteria: "SARGable is explained — Search ARGument ABLE means the condition can use an index. Functions, math, or type conversions on the indexed column prevent index usage because MySQL can't use the B-tree to look up transformed values. The condition must isolate the column on one side of the comparison"
+    weight: 0.35
+    description: "SARGable concept explained"
+  - type: llm_judge
+    criteria: "All 6 rewrites are correct — (1) created_at >= '2025-12-01' AND created_at < '2026-01-01', (2) email = 'john@example.com' (MySQL default collation is case-insensitive) or use a generated column with expression index, (3) full-text index or application-level search (leading wildcard can't use B-tree), (4) price > 50/1.1 (move math to the constant side), (5) phone = '5551234567' (match the column type), (6) UNION of two queries or index_merge optimization"
+    weight: 0.35
+    description: "Correct rewrites for all 6"
+  - type: llm_judge
+    criteria: "General rules are provided — never apply functions to indexed columns, keep the indexed column alone on one side, match data types to avoid implicit conversion, leading wildcards can't use B-tree indexes, OR across different columns may prevent index usage (consider UNION or index_merge)"
+    weight: 0.30
+    description: "General SARGable rules"

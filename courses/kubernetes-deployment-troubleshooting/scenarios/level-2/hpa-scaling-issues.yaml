@@ -1,0 +1,62 @@
+meta:
+  id: hpa-scaling-issues
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug HPA scaling issues — diagnose why autoscaling isn't working, from missing metrics to thrashing"
+  tags: [Kubernetes, HPA, autoscaling, metrics-server, scaling, intermediate]
+
+state: {}
+
+trigger: |
+  Your HPA isn't scaling despite high CPU usage on your pods:
+
+  $ kubectl get hpa
+  NAME       REFERENCE             TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+  web-app    Deployment/web-app    <unknown>/70%   2         10        2          30m
+
+  The TARGETS column shows <unknown> — the HPA can't read metrics.
+
+  $ kubectl describe hpa web-app
+  Conditions:
+    Type           Status  Reason
+    AbleToScale    True    SucceededGetScale
+    ScalingActive  False   FailedGetResourceMetric
+  Events:
+    Warning  FailedComputeMetricsReplicas  1m  horizontal-pod-autoscaler
+    invalid metrics (1 invalid out of 1), first error is: failed to get
+    cpu utilization: missing request for cpu in container "web-app"
+
+  Two issues found:
+  1. The pods don't have CPU requests set — HPA calculates utilization
+     as a percentage of the request, so without requests it can't compute
+  2. After fixing requests, metrics-server isn't installed:
+
+  $ kubectl top pods
+  error: Metrics API not available
+
+  $ kubectl get deployment metrics-server -n kube-system
+  Error from server (NotFound): deployments.apps "metrics-server" not found
+
+  After installing metrics-server and setting CPU requests, the HPA
+  works but thrashes — scaling up and down rapidly every minute.
+
+  Task: Explain HPA and how to debug scaling issues. Write: how HPA
+  works (metrics → desired replicas calculation), why CPU requests are
+  required, metrics-server role, the stabilization window to prevent
+  thrashing, custom metrics with Prometheus adapter, and how to tune
+  HPA behavior.
+
+assertions:
+  - type: llm_judge
+    criteria: "HPA mechanics are explained — HPA queries metrics API every 15s (default), calculates desired replicas as ceil(currentReplicas * (currentMetric/targetMetric)). CPU utilization is percentage of CPU request, so requests MUST be set. metrics-server collects resource metrics from kubelets and exposes them via the Metrics API. Without metrics-server or without requests, HPA shows <unknown>"
+    weight: 0.35
+    description: "HPA mechanics"
+  - type: llm_judge
+    criteria: "Debugging steps are systematic — check TARGETS column (unknown = no metrics), kubectl describe hpa for conditions and events, verify metrics-server running, verify pods have resource requests, check if ScalingActive condition is True. Use kubectl top pod to verify metrics are available. Check HPA events for error messages"
+    weight: 0.35
+    description: "Debugging steps"
+  - type: llm_judge
+    criteria: "Thrashing prevention and tuning are covered — stabilization window (scaleDown stabilizationWindowSeconds defaults to 300s, prevents rapid scale-down), scaling policies (pods-per-minute or percent-per-minute limits), behavior field in HPA spec for fine-grained control. Custom metrics via Prometheus adapter for application-specific scaling (requests per second, queue depth)"
+    weight: 0.30
+    description: "Thrashing and tuning"

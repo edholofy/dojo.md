@@ -1,0 +1,69 @@
+meta:
+  id: covering-and-invisible-indexes
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Master covering indexes and invisible indexes — use INCLUDE-like patterns and safely test index removal in MySQL 8.0+"
+  tags: [MySQL, covering-index, invisible-index, index-only-scan, intermediate]
+
+state: {}
+
+trigger: |
+  Your application's most frequent query runs 100K times per day and
+  takes 15ms on average. EXPLAIN shows it uses an index but still
+  reads the full row from the clustered index (type=ref, no "Using
+  index" in Extra). You want to make it an index-only scan.
+
+  The query:
+  SELECT customer_id, email, status
+  FROM users
+  WHERE status = 'active' AND country = 'US';
+
+  Current index: idx_status_country (status, country)
+
+  EXPLAIN:
+  type=ref, key=idx_status_country, rows=50000, Extra=NULL
+
+  The index matches the WHERE clause, so MySQL uses it to find the
+  50K matching row pointers. But then it must do 50K lookups into
+  the clustered index to retrieve customer_id and email — those
+  columns aren't in the secondary index.
+
+  Target: Make this a covering index (index-only scan) so MySQL
+  reads everything from the index without touching the table data.
+
+  Meanwhile, you also have 15 indexes on the users table and suspect
+  5 of them are unused. But dropping an index in production is scary
+  — what if an important query uses it at month-end?
+
+  MySQL 8.0 introduced invisible indexes:
+  ALTER TABLE users ALTER INDEX idx_old_column INVISIBLE;
+  -- The optimizer ignores this index, but it's still maintained
+  -- If something breaks, make it visible again instantly
+
+  Questions to address:
+  1. How to create a covering index for the query above?
+  2. Why doesn't MySQL have INCLUDE columns like PostgreSQL?
+  3. How do invisible indexes help safely remove unused indexes?
+  4. What's the trade-off of wider indexes for covering vs write perf?
+  5. How do you identify which indexes are unused?
+
+  Task: Design the covering index and the index cleanup strategy.
+  Write: the covering index for the query, how index-only scans work
+  in InnoDB, the invisible index workflow for safe index removal, how
+  to identify unused indexes (Performance Schema), and the trade-offs
+  of wider covering indexes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Covering index is correct — creates idx_status_country_email_custid(status, country, customer_id, email) or similar. Explains that 'Using index' in EXPLAIN Extra means all needed columns are in the index (index-only scan). MySQL doesn't have INCLUDE like PostgreSQL, so all columns must be part of the index key"
+    weight: 0.35
+    description: "Correct covering index"
+  - type: llm_judge
+    criteria: "Invisible index workflow is explained — make suspect index invisible, monitor for query regressions over a business cycle (1 week or 1 month), if no impact then drop it, if queries slow down make it visible again instantly. Uses performance_schema.table_io_waits_summary_by_index_usage or sys.schema_unused_indexes to find candidates"
+    weight: 0.35
+    description: "Invisible index workflow"
+  - type: llm_judge
+    criteria: "Trade-offs are analyzed — wider covering indexes use more storage and slow writes (more data to update per insert/update), but eliminate clustered index lookups for reads. Quantifies the trade-off: 50K lookups avoided per query execution vs additional index size and write overhead. Decision depends on read/write ratio"
+    weight: 0.30
+    description: "Trade-offs analyzed"

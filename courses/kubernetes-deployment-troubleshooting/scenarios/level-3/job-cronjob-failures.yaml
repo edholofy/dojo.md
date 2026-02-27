@@ -1,0 +1,67 @@
+meta:
+  id: job-cronjob-failures
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Job and CronJob failures — diagnose stuck jobs, missed schedules, concurrent execution issues, and backoff limits"
+  tags: [Kubernetes, Job, CronJob, batch-processing, scheduling, advanced]
+
+state: {}
+
+trigger: |
+  Your data pipeline CronJobs are failing silently — reports aren't
+  being generated but nobody noticed for 3 days:
+
+  $ kubectl get cronjobs -n data
+  NAME               SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+  daily-report       0 2 * * *     False     0        3d              30d
+  hourly-etl         0 * * * *     False     3        5m              30d
+  weekly-cleanup     0 0 * * 0     True      0        7d              30d
+
+  Issues discovered:
+
+  1. daily-report — Last scheduled 3 days ago, no recent Jobs:
+  $ kubectl get jobs -n data -l job-name=daily-report --sort-by=.status.startTime
+  NAME                      COMPLETIONS   DURATION   AGE
+  daily-report-28930560     0/1           3d         3d
+
+  The job is still running (stuck) from 3 days ago. The CronJob's
+  concurrencyPolicy is "Forbid", so no new Jobs are created while the
+  old one is active. The Job's pod is stuck in Init:0/1 waiting for
+  a database migration init container that will never complete.
+
+  2. hourly-etl — 3 active jobs running concurrently:
+  concurrencyPolicy is "Allow" (default), so every hour a new Job
+  starts even if previous ones haven't finished. Jobs are piling up,
+  consuming resources and causing database contention.
+
+  3. weekly-cleanup — Suspended=True:
+  Someone suspended it during debugging and forgot to re-enable it.
+
+  Additionally:
+  $ kubectl get jobs -n data | grep -c "0/1"
+  47
+
+  47 failed jobs sitting in the namespace, never cleaned up because
+  failedJobsHistoryLimit wasn't set.
+
+  Task: Explain Job and CronJob troubleshooting. Write: how Jobs work
+  (completions, parallelism, backoffLimit), CronJob scheduling (schedule
+  syntax, concurrencyPolicy, startingDeadlineSeconds), common failure
+  modes (stuck jobs blocking schedules, missed schedules, resource
+  accumulation), cleanup and history limits, and monitoring Jobs
+  effectively.
+
+assertions:
+  - type: llm_judge
+    criteria: "Job mechanics are explained — completions: how many pod completions needed, parallelism: how many pods run simultaneously, backoffLimit: retries before marking as Failed (default 6), activeDeadlineSeconds: maximum runtime. Jobs create pods that run to completion. Failed pods are retried with exponential backoff. A Job stuck in active state blocks CronJobs with Forbid concurrency"
+    weight: 0.35
+    description: "Job mechanics"
+  - type: llm_judge
+    criteria: "CronJob-specific issues are covered — concurrencyPolicy: Allow (multiple jobs simultaneously, risk of pile-up), Forbid (skip if previous still running, risk of stuck blocking), Replace (kill previous, start new). startingDeadlineSeconds: if a schedule is missed by more than this, skip it. successfulJobsHistoryLimit and failedJobsHistoryLimit control cleanup (default 3/1). Suspended field pauses scheduling. Always check for suspended CronJobs during debugging"
+    weight: 0.35
+    description: "CronJob issues"
+  - type: llm_judge
+    criteria: "Debugging and monitoring are practical — check CronJob last schedule time, list active Jobs, check Job pod status and logs. For stuck Jobs: delete the Job or set activeDeadlineSeconds. Monitor: alert on CronJobs that haven't run within expected window, alert on failed Job count, use ttlSecondsAfterFinished (K8s 1.23+) for automatic cleanup. Set appropriate history limits to prevent namespace resource accumulation"
+    weight: 0.30
+    description: "Debugging and monitoring"

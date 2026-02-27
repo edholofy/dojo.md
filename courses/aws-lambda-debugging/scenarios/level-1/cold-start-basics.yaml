@@ -1,0 +1,70 @@
+meta:
+  id: cold-start-basics
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda cold start issues — understand cold vs warm invocations, identify cold start impact, and apply basic optimization techniques"
+  tags: [AWS, Lambda, cold-start, performance, initialization, beginner]
+
+state: {}
+
+trigger: |
+  Users complain that your API is "sometimes slow." CloudWatch metrics
+  show the Lambda function behind API Gateway has inconsistent latency:
+
+  Most requests: 50-100ms
+  Some requests: 2,000-5,000ms (40x slower!)
+
+  CloudWatch Logs reveal the pattern:
+
+  Slow invocation (cold start):
+  INIT_START Runtime Version: nodejs20.x
+  START RequestId: abc-123
+  2024-12-01T10:00:00.000Z Connecting to database...
+  2024-12-01T10:00:01.500Z Database connected
+  2024-12-01T10:00:02.000Z Processing request...
+  END RequestId: abc-123
+  REPORT RequestId: abc-123 Duration: 2100.00 ms
+  Billed Duration: 2100 ms Init Duration: 1850.00 ms
+
+  Fast invocation (warm):
+  START RequestId: def-456
+  2024-12-01T10:01:00.000Z Processing request...
+  END RequestId: def-456
+  REPORT RequestId: def-456 Duration: 55.00 ms
+  Billed Duration: 56 ms
+
+  The key difference: "Init Duration" appears only on cold starts.
+  This is the time Lambda takes to:
+  1. Download your code package
+  2. Start the runtime (Node.js/Python/Java)
+  3. Run initialization code (imports, DB connections, SDK setup)
+
+  After a cold start, the execution environment is reused for
+  subsequent invocations (warm starts) — no Init Duration.
+
+  Cold starts happen when:
+  - First invocation after deployment
+  - Scaling up (new concurrent executions)
+  - After ~15 minutes of inactivity (environment recycled)
+
+  Task: Explain Lambda cold starts. Write: what causes cold starts,
+  how to identify them in logs (INIT_START, Init Duration in REPORT),
+  factors affecting cold start duration (package size, runtime,
+  memory, VPC), basic optimizations (minimize dependencies, increase
+  memory, init code outside handler), and when cold starts matter
+  vs when they don't.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cold start mechanics are explained — cold start = Lambda creates new execution environment (download code, start runtime, run init). Identified by: INIT_START in logs, Init Duration in REPORT line. Warm start reuses existing environment — no init overhead. Cold starts happen: first invocation, scaling up new instances, after idle timeout (~15 min). Factors: package size (larger = slower download), runtime (Java/C# slowest, Python/Node fastest), memory setting (more memory = more CPU = faster init), VPC adds ENI attachment time"
+    weight: 0.35
+    description: "Cold start mechanics"
+  - type: llm_judge
+    criteria: "Basic optimizations are covered — minimize package size: remove unused dependencies, use tree shaking, use Lambda layers for shared code. Increase memory: Lambda allocates CPU proportional to memory — 1769MB = 1 vCPU. Higher memory = faster initialization. Init code outside handler: database connections, SDK clients created at module level are reused across warm invocations. Avoid importing unused modules. For critical latency: provisioned concurrency keeps environments warm (eliminates cold starts entirely)"
+    weight: 0.35
+    description: "Basic optimizations"
+  - type: llm_judge
+    criteria: "When cold starts matter is explained — matters: synchronous APIs (user-facing latency), real-time processing. Doesn't matter: async processing (SQS consumers, S3 events), batch jobs, scheduled tasks. Cold start frequency: at steady traffic with consistent load, most invocations are warm. Spiky traffic causes more cold starts. Monitor: CloudWatch metric ConcurrentExecutions shows scaling events. p99 latency includes cold starts, p50 typically doesn't. Evaluate whether cold start optimization is worth the effort based on actual user impact"
+    weight: 0.30
+    description: "When it matters"

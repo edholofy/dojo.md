@@ -1,0 +1,67 @@
+meta:
+  id: container-technology-evolution
+  level: 5
+  course: docker-container-debugging
+  type: output
+  description: "Analyze container technology evolution — evaluate emerging technologies like WebAssembly, eBPF, unikernels, and serverless containers and their impact on Docker"
+  tags: [Docker, WebAssembly, eBPF, serverless, evolution, future, master]
+
+state: {}
+
+trigger: |
+  Your company's technology radar review asks: "Is Docker still the
+  right bet? What's coming next in containerization?"
+
+  You need to evaluate emerging technologies and their relationship
+  to Docker:
+
+  1. WebAssembly (Wasm) Containers:
+  Docker co-founder Solomon Hykes: "If WASM+WASI existed in 2008,
+  we wouldn't have needed to create Docker."
+
+  Wasm advantages: ~1ms cold start (vs seconds for containers),
+  near-native performance, language-agnostic, smaller binaries (KBs
+  vs MBs), sandboxed by design. Docker Desktop can already run Wasm
+  workloads via containerd's Wasm shims (spin, wasmtime).
+
+  But: limited system access, no filesystem by default, ecosystem
+  still maturing, not suitable for all workloads (databases, legacy apps).
+
+  2. eBPF for Container Networking/Security:
+  Cilium replaces iptables with eBPF for container networking —
+  10x better performance for service mesh. Tetragon provides
+  kernel-level runtime security without sidecar containers.
+
+  3. Serverless Containers (AWS Fargate, Google Cloud Run):
+  Run containers without managing servers. Pay per second of
+  compute. No cluster management, no node scaling.
+  Trade-off: less control, cold starts, vendor lock-in, higher
+  per-unit cost at scale.
+
+  4. Unikernels and MicroVMs (Firecracker):
+  VM-level isolation with container-like density. Firecracker
+  (powers Lambda/Fargate): boots a microVM in 125ms, 5MB memory
+  overhead. Kata Containers: run each container in its own microVM.
+
+  5. OCI Runtime Alternatives:
+  containerd replacing Docker daemon. crun (C-based, faster than
+  runc). youki (Rust-based). gVisor (kernel-level sandboxing).
+
+  Task: Evaluate container technology evolution. Write: assessment
+  of each technology (maturity, use cases, limitations), impact on
+  Docker's role, migration considerations, timeline predictions,
+  and strategic recommendations for technology adoption.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technology assessments are balanced — Wasm: production-ready for edge/serverless workloads, not ready to replace general-purpose containers. Excellent for plugins, edge computing, serverless functions. eBPF: production-ready (Cilium, Tetragon), revolutionizing container networking and security. Serverless containers: production-ready, ideal for variable workloads and small teams. MicroVMs: production-ready (Firecracker), used by major cloud providers, good for multi-tenant isolation. Each technology complements rather than replaces Docker"
+    weight: 0.35
+    description: "Technology assessments"
+  - type: llm_judge
+    criteria: "Docker's evolving role is explained — Docker is no longer just a runtime — it's a developer experience layer. containerd is the actual container runtime in most Kubernetes clusters. Docker's value: developer workflow (build, test, local development), Dockerfile as standard build format, Docker Desktop as development environment, Docker Hub as distribution platform. Docker won't disappear but its role shifts from 'the container platform' to 'the developer tool for containers.' OCI standards ensure interoperability"
+    weight: 0.35
+    description: "Docker's role"
+  - type: llm_judge
+    criteria: "Strategic recommendations are practical — don't chase every new technology. Adopt based on: maturity (production-ready?), team capability (learning curve), ROI (real problems it solves), ecosystem (tooling, community). Timeline: eBPF/Cilium — adopt now for networking. Serverless containers — use for appropriate workloads now. Wasm — pilot for edge/plugin use cases, watch for general workloads. MicroVMs — let cloud providers manage. Key principle: containers (OCI) remain the packaging format; the runtime and orchestration evolve underneath"
+    weight: 0.30
+    description: "Strategic recommendations"

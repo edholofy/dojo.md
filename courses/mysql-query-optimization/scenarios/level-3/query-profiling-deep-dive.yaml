@@ -1,0 +1,84 @@
+meta:
+  id: query-profiling-deep-dive
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Deep-dive query profiling — use EXPLAIN ANALYZE, optimizer trace, and handler counters to understand exactly where query time is spent"
+  tags: [MySQL, profiling, EXPLAIN-ANALYZE, optimizer-trace, handler-counters, advanced]
+
+state: {}
+
+trigger: |
+  A critical API query takes 2 seconds but EXPLAIN estimates show it
+  should be fast (few rows, good indexes). You need to understand
+  exactly where the 2 seconds are spent — is it I/O, CPU, lock waits,
+  or something else entirely?
+
+  The query:
+  SELECT o.id, o.total, o.status,
+         c.name, c.email,
+         GROUP_CONCAT(oi.product_name ORDER BY oi.price DESC) AS products
+  FROM orders o
+  JOIN customers c ON c.id = o.customer_id
+  JOIN order_items oi ON oi.order_id = o.id
+  WHERE o.customer_id = 42
+    AND o.created_at >= '2025-01-01'
+  GROUP BY o.id
+  ORDER BY o.created_at DESC
+  LIMIT 10;
+
+  EXPLAIN shows good plans (all using indexes, few rows).
+  But actual execution: 2 seconds.
+
+  Profiling tools available:
+
+  1. EXPLAIN ANALYZE (MySQL 8.0.18+):
+     Shows actual time spent at each step, not just estimates.
+
+  2. Optimizer Trace:
+     SET optimizer_trace = 'enabled=on';
+     SELECT ...; -- your query
+     SELECT * FROM information_schema.optimizer_trace;
+     Shows every decision the optimizer made.
+
+  3. Handler counters:
+     FLUSH STATUS;
+     SELECT ...; -- your query
+     SHOW STATUS LIKE 'Handler%';
+     Shows exact row-level operations (reads, writes, sorts).
+
+  4. Performance Schema events:
+     SELECT * FROM events_stages_history
+     WHERE THREAD_ID = (current thread);
+     Shows time spent in each execution stage.
+
+  5. Status counters:
+     SHOW STATUS LIKE 'Sort%';
+     SHOW STATUS LIKE 'Created_tmp%';
+     Shows temporary table and sort operations.
+
+  Your investigation reveals:
+  - Handler_read_next: 50,000 (reading 50K order_items)
+  - Created_tmp_disk_tables: 1 (GROUP_CONCAT overflow to disk)
+  - Sort_merge_passes: 5 (sorting on disk, not in memory)
+  - GROUP_CONCAT result for one order has 500+ items
+
+  Task: Write the query profiling guide. Include: how to use EXPLAIN
+  ANALYZE to find time bottlenecks, how to read optimizer trace output,
+  what handler counters reveal about row access patterns, how to
+  identify temporary table and sort issues, and the fix for this
+  specific query.
+
+assertions:
+  - type: llm_judge
+    criteria: "EXPLAIN ANALYZE interpretation is explained — shows how to read the actual_time field (start_time...end_time), how actual_rows vs estimated rows reveals bad estimates, and identifies which iterator in the tree is consuming the most time. This is the primary tool for finding where 2 seconds is spent"
+    weight: 0.35
+    description: "EXPLAIN ANALYZE interpretation"
+  - type: llm_judge
+    criteria: "Handler counters and temporary tables are decoded — Handler_read_next=50K means 50K sequential reads (scanning through order_items), Created_tmp_disk_tables=1 means the temporary table overflowed to disk (likely GROUP_CONCAT result exceeding group_concat_max_len or tmp_table_size), and Sort_merge_passes=5 indicates sort didn't fit in sort_buffer_size"
+    weight: 0.35
+    description: "Counters decoded"
+  - type: llm_judge
+    criteria: "Fix for the specific query is provided — the GROUP_CONCAT on 500+ items per order is the bottleneck (overflows to disk temp table). Solutions: add LIMIT within GROUP_CONCAT (MySQL doesn't support it natively, so use a subquery), increase group_concat_max_len and tmp_table_size, or restructure to return order items separately instead of concatenating"
+    weight: 0.30
+    description: "Specific query fix"

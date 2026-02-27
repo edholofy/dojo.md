@@ -1,0 +1,74 @@
+meta:
+  id: query-optimizer-hints
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Use MySQL optimizer hints — influence query plans with index hints, optimizer_switch, and MySQL 8.0 hint syntax"
+  tags: [MySQL, optimizer-hints, USE-INDEX, FORCE-INDEX, optimizer-switch, intermediate]
+
+state: {}
+
+trigger: |
+  Your application has a query that usually runs in 5ms but
+  occasionally switches to a slow plan (15 seconds). The DBA says
+  the optimizer's statistics are sometimes stale, causing it to choose
+  a full table scan instead of an index scan. You need to understand
+  how to influence the optimizer's choices.
+
+  The query:
+  SELECT * FROM orders
+  WHERE customer_id = 42 AND status = 'pending'
+  ORDER BY created_at DESC LIMIT 10;
+
+  Fast plan (normal): Uses idx_customer_status (customer_id, status)
+  Slow plan (occasional): Full table scan when optimizer estimates
+  the index will return too many rows (stale statistics)
+
+  MySQL hint mechanisms:
+
+  1. Traditional index hints (SQL-level):
+     SELECT * FROM orders USE INDEX (idx_customer_status) WHERE ...
+     SELECT * FROM orders FORCE INDEX (idx_customer_status) WHERE ...
+     SELECT * FROM orders IGNORE INDEX (idx_status) WHERE ...
+
+  2. MySQL 8.0+ optimizer hints (comment-based):
+     SELECT /*+ INDEX(orders idx_customer_status) */ * FROM orders ...
+     SELECT /*+ NO_INDEX(orders idx_status) */ * FROM orders ...
+     SELECT /*+ JOIN_ORDER(orders, customers) */ ...
+     SELECT /*+ SET_VAR(join_buffer_size=16M) */ ...
+     SELECT /*+ MAX_EXECUTION_TIME(5000) */ ...  -- timeout in ms
+
+  3. optimizer_switch (session/global):
+     SET optimizer_switch = 'index_merge=off';
+     SET optimizer_switch = 'block_nested_loop=off';
+     SET optimizer_switch = 'derived_merge=off';
+
+  4. ANALYZE TABLE (update statistics):
+     ANALYZE TABLE orders;  -- Recalculate index statistics
+
+  Common scenarios where hints are needed:
+  A. Plan instability (same query, different plans)
+  B. Optimizer choosing wrong join order
+  C. Index merge being slower than single index
+  D. Derived table merging causing performance regression
+  E. Setting per-query memory limits
+
+  Task: Explain when and how to use optimizer hints. Write: the
+  difference between USE INDEX, FORCE INDEX, and IGNORE INDEX, the
+  MySQL 8.0 hint syntax and available hints, when to use ANALYZE TABLE
+  vs hints (root cause vs workaround), common optimizer_switch settings,
+  and the risks of using hints in production.
+
+assertions:
+  - type: llm_judge
+    criteria: "Index hints are correctly differentiated — USE INDEX suggests the optimizer consider only these indexes (but it may still choose a table scan), FORCE INDEX tells the optimizer to use the index unless impossible (treats table scan as very expensive), IGNORE INDEX excludes specific indexes. FORCE INDEX is stronger than USE INDEX"
+    weight: 0.35
+    description: "Index hints differentiated"
+  - type: llm_judge
+    criteria: "MySQL 8.0 hints are explained — /*+ ... */ syntax is preferred over traditional hints because they don't change SQL semantics, support more features (JOIN_ORDER, SET_VAR, MAX_EXECUTION_TIME), and can be added without modifying query structure. Shows examples of common hints and their use cases"
+    weight: 0.35
+    description: "MySQL 8.0 hints explained"
+  - type: llm_judge
+    criteria: "Risks and best practices are discussed — hints are workarounds, not fixes (ANALYZE TABLE and index design are better long-term solutions), hints can become counter-productive when data distribution changes, they should be documented and reviewed periodically, and per-query SET_VAR/MAX_EXECUTION_TIME are safer than global optimizer_switch changes"
+    weight: 0.30
+    description: "Risks and best practices"

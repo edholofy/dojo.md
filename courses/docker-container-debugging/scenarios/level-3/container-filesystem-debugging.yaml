@@ -1,0 +1,70 @@
+meta:
+  id: container-filesystem-debugging
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug container filesystem issues — diagnose storage driver problems, layer corruption, copy-on-write behavior, and container diff analysis"
+  tags: [Docker, filesystem, storage-driver, overlay2, copy-on-write, layers, advanced]
+
+state: {}
+
+trigger: |
+  Your application container is behaving strangely — configuration
+  files appear to have been modified, but nobody changed the image:
+
+  $ docker diff webapp-1
+  C /etc/nginx/nginx.conf
+  A /tmp/session_abc123
+  C /var/log/nginx/access.log
+  A /var/log/nginx/error.log
+  C /app/config/settings.json
+
+  The C (changed) entries show files modified in the container's
+  writable layer. Someone exec'd into the container and made changes
+  directly — these changes aren't in the image and will be lost on
+  container restart.
+
+  Deeper investigation reveals storage driver issues:
+
+  $ docker info | grep "Storage Driver"
+  Storage Driver: overlay2
+
+  $ ls /var/lib/docker/overlay2/
+  (hundreds of directories — one per layer)
+
+  $ du -sh /var/lib/docker/overlay2/
+  89GB
+
+  Problem 1: A container's writable layer grew to 15GB because the
+  application writes temporary files that are never cleaned up. Even
+  though the files are "deleted" inside the container, the overlay2
+  whiteout files still consume space.
+
+  Problem 2: docker commit was used to save a modified container as
+  a new image. This created a massive single layer with all the
+  runtime changes, making the image 3x larger than necessary.
+
+  Problem 3: After an unclean Docker shutdown, some overlay2 layers
+  are corrupted:
+  $ docker inspect broken-container
+  Error: layer not found
+
+  Task: Explain container filesystem debugging. Write: how overlay2
+  works (lower/upper/merged/work directories), copy-on-write behavior,
+  docker diff for change detection, whiteout files, why docker commit
+  is an anti-pattern, layer corruption recovery, and best practices
+  for managing container writable layers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Overlay2 mechanics are explained — overlay2 uses lower directories (read-only image layers), upper directory (container's writable layer), merged directory (unified view), work directory (atomic operations). Copy-on-write: first write to a file copies it from lower to upper, then modifies. Deletes create whiteout files in upper layer (file still exists in lower). docker diff shows C (changed), A (added), D (deleted) in the writable layer"
+    weight: 0.35
+    description: "Overlay2 mechanics"
+  - type: llm_judge
+    criteria: "Layer management issues are covered — container writable layer grows with every write (even temporary files). Deleting files creates whiteout entries, not actual space recovery. docker commit captures the entire writable layer as a new image layer — includes temp files, logs, secrets, and is not reproducible. Always use Dockerfile for image creation, not docker commit. Large writable layers indicate the app should use volumes for data/logs/temp files"
+    weight: 0.35
+    description: "Layer management"
+  - type: llm_judge
+    criteria: "Recovery and best practices are practical — layer corruption: docker system prune can remove orphaned layers. For specific container: docker rm (removes writable layer). For images: docker rmi and re-pull. /var/lib/docker/overlay2 should not be manually modified. Best practices: use volumes for persistent data, tmpfs for temporary data, --read-only filesystem where possible, monitor writable layer size with docker system df -v, set storage-opts for layer size limits"
+    weight: 0.30
+    description: "Recovery and practices"

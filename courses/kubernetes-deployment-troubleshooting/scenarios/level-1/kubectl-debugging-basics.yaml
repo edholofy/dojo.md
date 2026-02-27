@@ -1,0 +1,56 @@
+meta:
+  id: kubectl-debugging-basics
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Learn essential kubectl debugging commands — logs, describe, exec, port-forward, and events for systematic troubleshooting"
+  tags: [Kubernetes, kubectl, debugging, logs, describe, exec, beginner]
+
+state: {}
+
+trigger: |
+  A teammate asks for help debugging a misbehaving pod. You need to
+  walk them through the essential kubectl debugging toolkit.
+
+  Here's what they see:
+
+  $ kubectl get pods -n production
+  NAME                         READY   STATUS    RESTARTS   AGE
+  inventory-svc-6f7g8h9i-j0  1/1     Running   3          45m
+  inventory-svc-6f7g8h9i-k1  1/1     Running   0          45m
+
+  One pod has 3 restarts, the other has 0. Both show Running now.
+
+  They need to figure out:
+  1. Why did the first pod restart 3 times?
+  2. What's different about the two pods?
+  3. Is the application actually healthy?
+
+  Key commands to teach:
+  - kubectl describe pod: events, conditions, container state, restart reason
+  - kubectl logs: current and previous container output
+  - kubectl logs --previous: see logs from the crashed container
+  - kubectl exec: run commands inside the container
+  - kubectl port-forward: test the application locally
+  - kubectl get events: cluster-wide event timeline
+  - kubectl top pod: resource usage (requires metrics-server)
+
+  Task: Explain the essential kubectl debugging workflow. Write: the
+  purpose and usage of each debugging command (describe, logs, logs
+  --previous, exec, port-forward, events, top), the order to use them
+  for systematic debugging, what information each command reveals, and
+  how to debug multi-container pods (using -c flag).
+
+assertions:
+  - type: llm_judge
+    criteria: "Core debugging commands are explained with purpose — kubectl describe pod shows events/conditions/state (first command to run), kubectl logs shows stdout/stderr output, kubectl logs --previous shows logs from the crashed container instance, kubectl exec -it allows interactive debugging inside the container, kubectl port-forward tunnels to test the app locally, kubectl get events shows cluster-wide timeline"
+    weight: 0.35
+    description: "Core debugging commands"
+  - type: llm_judge
+    criteria: "Systematic debugging order is presented — recommended flow: (1) kubectl get pods to see status/restarts, (2) kubectl describe pod for events and exit codes, (3) kubectl logs / logs --previous for application errors, (4) kubectl exec to inspect container state (env vars, files, connectivity), (5) kubectl top pod for resource usage. For multi-container pods: use -c <container-name> flag"
+    weight: 0.35
+    description: "Systematic debugging order"
+  - type: llm_judge
+    criteria: "Practical usage patterns are shown — how to stream logs (kubectl logs -f), follow multiple pods (kubectl logs -l app=inventory-svc), filter events by type (kubectl get events --field-selector type=Warning), test connectivity from inside a pod (kubectl exec -- curl, nslookup), and use ephemeral debug containers (kubectl debug) for distroless images that lack shell access"
+    weight: 0.30
+    description: "Practical usage patterns"

@@ -1,0 +1,52 @@
+meta:
+  id: performance-sla-design
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL performance SLAs — define latency budgets, throughput targets, and capacity planning for enterprise workloads"
+  tags: [MySQL, SLA, performance, latency, capacity-planning, expert]
+
+state: {}
+
+trigger: |
+  Your company is formalizing database performance SLAs. The platform
+  serves 30M daily active users across 8 product teams. There are no
+  documented standards — teams say "the database should be fast" but
+  there's no definition of "fast."
+
+  Current state:
+  - 10 MySQL clusters (mix of RDS and Aurora)
+  - P50: 3ms, P95: 30ms, P99: 300ms, P99.9: 3 seconds
+  - The P99.9 tail causes user-visible timeouts
+  - No query budget per team — one team's query impacts others
+  - No capacity planning — discover limits during traffic spikes
+
+  Product teams:
+  1. Checkout (critical): Needs <5ms P99 for payment queries
+  2. Product Search: Needs <50ms P95 for search results
+  3. Analytics: 15-minute aggregation queries, needs throughput
+  4. Notifications: Burst writes 30K/sec during campaigns
+  5. User Profile: Read-heavy, needs 99.99% availability
+
+  The VP asks:
+  - "What should our database SLAs be?"
+  - "How do we prevent one team from degrading another?"
+  - "When do we need to add capacity?"
+
+  Task: Design the performance SLA framework. Write: tiered SLA
+  definitions, latency budget allocation per team, capacity planning
+  model, isolation strategy, and cost-performance trade-off analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "SLA tiers are defined with specific metrics — at least 3 tiers (critical/standard/batch) with latency targets (P50, P95, P99), throughput limits, and availability per tier. Maps the 5 teams to appropriate tiers. Critical tier (checkout) has strictest requirements"
+    weight: 0.35
+    description: "Specific SLA tiers"
+  - type: llm_judge
+    criteria: "Isolation strategy prevents noisy neighbors — separate clusters or ProxySQL query routing per team, connection limits per team/service, query timeout enforcement (MAX_EXECUTION_TIME), and resource groups (MySQL 8.0) for CPU allocation. Explains how to detect approaching limits before incidents"
+    weight: 0.35
+    description: "Noisy neighbor isolation"
+  - type: llm_judge
+    criteria: "Capacity planning is quantified — utilization thresholds for scaling (70% CPU triggers planning, 85% triggers action), growth projections based on historical data, lead time for provisioning, and the cost of each SLA tier to help teams make informed decisions"
+    weight: 0.30
+    description: "Quantified capacity planning"

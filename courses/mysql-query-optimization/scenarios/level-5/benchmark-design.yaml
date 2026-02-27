@@ -1,0 +1,47 @@
+meta:
+  id: benchmark-design
+  level: 5
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL benchmarks — create rigorous performance tests, avoid common pitfalls, and translate results into infrastructure decisions"
+  tags: [MySQL, benchmarks, sysbench, performance-testing, capacity-planning, master]
+
+state: {}
+
+trigger: |
+  Your company needs to decide between Aurora MySQL and self-managed
+  MySQL on EC2 for a $1.5M infrastructure decision. The CTO says "run
+  benchmarks by Friday." You know naive benchmarking leads to wrong
+  conclusions.
+
+  Context:
+  - Current: Self-managed MySQL 8.0 on r6g.4xlarge
+  - Candidate: Aurora MySQL 8.0 on db.r6g.4xlarge
+  - Workload: Mixed OLTP (75% reads, 25% writes), 80K TPS
+  - Data: 500GB active, 2TB total
+  - Critical queries: point lookups, range scans, JOINs, bulk inserts
+
+  Common mistakes you've seen:
+  1. Using sysbench with data fitting in RAM (no I/O test)
+  2. Running 5-minute benchmarks (not long enough)
+  3. Testing with uniform data (not real distribution)
+  4. Single-connection tests (not concurrent load)
+  5. Ignoring storage (Aurora I/O costs vs EBS provisioned IOPS)
+  6. Not testing failure scenarios
+
+  Task: Design the benchmark plan. Write: methodology, workload design,
+  metrics to collect, pitfalls to avoid, and decision framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Methodology is rigorous — tests data larger than RAM (500GB+), runs for hours with warm-up phase, includes concurrent load matching production (100+ connections), and tests both normal and degraded modes (replica failure, high connections)"
+    weight: 0.35
+    description: "Rigorous methodology"
+  - type: llm_judge
+    criteria: "Workload represents real usage — captures 75/25 read/write mix, uses representative queries (not just simple SELECTs), realistic data distributions, and tests at multiple concurrency levels to find saturation"
+    weight: 0.35
+    description: "Realistic workload"
+  - type: llm_judge
+    criteria: "Decision framework considers more than QPS — includes latency percentiles, cost-per-transaction, operational overhead, failure behavior, and long-term cost trajectory. Acknowledges benchmarks are one input alongside operational and strategic factors"
+    weight: 0.30
+    description: "Holistic decision framework"

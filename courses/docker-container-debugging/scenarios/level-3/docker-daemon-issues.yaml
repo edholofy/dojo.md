@@ -1,0 +1,73 @@
+meta:
+  id: docker-daemon-issues
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker daemon issues — diagnose daemon startup failures, storage driver problems, and daemon configuration errors"
+  tags: [Docker, daemon, storage-driver, daemon.json, configuration, advanced]
+
+state: {}
+
+trigger: |
+  The Docker daemon won't start after a configuration change:
+
+  $ sudo systemctl start docker
+  Job for docker.service failed because the control process exited
+  with error code.
+
+  $ sudo journalctl -u docker -e
+  dockerd: unable to configure the Docker daemon with file
+  /etc/docker/daemon.json: invalid character '}' after object key
+
+  $ cat /etc/docker/daemon.json
+  {
+    "storage-driver": "overlay2",
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "10m"
+      "max-file": "3"
+    }
+  }
+
+  Missing comma after "max-size": "10m"! JSON syntax error.
+
+  After fixing the JSON, a different error:
+  $ sudo journalctl -u docker -e
+  dockerd: failed to start daemon: error initializing graphdriver:
+  driver not supported
+
+  The server has a btrfs filesystem but overlay2 was configured as
+  the storage driver. overlay2 requires ext4 or xfs.
+
+  After changing to the correct storage driver:
+  $ sudo systemctl start docker
+  (success, but all containers and images are gone!)
+
+  Changing storage drivers creates a new storage directory. The old
+  images and containers using the previous driver are inaccessible.
+
+  Additional daemon issues to cover:
+  - Disk space exhaustion preventing container creation
+  - iptables conflicts breaking container networking
+  - DNS configuration in daemon.json
+  - Live restore feature for daemon upgrades
+
+  Task: Explain Docker daemon troubleshooting. Write: how to read
+  daemon logs (journalctl, Docker Desktop logs), common daemon.json
+  errors (JSON syntax, invalid options), storage driver compatibility
+  and migration, disk space management (docker system df, prune), and
+  daemon configuration best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Daemon log analysis is explained — Linux: journalctl -u docker for systemd logs, Docker Desktop: ~/Library/Logs/Docker/ (Mac). Common startup failures: invalid daemon.json (JSON syntax error), storage driver incompatibility, disk space exhaustion, port conflicts, permission issues on /var/run/docker.sock. Always validate daemon.json with jq before restarting: jq empty /etc/docker/daemon.json"
+    weight: 0.35
+    description: "Daemon log analysis"
+  - type: llm_judge
+    criteria: "Storage driver issues are covered — overlay2 requires ext4/xfs filesystem, btrfs driver requires btrfs filesystem. Changing storage drivers means losing access to existing images/containers (stored in /var/lib/docker). Check current driver: docker info | grep 'Storage Driver'. Check filesystem: df -T /var/lib/docker. Use data-root in daemon.json to change Docker's storage location"
+    weight: 0.35
+    description: "Storage driver issues"
+  - type: llm_judge
+    criteria: "Configuration best practices are practical — keep a backup of working daemon.json, validate JSON before applying, use live-restore: true to keep containers running during daemon restart, configure log rotation globally, set DNS servers if needed, monitor disk space with docker system df. Disk cleanup: docker system prune -a removes unused images, containers, networks, volumes"
+    weight: 0.30
+    description: "Configuration practices"

@@ -1,0 +1,63 @@
+meta:
+  id: init-container-failures
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug init container failures — diagnose why pods are stuck in Init state and how init containers affect pod startup"
+  tags: [Kubernetes, init-containers, pod-startup, dependencies, intermediate]
+
+state: {}
+
+trigger: |
+  Your application pod is stuck in Init:0/2 state and never starts:
+
+  $ kubectl get pods
+  NAME                        READY   STATUS     RESTARTS   AGE
+  webapp-4a5b6c7d-e8f9       0/1     Init:0/2   0          10m
+
+  $ kubectl describe pod webapp-4a5b6c7d-e8f9
+  Init Containers:
+    wait-for-db:
+      Image:   busybox
+      Command: ["sh", "-c", "until nc -z postgres-svc 5432; do echo
+               waiting for postgres; sleep 2; done"]
+      State:   Running
+        Started: 2025-12-01T10:00:00Z
+    run-migrations:
+      Image:   webapp:v2.0
+      Command: ["./migrate", "--up"]
+      State:   Waiting
+        Reason: PodInitializing
+
+  Events:
+    Normal  Pulled   10m  kubelet  Container image "busybox" pulled
+    Normal  Created  10m  kubelet  Created container wait-for-db
+    Normal  Started  10m  kubelet  Started container wait-for-db
+
+  The first init container (wait-for-db) is running forever because
+  postgres-svc doesn't exist in this namespace — the database is in the
+  "data" namespace and should be referenced as postgres-svc.data.
+
+  The second init container (run-migrations) can't start because init
+  containers run sequentially — it waits for wait-for-db to complete.
+
+  Task: Explain init containers and how to debug them. Write: what init
+  containers are (run-to-completion before main container starts), how
+  they run sequentially, how to read Init:X/Y status, how to view init
+  container logs (kubectl logs <pod> -c <init-container>), common init
+  container patterns (wait for dependency, run migrations, download
+  config), and how to fix stuck init containers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Init containers are explained — specialized containers that run to completion before the main container starts. They run sequentially (init-1 must succeed before init-2 starts). Init:0/2 means 0 of 2 init containers have completed. If an init container fails, the pod restarts (applying the restartPolicy). Init containers share volumes with the main container but have their own image and command"
+    weight: 0.35
+    description: "Init containers explained"
+  - type: llm_judge
+    criteria: "Debugging workflow is clear — read Init status (Init:X/Y shows progress), kubectl describe pod shows each init container state and events, kubectl logs <pod> -c <init-container-name> shows init container output (critical for debugging), identify if init container is stuck running (infinite wait loop) vs failing (exit code). In this case, the DNS name is wrong — should use cross-namespace DNS"
+    weight: 0.35
+    description: "Init container debugging"
+  - type: llm_judge
+    criteria: "Common patterns and fixes covered — patterns: wait-for-dependency (check service availability), run-migrations (database schema changes), download-config (fetch from external source), set-permissions (chown/chmod on shared volumes). Fixes: add timeouts to wait loops, use correct DNS names for cross-namespace services (<svc>.<namespace>.svc.cluster.local), add resource limits to init containers"
+    weight: 0.30
+    description: "Patterns and fixes"

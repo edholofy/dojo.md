@@ -1,0 +1,66 @@
+meta:
+  id: cicd-pipeline-design
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design container CI/CD pipelines — implement build, test, scan, sign, and deploy workflows for containerized applications at scale"
+  tags: [Docker, CI/CD, pipeline, deployment, automation, GitOps, expert]
+
+state: {}
+
+trigger: |
+  Your organization is standardizing its container CI/CD pipeline.
+  Currently, each team has ad-hoc scripts:
+
+  Team A: docker build && docker push && ssh prod docker pull && restart
+  Team B: Jenkins pipeline with docker-compose up on build agent
+  Team C: GitHub Actions with manual approval for production
+
+  None have: security scanning, image signing, staged rollouts,
+  automated rollback, or audit trails.
+
+  Design a standard pipeline:
+
+  Stage 1 — Build:
+  - BuildKit with layer caching (registry-based cache)
+  - Multi-architecture builds (amd64 + arm64) via docker buildx
+  - Deterministic builds: pinned base image digests, lock files
+  - Build metadata: git SHA, build timestamp, CI job URL as labels
+
+  Stage 2 — Test:
+  - Unit tests in build stage (fail fast)
+  - Integration tests with docker compose (spin up dependencies)
+  - Smoke tests against built image (start container, hit health endpoint)
+  - Test containers clean up after themselves (--rm, compose down -v)
+
+  Stage 3 — Security:
+  - Trivy scan: block CRITICAL, warn HIGH
+  - SBOM generation (syft) attached as attestation
+  - Image signing (cosign) with CI identity
+  - License compliance check
+
+  Stage 4 — Deploy:
+  - Push to registry with git SHA tag + branch tag
+  - Staging: automatic deploy, run integration tests
+  - Production: manual approval gate, canary deployment (10% → 50% → 100%)
+  - Automated rollback if error rate exceeds threshold
+
+  Task: Design the container CI/CD pipeline. Write: each stage in
+  detail, caching strategies for fast builds, testing containers in
+  CI (compose-based integration tests), security gates, deployment
+  strategies (canary, blue-green), rollback automation, and how to
+  standardize across teams without being overly rigid.
+
+assertions:
+  - type: llm_judge
+    criteria: "Build and test stages are thorough — BuildKit cache: --cache-from type=registry for cross-CI cache sharing. Multi-arch: docker buildx build --platform linux/amd64,linux/arm64. Pin base images by digest for reproducibility. Test in CI: docker compose up -d to start dependencies, run tests, compose down -v to clean up. Smoke test: start the built image, wait for health check, hit /health endpoint. All test containers must clean up (no orphaned resources in CI)"
+    weight: 0.35
+    description: "Build and test"
+  - type: llm_judge
+    criteria: "Security and deployment gates are covered — scan before push (shift left). Trivy with --exit-code 1 --severity CRITICAL fails the pipeline. SBOM with syft for supply chain transparency. Image signing with cosign (keyless via OIDC in CI). Deploy: push to registry with immutable tags (git SHA, never :latest). Canary: deploy to subset, monitor error rate, auto-promote or rollback. Blue-green: run both versions, switch traffic at load balancer. Rollback: keep previous N images, automate based on health metrics"
+    weight: 0.35
+    description: "Security and deployment"
+  - type: llm_judge
+    criteria: "Standardization approach is practical — provide a shared pipeline template/library that teams extend. Core stages (build, scan, sign) are mandatory and team-managed. Testing and deployment stages are customizable per team. Platform team maintains the template, teams consume via CI includes. Don't enforce identical pipelines — allow team-specific test suites and deployment strategies. Measure: build times, deployment frequency, change failure rate, mean time to recovery (DORA metrics)"
+    weight: 0.30
+    description: "Standardization"

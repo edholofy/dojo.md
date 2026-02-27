@@ -1,0 +1,67 @@
+meta:
+  id: connection-management
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL connections — deploy ProxySQL for connection pooling, read/write splitting, and query routing"
+  tags: [MySQL, ProxySQL, connection-pooling, read-write-split, routing, advanced]
+
+state: {}
+
+trigger: |
+  Your application is experiencing "Too many connections" errors during
+  peak hours. The MySQL server has max_connections=500 but 20
+  microservices are each opening 50 connections, totaling 1,000
+  potential connections. Most connections sit idle in Sleep state.
+
+  Current state:
+  - MySQL max_connections: 500
+  - Application connections needed: 1,000 (20 services × 50)
+  - Active queries at peak: only 80 concurrent
+  - Sleep connections: 420 (84% idle)
+  - Memory per connection: ~10MB (thread stack + buffers)
+  - Total connection memory: 500 × 10MB = 5GB wasted on idle connections
+
+  SHOW PROCESSLIST during peak:
+  - 80 connections in Query state (active)
+  - 420 connections in Sleep state (idle, wasting resources)
+  - Error: "Too many connections" — 500 rejected in last hour
+
+  Architecture problem:
+  - Each microservice maintains its own connection pool
+  - No connection sharing between services
+  - Read queries (70%) go to primary — replicas underutilized
+  - No query routing — all services connect directly to MySQL
+
+  ProxySQL deployment plan:
+  - Insert ProxySQL between applications and MySQL
+  - Multiplex: 1,000 frontend connections → 200 backend connections
+  - Read/write split: writes → primary, reads → replicas
+  - Query routing rules: route by query pattern, user, schema
+  - Connection pooling: reuse backend connections across services
+
+  Questions:
+  1. How does ProxySQL multiplex connections?
+  2. How to configure read/write splitting?
+  3. How to handle prepared statements through a proxy?
+  4. What about MySQL Router (official) vs ProxySQL?
+  5. How to monitor connection pool health?
+
+  Task: Design the connection management architecture. Write: the
+  ProxySQL deployment plan, the read/write splitting configuration,
+  the query routing rules, the connection pool sizing (frontend and
+  backend), and the comparison with MySQL Router.
+
+assertions:
+  - type: llm_judge
+    criteria: "ProxySQL multiplexing is explained — frontend connections from applications are mapped to a smaller pool of backend connections to MySQL. ProxySQL maintains the session state and switches backend connections as needed. This reduces MySQL from 500+ connections to ~200 backend connections, saving memory and reducing context switching"
+    weight: 0.35
+    description: "ProxySQL multiplexing explained"
+  - type: llm_judge
+    criteria: "Read/write split is configured — ProxySQL query rules route SELECT to read replicas (hostgroup for readers) and INSERT/UPDATE/DELETE to primary (hostgroup for writers). Handles edge cases: SELECT ... FOR UPDATE goes to primary, queries within transactions go to primary, and freshly-written data reads may need primary (session stickiness or replication-lag-aware routing)"
+    weight: 0.35
+    description: "Read/write split configured"
+  - type: llm_judge
+    criteria: "Pool sizing and comparison are provided — backend pool size calculation (based on active query concurrency, not application pool size), ProxySQL vs MySQL Router comparison (ProxySQL: more features, query routing, caching; MySQL Router: simpler, better InnoDB Cluster integration, no connection pooling), and monitoring queries for pool health (ProxySQL stats tables)"
+    weight: 0.30
+    description: "Pool sizing and comparison"

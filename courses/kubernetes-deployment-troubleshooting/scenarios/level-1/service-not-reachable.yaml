@@ -1,0 +1,66 @@
+meta:
+  id: service-not-reachable
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Service connectivity — diagnose why a Kubernetes Service can't reach its backend pods"
+  tags: [Kubernetes, Service, networking, endpoints, DNS, beginner]
+
+state: {}
+
+trigger: |
+  Your frontend app can't connect to the backend API service. The
+  frontend logs show:
+
+  Error: connect ECONNREFUSED api-service:8080
+  Error: getaddrinfo ENOTFOUND api-service
+
+  Both the frontend and backend are running in the same namespace.
+
+  $ kubectl get pods -n app
+  NAME                        READY   STATUS    RESTARTS   AGE
+  frontend-6a7b8c9d-p1       1/1     Running   0          10m
+  backend-api-3e4f5g6h-q2    1/1     Running   0          10m
+
+  $ kubectl get svc -n app
+  NAME          TYPE        CLUSTER-IP    PORT(S)    AGE
+  api-service   ClusterIP   10.96.45.12   80/TCP     10m
+
+  $ kubectl get endpoints api-service -n app
+  NAME          ENDPOINTS   AGE
+  api-service   <none>      10m
+
+  The endpoints are empty! The Service exists and the pod is Running,
+  but they're not connected.
+
+  Investigation:
+  - Service selector: app=backend-api
+  - Pod labels: app=api-backend (label mismatch!)
+  - The Service uses port 80 but the container listens on 8080
+    (targetPort should be 8080)
+
+  Two problems:
+  1. Label selector mismatch: Service looks for app=backend-api but
+     pods have app=api-backend
+  2. Port mismatch: Service port 80 → targetPort not set (defaults
+     to 80, but container listens on 8080)
+
+  Task: Explain how Kubernetes Services connect to pods. Write: how
+  selectors match pods to Services (label-based), how to verify
+  endpoints, the port vs targetPort distinction, common Service
+  connectivity issues, and how to test connectivity from inside the
+  cluster.
+
+assertions:
+  - type: llm_judge
+    criteria: "Service-to-pod connection is explained — Services use label selectors to find matching pods and create endpoints. If no pods match the selector, endpoints list is empty and the Service has nothing to route to. The selector must exactly match the pod labels"
+    weight: 0.35
+    description: "Service-pod connection"
+  - type: llm_judge
+    criteria: "Debugging steps identify both issues — check endpoints (kubectl get endpoints), compare Service selector with pod labels (kubectl get svc -o yaml vs kubectl get pod --show-labels), verify port configuration (Service port vs container port vs targetPort). Shows how to test with kubectl exec and curl/wget from within the cluster"
+    weight: 0.35
+    description: "Debugging identifies issues"
+  - type: llm_judge
+    criteria: "Port configuration is clearly explained — Service port: what clients connect to, targetPort: the container port to forward to (defaults to port if not specified), containerPort: informational only (doesn't actually restrict access). DNS resolution: <service-name>.<namespace>.svc.cluster.local"
+    weight: 0.30
+    description: "Port configuration explained"

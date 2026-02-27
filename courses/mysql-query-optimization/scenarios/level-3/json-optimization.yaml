@@ -1,0 +1,87 @@
+meta:
+  id: json-optimization
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL JSON queries — use generated columns, functional indexes, multi-valued indexes, and JSON_TABLE for efficient JSON processing"
+  tags: [MySQL, JSON, generated-columns, multi-valued-index, JSON-TABLE, advanced]
+
+state: {}
+
+trigger: |
+  Your application stores product metadata as JSON in MySQL 8.0. As
+  the product catalog grows to 5M rows, JSON queries are becoming slow
+  because they can't use indexes effectively.
+
+  Table schema:
+  CREATE TABLE products (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category_id INT NOT NULL,
+    metadata JSON NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_category (category_id)
+  ) ENGINE=InnoDB;
+
+  Sample JSON in metadata column:
+  {
+    "brand": "AcmeCorp",
+    "price": 29.99,
+    "currency": "USD",
+    "tags": ["electronics", "sale", "new-arrival"],
+    "dimensions": {"width": 10, "height": 5, "depth": 3},
+    "ratings": {"average": 4.5, "count": 230},
+    "variants": [
+      {"color": "red", "sku": "ACM-001-R", "stock": 50},
+      {"color": "blue", "sku": "ACM-001-B", "stock": 0}
+    ]
+  }
+
+  Slow queries:
+  1. Filter by brand (50K queries/day, 2 seconds each):
+     SELECT * FROM products
+     WHERE JSON_EXTRACT(metadata, '$.brand') = 'AcmeCorp';
+     -- Full table scan — no index on JSON field
+
+  2. Filter by tag (20K queries/day, 3 seconds each):
+     SELECT * FROM products
+     WHERE JSON_CONTAINS(metadata->'$.tags', '"sale"');
+     -- Full table scan — can't index arrays normally
+
+  3. Price range (30K queries/day, 1.5 seconds each):
+     SELECT * FROM products
+     WHERE CAST(JSON_EXTRACT(metadata, '$.price') AS DECIMAL(10,2))
+           BETWEEN 20 AND 50;
+     -- Full table scan — CAST prevents index usage
+
+  4. Join JSON array with another table:
+     SELECT p.name, t.tag_name
+     FROM products p, JSON_TABLE(
+       p.metadata, '$.tags[*]' COLUMNS (tag_name VARCHAR(50) PATH '$')
+     ) t
+     WHERE t.tag_name IN ('electronics', 'sale');
+
+  Optimization options:
+  A. Generated columns + regular indexes
+  B. Functional indexes (MySQL 8.0.13+)
+  C. Multi-valued indexes for arrays (MySQL 8.0.17+)
+  D. Denormalize into regular columns
+
+  Task: Optimize each slow query. Write: the generated column approach
+  (extract JSON to indexed column), functional indexes (direct index on
+  JSON expression), multi-valued indexes (for JSON arrays), JSON_TABLE
+  usage and performance, and when to denormalize vs keep JSON.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each query has a correct optimization — Query 1: functional index on JSON_EXTRACT(metadata, '$.brand') or generated column + index, Query 2: multi-valued index on CAST(metadata->'$.tags' AS CHAR(50) ARRAY) for JSON_CONTAINS, Query 3: generated column brand_price DECIMAL AS (metadata->>'$.price') STORED + regular index, Query 4: JSON_TABLE is for ad-hoc use, consider denormalizing for frequent joins"
+    weight: 0.35
+    description: "Correct optimizations"
+  - type: llm_judge
+    criteria: "Multi-valued indexes are explained — MySQL 8.0.17+ allows indexing JSON arrays, enabling efficient MEMBER OF(), JSON_CONTAINS(), and JSON_OVERLAPS() queries. Shows the CREATE INDEX syntax with CAST(... AS ... ARRAY), explains that it creates one index entry per array element, and notes limitations (only works with specific JSON functions)"
+    weight: 0.35
+    description: "Multi-valued indexes explained"
+  - type: llm_judge
+    criteria: "Denormalization trade-off is discussed — JSON is good for flexible, rarely-queried attributes; generated columns (STORED) + indexes for frequently-queried fields; full denormalization for high-performance needs. Discusses storage trade-off (STORED generated columns duplicate data) and when to keep JSON vs extract to regular columns"
+    weight: 0.30
+    description: "Denormalization trade-off"

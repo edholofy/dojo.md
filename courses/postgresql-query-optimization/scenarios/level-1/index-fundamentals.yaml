@@ -1,0 +1,76 @@
+meta:
+  id: index-fundamentals
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Understand index fundamentals — learn when to create B-tree indexes and how they affect query performance"
+  tags: [PostgreSQL, indexes, B-tree, performance, beginner]
+
+state: {}
+
+trigger: |
+  You're working on a customer support ticketing system. The database
+  has a tickets table with 5 million rows:
+
+  CREATE TABLE tickets (
+    id SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    agent_id INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'open',
+    priority VARCHAR(10) NOT NULL DEFAULT 'medium',
+    subject TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMP,
+    category VARCHAR(50),
+    tags TEXT[]
+  );
+
+  Currently the only index is on id (primary key). These queries are
+  all doing sequential scans on 5M rows:
+
+  Query 1 — Agent dashboard (runs 500 times/minute):
+  SELECT * FROM tickets
+  WHERE agent_id = 42 AND status = 'open'
+  ORDER BY priority, created_at;
+
+  Query 2 — Customer history (runs 200 times/minute):
+  SELECT * FROM tickets
+  WHERE customer_id = 12345
+  ORDER BY created_at DESC;
+
+  Query 3 — Reporting (runs hourly):
+  SELECT status, COUNT(*) FROM tickets
+  WHERE created_at >= '2026-02-01'
+  GROUP BY status;
+
+  Query 4 — Search (runs 100 times/minute):
+  SELECT * FROM tickets
+  WHERE category = 'billing' AND status IN ('open', 'pending')
+  AND created_at >= NOW() - INTERVAL '7 days';
+
+  Query 5 — Duplicate detection (runs on every new ticket):
+  SELECT * FROM tickets
+  WHERE customer_id = 12345
+  AND subject = 'Refund request'
+  AND created_at >= NOW() - INTERVAL '24 hours';
+
+  Task: For each of the 5 queries, recommend the right index. Explain
+  why you chose each index (column order matters!), what type of scan
+  the query will use after indexing, and the trade-offs of adding too
+  many indexes. Then prioritize which indexes to create first based on
+  query frequency and impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "Index recommendations are correct — multi-column indexes have the right column order (equality columns first, then range/sort columns), each query's access pattern is analyzed (point lookup vs range scan vs sort), and the recommended indexes would eliminate the sequential scans"
+    weight: 0.35
+    description: "Correct index recommendations"
+  - type: llm_judge
+    criteria: "Trade-offs are explained — discusses write overhead (indexes slow down INSERTs/UPDATEs), storage cost, index maintenance (bloat, REINDEX), and why not to create an index for every possible query. Addresses whether some queries can share indexes"
+    weight: 0.35
+    description: "Trade-offs explained"
+  - type: llm_judge
+    criteria: "Prioritization is well-reasoned — considers query frequency (agent dashboard at 500/min is highest priority), business impact, and whether a single index can serve multiple queries. Creates the minimum set of indexes for maximum impact"
+    weight: 0.30
+    description: "Well-reasoned prioritization"

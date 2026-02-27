@@ -1,0 +1,47 @@
+meta:
+  id: ma-database-integration
+  level: 5
+  course: mysql-query-optimization
+  type: output
+  description: "Plan database integration after M&A — merge two companies' MySQL databases while maintaining service continuity"
+  tags: [MySQL, M&A, integration, migration, schema-merge, master]
+
+state: {}
+
+trigger: |
+  Your company ($150M ARR) acquired a competitor ($40M ARR). Both run
+  MySQL. The board mandates full integration within 12 months.
+
+  Acquirer: MySQL 8.0 on Aurora, 15 clusters, 20TB, well-documented
+  Acquired: MySQL 5.7 on EC2, 5 clusters, 5TB, monolithic, 1 DBA
+
+  Challenges:
+  1. Schema conflicts: both have users, orders, payments tables with
+     different schemas and overlapping IDs
+  2. 1,500 shared customers — data must be merged, not duplicated
+  3. Acquired company stores PII in plain text
+  4. MySQL 5.7→8.0 upgrade needed
+  5. Both products must stay operational during integration
+  6. API compatibility for 3rd-party integrations
+  7. 7-year financial data retention requirement
+
+  CEO's directive: "One database, one platform, one team — 12 months.
+  Zero data loss."
+
+  Task: Write the integration plan. Include: system assessment, schema
+  unification strategy, data migration plan, phased timeline, and risk
+  mitigation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Schema unification handles conflicts — defines approach for merging tables (ID mapping, namespacing), resolves overlapping customer records (deduplication with merge rules), and preserves data lineage for regulatory compliance"
+    weight: 0.35
+    description: "Schema unification"
+  - type: llm_judge
+    criteria: "Timeline is phased and realistic — breaks into assessment, preparation, parallel run, migration, decommission phases. Includes MySQL 5.7→8.0 upgrade and PII encryption remediation. Both products remain operational throughout"
+    weight: 0.35
+    description: "Phased timeline"
+  - type: llm_judge
+    criteria: "Risk mitigation covers business-critical concerns — rollback plan at each phase, data validation (row counts, financial totals), parallel running period, API compatibility layer for 3rd parties, and kill switch if customer impact detected"
+    weight: 0.30
+    description: "Business-critical risk mitigation"

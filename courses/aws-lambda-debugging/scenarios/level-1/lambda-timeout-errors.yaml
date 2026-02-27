@@ -1,0 +1,65 @@
+meta:
+  id: lambda-timeout-errors
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda timeout errors — diagnose why functions exceed their configured timeout and how to fix common timeout causes"
+  tags: [AWS, Lambda, timeout, duration, configuration, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails with a timeout error:
+
+  $ aws lambda invoke --function-name process-order output.json
+  {
+    "StatusCode": 200,
+    "FunctionError": "Unhandled",
+    "ExecutedVersion": "$LATEST"
+  }
+
+  $ cat output.json
+  {
+    "errorMessage": "2024-12-01T10:00:00.000Z abc-123 Task timed out after 3.00 seconds"
+  }
+
+  CloudWatch Logs:
+  START RequestId: abc-123 Version: $LATEST
+  2024-12-01T10:00:00.000Z abc-123 Connecting to database...
+  2024-12-01T10:00:03.000Z abc-123 Task timed out after 3.00 seconds
+  END RequestId: abc-123
+  REPORT RequestId: abc-123 Duration: 3001.45 ms
+  Billed Duration: 3000 ms Memory Size: 128 MB Max Memory Used: 65 MB
+
+  The function has a 3-second timeout (default) but the database
+  connection takes 4+ seconds on cold start. The function never
+  reaches the actual business logic.
+
+  Fix options:
+  1. Increase timeout: aws lambda update-function-configuration \
+       --function-name process-order --timeout 30
+  2. Optimize: connection pooling, move DB connection outside handler
+  3. Use RDS Proxy for faster connection establishment
+
+  But setting timeout too high is also a problem — if the function
+  hangs, you pay for the full duration (max 15 minutes).
+
+  Task: Explain Lambda timeout debugging. Write: what the timeout
+  error means, how to read the REPORT line (Duration, Billed Duration,
+  Memory), common timeout causes (DB connections, API calls, large
+  payloads), how to set appropriate timeouts, and the relationship
+  between Lambda timeout and API Gateway timeout (29 seconds max).
+
+assertions:
+  - type: llm_judge
+    criteria: "Timeout mechanics are explained — Lambda timeout is configurable (default 3 seconds, max 15 minutes). When exceeded, Lambda kills the execution and returns a Task timed out error. The REPORT line shows: Duration (actual execution time), Billed Duration (rounded up to nearest ms or 1ms minimum), Memory Size (configured), Max Memory Used (peak). Billed for full timeout duration if it times out. CloudWatch Logs show what happened before timeout"
+    weight: 0.35
+    description: "Timeout mechanics"
+  - type: llm_judge
+    criteria: "Common causes and fixes are covered — database connections on cold start (use connection pooling, RDS Proxy, initialize outside handler for reuse), external API calls without timeout (always set HTTP timeout shorter than Lambda timeout), large S3 file processing (stream instead of loading entirely into memory), cold start initialization (heavy imports, large packages). Set Lambda timeout slightly higher than expected max duration. API Gateway has a hard 29-second limit — Lambda behind API GW must complete within 29s"
+    weight: 0.35
+    description: "Causes and fixes"
+  - type: llm_judge
+    criteria: "Best practices are practical — set timeout based on p99 duration + buffer (not arbitrary large values). Monitor with CloudWatch Duration metric. Alert when duration approaches timeout. Use X-Ray to identify slow segments. Move initialization code outside handler (runs once per cold start, reused on warm invocations). Set HTTP client timeouts shorter than Lambda timeout to get a proper error instead of Lambda timeout. For long-running tasks: use Step Functions, SQS, or async invocation instead of increasing Lambda timeout"
+    weight: 0.30
+    description: "Best practices"

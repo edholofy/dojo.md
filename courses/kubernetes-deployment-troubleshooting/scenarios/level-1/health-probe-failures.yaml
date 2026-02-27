@@ -1,0 +1,70 @@
+meta:
+  id: health-probe-failures
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug health probe failures — understand liveness, readiness, and startup probes and why misconfigured probes cause restarts or traffic loss"
+  tags: [Kubernetes, health-probes, liveness, readiness, startup, beginner]
+
+state: {}
+
+trigger: |
+  Your application is running but keeps getting restarted, and users
+  report intermittent 503 errors:
+
+  $ kubectl get pods
+  NAME                       READY   STATUS    RESTARTS   AGE
+  web-app-4a5b6c7d-mn01    1/1     Running   12         1h
+  web-app-4a5b6c7d-op23    0/1     Running   0          30s
+  web-app-4a5b6c7d-qr45    1/1     Running   8          1h
+
+  $ kubectl describe pod web-app-4a5b6c7d-mn01
+  Containers:
+    web-app:
+      Liveness:   http-get http://:8080/healthz delay=5s timeout=1s
+                  period=10s #success=1 #failure=3
+      Readiness:  http-get http://:8080/ready delay=5s timeout=1s
+                  period=10s #success=1 #failure=3
+
+  Events:
+    Warning  Unhealthy  2m   kubelet  Liveness probe failed: HTTP probe
+             failed with statuscode: 503
+    Normal   Killing    2m   kubelet  Container web-app failed liveness
+             check, will be restarted
+    Warning  Unhealthy  30s  kubelet  Readiness probe failed: HTTP probe
+             failed with statuscode: 503
+
+  The application takes 45 seconds to fully start up (loading caches,
+  warming connections). But the liveness probe starts checking at 5
+  seconds with only 3 failures allowed (5s + 3*10s = 35s), so it kills
+  the container before it's ready.
+
+  Additionally, the readiness probe uses the same aggressive timing,
+  so during startup the pod is removed from the Service endpoints,
+  causing 503s for users.
+
+  Problems:
+  1. Liveness probe starts too early — kills the container during startup
+  2. No startup probe — would protect the container during initialization
+  3. Readiness probe timing causes premature endpoint removal
+
+  Task: Explain Kubernetes health probes. Write: the difference between
+  liveness, readiness, and startup probes, what each one controls (restart
+  vs traffic vs startup protection), how to configure timing parameters
+  (initialDelaySeconds, periodSeconds, failureThreshold, timeoutSeconds),
+  common misconfiguration patterns, and best practices for slow-starting
+  applications.
+
+assertions:
+  - type: llm_judge
+    criteria: "All three probe types are explained — liveness: kills and restarts the container if it fails (detects deadlocks/hangs), readiness: removes pod from Service endpoints if it fails (controls traffic routing), startup: disables liveness/readiness until it succeeds (protects slow-starting containers). Each probe serves a different purpose and should not use the same endpoint"
+    weight: 0.35
+    description: "Probe types explained"
+  - type: llm_judge
+    criteria: "Timing parameters are explained with the math — initialDelaySeconds (wait before first check), periodSeconds (interval between checks), failureThreshold (consecutive failures before action), timeoutSeconds (per-check timeout). Total startup tolerance = initialDelaySeconds + (failureThreshold * periodSeconds). In this case: 5 + (3*10) = 35s < 45s startup time, so the container gets killed"
+    weight: 0.35
+    description: "Timing parameters explained"
+  - type: llm_judge
+    criteria: "Fix and best practices are practical — add a startup probe with generous timeout (e.g., failureThreshold=30, periodSeconds=5 = 150s window), keep liveness probe for runtime health only (not startup), make readiness check actual dependency availability, never use the same endpoint for all three probes if they serve different purposes"
+    weight: 0.30
+    description: "Fix and best practices"

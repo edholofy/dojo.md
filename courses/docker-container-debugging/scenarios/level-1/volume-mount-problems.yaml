@@ -1,0 +1,66 @@
+meta:
+  id: volume-mount-problems
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker volume mount problems — diagnose permission errors, empty directories, and data persistence issues"
+  tags: [Docker, volumes, bind-mounts, permissions, storage, beginner]
+
+state: {}
+
+trigger: |
+  You're trying to persist data from your container but running into
+  mount issues:
+
+  Scenario 1 — Empty directory after mount:
+  $ docker run -d -v /data/db:/var/lib/postgresql/data postgres:16
+  $ docker exec -it <container> ls /var/lib/postgresql/data
+  (empty!)
+
+  The host directory /data/db didn't exist before the mount. Docker
+  created it (as root) but it's empty. PostgreSQL expected to find
+  its data files there or initialize in a writable directory.
+
+  Scenario 2 — Permission denied:
+  $ docker run -d -v $(pwd)/app:/app --user 1000:1000 node:20
+  $ docker logs <container>
+  Error: EACCES: permission denied, mkdir '/app/node_modules'
+
+  The container runs as user 1000 but the mounted directory is owned
+  by root. The user can't write to the mount.
+
+  Scenario 3 — Data disappears:
+  $ docker run --name mydb postgres:16
+  # Insert some data...
+  $ docker rm mydb
+  $ docker run --name mydb postgres:16
+  # Data is gone!
+
+  No volume was specified — data was stored in the container's writable
+  layer, which is deleted when the container is removed.
+
+  Types of Docker storage:
+  1. Bind mount: -v /host/path:/container/path (maps host directory)
+  2. Named volume: -v myvolume:/container/path (Docker-managed)
+  3. tmpfs: --tmpfs /container/path (in-memory, not persisted)
+  4. Container layer: default writable layer (deleted with container)
+
+  Task: Explain Docker storage and how to debug volume issues. Write:
+  the difference between bind mounts, named volumes, and tmpfs, common
+  permission problems and how to fix them, why data disappears without
+  volumes, how to inspect volumes (docker volume inspect), and best
+  practices for data persistence.
+
+assertions:
+  - type: llm_judge
+    criteria: "Storage types are explained — bind mounts map host directory to container (host path must exist, performance depends on host OS), named volumes are Docker-managed (stored in /var/lib/docker/volumes, portable, Docker manages permissions), tmpfs is in-memory (fast, not persisted, good for secrets). Container writable layer is the default (copy-on-write, deleted when container is removed)"
+    weight: 0.35
+    description: "Storage types"
+  - type: llm_judge
+    criteria: "Permission issues are addressed — bind mounts: host directory UID/GID must match container user, use --user to match, or chown in Dockerfile. Named volumes: Docker creates with correct permissions for the container. Common fix: run as root temporarily to fix permissions, or use init scripts. On macOS/Windows with Docker Desktop, bind mount performance is slower due to file system translation"
+    weight: 0.35
+    description: "Permission issues"
+  - type: llm_judge
+    criteria: "Debugging and best practices are practical — docker volume ls to list volumes, docker volume inspect to see mount point, docker inspect <container> to see mount configuration. Use docker volume prune to clean unused volumes (careful!). Best practices: use named volumes for databases (not bind mounts), use bind mounts for development (live code reload), never store important data in the container layer, backup volumes regularly"
+    weight: 0.30
+    description: "Debugging and practices"

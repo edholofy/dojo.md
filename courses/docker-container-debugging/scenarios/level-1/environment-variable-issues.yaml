@@ -1,0 +1,74 @@
+meta:
+  id: environment-variable-issues
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker environment variable issues — diagnose missing, overridden, or incorrectly passed env vars in containers"
+  tags: [Docker, environment-variables, ENV, env-file, configuration, beginner]
+
+state: {}
+
+trigger: |
+  Your containerized app is failing because of environment variable
+  issues:
+
+  $ docker run -d --name api \
+    -e DATABASE_URL=postgres://user:pass@db:5432/mydb \
+    -e API_KEY=sk-abc123 \
+    myapp:v1.0
+
+  $ docker logs api
+  Error: Missing required environment variable: API_SECRET
+  Error: DATABASE_URL has invalid format
+
+  Two issues:
+  1. API_SECRET isn't set — only API_KEY was provided, but the app
+     expects API_SECRET
+  2. DATABASE_URL value contains special characters in the password
+     that weren't properly quoted
+
+  $ docker exec api env | sort
+  API_KEY=sk-abc123
+  DATABASE_URL=postgres://user:pass@db:5432/mydb
+  HOME=/root
+  NODE_ENV=production
+  PATH=/usr/local/bin:/usr/bin:/bin
+
+  Wait — NODE_ENV=production is set even though you didn't specify it.
+  It must be set in the Dockerfile with ENV:
+
+  Dockerfile:
+  FROM node:20
+  ENV NODE_ENV=production
+  WORKDIR /app
+  COPY . .
+  RUN npm install --production
+  CMD ["node", "server.js"]
+
+  Ways to pass environment variables:
+  1. -e KEY=VALUE (single variable)
+  2. --env-file .env (file with KEY=VALUE lines)
+  3. ENV in Dockerfile (baked into image)
+  4. Docker Compose environment: section
+
+  Priority: runtime (-e) overrides Dockerfile (ENV).
+
+  Task: Explain Docker environment variables. Write: the different ways
+  to pass env vars (-e, --env-file, ENV, Compose), precedence rules,
+  how to inspect env vars in running containers, common mistakes (special
+  characters, missing quotes, wrong variable names), security concerns
+  (env vars visible in docker inspect), and best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Env var methods are explained — -e KEY=VALUE at runtime, --env-file reads from file (one KEY=VALUE per line, no quotes needed), ENV in Dockerfile (baked into image, visible in all containers), Docker Compose environment section. Runtime values override Dockerfile ENV. ARG is build-time only and NOT available at runtime (common confusion)"
+    weight: 0.35
+    description: "Env var methods"
+  - type: llm_judge
+    criteria: "Common mistakes are covered — special characters in values need proper quoting (-e 'DB_URL=postgres://user:p@ss@db:5432/db'), missing variables (app expects different name), env var not available at runtime (used ARG instead of ENV), --env-file doesn't support comments inline with values in some versions, .env file not found (wrong path). Debugging: docker exec <container> env to see actual variables"
+    weight: 0.35
+    description: "Common mistakes"
+  - type: llm_judge
+    criteria: "Security concerns are addressed — env vars are visible in docker inspect output (anyone with Docker access can see them), they appear in /proc/<pid>/environ inside the container, they may be logged accidentally. Better alternatives for secrets: Docker secrets (Swarm), mount secret files as volumes, use secret management tools (Vault, AWS Secrets Manager). Never put secrets in Dockerfiles (they're baked into image layers)"
+    weight: 0.30
+    description: "Security concerns"

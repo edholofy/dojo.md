@@ -1,0 +1,69 @@
+meta:
+  id: performance-schema-analysis
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Analyze MySQL with Performance Schema — use events_statements, sys schema views, and digest tables to identify optimization targets"
+  tags: [MySQL, Performance-Schema, sys-schema, monitoring, analysis, intermediate]
+
+state: {}
+
+trigger: |
+  Your team needs to identify the top optimization opportunities across
+  your MySQL database. The slow query log captures individual slow
+  queries, but you want a complete picture of all query performance.
+  Performance Schema is enabled but nobody on the team knows how to
+  use it effectively.
+
+  Available data sources:
+  1. performance_schema.events_statements_summary_by_digest
+     — Aggregated query statistics (the most valuable table)
+  2. performance_schema.events_waits_summary_by_instance
+     — Where time is spent waiting (I/O, locks, mutexes)
+  3. sys.schema_unused_indexes
+     — Indexes that haven't been used since last server restart
+  4. sys.statements_with_full_table_scans
+     — Queries performing full table scans
+  5. sys.innodb_lock_waits
+     — Current lock wait chains
+
+  Your initial analysis reveals:
+
+  Top 5 queries by total time (events_statements_summary_by_digest):
+  | digest_text (truncated)        | count  | avg_ms | total_min | rows_exam | rows_sent |
+  |-------------------------------|--------|--------|-----------|-----------|-----------|
+  | SELECT * FROM orders WHERE... | 500K   | 50     | 416       | 2.5B      | 500K      |
+  | SELECT p.*, COUNT(r...)...    | 50K    | 200    | 166       | 5B        | 50K       |
+  | INSERT INTO audit_log...      | 2M     | 5      | 166       | 0         | 0         |
+  | SELECT * FROM users WHERE...  | 1M     | 10     | 166       | 100M      | 1M        |
+  | UPDATE inventory SET...       | 100K   | 100    | 166       | 100M      | 0         |
+
+  Unused indexes: 45 indexes consuming 12GB of storage
+
+  Full table scan queries: 23 queries, top one examining 2B rows/day
+
+  Questions to answer:
+  1. How to interpret the rows_examined vs rows_sent ratio?
+  2. Which query should we optimize first?
+  3. How to use sys schema for quick wins?
+  4. How to track query performance after optimization?
+
+  Task: Write the Performance Schema analysis guide. Include: how to
+  query the key Performance Schema tables, how to interpret the results
+  (which metrics matter most), the prioritization framework (which
+  queries to optimize first), the sys schema quick wins, and how to
+  set up ongoing monitoring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Key queries for Performance Schema are provided — shows SQL for top queries by total time, by rows examined, by frequency, and the rows_examined/rows_sent ratio as an efficiency metric. Explains that a ratio of 5000:1 (query #1) means 5000 rows are read for every 1 returned — a clear index problem"
+    weight: 0.35
+    description: "Performance Schema queries"
+  - type: llm_judge
+    criteria: "Prioritization framework is practical — optimizes by total time impact (not just per-query time), considers query #1 first (500K executions × 50ms = 416 minutes/day, high volume), explains that the INSERT query (#3) has high total time but low per-query time (may not be optimizable), and the UPDATE (#5) has high per-query time suggesting a missing index or lock contention"
+    weight: 0.35
+    description: "Practical prioritization"
+  - type: llm_judge
+    criteria: "Sys schema quick wins are identified — sys.schema_unused_indexes (drop 45 unused indexes to save 12GB and speed writes), sys.statements_with_full_table_scans (add indexes for top full-scan queries), sys.innodb_lock_waits (identify blocking transactions), and explains how to reset Performance Schema counters (TRUNCATE TABLE) to measure improvement after changes"
+    weight: 0.30
+    description: "Sys schema quick wins"

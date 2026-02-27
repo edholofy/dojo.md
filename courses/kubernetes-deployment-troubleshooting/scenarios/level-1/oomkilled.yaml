@@ -1,0 +1,70 @@
+meta:
+  id: oomkilled
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug OOMKilled pods — understand memory limits, diagnose memory leaks, and configure appropriate resource limits"
+  tags: [Kubernetes, OOMKilled, memory, resource-limits, debugging, beginner]
+
+state: {}
+
+trigger: |
+  Your Java application pod keeps getting OOMKilled every few hours:
+
+  $ kubectl get pods
+  NAME                       READY   STATUS    RESTARTS   AGE
+  order-svc-8a9b0c1d-xyz    1/1     Running   4          6h
+
+  $ kubectl describe pod order-svc-8a9b0c1d-xyz
+  Last State:     Terminated
+    Reason:       OOMKilled
+    Exit Code:    137
+    Started:      2025-12-01T10:00:00Z
+    Finished:     2025-12-01T11:30:00Z
+
+  Containers:
+    order-svc:
+      Limits:
+        memory:  512Mi
+      Requests:
+        memory:  256Mi
+
+  $ kubectl top pod order-svc-8a9b0c1d-xyz
+  NAME                      CPU(cores)   MEMORY(bytes)
+  order-svc-8a9b0c1d-xyz    150m         498Mi
+
+  The pod is using 498Mi of its 512Mi limit — about to be killed again.
+
+  The application is a Java Spring Boot service with:
+  - JVM heap: not explicitly configured (defaults to 25% of container RAM)
+  - No -XX:MaxRAMPercentage set
+  - Container limit: 512Mi
+  - JVM sees 512Mi and sets max heap to ~128Mi
+  - But JVM total memory (heap + metaspace + threads + native) exceeds 512Mi
+
+  Questions:
+  1. What does OOMKilled mean and why is exit code 137?
+  2. Why does the JVM exceed the container memory limit?
+  3. How should you configure JVM memory in containers?
+  4. How do Kubernetes memory requests vs limits work?
+  5. How to monitor memory to prevent OOMKilled?
+
+  Task: Explain OOMKilled and how to fix it. Write: what OOMKilled
+  means (kernel OOM killer, exit code 137), why JVM apps often get
+  OOMKilled in containers, the correct JVM memory configuration for
+  containers, how requests and limits work (QoS classes), and memory
+  monitoring approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "OOMKilled is correctly explained — the Linux kernel's OOM killer terminates the process when it exceeds cgroup memory limit. Exit code 137 = 128 + 9 (SIGKILL). This is different from the application running out of heap space (which throws OutOfMemoryError). Kubernetes sets the cgroup limit based on the pod's memory limit"
+    weight: 0.35
+    description: "OOMKilled explained"
+  - type: llm_judge
+    criteria: "JVM container issue is addressed — JVM total memory = heap + metaspace + thread stacks + direct buffers + native memory. Even if heap is within limit, total can exceed. Fix: set -XX:MaxRAMPercentage=75 (leave 25% for non-heap), or explicitly set -Xmx to 75% of container limit. Modern JVMs (11+) are container-aware but still need tuning"
+    weight: 0.35
+    description: "JVM container memory"
+  - type: llm_judge
+    criteria: "Requests, limits, and QoS are explained — requests: minimum guaranteed memory (used for scheduling), limits: maximum allowed (enforced by cgroup). QoS classes: Guaranteed (requests=limits), Burstable (requests<limits), BestEffort (no requests/limits). Guaranteed pods are last to be evicted. Monitoring: kubectl top, Prometheus metrics, set up alerts before hitting limits"
+    weight: 0.30
+    description: "Requests, limits, QoS"

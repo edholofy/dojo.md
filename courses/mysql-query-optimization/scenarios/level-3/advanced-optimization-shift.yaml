@@ -1,0 +1,71 @@
+meta:
+  id: advanced-optimization-shift
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Advanced optimization shift — handle a complex MySQL performance crisis combining replication failure, lock contention, and slow query regression"
+  tags: [MySQL, shift-simulation, crisis, replication, lock-contention, advanced]
+
+state: {}
+
+trigger: |
+  You're on-call when multiple MySQL alerts fire simultaneously during
+  a product launch event. The application is partially down and the
+  engineering VP is asking for status updates every 5 minutes.
+
+  Alert timeline:
+
+  14:00 — Traffic starts at 4x normal for product launch.
+
+  14:10 — Alert: Primary CPU 92%, query latency P99 jumps to 5 seconds.
+  Performance Schema shows a new query (from the launch feature):
+    SELECT p.*, r.*, u.name
+    FROM products p
+    JOIN reviews r ON r.product_id = p.id
+    JOIN users u ON u.id = r.user_id
+    WHERE p.id = ?
+    ORDER BY r.created_at DESC;
+  Missing index on reviews.product_id — full table scan on 50M reviews.
+
+  14:15 — Alert: Replication lag on Replica 1 at 120 seconds.
+  Analytics query running for 45 minutes holding open transaction,
+  preventing relay log application on the replica.
+
+  14:18 — Alert: "Lock wait timeout exceeded" errors at 100/minute.
+  The launch feature's "add to cart" UPDATE:
+    UPDATE inventory SET reserved = reserved + 1
+    WHERE product_id = ? AND warehouse_id = ?;
+  200 concurrent users trying to reserve the same hot product.
+  InnoDB row lock wait queue backing up.
+
+  14:22 — Alert: Connection pool exhausted. ProxySQL reports 0 available
+  backend connections. Queries queuing in ProxySQL.
+  Many connections stuck waiting for locks from 14:18 issue.
+
+  14:25 — Replica 2 also lagging 90 seconds. Read traffic can't be
+  served from replicas. All traffic hitting primary.
+
+  14:28 — Disk usage alert: 88%. Binlog accumulation from high write
+  volume + relay logs backing up on replicas.
+
+  Current state: Application returning 50% error rate.
+  Revenue impact: $20K/minute lost.
+
+  Task: Write the incident response. Include: the immediate triage
+  (first 5 minutes — what to fix first and why), the stabilization
+  steps (next 30 minutes), the root cause for each issue, the
+  post-incident action items, and the war-room communication template.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage prioritization is correct — fixes the most impactful issue first: kill the blocking analytics query on the replica (unblocking replication), add the missing index on reviews.product_id (fixing the slow query driving CPU), and increase ProxySQL backend connection limits or kill stuck connections. Lock contention on hot product addressed with application-level serialization or optimistic locking"
+    weight: 0.35
+    description: "Correct triage prioritization"
+  - type: llm_judge
+    criteria: "All issues are resolved with specific actions — missing index (CREATE INDEX CONCURRENTLY or online DDL), replication lag (kill blocking query, enable parallel replication for future), lock contention (change to optimistic locking or queue-based reservation), connection exhaustion (increase pool, reduce per-query lock hold time), disk (purge old binlogs, extend disk)"
+    weight: 0.35
+    description: "All issues resolved"
+  - type: llm_judge
+    criteria: "Post-incident improvements prevent recurrence — query review in CI/CD (catch missing indexes before deploy), load testing before launch events, replica query timeout (prevent long-running analytics from blocking replication), hot-product inventory pattern (Redis cache or queue-based reservation), and ProxySQL connection limits tuned for peak traffic"
+    weight: 0.30
+    description: "Prevention measures"

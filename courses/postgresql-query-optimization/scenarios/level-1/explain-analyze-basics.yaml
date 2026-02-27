@@ -1,0 +1,80 @@
+meta:
+  id: explain-analyze-basics
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Read EXPLAIN ANALYZE output — interpret PostgreSQL query execution plans to identify performance bottlenecks"
+  tags: [PostgreSQL, EXPLAIN, execution-plan, query-optimization, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior developer working on an e-commerce app. The product
+  listing page takes 8 seconds to load. Your tech lead asks you to
+  run EXPLAIN ANALYZE on the query and figure out what's slow.
+
+  The query:
+  SELECT p.id, p.name, p.price, c.name as category,
+         AVG(r.rating) as avg_rating
+  FROM products p
+  JOIN categories c ON c.id = p.category_id
+  LEFT JOIN reviews r ON r.product_id = p.id
+  WHERE p.active = true AND p.price BETWEEN 10 AND 100
+  GROUP BY p.id, p.name, p.price, c.name
+  ORDER BY avg_rating DESC NULLS LAST
+  LIMIT 20;
+
+  EXPLAIN ANALYZE output:
+  Limit (cost=45892.12..45892.17 rows=20 width=76)
+        (actual time=8234.521..8234.534 rows=20 loops=1)
+    -> Sort (cost=45892.12..46142.12 rows=100000 width=76)
+           (actual time=8234.519..8234.527 rows=20 loops=1)
+         Sort Key: (avg(r.rating)) DESC NULLS LAST
+         Sort Method: top-N heapsort Memory: 27kB
+      -> HashAggregate (cost=42391.50..43391.50 rows=100000 width=76)
+             (actual time=7891.234..8102.456 rows=85000 loops=1)
+           Group Key: p.id, p.name, p.price, c.name
+         -> Hash Left Join (cost=3456.78..38141.50 rows=850000 width=48)
+                (actual time=234.567..5678.901 rows=850000 loops=1)
+              Hash Cond: (r.product_id = p.id)
+              -> Seq Scan on reviews r (cost=0..28456.00 rows=1200000
+                     width=12) (actual time=0.023..1234.567 rows=1200000
+                     loops=1)
+              -> Hash (cost=3206.78..3206.78 rows=20000 width=44)
+                     (actual time=234.123..234.123 rows=18500 loops=1)
+                   Buckets: 32768 Batches: 1 Memory Usage: 1234kB
+                -> Hash Join (cost=12.50..3206.78 rows=20000 width=44)
+                       (actual time=0.345..198.765 rows=18500 loops=1)
+                     Hash Cond: (p.category_id = c.id)
+                     -> Seq Scan on products p (cost=0..3125.00
+                            rows=20000 width=40)
+                            (actual time=0.012..178.234 rows=18500
+                            loops=1)
+                           Filter: (active AND (price >= 10)
+                                    AND (price <= 100))
+                           Rows Removed by Filter: 81500
+                     -> Hash (cost=10.00..10.00 rows=200 width=12)
+                            (actual time=0.234..0.234 rows=200 loops=1)
+
+  Table sizes: products (100K rows), reviews (1.2M rows),
+  categories (200 rows).
+
+  Task: Analyze this execution plan. Explain: what each node means
+  (in plain English), where the time is being spent, why it's doing
+  sequential scans, what indexes would help, and write the optimized
+  version of this query with the recommended indexes. Explain the
+  difference between estimated and actual rows.
+
+assertions:
+  - type: llm_judge
+    criteria: "Execution plan is correctly interpreted — identifies that the sequential scan on reviews (1.2M rows) is the biggest bottleneck, explains cost vs actual time, estimated vs actual rows, and each node type (Seq Scan, Hash Join, HashAggregate, Sort, Limit). The explanation is in plain English a junior developer can understand"
+    weight: 0.35
+    description: "Correct plan interpretation"
+  - type: llm_judge
+    criteria: "Optimization recommendations are specific — suggests index on reviews(product_id) for the JOIN, index on products(active, price) for the filter, and explains why these indexes would replace sequential scans with index scans. May suggest a materialized view or covering index for further optimization"
+    weight: 0.35
+    description: "Specific optimization recommendations"
+  - type: llm_judge
+    criteria: "Explains key EXPLAIN ANALYZE concepts — cost units (arbitrary but relative), actual time (milliseconds), loops, rows removed by filter, sort methods, hash bucket sizing, and how to identify the slowest node by looking at actual time differences between parent and child nodes"
+    weight: 0.30
+    description: "Key concepts explained"

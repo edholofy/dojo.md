@@ -1,0 +1,62 @@
+meta:
+  id: multi-cluster-operations
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design multi-cluster troubleshooting strategy — cross-cluster service discovery, federated monitoring, and disaster recovery across regions"
+  tags: [Kubernetes, multi-cluster, federation, disaster-recovery, cross-region, expert]
+
+state: {}
+
+trigger: |
+  Your organization runs 5 Kubernetes clusters across 3 regions for a
+  global e-commerce platform:
+
+  | Cluster      | Region      | Purpose           | Nodes | Workloads |
+  |-------------|-------------|-------------------|-------|-----------|
+  | prod-us-1   | us-east-1   | Primary US        | 50    | 200+      |
+  | prod-us-2   | us-west-2   | Secondary US      | 30    | 150+      |
+  | prod-eu-1   | eu-west-1   | EU primary        | 40    | 180+      |
+  | prod-apac-1 | ap-south-1  | APAC primary      | 25    | 100+      |
+  | staging     | us-east-1   | Pre-production    | 15    | 200+      |
+
+  Current challenges:
+  1. Cross-cluster service discovery — services in prod-us-1 need to
+     call services in prod-eu-1 for GDPR compliance (EU user data stays
+     in EU). Currently using hardcoded LoadBalancer IPs.
+
+  2. Monitoring fragmentation — each cluster has its own Prometheus,
+     but no unified view. Alert fatigue from 5 separate Alertmanagers.
+
+  3. Disaster recovery — when prod-us-1 had a control plane issue last
+     month, failover to prod-us-2 took 45 minutes (manual DNS switch,
+     database failover, config updates). Target RTO is 5 minutes.
+
+  4. Configuration drift — clusters have diverged. Same app deployed
+     with different resource limits, different RBAC policies, different
+     network policies across clusters.
+
+  5. Upgrade coordination — upgrading all clusters takes weeks of
+     sequential work, and version skew between clusters causes API
+     compatibility issues.
+
+  Task: Design a multi-cluster troubleshooting and operations strategy.
+  Write: cross-cluster service discovery approaches (Istio multi-cluster,
+  Submariner, DNS-based), federated monitoring architecture (Thanos/
+  Cortex for global Prometheus view), automated failover design, GitOps
+  for multi-cluster consistency, and the operational runbook for
+  cross-cluster incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cross-cluster connectivity is addressed — options: Istio multi-cluster mesh (automatic cross-cluster service discovery via shared control plane or remote clusters), Submariner (L3 connectivity between clusters), DNS-based with external-dns + global load balancer, or service export/import API. Trade-offs between complexity, latency, and feature richness. Istio provides mTLS across clusters but adds operational overhead"
+    weight: 0.35
+    description: "Cross-cluster connectivity"
+  - type: llm_judge
+    criteria: "Federated monitoring is designed — use Thanos or Cortex for global Prometheus query layer across all clusters. Each cluster runs local Prometheus, Thanos sidecar uploads to object storage, Thanos Query aggregates across clusters. Unified Alertmanager with deduplication to prevent alert fatigue. Grafana dashboards with cluster selector for unified view"
+    weight: 0.35
+    description: "Federated monitoring"
+  - type: llm_judge
+    criteria: "Failover and consistency are practical — automated failover: global load balancer (Route53/CloudFlare) with health checks, pre-provisioned standby capacity, database replication with automatic promotion. GitOps: single Git repo with cluster-specific overlays (Kustomize/Helm), ArgoCD ApplicationSets for multi-cluster sync, policy-as-code (OPA/Kyverno) for consistency enforcement. Upgrade strategy: rolling cluster upgrades starting with staging"
+    weight: 0.30
+    description: "Failover and consistency"

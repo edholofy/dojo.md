@@ -1,0 +1,56 @@
+meta:
+  id: deployment-rollout
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug deployment rollout issues — understand rolling updates, rollback, and why a deployment might get stuck"
+  tags: [Kubernetes, Deployment, rollout, rolling-update, rollback, beginner]
+
+state: {}
+
+trigger: |
+  You updated your deployment to a new image version but the rollout
+  is stuck. Old pods are still running alongside partially updated ones:
+
+  $ kubectl rollout status deployment/user-svc
+  Waiting for deployment "user-svc" spec update to be observed...
+  Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
+
+  $ kubectl get pods
+  NAME                        READY   STATUS             RESTARTS   AGE
+  user-svc-7a8b9c0d-old1    1/1     Running            0          2h
+  user-svc-7a8b9c0d-old2    1/1     Running            0          2h
+  user-svc-7a8b9c0d-old3    1/1     Running            0          2h
+  user-svc-3e4f5g6h-new1    0/1     CrashLoopBackOff   4          5m
+
+  The deployment strategy is RollingUpdate with maxSurge=1 and
+  maxUnavailable=0. The new pod keeps crashing, so the rollout can't
+  proceed (it needs at least 1 new pod Ready before terminating old ones).
+
+  $ kubectl logs user-svc-3e4f5g6h-new1
+  Error: Cannot connect to database — migration v15 not applied
+  The new version requires a database migration that wasn't run.
+
+  The deployment is stuck: new pods crash, old pods keep serving traffic,
+  but the deployment never completes. After 10 minutes the
+  progressDeadlineSeconds (default 600s) will mark it as Failed.
+
+  Task: Explain how Kubernetes deployment rollouts work. Write: the
+  RollingUpdate strategy (maxSurge, maxUnavailable), what happens when
+  a rollout gets stuck, how to check rollout status and history, how
+  to rollback (kubectl rollout undo), progressDeadlineSeconds, and the
+  Recreate strategy as an alternative.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rolling update mechanics are explained — maxSurge controls how many extra pods can be created during update, maxUnavailable controls how many pods can be down. With maxSurge=1 maxUnavailable=0, Kubernetes creates 1 new pod, waits for it to be Ready, then terminates 1 old pod. If the new pod never becomes Ready, the rollout stalls"
+    weight: 0.35
+    description: "Rolling update mechanics"
+  - type: llm_judge
+    criteria: "Stuck rollout debugging is explained — kubectl rollout status shows progress, kubectl rollout history shows revision history, progressDeadlineSeconds (default 600s) marks deployment as Failed if no progress within deadline. A stuck rollout means old pods continue serving traffic (safe but incomplete update)"
+    weight: 0.35
+    description: "Stuck rollout debugging"
+  - type: llm_judge
+    criteria: "Rollback and alternatives are covered — kubectl rollout undo deployment/<name> reverts to previous revision, kubectl rollout undo --to-revision=N reverts to specific version. Recreate strategy: terminates all old pods before creating new ones (causes downtime but avoids version mixing). kubectl rollout pause/resume for controlled rollouts"
+    weight: 0.30
+    description: "Rollback and alternatives"

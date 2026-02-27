@@ -1,0 +1,70 @@
+meta:
+  id: first-debugging-shift
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Combined debugging shift — diagnose multiple Docker container failures using the full beginner debugging toolkit"
+  tags: [Docker, troubleshooting, combined, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  You're helping a teammate deploy a 3-container application stack for
+  the first time. Nothing is working:
+
+  $ docker ps -a
+  CONTAINER ID   IMAGE            STATUS                     PORTS    NAMES
+  a1b2c3d4e5f6   myapp:v1         Exited (127) 2 min ago              api
+  b2c3d4e5f6g7   postgres:16      Up 5 minutes                        db
+  c3d4e5f6g7h8   redis:7          Exited (1) 3 min ago                cache
+
+  Three containers, two are stopped, one is running but inaccessible.
+
+  Issue 1 — api container (exit code 127):
+  $ docker logs api
+  /bin/sh: 1: node: not found
+  The Dockerfile uses FROM python:3.12 but CMD ["node", "server.js"].
+  Wrong base image!
+
+  Issue 2 — cache container (exit code 1):
+  $ docker logs cache
+  Fatal error: Can't open config file /etc/redis/redis.conf
+  A bind mount -v ./redis.conf:/etc/redis/redis.conf was specified
+  but ./redis.conf doesn't exist on the host. Docker created an empty
+  directory in its place.
+
+  Issue 3 — db container (running but inaccessible):
+  $ docker exec api ping db
+  (api is stopped, can't exec into it)
+
+  $ docker run --rm postgres:16 pg_isready -h db
+  db:5432 - no response
+
+  The database is running but on the default bridge network. The
+  hostname "db" doesn't resolve because default bridge doesn't
+  support DNS.
+
+  Additional issue found:
+  $ curl http://localhost:3000
+  Connection refused
+  No -p flag was used for the api container — no port published.
+
+  Task: Walk through debugging all three issues. Write: the triage
+  approach (check status, check logs, check configuration), the fix
+  for each issue, why exit code 127 means command not found, why Docker
+  creates directories for missing bind mount files, and the checklist
+  for running multi-container applications.
+
+assertions:
+  - type: llm_judge
+    criteria: "All three issues are correctly diagnosed — (1) exit code 127 = command not found, wrong base image (python instead of node), (2) bind mount of non-existent file creates empty directory (Docker's default behavior), redis can't read a directory as config file, (3) default bridge network doesn't support DNS resolution, containers can't find each other by name, also no port published for external access"
+    weight: 0.35
+    description: "All issues diagnosed"
+  - type: llm_judge
+    criteria: "Fixes are practical — (1) change Dockerfile base image to node:20 or fix CMD to use python, (2) ensure redis.conf exists before starting container, or use default redis config without the mount, (3) create custom network and put all containers on it, add -p flag for external access. Show the corrected docker run commands for each container"
+    weight: 0.35
+    description: "Practical fixes"
+  - type: llm_judge
+    criteria: "Multi-container checklist is provided — before starting: verify all images are correct and available, check all mount source paths exist, create a custom network, plan port mappings. Use Docker Compose for multi-container apps (avoids manual docker run flags). Debugging order: check status → check logs → check inspect → check network → fix and retry"
+    weight: 0.30
+    description: "Multi-container checklist"

@@ -1,0 +1,73 @@
+meta:
+  id: intermediate-debugging-shift
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Combined intermediate debugging shift — diagnose multi-service Docker Compose application with build, networking, health check, and logging issues"
+  tags: [Docker, troubleshooting, combined, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  You're debugging a Docker Compose application that a colleague set up.
+  It has 5 services and "nothing works":
+
+  $ docker compose up -d
+  $ docker compose ps
+  NAME         SERVICE      STATUS                  PORTS
+  frontend     frontend     Up (unhealthy)          0.0.0.0:3000->3000/tcp
+  api          api          exited (1)
+  worker       worker       waiting
+  postgres     postgres     Up (healthy)            5432/tcp
+  redis        redis        Up 2 seconds            6379/tcp
+
+  Investigation reveals 5 interconnected issues:
+
+  1. api — Build failed silently, running old cached image:
+  $ docker compose logs api
+  Error: Cannot find module '/app/dist/server.js'
+  The Dockerfile has a multi-stage build but COPY --from uses wrong
+  stage name. The old image (without the build fix) was cached.
+  Fix: docker compose build --no-cache api
+
+  2. worker — depends_on api with condition: service_healthy, but api
+  exited so worker waits forever.
+
+  3. frontend — Marked unhealthy. Health check uses curl but the
+  alpine-based image doesn't have curl.
+
+  4. redis — Running but no persistence configured. Every restart
+  loses session data. Also, no log rotation — redis logs growing fast.
+
+  5. Hidden issue — postgres password is set in docker-compose.yaml
+  as an environment variable visible in docker inspect. Should use
+  Docker secrets or env_file with restricted permissions.
+
+  $ docker system df
+  TYPE         TOTAL    ACTIVE   SIZE     RECLAIMABLE
+  Images       45       5        12.5GB   10.2GB (81%)
+  Containers   12       5        500MB    200MB
+  Volumes      23       3        8.5GB    6.2GB (72%)
+
+  Additionally, 81% of images and 72% of volumes are reclaimable
+  (unused). Disk space is filling up.
+
+  Task: Walk through diagnosing and fixing all issues. Write: the
+  triage approach for multi-service Compose applications, the fix for
+  each issue, how to clean up unused Docker resources (docker system
+  prune), security best practices for secrets in Compose, and the
+  maintenance checklist for Docker environments.
+
+assertions:
+  - type: llm_judge
+    criteria: "All five issues are diagnosed and fixed — (1) stale cached image: docker compose build --no-cache, fix COPY --from stage name, (2) worker waiting: fix api first, worker will start automatically, (3) frontend health check: use wget instead of curl or install curl in Dockerfile, (4) redis: add volume for persistence, configure log rotation, (5) secrets: use env_file with chmod 600 or Docker secrets, never plain environment variables for passwords"
+    weight: 0.35
+    description: "All issues fixed"
+  - type: llm_judge
+    criteria: "Cleanup and maintenance are covered — docker system df shows disk usage breakdown, docker system prune removes unused containers/images/networks, docker volume prune removes unused volumes (careful!), docker builder prune clears build cache. Maintenance checklist: regular prune, log rotation configured globally, base image updates, security scanning, volume backup strategy"
+    weight: 0.35
+    description: "Cleanup and maintenance"
+  - type: llm_judge
+    criteria: "Triage methodology is systematic — check docker compose ps first (status overview), check logs for exited services, check health for unhealthy services, fix dependencies bottom-up (database → api → worker → frontend), verify networking between services, check for resource issues (disk, memory). Security audit: check for secrets in environment, image vulnerabilities, privileged containers"
+    weight: 0.30
+    description: "Triage methodology"

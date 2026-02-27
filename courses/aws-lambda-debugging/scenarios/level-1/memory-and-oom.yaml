@@ -1,0 +1,70 @@
+meta:
+  id: memory-and-oom
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda memory issues — diagnose out-of-memory errors, understand memory-CPU relationship, and right-size Lambda functions"
+  tags: [AWS, Lambda, memory, OOM, right-sizing, configuration, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails intermittently with large payloads:
+
+  {
+    "errorType": "Runtime.ExitError",
+    "errorMessage": "RequestId: abc-123 Error: Runtime exited with
+    error: signal: killed"
+  }
+
+  CloudWatch REPORT line:
+  REPORT RequestId: abc-123 Duration: 4521.00 ms
+  Billed Duration: 4521 ms Memory Size: 128 MB
+  Max Memory Used: 128 MB
+
+  Max Memory Used equals Memory Size — the function ran out of memory
+  and was killed by the OOM killer. "signal: killed" = SIGKILL from
+  the system.
+
+  The function processes CSV files from S3. Small files work (< 5MB),
+  large files fail because loading the entire file into memory exceeds
+  128MB.
+
+  Fix options:
+  1. Increase memory:
+     aws lambda update-function-configuration \
+       --function-name process-csv --memory-size 512
+
+  2. Stream processing — read the file in chunks instead of loading
+     it entirely into memory.
+
+  Important: Lambda memory also controls CPU allocation!
+  - 128 MB  = ~0.08 vCPU (very slow)
+  - 512 MB  = ~0.3 vCPU
+  - 1769 MB = 1 vCPU
+  - 3538 MB = 2 vCPU
+  - 10240 MB = 6 vCPU (maximum)
+
+  A function at 128MB runs on a fraction of a CPU. Increasing memory
+  to 256MB might actually DECREASE total cost because the function
+  runs 3x faster (more CPU) even though per-ms cost doubles.
+
+  Task: Explain Lambda memory debugging. Write: how to identify OOM
+  errors (signal: killed, Max Memory Used = Memory Size), the
+  memory-CPU relationship, how to right-size memory (AWS Lambda
+  Power Tuning), common memory-hungry operations (loading files,
+  large JSON parsing), and cost optimization through memory tuning.
+
+assertions:
+  - type: llm_judge
+    criteria: "OOM identification is explained — signal: killed or Runtime.ExitError with killed means OOM. Check REPORT line: if Max Memory Used equals or is very close to Memory Size, function ran out of memory. Memory includes: your code, runtime, libraries, and all variables/data in memory. /tmp directory has separate 512MB-10GB allocation (configurable). Lambda memory range: 128MB to 10,240MB in 1MB increments"
+    weight: 0.35
+    description: "OOM identification"
+  - type: llm_judge
+    criteria: "Memory-CPU relationship is covered — Lambda allocates CPU proportional to memory. 1,769MB = 1 full vCPU. At 128MB you get ~7% of a vCPU — CPU-bound tasks are extremely slow. This means: increasing memory for a CPU-bound function makes it faster AND can make it cheaper (shorter duration offsets higher per-ms cost). Use AWS Lambda Power Tuning tool to find optimal memory: tests your function at different memory sizes and plots cost vs duration. Memory is the ONLY performance lever for Lambda — no separate CPU setting"
+    weight: 0.35
+    description: "Memory-CPU relationship"
+  - type: llm_judge
+    criteria: "Right-sizing is practical — use Lambda Power Tuning (open-source Step Functions tool): runs your function at multiple memory configs, shows cost and duration at each. Look for the 'sweet spot' where increasing memory stops improving duration. Common memory-hungry operations: loading entire files into memory (stream instead), parsing large JSON (use streaming JSON parser), image processing (needs 512MB+). Monitor Max Memory Used metric over time. Set memory to ~1.5x the typical Max Memory Used for headroom. /tmp for large file processing (up to 10GB ephemeral storage)"
+    weight: 0.30
+    description: "Right-sizing"

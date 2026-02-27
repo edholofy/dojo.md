@@ -1,0 +1,74 @@
+meta:
+  id: container-security-hardening
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug container security issues — diagnose privilege escalation, capability problems, seccomp profiles, and rootless container configuration"
+  tags: [Docker, security, rootless, seccomp, capabilities, hardening, advanced]
+
+state: {}
+
+trigger: |
+  A security audit of your Docker deployment flags several issues:
+
+  Finding 1 — Containers running as root:
+  $ docker exec webapp whoami
+  root
+  $ docker exec webapp id
+  uid=0(root) gid=0(root) groups=0(root)
+
+  If the application is compromised, the attacker has root inside the
+  container. With certain misconfigurations, this can lead to host
+  escape.
+
+  Finding 2 — Excessive capabilities:
+  $ docker exec webapp capsh --print
+  Current: cap_chown,cap_dac_override,cap_fsetid,cap_fowner,
+  cap_mknod,cap_net_raw,cap_setgid,cap_setuid,cap_setfcap,
+  cap_setpcap,cap_net_bind_service,cap_sys_chroot,cap_kill,cap_audit_write
+
+  Most apps don't need cap_net_raw, cap_sys_chroot, or cap_mknod.
+
+  Finding 3 — --privileged flag used "because it works":
+  docker run --privileged myapp
+  This gives the container ALL capabilities, access to all devices,
+  and disables seccomp/AppArmor. Used as a debugging shortcut but
+  left in production.
+
+  Finding 4 — Writable root filesystem:
+  $ docker exec webapp touch /etc/malicious-config
+  (succeeds — attacker can modify container filesystem)
+
+  Hardened configuration:
+  docker run \
+    --read-only \
+    --tmpfs /tmp \
+    --cap-drop ALL \
+    --cap-add NET_BIND_SERVICE \
+    --security-opt no-new-privileges:true \
+    --security-opt seccomp=custom-profile.json \
+    -u 1000:1000 \
+    myapp
+
+  But this breaks the app — it tries to write to /var/cache and
+  needs to bind to port 80 (requires NET_BIND_SERVICE or port > 1024).
+
+  Task: Explain container security hardening. Write: running as
+  non-root (USER directive, --user flag), Linux capabilities (drop
+  all, add specific), read-only filesystem (with tmpfs exceptions),
+  seccomp profiles, no-new-privileges, why --privileged is dangerous,
+  and the debugging process when hardening breaks applications.
+
+assertions:
+  - type: llm_judge
+    criteria: "Non-root and capabilities are explained — Dockerfile USER directive or --user flag. Running as root inside container is dangerous even with namespace isolation. Drop ALL capabilities, add only what's needed (NET_BIND_SERVICE for port < 1024, CHOWN for file ownership). --privileged gives ALL capabilities plus device access plus disables security modules — never use in production. To find required capabilities: run with all dropped, check error messages, add back one at a time"
+    weight: 0.35
+    description: "Non-root and capabilities"
+  - type: llm_judge
+    criteria: "Filesystem and seccomp are covered — --read-only makes root filesystem immutable (prevents attackers from modifying binaries/config). Use --tmpfs for directories that need writes (/tmp, /var/cache, /var/run). no-new-privileges prevents privilege escalation via setuid binaries. Seccomp profiles restrict syscalls — Docker's default profile blocks ~44 dangerous syscalls. Custom profiles can restrict further. AppArmor/SELinux add mandatory access control"
+    weight: 0.35
+    description: "Filesystem and seccomp"
+  - type: llm_judge
+    criteria: "Debugging hardened containers is practical — common breakages when hardening: app writes to filesystem (add tmpfs), needs specific capability (add one at a time), needs specific syscall blocked by seccomp (check audit log, adjust profile). Use strace to identify required syscalls. Use docker diff to see filesystem changes. Test hardening in staging before production. Security scanning (Trivy, Docker Scout) complements runtime hardening"
+    weight: 0.30
+    description: "Debugging hardened containers"

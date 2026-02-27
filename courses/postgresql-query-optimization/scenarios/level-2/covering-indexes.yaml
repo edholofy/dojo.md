@@ -1,0 +1,74 @@
+meta:
+  id: covering-indexes
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Implement covering indexes — use INCLUDE columns and index-only scans to eliminate heap fetches"
+  tags: [PostgreSQL, covering-index, INCLUDE, index-only-scan, intermediate]
+
+state: {}
+
+trigger: |
+  Your analytics API has endpoints that run the same queries millions
+  of times per day. Even with indexes, EXPLAIN ANALYZE shows "Heap
+  Fetches: 50000" — the query uses the index to find rows but then
+  must read the actual table (heap) to get the columns not in the
+  index.
+
+  Table: events (500M rows, 200GB)
+  Most queries select only 3-5 columns out of 25.
+
+  Query 1 (2M calls/day):
+  SELECT user_id, event_type, created_at
+  FROM events
+  WHERE user_id = $1 AND created_at >= $2
+  ORDER BY created_at DESC LIMIT 100;
+
+  Current index: (user_id, created_at)
+  Problem: Index finds the rows fast, but must heap-fetch each row
+  to read event_type. With 100 rows, that's 100 random I/O reads.
+
+  Query 2 (500K calls/day):
+  SELECT product_id, SUM(quantity), COUNT(*)
+  FROM events
+  WHERE event_type = 'purchase' AND created_at >= $1
+  GROUP BY product_id;
+
+  Current index: (event_type, created_at)
+  Problem: Must heap-fetch every matching row to read product_id
+  and quantity. Thousands of heap fetches.
+
+  Query 3 (1M calls/day):
+  SELECT COUNT(*) FROM events
+  WHERE user_id = $1 AND event_type = 'page_view';
+
+  Current index: (user_id, event_type)
+  Problem: COUNT(*) should be index-only but EXPLAIN shows heap
+  fetches. Why?
+
+  Query 4 (100K calls/day):
+  SELECT DISTINCT category FROM events
+  WHERE tenant_id = $1;
+
+  Current index: (tenant_id)
+  Problem: Must heap-fetch every row to read category, then
+  deduplicate. Extremely slow for tenants with millions of events.
+
+  Task: Design covering indexes for each query. Explain: the INCLUDE
+  clause syntax, why index-only scans are faster, why Query 3 still
+  shows heap fetches (visibility map), and the trade-offs of wider
+  indexes (storage, write overhead, maintenance).
+
+assertions:
+  - type: llm_judge
+    criteria: "Covering indexes are correctly designed — uses INCLUDE to add non-key columns (event_type in Q1, product_id + quantity in Q2, category in Q4), enabling index-only scans that eliminate heap fetches. The INCLUDE columns are in the right place (not as index keys)"
+    weight: 0.35
+    description: "Correct covering index design"
+  - type: llm_judge
+    criteria: "Visibility map issue is explained — Query 3 shows heap fetches because recently updated/inserted pages aren't marked as all-visible in the visibility map. VACUUM updates the visibility map. Explains the connection between VACUUM frequency and index-only scan effectiveness"
+    weight: 0.35
+    description: "Visibility map explanation"
+  - type: llm_judge
+    criteria: "Trade-offs are quantified — estimates the index size increase from INCLUDE columns, discusses write amplification (wider indexes = more data per write), and provides guidelines for when covering indexes are worth the cost (high-frequency read queries on large tables)"
+    weight: 0.30
+    description: "Quantified trade-offs"

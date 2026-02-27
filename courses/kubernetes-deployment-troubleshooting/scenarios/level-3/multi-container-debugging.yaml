@@ -1,0 +1,68 @@
+meta:
+  id: multi-container-debugging
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug multi-container pods — diagnose sidecar issues, shared volume problems, and inter-container communication failures"
+  tags: [Kubernetes, multi-container, sidecar, init-container, volumes, advanced]
+
+state: {}
+
+trigger: |
+  Your application pod has 3 containers: the main app, a log-shipper
+  sidecar, and a config-reloader sidecar. The pod shows 2/3 Ready:
+
+  $ kubectl get pods
+  NAME                     READY   STATUS    RESTARTS   AGE
+  webapp-5a6b7c-d8e9      2/3     Running   0          10m
+
+  $ kubectl describe pod webapp-5a6b7c-d8e9
+  Containers:
+    webapp:
+      State:      Running
+      Ready:      True
+
+    log-shipper:
+      State:      Running
+      Ready:      True
+
+    config-reloader:
+      State:      Running
+      Ready:      False
+      Readiness:  http-get http://:9091/healthz
+      Message:    Readiness probe failed: connection refused
+
+  The config-reloader container is Running but not Ready. Its readiness
+  probe targets port 9091 but the container is actually listening on
+  9090 (port mismatch in the probe config).
+
+  Because one container isn't Ready, the entire pod is not fully Ready,
+  which means the Service might remove it from endpoints if the Service
+  requires all containers Ready.
+
+  Additional issues discovered:
+  - log-shipper can't read app logs because the shared volume mount
+    path is wrong (/var/log/app vs /var/log/webapp)
+  - config-reloader watches a ConfigMap volume but the ConfigMap update
+    propagation delay (up to 60s) causes stale config reads
+
+  Task: Explain multi-container pod debugging. Write: how containers
+  in a pod share resources (network, storage, but NOT filesystem by
+  default), sidecar container patterns (logging, config reload, proxy),
+  how pod readiness is determined (ALL containers must be Ready), how
+  shared volumes work between containers, troubleshooting techniques
+  for each container (-c flag), and native sidecar containers (K8s 1.29+).
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-container pod model is explained — containers in a pod share network namespace (same IP, localhost communication), can share volumes via volumeMounts, but have separate filesystems otherwise. Pod is Ready only when ALL containers pass readiness probes. Each container has independent lifecycle, restart policy, and resource limits. Logs and exec require -c <container> flag"
+    weight: 0.35
+    description: "Pod model explained"
+  - type: llm_judge
+    criteria: "Sidecar patterns and debugging are covered — logging sidecar reads from shared volume (both containers must mount the SAME path), config-reloader watches ConfigMap volumes (updates propagate every kubelet sync period ~60s), proxy sidecar shares network namespace. Debug: kubectl logs <pod> -c <container>, kubectl exec <pod> -c <container>, check shared volume mount paths match, verify port configurations per container"
+    weight: 0.35
+    description: "Sidecar debugging"
+  - type: llm_judge
+    criteria: "Native sidecars and best practices are covered — Kubernetes 1.29+ native sidecar containers (init containers with restartPolicy: Always) start before and stop after the main container, solving lifecycle ordering issues. Best practices: use emptyDir for shared volumes, ensure consistent mount paths, set resource limits per container, use separate health endpoints per container, consider if you really need sidecars vs a separate deployment"
+    weight: 0.30
+    description: "Native sidecars and practices"

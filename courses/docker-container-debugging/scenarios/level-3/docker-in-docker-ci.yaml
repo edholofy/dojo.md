@@ -1,0 +1,69 @@
+meta:
+  id: docker-in-docker-ci
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker-in-Docker and CI/CD pipeline issues — diagnose DinD socket mounting, build context problems, and CI-specific container failures"
+  tags: [Docker, DinD, CI/CD, socket, build-context, advanced]
+
+state: {}
+
+trigger: |
+  Your CI/CD pipeline (GitLab CI) suddenly fails at the Docker build step:
+
+  .gitlab-ci.yml:
+  build:
+    image: docker:24-dind
+    services:
+      - docker:24-dind
+    variables:
+      DOCKER_HOST: tcp://docker:2376
+      DOCKER_TLS_CERTDIR: "/certs"
+    script:
+      - docker build -t myapp:$CI_COMMIT_SHA .
+      - docker push registry.example.com/myapp:$CI_COMMIT_SHA
+
+  Error:
+  Cannot connect to the Docker daemon at tcp://docker:2376.
+  Is the docker daemon running?
+
+  Investigation:
+  1. The DinD service container starts but TLS handshake fails. The
+     DOCKER_TLS_CERTDIR variable must match between the client and
+     service containers. Also needs DOCKER_CERT_PATH and
+     DOCKER_TLS_VERIFY=1.
+
+  2. After fixing TLS, builds work but are extremely slow — every
+     build downloads all base images fresh because the DinD container
+     has no persistent storage.
+
+  3. Alternative approach — mounting the host Docker socket:
+     volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
+     This is faster (shared image cache) but creates security risks:
+     the CI job has full access to the host Docker daemon.
+
+  4. The socket mount approach causes a different bug:
+     docker build -t myapp . uses the CI container's filesystem as
+     build context, but .dockerignore is missing, sending 2GB of
+     node_modules and .git to the daemon.
+
+  Task: Explain Docker-in-Docker and CI/CD debugging. Write: DinD vs
+  socket mounting (trade-offs), TLS configuration for DinD, build
+  caching strategies in CI (BuildKit cache mounts, registry cache),
+  build context optimization, and security considerations for Docker
+  in CI environments.
+
+assertions:
+  - type: llm_judge
+    criteria: "DinD vs socket mounting trade-offs are explained — DinD (docker:dind service): fully isolated, clean state each build, slower (no cache), more secure. Socket mounting (/var/run/docker.sock): uses host daemon, shared image cache (faster), but CI jobs get host-level Docker access (security risk). Socket mount also means containers created by CI are siblings, not children. DinD TLS setup requires matching DOCKER_TLS_CERTDIR, DOCKER_CERT_PATH, DOCKER_HOST with tcp:// and port 2376"
+    weight: 0.35
+    description: "DinD vs socket mounting"
+  - type: llm_judge
+    criteria: "Build caching in CI is covered — BuildKit inline cache: DOCKER_BUILDKIT=1 docker build --build-arg BUILDKIT_INLINE_CACHE=1. Registry-based cache: --cache-from registry.example.com/myapp:latest --cache-to type=registry. CI-specific: mount cache volumes for DinD, use --cache-from with previously pushed images. Build context: always use .dockerignore to exclude .git, node_modules, test files. Small context = fast builds"
+    weight: 0.35
+    description: "Build caching in CI"
+  - type: llm_judge
+    criteria: "Security considerations are practical — socket mounting gives full Docker access (can access other containers, mount host filesystem). DinD with --privileged also has elevated privileges. Alternatives: Kaniko (build without Docker daemon), Buildah (daemonless builds), Docker BuildKit with rootless mode. Credential management: use CI variables for registry auth, never hardcode in Dockerfile. Image scanning in CI pipeline before push"
+    weight: 0.30
+    description: "Security considerations"

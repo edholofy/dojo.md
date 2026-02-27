@@ -1,0 +1,70 @@
+meta:
+  id: node-pressure-evictions
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug node pressure and pod evictions — diagnose DiskPressure, MemoryPressure, and PIDPressure conditions causing pod disruptions"
+  tags: [Kubernetes, node-pressure, eviction, DiskPressure, MemoryPressure, advanced]
+
+state: {}
+
+trigger: |
+  Pods are being evicted from nodes across your cluster, causing
+  intermittent service disruptions:
+
+  $ kubectl get pods --field-selector=status.phase=Failed
+  NAME                         STATUS   REASON    AGE
+  logger-svc-5a6b-c7d8        Failed   Evicted   15m
+  metrics-agg-9e0f-g1h2       Failed   Evicted   15m
+  cache-warm-3i4j-k5l6        Failed   Evicted   14m
+
+  $ kubectl describe node worker-3
+  Conditions:
+    Type              Status  Reason
+    MemoryPressure    True    KubeletHasInsufficientMemory
+    DiskPressure      True    KubeletHasDiskPressure
+    PIDPressure       False   KubeletHasSufficientPID
+    Ready             True    KubeletReady
+
+  Taints:
+    node.kubernetes.io/memory-pressure:NoSchedule
+    node.kubernetes.io/disk-pressure:NoSchedule
+
+  Allocated resources:
+    CPU Requests: 7200m (90%), Memory Requests: 28Gi (87%)
+    CPU Limits: 14000m (175%), Memory Limits: 56Gi (175%)
+
+  The node has memory and disk pressure. Kubernetes automatically added
+  taints to prevent new pods from scheduling. The kubelet is evicting
+  pods based on QoS class:
+  - BestEffort pods evicted first
+  - Then Burstable pods exceeding requests
+  - Guaranteed pods only if exceeding limits
+
+  The overcommitment ratio is concerning: limits are 175% of node
+  capacity. If all pods try to use their limits simultaneously, the
+  node will be severely overcommitted.
+
+  $ kubectl top node worker-3
+  NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%
+  worker-3   6800m        85%    30Gi            94%
+
+  Task: Explain node pressure conditions and eviction. Write: the three
+  pressure types (memory, disk, PID), how kubelet eviction thresholds
+  work (soft vs hard), eviction order by QoS class, how Kubernetes
+  automatically taints pressured nodes, the relationship between
+  requests/limits and overcommitment, and strategies to prevent evictions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Node pressure types are explained — MemoryPressure (memory usage exceeds threshold), DiskPressure (disk usage exceeds threshold, includes container images and logs), PIDPressure (process IDs exhausted). Kubelet monitors these and sets node conditions. Automatic taints are applied: node.kubernetes.io/<condition>:NoSchedule prevents new pods from scheduling on pressured nodes"
+    weight: 0.35
+    description: "Pressure types explained"
+  - type: llm_judge
+    criteria: "Eviction thresholds and order are explained — soft evictions: kubelet waits eviction-soft-grace-period before evicting (e.g., memory.available < 100Mi for 30s). Hard evictions: immediate eviction when threshold crossed (e.g., memory.available < 50Mi). Eviction order: BestEffort first, then Burstable pods exceeding requests sorted by usage, then Guaranteed only if exceeding limits. Pods using more than requested are evicted before those within requests"
+    weight: 0.35
+    description: "Eviction mechanics"
+  - type: llm_judge
+    criteria: "Prevention strategies are practical — set appropriate resource requests and limits (avoid overcommitment), use Guaranteed QoS for critical workloads, implement PodDisruptionBudgets to limit simultaneous evictions, monitor node capacity (kubectl top node, Prometheus), use cluster autoscaler to add nodes before pressure, set ResourceQuotas per namespace, configure kubelet eviction thresholds appropriately"
+    weight: 0.30
+    description: "Prevention strategies"

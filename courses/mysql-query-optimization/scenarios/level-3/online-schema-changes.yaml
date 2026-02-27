@@ -1,0 +1,79 @@
+meta:
+  id: online-schema-changes
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Perform online schema changes — use pt-online-schema-change, gh-ost, and MySQL Online DDL to modify large tables without downtime"
+  tags: [MySQL, online-DDL, pt-osc, gh-ost, schema-change, advanced]
+
+state: {}
+
+trigger: |
+  You need to add a column and an index to a 500 million row table in
+  production without causing downtime. The last time someone ran ALTER
+  TABLE on this table, it blocked all queries for 45 minutes.
+
+  The change needed:
+  ALTER TABLE orders
+    ADD COLUMN shipping_method VARCHAR(50) DEFAULT 'standard',
+    ADD INDEX idx_shipping (shipping_method, created_at);
+
+  Table: orders (500M rows, 200GB, InnoDB)
+  - 50K queries/second during peak
+  - Used by checkout (cannot tolerate blocking)
+
+  MySQL Online DDL capabilities (8.0):
+  - ALGORITHM=INPLACE: restructures table in-place without full copy
+  - ALGORITHM=INSTANT: metadata-only change (fastest, very limited)
+  - LOCK=NONE: allows concurrent DML during DDL
+
+  What each DDL supports:
+  | Operation          | INSTANT | INPLACE | COPY  | Lock during |
+  |--------------------|---------|---------|-------|-------------|
+  | ADD COLUMN (last)  | Yes     | Yes     | Yes   | None        |
+  | ADD COLUMN (middle)| No      | Yes     | Yes   | None        |
+  | ADD INDEX          | No      | Yes     | Yes   | None        |
+  | DROP COLUMN        | No*     | Yes     | Yes   | None        |
+  | CHANGE column type | No      | No      | Yes   | Full lock   |
+  | ADD FOREIGN KEY    | No      | Yes*    | Yes   | None*       |
+
+  * With caveats
+
+  But even with ALGORITHM=INPLACE, the operation can:
+  1. Take hours (rebuilds index in background)
+  2. Consume massive disk space (temporary files)
+  3. Cause replication lag (DDL replays as single operation on replica)
+  4. Briefly acquire metadata lock at start and end (blocking if long
+     transactions are running)
+
+  External tools:
+  A. pt-online-schema-change (Percona Toolkit):
+     - Creates shadow table, copies data via triggers, atomic rename
+     - Throttles based on replica lag and server load
+  B. gh-ost (GitHub):
+     - Uses binlog streaming instead of triggers
+     - No trigger overhead, more controllable
+     - Can pause/resume migration
+  C. MySQL Online DDL (native):
+     - Built-in, no external tool
+     - More limited control, no throttling
+
+  Task: Design the schema change strategy. Write: which approach to
+  use for this change (and why), the execution plan (step by step), the
+  risk mitigation (what if it fails mid-way), the replication impact
+  and how to manage it, and the decision framework for choosing between
+  pt-osc, gh-ost, and native Online DDL.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tool recommendation is justified — recommends gh-ost or pt-osc for this change (despite native Online DDL support) because of controllability: throttling based on lag, ability to pause/resume, predictable disk usage. Explains that native INPLACE DDL works but can't be throttled and metadata lock acquisition can block queries if long transactions exist"
+    weight: 0.35
+    description: "Tool recommendation justified"
+  - type: llm_judge
+    criteria: "Execution plan is detailed — includes pre-checks (disk space for shadow table, no running long transactions, replica lag baseline), the migration command with throttling parameters, monitoring during migration (lag, disk, query latency), and the atomic cutover (rename tables). Estimates duration based on table size"
+    weight: 0.35
+    description: "Detailed execution plan"
+  - type: llm_judge
+    criteria: "Decision framework covers common cases — native Online DDL for: INSTANT-supported changes (add column at end), simple index additions on small tables. pt-osc for: trigger-compatible changes, MySQL 5.7. gh-ost for: large tables requiring throttling, trigger-sensitive environments, when pause/resume needed. All three compared on: speed, safety, controllability, replication impact"
+    weight: 0.30
+    description: "Decision framework"

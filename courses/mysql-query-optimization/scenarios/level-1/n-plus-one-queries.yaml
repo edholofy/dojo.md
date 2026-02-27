@@ -1,0 +1,67 @@
+meta:
+  id: n-plus-one-queries
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Detect and fix N+1 queries — identify the pattern in ORM-generated SQL and resolve with eager loading or query restructuring"
+  tags: [MySQL, N+1, ORM, eager-loading, performance, beginner]
+
+state: {}
+
+trigger: |
+  Your API endpoint /api/orders takes 12 seconds to return 100 orders.
+  You enable the MySQL slow query log and discover that the endpoint
+  executes 301 queries:
+
+  -- Query 1: Get orders
+  SELECT * FROM orders WHERE user_id = 42 ORDER BY created_at DESC LIMIT 100;
+  -- 0.5ms
+
+  -- Query 2-101: Get customer for each order (N times)
+  SELECT * FROM customers WHERE id = 1001;  -- 0.3ms
+  SELECT * FROM customers WHERE id = 1002;  -- 0.3ms
+  SELECT * FROM customers WHERE id = 1003;  -- 0.3ms
+  ... (98 more)
+
+  -- Query 102-201: Get order items for each order (N times)
+  SELECT * FROM order_items WHERE order_id = 5001;  -- 0.4ms
+  SELECT * FROM order_items WHERE order_id = 5002;  -- 0.4ms
+  ... (98 more)
+
+  -- Query 202-301: Get product for each order item (N times)
+  SELECT * FROM products WHERE id = 8001;  -- 0.3ms
+  SELECT * FROM products WHERE id = 8002;  -- 0.3ms
+  ... (98 more)
+
+  Each individual query is fast (0.3-0.5ms), but the total is:
+  1 + 100 + 100 + 100 = 301 queries × ~0.35ms = ~105ms query time
+  But with network round-trip overhead: 301 × ~40ms = 12 seconds
+
+  The ORM code that generates this:
+  orders = Order.find_by_user(user_id=42, limit=100)
+  for order in orders:
+      order.customer = Customer.find(order.customer_id)
+      order.items = OrderItem.find_by_order(order.id)
+      for item in order.items:
+          item.product = Product.find(item.product_id)
+
+  Task: Explain the N+1 query problem and how to fix it. Write: why
+  this pattern is slow (network round trips, not query execution), how
+  to detect it (query count monitoring, slow query log patterns), the
+  JOIN-based solution (single query with JOINs), the IN-based solution
+  (batch loading with WHERE id IN (...)), and which ORM features help
+  (eager loading, batch size configuration).
+
+assertions:
+  - type: llm_judge
+    criteria: "N+1 problem is correctly identified — 1 query to get the list + N queries per related entity = N+1 pattern. The bottleneck is network round-trip latency (not query execution), which is why each query is fast individually but the total is slow. 301 round trips at 40ms each dominates the 12-second response time"
+    weight: 0.35
+    description: "N+1 problem identified"
+  - type: llm_judge
+    criteria: "Solutions are provided — JOIN solution (single query joining orders, customers, order_items, products), IN-based batch loading (SELECT * FROM customers WHERE id IN (1001, 1002, ...)), and ORM eager loading patterns. Explains trade-offs: JOINs may return duplicate data for one-to-many, while IN-based loading keeps queries separate but reduces to 4 queries total"
+    weight: 0.35
+    description: "Multiple solutions provided"
+  - type: llm_judge
+    criteria: "Detection methods are explained — monitoring query count per request, enabling slow query log with low threshold, using MySQL Performance Schema (events_statements_summary_by_digest) to find high-frequency simple queries, and ORM-level query logging to catch the pattern during development"
+    weight: 0.30
+    description: "Detection methods explained"

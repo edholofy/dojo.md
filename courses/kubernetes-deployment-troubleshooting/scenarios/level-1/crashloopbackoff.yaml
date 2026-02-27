@@ -1,0 +1,68 @@
+meta:
+  id: crashloopbackoff
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug CrashLoopBackOff — diagnose why a pod keeps crashing and restarting, using kubectl logs, describe, and events"
+  tags: [Kubernetes, CrashLoopBackOff, debugging, pod-lifecycle, beginner]
+
+state: {}
+
+trigger: |
+  You deployed a new version of your API service and kubectl shows:
+
+  $ kubectl get pods
+  NAME                        READY   STATUS             RESTARTS   AGE
+  api-server-7b8f9c4d-x2k9l  0/1     CrashLoopBackOff   5          3m
+  api-server-7b8f9c4d-m4p7q  0/1     CrashLoopBackOff   5          3m
+  api-server-7b8f9c4d-r9n1j  0/1     CrashLoopBackOff   5          3m
+
+  All 3 replicas are in CrashLoopBackOff. The previous version was
+  running fine. The team is panicking because the API is down.
+
+  kubectl describe pod api-server-7b8f9c4d-x2k9l shows:
+  State:          Waiting
+    Reason:       CrashLoopBackOff
+  Last State:     Terminated
+    Reason:       Error
+    Exit Code:    1
+    Started:      2025-12-01T10:00:05Z
+    Finished:     2025-12-01T10:00:06Z
+
+  Events:
+    Warning  BackOff  3m  kubelet  Back-off restarting failed container
+
+  kubectl logs api-server-7b8f9c4d-x2k9l shows:
+  Error: connect ECONNREFUSED 10.100.50.3:5432
+  Error: Unable to connect to database
+  Process exited with code 1
+
+  The application requires a PostgreSQL database connection. The
+  database is running in the same cluster as a StatefulSet. Nothing
+  changed about the database — only the API image was updated.
+
+  Investigation reveals:
+  - The new image version changed the env var name from DATABASE_URL
+    to DB_CONNECTION_STRING
+  - The ConfigMap still has DATABASE_URL
+  - The container starts, fails to connect (wrong env var), and exits
+
+  Task: Explain how to debug CrashLoopBackOff. Write: what
+  CrashLoopBackOff means (the restart backoff mechanism), the debugging
+  workflow (kubectl logs → describe → events), common causes (app crash,
+  missing env vars, missing dependencies, OOM, wrong command), the fix
+  for this specific case, and how to prevent this in the future.
+
+assertions:
+  - type: llm_judge
+    criteria: "CrashLoopBackOff is explained — the container starts, crashes, Kubernetes restarts it with exponential backoff (10s, 20s, 40s... up to 5 minutes). Exit code 1 indicates application error (not OOMKilled=137, not SIGTERM=143). The backoff means Kubernetes is waiting longer between each restart attempt"
+    weight: 0.35
+    description: "CrashLoopBackOff explained"
+  - type: llm_judge
+    criteria: "Debugging workflow is systematic — (1) kubectl logs <pod> to see application error, (2) kubectl logs <pod> --previous if container already restarted, (3) kubectl describe pod to see events, exit codes, and container state, (4) check env vars with kubectl exec (if pod stays up) or kubectl get cm/secret. Identifies the env var mismatch as root cause"
+    weight: 0.35
+    description: "Systematic debugging workflow"
+  - type: llm_judge
+    criteria: "Fix and prevention are practical — immediate fix: update ConfigMap to include DB_CONNECTION_STRING, or update deployment to map the old var name. Prevention: validate env vars in CI/CD, use health checks (readiness probe on DB connection), and consider using a shared config schema between app versions"
+    weight: 0.30
+    description: "Fix and prevention"

@@ -1,0 +1,58 @@
+meta:
+  id: enterprise-image-management
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design enterprise container image management — implement private registries, image signing, vulnerability policies, and golden image pipelines"
+  tags: [Docker, registry, image-signing, vulnerability, enterprise, governance, expert]
+
+state: {}
+
+trigger: |
+  Your organization has 200+ developers building Docker images with
+  no governance. A security audit reveals:
+
+  1. Developers pull random base images from Docker Hub — some contain
+     known vulnerabilities, some are abandoned/unmaintained.
+
+  2. No image provenance — can't verify who built an image or if it
+     was tampered with between build and deployment.
+
+  3. Production runs images with CRITICAL vulnerabilities because
+     there's no gate between build and deploy.
+
+  4. Multiple teams independently build similar base images with
+     different security configurations.
+
+  5. Docker Hub rate limits (100 pulls/6hrs for anonymous, 200 for
+     free accounts) cause CI failures during peak hours.
+
+  Proposed enterprise image management architecture:
+
+  - Private registry (Harbor) as pull-through cache and primary store
+  - Golden base images maintained by the platform team, pre-hardened
+    and scanned, rebuilt weekly with latest patches
+  - Image signing with Docker Content Trust / cosign
+  - Admission controller that rejects unsigned/unscanned images
+  - Vulnerability policy: block CRITICAL, alert HIGH, log MEDIUM
+  - Image retention policy: keep 10 latest tags, delete untagged after 7 days
+
+  Task: Design enterprise image management. Write: private registry
+  architecture (Harbor, ECR, GCR), golden base image strategy, image
+  signing and verification (cosign, Notary), vulnerability gating in
+  CI/CD, image retention and garbage collection, and developer
+  experience considerations (don't slow down development).
+
+assertions:
+  - type: llm_judge
+    criteria: "Registry architecture is explained — private registry serves as: pull-through cache (reduces Docker Hub dependency, avoids rate limits), primary store for internal images, security scan integration point. Harbor: open-source, includes scanning (Trivy), signing (cosign/Notary), replication, RBAC, audit logging. Cloud registries (ECR, GCR, ACR): managed, integrated with cloud IAM. Registry should be highly available and backed up"
+    weight: 0.35
+    description: "Registry architecture"
+  - type: llm_judge
+    criteria: "Golden images and signing are covered — golden base images: maintained by platform team, pre-hardened (non-root, minimal packages, security config), scanned and signed, rebuilt on schedule (weekly or on CVE). Image signing: cosign for keyless signing (works with Sigstore), Docker Content Trust (DCT) for Docker-native. Admission control: reject unsigned images in production. Supply chain: SBOM generation (syft), provenance attestation (SLSA)"
+    weight: 0.35
+    description: "Golden images and signing"
+  - type: llm_judge
+    criteria: "Developer experience is balanced with security — developers should be able to build and test locally without friction. CI pipeline handles scanning/signing automatically. Clear documentation on approved base images. Fast feedback: scan in CI before merge, not just at deploy. Escape valve for urgent deployments (with audit trail). Self-service: developers can request new base images through a defined process. Metrics: track mean time from vulnerability disclosure to patched image deployment"
+    weight: 0.30
+    description: "Developer experience"

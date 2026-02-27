@@ -1,0 +1,71 @@
+meta:
+  id: database-ma-integration
+  level: 5
+  course: postgresql-query-optimization
+  type: output
+  description: "Plan database integration after M&A — merge two companies' PostgreSQL infrastructures while maintaining service continuity"
+  tags: [PostgreSQL, M&A, integration, data-migration, schema-merge, master]
+
+state: {}
+
+trigger: |
+  Your company (AcmePay, $200M ARR) just acquired a competitor
+  (QuickBill, $50M ARR). Both run on PostgreSQL. The board mandates
+  full technology integration within 12 months. You're leading the
+  database integration.
+
+  AcmePay (acquirer):
+  - PostgreSQL 16 on Aurora, 20 clusters, 30TB
+  - Well-documented schema, strong naming conventions
+  - 500 tables across 8 microservices
+  - 100K QPS peak, 99.95% availability
+  - PgBouncer, comprehensive monitoring
+  - 5 DBAs, mature processes
+
+  QuickBill (acquired):
+  - PostgreSQL 14 on self-managed EC2, 8 clusters, 10TB
+  - Organic schema growth, inconsistent naming
+  - 300 tables in a monolithic database
+  - 20K QPS peak, 99.5% availability
+  - No connection pooling, basic monitoring
+  - 1 DBA (the founder who wrote the original schema)
+
+  Integration challenges:
+  1. Schema conflicts: Both have "users", "invoices", "payments" tables
+     with different schemas, different ID formats (UUID vs serial), and
+     overlapping customer IDs
+  2. Data overlap: 2,000 customers exist in both systems — their data
+     must be merged, not duplicated
+  3. Compliance: QuickBill stores PII in plain text; AcmePay encrypts
+     at rest and at column level for SSN/tax IDs
+  4. Versioning: QuickBill on PG 14 needs upgrade to PG 16
+  5. Performance: QuickBill's monolith has 50 queries >10 seconds
+  6. Business continuity: Both products must remain operational during
+     integration — customers of both products are paying
+  7. API contracts: QuickBill's API returns data in different formats;
+     3rd-party integrations depend on these formats
+  8. Regulatory: Financial data retention requirements (7 years) mean
+     historical data must be carefully preserved and mapped
+
+  The CEO's directive: "I want one database, one platform, one team —
+  within 12 months. But we can't lose a single customer or a single
+  dollar of data."
+
+  Task: Write the integration plan. Include: the assessment of both
+  systems (gaps and risks), the schema unification strategy, the data
+  migration plan (handling overlapping customers), the phased timeline,
+  and the risk mitigation plan (what if integration fails mid-way).
+
+assertions:
+  - type: llm_judge
+    criteria: "Schema unification strategy handles conflicts — defines approach for merging users/invoices/payments tables (ID mapping tables, namespace prefixing, or new unified schema), resolves UUID vs serial ID conflict, handles the 2,000 overlapping customers (deduplication strategy with merge rules), and preserves data lineage for regulatory compliance"
+    weight: 0.35
+    description: "Sound schema unification"
+  - type: llm_judge
+    criteria: "Phased timeline is realistic — breaks 12 months into phases (assessment, preparation, parallel run, migration, decommission), ensures business continuity at each phase (both products operational), includes PG 14→16 upgrade and PII encryption remediation for QuickBill data, and identifies dependencies between phases"
+    weight: 0.35
+    description: "Realistic phased timeline"
+  - type: llm_judge
+    criteria: "Risk mitigation addresses business-critical concerns — rollback plan at each phase, data validation (row counts, financial totals, customer record integrity), parallel running period where both systems serve traffic, and a kill switch to halt integration if customer impact is detected. Addresses API compatibility for 3rd-party integrations"
+    weight: 0.30
+    description: "Business-critical risk mitigation"

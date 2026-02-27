@@ -1,0 +1,78 @@
+meta:
+  id: cte-and-window-functions
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize CTEs and window functions — use MySQL 8.0 features effectively while understanding their performance implications"
+  tags: [MySQL, CTE, window-functions, MySQL-8, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  Your team is migrating queries from subqueries to CTEs and window
+  functions (MySQL 8.0 upgrade). Some rewritten queries are faster,
+  but others are unexpectedly slower. You need to understand why.
+
+  Query 1 — CTE that got slower:
+  -- Old (subquery, 200ms):
+  SELECT * FROM (SELECT customer_id, SUM(total) AS total_spent
+    FROM orders GROUP BY customer_id) AS sub
+  WHERE total_spent > 10000;
+
+  -- New (CTE, 500ms):
+  WITH high_spenders AS (
+    SELECT customer_id, SUM(total) AS total_spent
+    FROM orders GROUP BY customer_id
+  )
+  SELECT * FROM high_spenders WHERE total_spent > 10000;
+
+  Why is the CTE slower? MySQL 8.0 may materialize the CTE into a
+  temporary table, while the derived table (subquery) gets merged into
+  the outer query by the optimizer.
+
+  Query 2 — Window function vs self-join:
+  -- Old (self-join, 5 seconds):
+  SELECT o1.*, (SELECT COUNT(*) FROM orders o2
+    WHERE o2.customer_id = o1.customer_id
+    AND o2.created_at <= o1.created_at) AS order_number
+  FROM orders o1 WHERE o1.customer_id = 42;
+
+  -- New (window function, 50ms):
+  SELECT *, ROW_NUMBER() OVER (
+    PARTITION BY customer_id ORDER BY created_at
+  ) AS order_number
+  FROM orders WHERE customer_id = 42;
+
+  Query 3 — Running total with window function:
+  SELECT id, amount,
+    SUM(amount) OVER (ORDER BY created_at
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_total,
+    AVG(amount) OVER (ORDER BY created_at
+      ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7
+  FROM transactions WHERE account_id = 1;
+
+  Questions:
+  1. When do CTEs get materialized vs merged?
+  2. How do window functions handle the OVER clause efficiently?
+  3. Can window functions use indexes?
+  4. What's the performance impact of multiple OVER clauses?
+
+  Task: Explain CTE and window function optimization in MySQL 8.0.
+  Write: when CTEs are materialized vs merged (and how to control it),
+  how window functions are executed (sort-based processing), when window
+  functions outperform self-joins, how to optimize queries with multiple
+  window functions, and common pitfalls.
+
+assertions:
+  - type: llm_judge
+    criteria: "CTE materialization is explained — MySQL 8.0 may materialize CTEs into temporary tables (adding overhead), while derived tables can be merged into the outer query. A CTE is materialized if: referenced more than once, is recursive, or optimizer chooses materialization. Use EXPLAIN to check. Can influence with optimizer_switch derived_merge"
+    weight: 0.35
+    description: "CTE materialization explained"
+  - type: llm_judge
+    criteria: "Window function execution is explained — MySQL sorts data by the PARTITION BY and ORDER BY columns, then processes the window frame for each row. Multiple OVER clauses with different orderings may require multiple sorts. Same OVER clause shared across functions avoids re-sorting. Indexes on (partition_col, order_col) help avoid explicit sorts"
+    weight: 0.35
+    description: "Window function execution"
+  - type: llm_judge
+    criteria: "Practical optimization advice is provided — use named WINDOW clauses to share sort operations, prefer ROW_NUMBER over self-joins for ranking, be aware that window functions process all rows before LIMIT (so add WHERE filters to reduce the window), and compare CTE vs derived table performance with EXPLAIN"
+    weight: 0.30
+    description: "Practical optimization advice"

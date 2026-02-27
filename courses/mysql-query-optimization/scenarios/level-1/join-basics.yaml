@@ -1,0 +1,66 @@
+meta:
+  id: join-basics
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Understand MySQL JOIN execution — learn how MySQL processes JOINs, the nested-loop algorithm, and how to optimize JOIN queries with indexes"
+  tags: [MySQL, JOIN, nested-loop, hash-join, index, beginner]
+
+state: {}
+
+trigger: |
+  You're building a report that shows order details with customer and
+  product information. Your query joins 4 tables and takes 30 seconds:
+
+  SELECT o.id, o.total, c.name, c.email,
+         oi.quantity, oi.unit_price, p.name AS product_name
+  FROM orders o
+  JOIN customers c ON c.id = o.customer_id
+  JOIN order_items oi ON oi.order_id = o.id
+  JOIN products p ON p.id = oi.product_id
+  WHERE o.created_at >= '2025-01-01'
+    AND o.status = 'completed';
+
+  EXPLAIN output:
+  +----+-------+--------+------+---------------+------+--------+-----------+
+  | id | table | type   | key  | rows          | filt | Extra              |
+  +----+-------+--------+------+---------------+------+--------+-----------+
+  |  1 | o     | ALL    | NULL | 5,000,000     | 5.00 | Using where        |
+  |  1 | c     | eq_ref | PK   | 1             | 100  | NULL               |
+  |  1 | oi    | ref    | idx_order_id | 3    | 100  | NULL               |
+  |  1 | p     | eq_ref | PK   | 1             | 100  | NULL               |
+  +----+-------+--------+------+---------------+------+--------+-----------+
+
+  The issue: orders table has type=ALL (full table scan of 5M rows).
+  MySQL then does a nested loop: for each of the 5M order rows, it
+  looks up the customer (eq_ref, fast), finds order items (ref, ~3 per
+  order), and looks up each product (eq_ref, fast).
+
+  But the first step scans all 5M orders when only ~250K match the
+  WHERE clause (status='completed' AND created_at >= '2025-01-01').
+
+  Available indexes:
+  - orders: PRIMARY(id), idx_customer_id(customer_id)
+  - customers: PRIMARY(id)
+  - order_items: PRIMARY(id), idx_order_id(order_id)
+  - products: PRIMARY(id)
+
+  Task: Explain how MySQL executes JOINs. Write: the nested-loop join
+  algorithm (how MySQL processes joins step by step), why join order
+  matters (driving table selection), why the orders table needs a better
+  index, how eq_ref vs ref vs ALL access types affect join performance,
+  and how MySQL 8.0's hash join changes things.
+
+assertions:
+  - type: llm_judge
+    criteria: "Nested-loop join is explained — MySQL traditionally uses nested-loop join: for each row in the outer (driving) table, it looks up matching rows in the inner table using the join condition. The optimizer chooses the join order to minimize total rows examined. Currently the orders full table scan drives 5M iterations"
+    weight: 0.35
+    description: "Nested-loop algorithm explained"
+  - type: llm_judge
+    criteria: "Index fix is recommended — a composite index on orders(status, created_at) or orders(created_at, status) would allow MySQL to use a range scan instead of a full table scan on the driving table, reducing rows from 5M to ~250K. Explains that the join itself (eq_ref for customers and products) is already optimal"
+    weight: 0.35
+    description: "Index fix recommended"
+  - type: llm_judge
+    criteria: "MySQL 8.0 hash join is mentioned — MySQL 8.0.18+ introduced hash join for equi-joins without indexes (builds hash table on smaller table, probes with larger table). Hash join is used when there's no usable index on the join column. It's an alternative to block nested-loop join, not a replacement for indexed nested-loop"
+    weight: 0.30
+    description: "Hash join mentioned"

@@ -1,0 +1,67 @@
+meta:
+  id: specialized-index-types
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Use specialized index types — choose between GIN, GiST, BRIN, and SP-GiST for non-standard data types and query patterns"
+  tags: [PostgreSQL, GIN, GiST, BRIN, SP-GiST, specialized-indexes, advanced]
+
+state: {}
+
+trigger: |
+  Your platform has diverse data types that B-tree indexes can't
+  handle efficiently. Each needs a specialized index type.
+
+  Scenario 1 — Full-text search (articles table, 20M rows):
+  SELECT * FROM articles
+  WHERE to_tsvector('english', title || ' ' || body) @@
+        to_tsquery('english', 'postgresql & optimization');
+  Currently: Seq Scan, 15 seconds per query.
+  Needs: GIN index on tsvector.
+
+  Scenario 2 — JSONB queries (products table, 5M rows):
+  SELECT * FROM products WHERE metadata @> '{"color": "red"}';
+  SELECT * FROM products WHERE metadata ? 'warranty';
+  Currently: Seq Scan, 8 seconds per query.
+  Needs: GIN index on JSONB column.
+
+  Scenario 3 — Geospatial (locations table, 2M rows):
+  SELECT * FROM locations
+  WHERE ST_DWithin(coordinates, ST_MakePoint(-73.98, 40.75), 1000);
+  Currently: Seq Scan with distance calculation on every row.
+  Needs: GiST index on geometry column.
+
+  Scenario 4 — Time-series data (metrics table, 10B rows):
+  SELECT * FROM metrics
+  WHERE recorded_at BETWEEN '2026-02-26' AND '2026-02-27';
+  Data is inserted in time order (naturally ordered on disk).
+  B-tree index would be 200GB. Needs: BRIN index (tiny, ~10MB).
+
+  Scenario 5 — Array contains (tags table, 3M rows):
+  SELECT * FROM posts WHERE tags @> ARRAY['postgresql', 'tutorial'];
+  Currently: Seq Scan.
+  Needs: GIN index on array column.
+
+  Scenario 6 — IP address range (access_logs table, 100M rows):
+  SELECT * FROM access_logs
+  WHERE ip_address <<= '192.168.0.0/16';
+  Needs: SP-GiST or GiST index on inet type.
+
+  Task: For each scenario, write: the CREATE INDEX statement, the
+  expected query performance improvement, the index size compared to
+  B-tree, and the trade-offs (build time, write overhead, maintenance).
+  Then create a decision matrix for choosing the right index type.
+
+assertions:
+  - type: llm_judge
+    criteria: "Index type selection is correct — GIN for full-text search, JSONB, and arrays (inverted index for containment), GiST for geospatial (nearest-neighbor, distance), BRIN for naturally-ordered time-series (block range summary), SP-GiST for IP ranges and hierarchical data"
+    weight: 0.35
+    description: "Correct index type selection"
+  - type: llm_judge
+    criteria: "Performance improvements are realistic — GIN on JSONB: 100-1000x improvement, GiST on geometry: spatial index eliminates full scan, BRIN on time-series: tiny index (10MB vs 200GB B-tree) with good pruning on ordered data. Each improvement is justified by the data characteristics"
+    weight: 0.35
+    description: "Realistic performance estimates"
+  - type: llm_judge
+    criteria: "Decision matrix is comprehensive — covers when to use each type (data type, query pattern, data ordering, write frequency), includes trade-offs (GIN: fast queries but slow updates, BRIN: tiny but requires physical ordering, GiST: versatile but larger than BRIN), and handles hybrid approaches"
+    weight: 0.30
+    description: "Comprehensive decision matrix"

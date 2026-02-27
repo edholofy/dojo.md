@@ -1,0 +1,67 @@
+meta:
+  id: docker-logs-debugging
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug with Docker logs — learn to use docker logs, docker inspect, and docker exec for systematic container troubleshooting"
+  tags: [Docker, logs, inspect, exec, debugging-commands, beginner]
+
+state: {}
+
+trigger: |
+  Your containerized web application is running but returning 500
+  errors. You need to figure out what's wrong.
+
+  $ docker ps
+  CONTAINER ID   IMAGE          STATUS         PORTS                  NAMES
+  a1b2c3d4e5f6   webapp:v2.1    Up 3 minutes   0.0.0.0:8080->3000/tcp api
+
+  $ curl http://localhost:8080/health
+  {"status":"error","message":"database connection failed"}
+
+  Step 1 — Check logs:
+  $ docker logs api
+  [2025-12-01T10:00:00] Starting server on port 3000
+  [2025-12-01T10:00:01] Error: connect ECONNREFUSED 172.17.0.5:5432
+  [2025-12-01T10:00:02] Retrying database connection (1/5)...
+  [2025-12-01T10:00:03] Error: connect ECONNREFUSED 172.17.0.5:5432
+  [2025-12-01T10:00:08] All retry attempts failed. Running in degraded mode.
+
+  Step 2 — Inspect the container:
+  $ docker inspect api --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+  172.17.0.3
+
+  $ docker inspect api --format='{{json .Config.Env}}' | jq
+  ["DATABASE_URL=postgres://user:pass@172.17.0.5:5432/mydb", "NODE_ENV=production"]
+
+  The DATABASE_URL points to 172.17.0.5 but is that IP still valid?
+
+  Step 3 — Exec into the container:
+  $ docker exec -it api sh
+  /app $ ping 172.17.0.5
+  PING 172.17.0.5: 56 data bytes
+  --- 172.17.0.5 ping statistics ---
+  3 packets transmitted, 0 received, 100% packet loss
+
+  The database container IP changed (it was restarted and got a new IP).
+  The hardcoded IP in DATABASE_URL is stale.
+
+  Task: Explain the Docker debugging toolkit. Write: how to use docker
+  logs (with --follow, --since, --tail), docker inspect for container
+  metadata, docker exec for interactive debugging, docker stats for
+  resource monitoring, docker events for real-time lifecycle events,
+  and the systematic approach to diagnosing container issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Docker logs usage is comprehensive — docker logs <container> shows stdout/stderr, --follow (-f) streams in real-time, --since '10m' shows last 10 minutes, --tail 100 shows last 100 lines, --timestamps adds timestamps. For containers that write logs to files instead of stdout, logs command shows nothing — must exec into container or mount log volume"
+    weight: 0.35
+    description: "Docker logs"
+  - type: llm_judge
+    criteria: "Docker inspect and exec are explained — docker inspect returns full JSON metadata (network settings, env vars, mounts, state, config). Use --format with Go templates to extract specific fields. docker exec -it <container> sh opens interactive shell for debugging (check files, environment, network). docker exec can also run one-off commands: docker exec api env, docker exec api cat /etc/hosts"
+    weight: 0.35
+    description: "Inspect and exec"
+  - type: llm_judge
+    criteria: "Systematic debugging approach is shown — (1) docker ps to check container status, (2) docker logs for application errors, (3) docker inspect for configuration and network info, (4) docker exec to investigate inside the container, (5) docker stats for resource usage. The IP issue demonstrates why you should use container names or Docker DNS instead of hardcoded IPs. Use Docker networks for reliable service discovery"
+    weight: 0.30
+    description: "Systematic approach"

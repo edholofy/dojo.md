@@ -1,0 +1,67 @@
+meta:
+  id: expert-optimization-shift
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Expert optimization shift — manage a multi-cluster MySQL crisis during a high-traffic event with cascading failures"
+  tags: [MySQL, shift-simulation, crisis, multi-cluster, cascading-failure, expert]
+
+state: {}
+
+trigger: |
+  You're the database lead during Cyber Monday. Your company's MySQL
+  infrastructure spans 5 clusters. At 09:00 AM, traffic hits 5x
+  normal and cascading failures begin.
+
+  Timeline:
+
+  09:00 — Traffic starts at 5x normal. All green initially.
+
+  09:12 — Cluster A (Orders): Primary CPU 95%. ProxySQL backend
+  connection queue growing. P99 latency at 3 seconds.
+  Cause: New recommendation engine query deployed at 08:55:
+    SELECT p.* FROM products p
+    JOIN purchase_history ph ON ph.product_id = p.id
+    JOIN user_preferences up ON up.category = p.category
+    WHERE up.user_id = ?
+    ORDER BY ph.purchase_count DESC LIMIT 20;
+  Missing index on purchase_history, scanning 200M rows per request.
+
+  09:18 — Cluster B (Users): InnoDB deadlock rate 200/minute.
+  The loyalty points update is deadlocking with the cart update:
+    -- Transaction 1 (loyalty): UPDATE users SET points = points + 10...
+    -- Transaction 2 (cart): UPDATE users SET cart_total = ...
+  Both acquiring row locks on the same user rows.
+
+  09:22 — Cluster C (Inventory): Disk space at 92%. Binary logs and
+  relay logs accumulating. All 3 replicas lagging >2 minutes.
+  Cause: Massive write volume (inventory decrements for every purchase)
+  generating 2GB/hour of binlog.
+
+  09:25 — Cluster A Replica 1 removed from ProxySQL (lag > 120s).
+  All read traffic shifts to Replica 2, which also starts lagging.
+  API error rate hits 30%.
+
+  09:28 — Cluster D (Analytics): 5 long-running queries holding
+  metadata locks, blocking a scheduled ALTER TABLE that's been
+  waiting for 10 minutes. Other DDL operations queuing behind it.
+
+  09:30 — Revenue loss: $50K/minute. CEO in war room.
+
+  Task: Write the incident response. Include: immediate triage (first
+  5 minutes), stabilization plan (next 30 minutes), root cause per
+  cluster, post-incident improvements, and war-room communications.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage is correctly prioritized — addresses the highest revenue impact first: Cluster A (kill the bad query or add emergency index, increase ProxySQL limits), then Cluster C disk space (PURGE BINARY LOGS, increase disk), then Cluster B deadlocks (separate the conflicting transactions), then Cluster D (kill waiting DDL, reschedule). Each step has a time estimate"
+    weight: 0.35
+    description: "Prioritized triage"
+  - type: llm_judge
+    criteria: "All 4 clusters are stabilized — Cluster A (add missing index or roll back deployment), Cluster B (redesign lock ordering or use optimistic locking), Cluster C (purge binlogs, add disk, tune binlog retention), Cluster D (cancel DDL, implement DDL scheduling policy). ProxySQL backend connections are restored"
+    weight: 0.35
+    description: "All clusters stabilized"
+  - type: llm_judge
+    criteria: "Post-incident improvements prevent recurrence — mandatory query review before deployment (especially before high-traffic events), deployment freeze during traffic events, binlog retention policy, disk space monitoring with 3-day projection alerts, and load testing with realistic traffic patterns before major events"
+    weight: 0.30
+    description: "Preventive improvements"

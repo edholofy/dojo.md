@@ -1,0 +1,73 @@
+meta:
+  id: master-troubleshooting-shift
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Master-level troubleshooting shift — manage a global multi-cluster crisis combining technical failures, organizational challenges, and strategic decisions"
+  tags: [Kubernetes, troubleshooting, combined, shift-simulation, global-crisis, master]
+
+state: {}
+
+trigger: |
+  You're the VP of Platform Engineering. It's 2:00 AM and you receive
+  a call: "We're having a global incident affecting all regions."
+
+  The situation (unfolding over the next 4 hours):
+
+  2:00 AM — Initial alert:
+  - prod-us-1: 30% of pods OOMKilled after a memory leak in a shared
+    library updated 6 hours ago. HPA scaling rapidly.
+  - prod-eu-1: healthy but seeing 2x traffic as users retry failed US
+    requests through CDN failover
+
+  2:15 AM — Escalation:
+  - The shared library was updated by 15 different services via
+    automated dependency bot (Renovate) — all merged without human
+    review
+  - Rollback requires coordinating 15 service teams
+  - The memory leak is slow: pods run fine for 1-2 hours then OOMKill
+  - HPA is scaling to max, exhausting cluster capacity
+
+  2:45 AM — Cascade begins:
+  - prod-us-1 runs out of cluster capacity. New pods can't schedule.
+  - Cluster autoscaler hits AWS account EC2 limit (quota reached)
+  - prod-eu-1 starting to see memory growth in the same services
+  - EU compliance officer: "US traffic hitting EU cluster may violate
+    GDPR for certain customers"
+
+  3:15 AM — Decision point:
+  - Board member calls: "I saw on Twitter we're having an outage. What's
+    the customer impact and when will it be resolved?"
+  - Customer success: "Our top 3 enterprise accounts are escalating.
+    One is threatening to invoke the SLA penalty clause ($500K)."
+  - Engineering: "We can rollback the library but it requires CI builds
+    for all 15 services — estimated 90 minutes"
+  - Security: "The dependency bot shouldn't have auto-merged. This is
+    a supply chain risk."
+
+  4:00 AM — Resolution path:
+  You need to simultaneously: contain the blast radius, communicate
+  to all stakeholders, make strategic decisions about GDPR exposure,
+  and plan the remediation.
+
+  Task: Walk through managing this global crisis end-to-end. Write:
+  the technical incident response (contain → triage → remediate),
+  the multi-stakeholder communication strategy (board, customers,
+  teams, compliance), the strategic decisions required and their
+  trade-offs, the organizational failures that enabled this incident,
+  the post-incident improvement program, and how this incident shapes
+  future platform architecture and governance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical response is immediate and effective — containment: set memory limits on affected pods (kill early, restart fresh to buy time), disable HPA scaling to prevent cluster exhaustion, request AWS quota increase. Triage: identify the shared library as root cause, determine which services are affected. Remediate: pin the library to previous version in dependency bot, trigger CI builds for all 15 services, deploy rollbacks as they complete. Meanwhile: rate-limit CDN failover to prevent GDPR exposure"
+    weight: 0.35
+    description: "Technical response"
+  - type: llm_judge
+    criteria: "Communication is multi-layered and timely — board member: concise impact statement, ETA, reassurance of response capability (2 min update). Enterprise accounts: personal outreach from customer success with honest ETA, proactive SLA credit offer before they ask. Engineering teams: clear incident channel, assigned rollback owners per service, 15-min status updates. Compliance: document GDPR exposure window, assess if EU data was actually processed in wrong region, prepare breach assessment if needed"
+    weight: 0.35
+    description: "Stakeholder communication"
+  - type: llm_judge
+    criteria: "Organizational failures and improvements are systemic — failures: automated dependency updates without human review for critical libraries, no canary period for shared library updates, no memory limit enforcement, AWS quota not sized for surge, GDPR traffic routing not enforced at CDN level. Improvements: require human review for shared/transitive dependencies, implement dependency update canary (1 service first, monitor 24h), enforce memory limits as admission policy, implement traffic geo-fencing, regular capacity stress tests. Frame as governance evolution, not blame"
+    weight: 0.30
+    description: "Failures and improvements"

@@ -1,0 +1,70 @@
+meta:
+  id: overlay-network-debugging
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker overlay and multi-host networking — diagnose Swarm overlay networks, VXLAN issues, and cross-host container communication"
+  tags: [Docker, overlay, Swarm, VXLAN, multi-host, networking, advanced]
+
+state: {}
+
+trigger: |
+  Your Docker Swarm cluster has 3 nodes. Services on different nodes
+  can't communicate even though they're on the same overlay network:
+
+  $ docker network create -d overlay --attachable mynet
+  $ docker service create --name api --network mynet api-image
+  $ docker service create --name db --network mynet postgres:15
+
+  api and db are scheduled on different nodes:
+  $ docker service ps api
+  ID         NAME    NODE    CURRENT STATE
+  abc123     api.1   node-1  Running 5 minutes ago
+
+  $ docker service ps db
+  ID         NAME    NODE    CURRENT STATE
+  def456     db.1   node-2  Running 3 minutes ago
+
+  From api container:
+  $ docker exec api.1 ping db
+  PING db (10.0.1.5): 56 data bytes
+  (no response — packets lost)
+
+  Investigation:
+
+  1. The overlay network uses VXLAN (UDP port 4789) for encapsulation.
+     Node-2's firewall blocks UDP 4789:
+     $ sudo iptables -L -n | grep 4789
+     (no rule — VXLAN traffic is being dropped)
+
+  2. After opening port 4789, pings work but TCP connections to
+     postgres:5432 intermittently fail. MTU issue — VXLAN adds 50
+     bytes of overhead. The default MTU of 1500 causes fragmentation:
+     $ docker exec api.1 ping -s 1450 db
+     (works)
+     $ docker exec api.1 ping -s 1472 db
+     (fails — packet too large with VXLAN overhead)
+
+  3. DNS resolution between services uses Docker's embedded DNS
+     (127.0.0.11). In some cases, the VIP (virtual IP) load balancing
+     sends traffic to a container that hasn't finished starting.
+
+  Task: Explain Docker overlay network debugging. Write: how overlay
+  networks work (VXLAN encapsulation, control plane vs data plane),
+  required ports for Swarm (2377, 7946, 4789), MTU considerations,
+  DNS service discovery in Swarm (VIP vs DNSRR), cross-host debugging
+  tools and techniques, and common overlay network failure modes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Overlay network mechanics are explained — overlay networks use VXLAN to encapsulate Layer 2 frames in UDP packets (port 4789). Docker Swarm requires: TCP 2377 (cluster management), TCP/UDP 7946 (node communication/gossip), UDP 4789 (VXLAN data). If any port is blocked, overlay networking fails. The ingress network handles published port routing (routing mesh). Each service gets a VIP on the overlay network"
+    weight: 0.35
+    description: "Overlay mechanics"
+  - type: llm_judge
+    criteria: "MTU and DNS issues are covered — VXLAN adds 50 bytes overhead, so effective MTU is 1450 (not 1500). Symptoms of MTU issues: small packets work, large transfers fail or hang. Fix: set MTU on overlay network creation (--opt com.docker.network.driver.mtu=1450) or in daemon.json. DNS: services resolve via embedded DNS (127.0.0.11). VIP mode (default) provides single virtual IP with load balancing. DNSRR mode returns all container IPs. VIP can route to starting containers — use health checks"
+    weight: 0.35
+    description: "MTU and DNS"
+  - type: llm_judge
+    criteria: "Debugging techniques are practical — check network connectivity: docker network inspect (shows connected containers and IPs). Use netshoot container on overlay network for debugging. Check VXLAN: tcpdump on host for UDP 4789. Verify port rules: iptables -L -n. Check Swarm gossip: docker node ls (all nodes must be Ready). Common failures: firewall blocking Swarm ports, MTU mismatch, stale network state (docker network disconnect/connect to reset)"
+    weight: 0.30
+    description: "Debugging techniques"

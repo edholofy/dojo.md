@@ -1,0 +1,58 @@
+meta:
+  id: security-hardening
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes security hardening strategy — Pod Security Standards, supply chain security, runtime protection, and compliance"
+  tags: [Kubernetes, security, Pod-Security-Standards, supply-chain, compliance, expert]
+
+state: {}
+
+trigger: |
+  A security audit of your Kubernetes platform revealed critical findings:
+
+  CRITICAL findings:
+  1. 65% of pods run as root
+  2. 40% of containers have privileged=true
+  3. No pod security admission is enforced
+  4. Container images pulled from public registries without verification
+  5. Secrets stored as base64 in etcd (not encrypted at rest)
+
+  HIGH findings:
+  6. No network segmentation between namespaces
+  7. ServiceAccount tokens auto-mounted in all pods
+  8. No image vulnerability scanning in CI/CD pipeline
+  9. Kubernetes API server accessible from all pods
+  10. No audit logging enabled
+
+  MEDIUM findings:
+  11. No resource limits on 30% of pods (DoS risk)
+  12. ConfigMaps contain credentials that should be in Secrets
+  13. Helm charts pulled from untrusted repositories
+  14. No RBAC review process (stale permissions accumulate)
+  15. Kubernetes dashboard exposed without authentication
+
+  The security team requires all CRITICAL and HIGH findings remediated
+  within 90 days for SOC2 compliance. You can't just enforce everything
+  at once — that would break 200+ running services.
+
+  Task: Design a phased security hardening plan. Write: the remediation
+  priority and timeline, Pod Security Standards rollout strategy (audit
+  → warn → enforce), supply chain security (image signing, scanning,
+  admission control), secrets management (external vault, encryption at
+  rest), network segmentation approach, and how to balance security
+  with developer velocity.
+
+assertions:
+  - type: llm_judge
+    criteria: "Phased rollout is realistic — Phase 1 (weeks 1-4): enable audit logging, encrypt secrets at rest, disable auto-mounting SA tokens, scan existing images. Phase 2 (weeks 5-8): Pod Security Standards in audit mode, add NetworkPolicies in monitoring mode, image signing. Phase 3 (weeks 9-12): enforce Pod Security Standards (warn → enforce), block unsigned images, RBAC review. The progression audit → warn → enforce prevents breaking running services"
+    weight: 0.35
+    description: "Phased rollout"
+  - type: llm_judge
+    criteria: "Supply chain security is addressed — image scanning in CI/CD (Trivy/Grype), admission control (Kyverno/OPA Gatekeeper) to reject vulnerable or unsigned images, private registry as proxy cache for public images, image signing with Cosign/Notation, SBOM generation, base image standardization. Supply chain attacks are a top Kubernetes risk — images are the primary attack vector"
+    weight: 0.35
+    description: "Supply chain security"
+  - type: llm_judge
+    criteria: "Operational security balance is practical — developer velocity: provide pre-hardened base images (non-root, minimal), self-service exception process for privileged containers (approval workflow), automated RBAC provisioning tied to team membership, policy-as-code in Git (Kyverno/OPA policies reviewed via PR). Monitoring: runtime security (Falco) for detecting anomalous behavior, regular penetration testing"
+    weight: 0.30
+    description: "Security-velocity balance"

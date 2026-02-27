@@ -1,0 +1,65 @@
+meta:
+  id: multi-environment-management
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design multi-environment container management — implement dev/staging/prod parity, environment-specific configuration, and promotion workflows"
+  tags: [Docker, environments, dev-prod-parity, configuration, promotion, expert]
+
+state: {}
+
+trigger: |
+  "It works in dev but not in production" — your team's most common
+  incident cause. Investigation reveals massive environment drift:
+
+  Development:
+  - docker compose up (all services on laptop)
+  - Uses :latest tags, builds locally
+  - Mounts source code as volumes (hot reload)
+  - Single instance of everything
+  - SQLite instead of PostgreSQL
+  - No resource limits, no health checks
+
+  Staging:
+  - docker compose -f docker-compose.staging.yml up
+  - Some services use :latest, some use specific tags
+  - Different Compose file with staging overrides
+  - PostgreSQL but different version than production
+  - Health checks defined but not enforced
+
+  Production:
+  - docker compose -f docker-compose.prod.yml up on 3 servers
+  - Manually tagged images (sometimes wrong tag)
+  - nginx reverse proxy manually configured
+  - PostgreSQL 15 with replication
+  - Resource limits, health checks, log rotation
+
+  Three separate Compose files that have diverged significantly.
+  Config values hardcoded differently in each environment.
+
+  Proposed solution architecture:
+  - Single docker-compose.yml with environment-specific overrides
+  - Identical images across all environments (config via env vars)
+  - Environment parity: same database engine, same service versions
+  - Promotion: same image SHA moves dev → staging → production
+  - Configuration management via .env files per environment
+
+  Task: Design multi-environment container management. Write: the
+  12-factor app approach to configuration, Compose override files
+  (docker-compose.override.yml), environment parity strategies,
+  image promotion workflows (same SHA across environments), secrets
+  per environment, and debugging environment-specific issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Environment parity is explained — the 12-factor app: same image in all environments, configuration via environment variables only. Docker Compose overrides: base docker-compose.yml + docker-compose.override.yml (dev defaults) + docker-compose.prod.yml (production overrides). Use docker compose -f base.yml -f prod.yml up. Keep dev close to prod: same database engine (not SQLite vs PostgreSQL), same service versions, same network topology. Dev additions: volume mounts for hot reload, debug ports"
+    weight: 0.35
+    description: "Environment parity"
+  - type: llm_judge
+    criteria: "Image promotion workflow is covered — build once, deploy everywhere: CI builds image with git SHA tag, same image moves through environments. Never rebuild for different environments — configuration changes, not the image. Promotion: dev (auto-deploy on merge) → staging (auto-deploy, run integration tests) → production (manual approval, same SHA). Image tags: git SHA for traceability, semantic version for releases, never :latest in staging/production. Registry as the source of truth for promoted images"
+    weight: 0.35
+    description: "Promotion workflow"
+  - type: llm_judge
+    criteria: "Configuration and debugging are practical — configuration hierarchy: defaults in image → .env file per environment → runtime environment variables. Secrets: Docker secrets for production, .env file for development (gitignored). Debugging environment-specific issues: compare docker inspect output between environments, diff effective configuration, check resource limits (may only manifest under production load), verify network topology matches. Common gotchas: DNS resolution differs, filesystem case sensitivity (Mac vs Linux), time zones, locale settings"
+    weight: 0.30
+    description: "Configuration and debugging"

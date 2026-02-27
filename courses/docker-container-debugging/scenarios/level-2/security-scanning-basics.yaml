@@ -1,0 +1,67 @@
+meta:
+  id: security-scanning-basics
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug container security issues — scan images for vulnerabilities, understand CVE severity, and fix common security problems"
+  tags: [Docker, security, scanning, Trivy, CVE, vulnerability, intermediate]
+
+state: {}
+
+trigger: |
+  Your CI/CD pipeline started failing after adding a security scan step:
+
+  $ trivy image myapp:latest
+  Total: 147 (CRITICAL: 3, HIGH: 12, MEDIUM: 45, LOW: 87)
+
+  CRITICAL vulnerabilities:
+  ┌─────────────────┬──────────────┬──────────┬─────────────────────────┐
+  │ Library         │ Vulnerability│ Severity │ Fixed Version           │
+  ├─────────────────┼──────────────┼──────────┼─────────────────────────┤
+  │ openssl         │ CVE-2024-XXX │ CRITICAL │ 3.0.13                  │
+  │ curl            │ CVE-2024-YYY │ CRITICAL │ 8.6.0                   │
+  │ node            │ CVE-2024-ZZZ │ CRITICAL │ 20.11.1                 │
+  └─────────────────┴──────────────┴──────────┴─────────────────────────┘
+
+  Questions:
+  1. All 3 critical CVEs are in the base image (node:20.10.0), not in
+     your application code. Updating the base image to node:20.11.1
+     fixes all three.
+
+  2. Of the 12 HIGH vulnerabilities, 8 are in packages your app doesn't
+     even use — they're just in the base image.
+
+  3. After updating the base image, re-scanning still shows 45 MEDIUM
+     and 87 LOW vulnerabilities. Should you block deployment?
+
+  4. Your company's policy: block on CRITICAL and HIGH, allow MEDIUM
+     and below. But one HIGH CVE has no fix available yet.
+
+  $ trivy image --severity CRITICAL,HIGH myapp:latest
+  Total: 1 (HIGH: 1)  # After base image update
+
+  The unfixable HIGH CVE is in a transitive dependency. Options:
+  - Accept the risk and add to ignore list
+  - Switch to a different library
+  - Wait for upstream fix
+
+  Task: Explain container security scanning. Write: how vulnerability
+  scanners work (match packages against CVE databases), scanner tools
+  (Trivy, Docker Scout, Snyk), severity levels and what they mean,
+  how to reduce vulnerabilities (base image selection, minimal images),
+  handling unfixable vulnerabilities, and integrating scanning into
+  CI/CD pipelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Scanning mechanics are explained — scanners extract the package list from image layers (OS packages + language dependencies), then match against CVE databases (NVD, vendor advisories). Each CVE has a severity (CRITICAL/HIGH/MEDIUM/LOW) based on CVSS score. Most vulnerabilities come from the base image, not application code. Updating the base image is the most impactful fix"
+    weight: 0.35
+    description: "Scanning mechanics"
+  - type: llm_judge
+    criteria: "Reduction strategies are covered — use minimal base images (alpine, distroless, slim) to reduce attack surface, regularly update base images, use multi-stage builds to exclude build tools from final image, remove unnecessary packages. Scanner comparison: Trivy (free, fast, broad), Docker Scout (native Docker integration), Snyk (developer-focused, fix suggestions)"
+    weight: 0.35
+    description: "Reduction strategies"
+  - type: llm_judge
+    criteria: "CI/CD integration and policy are practical — fail builds on CRITICAL: trivy image --exit-code 1 --severity CRITICAL myapp. Allow ignore list for accepted risks (.trivyignore file). Use --ignore-unfixed to skip CVEs without available patches. Policy: define severity threshold per environment (block CRITICAL in prod, warn in dev). Scan on every build, schedule weekly full scans for drift detection"
+    weight: 0.30
+    description: "CI/CD integration"

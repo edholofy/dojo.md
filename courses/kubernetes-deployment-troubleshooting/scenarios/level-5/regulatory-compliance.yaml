@@ -1,0 +1,76 @@
+meta:
+  id: regulatory-compliance
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Kubernetes regulatory compliance — navigate SOC2, PCI-DSS, HIPAA, and GDPR requirements in Kubernetes environments"
+  tags: [Kubernetes, compliance, SOC2, PCI-DSS, HIPAA, GDPR, regulatory, master]
+
+state: {}
+
+trigger: |
+  Your company's Kubernetes platform must pass audits for multiple
+  compliance frameworks simultaneously. The compliance team has flagged
+  gaps that must be addressed before the next audit cycle (90 days).
+
+  Framework requirements and Kubernetes implications:
+
+  SOC2 (all services):
+  - Access control: Who can access what in the cluster?
+  - Change management: How are changes tracked and approved?
+  - Monitoring: Is there continuous monitoring and alerting?
+  - Incident response: Is there a documented process?
+  - Data protection: Are secrets and data encrypted?
+
+  PCI-DSS (payment services):
+  - Network segmentation: Payment services isolated from other workloads
+  - Encryption in transit: All communication encrypted (mTLS)
+  - Access logging: Every API call logged and auditable
+  - Vulnerability scanning: Container images scanned before deployment
+  - Penetration testing: Regular pen testing of the infrastructure
+
+  HIPAA (health services):
+  - PHI encryption: Patient data encrypted at rest and in transit
+  - Access controls: Minimum necessary access to PHI
+  - Audit trails: All access to PHI logged
+  - BAA with cloud provider: Business Associate Agreement
+  - Breach notification: Process for breach detection and notification
+
+  GDPR (EU customers):
+  - Data residency: EU customer data processed in EU region
+  - Data minimization: Only collect necessary data
+  - Right to deletion: Ability to purge user data across all services
+  - Data processing records: Document all data flows
+  - DPO appointment: Data Protection Officer
+
+  Current gaps (from pre-audit assessment):
+  1. RBAC is too permissive (cluster-admin granted broadly)
+  2. No network segmentation between namespaces
+  3. Kubernetes audit logging not enabled
+  4. Secrets not encrypted at rest in etcd
+  5. No image vulnerability scanning
+  6. No documented change management process
+  7. EU data sometimes processed in US clusters (GDPR violation)
+  8. No data deletion workflow across microservices
+
+  Task: Design the compliance remediation plan. Write: the mapping of
+  each compliance requirement to Kubernetes controls, the technical
+  implementation for each gap (RBAC tightening, NetworkPolicy, audit
+  logging, encryption, scanning), the organizational processes needed
+  (change management, incident response documentation), how to maintain
+  compliance continuously (not just for audits), and the evidence
+  collection automation for audit readiness.
+
+assertions:
+  - type: llm_judge
+    criteria: "Compliance-to-Kubernetes control mapping is comprehensive — RBAC maps to SOC2 access control + PCI-DSS access + HIPAA minimum necessary. NetworkPolicy maps to PCI-DSS segmentation + HIPAA access controls. Kubernetes audit logging maps to SOC2 monitoring + PCI-DSS logging + HIPAA audit trails. etcd encryption maps to SOC2 + PCI-DSS + HIPAA data protection. Image scanning maps to PCI-DSS vulnerability management. Data residency controls map to GDPR requirements"
+    weight: 0.35
+    description: "Control mapping"
+  - type: llm_judge
+    criteria: "Technical implementations are specific — RBAC: namespace-scoped roles, remove cluster-admin, implement just-in-time access for emergency. NetworkPolicy: default-deny + explicit allow between payment services. Audit logging: configure kube-apiserver audit policy (log all write operations, log read operations on sensitive resources). etcd encryption: enable encryption provider with KMS integration. Image scanning: Trivy in CI/CD + admission controller blocking vulnerable images"
+    weight: 0.35
+    description: "Technical implementations"
+  - type: llm_judge
+    criteria: "Continuous compliance and automation are addressed — shift from point-in-time audits to continuous compliance. Implement: OPA/Kyverno policies enforcing compliance rules (prevent non-compliant resources), automated compliance dashboards (policy violations, RBAC drift, unscanned images), evidence collection automation (export audit logs, RBAC reports, scan results to compliance platform). Regular compliance reviews (monthly), automated drift detection. GDPR: implement data flow tracking, build cross-service data deletion API"
+    weight: 0.30
+    description: "Continuous compliance"

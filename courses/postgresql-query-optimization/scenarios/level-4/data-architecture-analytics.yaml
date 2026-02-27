@@ -1,0 +1,64 @@
+meta:
+  id: data-architecture-analytics
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Design data architecture for analytics — separate OLTP from OLAP, implement data warehousing patterns, and optimize PostgreSQL for analytical workloads"
+  tags: [PostgreSQL, data-architecture, OLTP, OLAP, analytics, warehousing, expert]
+
+state: {}
+
+trigger: |
+  Your company runs everything on PostgreSQL — OLTP transactions AND
+  analytics queries on the same database. The analytics team's queries
+  are killing production performance. The CTO wants a data architecture
+  that separates concerns without introducing too much complexity.
+
+  Current state:
+  - Single PostgreSQL cluster handling both OLTP and analytics
+  - OLTP: 50K transactions/second, needs <10ms latency
+  - Analytics: 200 queries/day, each scanning 100M+ rows, taking 5-30 min
+  - Analytics queries cause: table locks, buffer cache pollution, CPU spikes
+  - Data team wants: real-time dashboards, ad-hoc queries, ML feature extraction
+  - Current data volume: 2TB, growing 50GB/month
+
+  Recent incidents caused by analytics on production:
+  1. Analytics query consumed all work_mem (256MB × 50 parallel workers),
+     causing OOM and PostgreSQL restart
+  2. Sequential scan on 500M-row table evicted hot OLTP data from
+     shared_buffers, causing 10x latency spike for 30 minutes
+  3. Long-running analytics transaction prevented VACUUM, causing table
+     bloat that filled the disk
+
+  Architecture options being considered:
+  A. Read replica dedicated to analytics (simplest)
+  B. PostgreSQL + columnar extension (Citus columnar, pg_analytics)
+  C. PostgreSQL OLTP + dedicated analytics database (ClickHouse, DuckDB)
+  D. PostgreSQL OLTP + data warehouse (Snowflake, BigQuery, Redshift)
+  E. PostgreSQL OLTP + data lake (S3 + Iceberg + query engine)
+
+  Constraints:
+  - Engineering team knows PostgreSQL, limited experience with other DBs
+  - Budget: $50K/month for analytics infrastructure
+  - Data freshness: dashboards need data within 5 minutes
+  - Compliance: PII must be masked in analytics layer
+  - 3 data engineers available for implementation
+
+  Task: Design the data architecture. Write: the recommended approach
+  with justification, the data pipeline design (how data flows from OLTP
+  to analytics), the query optimization for analytical workloads, the
+  PII handling strategy, and the migration plan from current state.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture separates OLTP and OLAP effectively — recommends an approach that eliminates analytics impact on production, justifies the choice against all 5 options considering the team's PostgreSQL expertise and constraints, and explains the data flow from OLTP to analytics layer (CDC, logical replication, or ETL)"
+    weight: 0.35
+    description: "Sound OLTP/OLAP separation"
+  - type: llm_judge
+    criteria: "Data pipeline achieves freshness requirements — designs a pipeline that delivers data within 5 minutes to the analytics layer, handles schema evolution, includes PII masking (column-level encryption, tokenization, or view-based masking), and addresses the 3 past incidents (memory, cache pollution, vacuum blocking)"
+    weight: 0.35
+    description: "Production-ready data pipeline"
+  - type: llm_judge
+    criteria: "Migration plan is realistic — phases the migration (start with read replica, then add dedicated analytics), estimates timeline considering 3 data engineers, identifies risks (data consistency during migration, team learning curve), and provides a cost projection within the $50K/month budget"
+    weight: 0.30
+    description: "Realistic migration plan"

@@ -1,0 +1,66 @@
+meta:
+  id: disaster-recovery-containers
+  level: 5
+  course: docker-container-debugging
+  type: output
+  description: "Design container disaster recovery — implement backup strategies, multi-region failover, RPO/RTO targets, and chaos engineering for containerized applications"
+  tags: [Docker, disaster-recovery, multi-region, RPO-RTO, chaos-engineering, master]
+
+state: {}
+
+trigger: |
+  Your container platform experienced a catastrophic failure: a cloud
+  provider region outage took down all services for 6 hours. Revenue
+  impact: $2.4M. The board demands a disaster recovery plan.
+
+  Current state (single region):
+  - All containers in us-east-1
+  - Database backups: daily SQL dumps to S3 (same region)
+  - No automated failover
+  - Recovery process: manual, undocumented, took 6 hours
+  - RPO: 24 hours (last backup could be 24h old)
+  - RTO: 6 hours (how long it took to restore)
+
+  Business requirements:
+  - RPO target: < 1 hour (max 1 hour of data loss)
+  - RTO target: < 15 minutes (max 15 minutes of downtime)
+  - Cost constraint: DR infrastructure < 30% of primary cost
+
+  Proposed DR architecture:
+
+  Tier 1 — Critical services (payment, auth, core API):
+  Active-active across 2 regions. Database: multi-region replication.
+  RPO: ~0 (synchronous replication). RTO: ~0 (automatic failover).
+  Cost: 100% duplication.
+
+  Tier 2 — Important services (user dashboard, notifications):
+  Active-passive with warm standby. Database: async replication.
+  RPO: < 5 minutes. RTO: < 15 minutes.
+  Cost: 30-50% of primary.
+
+  Tier 3 — Non-critical (analytics, reporting, batch jobs):
+  Backup and restore. Database: daily backups to DR region.
+  RPO: < 24 hours. RTO: < 4 hours.
+  Cost: 10% of primary (storage only).
+
+  Validation: quarterly DR drills + continuous chaos engineering.
+
+  Task: Design the container DR strategy. Write: the tiered approach
+  with RPO/RTO definitions, multi-region container deployment,
+  database replication for containerized databases, automated
+  failover mechanisms, DR testing (chaos engineering, game days),
+  and cost optimization for DR infrastructure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tiered DR architecture is justified — not all services need the same DR level. Tier by business impact: revenue-generating services get active-active, supporting services get warm standby, internal tools get backup/restore. RPO (Recovery Point Objective): maximum acceptable data loss. RTO (Recovery Time Objective): maximum acceptable downtime. Cost scales with RPO/RTO: near-zero requires full duplication, longer RPO/RTO uses cheaper strategies. Service dependency mapping determines which services must fail over together"
+    weight: 0.35
+    description: "Tiered DR"
+  - type: llm_judge
+    criteria: "Container-specific DR is covered — containers are inherently portable: same image runs anywhere. Stateless containers: deploy to DR region from registry (no data migration needed). Stateful containers: need data replication strategy (database replication, volume snapshots, S3 cross-region replication). Multi-region deployment: global load balancer (Route53/CloudFront), container images replicated to DR region registry, infrastructure-as-code (Terraform) for consistent DR environment. DNS failover: health check based, automatic redirect to DR region"
+    weight: 0.35
+    description: "Container DR"
+  - type: llm_judge
+    criteria: "Testing and chaos engineering are practical — DR plan is worthless without testing. Quarterly DR drills: simulate region failure, measure actual RTO/RPO. Chaos engineering: Netflix Chaos Monkey approach — randomly terminate containers in production to verify resilience. Tools: Chaos Monkey, Litmus, Pumba (Docker-specific chaos). Game days: scheduled full-team DR exercises with stakeholder communication practice. Document and improve after each drill. Automated chaos tests in CI/CD pipeline for critical services. Track: actual RTO vs target RTO across drills"
+    weight: 0.30
+    description: "Testing and chaos"

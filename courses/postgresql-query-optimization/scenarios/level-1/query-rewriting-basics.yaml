@@ -1,0 +1,69 @@
+meta:
+  id: query-rewriting-basics
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Rewrite queries for performance — transform common slow query patterns into efficient alternatives"
+  tags: [PostgreSQL, query-rewriting, optimization, patterns, beginner]
+
+state: {}
+
+trigger: |
+  You've been asked to review and optimize a set of queries from a
+  legacy application. Each query works correctly but performs poorly.
+  The table has 5 million invoices.
+
+  Query 1 — Correlated subquery (runs per row):
+  SELECT i.*, (SELECT name FROM customers c
+               WHERE c.id = i.customer_id) as customer_name
+  FROM invoices i
+  WHERE i.amount > 1000;
+  (Executes the subquery for each of the 200,000 matching rows)
+
+  Query 2 — DISTINCT instead of proper JOIN:
+  SELECT DISTINCT i.*
+  FROM invoices i
+  JOIN line_items li ON li.invoice_id = i.id
+  WHERE li.product_id = 42;
+  (DISTINCT removes duplicates caused by the JOIN, very expensive
+  on wide rows)
+
+  Query 3 — Unnecessary sorting:
+  SELECT * FROM invoices
+  WHERE status = 'overdue'
+  ORDER BY id
+  LIMIT 100;
+  (The ORDER BY id is meaningless if you just want any 100 rows)
+
+  Query 4 — Counting all to check existence:
+  IF (SELECT COUNT(*) FROM invoices
+      WHERE customer_id = 42 AND status = 'unpaid') > 0 THEN ...
+  (Counts all matching rows just to check if any exist)
+
+  Query 5 — Multiple queries that could be one:
+  total = SELECT COUNT(*) FROM invoices WHERE status = 'paid';
+  total_amount = SELECT SUM(amount) FROM invoices WHERE status = 'paid';
+  avg_amount = SELECT AVG(amount) FROM invoices WHERE status = 'paid';
+  (Three full table scans for the same filter)
+
+  Query 6 — Inefficient pagination:
+  SELECT * FROM invoices ORDER BY created_at OFFSET 999980 LIMIT 20;
+  (OFFSET 999980 scans and discards almost 1M rows)
+
+  Task: Rewrite each query with the optimized version. For each,
+  explain: why the original is slow, what the optimized version does
+  differently, and the expected performance improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 queries are correctly rewritten — correlated subquery becomes a JOIN, DISTINCT becomes EXISTS or proper deduplication, unnecessary ORDER BY is removed, COUNT for existence becomes EXISTS, three queries become one with multiple aggregates, and OFFSET pagination becomes keyset/cursor pagination"
+    weight: 0.35
+    description: "All queries correctly rewritten"
+  - type: llm_judge
+    criteria: "Explanations show why originals are slow — correlated subquery executes N times, DISTINCT sorts/hashes wide rows, COUNT(*) scans all matching rows vs EXISTS stops at first, OFFSET scans and discards rows. Each explanation identifies the specific performance anti-pattern"
+    weight: 0.35
+    description: "Clear explanations of slowness"
+  - type: llm_judge
+    criteria: "Performance improvements are quantified — estimates the improvement for each rewrite (e.g., EXISTS vs COUNT: O(1) vs O(N), keyset pagination: constant time vs linear time with offset). The improvements are realistic for the 5M row table"
+    weight: 0.30
+    description: "Quantified performance improvements"

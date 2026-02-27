@@ -1,0 +1,67 @@
+meta:
+  id: buildkit-optimization
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug BuildKit build performance — diagnose slow builds, cache misses, and optimize multi-stage builds with BuildKit features"
+  tags: [Docker, BuildKit, build-cache, multi-stage, optimization, advanced]
+
+state: {}
+
+trigger: |
+  Your Docker image builds take 15+ minutes in CI. You're using BuildKit
+  but not seeing the expected speedup:
+
+  $ DOCKER_BUILDKIT=1 docker build -t myapp .
+  [+] Building 923.4s (18/18)
+   => [internal] load build context                           45.2s
+   => [stage-1  1/5] FROM node:20                             0.0s
+   => [stage-1  2/5] COPY package*.json ./                    0.3s
+   => [stage-1  3/5] RUN npm ci                             412.8s
+   => [stage-1  4/5] COPY . .                                12.1s
+   => [stage-1  5/5] RUN npm run build                      180.5s
+   => [stage-2  1/3] FROM node:20-slim                        0.0s
+   => [stage-2  2/3] COPY --from=stage-1 /app/dist ./dist     2.1s
+   => [stage-2  3/3] COPY --from=stage-1 /app/node_modules    8.4s
+
+  Issues found:
+
+  1. Build context is 2.3GB — .dockerignore missing node_modules, .git,
+     and test fixtures. The 45-second context load is pure waste.
+
+  2. npm ci runs every build because COPY . . invalidates the cache.
+     Layer ordering: dependencies should be installed before copying
+     source code.
+
+  3. node_modules is 800MB because it includes devDependencies.
+     The production image only needs production deps.
+
+  4. No BuildKit cache mounts — npm ci downloads packages fresh each
+     time even when package.json hasn't changed:
+     RUN --mount=type=cache,target=/root/.npm npm ci
+
+  5. The COPY --from copies all of node_modules (800MB) into the final
+     image. Should run npm ci --production in the final stage or use
+     a separate dependency stage.
+
+  After optimization, build drops from 15 minutes to 2 minutes.
+
+  Task: Explain BuildKit optimization. Write: build context management
+  (.dockerignore), layer cache optimization (order matters), BuildKit
+  cache mounts (--mount=type=cache), multi-stage build patterns for
+  minimal images, parallel stage execution in BuildKit, and common
+  Dockerfile anti-patterns that kill build performance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Layer caching strategy is explained — Docker caches each layer; if a layer changes, all subsequent layers are invalidated. Key pattern: copy dependency files first (package.json, requirements.txt), install dependencies, THEN copy source code. This way source code changes don't invalidate the dependency install layer. COPY . . before RUN npm install is an anti-pattern because any source change triggers a full reinstall"
+    weight: 0.35
+    description: "Layer caching"
+  - type: llm_judge
+    criteria: "BuildKit features are covered — cache mounts: RUN --mount=type=cache,target=/root/.npm npm ci (persists npm cache between builds). Secret mounts: RUN --mount=type=secret,id=npmrc (inject secrets without baking into layers). Parallel stage execution: BuildKit builds independent stages concurrently. Build context: .dockerignore should exclude .git, node_modules, test files, docs. Large context = slow builds even if files aren't used"
+    weight: 0.35
+    description: "BuildKit features"
+  - type: llm_judge
+    criteria: "Multi-stage optimization is practical — separate stages for: (1) dependency installation (with dev deps), (2) build/compile, (3) production image (minimal base, production deps only). Use specific base image tags (node:20.11-slim not node:latest). Final image should only contain runtime artifacts. Measure with docker images and docker history. Target: production images should be 10-50x smaller than build images"
+    weight: 0.30
+    description: "Multi-stage optimization"

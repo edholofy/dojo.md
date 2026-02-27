@@ -1,0 +1,66 @@
+meta:
+  id: query-rewriting-basics
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Rewrite inefficient MySQL queries — transform common slow patterns into optimized equivalents using indexes, limits, and restructured logic"
+  tags: [MySQL, query-rewriting, optimization, patterns, beginner]
+
+state: {}
+
+trigger: |
+  Your team lead asks you to review 6 queries flagged by the DBA as
+  "query optimization opportunities." Each query works correctly but
+  can be rewritten to be significantly faster.
+
+  Query 1 — Counting with full scan:
+  SELECT COUNT(*) FROM orders WHERE status = 'pending';
+  -- Takes 3 seconds on 10M rows, even with index on status
+  -- Because COUNT(*) must visit every matching row
+
+  Query 2 — Existence check with COUNT:
+  SELECT COUNT(*) FROM users WHERE email = 'john@example.com';
+  -- Application checks: if (count > 0) { user_exists = true }
+  -- Scans all matching rows just to check existence
+
+  Query 3 — DISTINCT with large result set:
+  SELECT DISTINCT customer_id FROM orders
+  WHERE created_at >= '2025-01-01';
+  -- Returns 500K distinct customer IDs from 5M orders
+  -- Creates a temporary table and sorts
+
+  Query 4 — Sorting large result sets:
+  SELECT * FROM products ORDER BY popularity DESC;
+  -- Returns all 1M products sorted, but UI shows only top 20
+  -- Sorts 1M rows in memory or on disk
+
+  Query 5 — Correlated subquery:
+  SELECT * FROM customers c
+  WHERE (SELECT MAX(created_at) FROM orders
+         WHERE customer_id = c.id) >= '2025-01-01';
+  -- Executes the subquery once per customer (500K times)
+
+  Query 6 — UNION when UNION ALL works:
+  SELECT name FROM products WHERE category = 'electronics'
+  UNION
+  SELECT name FROM products WHERE category = 'computers';
+  -- UNION removes duplicates (requires sort + dedup)
+  -- Categories are mutually exclusive, so no duplicates possible
+
+  Task: Rewrite each query for better performance. Write: the optimized
+  version of each query, why the original is slow, what technique makes
+  it faster, and the general principle behind each optimization.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 rewrites are correct — (1) maintain a counter table or use approximate count, or accept the cost if exact count is needed, (2) SELECT EXISTS or SELECT 1 ... LIMIT 1, (3) consider GROUP BY or index-only scan, (4) add LIMIT 20, (5) convert to JOIN (JOIN orders ON... WHERE orders.created_at >= ...), (6) UNION ALL since categories are mutually exclusive"
+    weight: 0.35
+    description: "All rewrites correct"
+  - type: llm_judge
+    criteria: "Performance impact is explained — each rewrite explains why it's faster (fewer rows examined, less sorting, avoiding temporary tables, reducing subquery executions from N to 1, removing unnecessary deduplication)"
+    weight: 0.35
+    description: "Performance impact explained"
+  - type: llm_judge
+    criteria: "General principles are extracted — always add LIMIT when you only need a subset, use EXISTS instead of COUNT for existence checks, use UNION ALL when duplicates aren't possible, convert correlated subqueries to JOINs, avoid sorting more data than needed"
+    weight: 0.30
+    description: "General principles extracted"

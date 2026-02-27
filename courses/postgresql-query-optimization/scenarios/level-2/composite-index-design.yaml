@@ -1,0 +1,81 @@
+meta:
+  id: composite-index-design
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Design composite indexes — optimize multi-column indexes with correct column ordering for complex query patterns"
+  tags: [PostgreSQL, composite-index, column-ordering, intermediate]
+
+state: {}
+
+trigger: |
+  Your SaaS application has an orders table (50M rows) with these
+  common query patterns. You need to design the minimum set of
+  composite indexes that covers all of them.
+
+  Table:
+  CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    customer_id INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    shipped_at TIMESTAMP,
+    region VARCHAR(10) NOT NULL
+  );
+
+  Query patterns (ordered by frequency):
+
+  Q1 (10,000/min): Tenant dashboard — recent orders
+  WHERE tenant_id = ? AND status = ?
+  ORDER BY created_at DESC LIMIT 50
+
+  Q2 (5,000/min): Customer order history
+  WHERE tenant_id = ? AND customer_id = ?
+  ORDER BY created_at DESC
+
+  Q3 (1,000/min): Revenue reporting
+  WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
+  AND status = 'completed'
+
+  Q4 (500/min): Shipping queue
+  WHERE tenant_id = ? AND status = 'ready_to_ship'
+  AND region = ?
+  ORDER BY created_at ASC
+
+  Q5 (100/min): Large order alerts
+  WHERE tenant_id = ? AND total > 10000
+  AND created_at >= NOW() - INTERVAL '24 hours'
+
+  Q6 (50/min): Analytics — status distribution
+  SELECT status, COUNT(*) FROM orders
+  WHERE tenant_id = ? AND created_at >= ?
+  GROUP BY status
+
+  Current state: Only the PRIMARY KEY index exists. All queries
+  do sequential scans.
+
+  Constraints:
+  - Maximum 5 indexes total (write performance budget)
+  - Every query must use tenant_id (multi-tenant isolation)
+  - Minimize total index storage (currently 50M rows × 5 indexes)
+
+  Task: Design the 5 composite indexes. For each, explain: the column
+  order and why (equality → range → sort), which queries it serves,
+  the expected scan type after indexing. Then explain which queries
+  share indexes and any trade-offs in your design.
+
+assertions:
+  - type: llm_judge
+    criteria: "Index column ordering follows the equality-range-sort principle — equality columns (tenant_id, status) come first, followed by range columns (created_at BETWEEN), then sort columns (ORDER BY created_at). The reasoning for each column's position is explicit"
+    weight: 0.35
+    description: "Correct column ordering principle"
+  - type: llm_judge
+    criteria: "Index set is minimal and covers all queries — 5 or fewer indexes serve all 6 query patterns, some indexes are shared across multiple queries (e.g., tenant_id + status + created_at serves Q1 and Q3), and the design prioritizes high-frequency queries (Q1 at 10K/min gets the best index)"
+    weight: 0.35
+    description: "Minimal covering index set"
+  - type: llm_judge
+    criteria: "Trade-offs are acknowledged — explains write overhead of 5 indexes on a 50M-row table, discusses which queries get optimal vs acceptable performance, and considers partial indexes or covering indexes (INCLUDE) to further optimize"
+    weight: 0.30
+    description: "Trade-offs acknowledged"

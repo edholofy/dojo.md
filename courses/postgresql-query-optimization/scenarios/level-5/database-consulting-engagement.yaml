@@ -1,0 +1,61 @@
+meta:
+  id: database-consulting-engagement
+  level: 5
+  course: postgresql-query-optimization
+  type: output
+  description: "Lead a database consulting engagement — assess a client's PostgreSQL infrastructure, identify optimization opportunities, and deliver a transformation roadmap"
+  tags: [PostgreSQL, consulting, assessment, transformation, roadmap, master]
+
+state: {}
+
+trigger: |
+  You're a PostgreSQL consulting lead hired by a Series C fintech
+  company ($500M valuation) that's experiencing database growing pains.
+  They've doubled their engineering team to 200 in the past year, and
+  their PostgreSQL infrastructure is struggling to keep up.
+
+  Client briefing:
+  - Company: PayStream (B2B payment processing)
+  - Revenue: $80M ARR, growing 100% YoY
+  - Transaction volume: 10M transactions/day, projected 50M in 12 months
+  - Database: 8 PostgreSQL clusters, 3TB total, mix of PG 13 and PG 15
+  - Team: 2 DBAs (both joined <6 months ago), 15 backend engineers
+  - Monthly infrastructure cost: $120K (growing 20%/quarter)
+
+  Assessment findings (your first week):
+  1. Performance: 40% of API endpoints exceed 500ms P99 latency
+  2. Schema: 15 tables over 1B rows with no partitioning
+  3. Indexes: 2,000 indexes total, estimated 40% unused (wasting 400GB)
+  4. Queries: Top 50 queries consume 80% of database CPU
+  5. Configuration: All 8 clusters use identical postgresql.conf despite
+     wildly different workloads (OLTP, reporting, event storage)
+  6. Monitoring: Basic CloudWatch only — no query-level visibility
+  7. No connection pooling on 5 of 8 clusters
+  8. Backups: Daily pg_dump (takes 6 hours), never tested restoration
+  9. Version: 3 clusters still on PG 13 (EOL approaching)
+  10. No query review process — any engineer can deploy any query
+
+  The CEO says: "We're spending more on database infrastructure every
+  quarter. Our engineers complain the database is slow. Our DBAs are
+  overwhelmed. We need a plan to fix this before our Series D."
+
+  Task: Write the consulting deliverable. Include: the executive
+  assessment (current state in business terms), the prioritized
+  optimization roadmap (quick wins, medium-term, long-term), the
+  staffing and organizational recommendations, the cost projection
+  (infrastructure costs with and without optimization), and the risk
+  register (what happens if they don't act).
+
+assertions:
+  - type: llm_judge
+    criteria: "Assessment translates technical findings into business impact — quantifies the cost of poor performance (revenue impact of 500ms latency, cost of unused indexes, risk of untested backups), prioritizes findings by business impact, and presents a clear current-state summary that a CEO can understand"
+    weight: 0.35
+    description: "Business-impact assessment"
+  - type: llm_judge
+    criteria: "Roadmap is prioritized and realistic — quick wins (drop unused indexes, deploy PgBouncer, tune top 50 queries) deliver measurable improvement in 2-4 weeks, medium-term (partition large tables, upgrade PG 13→16, implement monitoring) in 2-3 months, long-term (query review process, architecture evolution) in 6-12 months. Each phase has estimated cost savings"
+    weight: 0.35
+    description: "Prioritized optimization roadmap"
+  - type: llm_judge
+    criteria: "Staffing and cost projections are realistic — recommends DBA team growth or managed service adoption, projects infrastructure costs with optimization (reducing growth rate) vs without (linear extrapolation), and presents a compelling case for investment before Series D (database health as investor due diligence concern)"
+    weight: 0.30
+    description: "Staffing and cost projections"

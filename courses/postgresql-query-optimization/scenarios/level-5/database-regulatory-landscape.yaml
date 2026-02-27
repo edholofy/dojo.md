@@ -1,0 +1,76 @@
+meta:
+  id: database-regulatory-landscape
+  level: 5
+  course: postgresql-query-optimization
+  type: output
+  description: "Navigate database regulatory compliance — design PostgreSQL configurations for GDPR, PCI DSS, HIPAA, SOX, and emerging data sovereignty regulations"
+  tags: [PostgreSQL, compliance, GDPR, PCI-DSS, HIPAA, SOX, data-sovereignty, master]
+
+state: {}
+
+trigger: |
+  Your company is expanding into 3 new markets (EU, healthcare, and
+  government contracts). Each market has different database compliance
+  requirements, and your PostgreSQL infrastructure wasn't designed for
+  regulatory compliance. The legal team has given you 6 months to achieve
+  compliance or the expansion deals ($30M combined) will be lost.
+
+  Current PostgreSQL infrastructure:
+  - 20 clusters, all in US-East region
+  - No data classification (PII mixed with non-PII)
+  - Audit logging: only pg_log (not queryable, not tamper-evident)
+  - Encryption: TLS in transit, no encryption at rest, no column-level
+  - Access control: 5 shared database users for 200 engineers
+  - Data retention: No automated deletion, data kept forever
+  - Backups: Daily pg_dump, stored unencrypted in same region
+
+  Compliance requirements by market:
+
+  1. EU expansion (GDPR):
+  - Data residency: EU customer data must stay in EU
+  - Right to erasure: Must delete customer data on request within 30 days
+  - Data portability: Must export customer data in machine-readable format
+  - Breach notification: 72 hours to report data breaches
+  - Data minimization: Only collect what's necessary
+  - Audit trail: Prove who accessed what data and when
+
+  2. Healthcare (HIPAA):
+  - PHI must be encrypted at rest and in transit
+  - Access controls: Role-based, minimum necessary access
+  - Audit trail: All access to PHI must be logged and retained 6 years
+  - Business Associate Agreements with all vendors (including AWS)
+  - Breach notification: 60 days for breaches affecting 500+ individuals
+
+  3. Government (FedRAMP / NIST 800-53):
+  - Data must reside in US government-authorized regions
+  - FIPS 140-2 validated encryption modules
+  - Continuous monitoring and vulnerability scanning
+  - System categorization (Low, Moderate, High impact)
+  - Multi-factor authentication for all database access
+
+  Cross-cutting requirements:
+  - SOX compliance (public company): Database changes must be auditable,
+    separation of duties between development and production access
+  - PCI DSS (payment processing): Cardholder data encrypted, quarterly
+    vulnerability scans, access logging, tokenization
+
+  Task: Design the compliance architecture. Write: the data
+  classification and residency strategy, the encryption architecture
+  (at rest, in transit, column-level), the audit logging system (tamper-
+  evident, queryable, retained per regulation), the access control
+  redesign (from 5 shared users to RBAC), and the compliance automation
+  (how to continuously verify compliance, not just achieve it once).
+
+assertions:
+  - type: llm_judge
+    criteria: "Data classification and residency are addressed — defines data classification tiers (public, internal, confidential, restricted), maps PII/PHI/cardholder data to appropriate tiers, designs multi-region deployment for EU data residency (PostgreSQL in EU region with logical replication or partitioned access), and addresses right-to-erasure with soft-delete + scheduled purge patterns"
+    weight: 0.35
+    description: "Data classification and residency"
+  - type: llm_judge
+    criteria: "Encryption and access control are comprehensive — implements TDE or filesystem encryption at rest, column-level encryption (pgcrypto or application-level) for PII/PHI/cardholder data, redesigns access from 5 shared users to role-based access with per-engineer credentials, implements row-level security for data isolation, and addresses FIPS 140-2 requirements for government"
+    weight: 0.35
+    description: "Encryption and access control"
+  - type: llm_judge
+    criteria: "Audit logging and compliance automation are production-ready — implements tamper-evident audit logging (pgAudit or custom triggers with hash chains), retains logs per regulation (6 years for HIPAA, 7 for SOX), provides queryable audit trail, and designs continuous compliance monitoring (automated checks, drift detection, compliance dashboard) rather than point-in-time audits"
+    weight: 0.30
+    description: "Audit and compliance automation"

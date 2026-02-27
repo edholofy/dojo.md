@@ -1,0 +1,81 @@
+meta:
+  id: image-layer-optimization
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker image size issues — analyze layers, optimize caching, reduce image size, and fix build cache invalidation"
+  tags: [Docker, image-optimization, layers, caching, size-reduction, intermediate]
+
+state: {}
+
+trigger: |
+  Your Docker image is 1.2GB for a simple Node.js application. The
+  application code is only 5MB. Where did the rest come from?
+
+  $ docker images myapp
+  REPOSITORY   TAG     SIZE
+  myapp        latest  1.2GB
+
+  $ docker history myapp
+  IMAGE        CREATED BY                                      SIZE
+  abc123       CMD ["node", "server.js"]                       0B
+  def456       COPY . /app                                     850MB
+  ghi789       RUN npm install                                 280MB
+  jkl012       COPY package.json /app/                         2KB
+  mno345       WORKDIR /app                                    0B
+  pqr678       FROM node:20                                    1.1GB (base)
+
+  Wait, the base image is 1.1GB, but the total is 1.2GB? Docker layers
+  are additive but share the base. The real issues:
+
+  1. COPY . /app is 850MB — it copied node_modules, .git directory,
+     build artifacts, and test data! No .dockerignore file exists.
+
+  2. npm install adds 280MB but many are devDependencies not needed
+     in production.
+
+  3. The base image node:20 (Debian-based) is huge. node:20-alpine
+     would be ~180MB.
+
+  After creating .dockerignore:
+  node_modules
+  .git
+  *.log
+  test/
+  .env
+
+  And optimizing the Dockerfile:
+  FROM node:20-alpine
+  WORKDIR /app
+  COPY package*.json ./
+  RUN npm ci --only=production
+  COPY . .
+  CMD ["node", "server.js"]
+
+  New size: 180MB (from 1.2GB — 85% reduction!)
+
+  But builds are slow because changing ANY source file invalidates the
+  npm install cache. The COPY package*.json first + RUN npm install
+  pattern preserves the cache when only source code changes.
+
+  Task: Explain Docker image optimization. Write: how layers work
+  (each instruction creates a layer, layers are cached and shared),
+  how build cache invalidation works (any change to a layer invalidates
+  all subsequent layers), .dockerignore best practices, the dependency-
+  first pattern for caching, base image selection (full vs slim vs
+  alpine vs distroless), and how to analyze image size with docker
+  history and dive.
+
+assertions:
+  - type: llm_judge
+    criteria: "Layer mechanics are explained — each RUN, COPY, ADD creates a new layer. Layers are cached by content hash. If a layer's content changes, that layer and ALL subsequent layers are rebuilt. This is why instruction order matters: put stable instructions first (dependencies) and frequently changing ones last (source code). Layers are shared between images with common base"
+    weight: 0.35
+    description: "Layer mechanics"
+  - type: llm_judge
+    criteria: "Cache optimization is covered — dependency-first pattern: COPY package.json first, RUN npm install, then COPY source code. This way npm install is only re-run when dependencies change, not when source code changes. .dockerignore excludes files from build context (like .gitignore), preventing unnecessary cache busting and reducing context size. Use npm ci instead of npm install for reproducible builds"
+    weight: 0.35
+    description: "Cache optimization"
+  - type: llm_judge
+    criteria: "Size reduction techniques are practical — use slim/alpine base images (1.1GB → 180MB), multi-stage builds for compiled languages, .dockerignore to exclude unnecessary files, clean package manager cache in same RUN (apt-get clean && rm -rf /var/lib/apt/lists/*), use --only=production for Node.js, analyze with docker history or dive tool. Combine RUN commands to reduce layers"
+    weight: 0.30
+    description: "Size reduction"

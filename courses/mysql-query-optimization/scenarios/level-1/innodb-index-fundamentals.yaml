@@ -1,0 +1,68 @@
+meta:
+  id: innodb-index-fundamentals
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Understand InnoDB indexing — learn clustered indexes, secondary indexes, and how InnoDB's B+tree structure affects query performance"
+  tags: [MySQL, InnoDB, indexes, B-tree, clustered-index, beginner]
+
+state: {}
+
+trigger: |
+  Your team is debating whether to use UUID or auto-increment INT as
+  the primary key for a new high-traffic table. A senior engineer says
+  "UUIDs will kill insert performance in InnoDB." You need to understand
+  why.
+
+  Context:
+  - Table: user_events (expected 100M rows in first year)
+  - Current schema option A (auto-increment):
+    CREATE TABLE user_events (
+      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      user_id BIGINT UNSIGNED NOT NULL,
+      event_type VARCHAR(50) NOT NULL,
+      payload JSON,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_user_events (user_id, created_at)
+    ) ENGINE=InnoDB;
+
+  - Current schema option B (UUID):
+    CREATE TABLE user_events (
+      id CHAR(36) PRIMARY KEY,
+      user_id BIGINT UNSIGNED NOT NULL,
+      event_type VARCHAR(50) NOT NULL,
+      payload JSON,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_user_events (user_id, created_at)
+    ) ENGINE=InnoDB;
+
+  Your measurements after inserting 10M rows:
+  - Option A: 15 minutes, 2GB on disk, sequential I/O during inserts
+  - Option B: 45 minutes, 3.5GB on disk, random I/O during inserts
+
+  The team wants to understand:
+  1. What is a clustered index and why does InnoDB always have one?
+  2. Why do UUIDs cause random I/O on insert?
+  3. Why is Option B 75% larger on disk?
+  4. How do secondary indexes work in InnoDB (why do they store the PK)?
+  5. What is a "covering index" and how does it avoid table lookups?
+
+  Task: Explain InnoDB's indexing architecture. Write: how the clustered
+  index works (data stored in PK order), why UUIDs cause page splits
+  and random I/O, how secondary indexes reference the primary key (not
+  row pointers), what a covering index is (index-only scan), and your
+  recommendation for the primary key choice.
+
+assertions:
+  - type: llm_judge
+    criteria: "Clustered index is correctly explained — InnoDB stores table data in primary key order (the clustered index IS the table), inserts with auto-increment append to the end (sequential I/O), while random UUIDs insert into random positions causing page splits and fragmentation"
+    weight: 0.35
+    description: "Clustered index explanation"
+  - type: llm_judge
+    criteria: "Secondary indexes are explained — InnoDB secondary indexes store the primary key value (not a row pointer), so lookups via secondary index require a 'bookmark lookup' back to the clustered index. This means larger PKs (UUID=36 bytes vs BIGINT=8 bytes) make every secondary index larger, explaining the 75% size difference"
+    weight: 0.35
+    description: "Secondary index mechanics"
+  - type: llm_judge
+    criteria: "Recommendation is practical — recommends auto-increment BIGINT for this use case (high insert volume), or if UUIDs are needed, suggests UUID_TO_BIN() with swap flag (ordered UUID) or ULID/UUIDv7 (time-sorted) as a compromise that preserves insert performance while maintaining uniqueness"
+    weight: 0.30
+    description: "Practical PK recommendation"

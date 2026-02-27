@@ -1,0 +1,73 @@
+meta:
+  id: expert-optimization-shift
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Expert optimization shift — handle a complex production crisis combining replication failure, query regression, and capacity emergency during a traffic spike"
+  tags: [PostgreSQL, shift-simulation, crisis, replication, capacity, expert]
+
+state: {}
+
+trigger: |
+  You're the on-call database lead during Black Friday. Multiple
+  cascading failures hit your PostgreSQL infrastructure simultaneously.
+  The CEO is in the war room. Revenue is dropping $100K/minute.
+
+  Timeline of events:
+
+  10:00 AM — Traffic starts at 3x normal. All systems green.
+
+  10:15 AM — Alert: Primary CPU at 95%. Query latency P99 jumps from
+  200ms to 2 seconds. PgBouncer queue depth growing.
+
+  10:22 AM — Alert: Replication lag on Replica 2 exceeds 60 seconds.
+  Replica removed from read pool automatically. Remaining 2 replicas
+  now handle all read traffic — they start lagging too.
+
+  10:25 AM — Alert: Connection pool exhausted. Application returning
+  503 errors. 40% of checkout requests failing. Revenue impact begins.
+
+  10:30 AM — Investigation reveals: A deployment at 10:05 AM introduced
+  a new query in the checkout flow:
+  SELECT * FROM inventory i
+  JOIN products p ON p.id = i.product_id
+  JOIN warehouses w ON w.id = i.warehouse_id
+  WHERE p.category_id IN (SELECT id FROM categories WHERE parent_id = $1)
+  AND i.quantity > 0
+  ORDER BY w.distance_from(point($2, $3))
+  LIMIT 20;
+  This query does a sequential scan on inventory (200M rows) because
+  the planner doesn't have statistics for the distance_from function.
+
+  10:35 AM — Alert: Disk space on primary dropping fast. Autovacuum
+  is blocked by a 2-hour-old analytics transaction on Replica 1 that's
+  preventing cleanup of dead tuples. WAL files accumulating.
+
+  10:40 AM — Disk at 90%. If it hits 100%, PostgreSQL will crash.
+
+  Simultaneous problems:
+  1. New query causing sequential scan on 200M rows (10:30 AM finding)
+  2. Replication cascade failure (replicas can't keep up)
+  3. Connection pool exhausted (503 errors)
+  4. Disk filling due to WAL accumulation + vacuum blocked
+  5. Revenue loss of $100K/minute
+
+  Task: Write the incident response plan. Include: the immediate
+  triage (first 5 minutes — what do you do RIGHT NOW), the
+  stabilization plan (next 30 minutes), the root cause analysis,
+  the post-incident improvements, and the communication updates to
+  the war room at each stage.
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate triage prioritizes correctly — addresses the disk space emergency first (terminate the blocking analytics transaction, manually trigger VACUUM, or move WAL to another volume), then mitigates the bad query (kill active instances, roll back the deployment or add a query hint/index), and increases connection pool limits or redirects traffic. Timing for each step is estimated"
+    weight: 0.35
+    description: "Correct triage prioritization"
+  - type: llm_judge
+    criteria: "Stabilization addresses all 5 problems — fixes the query (add appropriate index or rewrite), recovers replication (restart WAL replay, potentially rebuild lagging replicas), restores connection capacity (increase pool, reduce per-query connection time), reclaims disk space (vacuum, archive WAL), and provides war-room updates with ETA for recovery"
+    weight: 0.35
+    description: "Comprehensive stabilization"
+  - type: llm_judge
+    criteria: "Post-incident improvements prevent recurrence — recommends query review in CI/CD (EXPLAIN analysis before deployment), query timeout configuration, disk space alerting with more headroom, replication lag circuit breakers, and a deployment freeze policy during high-traffic events. Root cause traces back to missing query review process"
+    weight: 0.30
+    description: "Preventive post-incident improvements"

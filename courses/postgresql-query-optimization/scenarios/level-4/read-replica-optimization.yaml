@@ -1,0 +1,62 @@
+meta:
+  id: read-replica-optimization
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize read replica architecture — design replica routing, handle replication lag, and balance read workloads across PostgreSQL replicas"
+  tags: [PostgreSQL, read-replicas, replication-lag, load-balancing, routing, expert]
+
+state: {}
+
+trigger: |
+  Your platform has outgrown a single PostgreSQL primary. Read queries
+  account for 85% of total load, and the primary is at 90% CPU during
+  peak hours. You've added 3 read replicas, but they're not helping as
+  much as expected — some replicas are overloaded while others are idle,
+  and users are seeing stale data.
+
+  Current architecture:
+  - Primary: r6g.4xlarge, 100K queries/sec peak
+  - Replica 1: r6g.2xlarge — serving analytics team (heavy queries)
+  - Replica 2: r6g.4xlarge — serving API reads (high throughput)
+  - Replica 3: r6g.2xlarge — mostly idle (recently added)
+
+  Problems observed:
+  1. Replication lag: Replica 1 lags 30 seconds during analytics queries
+     because heavy queries consume all CPU, slowing WAL replay.
+  2. Stale reads: A user updates their profile, then immediately sees
+     the old data because the read is routed to a replica.
+  3. Uneven load: Application uses round-robin routing, but analytics
+     queries on Replica 1 make it 10x slower than Replica 2.
+  4. Failover gaps: When the primary fails, Replica 1 was promoted but
+     it was 30 seconds behind — 30 seconds of data was lost.
+  5. Connection routing: Each service has hardcoded replica endpoints.
+     Adding Replica 3 requires updating 20 service configurations.
+
+  Architecture questions:
+  - How to route reads intelligently (by query type, not round-robin)?
+  - How to handle read-after-write consistency without always hitting
+    the primary?
+  - How to prevent analytics queries from impacting OLTP replicas?
+  - How to manage replication lag and make promotion decisions safely?
+  - Should you use synchronous replication for any replicas?
+
+  Task: Design the optimized read replica architecture. Write: the
+  replica topology (sizing, roles, sync vs async), the query routing
+  strategy (intelligent routing, not round-robin), the consistency
+  model (handling stale reads), the replication lag management plan,
+  and the failover strategy with RPO guarantees.
+
+assertions:
+  - type: llm_judge
+    criteria: "Replica topology separates workloads — dedicates specific replicas to OLTP reads vs analytics, sizes replicas appropriately for their workload, and explains the sync vs async trade-off (sync for zero-data-loss failover candidate, async for analytics where lag is acceptable). Addresses all 5 observed problems"
+    weight: 0.35
+    description: "Workload-aware replica topology"
+  - type: llm_judge
+    criteria: "Query routing is intelligent — uses middleware or proxy (e.g., PgPool-II, HAProxy, application-level routing) to route by query type (writes→primary, OLTP reads→OLTP replicas, analytics→analytics replica), implements read-after-write consistency (session stickiness to primary for N seconds after write, or check replication LSN), and handles adding/removing replicas without application changes"
+    weight: 0.35
+    description: "Intelligent query routing"
+  - type: llm_judge
+    criteria: "Replication lag and failover are managed — monitors lag per replica (pg_stat_replication, replay_lag), removes lagging replicas from read pool, uses synchronous replication for at least one failover candidate to guarantee RPO=0, and defines promotion criteria (which replica to promote, how to handle lag gap)"
+    weight: 0.30
+    description: "Lag management and failover"

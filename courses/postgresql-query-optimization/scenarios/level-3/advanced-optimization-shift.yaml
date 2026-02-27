@@ -1,0 +1,71 @@
+meta:
+  id: advanced-optimization-shift
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Advanced optimization shift — rescue a failing database under production load with multiple concurrent crises"
+  tags: [PostgreSQL, optimization, shift-simulation, production, advanced]
+
+state: {}
+
+trigger: |
+  You're the senior DBA called in to a production emergency. The main
+  database for a fintech platform (processing $10M/day) is failing
+  under load.
+
+  System: PostgreSQL 16, 64 cores, 512GB RAM, 10TB NVMe
+  Database: 3TB across 200 tables
+  Load: 50,000 queries/second (normally 30,000)
+
+  Crisis timeline:
+
+  9:00 AM — Traffic spike (Black Friday sale):
+  - Queries/second jumped from 30K to 50K
+  - Connection pool exhausted (200/200 connections)
+  - New customers getting "connection refused" errors
+
+  9:15 AM — Table bloat discovered:
+  - The transactions table (500M rows, 200GB) is 60% bloated
+  - Autovacuum has been failing for 3 weeks (blocked by a cron job
+    that opens a transaction and never closes it)
+  - Dead tuples: 300M
+  - Sequential scans on this bloated table are 2.5x slower
+
+  9:30 AM — Query plan regression:
+  - The pricing query (runs 10,000 times/second) switched from Index
+    Scan to Seq Scan after an ANALYZE ran with stale statistics
+  - This single query is now consuming 40% of CPU
+  - Before regression: 2ms per query
+  - After regression: 50ms per query
+
+  9:45 AM — Disk space alert:
+  - WAL directory is 500GB (normally 10GB)
+  - A stuck replication slot from a decommissioned replica is
+    preventing WAL cleanup
+  - Disk: 9.5TB / 10TB used (95%)
+
+  10:00 AM — Deadlock storm:
+  - The payment processing code has a deadlock pattern:
+    Process A: Lock order (accounts → transactions)
+    Process B: Lock order (transactions → accounts)
+  - 100 deadlocks in the last 15 minutes
+  - Each deadlock rolls back one transaction → customer sees error
+
+  Task: Stabilize the database. Write: the triage order (what to fix
+  first), the immediate actions for each crisis, the root cause fixes,
+  and the post-incident improvements to prevent this combination of
+  issues from recurring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage order is correct — disk space first (95% full is existential: drop replication slot to free WAL), then query plan regression (40% CPU from one query: force correct plan or recreate statistics), then connections (PgBouncer or increase max_connections), then deadlocks (fix lock ordering), then bloat (long-term fix)"
+    weight: 0.35
+    description: "Correct triage order"
+  - type: llm_judge
+    criteria: "Immediate actions are specific — DROP REPLICATION SLOT for the stuck slot, SET enable_seqscan = off or pin the pricing query plan, kill the cron job holding the open transaction, PgBouncer for connection pooling, and fix the lock ordering in application code"
+    weight: 0.35
+    description: "Specific immediate actions"
+  - type: llm_judge
+    criteria: "Post-incident improvements prevent recurrence — replication slot monitoring with alerting, idle_in_transaction_session_timeout to prevent autovacuum blocking, query plan monitoring to detect regressions, connection pooling as default architecture, and deadlock detection in CI/CD testing"
+    weight: 0.30
+    description: "Recurrence prevention"

@@ -1,0 +1,65 @@
+meta:
+  id: product-development
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Build a Kubernetes troubleshooting product — design a commercial platform for automated root cause analysis and remediation"
+  tags: [Kubernetes, product-development, troubleshooting-tool, automation, AI-ops, master]
+
+state: {}
+
+trigger: |
+  You're founding a startup that automates Kubernetes troubleshooting.
+  Your thesis: "80% of Kubernetes incidents have patterns that can be
+  detected and remediated automatically."
+
+  Market research:
+  - 78% of organizations report Kubernetes troubleshooting as their
+    #1 operational pain point
+  - Average MTTR for Kubernetes incidents: 2 hours
+  - $50K-500K cost per hour of downtime depending on company size
+  - Existing tools (Komodor, Robusta, Kubecost) address pieces but no
+    unified automated remediation platform
+
+  Product vision: An AI-powered platform that:
+  1. Continuously monitors cluster health
+  2. Detects anomalies before they become incidents
+  3. Automatically diagnoses root cause using knowledge graph
+  4. Suggests or auto-executes remediation
+  5. Learns from past incidents to prevent recurrence
+
+  Technical challenges:
+  - How to access cluster state without excessive permissions
+  - How to distinguish normal behavior from anomalies
+  - How to safely auto-remediate without making things worse
+  - How to work across different Kubernetes distributions (EKS, GKE, AKS,
+    on-prem)
+  - How to handle the blast radius of automated actions
+  - How to build trust — engineers won't let automation touch production
+    without confidence
+
+  Your advisor asks:
+  - "What's the minimum viable product?"
+  - "How do you differentiate from kubectl + Prometheus + PagerDuty?"
+  - "What's the GTM strategy for selling to platform teams?"
+  - "How do you handle the 'it deleted my pod' support ticket?"
+
+  Task: Design the product and go-to-market strategy. Write: the
+  product architecture (data collection, analysis engine, remediation
+  framework), the MVP scope and features, differentiation and moat,
+  the trust-building approach (observe → suggest → auto-remediate
+  progression), pricing model, and go-to-market strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Product architecture is technically sound — data collection: read-only agent (DaemonSet) collecting events, logs, metrics, resource state via K8s API and node-level telemetry. Analysis engine: pattern matching against known failure modes (CrashLoopBackOff + specific log patterns), ML for anomaly detection on resource usage trends, knowledge graph linking symptoms to root causes. Remediation: runbook automation engine with approval workflows and blast radius controls"
+    weight: 0.35
+    description: "Product architecture"
+  - type: llm_judge
+    criteria: "Trust and GTM strategy are realistic — trust progression: Phase 1 (observe) just dashboards and alerts, Phase 2 (suggest) recommended actions with explanation, Phase 3 (auto-remediate) automated actions with undo capability and audit log. MVP: focus on top 10 failure patterns (CrashLoopBackOff, OOMKilled, Pending, ImagePullBackOff, etc.) with automated diagnosis. GTM: target platform engineering teams at 50-500 engineer companies, freemium for < 3 clusters, land-and-expand pricing"
+    weight: 0.35
+    description: "Trust and GTM"
+  - type: llm_judge
+    criteria: "Differentiation and business model are compelling — moat: incident knowledge graph grows with each customer (network effects), cross-cluster pattern detection impossible with single-cluster tools. Differentiation from kubectl+Prometheus: automated root cause analysis (not just alerting), cross-signal correlation (logs + events + metrics), remediation automation. Pricing: per-node or per-cluster SaaS ($X/node/month). Competitive positioning: 'reduce MTTR by 80%' with measurable before/after metrics"
+    weight: 0.30
+    description: "Differentiation and model"

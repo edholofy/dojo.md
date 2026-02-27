@@ -1,0 +1,69 @@
+meta:
+  id: statefulset-troubleshooting
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug StatefulSet issues — diagnose ordered startup failures, persistent volume problems, and headless service misconfigurations"
+  tags: [Kubernetes, StatefulSet, ordered-deployment, PVC, headless-service, advanced]
+
+state: {}
+
+trigger: |
+  Your Kafka cluster StatefulSet is partially failed. Pod kafka-0 runs
+  fine but kafka-1 and kafka-2 won't start:
+
+  $ kubectl get pods -l app=kafka
+  NAME      READY   STATUS    RESTARTS   AGE
+  kafka-0   1/1     Running   0          1h
+  kafka-1   0/1     Pending   0          1h
+  kafka-2   0/1     Pending   0          1h
+
+  StatefulSets use OrderedReady pod management by default — kafka-1
+  won't even be attempted until kafka-0 is Running and Ready, and
+  kafka-2 waits for kafka-1. But kafka-0 IS Running...
+
+  $ kubectl describe pod kafka-1
+  Events:
+    Warning  FailedScheduling  5m  default-scheduler
+    0/5 nodes are available: 5 node(s) had volume node affinity conflict
+
+  $ kubectl get pvc -l app=kafka
+  NAME             STATUS   VOLUME          CAPACITY   STORAGECLASS
+  data-kafka-0     Bound    pv-us-east-1a   50Gi       gp3
+  data-kafka-1     Bound    pv-us-east-1b   50Gi       gp3
+  data-kafka-2     Pending                              gp3
+
+  PVC data-kafka-1 is bound to a PV in us-east-1b, but there are no
+  nodes in that AZ anymore (a node was decommissioned). PVC data-kafka-2
+  can't provision at all.
+
+  Additionally, the headless Service for Kafka is misconfigured:
+
+  $ kubectl get svc kafka-headless
+  NAME             TYPE        CLUSTER-IP   PORT(S)
+  kafka-headless   ClusterIP   10.96.1.50   9092/TCP
+
+  It has a ClusterIP! Headless services must have clusterIP: None to
+  return individual pod IPs for StatefulSet DNS entries like
+  kafka-0.kafka-headless.default.svc.cluster.local.
+
+  Task: Explain StatefulSet-specific troubleshooting. Write: how
+  StatefulSets differ from Deployments (ordered, stable identity,
+  stable storage), OrderedReady vs Parallel pod management, PVC
+  lifecycle (PVCs persist across pod restarts and aren't auto-deleted),
+  headless Service requirements, volume node affinity issues, and
+  common StatefulSet failure patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "StatefulSet semantics are explained — ordered pod creation/deletion (pod-0 before pod-1), stable network identity (pod-name.headless-svc.namespace.svc.cluster.local), stable persistent storage (PVCs bound to specific pods and persist across restarts/rescheduling). PVCs are NOT deleted when StatefulSet is scaled down — must be manually cleaned up. OrderedReady: wait for Ready before next pod. Parallel: all pods simultaneously"
+    weight: 0.35
+    description: "StatefulSet semantics"
+  - type: llm_judge
+    criteria: "Volume and headless Service issues are diagnosed — PVCs bound to specific PVs may have zone affinity, preventing scheduling if no nodes exist in that zone. Headless Service must have clusterIP: None to enable DNS A records for individual pods. With a ClusterIP, DNS returns the cluster IP instead of pod IPs, breaking StatefulSet peer discovery (Kafka, etcd, ZooKeeper need direct pod addressing)"
+    weight: 0.35
+    description: "Volume and DNS issues"
+  - type: llm_judge
+    criteria: "Fixes and patterns are practical — for zone affinity: use WaitForFirstConsumer volumeBindingMode to co-locate PV with pod's node, or ensure nodes exist in all zones. For stuck PVCs: delete PVC and let StatefulSet recreate it (data loss!). For headless Service: set clusterIP: None. For rolling updates: use partition field to do canary-style updates. Monitor StatefulSet with kubectl rollout status"
+    weight: 0.30
+    description: "Fixes and patterns"

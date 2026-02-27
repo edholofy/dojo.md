@@ -1,0 +1,57 @@
+meta:
+  id: cost-optimization
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes cost optimization strategy — FinOps practices, spot instances, Karpenter, and cost attribution for multi-team clusters"
+  tags: [Kubernetes, cost-optimization, FinOps, spot-instances, Karpenter, expert]
+
+state: {}
+
+trigger: |
+  The CFO has flagged Kubernetes cloud costs as growing 3x faster than
+  revenue. Your monthly bill breakdown:
+
+  | Category              | Monthly Cost | % of Total |
+  |-----------------------|-------------|------------|
+  | EC2 compute (on-demand)| $95,000     | 55%        |
+  | EBS storage            | $25,000     | 15%        |
+  | Data transfer          | $20,000     | 12%        |
+  | Load balancers         | $12,000     | 7%         |
+  | NAT gateways           | $10,000     | 6%         |
+  | Other (ECR, Route53)   | $8,000      | 5%         |
+  | **Total**              | **$170,000**|            |
+
+  Cost attribution analysis:
+  - 4 of 12 teams account for 70% of compute costs
+  - The ML team runs GPU instances 24/7 but only uses them 8 hours/day
+  - 3 staging environments run full replicas of production (identical
+    node count) but get 5% of the traffic
+  - 40% of pods are overprovisioned by 3x or more
+  - No spot instances are used anywhere
+  - Each service has its own LoadBalancer ($18/mo each × 50 services)
+  - NAT gateway costs are high because pods pull images from public
+    registries on every deployment
+
+  Target: Reduce monthly costs from $170K to $100K within 6 months
+  without reducing availability.
+
+  Task: Design the cost optimization strategy. Write: the quick wins
+  (what can save money this month), medium-term optimizations (1-3
+  months), structural changes (3-6 months), cost attribution and
+  showback model for teams, FinOps culture practices, and how to
+  maintain cost discipline as the platform grows.
+
+assertions:
+  - type: llm_judge
+    criteria: "Quick wins are specific with estimated savings — right-size staging (reduce to 20% of prod capacity: save ~$20K/mo), schedule GPU instances off-hours (save ~$8K/mo), consolidate LoadBalancers into shared Ingress controller (save ~$7K/mo), set up ECR pull-through cache for public images (save ~$3K/mo on NAT). Each quick win has clear implementation steps and expected savings"
+    weight: 0.35
+    description: "Quick wins"
+  - type: llm_judge
+    criteria: "Medium and structural optimizations are comprehensive — medium: implement Karpenter for intelligent node provisioning (right-size instances automatically, mix instance types), use spot instances for stateless workloads (60-90% savings), implement VPA for right-sizing pod requests. Structural: reserved instances or savings plans for baseline capacity, implement cost attribution tags per team/service, automated idle resource detection and cleanup, data transfer optimization (VPC endpoints, regional caching)"
+    weight: 0.35
+    description: "Optimization strategy"
+  - type: llm_judge
+    criteria: "FinOps culture and sustainability are addressed — cost attribution model: tag all resources by team/service, monthly cost reports per team, set team-level budgets with alerts. FinOps practices: cost reviews in sprint retrospectives, 'cost of change' in PR reviews, engineering KPI for cost efficiency (cost per request). Governance: require cost estimates for new services, auto-scale-down for non-production during off-hours, regular quarterly cost optimization sprints"
+    weight: 0.30
+    description: "FinOps culture"

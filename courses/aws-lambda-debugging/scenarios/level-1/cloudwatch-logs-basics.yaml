@@ -1,0 +1,64 @@
+meta:
+  id: cloudwatch-logs-basics
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda with CloudWatch Logs — read log streams, understand the REPORT line, and use structured logging for effective debugging"
+  tags: [AWS, Lambda, CloudWatch, logs, REPORT, structured-logging, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function returns an error but you don't know why.
+  Time to check the logs:
+
+  $ aws logs filter-log-events \
+    --log-group-name /aws/lambda/process-order \
+    --start-time 1701432000000
+
+  Each invocation produces these log entries:
+
+  START RequestId: abc-123 Version: $LATEST
+  2024-12-01T10:00:00.123Z abc-123 INFO Processing order: ORD-456
+  2024-12-01T10:00:00.456Z abc-123 INFO Fetching customer: CUST-789
+  2024-12-01T10:00:01.789Z abc-123 ERROR Customer not found: CUST-789
+  2024-12-01T10:00:01.790Z abc-123 ERROR {
+    "errorType": "CustomerNotFoundError",
+    "errorMessage": "Customer CUST-789 does not exist",
+    "stackTrace": ["at getCustomer (/var/task/handler.js:25:11)"]
+  }
+  END RequestId: abc-123
+  REPORT RequestId: abc-123 Duration: 1667.45 ms
+  Billed Duration: 1668 ms Memory Size: 256 MB
+  Max Memory Used: 89 MB Init Duration: 423.12 ms
+
+  Understanding the REPORT line:
+  - Duration: actual execution time (1667.45ms)
+  - Billed Duration: rounded up for billing (1668ms)
+  - Memory Size: configured memory (256MB)
+  - Max Memory Used: peak memory during execution (89MB)
+  - Init Duration: cold start initialization time (only on cold starts)
+
+  Problem: The logs are unstructured text, making it hard to search
+  across thousands of invocations. Better approach: structured JSON
+  logging with correlation IDs.
+
+  Task: Explain CloudWatch Logs for Lambda debugging. Write: how
+  Lambda logs are organized (log groups, log streams), understanding
+  the REPORT line metrics, structured logging best practices (JSON
+  format, correlation IDs), searching logs (filter patterns, Logs
+  Insights queries), and common logging mistakes to avoid.
+
+assertions:
+  - type: llm_judge
+    criteria: "Log organization is explained — log group: /aws/lambda/<function-name> (one per function). Log streams: one per execution environment (not per invocation — multiple warm invocations share a stream). Each invocation has START, your logs, END, and REPORT markers. RequestId links all entries for one invocation. CloudWatch Logs Insights: SQL-like query language to search across streams. Example: filter @message like /ERROR/ | stats count() by bin(1h)"
+    weight: 0.35
+    description: "Log organization"
+  - type: llm_judge
+    criteria: "REPORT line and structured logging are covered — REPORT fields: Duration (actual), Billed Duration (billing), Memory Size (configured), Max Memory Used (peak, for right-sizing), Init Duration (cold start only, absent on warm). XRAY TraceId appears if tracing enabled. Structured logging: use JSON format with consistent fields (requestId, level, message, timestamp). Libraries: Powertools for AWS Lambda (Python/TypeScript/Java) provides structured logging, tracing, metrics. Include correlation IDs (orderId, customerId) for tracing business transactions"
+    weight: 0.35
+    description: "REPORT and structured logging"
+  - type: llm_judge
+    criteria: "Practical tips are included — common mistakes: logging sensitive data (PII, credentials), excessive logging (increases costs and CloudWatch charges), not setting log retention (logs stored forever by default = growing costs). Set retention policy: 7/14/30 days based on needs. Use log levels (DEBUG in dev, INFO/WARN in prod). CloudWatch Logs Insights queries are powerful: parse, filter, stats, sort. Cost awareness: CloudWatch Logs charged per GB ingested — structured logging with appropriate levels controls costs"
+    weight: 0.30
+    description: "Practical tips"

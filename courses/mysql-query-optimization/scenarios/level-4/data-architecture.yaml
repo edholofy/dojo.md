@@ -1,0 +1,62 @@
+meta:
+  id: data-architecture
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL data architecture — separate OLTP from OLAP, implement sharding strategies, and plan for 10x growth"
+  tags: [MySQL, data-architecture, sharding, OLTP, OLAP, scaling, expert]
+
+state: {}
+
+trigger: |
+  Your SaaS platform has outgrown a single MySQL cluster. The primary
+  database is 5TB, handles 100K QPS, and analytics queries are
+  degrading OLTP performance. The CTO asks you to design the data
+  architecture for the next 3 years of 10x growth.
+
+  Current state:
+  - Single Aurora MySQL cluster: 1 writer + 4 readers
+  - 5TB data, 500 tables, 100K QPS
+  - OLTP and analytics on the same cluster
+  - Largest table: events (2B rows, 2TB)
+  - Analytics queries run on readers but cause replication lag
+
+  Growth projections:
+  - Users: 5M → 50M in 3 years
+  - Data: 5TB → 50TB
+  - QPS: 100K → 1M
+  - Analytics: real-time dashboards, ML feature extraction
+
+  Architecture options:
+  A. Vertical scaling (bigger instances)
+  B. Read replicas (more readers)
+  C. Functional sharding (split by domain: users, orders, events)
+  D. Horizontal sharding (split by tenant_id or user_id)
+  E. Vitess (MySQL sharding proxy from YouTube/PlanetScale)
+  F. TiDB (MySQL-compatible distributed database)
+  G. OLTP stays MySQL + OLAP moves to ClickHouse/BigQuery
+
+  Constraints:
+  - Team knows MySQL, limited distributed systems experience
+  - Must support transactions within a single shard
+  - Cross-shard JOINs needed for some reports
+  - Data locality: some jurisdictions require data residency
+
+  Task: Design the data architecture. Write: the recommended approach
+  with justification, the sharding strategy (if applicable), the
+  OLTP/OLAP separation design, the data pipeline architecture, and
+  the migration plan from current state.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture addresses 10x growth — evaluates all options, recommends a phased approach (functional sharding first, then horizontal if needed), separates OLTP and OLAP workloads (MySQL for OLTP, analytical database for OLAP), and explains why each rejected option doesn't meet requirements"
+    weight: 0.35
+    description: "10x growth architecture"
+  - type: llm_judge
+    criteria: "Sharding strategy is practical — if recommending sharding, defines the shard key (tenant_id for multi-tenant SaaS), explains how cross-shard queries are handled (fan-out or analytical database), addresses data locality requirements, and considers Vitess or ProxySQL for shard routing. If recommending against sharding, explains the alternative scaling path"
+    weight: 0.35
+    description: "Practical sharding strategy"
+  - type: llm_judge
+    criteria: "OLTP/OLAP separation is designed — explains the data pipeline from MySQL to analytical database (CDC via Debezium, binlog streaming, or DMS), data freshness requirements, and how this eliminates analytics impact on OLTP. Migration plan is phased with rollback capability at each stage"
+    weight: 0.30
+    description: "OLTP/OLAP separation"

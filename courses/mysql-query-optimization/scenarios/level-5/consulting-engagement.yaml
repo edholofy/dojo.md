@@ -1,0 +1,52 @@
+meta:
+  id: consulting-engagement
+  level: 5
+  course: mysql-query-optimization
+  type: output
+  description: "Lead a MySQL consulting engagement — assess a client's infrastructure, deliver optimization roadmap, and quantify business impact"
+  tags: [MySQL, consulting, assessment, roadmap, business-impact, master]
+
+state: {}
+
+trigger: |
+  You're a MySQL consulting lead hired by a Series B e-commerce company
+  ($100M GMV) experiencing database growing pains. They've tripled
+  engineering from 50 to 150 in 18 months and MySQL is struggling.
+
+  Client briefing:
+  - Company: ShopFast (marketplace platform)
+  - Revenue: $100M GMV, $15M take rate
+  - Database: 6 MySQL clusters, 2TB total, all MySQL 5.7
+  - Team: 1 DBA (part-time, also does DevOps), 12 backend engineers
+  - Infrastructure cost: $80K/month (growing 25%/quarter)
+  - Incidents: 4 outages last quarter (18 hours total downtime)
+
+  Assessment findings:
+  1. All 6 clusters still on MySQL 5.7 (approaching EOL)
+  2. Buffer pool at 128MB default on 3 clusters (64GB RAM servers)
+  3. 500+ queries with full table scans
+  4. No connection pooling — services connect directly
+  5. Single primary, 1 async replica — no HA
+  6. Backups: mysqldump weekly (takes 8 hours), never tested restore
+  7. No Performance Schema analysis ever performed
+  8. 30% of tables have no primary key (InnoDB performance issue)
+  9. Largest table: 500M rows, never partitioned, never optimized
+  10. Application ORM generates N+1 queries extensively
+
+  Task: Write the consulting deliverable. Include: executive assessment,
+  prioritized roadmap (quick wins, medium-term, long-term), staffing
+  recommendations, cost projection, and risk register.
+
+assertions:
+  - type: llm_judge
+    criteria: "Assessment quantifies business impact — translates each finding into cost/risk (18 hours downtime = $X revenue loss, 500+ full table scans = Y seconds of excess latency, MySQL 5.7 EOL = security risk). Prioritizes by business impact, not technical severity"
+    weight: 0.35
+    description: "Business-impact assessment"
+  - type: llm_judge
+    criteria: "Roadmap is phased and realistic — quick wins (buffer pool tuning, top 10 slow queries, add PKs to tables missing them) in weeks 1-2, medium-term (connection pooling, MySQL 8.0 upgrade, index cleanup) in months 1-3, long-term (HA setup, partitioning, monitoring) in months 3-6. Each phase has estimated cost savings"
+    weight: 0.35
+    description: "Phased roadmap"
+  - type: llm_judge
+    criteria: "Staffing and cost projections are realistic — recommends hiring a dedicated senior DBA, projects infrastructure costs with vs without optimization, and provides a framework for ongoing performance management (monitoring, query review process)"
+    weight: 0.30
+    description: "Staffing and cost"

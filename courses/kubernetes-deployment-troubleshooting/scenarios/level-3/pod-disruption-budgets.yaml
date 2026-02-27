@@ -1,0 +1,59 @@
+meta:
+  id: pod-disruption-budgets
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug PodDisruptionBudget issues — diagnose why node drains hang, upgrades stall, and voluntary disruptions are blocked"
+  tags: [Kubernetes, PDB, PodDisruptionBudget, node-drain, upgrades, advanced]
+
+state: {}
+
+trigger: |
+  You need to drain a node for maintenance but the drain command hangs:
+
+  $ kubectl drain worker-2 --ignore-daemonsets --delete-emptydir-data
+  evicting pod app/critical-svc-7a8b-c9d0
+  evicting pod app/critical-svc-1e2f-g3h4
+  error when evicting pods/"critical-svc-7a8b-c9d0" -n "app":
+  Cannot evict pod as it would violate the pod's disruption budget.
+
+  $ kubectl get pdb -n app
+  NAME             MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+  critical-pdb     3               N/A               0                     7d
+
+  $ kubectl get pods -l app=critical-svc -n app
+  NAME                         READY   STATUS    RESTARTS   AGE
+  critical-svc-7a8b-c9d0      1/1     Running   0          2d    (worker-2)
+  critical-svc-1e2f-g3h4      1/1     Running   0          2d    (worker-2)
+  critical-svc-5i6j-k7l8      1/1     Running   0          2d    (worker-3)
+
+  The PDB requires minAvailable=3 but there are only 3 pods total,
+  two of which are on the node being drained. Evicting either would
+  drop below the minimum.
+
+  This also blocks cluster autoscaler from removing underutilized nodes
+  and blocks Kubernetes version upgrades that require node rotation.
+
+  Compounding the issue: the HPA has minReplicas=3, so it can't scale
+  up additional pods to create room for the drain.
+
+  Task: Explain PodDisruptionBudgets and how to debug drain issues.
+  Write: what PDBs protect against (voluntary disruptions), minAvailable
+  vs maxUnavailable, how PDBs interact with node drains and cluster
+  upgrades, the difference between voluntary and involuntary disruptions,
+  common PDB misconfigurations, and how to properly configure PDBs for
+  maintenance windows.
+
+assertions:
+  - type: llm_judge
+    criteria: "PDB behavior is explained — PDBs limit voluntary disruptions (node drain, cluster upgrade, pod eviction) but NOT involuntary disruptions (node crash, OOM kill, hardware failure). minAvailable: minimum pods that must be running. maxUnavailable: maximum pods that can be down simultaneously. ALLOWED DISRUPTIONS shows how many pods can currently be evicted without violating the budget"
+    weight: 0.35
+    description: "PDB behavior"
+  - type: llm_judge
+    criteria: "The misconfiguration is diagnosed — minAvailable=3 with 3 total pods means ALLOWED DISRUPTIONS=0 (can never evict any pod). Fix: use maxUnavailable=1 instead (allows 1 pod down at a time), or set minAvailable to N-1 (e.g., 2 for 3 replicas). Must also ensure HPA maxReplicas allows scaling up to create headroom for drains. PDB blocks kubectl drain, cluster autoscaler scale-down, and rolling node upgrades"
+    weight: 0.35
+    description: "Misconfiguration diagnosed"
+  - type: llm_judge
+    criteria: "Best practices are practical — use maxUnavailable instead of minAvailable for easier reasoning, ensure PDB allows at least 1 disruption at all times, coordinate PDB with HPA (HPA should scale up before drain to maintain minimum), use --timeout on kubectl drain to detect stuck drains, temporary PDB modification for emergency maintenance, test PDBs with kubectl drain --dry-run"
+    weight: 0.30
+    description: "Best practices"

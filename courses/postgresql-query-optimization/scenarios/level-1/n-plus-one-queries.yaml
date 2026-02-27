@@ -1,0 +1,62 @@
+meta:
+  id: n-plus-one-queries
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Fix N+1 query problems — identify and resolve the most common ORM performance anti-pattern"
+  tags: [PostgreSQL, N+1, ORM, performance, anti-pattern, beginner]
+
+state: {}
+
+trigger: |
+  Your blog application's homepage takes 12 seconds to load. The page
+  shows the 20 most recent posts with their authors and comment
+  counts. Your monitoring shows the page makes 62 database queries
+  per request.
+
+  The ORM code (pseudocode):
+  posts = Post.findAll({ limit: 20, order: 'created_at DESC' })
+  for each post in posts:
+    author = User.findById(post.author_id)       // N queries
+    commentCount = Comment.count(post_id: post.id) // N queries
+    categories = post.getCategories()              // N queries
+    post.display(author, commentCount, categories)
+
+  Database query log (abbreviated):
+  Query 1:  SELECT * FROM posts ORDER BY created_at DESC LIMIT 20
+  Query 2:  SELECT * FROM users WHERE id = 101
+  Query 3:  SELECT COUNT(*) FROM comments WHERE post_id = 1
+  Query 4:  SELECT c.* FROM categories c JOIN post_categories pc
+            ON c.id = pc.category_id WHERE pc.post_id = 1
+  Query 5:  SELECT * FROM users WHERE id = 102
+  Query 6:  SELECT COUNT(*) FROM comments WHERE post_id = 2
+  Query 7:  SELECT c.* FROM categories c JOIN post_categories pc
+            ON c.id = pc.category_id WHERE pc.post_id = 2
+  ... (repeat for all 20 posts = 1 + 20*3 = 61 queries)
+
+  Table sizes:
+  - posts: 50,000 rows
+  - users: 10,000 rows
+  - comments: 500,000 rows
+  - categories: 50 rows
+  - post_categories: 100,000 rows
+
+  Task: Rewrite this as optimized SQL. Show: (1) the N+1 problem
+  explained visually (why 62 queries), (2) the optimized version
+  using JOINs (1-2 queries), (3) an alternative using subqueries,
+  (4) how to fix this at the ORM level (eager loading), and (5) the
+  expected performance improvement with EXPLAIN ANALYZE comparison.
+
+assertions:
+  - type: llm_judge
+    criteria: "N+1 problem is clearly explained — shows why the loop generates 1 + N*3 queries, explains the network round-trip overhead of 62 separate queries, and demonstrates that the database does redundant work (same author fetched multiple times)"
+    weight: 0.35
+    description: "Clear N+1 explanation"
+  - type: llm_judge
+    criteria: "Optimized query is correct — uses JOINs to fetch posts with authors, comment counts (via LEFT JOIN + GROUP BY or subquery), and categories in 1-2 queries instead of 62. The SQL is syntactically correct and handles edge cases (posts with no comments, no categories)"
+    weight: 0.35
+    description: "Correct optimized query"
+  - type: llm_judge
+    criteria: "Multiple solutions are provided — shows the pure SQL approach (JOINs), the ORM approach (eager loading / includes / preload), and discusses when each is appropriate. Includes the expected performance improvement (62 queries → 1-2 queries, 12s → <200ms)"
+    weight: 0.30
+    description: "Multiple solution approaches"

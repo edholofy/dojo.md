@@ -1,0 +1,69 @@
+meta:
+  id: select-star-problems
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Eliminate SELECT * problems — understand why selecting all columns hurts performance and how to fix it"
+  tags: [PostgreSQL, SELECT, columns, performance, anti-pattern, beginner]
+
+state: {}
+
+trigger: |
+  Your API has a /users endpoint that returns user profiles. The
+  endpoint query is:
+
+  SELECT * FROM users WHERE active = true ORDER BY name LIMIT 50;
+
+  The users table has 25 columns including:
+  - id, name, email (used by the API response)
+  - password_hash, salt (NEVER should be sent to clients)
+  - profile_photo BYTEA (avg 500KB per row)
+  - resume_pdf BYTEA (avg 2MB per row)
+  - login_history JSONB (avg 100KB per row)
+  - preferences JSONB (avg 10KB per row)
+  - 15 other metadata columns
+
+  Performance problems caused by SELECT *:
+
+  1. Data transfer: Each row is ~2.6MB instead of ~200 bytes (name +
+     email). For 50 rows, that's 130MB instead of 10KB.
+
+  2. Memory usage: The application ORM hydrates all 25 columns into
+     objects, consuming 130MB of heap memory per request.
+
+  3. Security leak: password_hash and salt are fetched (even if the
+     API doesn't serialize them, they're in memory).
+
+  4. Index-only scan prevented: With SELECT *, PostgreSQL must visit
+     the heap even if an index covers the needed columns. An index on
+     (active, name) could serve SELECT name, email with an index-only
+     scan but SELECT * forces a heap fetch.
+
+  5. Schema evolution risk: When a new column is added (like a 5MB
+     attachment_data), all SELECT * queries automatically get slower
+     without any code change.
+
+  Other scenarios to address:
+  - COUNT(*) vs COUNT(1) — is there a difference?
+  - SELECT * in subqueries — does the optimizer help?
+  - SELECT * in EXISTS — does it matter?
+  - When is SELECT * actually OK? (ad-hoc queries, CTEs?)
+
+  Task: Rewrite the query with explicit columns, explain each of the
+  5 problems in detail, address the 4 additional scenarios, and
+  provide a coding guideline for when to use SELECT * vs explicit
+  columns.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 problems are clearly explained — data transfer bloat (130MB vs 10KB), memory waste, security risk (password in memory), prevented index-only scans, and schema evolution risk. Each explanation connects the technical issue to real impact (latency, memory, security)"
+    weight: 0.35
+    description: "All problems clearly explained"
+  - type: llm_judge
+    criteria: "Additional scenarios are correctly answered — COUNT(*) vs COUNT(1) are identical in PostgreSQL, SELECT * in subqueries may or may not be optimized by the planner, SELECT * in EXISTS is fine because only existence is checked, and SELECT * in development/debugging contexts is acceptable"
+    weight: 0.35
+    description: "Additional scenarios correctly answered"
+  - type: llm_judge
+    criteria: "Practical guidelines are provided — when to always use explicit columns (production code, APIs), when SELECT * is acceptable (ad-hoc queries, EXISTS), how to enforce this in code review or linting, and the covering index opportunity when selecting specific columns"
+    weight: 0.30
+    description: "Practical guidelines"

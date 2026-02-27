@@ -1,0 +1,76 @@
+meta:
+  id: logging-and-log-rotation
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker logging issues — diagnose disk exhaustion from logs, configure log rotation, and set up logging drivers"
+  tags: [Docker, logging, log-rotation, json-file, disk-space, intermediate]
+
+state: {}
+
+trigger: |
+  Your Docker host is running out of disk space. Investigation reveals
+  container logs are the culprit:
+
+  $ df -h /var/lib/docker
+  Filesystem      Size  Used  Avail  Use%
+  /dev/sda1       100G  95G   5G     95%
+
+  $ du -sh /var/lib/docker/containers/*/
+  45G  /var/lib/docker/containers/a1b2c3d4.../
+  30G  /var/lib/docker/containers/b2c3d4e5.../
+  15G  /var/lib/docker/containers/c3d4e5f6.../
+
+  90GB of logs! The containers have been running for months with no
+  log rotation configured.
+
+  $ ls -lh /var/lib/docker/containers/a1b2c3d4.../*-json.log
+  -rw-r----- 1 root root 45G Dec 01 10:00 a1b2c3d4...-json.log
+
+  A single 45GB log file! The default json-file logging driver has
+  NO rotation by default.
+
+  Emergency fix:
+  $ truncate -s 0 /var/lib/docker/containers/a1b2c3d4.../*-json.log
+
+  Proper fix — configure log rotation per container:
+  docker run --log-opt max-size=10m --log-opt max-file=3 myapp
+
+  Or globally in /etc/docker/daemon.json:
+  {
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "10m",
+      "max-file": "3"
+    }
+  }
+
+  But there's a caveat: changing daemon.json only affects NEW containers.
+  Existing containers keep their original logging configuration.
+
+  Additional issue: one service uses the fluentd logging driver:
+  $ docker logs fluentd-service
+  Error response from daemon: configured logging driver does not
+  support reading
+
+  Some logging drivers don't support docker logs command!
+
+  Task: Explain Docker logging and log management. Write: the default
+  json-file driver behavior (no rotation!), how to configure log
+  rotation (max-size, max-file), logging drivers (json-file, syslog,
+  fluentd, journald), which drivers support docker logs, daemon.json
+  global configuration, and production logging strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Default logging behavior is explained — json-file driver stores logs as JSON in /var/lib/docker/containers/<id>/<id>-json.log. NO rotation by default — logs grow indefinitely and can fill disk. This is the single most common Docker disk space issue. Logs capture stdout and stderr from the container's PID 1 process. Applications logging to files inside the container are NOT captured by docker logs"
+    weight: 0.35
+    description: "Default behavior"
+  - type: llm_judge
+    criteria: "Log rotation configuration is covered — per-container: --log-opt max-size=10m --log-opt max-file=3 (keeps 3 files of 10MB = 30MB max). Global via daemon.json (only affects new containers). Logging drivers: json-file (local, supports docker logs), syslog (remote syslog server), fluentd (log aggregation), journald (systemd). Not all drivers support docker logs — fluentd and syslog don't by default"
+    weight: 0.35
+    description: "Log rotation"
+  - type: llm_judge
+    criteria: "Production strategy is practical — development: json-file with rotation. Production: centralized logging (fluentd → Elasticsearch, or CloudWatch/Datadog). Use dual logging (Docker 20.10+) to keep docker logs working while forwarding to centralized system. Monitor /var/lib/docker disk usage. Set global log rotation in daemon.json as a safety net. Use docker system df to check disk usage breakdown"
+    weight: 0.30
+    description: "Production strategy"

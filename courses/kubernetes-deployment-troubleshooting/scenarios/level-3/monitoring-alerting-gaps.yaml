@@ -1,0 +1,64 @@
+meta:
+  id: monitoring-alerting-gaps
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug monitoring and alerting gaps — diagnose why Prometheus isn't scraping metrics, Grafana dashboards show no data, and alerts don't fire"
+  tags: [Kubernetes, Prometheus, Grafana, monitoring, alerting, advanced]
+
+state: {}
+
+trigger: |
+  Your team deployed a new service but it doesn't appear in Grafana
+  dashboards and no alerts are configured for it:
+
+  $ kubectl get pods -n monitoring
+  NAME                          READY   STATUS    RESTARTS   AGE
+  prometheus-server-0           2/2     Running   0          30d
+  grafana-7a8b9c0d-e1f2        1/1     Running   0          30d
+  alertmanager-0                1/1     Running   0          30d
+
+  Prometheus is running but not scraping the new service:
+
+  Checking Prometheus targets UI shows the new service is not listed.
+
+  $ kubectl get servicemonitor -n app
+  No resources found in app namespace.
+
+  The team expected Prometheus to auto-discover the service, but:
+  1. No ServiceMonitor resource was created for the new service
+  2. The Prometheus instance is configured to only watch the "monitoring"
+     namespace for ServiceMonitors (serviceMonitorNamespaceSelector)
+  3. The application exposes metrics on /metrics:9090 but the
+     ServiceMonitor targets port 8080
+
+  Additionally, existing alerts aren't firing during outages:
+
+  $ kubectl get prometheusrules -n monitoring
+  NAME           AGE
+  default-rules  30d
+
+  The alert rules exist but Alertmanager isn't sending notifications:
+  - Alertmanager config has a Slack webhook URL that expired
+  - Alert routing doesn't match the team's namespace labels
+  - inhibitRules are suppressing lower-severity alerts
+
+  Task: Explain Kubernetes monitoring and alerting setup. Write: how
+  Prometheus discovers targets (ServiceMonitor, PodMonitor, annotations),
+  how to debug missing metrics (targets page, scrape config), how
+  Grafana connects to Prometheus, alert pipeline (PrometheusRule →
+  Alertmanager → notification channel), and common monitoring gaps.
+
+assertions:
+  - type: llm_judge
+    criteria: "Prometheus service discovery is explained — ServiceMonitor CRD tells Prometheus which Services to scrape (port, path, interval). PodMonitor for pod-level scraping. Prometheus must be configured to watch the namespace where ServiceMonitors exist (serviceMonitorNamespaceSelector). Legacy method: annotations (prometheus.io/scrape=true). Targets page shows what's being scraped and any errors"
+    weight: 0.35
+    description: "Prometheus service discovery"
+  - type: llm_judge
+    criteria: "Alert pipeline is explained — PrometheusRule defines alerting conditions (PromQL expressions with for duration), Prometheus evaluates rules and sends firing alerts to Alertmanager, Alertmanager routes alerts to receivers (Slack, PagerDuty, email) based on labels, inhibitRules can suppress alerts. Debug: check Prometheus /alerts page, Alertmanager UI for silences and routing, verify receiver config"
+    weight: 0.35
+    description: "Alert pipeline"
+  - type: llm_judge
+    criteria: "Common gaps and fixes are covered — missing ServiceMonitor for new services (should be part of deployment template), Prometheus not watching correct namespaces, wrong port/path in ServiceMonitor, Alertmanager webhook URLs expiring, alert routing not matching labels, no alerts defined for new services. Fix: include ServiceMonitor in Helm charts, use namespace-wide selectors, test alerts regularly"
+    weight: 0.30
+    description: "Common gaps and fixes"

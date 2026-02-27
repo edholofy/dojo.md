@@ -1,0 +1,63 @@
+meta:
+  id: window-function-optimization
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize window functions — reduce sorting overhead and memory usage in analytical queries"
+  tags: [PostgreSQL, window-functions, analytics, sorting, intermediate]
+
+state: {}
+
+trigger: |
+  Your analytics team writes queries with multiple window functions
+  that are extremely slow. The DBA says "window functions cause
+  re-sorting" but the team doesn't understand why.
+
+  Problem query (takes 45 seconds on 10M rows):
+  SELECT
+    id, department, salary, hire_date,
+    ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)
+      as salary_rank,
+    SUM(salary) OVER (PARTITION BY department) as dept_total,
+    AVG(salary) OVER (PARTITION BY department) as dept_avg,
+    RANK() OVER (ORDER BY salary DESC) as global_rank,
+    LAG(salary) OVER (PARTITION BY department ORDER BY hire_date)
+      as prev_salary,
+    SUM(salary) OVER (ORDER BY hire_date ROWS BETWEEN UNBOUNDED
+      PRECEDING AND CURRENT ROW) as running_total
+  FROM employees;
+
+  EXPLAIN ANALYZE shows 4 separate Sort operations:
+  - Sort 1: PARTITION BY department ORDER BY salary DESC (for salary_rank)
+  - Sort 2: PARTITION BY department (for dept_total, dept_avg)
+  - Sort 3: ORDER BY salary DESC (for global_rank)
+  - Sort 4: PARTITION BY department ORDER BY hire_date (for prev_salary)
+  - Sort 5: ORDER BY hire_date (for running_total)
+
+  Each sort processes all 10M rows. Five sorts × 10M rows = slow.
+
+  Additional challenges:
+  1. The query spills to disk (work_mem too small for 10M-row sorts)
+  2. Can any window functions share a sort operation?
+  3. Is there a way to pre-compute some of these values?
+  4. The running_total window frame is expensive — alternatives?
+
+  Task: Optimize this query. Show: how to consolidate window
+  definitions to minimize sorts, how to use named WINDOW clauses,
+  which window functions can share sort operations, work_mem tuning
+  for window functions, and alternative approaches for running totals
+  at scale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Window consolidation reduces sorts — groups window functions with compatible PARTITION BY and ORDER BY into shared window definitions using named WINDOW clauses. dept_total and dept_avg share the same window, salary_rank and prev_salary may be reorganized to share sorts"
+    weight: 0.35
+    description: "Sort consolidation"
+  - type: llm_judge
+    criteria: "work_mem and disk spill are addressed — explains that each Sort node uses work_mem independently, so 5 sorts × work_mem must fit in RAM. Recommends appropriate work_mem for the query size and shows how to set it per-session for analytical queries"
+    weight: 0.35
+    description: "Memory tuning"
+  - type: llm_judge
+    criteria: "Alternative approaches for scale are provided — suggests pre-computing aggregates in materialized views, using CTEs to separate window function groups, or restructuring to avoid global window functions (ORDER BY salary DESC without PARTITION) that require sorting the entire table"
+    weight: 0.30
+    description: "Scalable alternatives"

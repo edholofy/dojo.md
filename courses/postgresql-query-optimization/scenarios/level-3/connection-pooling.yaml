@@ -1,0 +1,60 @@
+meta:
+  id: connection-pooling
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Implement connection pooling — deploy and tune PgBouncer for high-concurrency applications"
+  tags: [PostgreSQL, PgBouncer, connection-pooling, concurrency, advanced]
+
+state: {}
+
+trigger: |
+  Your application is hitting PostgreSQL connection limits and
+  performance is degrading. During peak traffic:
+
+  Symptoms:
+  - max_connections = 200, all slots used
+  - New connections queue and timeout after 5 seconds
+  - Each connection consumes ~10MB of RAM (200 × 10MB = 2GB just for
+    connections)
+  - Connection creation takes 50-100ms (TCP + SSL + auth)
+  - Application creates and destroys connections per request
+    (no pooling)
+  - Serverless functions (Lambda) open hundreds of connections
+    simultaneously
+
+  Application stack:
+  - 20 application servers (Node.js)
+  - 50 serverless functions (AWS Lambda)
+  - 5 background job workers
+  - 3 analytics/reporting services
+  - 1 admin dashboard
+
+  Current connection distribution:
+  - App servers: 20 × 10 connections = 200 (at the limit!)
+  - Lambda: 50 × 1-5 connections = 50-250 (spiky, blows past limit)
+  - Workers: 5 × 5 connections = 25
+  - Analytics: 3 × 10 connections = 30 (long-running queries)
+  - Admin: 1 × 5 connections = 5
+  Total potential: 310-510 connections (but limit is 200)
+
+  Task: Deploy PgBouncer to solve the connection problem. Write:
+  the PgBouncer configuration (pool mode, pool sizes per application
+  type), the architecture diagram (where PgBouncer sits), the
+  migration plan (how to switch applications to PgBouncer), the
+  limitations (what breaks in transaction pooling mode), and the
+  monitoring setup.
+
+assertions:
+  - type: llm_judge
+    criteria: "PgBouncer configuration is correct — uses transaction pooling mode for most apps (not session mode), configures different pool sizes per database/user (larger for app servers, smaller for Lambda), and the total server-side connections are well under max_connections"
+    weight: 0.35
+    description: "Correct PgBouncer configuration"
+  - type: llm_judge
+    criteria: "Limitations of transaction pooling are addressed — prepared statements don't work in transaction mode (or need server_reset_query), session variables are lost between transactions, LISTEN/NOTIFY doesn't work, advisory locks need session mode, and the analytics long-running queries may need a separate pool or direct connection"
+    weight: 0.35
+    description: "Transaction pooling limitations"
+  - type: llm_judge
+    criteria: "Architecture and migration plan are practical — PgBouncer deployment location (same host, sidecar, or separate), application configuration changes (connection string swap), monitoring (pgbouncer SHOW commands, stats database), and a phased rollout that doesn't risk all traffic at once"
+    weight: 0.30
+    description: "Practical architecture and migration"

@@ -1,0 +1,77 @@
+meta:
+  id: full-text-search
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Implement MySQL full-text search — use FULLTEXT indexes, natural language and boolean modes, and relevance ranking for search features"
+  tags: [MySQL, full-text-search, FULLTEXT, MATCH-AGAINST, relevance, advanced]
+
+state: {}
+
+trigger: |
+  Your e-commerce site's product search is using LIKE '%keyword%'
+  queries, which cause full table scans on 5 million products. The
+  search page takes 8 seconds. You need to implement proper full-text
+  search using MySQL's built-in FULLTEXT indexes.
+
+  Current query (slow):
+  SELECT * FROM products
+  WHERE name LIKE '%wireless headphones%'
+     OR description LIKE '%wireless headphones%'
+  ORDER BY created_at DESC
+  LIMIT 20;
+  -- EXPLAIN: type=ALL, rows=5M, Using filesort
+
+  Products table:
+  CREATE TABLE products (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    category_id INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    rating DECIMAL(3,2),
+    created_at DATETIME,
+    INDEX idx_category (category_id)
+  ) ENGINE=InnoDB;
+
+  Requirements:
+  1. Search by keyword across name and description
+  2. Results ranked by relevance (not just date)
+  3. Support for boolean operators (+must -exclude "exact phrase")
+  4. Search within a specific category
+  5. Boost exact name matches over description matches
+  6. Handle misspellings and partial matches
+
+  Search use cases to support:
+  A. Simple search: "wireless headphones"
+  B. Boolean search: "+wireless +headphones -bluetooth"
+  C. Phrase search: '"noise cancelling"'
+  D. Category-filtered search: wireless headphones in Electronics
+  E. Weighted relevance: name matches ranked higher than description
+
+  Questions:
+  1. How does FULLTEXT indexing work in InnoDB?
+  2. Natural language mode vs boolean mode — when to use each?
+  3. How to combine FULLTEXT with other WHERE conditions?
+  4. How to weight name matches higher than description matches?
+  5. When to use MySQL FTS vs Elasticsearch?
+
+  Task: Implement the full-text search. Write: the FULLTEXT index
+  creation, the MATCH...AGAINST query for each use case, the relevance
+  ranking approach (weighting name vs description), the combined
+  filtering (FULLTEXT + category), and the comparison with
+  Elasticsearch for when MySQL FTS isn't enough.
+
+assertions:
+  - type: llm_judge
+    criteria: "FULLTEXT implementation is correct — creates FULLTEXT INDEX on (name, description), uses MATCH(name, description) AGAINST('wireless headphones' IN NATURAL LANGUAGE MODE) for simple search and IN BOOLEAN MODE for operator search. Shows how to combine with WHERE category_id = ? using AND"
+    weight: 0.35
+    description: "Correct FULLTEXT implementation"
+  - type: llm_judge
+    criteria: "Relevance weighting is addressed — uses separate MATCH expressions: (MATCH(name) AGAINST(...) * 2 + MATCH(description) AGAINST(...)) AS relevance to weight name matches 2x higher. Requires FULLTEXT index on name alone AND a separate FULLTEXT index on (name, description). Explains that all MATCH columns must correspond to a single FULLTEXT index"
+    weight: 0.35
+    description: "Relevance weighting"
+  - type: llm_judge
+    criteria: "Limitations and Elasticsearch comparison are discussed — MySQL FTS limitations: no fuzzy matching (typo tolerance), no synonyms, no faceted search, minimum word length (ft_min_word_len), stopword issues. Elasticsearch is better for: complex search UX, faceted navigation, typo tolerance, multilingual search. MySQL FTS is sufficient for: basic keyword search, small-to-medium datasets, when simplicity matters"
+    weight: 0.30
+    description: "Limitations and Elasticsearch comparison"

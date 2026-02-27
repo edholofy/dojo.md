@@ -1,0 +1,74 @@
+meta:
+  id: disk-space-management
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker disk space exhaustion — diagnose storage consumption from images, containers, volumes, and build cache, then implement cleanup strategies"
+  tags: [Docker, disk-space, prune, storage, build-cache, cleanup, advanced]
+
+state: {}
+
+trigger: |
+  Production Docker host is critically low on disk space. Containers
+  are failing to start:
+
+  $ docker run myapp
+  Error: no space left on device
+
+  $ df -h /var/lib/docker
+  Filesystem      Size  Used  Avail  Use%
+  /dev/sda1       200G  195G  5G     98%
+
+  $ docker system df
+  TYPE            TOTAL   ACTIVE  SIZE      RECLAIMABLE
+  Images          127     8       45.2GB    38.1GB (84%)
+  Containers      43      8       12.3GB    8.7GB (70%)
+  Local Volumes   56      12      78.5GB    52.3GB (66%)
+  Build Cache     -       -       34.8GB    34.8GB
+
+  170GB used by Docker! Breakdown:
+
+  1. Images (45GB, 84% reclaimable): 127 images, only 8 in use.
+     Old CI builds never cleaned up. Dangling images from failed
+     builds. Multiple versions of the same image.
+     $ docker images --filter "dangling=true" -q | wc -l
+     45
+
+  2. Containers (12GB): Stopped containers with large log files and
+     writable layer changes. docker rm only removes stopped containers.
+
+  3. Volumes (78GB, 66% reclaimable): Orphaned volumes from removed
+     containers. Database test volumes never cleaned up. Named volumes
+     for services that no longer exist.
+     $ docker volume ls --filter "dangling=true" -q | wc -l
+     44
+
+  4. Build cache (34GB): BuildKit cache from months of builds.
+
+  Cleanup strategy (careful — don't delete production data!):
+  $ docker system prune -a --volumes
+  WARNING! This will remove all stopped containers, all networks not
+  used, all images without containers, and all volumes not used.
+  Are you sure? [y/N]
+
+  But this is too aggressive for production! Need selective cleanup.
+
+  Task: Explain Docker disk space management. Write: understanding
+  docker system df output, selective cleanup (prune with filters),
+  dangerous vs safe prune commands, volume backup before cleanup,
+  automated cleanup strategies (cron, CI cleanup), monitoring disk
+  usage, and prevention (log rotation, image retention policies).
+
+assertions:
+  - type: llm_judge
+    criteria: "Disk usage diagnosis is explained — docker system df shows breakdown by type (images, containers, volumes, build cache). RECLAIMABLE shows what can be safely removed. docker system df -v shows detailed per-item usage. Disk consumers: dangling images (untagged), stopped containers (writable layer + logs), orphaned volumes (no container reference), build cache. Check with du -sh /var/lib/docker/* for filesystem-level breakdown"
+    weight: 0.35
+    description: "Disk usage diagnosis"
+  - type: llm_judge
+    criteria: "Selective cleanup is covered — safe: docker image prune (remove dangling only), docker container prune (remove stopped), docker builder prune (clear build cache). Filtered: docker image prune -a --filter 'until=720h' (remove images older than 30 days). DANGEROUS: docker system prune -a --volumes (removes everything unused including volumes with data). Always: backup named volumes before pruning, never prune volumes on database hosts without verification. Use docker volume inspect to check last mount time"
+    weight: 0.35
+    description: "Selective cleanup"
+  - type: llm_judge
+    criteria: "Prevention and automation are practical — automated cleanup: cron job with docker system prune --filter 'until=168h' (weekly, items older than 7 days). CI/CD: clean up after pipeline runs, limit image retention. Log rotation in daemon.json prevents log bloat. Image retention policy: keep only N latest tags. Monitor: alert when /var/lib/docker exceeds 80%. Use docker system events to track resource creation. Separate volume for /var/lib/docker to isolate Docker disk usage from system"
+    weight: 0.30
+    description: "Prevention and automation"

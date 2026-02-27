@@ -1,0 +1,64 @@
+meta:
+  id: database-industry-benchmarks
+  level: 5
+  course: postgresql-query-optimization
+  type: output
+  description: "Design and interpret database benchmarks — create meaningful PostgreSQL benchmarks, avoid common pitfalls, and use benchmarks for capacity planning and vendor selection"
+  tags: [PostgreSQL, benchmarks, TPC, pgbench, performance-testing, capacity-planning, master]
+
+state: {}
+
+trigger: |
+  Your company needs to make a $2M infrastructure decision — whether to
+  migrate from self-managed PostgreSQL to Aurora PostgreSQL. The CTO
+  says "run some benchmarks and tell me which is faster." You know that
+  naive benchmarking leads to wrong conclusions, so you need to design
+  a rigorous benchmark that actually answers the right questions.
+
+  Context:
+  - Current: Self-managed PG 16 on r6g.4xlarge (16 vCPU, 128GB RAM)
+  - Candidate: Aurora PG 16 on db.r6g.4xlarge (same compute class)
+  - Workload: Mixed OLTP (70% reads, 30% writes), 50K TPS peak
+  - Data size: 500GB active dataset, 2TB total
+  - Critical queries: Point lookups, range scans, complex joins, bulk inserts
+
+  Common benchmarking mistakes you've seen teams make:
+  1. Using pgbench with default scale factor (fits entirely in RAM)
+  2. Benchmarking with empty tables (no realistic data distribution)
+  3. Running benchmarks for 5 minutes (not long enough for caches to warm)
+  4. Testing on a quiet system (no concurrent workload)
+  5. Ignoring storage performance (only testing CPU-bound queries)
+  6. Not testing failure scenarios (how does performance degrade under
+     replica failure, disk pressure, connection storms?)
+  7. Comparing list price vs actual cost (ignoring IOPS charges, data
+     transfer, backup costs)
+
+  Industry standard benchmarks:
+  - TPC-C: OLTP transactions (orders, payments, deliveries)
+  - TPC-H: Analytical queries (decision support)
+  - pgbench: PostgreSQL-specific, configurable
+  - sysbench: General-purpose database benchmark
+  - HammerDB: TPC-C/TPC-H implementation for PostgreSQL
+
+  Your VP asks: "Can you give me a number — queries per second on
+  Aurora vs self-managed — by Friday?"
+
+  Task: Design the benchmark plan. Write: the benchmark methodology
+  (what to test, how to test, how long), the workload design (realistic
+  representation of your actual workload), the metrics to collect and
+  how to interpret them, the pitfalls to avoid, and the decision
+  framework (how benchmark results translate into the migration decision).
+
+assertions:
+  - type: llm_judge
+    criteria: "Benchmark methodology is rigorous — tests realistic data volume (500GB+ to exceed RAM), runs long enough for steady state (hours, not minutes), includes warm-up phase, tests under concurrent load matching production patterns, and tests both normal operation and degraded modes (replica failure, high connection count)"
+    weight: 0.35
+    description: "Rigorous benchmark methodology"
+  - type: llm_judge
+    criteria: "Workload design represents real usage — captures the 70/30 read/write mix, includes representative query types (point lookups, range scans, complex joins, bulk inserts), uses realistic data distributions (not uniform), and tests at multiple concurrency levels (10, 50, 100, 500 connections) to find saturation points"
+    weight: 0.35
+    description: "Realistic workload design"
+  - type: llm_judge
+    criteria: "Decision framework goes beyond QPS — considers latency percentiles (P50/P95/P99), throughput under load, cost-per-transaction, operational overhead, failure behavior, and long-term cost trajectory. Acknowledges that benchmarks are one input to the decision alongside operational, compliance, and strategic factors"
+    weight: 0.30
+    description: "Holistic decision framework"

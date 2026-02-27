@@ -1,0 +1,78 @@
+meta:
+  id: first-optimization-shift
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "First optimization shift — diagnose and fix a slow e-commerce checkout combining multiple beginner optimization techniques"
+  tags: [MySQL, shift-simulation, checkout, diagnosis, beginner]
+
+state: {}
+
+trigger: |
+  It's your first on-call shift as a junior DBA. The checkout page is
+  loading slowly (8 seconds) and the engineering manager asks you to
+  investigate. You have access to the MySQL server and the application
+  logs.
+
+  Step 1 — You check SHOW PROCESSLIST and see 15 queries related to
+  the checkout endpoint, all from the same user session.
+
+  Step 2 — You enable the slow query log and capture these queries
+  from a single checkout request:
+
+  Query A (2 seconds):
+  SELECT * FROM products WHERE id IN (101, 205, 308, 412, 567);
+  -- EXPLAIN: type=range, key=PRIMARY, rows=5, Extra=NULL
+  -- Fast! Not the problem.
+
+  Query B (3 seconds):
+  SELECT * FROM inventory
+  WHERE product_id IN (101, 205, 308, 412, 567)
+    AND warehouse_id = 3
+    AND CAST(quantity AS CHAR) > '0';
+  -- EXPLAIN: type=ALL, rows=2M, Extra=Using where
+  -- Full table scan! The CAST prevents index usage.
+
+  Query C (0.5ms each, but called 5 times):
+  SELECT * FROM shipping_rates
+  WHERE zone_id = (SELECT zone_id FROM addresses WHERE user_id = 42);
+  -- Not slow individually, but it's an N+1 pattern (called per item)
+
+  Query D (2 seconds):
+  SELECT p.name, p.price, COUNT(r.id) AS review_count,
+         AVG(r.rating) AS avg_rating
+  FROM products p
+  LEFT JOIN reviews r ON r.product_id = p.id
+  WHERE p.id IN (101, 205, 308, 412, 567)
+  GROUP BY p.id;
+  -- EXPLAIN: reviews table type=ALL, rows=5M, Using temporary; Using filesort
+  -- No index on reviews.product_id!
+
+  Query E (1 second):
+  SELECT * FROM promotions
+  WHERE NOW() BETWEEN start_date AND end_date
+    AND minimum_order > 0
+  ORDER BY discount_percent DESC;
+  -- EXPLAIN: type=ALL, rows=50K
+  -- Function NOW() on every comparison prevents range scan optimization
+
+  Total: ~8 seconds across these queries.
+
+  Task: Diagnose and fix each slow query. Write: the root cause of each
+  query's performance problem, the specific fix (index, query rewrite,
+  or both), the expected improvement, and the priority order for
+  implementing fixes (which fix gives the biggest improvement first).
+
+assertions:
+  - type: llm_judge
+    criteria: "All root causes identified — Query B: CAST() on indexed column prevents index usage (SARGable violation), Query C: N+1 pattern (should be single query with JOIN), Query D: missing index on reviews.product_id, Query E: function wrapping issue with NOW(). Query A is correctly identified as not a problem"
+    weight: 0.35
+    description: "Root causes identified"
+  - type: llm_judge
+    criteria: "Fixes are correct — Query B: change to quantity > 0 (no CAST needed for numeric comparison), Query C: rewrite as single JOIN query, Query D: ADD INDEX idx_product_id (product_id) on reviews, Query E: rewrite WHERE clause to compare dates directly or add composite index on (end_date, start_date). Priority order puts highest-impact fixes first"
+    weight: 0.35
+    description: "Correct fixes"
+  - type: llm_judge
+    criteria: "Expected improvements are realistic — quantifies improvement for each fix (e.g., Query B from 3s to <10ms with proper index, Query D from 2s to <50ms with index on reviews.product_id). Total checkout time reduction from 8s to well under 1 second"
+    weight: 0.30
+    description: "Realistic improvement estimates"

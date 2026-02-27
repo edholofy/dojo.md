@@ -1,0 +1,65 @@
+meta:
+  id: slow-query-diagnosis
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Diagnose slow MySQL queries — use the slow query log, Performance Schema, and SHOW PROCESSLIST to find and analyze problematic queries"
+  tags: [MySQL, slow-query-log, Performance-Schema, diagnosis, beginner]
+
+state: {}
+
+trigger: |
+  Users are reporting that "the app is slow." You need to find which
+  queries are causing the problem, but you don't know where to start.
+  You have access to a MySQL 8.0 production server.
+
+  Current configuration:
+  - slow_query_log = OFF (never been enabled)
+  - long_query_time = 10 (default — only logs queries >10 seconds)
+  - performance_schema = ON (default in MySQL 8.0)
+
+  When you run SHOW PROCESSLIST:
+  +----+------+-------+------+---------+------+----------+----------------------+
+  | Id | User | Host  | db   | Command | Time | State    | Info                 |
+  +----+------+-------+------+---------+------+----------+----------------------+
+  | 45 | app  | ...   | shop | Query   | 120  | Sending  | SELECT * FROM ord... |
+  | 46 | app  | ...   | shop | Query   | 85   | Sorting  | SELECT p.*, COUNT... |
+  | 47 | app  | ...   | shop | Query   | 0    | executing| SELECT id FROM u... |
+  | 48 | app  | ...   | shop | Sleep   | 300  | NULL     | NULL                 |
+  | 49 | app  | ...   | shop | Query   | 45   | Locked   | UPDATE inventory ... |
+  +----+------+-------+------+---------+------+----------+----------------------+
+  (plus 195 more connections, mostly in Sleep state)
+
+  You also check Performance Schema:
+  SELECT DIGEST_TEXT, COUNT_STAR, AVG_TIMER_WAIT/1000000000 AS avg_ms,
+         SUM_ROWS_EXAMINED, SUM_ROWS_SENT
+  FROM performance_schema.events_statements_summary_by_digest
+  ORDER BY SUM_TIMER_WAIT DESC LIMIT 5;
+
+  Top 5 queries by total time:
+  1. SELECT * FROM orders WHERE... — 50K executions, avg 200ms, 10M rows examined
+  2. SELECT p.*, COUNT(r.*)... — 5K executions, avg 3 seconds, 50M rows examined
+  3. UPDATE inventory SET... — 20K executions, avg 150ms (but high lock waits)
+  4. SELECT * FROM products... — 100K executions, avg 50ms, 500K rows examined
+  5. INSERT INTO audit_log... — 200K executions, avg 5ms (low individual but high total)
+
+  Task: Explain how to diagnose slow queries in MySQL. Write: how to
+  enable and configure the slow query log (what settings to change),
+  how to read SHOW PROCESSLIST output (what each column and state means),
+  how to use Performance Schema for query analysis, how to identify the
+  highest-impact query to optimize first, and the initial investigation
+  steps for each of the 5 top queries.
+
+assertions:
+  - type: llm_judge
+    criteria: "Slow query log configuration is correct — SET GLOBAL slow_query_log = ON, lower long_query_time to 1 second (or lower), enable log_queries_not_using_indexes, and explains where to find the log file. Mentions pt-query-digest or mysqldumpslow for analyzing the log"
+    weight: 0.35
+    description: "Slow query log setup"
+  - type: llm_judge
+    criteria: "PROCESSLIST analysis identifies issues — the 120-second query is a major problem (likely full table scan), the Sorting state indicates filesort on large result, the Locked state indicates lock contention, the 300-second Sleep is a connection leak. Each state is explained and the severity is assessed"
+    weight: 0.35
+    description: "PROCESSLIST analysis"
+  - type: llm_judge
+    criteria: "Performance Schema analysis prioritizes correctly — identifies query #2 (3-second avg, 50M rows) as highest impact for optimization, explains why total time matters more than individual execution time for query #5, and recommends investigating the rows_examined vs rows_sent ratio as a key efficiency metric"
+    weight: 0.30
+    description: "Performance Schema prioritization"

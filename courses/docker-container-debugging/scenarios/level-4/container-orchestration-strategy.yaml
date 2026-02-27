@@ -1,0 +1,62 @@
+meta:
+  id: container-orchestration-strategy
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design container orchestration strategy — evaluate Docker Swarm vs Kubernetes, define deployment architectures, and plan migration paths for enterprise containerized applications"
+  tags: [Docker, orchestration, Swarm, Kubernetes, architecture, strategy, expert]
+
+state: {}
+
+trigger: |
+  Your company runs 50+ microservices on Docker Compose across 8
+  bare-metal servers. The setup works but pain points are growing:
+
+  - Manual deployment: SSH into each server, docker compose pull && up
+  - No automatic failover: if a server dies, its services are down
+  - Scaling: manually adding containers and updating nginx upstream
+  - Secret management: .env files on each server, rotated manually
+  - No resource governance: containers compete for CPU/memory
+
+  Management wants "orchestration" and asks you to evaluate options:
+
+  Option A — Docker Swarm:
+  Pros: Built into Docker Engine, minimal learning curve, uses existing
+  docker-compose.yaml (with minor changes to deploy section), simple
+  setup (docker swarm init, docker swarm join).
+  Cons: Smaller community, fewer features, no auto-scaling, limited
+  ecosystem, uncertain future (Docker Inc. focus shifted to Desktop).
+
+  Option B — Kubernetes:
+  Pros: Industry standard, massive ecosystem, advanced scheduling,
+  auto-scaling (HPA/VPA), extensive networking (CNI plugins), strong
+  secret management, RBAC, namespace isolation.
+  Cons: Steep learning curve, complex operations, requires dedicated
+  team, YAML complexity, overkill for small deployments.
+
+  Option C — Managed Kubernetes (EKS/GKE/AKS):
+  Pros: Control plane managed by cloud provider, integrated with cloud
+  services, automatic upgrades, SLA-backed.
+  Cons: Cloud vendor dependency, cost, networking complexity with
+  existing on-prem services, data sovereignty concerns.
+
+  The decision affects 3+ years of infrastructure investment.
+
+  Task: Evaluate container orchestration options. Write: comparison
+  matrix (Swarm vs K8s vs managed K8s), migration path from Compose
+  to orchestration, decision criteria (team size, scale, budget,
+  compliance), rollout strategy, and risk mitigation plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Orchestration comparison is thorough — Docker Swarm: simple, uses Compose files, good for < 20 services and small teams. Kubernetes: complex but standard, good for > 20 services, multi-team, auto-scaling needs. Managed K8s: removes operational burden of K8s control plane. Decision factors: team expertise, number of services, scaling requirements, compliance needs, budget (managed K8s has cloud costs), existing infrastructure (on-prem favors Swarm or self-hosted K8s)"
+    weight: 0.35
+    description: "Orchestration comparison"
+  - type: llm_judge
+    criteria: "Migration strategy is covered — phased approach: (1) containerize properly first (health checks, graceful shutdown, 12-factor), (2) start with non-critical services, (3) migrate stateless before stateful, (4) run hybrid during transition. Compose to Swarm: add deploy section, docker stack deploy. Compose to K8s: use kompose for initial conversion, then refine. Keep Compose for local development regardless of production orchestration"
+    weight: 0.35
+    description: "Migration strategy"
+  - type: llm_judge
+    criteria: "Risk mitigation is practical — run parallel environments during migration, blue-green at infrastructure level. Keep rollback path to Compose for 6+ months. Staff training before migration (K8s has steep curve). Start with a platform team of 2-3 dedicated engineers for K8s. Budget for monitoring/observability platform. Document runbooks for new platform. Consider: is the complexity justified? Many companies successfully run on Compose/Swarm at significant scale"
+    weight: 0.30
+    description: "Risk mitigation"

@@ -1,0 +1,68 @@
+meta:
+  id: pending-pods
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Pending pods — diagnose why pods won't schedule, from insufficient resources to node affinity mismatches"
+  tags: [Kubernetes, Pending, scheduling, resources, node-affinity, beginner]
+
+state: {}
+
+trigger: |
+  You deployed a new service but the pods are stuck in Pending state
+  for over 10 minutes:
+
+  $ kubectl get pods
+  NAME                         READY   STATUS    RESTARTS   AGE
+  analytics-svc-9d8e7f6g-a1   0/1     Pending   0          10m
+  analytics-svc-9d8e7f6g-b2   0/1     Pending   0          10m
+  analytics-svc-9d8e7f6g-c3   0/1     Pending   0          10m
+
+  $ kubectl describe pod analytics-svc-9d8e7f6g-a1
+  Events:
+    Warning  FailedScheduling  10m  default-scheduler
+    0/5 nodes are available: 2 Insufficient cpu, 3 node(s) had
+    untolerated taint {dedicated: gpu-workload}
+
+  The deployment requests:
+    resources:
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+
+  Cluster nodes:
+  - node-1: 8 CPU, 32GB — 6.5 CPU already allocated
+  - node-2: 8 CPU, 32GB — 7 CPU already allocated
+  - node-3: 16 CPU, 64GB — taint: dedicated=gpu-workload:NoSchedule
+  - node-4: 16 CPU, 64GB — taint: dedicated=gpu-workload:NoSchedule
+  - node-5: 16 CPU, 64GB — taint: dedicated=gpu-workload:NoSchedule
+
+  So: nodes 1-2 don't have enough CPU available, nodes 3-5 have taints
+  that the pod doesn't tolerate.
+
+  Common Pending causes:
+  1. Insufficient CPU or memory on available nodes
+  2. Node taints without matching tolerations
+  3. Node affinity/anti-affinity rules not satisfied
+  4. PVC not bound (waiting for volume)
+  5. ResourceQuota exceeded for namespace
+  6. Too many pods (max pods per node reached)
+
+  Task: Explain how to debug Pending pods. Write: what Pending means
+  (scheduler can't place the pod), how to read the FailedScheduling
+  event message, common causes and their fixes, how taints and
+  tolerations work, and how to check cluster capacity.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pending state is explained — the pod is in the scheduling queue but no node satisfies all constraints (resource requests, taints, affinity rules, PVC availability). The FailedScheduling event message tells you exactly why — it lists how many nodes failed each check"
+    weight: 0.35
+    description: "Pending state explained"
+  - type: llm_judge
+    criteria: "Taints and tolerations are explained — taints on nodes repel pods unless the pod has a matching toleration. NoSchedule prevents scheduling, PreferNoSchedule is soft, NoExecute evicts existing pods. In this case, nodes 3-5 have dedicated=gpu-workload:NoSchedule, so non-GPU pods can't schedule there"
+    weight: 0.35
+    description: "Taints and tolerations"
+  - type: llm_judge
+    criteria: "Fixes are practical — options: reduce resource requests, add capacity (new nodes), add toleration to the pod spec (if appropriate), check if allocated resources can be reclaimed (pods using less than requested), or use the cluster autoscaler. Shows kubectl commands to check node capacity (kubectl describe node, kubectl top node)"
+    weight: 0.30
+    description: "Practical fixes"

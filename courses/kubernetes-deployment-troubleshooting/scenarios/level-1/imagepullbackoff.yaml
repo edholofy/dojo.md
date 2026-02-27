@@ -1,0 +1,57 @@
+meta:
+  id: imagepullbackoff
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug ImagePullBackOff — diagnose why Kubernetes can't pull a container image from the registry"
+  tags: [Kubernetes, ImagePullBackOff, container-registry, authentication, beginner]
+
+state: {}
+
+trigger: |
+  You deployed a new service but pods are stuck in ImagePullBackOff:
+
+  $ kubectl get pods
+  NAME                          READY   STATUS             RESTARTS   AGE
+  payment-svc-5c6d7e8f-abc12   0/1     ImagePullBackOff   0          5m
+  payment-svc-5c6d7e8f-def34   0/1     ImagePullBackOff   0          5m
+
+  $ kubectl describe pod payment-svc-5c6d7e8f-abc12
+  Events:
+    Normal   Scheduled  5m  default-scheduler  Successfully assigned...
+    Normal   Pulling    5m  kubelet  Pulling image "gcr.io/mycompany/payment:v2.1.0"
+    Warning  Failed     5m  kubelet  Failed to pull image "gcr.io/mycompany/payment:v2.1.0":
+             rpc error: code = Unknown desc = Error response from daemon:
+             unauthorized: You don't have the needed permissions to perform
+             this operation, and you may have invalid credentials.
+    Warning  Failed     5m  kubelet  Error: ImagePullBackOff
+
+  The v2.0.0 tag works fine. v2.1.0 was just pushed to GCR.
+
+  Possible causes to investigate:
+  1. Image doesn't exist (typo in tag or repository)
+  2. Registry authentication expired or misconfigured
+  3. Image was pushed to a different registry/project
+  4. imagePullSecrets not configured on the ServiceAccount
+  5. Network issue between cluster and registry
+  6. Image pull policy: IfNotPresent with a mutable tag
+
+  Task: Explain how to debug ImagePullBackOff. Write: the common
+  causes (authentication, typo, network, pull policy), the debugging
+  steps (verify image exists, check secrets, test pull manually), how
+  imagePullSecrets work, image pull policies (Always, IfNotPresent,
+  Never), and best practices for image management.
+
+assertions:
+  - type: llm_judge
+    criteria: "Common causes are listed — authentication failure (expired token, missing imagePullSecrets), image tag doesn't exist (typo, not pushed yet), registry network issue, wrong image pull policy. The error message 'unauthorized' points to authentication as the likely cause in this scenario"
+    weight: 0.35
+    description: "Common causes listed"
+  - type: llm_judge
+    criteria: "Debugging steps are actionable — verify image exists (docker pull or crane/skopeo), check imagePullSecrets (kubectl get sa default -o yaml, kubectl get secret), verify secret has correct credentials (kubectl get secret -o jsonpath), test from node directly. Shows the kubectl commands for each step"
+    weight: 0.35
+    description: "Actionable debugging steps"
+  - type: llm_judge
+    criteria: "Pull policies and best practices are explained — Always (re-pull every time, good for mutable tags like :latest), IfNotPresent (use cached if available, good for immutable tags), Never (only use locally loaded). Best practices: use immutable tags (SHA or semver, not :latest), rotate registry credentials, set imagePullSecrets on ServiceAccount rather than per-pod"
+    weight: 0.30
+    description: "Pull policies and best practices"

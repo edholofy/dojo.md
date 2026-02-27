@@ -1,0 +1,73 @@
+meta:
+  id: materialized-view-optimization
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize with materialized views — design refresh strategies, concurrent refresh, incremental maintenance, and query routing for expensive aggregations"
+  tags: [PostgreSQL, materialized-views, refresh, aggregation, caching, advanced]
+
+state: {}
+
+trigger: |
+  Your analytics dashboard queries aggregate data from a 500M-row
+  events table. The dashboard loads in 45 seconds because every page
+  view re-executes expensive aggregations. Your team wants to use
+  materialized views but has concerns about data freshness and refresh
+  cost.
+
+  The expensive dashboard query (45 seconds):
+  SELECT
+    date_trunc('hour', created_at) AS hour,
+    event_type,
+    COUNT(*) AS event_count,
+    COUNT(DISTINCT user_id) AS unique_users,
+    AVG(EXTRACT(EPOCH FROM duration)) AS avg_duration_secs
+  FROM events
+  WHERE created_at >= NOW() - INTERVAL '7 days'
+  GROUP BY 1, 2
+  ORDER BY 1 DESC, 2;
+
+  Current state:
+  - events table: 500M rows, 200GB, partitioned by month
+  - 50 new events/second (4.3M/day)
+  - Dashboard accessed by 30 analysts, 200 page views/day
+  - Data freshness requirement: within 15 minutes
+  - Full refresh of a materialized view takes 8 minutes
+  - During refresh, the old data must remain queryable
+
+  Challenges:
+  1. REFRESH MATERIALIZED VIEW takes an ACCESS EXCLUSIVE lock by default
+     — blocks all reads during the 8-minute refresh
+  2. REFRESH MATERIALIZED VIEW CONCURRENTLY requires a UNIQUE INDEX and
+     is slower (12 minutes) but doesn't block reads
+  3. No built-in incremental refresh — the entire view is recomputed
+  4. Multiple materialized views for different aggregations (hourly,
+     daily, weekly) — refresh coordination is needed
+  5. The view must include the last 15 minutes of data, but refreshing
+     every 15 minutes means the view is always being refreshed
+
+  Additional materialized view patterns to evaluate:
+  A. Single matview + CONCURRENTLY refresh every 15 minutes
+  B. Two matviews (swap pattern): refresh one while serving from the other
+  C. Matview for historical data + live query for recent 15 minutes (UNION)
+  D. pg_ivm extension for incremental materialized views
+  E. Continuous aggregation (TimescaleDB approach)
+
+  Task: Design the materialized view strategy. Write: the recommended
+  approach with justification, the refresh scheduling architecture,
+  how to handle the freshness requirement, the indexing strategy for
+  the materialized view, and monitoring for refresh health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Recommended approach handles the freshness-vs-performance trade-off — the hybrid approach (option C: matview for historical + live query for recent data via UNION ALL) or a swap pattern (option B) is recommended with justification. Explains why simple CONCURRENTLY refresh alone isn't sufficient (12-minute refresh for 15-minute freshness leaves only 3 minutes of fresh data)"
+    weight: 0.35
+    description: "Sound matview strategy"
+  - type: llm_judge
+    criteria: "Refresh architecture is production-ready — includes scheduling (pg_cron or external scheduler), CONCURRENTLY to avoid blocking reads, unique index requirement for concurrent refresh, error handling for failed refreshes, and monitoring (track refresh duration, detect stale views, alert on refresh failures)"
+    weight: 0.35
+    description: "Production-ready refresh architecture"
+  - type: llm_judge
+    criteria: "Indexing and query routing are addressed — materialized view has appropriate indexes for dashboard query patterns, explains how to route queries to use the matview (direct query or view rewriting), and discusses trade-offs of each approach (storage cost, refresh CPU, staleness window)"
+    weight: 0.30
+    description: "Indexing and query routing"

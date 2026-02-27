@@ -1,0 +1,67 @@
+meta:
+  id: subquery-optimization
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize subqueries — convert correlated subqueries to JOINs, use EXISTS vs IN, and leverage lateral joins for dependent subqueries"
+  tags: [PostgreSQL, subqueries, correlated-subquery, EXISTS, IN, lateral-join, intermediate]
+
+state: {}
+
+trigger: |
+  Your team's order summary endpoint is slow. The query uses multiple
+  subqueries, and EXPLAIN ANALYZE shows repeated execution of correlated
+  subqueries — one for each row in the outer query.
+
+  The current query (takes 12 seconds):
+  SELECT c.id, c.name, c.email,
+    (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) AS order_count,
+    (SELECT SUM(total) FROM orders WHERE customer_id = c.id) AS total_spent,
+    (SELECT MAX(created_at) FROM orders WHERE customer_id = c.id) AS last_order
+  FROM customers c
+  WHERE c.status = 'active'
+    AND (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) > 5;
+
+  EXPLAIN ANALYZE shows:
+  Seq Scan on customers (rows=50,000)
+    → SubPlan 1: Index Scan on orders (executed 50,000 times)
+    → SubPlan 2: Index Scan on orders (executed 50,000 times)
+    → SubPlan 3: Index Scan on orders (executed 50,000 times)
+    → SubPlan 4: Index Scan on orders (executed 50,000 times)
+  Total: 12.4 seconds
+
+  That's 200,000 subplan executions for 50,000 customers.
+
+  Additional subquery patterns your team uses that need review:
+  1. WHERE id IN (SELECT ...) vs WHERE EXISTS (SELECT ...)
+     - When does the planner treat these differently?
+  2. Scalar subquery in SELECT vs JOIN
+     - The query above uses scalar subqueries — how does a JOIN compare?
+  3. LATERAL JOIN for "top-N per group" queries:
+     SELECT d.name, recent.*
+     FROM departments d,
+     LATERAL (SELECT * FROM employees WHERE dept_id = d.id
+              ORDER BY hire_date DESC LIMIT 3) recent;
+  4. Subquery in FROM (derived table) vs CTE:
+     SELECT * FROM (SELECT ...) sub WHERE sub.x > 10;
+     vs WITH sub AS (SELECT ...) SELECT * FROM sub WHERE sub.x > 10;
+
+  Task: Rewrite the slow query to eliminate the repeated subplan
+  executions. Explain: the rewritten query using JOINs, why correlated
+  subqueries are expensive (execution model), when EXISTS outperforms IN,
+  how LATERAL joins work and when to use them, and the difference between
+  derived tables and CTEs in PostgreSQL's optimizer.
+
+assertions:
+  - type: llm_judge
+    criteria: "The correlated subquery is correctly rewritten — converts the 4 scalar subqueries into a single LEFT JOIN with GROUP BY on orders (aggregating COUNT, SUM, MAX), reducing 200K subplan executions to a single hash aggregate. The rewritten query should use HAVING or a subquery/CTE for the >5 filter"
+    weight: 0.35
+    description: "Correct subquery rewrite"
+  - type: llm_judge
+    criteria: "EXISTS vs IN is explained — EXISTS short-circuits (stops at first match), IN materializes the full subquery result. EXISTS is better for large subquery results with selective outer queries. The planner may convert IN to a semi-join (equivalent to EXISTS) but not always, especially with NULLs"
+    weight: 0.35
+    description: "EXISTS vs IN explained"
+  - type: llm_judge
+    criteria: "LATERAL joins and derived tables vs CTEs are explained — LATERAL allows dependent subqueries in FROM clause (each row can reference prior tables), useful for top-N per group. Derived tables can be folded into the outer query by the optimizer, while CTEs in PG 12+ are only materialized when specified or referenced multiple times"
+    weight: 0.30
+    description: "LATERAL and CTE behavior explained"

@@ -1,0 +1,58 @@
+meta:
+  id: performance-sla-design
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Design database performance SLAs — define latency budgets, throughput targets, and capacity planning for PostgreSQL at scale"
+  tags: [PostgreSQL, SLA, performance, latency, throughput, capacity-planning, expert]
+
+state: {}
+
+trigger: |
+  Your company is formalizing database performance SLAs for the first
+  time. The platform serves 50M daily active users across 12 product
+  teams. Each team has different performance needs, but there are no
+  documented standards. Last quarter, 3 incidents were caused by teams
+  with conflicting expectations about what "fast" means.
+
+  Current state:
+  - 15 PostgreSQL clusters (mix of RDS and self-managed)
+  - No formal latency targets — teams say "it should be fast"
+  - P50 latency: 5ms, P95: 50ms, P99: 500ms, P99.9: 5 seconds
+  - The P99.9 tail is causing user-facing timeouts
+  - No query budget per team — one team's expensive query impacts others
+  - No capacity planning — teams discover limits during traffic spikes
+  - Monitoring exists but no alerting thresholds defined
+
+  Product teams with different needs:
+  1. Checkout (critical path): Needs <10ms P99 for payment queries
+  2. Search: Needs <100ms P95 for search results
+  3. Analytics: Runs 30-minute aggregation queries, needs throughput
+  4. Notification: Burst writes of 50K/sec during campaigns
+  5. User Profile: Read-heavy, tolerates 50ms P99 but needs 99.99% availability
+
+  The VP of Engineering asks:
+  - "What should our database SLAs be?"
+  - "How do we prevent one team from degrading another's performance?"
+  - "When do we need to add capacity, and how much lead time do we need?"
+  - "What's the cost of improving P99 from 500ms to 50ms?"
+
+  Task: Design the performance SLA framework. Write: tiered SLA
+  definitions (by criticality), the latency budget allocation per team,
+  the capacity planning model (when to scale), the isolation strategy
+  (preventing noisy neighbors), and the cost-performance trade-off
+  analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "SLA tiers are well-defined — creates at least 3 tiers (e.g., critical/standard/batch) with specific latency targets (P50, P95, P99), throughput limits, and availability requirements per tier. Maps the 5 product teams to appropriate tiers with justification"
+    weight: 0.35
+    description: "Well-defined SLA tiers"
+  - type: llm_judge
+    criteria: "Isolation and capacity planning are addressed — explains workload isolation strategies (separate clusters, connection pool limits per team, resource governor, query timeouts), capacity planning model (utilization thresholds, growth projections, lead time for provisioning), and how to detect approaching limits before they cause incidents"
+    weight: 0.35
+    description: "Isolation and capacity planning"
+  - type: llm_judge
+    criteria: "Cost-performance trade-off is analyzed — explains the diminishing returns of tail latency improvement (P99 500ms→50ms might require 3x infrastructure), quantifies the cost of each SLA tier, and provides a framework for teams to choose their tier based on business impact vs cost"
+    weight: 0.30
+    description: "Cost-performance analysis"

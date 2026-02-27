@@ -1,0 +1,59 @@
+meta:
+  id: database-migration-planning
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Plan a MySQL migration — migrate from MySQL 5.7 to 8.0, or from self-managed to Aurora, with near-zero downtime"
+  tags: [MySQL, migration, upgrade, Aurora, zero-downtime, expert]
+
+state: {}
+
+trigger: |
+  Your company needs to migrate from MySQL 5.7 (self-managed on EC2)
+  to MySQL 8.0 on Aurora. The database processes $30M in transactions
+  daily with a 99.95% availability SLA. MySQL 5.7 reaches end of
+  extended support, and the business needs Aurora's read scaling.
+
+  Source: MySQL 5.7.44 on EC2, 3TB, 150 tables, 80K QPS peak
+  Target: Aurora MySQL 8.0 (latest)
+
+  Challenges:
+  1. 3TB data takes ~5 hours via mysqldump
+  2. MySQL 5.7→8.0 has breaking changes:
+     - Default charset changes (latin1 → utf8mb4)
+     - GROUP BY implicit ordering removed
+     - Reserved word changes (RANK, GROUPS, etc.)
+     - JSON function behavior changes
+     - Authentication plugin changes (mysql_native_password → caching_sha2)
+  3. Application uses mysql_native_password — Aurora 8.0 defaults to
+     caching_sha2_password
+  4. 15 stored procedures using deprecated syntax
+  5. 3 applications use MySQL-specific features (GET_LOCK, FOUND_ROWS)
+  6. Read replicas serving 3 analytics dashboards must migrate too
+  7. Maximum acceptable downtime: 10 minutes
+
+  Migration approaches:
+  A. mysqldump + restore (simple, hours of downtime)
+  B. AWS DMS (managed migration, CDC for near-zero downtime)
+  C. Binlog replication (source→target, then cutover)
+  D. Percona XtraBackup + binlog replay
+  E. Blue-green with Aurora cloning
+
+  Task: Design the migration plan. Write: the compatibility assessment
+  (what breaks between 5.7 and 8.0), the chosen approach with
+  justification, the step-by-step migration procedure, the cutover
+  choreography (the 10-minute window), and the rollback plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Compatibility assessment is thorough — identifies the key 5.7→8.0 breaking changes (charset defaults, GROUP BY ordering, reserved words, authentication plugin, deprecated syntax), provides a testing plan to validate application compatibility, and addresses the stored procedure and MySQL-specific feature issues before migration day"
+    weight: 0.35
+    description: "Thorough compatibility assessment"
+  - type: llm_judge
+    criteria: "Migration approach achieves <10 min downtime — uses DMS or binlog replication for initial data sync + ongoing CDC, then a brief cutover window (stop writes, let replication catch up, switch endpoints, verify, resume). The 3TB initial sync happens while source is live. Cutover choreography has timing estimates for each step"
+    weight: 0.35
+    description: "Near-zero downtime approach"
+  - type: llm_judge
+    criteria: "Rollback plan is viable — maintains source MySQL 5.7 as hot standby during migration, reverse replication from Aurora back to source if needed, DNS/endpoint switching allows quick rollback, and defines go/no-go criteria (data validation, application smoke tests, latency checks) before committing to the cutover"
+    weight: 0.30
+    description: "Viable rollback plan"

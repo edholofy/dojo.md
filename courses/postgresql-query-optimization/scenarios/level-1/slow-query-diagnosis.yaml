@@ -1,0 +1,63 @@
+meta:
+  id: slow-query-diagnosis
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Diagnose slow queries — use pg_stat_statements and query logs to find and prioritize the worst-performing queries"
+  tags: [PostgreSQL, pg_stat_statements, slow-queries, diagnosis, beginner]
+
+state: {}
+
+trigger: |
+  Your application's database response times have been creeping up
+  over the last month. Users are complaining about slowness but
+  nobody knows which queries are the problem. Your senior DBA is
+  on vacation and left you a note: "Enable pg_stat_statements and
+  check the slow query log."
+
+  You enable pg_stat_statements and after 24 hours, here's the
+  top 10 by total_exec_time:
+
+  | calls    | mean_ms | total_ms   | query (truncated)                |
+  |----------|---------|------------|----------------------------------|
+  | 2,400,000| 0.5     | 1,200,000  | SELECT id FROM sessions WHERE... |
+  | 50,000   | 200     | 10,000,000 | SELECT * FROM orders JOIN...     |
+  | 500,000  | 15      | 7,500,000  | UPDATE products SET view_count...|
+  | 10,000   | 500     | 5,000,000  | SELECT * FROM analytics WHERE...|
+  | 1,000    | 3,000   | 3,000,000  | SELECT * FROM reports WHERE...   |
+  | 100,000  | 25      | 2,500,000  | INSERT INTO events (...)...      |
+  | 5,000    | 400     | 2,000,000  | DELETE FROM sessions WHERE...    |
+  | 800,000  | 2       | 1,600,000  | SELECT 1 FROM users WHERE id=...|
+  | 200,000  | 5       | 1,000,000  | SELECT name FROM categories...   |
+  | 50       | 15,000  | 750,000    | SELECT * FROM users CROSS JOIN...|
+
+  Questions to answer:
+  1. Which query should you optimize first? (It's not the one with
+     the longest single execution time)
+  2. The session check query (row 1) is fast per call but runs 2.4M
+     times — is this a problem?
+  3. The reports query (row 5) runs only 1,000 times but takes 3
+     seconds each — how do you approach this differently than the
+     orders query?
+  4. The CROSS JOIN query (row 10) takes 15 seconds — what's likely
+     wrong?
+
+  Task: Analyze the pg_stat_statements data and create an optimization
+  priority list. For each of the top 10 queries, explain: whether it
+  needs optimization, what the likely issue is, how to investigate
+  further, and the expected impact of fixing it. Then explain how to
+  set up ongoing slow query monitoring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization is correct — ranks by total_exec_time (not mean or calls alone), identifies the orders query (50K calls × 200ms = 10M ms total) as the highest priority, explains why a fast-but-frequent query can consume more time than a slow-but-rare one"
+    weight: 0.35
+    description: "Correct query prioritization"
+  - type: llm_judge
+    criteria: "Analysis of each query is insightful — identifies likely issues (missing indexes for orders/analytics, CROSS JOIN likely missing a WHERE clause, session checks might be unnecessary with caching, view_count UPDATE might need batching). Investigation steps are practical (EXPLAIN ANALYZE, check indexes, check table sizes)"
+    weight: 0.35
+    description: "Insightful per-query analysis"
+  - type: llm_judge
+    criteria: "Monitoring setup is practical — explains how to configure pg_stat_statements (shared_preload_libraries), log_min_duration_statement for slow query logging, and how to set up ongoing monitoring (periodic snapshots of pg_stat_statements, alerting on regression)"
+    weight: 0.30
+    description: "Practical monitoring setup"

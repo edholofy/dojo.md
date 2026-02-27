@@ -1,0 +1,71 @@
+meta:
+  id: docker-exec-debugging
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug running containers with docker exec — diagnose runtime issues using interactive shells, process inspection, and filesystem exploration inside containers"
+  tags: [Docker, exec, debugging, interactive, process-inspection, intermediate]
+
+state: {}
+
+trigger: |
+  Your API container is responding slowly but docker logs shows nothing
+  unusual. You need to investigate the running container from the inside:
+
+  $ docker exec -it api-server sh
+  OCI runtime exec failed: exec: "sh": executable file not found
+
+  The image is based on distroless — no shell at all! You can't exec
+  into it. But there are alternatives:
+
+  Solution 1 — Use debug image variant:
+  $ docker run --rm -it --pid=container:api-server --net=container:api-server \
+    busybox sh
+  # Shares PID and network namespace — can see processes and connections
+
+  Solution 2 — Docker debug (Docker Desktop 4.27+):
+  $ docker debug api-server
+  # Attaches a debug shell even to distroless containers
+
+  Once inside a container with a shell, the investigation:
+
+  $ docker exec api-server ps aux
+  PID   USER     TIME  COMMAND
+  1     node     2:30  node /app/server.js
+  45    node     0:05  /app/node_modules/.bin/sharp (zombie)
+  46    node     0:05  /app/node_modules/.bin/sharp (zombie)
+
+  Zombie processes! The Node.js app spawns child processes for image
+  processing but doesn't properly wait() for them. PID 1 (node) isn't
+  a proper init and doesn't reap orphaned children.
+
+  $ docker exec api-server cat /proc/1/status | grep Threads
+  Threads: 45
+
+  45 threads — the thread pool is exhausted because zombie processes
+  still hold thread pool slots.
+
+  $ docker exec api-server cat /proc/meminfo
+  $ docker exec api-server df -h
+  $ docker exec api-server netstat -tlnp
+
+  Task: Explain docker exec debugging techniques. Write: how to exec
+  into containers (interactive shell, single commands), debugging
+  distroless/minimal images (namespace sharing, debug containers),
+  process inspection (ps, /proc filesystem, zombie detection), resource
+  inspection (memory, disk, network from inside), and the PID 1 zombie
+  reaping problem.
+
+assertions:
+  - type: llm_judge
+    criteria: "Docker exec techniques are explained — docker exec -it <container> sh/bash for interactive shell, docker exec <container> <command> for single command. Flags: -it (interactive + tty), -u root (run as root even if container runs as non-root), -e KEY=VALUE (set env vars). For distroless images: share namespaces with debug container (--pid=container:X --net=container:X), use docker debug (Docker Desktop), or docker cp to copy tools in. Never install debug tools in production images"
+    weight: 0.35
+    description: "Exec techniques"
+  - type: llm_judge
+    criteria: "Process and resource inspection are covered — ps aux shows all processes. /proc filesystem: /proc/1/status (PID 1 details), /proc/meminfo (memory), /proc/net/tcp (connections). Zombie processes: Z state in ps, caused by parent not calling wait(). PID 1 responsibility: in containers, PID 1 must reap adopted orphan processes. Node.js/Python aren't proper init systems. Fix: use tini (--init flag) or dumb-init as PID 1. Resource inspection: df -h (disk), free -m (memory), ss -tlnp (listening ports)"
+    weight: 0.35
+    description: "Process inspection"
+  - type: llm_judge
+    criteria: "Practical debugging workflow is provided — systematic approach: (1) docker logs first (no exec needed), (2) docker stats for resource overview, (3) docker top for process list, (4) docker exec for detailed investigation. Inside container: check processes, check disk space, check network connections, check file modifications. Compare with expected state. Common findings: zombie processes, thread pool exhaustion, file descriptor leaks (ls /proc/1/fd | wc -l), temp files filling disk, unexpected network connections"
+    weight: 0.30
+    description: "Debugging workflow"

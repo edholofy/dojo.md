@@ -1,0 +1,74 @@
+meta:
+  id: parallel-query-execution
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize parallel query execution — configure and tune PostgreSQL parallel workers for analytical workloads"
+  tags: [PostgreSQL, parallel-query, workers, analytics, advanced]
+
+state: {}
+
+trigger: |
+  Your analytics database has a 64-core server but analytical queries
+  only use 1 core. EXPLAIN shows no parallel workers despite large
+  table scans.
+
+  Server: 64 cores, 512GB RAM, NVMe storage
+  PostgreSQL 16
+  Database: 2TB across 50 tables
+
+  Current settings (defaults):
+  max_parallel_workers = 8
+  max_parallel_workers_per_gather = 2
+  max_worker_processes = 8
+  parallel_setup_cost = 1000
+  parallel_tuple_cost = 0.1
+  min_parallel_table_scan_size = 8MB
+  min_parallel_index_scan_size = 512kB
+
+  Queries that should parallelize but don't:
+
+  Q1: Full table aggregate (100M rows):
+  SELECT COUNT(*), AVG(amount), SUM(amount)
+  FROM transactions
+  WHERE created_at >= '2026-01-01';
+  EXPLAIN shows: Seq Scan (no Gather node). Why?
+
+  Q2: GROUP BY with many groups (100M rows):
+  SELECT customer_id, SUM(amount)
+  FROM transactions
+  GROUP BY customer_id;
+  Uses parallel workers but is still slow — partial aggregate
+  + final aggregate creates bottleneck at Gather.
+
+  Q3: Complex JOIN (50M × 10M):
+  SELECT t.*, c.name
+  FROM transactions t
+  JOIN customers c ON c.id = t.customer_id
+  WHERE t.amount > 1000;
+  Parallel scan on transactions but nested loop JOIN is serial.
+
+  Q4: Partitioned table scan (500M rows, 60 partitions):
+  SELECT region, COUNT(*)
+  FROM events
+  GROUP BY region;
+  Should scan partitions in parallel but scans sequentially.
+
+  Task: Tune parallel query settings for this 64-core server. For
+  each query, diagnose why parallelism isn't working and fix it.
+  Write the optimal configuration, the expected speedup, and the
+  limitations of parallel queries in PostgreSQL.
+
+assertions:
+  - type: llm_judge
+    criteria: "Configuration is correct for 64-core server — max_parallel_workers increased to 32+ (not 64, need cores for other work), max_parallel_workers_per_gather increased to 8-16, parallel_setup_cost reduced for more aggressive parallelization, and explains why max_worker_processes must be >= max_parallel_workers"
+    weight: 0.35
+    description: "Correct parallel configuration"
+  - type: llm_judge
+    criteria: "Each query's parallelism issue is diagnosed — Q1 may not parallelize due to cost estimate (reduce parallel_setup_cost), Q2 has Gather bottleneck (increase max_parallel_workers_per_gather), Q3 needs parallel-aware JOIN (hash join can parallelize, nested loop may not), Q4 needs enable_parallel_append for partitioned tables"
+    weight: 0.35
+    description: "Per-query diagnosis"
+  - type: llm_judge
+    criteria: "Limitations are honestly stated — not all operations parallelize (correlated subqueries, some functions, writes), Gather node is a bottleneck for result assembly, parallel workers consume memory (work_mem per worker), and adding workers has diminishing returns (Amdahl's law)"
+    weight: 0.30
+    description: "Honest limitations"

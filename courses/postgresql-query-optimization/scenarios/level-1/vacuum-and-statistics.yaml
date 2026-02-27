@@ -1,0 +1,62 @@
+meta:
+  id: vacuum-and-statistics
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Understand VACUUM and statistics — learn why PostgreSQL needs maintenance and how outdated statistics cause bad query plans"
+  tags: [PostgreSQL, VACUUM, autovacuum, statistics, ANALYZE, beginner]
+
+state: {}
+
+trigger: |
+  Your orders table has 10 million rows. Yesterday it was fast.
+  Today, a simple query that used to take 50ms now takes 15 seconds:
+
+  SELECT * FROM orders WHERE status = 'pending'
+  AND created_at >= '2026-02-26';
+
+  EXPLAIN shows: Seq Scan on orders (estimated rows: 5,000,000)
+  But the actual result is only 150 rows.
+
+  Investigation reveals:
+  1. The table statistics say 50% of rows have status = 'pending'
+     (true 6 months ago, now only 0.01% are pending)
+  2. A bulk UPDATE last night changed 8M rows from 'pending' to
+     'completed' but ANALYZE hasn't run since
+  3. The table has 8M dead tuples (from the bulk UPDATE) that
+     VACUUM hasn't cleaned up yet
+  4. Table bloat: the table occupies 4GB on disk but only 2GB of
+     that is live data
+
+  Your DBA explains: "PostgreSQL's query planner uses statistics to
+  estimate how many rows a query will return. If the statistics are
+  wrong, the planner picks the wrong execution plan."
+
+  Additional scenarios:
+  - Why did autovacuum not run? (It's been blocked by a long-running
+    transaction from a reporting query)
+  - What happens when dead tuples accumulate? (Table bloat, slower
+    sequential scans, index bloat)
+  - What's the difference between VACUUM and VACUUM FULL?
+  - What does ANALYZE do and when should you run it?
+
+  Task: Explain what happened, fix the immediate problem, and set up
+  ongoing maintenance. Write: why the statistics were wrong and how
+  they led to a bad plan, the immediate fix (ANALYZE + VACUUM), the
+  difference between VACUUM, VACUUM FULL, and VACUUM ANALYZE, the
+  autovacuum configuration for high-update tables, and how to prevent
+  long-running transactions from blocking autovacuum.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause is clearly explained — outdated statistics caused the planner to estimate 5M rows when only 150 existed, leading it to choose Seq Scan instead of Index Scan. ANALYZE updates statistics, fixing the plan. Dead tuples from the bulk UPDATE caused bloat"
+    weight: 0.35
+    description: "Clear root cause explanation"
+  - type: llm_judge
+    criteria: "Maintenance operations are correctly distinguished — VACUUM reclaims dead tuples without locking (but doesn't shrink the file), VACUUM FULL rewrites the table (locks it), ANALYZE updates statistics only, VACUUM ANALYZE does both. Explains when each is appropriate"
+    weight: 0.35
+    description: "Correct maintenance distinctions"
+  - type: llm_judge
+    criteria: "Autovacuum configuration is practical — explains key parameters (autovacuum_vacuum_threshold, autovacuum_vacuum_scale_factor) for high-update tables, how to set per-table autovacuum settings, and how to prevent long-running transactions from blocking autovacuum (statement_timeout, idle_in_transaction_session_timeout)"
+    weight: 0.30
+    description: "Practical autovacuum configuration"

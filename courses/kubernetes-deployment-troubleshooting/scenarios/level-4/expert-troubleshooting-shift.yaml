@@ -1,0 +1,65 @@
+meta:
+  id: expert-troubleshooting-shift
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Combined expert troubleshooting shift — manage a multi-cluster incident requiring cross-team coordination, executive communication, and architectural decisions"
+  tags: [Kubernetes, troubleshooting, combined, shift-simulation, multi-cluster, expert]
+
+state: {}
+
+trigger: |
+  You're the platform engineering lead. A regional cloud provider outage
+  affects your primary US cluster (prod-us-1). You must coordinate
+  response across multiple teams and communicate to leadership.
+
+  9:00 AM — Cloud provider status page: "Investigating increased error
+  rates in us-east-1"
+
+  Cluster impact:
+  - prod-us-1 (us-east-1): 40% of API calls failing, 3 nodes NotReady
+  - prod-us-2 (us-west-2): Healthy, running at 60% capacity
+  - prod-eu-1 (eu-west-1): Healthy
+
+  Your decision matrix:
+  1. Do you failover US traffic to prod-us-2?
+     - Pro: Restores service immediately
+     - Con: prod-us-2 may not handle 100% US traffic
+     - Risk: If us-west-2 also fails, complete US outage
+
+  2. Do you split traffic between prod-us-2 and prod-eu-1?
+     - Pro: Distributes load
+     - Con: EU latency for US users, GDPR implications for EU processing
+
+  3. Do you wait for cloud provider to resolve?
+     - Pro: Minimal risk of making things worse
+     - Con: Extended downtime, SLO violation
+
+  Complicating factors:
+  - The database is in us-east-1 with read replicas in us-west-2
+  - Database writes will fail if primary is affected
+  - 3 teams have critical releases scheduled for today
+  - Board meeting at 2 PM expects a platform stability update
+  - Customer support reporting 500+ tickets in the last hour
+  - Media coverage of the cloud provider outage
+
+  Task: Walk through managing this multi-cluster incident. Write: the
+  decision framework for failover (when to failover vs wait), the
+  communication plan (technical teams, leadership, customers), traffic
+  management across clusters, database write handling during partial
+  outage, post-incident analysis, and how this shapes future DR
+  architecture investments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Decision framework is structured — assess severity and duration estimate from cloud provider status page. If degradation < 30 min expected: wait with monitoring. If 30+ min or getting worse: failover to prod-us-2 for reads, queue writes or fail gracefully. If 2+ hours: full failover including database promotion in us-west-2. Decision criteria: SLO budget remaining, customer impact, risk of action vs inaction"
+    weight: 0.35
+    description: "Decision framework"
+  - type: llm_judge
+    criteria: "Communication plan is multi-layered — incident commander coordinates all communication. Technical teams: dedicated Slack channel, 15-min sync calls, clear ownership assignments. Leadership: executive summary every 30 min (impact, actions, ETA). Customers: status page update within 15 min, customer support talking points. Board meeting: prepare brief on incident response demonstrating platform resilience and DR investment need"
+    weight: 0.35
+    description: "Communication plan"
+  - type: llm_judge
+    criteria: "Technical response and post-incident are practical — traffic management: Route53 weighted routing to shift traffic, scale up prod-us-2 HPA limits and node count. Database: promote read replica if primary down > 30 min, accept brief data inconsistency. Freeze all non-critical deployments. Post-incident: review single-region database as SPOF, justify multi-region active-active investment, update DR runbooks with this scenario, reduce RTO target"
+    weight: 0.30
+    description: "Technical response"

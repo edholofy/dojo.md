@@ -1,0 +1,65 @@
+meta:
+  id: write-optimization
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize write performance — accelerate bulk inserts, COPY operations, and upserts for data pipeline workloads"
+  tags: [PostgreSQL, write-optimization, COPY, bulk-insert, upsert, advanced]
+
+state: {}
+
+trigger: |
+  Your data pipeline ingests 100M rows per day into PostgreSQL. The
+  current pipeline takes 16 hours to load each day's data, meaning
+  you're falling behind. By next month, you'll have a 2-day backlog.
+
+  Current pipeline:
+  1. Read CSV files from S3 (100 files × 1M rows each)
+  2. For each file: for each row: INSERT INTO events (...) VALUES (...)
+  3. After all inserts: UPDATE statistics tables
+  4. After all updates: run VACUUM ANALYZE
+
+  Table: events (currently 5B rows)
+  - 15 columns, average row size 500 bytes
+  - 8 indexes (some composite)
+  - 3 triggers (audit logging, updated_at, notification)
+  - Foreign keys to 4 other tables
+
+  Performance profile:
+  - Single INSERT: 0.5ms per row
+  - 100M rows × 0.5ms = 50,000 seconds = 13.8 hours
+  - Overhead: FK checks (1 hour), trigger execution (1 hour),
+    WAL generation (0.2 hours)
+  - Total: ~16 hours
+
+  Target: Load 100M rows in < 2 hours
+
+  Optimization options to evaluate:
+  1. COPY instead of INSERT (binary or CSV format)
+  2. Batch INSERTs (100-1000 rows per statement)
+  3. Drop indexes → load → recreate indexes
+  4. Disable triggers during load
+  5. Disable FK checks during load
+  6. UNLOGGED table for staging
+  7. Increase wal_buffers and checkpoint_timeout
+  8. Parallel loading (multiple COPY workers)
+
+  Task: Design the optimized pipeline. Evaluate each option with
+  expected speedup. Write: the pipeline architecture, the COPY
+  configuration, the index management strategy, the WAL tuning,
+  and the safety measures (how to validate data integrity after
+  disabling constraints).
+
+assertions:
+  - type: llm_judge
+    criteria: "Pipeline uses COPY for bulk loading — explains that COPY is 10-100x faster than individual INSERTs, shows the exact COPY command with optimal settings, and uses parallel COPY workers (one per file) with appropriate staging table approach"
+    weight: 0.35
+    description: "COPY-based pipeline"
+  - type: llm_judge
+    criteria: "Index and constraint management is safe — drops non-essential indexes before load, recreates with CREATE INDEX CONCURRENTLY after, disables triggers safely with ALTER TABLE DISABLE TRIGGER, and validates FK constraints after re-enabling with ALTER TABLE VALIDATE CONSTRAINT"
+    weight: 0.35
+    description: "Safe index/constraint management"
+  - type: llm_judge
+    criteria: "WAL optimization is included — increases checkpoint_timeout and max_wal_size for large loads, uses wal_level=minimal for initial load (if possible), and explains the tradeoff between WAL reduction and crash recovery risk. The total estimated time is under 2 hours"
+    weight: 0.30
+    description: "WAL optimization included"

@@ -1,0 +1,71 @@
+meta:
+  id: pid1-signal-handling
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug PID 1 and signal handling issues — diagnose containers that won't stop gracefully, zombie processes, and init system problems"
+  tags: [Docker, PID-1, signals, tini, graceful-shutdown, zombie-processes, intermediate]
+
+state: {}
+
+trigger: |
+  Your container takes exactly 10 seconds to stop every time:
+
+  $ time docker stop api-server
+  api-server
+  real    0m10.032s
+
+  Docker stop sends SIGTERM, waits 10 seconds (default grace period),
+  then sends SIGKILL. Your container is ignoring SIGTERM!
+
+  $ docker exec api-server ps aux
+  PID   USER   COMMAND
+  1     root   /bin/sh -c node server.js
+  7     root   node server.js
+
+  PID 1 is /bin/sh, not your application! The shell is PID 1, and
+  shells as PID 1 don't forward signals to child processes. Node.js
+  (PID 7) never receives SIGTERM.
+
+  This happens because the Dockerfile uses shell form:
+  CMD node server.js
+  (interpreted as: /bin/sh -c "node server.js")
+
+  vs exec form:
+  CMD ["node", "server.js"]
+  (node becomes PID 1 directly)
+
+  But even with exec form, there's another problem — PID 1 processes
+  don't have default signal handlers in Linux. Unless your app
+  explicitly handles SIGTERM, it gets ignored.
+
+  Additionally, after running for a while:
+  $ docker exec api-server ps aux | grep defunct
+  15    root   [worker] <defunct>
+  23    root   [worker] <defunct>
+
+  Zombie processes! PID 1 is supposed to reap orphaned child processes,
+  but your app doesn't do that.
+
+  Solution: Use an init system (tini or --init flag):
+  $ docker run --init api-server
+
+  Task: Explain the PID 1 problem in Docker. Write: why PID 1 is
+  special (signal handling, zombie reaping), shell form vs exec form
+  CMD/ENTRYPOINT, what happens during docker stop (SIGTERM → wait →
+  SIGKILL), how to use tini/dumb-init as an init process, the --init
+  flag, and how to implement graceful shutdown in applications.
+
+assertions:
+  - type: llm_judge
+    criteria: "PID 1 problem is explained — PID 1 in Linux has special behavior: it doesn't have default signal handlers (SIGTERM is ignored unless explicitly handled), and it's responsible for reaping zombie child processes (wait() on orphaned children). If your app is PID 1 and doesn't handle these, it won't shut down gracefully and zombies accumulate"
+    weight: 0.35
+    description: "PID 1 problem"
+  - type: llm_judge
+    criteria: "Shell vs exec form is explained — shell form (CMD node server.js) wraps in /bin/sh -c, making shell PID 1 and app a child process. Shell doesn't forward signals. Exec form (CMD ['node', 'server.js']) makes app PID 1 directly, receiving signals. ENTRYPOINT has the same distinction. docker stop sends SIGTERM to PID 1, waits --stop-timeout (default 10s), then SIGKILL"
+    weight: 0.35
+    description: "Shell vs exec form"
+  - type: llm_judge
+    criteria: "Solutions are practical — tini: lightweight init process (10KB), handles signal forwarding and zombie reaping. Install in Dockerfile: RUN apk add tini, ENTRYPOINT ['tini', '--'], CMD ['node', 'server.js']. Or use --init flag at runtime: docker run --init myapp. For application-level handling: implement SIGTERM handler (close connections, flush logs, exit cleanly). dumb-init is an alternative to tini"
+    weight: 0.30
+    description: "Solutions"

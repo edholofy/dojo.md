@@ -1,0 +1,80 @@
+meta:
+  id: lock-contention-analysis
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Diagnose lock contention — identify and resolve blocking queries, deadlocks, and lock escalation issues"
+  tags: [PostgreSQL, locks, deadlocks, contention, concurrency, advanced]
+
+state: {}
+
+trigger: |
+  Your application is experiencing intermittent slowdowns. Some
+  requests take 30+ seconds when they normally take 50ms. The
+  monitoring shows queries waiting for locks.
+
+  pg_stat_activity during a slowdown shows:
+
+  PID 1001: UPDATE orders SET status = 'shipped'
+            WHERE id = 42;
+            wait_event_type: Lock, wait_event: transactionid
+            state: active, waiting: true, duration: 28s
+
+  PID 1002: UPDATE orders SET status = 'paid'
+            WHERE id = 42;
+            wait_event_type: Lock, wait_event: transactionid
+            state: active, waiting: true, duration: 25s
+
+  PID 1003: SELECT * FROM orders WHERE id = 42;
+            state: active, waiting: false, duration: 0.1ms
+            (SELECT is not blocked — MVCC!)
+
+  PID 999:  BEGIN;
+            UPDATE orders SET tracking_number = 'ABC123'
+            WHERE id = 42;
+            -- Transaction started 30 seconds ago, no COMMIT yet
+            state: idle in transaction
+
+  Diagnosis: PID 999 holds a row lock on orders id=42, PIDs 1001
+  and 1002 are waiting for it. PID 999 is "idle in transaction" —
+  the application opened a transaction, did an UPDATE, then went
+  to do something else (call an external API?) before committing.
+
+  Additional issues found:
+
+  Issue 2 — Deadlock:
+  ERROR: deadlock detected
+  Process 2001 waits for ShareLock on transaction 5000;
+  blocked by process 2002.
+  Process 2002 waits for ShareLock on transaction 4999;
+  blocked by process 2001.
+  (Two processes updating the same rows in opposite order)
+
+  Issue 3 — DDL blocking DML:
+  ALTER TABLE orders ADD COLUMN notes TEXT;
+  This takes an AccessExclusive lock, blocking ALL queries on the
+  orders table for 45 seconds during the ALTER.
+
+  Issue 4 — VACUUM blocked by long transaction:
+  Autovacuum on orders table can't reclaim dead tuples because
+  PID 3001 has a transaction open for 2 hours (analytics query).
+  Dead tuples: 5M and growing.
+
+  Task: Resolve all 4 lock issues. For each, explain: the lock type
+  involved, why the contention occurs, the immediate fix, and the
+  preventive measure. Then write the monitoring queries to detect
+  each issue proactively.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 4 issues are correctly diagnosed — idle-in-transaction holding row locks (fix: idle_in_transaction_session_timeout), deadlock from inconsistent lock ordering (fix: application-level ordering), DDL blocking (fix: lock_timeout + retry, or use CREATE INDEX CONCURRENTLY approach), VACUUM blocked by long transaction (fix: old_snapshot_threshold or statement_timeout for analytics)"
+    weight: 0.35
+    description: "All issues correctly diagnosed"
+  - type: llm_judge
+    criteria: "Lock types are correctly identified — row-level locks (FOR UPDATE, FOR SHARE), table-level locks (AccessExclusive for DDL, RowExclusiveLock for DML), and transaction ID locks. Explains MVCC's role (SELECTs don't block, only writes contend)"
+    weight: 0.35
+    description: "Correct lock type identification"
+  - type: llm_judge
+    criteria: "Monitoring queries are practical — uses pg_stat_activity to find idle-in-transaction sessions, pg_locks to detect blocking chains, log_lock_waits for automatic logging, and includes alerting thresholds (alert when any transaction is idle-in-transaction for > 60 seconds)"
+    weight: 0.30
+    description: "Practical monitoring queries"

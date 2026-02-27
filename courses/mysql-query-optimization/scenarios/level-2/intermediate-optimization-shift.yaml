@@ -1,0 +1,68 @@
+meta:
+  id: intermediate-optimization-shift
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Intermediate optimization shift — tune a MySQL server for a growing SaaS application combining indexing, buffer pool, and query optimization"
+  tags: [MySQL, shift-simulation, SaaS, tuning, intermediate]
+
+state: {}
+
+trigger: |
+  You're the sole DBA for a SaaS application that's grown from 100
+  to 10,000 customers in 6 months. MySQL was set up once and never
+  tuned. Performance has degraded steadily, and the CEO says "the
+  app feels slow — fix it by Friday."
+
+  Server: MySQL 8.0 on RDS (db.r6g.2xlarge, 8 vCPU, 64GB RAM)
+
+  Performance Schema top issues:
+  1. 45 queries with full table scans (type=ALL in EXPLAIN)
+  2. Buffer pool hit ratio: 82% (innodb_buffer_pool_size=8GB)
+  3. 38 unused indexes consuming 5GB
+  4. Top query by total time: multi-tenant dashboard query
+     SELECT * FROM activities
+     WHERE tenant_id = ? AND created_at >= ?
+     ORDER BY created_at DESC LIMIT 50;
+     — No composite index on (tenant_id, created_at)
+     — Executes 200K times/day, avg 500ms each
+
+  5. Second highest: user search
+     SELECT * FROM users WHERE LOWER(email) LIKE '%@gmail.com';
+     — Full table scan (function on column + leading wildcard)
+     — Executes 50K times/day, avg 200ms each
+
+  6. Lock contention on the subscriptions table:
+     UPDATE subscriptions SET status = 'expired'
+     WHERE end_date < NOW() AND status = 'active';
+     — Runs every minute via cron, locks 5,000 rows for 3 seconds
+     — Blocks checkout flow (which also updates subscriptions)
+
+  7. Slow nightly report:
+     SELECT tenant_id, COUNT(*), SUM(amount)
+     FROM invoices GROUP BY tenant_id;
+     — 50M rows, takes 8 minutes, pollutes buffer pool
+
+  8. Connection issues:
+     max_connections = 151 (default)
+     Current connections: 145 (at capacity during peak)
+     Many connections in Sleep state (idle 300+ seconds)
+
+  Task: Write the optimization plan. Include: the immediate fixes
+  (what to do today), the index changes (add and remove), the
+  configuration tuning (buffer pool, connections), the query rewrites,
+  and the priority order with expected impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate fixes are high-impact — adds composite index on activities(tenant_id, created_at) as top priority (200K queries × 500ms → <10ms = saves 27 hours/day of query time), increases buffer pool to 48GB (75% of 64GB), and increases max_connections or adds connection timeout to handle the Sleep connections"
+    weight: 0.35
+    description: "High-impact immediate fixes"
+  - type: llm_judge
+    criteria: "All 8 issues are addressed — full table scans (add indexes), buffer pool (resize), unused indexes (make invisible then drop), dashboard query (composite index), user search (rewrite LOWER + wildcard, consider full-text search), lock contention (batch the UPDATE into smaller chunks or use WHERE + LIMIT), nightly report (run on read replica), connection management (reduce wait_timeout, consider ProxySQL)"
+    weight: 0.35
+    description: "All issues addressed"
+  - type: llm_judge
+    criteria: "Priority order maximizes impact — ranks fixes by total time saved or risk reduction, estimates improvement for each fix, and groups into 'do today' (index + buffer pool), 'this week' (query rewrites, connection tuning), and 'next sprint' (lock contention redesign, read replica for reports)"
+    weight: 0.30
+    description: "Prioritized action plan"

@@ -1,0 +1,63 @@
+meta:
+  id: ingress-routing-issues
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Ingress routing issues — diagnose 404s, TLS errors, and misconfigured path routing in Ingress resources"
+  tags: [Kubernetes, Ingress, routing, TLS, nginx-ingress, intermediate]
+
+state: {}
+
+trigger: |
+  Your application is returning 404 for all API routes through the
+  Ingress, but the app works fine when accessed via port-forward:
+
+  $ curl https://app.example.com/api/users
+  <html><body><h1>404 Not Found</h1></body></html>
+
+  $ kubectl port-forward svc/api-service 8080:80
+  $ curl http://localhost:8080/api/users
+  {"users": [...]}  # Works!
+
+  $ kubectl get ingress
+  NAME       CLASS   HOSTS              ADDRESS        PORTS     AGE
+  app-ing    nginx   app.example.com    10.0.50.100    80, 443   30m
+
+  $ kubectl describe ingress app-ing
+  Rules:
+    Host              Path  Backends
+    app.example.com
+                      /api   api-service:80
+  Annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+
+  The problem: the rewrite-target annotation rewrites /api/users to
+  just / — the backend receives / instead of /api/users. The app needs
+  the full path.
+
+  Additionally, HTTPS isn't working:
+  $ curl https://app.example.com/
+  curl: (60) SSL: certificate subject name does not match target host name
+
+  The TLS secret has a certificate for "*.internal.com", not
+  "app.example.com".
+
+  Task: Explain how Kubernetes Ingress works and how to debug routing
+  issues. Write: how Ingress controllers route traffic (host-based and
+  path-based), path types (Exact, Prefix, ImplementationSpecific),
+  the rewrite-target annotation and when to use it, TLS configuration
+  and certificate management, and debugging techniques for 404/502/503.
+
+assertions:
+  - type: llm_judge
+    criteria: "Ingress routing is explained — Ingress resource defines rules mapping hostnames and paths to backend Services. Ingress controller (nginx, traefik, etc.) implements the routing. Path types: Exact (exact match only), Prefix (prefix match, / matches everything), ImplementationSpecific (controller decides). The rewrite-target annotation modifies the URL path before forwarding to the backend"
+    weight: 0.35
+    description: "Ingress routing explained"
+  - type: llm_judge
+    criteria: "TLS and common errors are covered — TLS configured via tls section referencing a Kubernetes Secret containing tls.crt and tls.key. Certificate must match the hostname in the Ingress rules. Common errors: 404 (path mismatch, wrong backend, rewrite issues), 502 (backend pod not running or port wrong), 503 (no endpoints, readiness probe failing). cert-manager for automatic certificate management"
+    weight: 0.35
+    description: "TLS and errors"
+  - type: llm_judge
+    criteria: "Debugging workflow is practical — check Ingress controller logs (kubectl logs -n ingress-nginx <controller-pod>), verify backend Service exists and has endpoints, test directly via port-forward to isolate Ingress vs app issue, check Ingress controller config (kubectl exec into controller and inspect nginx.conf), verify DNS resolves correctly, check annotations match the controller type"
+    weight: 0.30
+    description: "Debugging workflow"

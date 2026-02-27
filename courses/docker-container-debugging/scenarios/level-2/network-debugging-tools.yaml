@@ -1,0 +1,67 @@
+meta:
+  id: network-debugging-tools
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker networking with tools — use tcpdump, curl, netcat, and nslookup inside containers to diagnose connectivity issues"
+  tags: [Docker, networking, tcpdump, debugging-tools, connectivity, intermediate]
+
+state: {}
+
+trigger: |
+  Your containerized API intermittently fails to connect to an external
+  payment gateway. The error is "connection timed out" but only for
+  some requests. You need to capture network traffic to understand why.
+
+  Problem: your container uses a minimal image with no debugging tools:
+
+  $ docker exec api-server curl http://payment-api:8443/health
+  OCI runtime exec failed: exec: "curl": executable file not found
+
+  $ docker exec api-server ping payment-api
+  OCI runtime exec failed: exec: "ping": executable file not found
+
+  Solution 1 — Use a sidecar debug container on the same network:
+  $ docker run --rm -it --network container:api-server nicolaka/netshoot
+
+  Now you have all networking tools sharing the api-server's network
+  namespace:
+
+  $ nslookup payment-api
+  Name:    payment-api
+  Address: 172.18.0.5
+
+  $ curl -v http://payment-api:8443/health
+  * Connected to payment-api (172.18.0.5) port 8443
+
+  $ tcpdump -i eth0 host 172.18.0.5 -w /tmp/capture.pcap
+  (capture packets for analysis)
+
+  $ nc -zv payment-api 8443
+  Connection to payment-api 8443 port [tcp/https-alt] succeeded!
+
+  The tcpdump capture reveals: some DNS responses take 5+ seconds
+  because the container's /etc/resolv.conf has ndots:5, causing
+  multiple DNS lookups for external hostnames before trying the
+  actual hostname.
+
+  Task: Explain Docker network debugging with tools. Write: how to
+  use debugging containers (netshoot) with --network container: mode,
+  key tools (curl, tcpdump, nslookup, dig, netcat, ss, traceroute),
+  how to capture and analyze packets, common DNS issues in containers
+  (ndots, search domains), and debugging external connectivity from
+  containers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Debug container approach is explained — use --network container:<target> to share the target container's network namespace. The debug container sees the same IPs, routes, DNS config. nicolaka/netshoot is the standard toolbox image. Alternative: install tools temporarily with docker exec (if package manager available). Never install debug tools in production images"
+    weight: 0.35
+    description: "Debug container approach"
+  - type: llm_judge
+    criteria: "Key tools and usage are covered — nslookup/dig for DNS resolution testing, curl -v for HTTP debugging (shows connection, TLS, headers), tcpdump for packet capture (filter by host, port, protocol), netcat (nc -zv) for port connectivity testing, ss -tlnp for listing listening ports, traceroute for routing path. Each tool answers a different question in the debugging process"
+    weight: 0.35
+    description: "Tools and usage"
+  - type: llm_judge
+    criteria: "DNS issues are explained — ndots:5 in container resolv.conf means names with < 5 dots get search domains appended first (app.payment.com → app.payment.com.default.svc.cluster.local first). This causes slow DNS for external hostnames. Fix: use FQDN with trailing dot (payment-api.external.com.) or adjust ndots. Also: DNS caching, TTL, and how Docker's embedded DNS (127.0.0.11) works on custom networks"
+    weight: 0.30
+    description: "DNS issues"

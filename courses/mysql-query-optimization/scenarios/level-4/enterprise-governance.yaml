@@ -1,0 +1,50 @@
+meta:
+  id: enterprise-governance
+  level: 4
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL governance for enterprises — standardize configurations, automate query review, and implement organization-wide database health monitoring"
+  tags: [MySQL, governance, enterprise, standardization, CI-CD, expert]
+
+state: {}
+
+trigger: |
+  You're the Director of Database Engineering at a company with 800
+  engineers and 120 MySQL databases. An audit revealed systemic issues:
+
+  - 120 databases, 25 teams, no consistent standards
+  - 40% of databases use default innodb_buffer_pool_size (128MB)
+  - 60 databases have no query-level monitoring
+  - Query performance varies 50x between teams for similar workloads
+  - 6 production incidents last year from unoptimized queries
+  - No query review before deployment
+  - Connection pooling used by only 3 teams
+  - Backups tested by 0 teams
+
+  The CTO wants a governance framework that:
+  - Standardizes MySQL configuration across all 120 databases
+  - Prevents slow queries from reaching production
+  - Ensures backup and recovery readiness
+  - Provides visibility into database health organization-wide
+  - Maintains team autonomy (no DBA bottleneck)
+
+  Your team: 4 DBAs (overwhelmed with tickets), no platform tooling.
+
+  Task: Design the governance framework. Write: the configuration
+  standards (tiered by workload size), the automated query review
+  pipeline (CI/CD integration), the monitoring standards, the backup
+  verification program, and the organizational structure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Configuration standards are tiered — defines settings for small/medium/large databases (buffer pool sizing, connection limits, innodb settings), provides a base my.cnf template, and addresses the 40% on defaults as immediate remediation. Standards are enforceable via configuration management (Ansible, Terraform) not just documentation"
+    weight: 0.35
+    description: "Tiered configuration standards"
+  - type: llm_judge
+    criteria: "Query review is automated — CI/CD pipeline captures SQL changes, runs EXPLAIN against a staging database, flags queries with full table scans or high estimated rows, blocks deployment if thresholds exceeded. Self-service: teams see results immediately without waiting for DBA review. Includes pt-query-digest analysis of test suite queries"
+    weight: 0.35
+    description: "Automated query review"
+  - type: llm_judge
+    criteria: "Monitoring and backup programs are comprehensive — unified PMM or equivalent dashboard across 120 databases, standard alerting rules (replication lag, disk space, slow queries, connections), and backup verification: automated monthly restore tests with documented RTO/RPO per database. Organizational shift from ticket-taking DBAs to platform engineering team"
+    weight: 0.30
+    description: "Monitoring and backup programs"

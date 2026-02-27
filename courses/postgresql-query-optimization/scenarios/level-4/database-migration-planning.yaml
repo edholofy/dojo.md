@@ -1,0 +1,57 @@
+meta:
+  id: database-migration-planning
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Plan a terabyte-scale database migration — migrate PostgreSQL with near-zero downtime using logical replication"
+  tags: [PostgreSQL, migration, logical-replication, zero-downtime, expert]
+
+state: {}
+
+trigger: |
+  Your company needs to migrate a 5TB PostgreSQL 14 database to
+  PostgreSQL 16 on new hardware. The database processes $50M in
+  transactions daily and has an SLA of 99.99% availability. Maximum
+  acceptable downtime: 5 minutes.
+
+  Source: PostgreSQL 14 on bare metal, 5TB, 200 tables
+  Target: PostgreSQL 16 on AWS RDS, same schema
+
+  Challenges:
+  1. 5TB of data takes ~10 hours to pg_dump/restore
+  2. Logical replication needs to catch up on changes during transfer
+  3. 15 custom extensions on the source (3 not available on RDS)
+  4. Sequences must be synchronized at cutover
+  5. Application uses prepared statements tied to backend connections
+  6. The orders table has 2B rows and takes 3 hours to COPY alone
+  7. Read replicas serving analytics must also be migrated
+  8. Rollback plan: if the new database fails, how to go back?
+
+  Migration options evaluated:
+  A. pg_dump + pg_restore (simple, requires hours of downtime)
+  B. Logical replication (near-zero downtime, complex setup)
+  C. AWS DMS (managed, but performance limitations)
+  D. pglogical extension (more features than native logical rep)
+
+  The VP of Engineering asked: "Can we do this with zero downtime
+  and zero data loss? What's the actual risk?"
+
+  Task: Design the migration plan. Write: the chosen approach with
+  justification, the step-by-step migration procedure, the cutover
+  choreography (the 5-minute window), the validation checklist
+  (how to verify the migration succeeded), the rollback plan, and
+  the risk assessment.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration approach handles the constraints — addresses the 5TB volume (parallel COPY or initial pg_dump + logical replication for incremental), the 3 incompatible extensions (workarounds or replacements), and sequence synchronization at cutover. The approach achieves <5 minutes downtime"
+    weight: 0.35
+    description: "Constraint-handling approach"
+  - type: llm_judge
+    criteria: "Cutover choreography is precise — defines the exact steps during the 5-minute window (stop writes, ensure replication caught up, sync sequences, switch application connection strings, verify, resume writes), with timing estimates for each step"
+    weight: 0.35
+    description: "Precise cutover choreography"
+  - type: llm_judge
+    criteria: "Validation and rollback are thorough — row count comparison per table, checksum verification for critical tables, application smoke tests, and the rollback plan maintains the original database as hot standby during the migration so it can take over immediately if needed"
+    weight: 0.30
+    description: "Thorough validation and rollback"

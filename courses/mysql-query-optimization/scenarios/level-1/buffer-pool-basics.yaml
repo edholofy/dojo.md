@@ -1,0 +1,65 @@
+meta:
+  id: buffer-pool-basics
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Understand InnoDB buffer pool — learn how MySQL caches data in memory, why buffer pool size matters, and how to monitor hit ratios"
+  tags: [MySQL, InnoDB, buffer-pool, memory, caching, beginner]
+
+state: {}
+
+trigger: |
+  Your MySQL server has 64GB of RAM but the InnoDB buffer pool is set
+  to the default 128MB. The server is hitting disk for almost every
+  query. A colleague says "just set innodb_buffer_pool_size to 48GB"
+  but you want to understand what that actually does before changing a
+  production setting.
+
+  Current state:
+  SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool%';
+  +-------------------------------------+----------+
+  | Variable_name                       | Value    |
+  +-------------------------------------+----------+
+  | Innodb_buffer_pool_read_requests    | 50000000 |
+  | Innodb_buffer_pool_reads            | 15000000 |
+  | Innodb_buffer_pool_pages_total      | 8192     |
+  | Innodb_buffer_pool_pages_data       | 8100     |
+  | Innodb_buffer_pool_pages_dirty      | 200      |
+  | Innodb_buffer_pool_pages_free       | 12       |
+  +-------------------------------------+----------+
+
+  Calculations from this data:
+  - Buffer pool hit ratio: (50M - 15M) / 50M = 70% (terrible — should be 99%+)
+  - Buffer pool is full: only 12 free pages out of 8,192
+  - 200 dirty pages waiting to be flushed to disk
+  - Total data in buffer pool: 8,100 × 16KB = ~126MB (matches 128MB setting)
+
+  Database size: 30GB of data + 10GB of indexes = 40GB total
+  Available RAM: 64GB (OS and other processes need ~8GB)
+
+  Questions to answer:
+  1. What is the buffer pool and why is it critical for InnoDB?
+  2. What should innodb_buffer_pool_size be set to?
+  3. What happens when data isn't in the buffer pool (disk read)?
+  4. How does InnoDB decide what to evict (LRU algorithm)?
+  5. What are dirty pages and how does flushing work?
+
+  Task: Explain the InnoDB buffer pool. Write: what it is (in-memory
+  cache for data and indexes), how to size it (rule of thumb and
+  monitoring approach), how the LRU eviction works (midpoint insertion),
+  what dirty pages are and how checkpoint/flushing works, and how to
+  monitor buffer pool health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Buffer pool is correctly explained — InnoDB's main memory cache holding both data pages and index pages (16KB each). All reads and writes go through the buffer pool first. A read request either finds the page in memory (cache hit) or reads from disk (cache miss). The 70% hit ratio is correctly identified as terrible and the 128MB setting is identified as far too small"
+    weight: 0.35
+    description: "Buffer pool basics"
+  - type: llm_judge
+    criteria: "Sizing recommendation is practical — suggests 70-80% of total RAM for dedicated MySQL servers (so ~48-50GB for this 64GB server), explains why the working set (40GB) should ideally fit in the buffer pool, mentions innodb_buffer_pool_instances for multi-core efficiency (1 instance per GB, up to 64), and notes that changing requires a restart in older versions but is dynamic in MySQL 8.0"
+    weight: 0.35
+    description: "Sizing recommendation"
+  - type: llm_judge
+    criteria: "LRU and flushing are explained — InnoDB uses a modified LRU with midpoint insertion (new pages go to midpoint, not head, to prevent one-time full table scans from evicting hot data), dirty pages are modified pages not yet written to disk, and checkpoint/flushing writes dirty pages back to tablespace files (controlled by innodb_io_capacity)"
+    weight: 0.30
+    description: "LRU and flushing explained"

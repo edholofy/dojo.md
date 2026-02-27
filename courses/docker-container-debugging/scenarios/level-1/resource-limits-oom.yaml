@@ -1,0 +1,70 @@
+meta:
+  id: resource-limits-oom
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker resource limits and OOM kills — understand memory limits, CPU constraints, and why containers get killed"
+  tags: [Docker, resource-limits, OOM, memory, CPU, cgroups, beginner]
+
+state: {}
+
+trigger: |
+  Your container keeps getting killed mysteriously:
+
+  $ docker run -d --name worker --memory=256m worker-app:v1.0
+  $ docker ps
+  CONTAINER ID   IMAGE             STATUS                     NAMES
+  a1b2c3d4e5f6   worker-app:v1.0   Exited (137) 2 mins ago   worker
+
+  Exit code 137 again — was it OOM killed?
+
+  $ docker inspect worker --format='{{.State.OOMKilled}}'
+  true
+
+  $ docker stats --no-stream worker
+  (container is stopped, can't get stats)
+
+  Before the kill, memory usage was climbing:
+  $ docker run -d --name worker --memory=256m worker-app:v1.0
+  $ docker stats worker --no-stream
+  CONTAINER   CPU %   MEM USAGE / LIMIT   MEM %
+  worker      45%     248MiB / 256MiB     96.88%
+
+  The container is using 248MiB of its 256MiB limit — about to be killed.
+
+  Understanding the limits:
+  --memory=256m sets a hard limit (cgroup). If the process tries to
+  allocate more, the kernel's OOM killer terminates it (SIGKILL = 137).
+
+  --memory-reservation=128m sets a soft limit (scheduling hint, not
+  enforced). --memory-swap=512m sets swap limit (defaults to 2x memory).
+
+  For CPU:
+  --cpus=0.5 limits to 50% of one CPU core
+  --cpu-shares=512 sets relative weight (default 1024)
+
+  $ docker run -d --name worker \
+    --memory=512m \
+    --memory-reservation=256m \
+    --cpus=1.0 \
+    worker-app:v1.0
+
+  Task: Explain Docker resource limits. Write: how memory limits work
+  (cgroups hard limit, OOM kill behavior), how CPU limits work (cpus
+  vs cpu-shares), the difference between --memory and --memory-reservation,
+  how to monitor resource usage (docker stats), how to right-size
+  container limits, and what happens when limits are too low or not set.
+
+assertions:
+  - type: llm_judge
+    criteria: "Memory limits are explained — --memory sets hard cgroup limit, kernel OOM killer sends SIGKILL (exit code 137) when exceeded. --memory-reservation is a soft limit (best effort, not enforced). --memory-swap controls total memory + swap (default 2x memory, set to -1 for unlimited swap, set equal to --memory to disable swap). OOMKilled flag in docker inspect confirms OOM"
+    weight: 0.35
+    description: "Memory limits"
+  - type: llm_judge
+    criteria: "CPU limits are explained — --cpus=N limits to N CPU cores (fractional allowed, e.g., 0.5), --cpu-shares sets relative weight in contention (default 1024, only matters when CPU is contested), --cpuset-cpus pins to specific cores. Without limits, containers compete for all host resources — one container can starve others"
+    weight: 0.35
+    description: "CPU limits"
+  - type: llm_judge
+    criteria: "Monitoring and right-sizing are practical — docker stats shows real-time CPU, memory, network, disk I/O per container. docker stats --no-stream for one-time snapshot. Right-sizing: run without limits, observe actual usage over time, set memory limit to peak usage + 25% buffer, set CPU based on typical load. Without limits: containers can use all host memory/CPU, causing host instability"
+    weight: 0.30
+    description: "Monitoring and sizing"

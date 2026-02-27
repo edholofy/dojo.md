@@ -1,0 +1,62 @@
+meta:
+  id: query-planner-settings
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Tune query planner settings — configure work_mem, effective_cache_size, and cost parameters for your workload"
+  tags: [PostgreSQL, planner, work_mem, effective_cache_size, tuning, intermediate]
+
+state: {}
+
+trigger: |
+  You just migrated to a new database server with NVMe SSDs and
+  128GB RAM, but query performance hasn't improved. The planner
+  still prefers sequential scans over index scans and hash joins
+  spill to disk.
+
+  Server specs:
+  - CPU: 32 cores
+  - RAM: 128GB
+  - Storage: NVMe SSD (500K IOPS, 3GB/s throughput)
+  - PostgreSQL 16
+  - max_connections: 200
+
+  Current settings (still at defaults):
+  - shared_buffers = 128MB (should be much higher)
+  - work_mem = 4MB (sorts spill to disk)
+  - effective_cache_size = 4GB (planner underestimates cache)
+  - random_page_cost = 4.0 (assumes spinning disk, not SSD)
+  - seq_page_cost = 1.0
+  - maintenance_work_mem = 64MB (VACUUM and index builds are slow)
+  - effective_io_concurrency = 1 (not using SSD parallelism)
+
+  Symptoms:
+  1. Planner chooses Seq Scan over Index Scan because
+     random_page_cost = 4.0 makes random I/O look 4x expensive
+     (true for HDD, not for SSD where it's ~1.1x)
+  2. Hash Joins spill to disk because work_mem = 4MB can't hold
+     the hash table in memory
+  3. Sorts spill to disk for the same reason
+  4. VACUUM takes hours because maintenance_work_mem = 64MB
+  5. effective_cache_size = 4GB makes the planner think only 4GB
+     of data is cached (actual: ~100GB between shared_buffers and
+     OS cache)
+
+  Task: Calculate the optimal value for each setting. For each,
+  explain: the formula or reasoning, the impact on query plans,
+  and the risks of over-tuning. Then show before/after EXPLAIN
+  output for a query that changes plan due to the settings.
+
+assertions:
+  - type: llm_judge
+    criteria: "Setting calculations are correct for the hardware — shared_buffers ~25% of RAM (32GB), work_mem calculated from RAM / (max_connections * expected_operations), effective_cache_size ~75% of RAM (96GB), random_page_cost 1.1-1.5 for NVMe SSDs, maintenance_work_mem 1-2GB, effective_io_concurrency 200+ for NVMe"
+    weight: 0.35
+    description: "Correct setting calculations"
+  - type: llm_judge
+    criteria: "Impact on query plans is demonstrated — shows how reducing random_page_cost makes the planner prefer Index Scan over Seq Scan, how increasing work_mem eliminates disk spill in Hash Joins, and how effective_cache_size changes the planner's cost estimates. Before/after EXPLAIN shows the plan change"
+    weight: 0.35
+    description: "Demonstrated plan impact"
+  - type: llm_judge
+    criteria: "Risks of over-tuning are explained — too-high work_mem × 200 connections can OOM the server, too-low random_page_cost can force inefficient index scans, shared_buffers > 40% of RAM can cause double-buffering with OS cache. Includes the formula for safe work_mem calculation"
+    weight: 0.30
+    description: "Over-tuning risks explained"

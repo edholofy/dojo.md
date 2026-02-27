@@ -1,0 +1,71 @@
+meta:
+  id: production-container-ops
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug production container operations — diagnose zero-downtime deployment failures, container update strategies, and production runtime issues"
+  tags: [Docker, production, zero-downtime, rolling-update, deployment, advanced]
+
+state: {}
+
+trigger: |
+  Your production Docker deployment experiences issues during updates:
+
+  Deployment strategy uses Docker Compose with rolling updates:
+  $ docker compose up -d --no-deps --build api
+
+  Problem 1 — Downtime during update:
+  The old container is killed before the new one is ready. For 5-10
+  seconds, requests to the API return "connection refused":
+
+  $ docker compose up -d api
+  Recreating api ... done
+
+  The default behavior: stop old → start new. No overlap period.
+  Health check is configured but Compose doesn't wait for it by
+  default during updates.
+
+  Problem 2 — Container doesn't stop gracefully:
+  $ docker stop api
+  (waits 10 seconds, then kills with SIGKILL)
+
+  The application doesn't handle SIGTERM. Running connections are
+  severed. In-progress requests return errors. The app needs a
+  graceful shutdown handler that:
+  - Stops accepting new connections
+  - Finishes processing current requests
+  - Closes database connections
+  - Exits cleanly
+
+  Problem 3 — Rollback needed but old image was overwritten:
+  $ docker compose up -d  # deploys broken version
+  # Need to roll back but :latest was overwritten
+  # No way to get the previous version!
+
+  Problem 4 — Resource leak over time:
+  $ docker stats api
+  CONTAINER   CPU%    MEM USAGE / LIMIT     MEM%    NET I/O
+  api         145%    1.8GiB / 2GiB         90%     45GB / 12GB
+
+  Memory at 90% and climbing. The container has a memory leak and
+  will eventually OOM. Restart is a band-aid, not a fix.
+
+  Task: Explain production container operations. Write: zero-downtime
+  deployment strategies (blue-green, rolling), graceful shutdown
+  (signal handling, stop_grace_period), image tagging strategies (never
+  use :latest in production), resource monitoring with docker stats,
+  handling memory leaks, and production readiness checklist.
+
+assertions:
+  - type: llm_judge
+    criteria: "Zero-downtime deployment is explained — blue-green: run new version alongside old, switch traffic after health check passes. Rolling update: gradually replace instances. With Compose: use health checks + depends_on condition: service_healthy. deploy.update_config in Swarm: parallelism, delay, order (start-first vs stop-first). start-first ensures new container is healthy before stopping old one. Without orchestration: use a reverse proxy (nginx, traefik) to manage traffic switching"
+    weight: 0.35
+    description: "Zero-downtime deployment"
+  - type: llm_judge
+    criteria: "Graceful shutdown is covered — Docker sends SIGTERM, waits stop_grace_period (default 10s), then SIGKILL. Application must handle SIGTERM: stop accepting new connections, drain existing connections, close resources, exit 0. Node.js: process.on('SIGTERM', ...). Python: signal.signal(SIGTERM, ...). stop_grace_period in Compose should match the app's drain time. PID 1 problem: shell form CMD doesn't forward signals — use exec form or tini"
+    weight: 0.35
+    description: "Graceful shutdown"
+  - type: llm_judge
+    criteria: "Production best practices are practical — never use :latest in production (not reproducible). Tag with git SHA or semantic version. Keep previous image tags for rollback. Monitor with docker stats (CPU, memory, I/O, network). Set resource limits to prevent runaway containers from affecting host. Memory leaks: monitor trend over time, set restart policy (--restart unless-stopped) as safety net, fix root cause. Production checklist: health checks, log rotation, resource limits, graceful shutdown, backup strategy, monitoring alerts"
+    weight: 0.30
+    description: "Production practices"

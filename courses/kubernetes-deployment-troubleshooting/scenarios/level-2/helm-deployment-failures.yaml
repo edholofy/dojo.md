@@ -1,0 +1,63 @@
+meta:
+  id: helm-deployment-failures
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug Helm deployment failures — diagnose template rendering errors, stuck releases, and rollback issues"
+  tags: [Kubernetes, Helm, deployment, chart, rollback, intermediate]
+
+state: {}
+
+trigger: |
+  Your Helm upgrade failed and now the release is stuck in a bad state:
+
+  $ helm upgrade myapp ./chart --values prod-values.yaml
+  Error: UPGRADE FAILED: template: chart/templates/deployment.yaml:42:
+  function "toJson" not defined
+
+  The chart uses a custom template function that doesn't exist. After
+  fixing the template, you try again:
+
+  $ helm upgrade myapp ./chart --values prod-values.yaml
+  Error: UPGRADE FAILED: another operation (install/upgrade/rollback)
+  is in progress
+
+  The release is stuck in "pending-upgrade" status from the failed attempt:
+
+  $ helm list
+  NAME    NAMESPACE  REVISION  STATUS          CHART
+  myapp   default    5         pending-upgrade  myapp-2.3.0
+
+  $ helm history myapp
+  REVISION  STATUS           CHART        DESCRIPTION
+  3         superseded       myapp-2.1.0  Upgrade complete
+  4         superseded       myapp-2.2.0  Upgrade complete
+  5         pending-upgrade  myapp-2.3.0  Preparing upgrade
+
+  The release is stuck because Helm's operation tracking thinks an
+  upgrade is still in progress. You need to rollback first:
+
+  $ helm rollback myapp 4
+  Rollback was a success! Happy Helming!
+
+  Now the upgrade can proceed with the fixed template.
+
+  Task: Explain Helm troubleshooting. Write: how Helm manages releases
+  (revision history, status tracking), common template errors and how
+  to debug them (helm template, helm lint, --dry-run), stuck release
+  states and how to fix them, helm rollback workflow, helm get commands
+  for inspecting releases, and best practices for safe Helm deployments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Helm release management is explained — Helm stores release history as Secrets in the namespace, each upgrade creates a new revision. Release statuses: deployed, pending-upgrade, pending-install, pending-rollback, failed, superseded. A stuck pending state means the previous operation didn't complete cleanly. Fix with helm rollback to last good revision"
+    weight: 0.35
+    description: "Release management"
+  - type: llm_judge
+    criteria: "Template debugging is covered — helm template renders templates locally without installing (catches syntax errors), helm lint validates chart structure and values, --dry-run --debug shows rendered manifests before applying. helm get manifest shows what was actually deployed, helm get values shows values used. Common errors: undefined functions, missing values, YAML indentation"
+    weight: 0.35
+    description: "Template debugging"
+  - type: llm_judge
+    criteria: "Best practices are practical — always use --dry-run before production upgrades, set --timeout and --wait for reliable status tracking, use --atomic flag (auto-rollback on failure), keep revision history (--history-max), version pin chart dependencies, use helm diff plugin to preview changes before applying"
+    weight: 0.30
+    description: "Best practices"

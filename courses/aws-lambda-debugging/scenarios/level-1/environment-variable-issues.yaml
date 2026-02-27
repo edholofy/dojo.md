@@ -1,0 +1,72 @@
+meta:
+  id: environment-variable-issues
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda environment variable issues — diagnose missing, incorrect, or encrypted environment variables and configuration problems"
+  tags: [AWS, Lambda, environment-variables, configuration, KMS, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails with a connection error:
+
+  {
+    "errorType": "Error",
+    "errorMessage": "connect ECONNREFUSED 127.0.0.1:5432"
+  }
+
+  The function tries to connect to a database but the connection
+  string is wrong. Checking the code:
+
+  const dbHost = process.env.DATABASE_URL;
+  // dbHost is undefined!
+
+  The environment variable is named DB_URL in the Lambda configuration
+  but the code expects DATABASE_URL. Classic mismatch.
+
+  $ aws lambda get-function-configuration --function-name my-func \
+    --query "Environment.Variables"
+  {
+    "DB_URL": "postgresql://prod-db.example.com:5432/mydb",
+    "API_KEY": "sk-prod-abc123..."
+  }
+
+  Issues found:
+
+  1. Variable name mismatch — DB_URL vs DATABASE_URL. Case-sensitive.
+
+  2. API_KEY is stored as plain text in the Lambda configuration.
+     Anyone with lambda:GetFunctionConfiguration permission can see
+     it. Should use AWS Secrets Manager or encrypted env vars.
+
+  3. After fixing the name, the function still fails in a new
+     deployment. The developer tested with staging env vars but
+     deployed to production without updating them. No environment-
+     specific configuration management.
+
+  4. Environment variables have a 4KB total size limit. A function
+     with many config values hits this limit:
+     "InvalidParameterValueException: Lambda was unable to configure
+     your environment variables because the environment variables you
+     have provided exceeded the 4KB limit."
+
+  Task: Explain Lambda environment variable debugging. Write: how to
+  check and set environment variables (CLI, console, IaC), common
+  mistakes (name mismatches, case sensitivity), encryption with KMS,
+  the 4KB limit and alternatives (Secrets Manager, Parameter Store,
+  S3), and environment management across stages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Environment variable basics are explained — env vars set via console, CLI (aws lambda update-function-configuration --environment), or IaC (SAM/CDK/Terraform). Variables are key-value strings, case-sensitive. Available via process.env (Node.js), os.environ (Python), System.getenv (Java). Common errors: name mismatch between code and config, forgetting to set in new deployments, using wrong values for the environment (staging vs production). Variables are set at deploy time, not runtime"
+    weight: 0.35
+    description: "Environment variable basics"
+  - type: llm_judge
+    criteria: "Security and limits are covered — env vars visible to anyone with lambda:GetFunctionConfiguration permission. Sensitive values: use AWS Secrets Manager (automatic rotation, cross-account access) or SSM Parameter Store (simpler, cheaper). KMS encryption: Lambda can encrypt env vars with custom KMS key — decrypted at runtime. 4KB total limit for all env vars combined. For large config: use Parameter Store (up to 8KB standard, 64KB advanced) or S3 for config files. Never put secrets in plain text env vars — use Secrets Manager"
+    weight: 0.35
+    description: "Security and limits"
+  - type: llm_judge
+    criteria: "Environment management is practical — use IaC (SAM, CDK) with environment-specific parameter files. SAM: --parameter-overrides for stage-specific values. CDK: separate stacks or context variables per environment. Never hardcode environment-specific values in code. Pattern: store environment name as env var (STAGE=prod), look up other config from Parameter Store using STAGE prefix. Validate required env vars at function initialization (fail fast if missing). Use .env files for local development (SAM local supports --env-vars)"
+    weight: 0.30
+    description: "Environment management"

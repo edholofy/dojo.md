@@ -1,0 +1,65 @@
+meta:
+  id: stateful-service-containers
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design stateful service container strategies — implement database containers, persistent storage, backup/restore, and data migration for containerized databases"
+  tags: [Docker, stateful, databases, volumes, backup, persistence, expert]
+
+state: {}
+
+trigger: |
+  Your team wants to containerize production databases (PostgreSQL,
+  Redis, Elasticsearch). The DBA team objects: "Databases don't belong
+  in containers — we'll lose data." You need to design a bulletproof
+  strategy.
+
+  Current concerns:
+
+  1. Data persistence — container removal must NOT delete data:
+     $ docker rm postgres-prod
+     # Without named volumes, all data is gone!
+
+     Solution: named volumes with explicit volume drivers:
+     docker run -v pgdata:/var/lib/postgresql/data postgres:15
+
+  2. Backup strategy — can't just copy files while database is running:
+     $ docker exec postgres pg_dump -U app mydb > backup.sql
+     # Logical backup — portable, but slow for large databases
+
+     $ docker run --volumes-from postgres -v /backups:/backup \
+       ubuntu tar czf /backup/pgdata.tar.gz /var/lib/postgresql/data
+     # Physical backup — fast, but must stop writes first
+
+  3. Performance — default volume driver (local) may have overhead:
+     $ docker run -v pgdata:/data --mount type=tmpfs,target=/tmp \
+       --shm-size=256m postgres:15
+     # SHM size affects PostgreSQL shared memory for sorting/hashing
+
+  4. High availability — single container is single point of failure:
+     - PostgreSQL: streaming replication with pg_basebackup
+     - Redis: Sentinel for automatic failover
+     - Elasticsearch: cluster across multiple containers
+
+  5. Version upgrades — PostgreSQL major version requires data migration:
+     $ docker run -v pgdata-old:/old -v pgdata-new:/new \
+       tianon/postgres-upgrade pg_upgrade --old-datadir /old ...
+
+  Task: Design stateful container strategy. Write: volume management
+  for databases, backup/restore procedures, performance tuning for
+  containerized databases, high availability patterns, version upgrade
+  strategies, and when NOT to containerize databases.
+
+assertions:
+  - type: llm_judge
+    criteria: "Volume management is thorough — always use named volumes (not bind mounts) for database data. Volume drivers: local (default, good for single host), NFS (shared across hosts), cloud-specific (EBS, Azure Disk). Never use anonymous volumes for important data. docker volume inspect shows mount point. Backup the volume directory on host. Consider: volume permissions (database runs as specific UID), volume labels for organization, volume cleanup policies (never auto-prune database volumes)"
+    weight: 0.35
+    description: "Volume management"
+  - type: llm_judge
+    criteria: "Backup and HA are covered — logical backups: pg_dump (portable, slow), mysqldump, redis-cli BGSAVE. Physical backups: volume snapshot (requires write quiescing), filesystem-level backup. Schedule: daily full + continuous WAL archiving for point-in-time recovery. HA patterns: primary-replica with volume per instance, automated failover (PgBouncer + Patroni for PostgreSQL, Redis Sentinel, Elasticsearch cluster). Test restore regularly — backup without tested restore is not a backup"
+    weight: 0.35
+    description: "Backup and HA"
+  - type: llm_judge
+    criteria: "Trade-offs and guidance are practical — when to containerize databases: development/testing (always), stateless caches (Redis without persistence), small-medium production databases with proper volume management. When NOT to: very large databases (multi-TB), extreme I/O requirements, when managed database services are available (RDS, Cloud SQL). Performance tuning: --shm-size for PostgreSQL, dedicated CPU/memory limits, SSD-backed volumes, tune database config for container environment (not bare-metal defaults)"
+    weight: 0.30
+    description: "Trade-offs"

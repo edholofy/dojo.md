@@ -1,0 +1,68 @@
+meta:
+  id: lock-contention-analysis
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Analyze and resolve MySQL lock contention — understand InnoDB row locks, gap locks, deadlocks, and design lock-free patterns"
+  tags: [MySQL, InnoDB, locks, deadlock, gap-locks, contention, advanced]
+
+state: {}
+
+trigger: |
+  Your e-commerce platform is experiencing intermittent deadlocks and
+  lock wait timeouts during checkout. The error rate spikes during flash
+  sales when multiple customers try to purchase the same products
+  simultaneously.
+
+  Error logs show:
+  - Deadlock detected (InnoDB): 50/hour during flash sales
+  - Lock wait timeout exceeded: 200/hour during flash sales
+  - innodb_lock_wait_timeout = 50 (default)
+
+  The problematic flow (checkout):
+  Transaction 1 (Customer A):
+    BEGIN;
+    SELECT * FROM inventory WHERE product_id = 101 FOR UPDATE; -- X lock
+    UPDATE inventory SET quantity = quantity - 1 WHERE product_id = 101;
+    INSERT INTO order_items (order_id, product_id, quantity) VALUES (1, 101, 1);
+    UPDATE orders SET total = total + 29.99 WHERE id = 1; -- Deadlock here!
+    COMMIT;
+
+  Transaction 2 (Customer B, concurrent):
+    BEGIN;
+    SELECT * FROM inventory WHERE product_id = 101 FOR UPDATE; -- Waits for T1
+    -- or takes a different code path that locks orders first, then inventory
+
+  SHOW ENGINE INNODB STATUS reveals:
+  - Gap locks on inventory (product_id range) blocking other inserts
+  - Deadlock cycle: T1 holds X on inventory.101, wants X on orders.1
+    T2 holds X on orders.2, wants X on inventory.101
+  - Lock modes: X (exclusive), S (shared), X,GAP, X,REC_NOT_GAP
+
+  Additional lock issues:
+  1. ALTER TABLE on orders (500M rows) takes AccessExclusive lock,
+     blocking all queries for 20 minutes during metadata operations
+  2. Long-running analytics transaction (READ COMMITTED) prevents
+     InnoDB purge of old row versions, causing undo log growth
+  3. Gap locks in REPEATABLE READ preventing concurrent inserts in
+     ranges even when no actual conflict exists
+
+  Task: Analyze and resolve the lock contention. Write: the deadlock
+  root cause analysis (why the circular dependency forms), the lock-free
+  checkout redesign, the gap lock explanation and mitigation, the
+  isolation level trade-offs (REPEATABLE READ vs READ COMMITTED), and
+  the monitoring strategy for lock issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Deadlock analysis is correct — identifies the circular lock dependency (T1 locks inventory then orders, T2 locks orders then inventory), explains that consistent lock ordering would prevent the deadlock (always lock inventory first, then orders), and shows how to read SHOW ENGINE INNODB STATUS deadlock output"
+    weight: 0.35
+    description: "Deadlock analysis"
+  - type: llm_judge
+    criteria: "Lock-free redesign is practical — uses optimistic locking (version column), or UPDATE ... WHERE quantity >= 1 without SELECT FOR UPDATE, or queuing (serialize inventory updates through a queue), or advisory locking. Explains gap locks (prevent phantom rows in REPEATABLE READ by locking gaps between index records) and how READ COMMITTED eliminates gap locks"
+    weight: 0.35
+    description: "Lock-free redesign"
+  - type: llm_judge
+    criteria: "Isolation level trade-offs and monitoring are addressed — REPEATABLE READ (default): gap locks prevent phantoms but reduce concurrency; READ COMMITTED: no gap locks, higher concurrency, but allows phantom reads. Monitoring: performance_schema.data_locks, data_lock_waits, innodb_row_lock_waits status variable, and alerting on deadlock frequency"
+    weight: 0.30
+    description: "Isolation and monitoring"

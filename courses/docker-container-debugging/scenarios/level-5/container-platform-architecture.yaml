@@ -1,0 +1,67 @@
+meta:
+  id: container-platform-architecture
+  level: 5
+  course: docker-container-debugging
+  type: output
+  description: "Design enterprise container platform architecture — build an internal developer platform with self-service container deployment, governance, and operational excellence"
+  tags: [Docker, platform, architecture, IDP, self-service, governance, master]
+
+state: {}
+
+trigger: |
+  Your company (2,000 engineers, 300+ services) needs an Internal
+  Developer Platform (IDP) built on containers. The goal: developers
+  deploy services without understanding infrastructure details.
+
+  Requirements from stakeholders:
+
+  Engineering VP: "Developers should deploy in under 5 minutes with
+  zero infrastructure knowledge. Current process takes 2 weeks
+  involving 3 teams."
+
+  CISO: "Every deployment must be scanned, signed, and compliant.
+  We need audit trails for SOC2."
+
+  SRE Director: "We need 99.95% platform availability. Current
+  container infrastructure has 99.7% (26 hours downtime/year)."
+
+  CFO: "Platform team costs $3M/year. Justify every dollar."
+
+  Platform architecture layers:
+
+  Layer 1 — Infrastructure:
+  Multi-region Kubernetes clusters (managed), container runtime,
+  CNI networking, storage classes, ingress controllers.
+
+  Layer 2 — Platform Services:
+  Service mesh (Istio/Linkerd), centralized logging (ELK/Loki),
+  monitoring (Prometheus/Grafana), secrets management (Vault),
+  CI/CD (ArgoCD/Flux), registry (Harbor).
+
+  Layer 3 — Developer Interface:
+  Self-service portal (Backstage), templated service creation,
+  one-click deployments, environment management, cost dashboards.
+
+  Layer 4 — Governance:
+  Policy engine (OPA/Kyverno), security scanning gates,
+  resource quotas, network policies, compliance reporting.
+
+  Task: Design the platform architecture. Write: each layer with
+  component selection rationale, the developer experience journey
+  (from code to production), governance automation, platform team
+  structure and responsibilities, SLO/SLA framework, and how to
+  measure platform success (adoption, developer satisfaction, MTTR).
+
+assertions:
+  - type: llm_judge
+    criteria: "Platform layers are well-designed — Infrastructure: managed K8s for reduced operational burden, multi-region for HA, storage classes for different workload needs. Platform services: service mesh for traffic management and mTLS, centralized observability, GitOps (ArgoCD/Flux) for declarative deployments. Developer interface: Backstage or similar portal for service catalog, templated creation (golden paths), self-service environments. Each layer has clear ownership and SLOs"
+    weight: 0.35
+    description: "Platform layers"
+  - type: llm_judge
+    criteria: "Developer experience is frictionless — golden path: developer creates service from template (Backstage), CI automatically builds/scans/signs, CD deploys to staging, promotion to production with one click. Time from commit to production: < 30 minutes. Self-service: developers manage their own services without tickets. Guard rails, not gates: policies enforced automatically, not by manual review. Documentation: runbooks auto-generated, dashboards pre-configured per service template"
+    weight: 0.35
+    description: "Developer experience"
+  - type: llm_judge
+    criteria: "Success metrics are measurable — platform adoption: % of services on platform (target: 80% in year 1). Developer satisfaction: quarterly survey (NPS > 50). MTTR: < 15 minutes for platform issues. Deployment frequency: daily (from weekly). Change failure rate: < 5%. Cost per service: decreasing trend. Platform team efficiency: services per platform engineer ratio (target: 50:1). SLA: 99.95% platform availability with error budget policy. Track and report these metrics monthly to stakeholders"
+    weight: 0.30
+    description: "Success metrics"

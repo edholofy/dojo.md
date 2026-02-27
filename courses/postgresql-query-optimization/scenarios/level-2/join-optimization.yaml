@@ -1,0 +1,72 @@
+meta:
+  id: join-optimization
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize JOIN strategies — tune PostgreSQL to choose the right JOIN algorithm for each query pattern"
+  tags: [PostgreSQL, JOIN, hash-join, merge-join, nested-loop, intermediate]
+
+state: {}
+
+trigger: |
+  Your reporting system has three problematic JOIN queries. Each uses
+  the wrong JOIN algorithm, causing severe performance issues.
+
+  Tables:
+  - customers (1M rows): id, name, email, tier, created_at
+  - orders (50M rows): id, customer_id, amount, status, created_at
+  - order_items (200M rows): id, order_id, product_id, quantity, price
+  - products (100K rows): id, name, category, price
+
+  Problem 1 — Wrong algorithm: Nested Loop on large tables
+  SELECT c.name, SUM(o.amount)
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+  WHERE c.tier = 'enterprise'
+  GROUP BY c.name;
+
+  EXPLAIN shows: Nested Loop Join (estimated: 30 seconds)
+  - Enterprise customers: 500 rows
+  - Orders per enterprise customer: ~100,000
+  - Total: 50M random index lookups
+  Better choice: Hash Join (build hash on 500 customers, probe orders)
+
+  Problem 2 — Hash Join spilling to disk
+  SELECT o.id, oi.product_id, oi.quantity
+  FROM orders o
+  JOIN order_items oi ON oi.order_id = o.id
+  WHERE o.created_at >= '2026-01-01';
+
+  EXPLAIN shows: Hash Join (estimated: 120 seconds)
+  - Matching orders: 5M rows
+  - Hash table too large for work_mem → spills to disk (Batches: 16)
+  - Disk I/O dominates execution time
+
+  Problem 3 — Missing opportunity for Merge Join
+  SELECT c.name, o.amount, o.created_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+  ORDER BY c.id, o.created_at;
+
+  EXPLAIN shows: Hash Join + Sort (estimated: 90 seconds)
+  - Both tables could be pre-sorted by the JOIN key
+  - Merge Join would eliminate the separate Sort step
+
+  Task: Fix each problem. For each, explain: why PostgreSQL chose
+  the wrong algorithm, what parameter or index change would fix it,
+  the expected EXPLAIN output after the fix, and the general rule
+  for when each JOIN algorithm is optimal.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 3 problems are correctly diagnosed and fixed — Problem 1 needs statistics update or adjusted cost parameters to favor Hash Join over Nested Loop, Problem 2 needs increased work_mem to prevent hash table spill, Problem 3 needs indexes on JOIN keys to enable Merge Join. Each fix is specific"
+    weight: 0.35
+    description: "All problems correctly fixed"
+  - type: llm_judge
+    criteria: "JOIN algorithm selection rules are clearly stated — Nested Loop: best for small outer × indexed inner, Hash Join: best for equality JOINs with sufficient memory, Merge Join: best when both inputs are pre-sorted or will be sorted anyway. Includes data size thresholds and work_mem considerations"
+    weight: 0.35
+    description: "Clear algorithm selection rules"
+  - type: llm_judge
+    criteria: "work_mem tuning is addressed — explains how work_mem affects Hash Join (too low → disk spill, too high × many connections → OOM), how to set it per-query vs globally, and the relationship between work_mem, max_connections, and available RAM"
+    weight: 0.30
+    description: "work_mem tuning addressed"

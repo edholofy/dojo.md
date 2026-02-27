@@ -1,0 +1,57 @@
+meta:
+  id: comprehensive-platform
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design a comprehensive Kubernetes platform — architect an enterprise-grade platform from scratch covering all operational concerns"
+  tags: [Kubernetes, platform-architecture, enterprise, comprehensive, design, master]
+
+state: {}
+
+trigger: |
+  You're hired as the founding platform architect for a rapidly growing
+  startup that's about to hit $100M ARR. They have 100 engineers, 40
+  microservices running on Heroku, and are hitting Heroku's limits
+  (cost, performance, flexibility).
+
+  The CEO says: "We're migrating to Kubernetes. Design the platform
+  that will carry us to $1B ARR."
+
+  Requirements gathered from stakeholders:
+  - CTO: "Multi-region, 99.99% availability, sub-100ms latency globally"
+  - VP Engineering: "Developers should deploy in < 10 minutes with zero
+    Kubernetes knowledge"
+  - CISO: "SOC2, GDPR, PCI-DSS compliance. Zero-trust networking."
+  - CFO: "Cloud costs should be < 5% of revenue at scale"
+  - Head of Data: "Support ML training workloads alongside production"
+  - VP Product: "A/B testing infrastructure, feature flags, canary
+    deployments as first-class features"
+
+  Constraints:
+  - 6-month timeline to migrate first 10 services
+  - 18 months to complete full migration
+  - Platform team budget: 8 engineers (hiring from 0)
+  - Prefer AWS but must be portable enough for multi-cloud if needed
+  - Must support Python, Go, Java, Node.js, and Rust services
+
+  Task: Design the comprehensive platform architecture. Write: the
+  infrastructure architecture (multi-region EKS, networking, storage),
+  developer experience layer (IDP, CI/CD, local dev), operational
+  excellence (monitoring, alerting, incident response), security and
+  compliance layer, data platform integration (ML workloads, GPU
+  scheduling), the migration strategy from Heroku, hiring plan for
+  the platform team, and the 18-month execution roadmap.
+
+assertions:
+  - type: llm_judge
+    criteria: "Infrastructure architecture is production-grade — multi-region EKS (us-east-1, eu-west-1, ap-southeast-1) with global load balancing. Networking: VPC per region with transit gateway, Cilium CNI with eBPF, Istio or Cilium service mesh. Storage: EBS for databases, EFS for shared storage, S3 for objects. Cluster design: separate clusters for production, staging, data/ML workloads. Karpenter for node autoscaling, spot instances for non-critical workloads"
+    weight: 0.35
+    description: "Infrastructure architecture"
+  - type: llm_judge
+    criteria: "Developer experience and operational layers are comprehensive — IDP: Backstage catalog with service templates (golden paths), ArgoCD for GitOps, automated CI/CD (build → test → security scan → canary deploy → promote). Local dev: Tilt or DevSpace. Monitoring: Prometheus + Thanos (cross-cluster), Grafana dashboards, Loki for logs, Tempo for traces. Alerting: Alertmanager with PagerDuty + Slack, SLO-based alerting. Incident response: documented runbooks, game day program"
+    weight: 0.35
+    description: "DevEx and operations"
+  - type: llm_judge
+    criteria: "Migration and hiring are realistic — Heroku migration: parallel-run strategy (run on both Heroku and K8s, shift traffic gradually). Start with stateless services, migrate stateful last. Hiring plan: hire platform lead month 1, then 2 engineers/month. Skills needed: Kubernetes, Terraform, Go, SRE. 18-month roadmap: months 1-3 (foundation: clusters, CI/CD, first service), months 4-9 (migrate 50% services, build IDP), months 10-15 (complete migration, ML platform), months 16-18 (optimization, multi-region active-active)"
+    weight: 0.30
+    description: "Migration and hiring"

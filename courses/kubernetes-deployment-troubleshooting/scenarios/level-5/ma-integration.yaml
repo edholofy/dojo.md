@@ -1,0 +1,62 @@
+meta:
+  id: ma-integration
+  level: 5
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "M&A Kubernetes platform integration — evaluate and merge acquired company's infrastructure with your platform"
+  tags: [Kubernetes, M&A, integration, migration, platform-consolidation, master]
+
+state: {}
+
+trigger: |
+  Your company (running multi-cluster Kubernetes on AWS) just acquired
+  a competitor running on Azure with a completely different stack:
+
+  Your platform:
+  - AWS EKS across 3 regions, 200+ microservices
+  - GitOps with ArgoCD, Istio service mesh
+  - Go and Java services, gRPC + REST APIs
+  - PostgreSQL on RDS, Redis on ElastiCache
+  - Prometheus + Grafana monitoring stack
+
+  Acquired company (AcquireCo):
+  - Azure AKS single region, 80 microservices
+  - Jenkins CI/CD, no GitOps
+  - Python and Node.js services, REST-only APIs
+  - MongoDB Atlas, Azure Cache for Redis
+  - Datadog for monitoring
+
+  Integration challenges:
+  1. Services need to communicate cross-platform during transition
+  2. Different authentication systems (AWS IAM vs Azure AD)
+  3. Different monitoring stacks create visibility gaps
+  4. Cultural: AcquireCo team used to full Azure access, now must follow
+     your RBAC and GitOps policies
+  5. Data residency: AcquireCo has EU customers, data must stay in EU
+  6. Combined customer base requires 99.99% availability (was 99.9%)
+  7. Timeline pressure: CEO wants "fully integrated" in 12 months
+  8. Budget: $2M for integration project
+
+  The CTO asks you to develop the integration strategy and lead
+  execution. 40 AcquireCo engineers need to be productive on your
+  platform within 3 months.
+
+  Task: Design the M&A platform integration strategy. Write: the
+  assessment framework for evaluating AcquireCo's platform, the phased
+  migration approach (coexistence → migration → consolidation),
+  cross-cloud connectivity during transition, team onboarding plan,
+  data migration strategy, risk analysis, and timeline with milestones.
+
+assertions:
+  - type: llm_judge
+    criteria: "Assessment and phased approach are defined — Phase 1 (months 1-3): Coexistence — establish cross-cloud connectivity (VPN/peering), unified monitoring (ship AcquireCo metrics to your Prometheus), single incident management process. Phase 2 (months 4-8): Migration — migrate AcquireCo services to your EKS clusters one by one, starting with stateless services. Phase 3 (months 9-12): Consolidation — decommission AKS, unified platform. Don't rush: premature migration causes outages"
+    weight: 0.35
+    description: "Phased approach"
+  - type: llm_judge
+    criteria: "Cross-cloud and data challenges are addressed — connectivity: site-to-site VPN or cloud interconnect (AWS-Azure), DNS delegation for service discovery. Authentication: federate Azure AD into AWS IAM or use platform-level auth (OIDC). Data residency: maintain EU region for AcquireCo EU data (EU EKS cluster), migrate MongoDB to PostgreSQL or run MongoDB on Kubernetes. Data migration must be carefully planned with rollback capability"
+    weight: 0.35
+    description: "Technical challenges"
+  - type: llm_judge
+    criteria: "Team and risk management are practical — onboarding plan: 2-week intensive on your platform (GitOps, ArgoCD, Istio), pair programming with your engineers, gradual RBAC permission expansion as comfort grows. Risk: rushing migration causes outages affecting combined customer base. Mitigation: feature-flag traffic routing to enable instant rollback to AKS. Budget allocation: $800K infrastructure, $600K team augmentation, $400K tooling, $200K contingency"
+    weight: 0.30
+    description: "Team and risk"

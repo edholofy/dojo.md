@@ -1,0 +1,66 @@
+meta:
+  id: intermediate-optimization-shift
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Intermediate optimization shift — optimize a database migration that's blocked by slow queries and table bloat"
+  tags: [PostgreSQL, optimization, shift-simulation, migration, intermediate]
+
+state: {}
+
+trigger: |
+  Your company is migrating from a monolith to microservices. The
+  first step is splitting the monolithic 2TB PostgreSQL database into
+  domain-specific databases. But the migration is blocked by
+  performance issues.
+
+  Current database: 2TB, 150 tables, 300 indexes, 100M queries/day
+
+  Blockers:
+
+  Blocker 1 — The migration query is too slow:
+  INSERT INTO orders_new SELECT * FROM orders
+  WHERE created_at >= '2024-01-01';
+  This copies 80M rows (800GB) and has been running for 18 hours
+  with no end in sight. It's also generating massive WAL traffic
+  that's causing replication lag on your read replica.
+
+  Blocker 2 — Table bloat prevents accurate size estimation:
+  The orders table is 800GB on disk but pgstattuple shows only
+  400GB of live data. 50% bloat is throwing off migration planning.
+  Should you fix bloat first or after migration?
+
+  Blocker 3 — Foreign key constraints slow the migration:
+  order_items has a FK to orders. Migrating orders first breaks the
+  FK. Migrating both together in a transaction locks both tables.
+  Current approach: disable FK → migrate → re-enable FK → validate.
+  But FK validation on 200M rows takes 4 hours.
+
+  Blocker 4 — Index rebuilds after migration:
+  After copying data, you need to recreate 15 indexes on the new
+  orders_new table. Each index takes 30-90 minutes to build. Total:
+  10-15 hours. Can you parallelize?
+
+  Blocker 5 — Applications still querying during migration:
+  The old database must remain operational during migration. Long-
+  running migration queries compete with production queries for
+  resources (CPU, I/O, connections).
+
+  Task: Unblock the migration. For each blocker, write: the root
+  cause, the solution (with specific commands), the expected time
+  savings, and the risk mitigation. Then create the optimized
+  migration plan that addresses all 5 blockers.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 blockers have specific solutions — batch the large copy (1M rows at a time vs 80M at once), fix bloat after migration (pg_repack or VACUUM FULL during maintenance), handle FKs with NOT VALID then VALIDATE CONSTRAINT, use CREATE INDEX CONCURRENTLY for parallel index builds, and throttle migration queries to coexist with production"
+    weight: 0.35
+    description: "All blockers solved"
+  - type: llm_judge
+    criteria: "Solutions use PostgreSQL-specific features — COPY instead of INSERT...SELECT for bulk data movement, CREATE INDEX CONCURRENTLY for non-blocking index builds, ALTER TABLE ... VALIDATE CONSTRAINT for background FK validation, and logical replication for zero-downtime migration alternative"
+    weight: 0.35
+    description: "PostgreSQL-specific solutions"
+  - type: llm_judge
+    criteria: "Migration plan is sequenced correctly — data migration before index builds, FK validation after both tables are migrated, resource throttling throughout, and a rollback plan in case any step fails. Time estimates are realistic"
+    weight: 0.30
+    description: "Correctly sequenced plan"

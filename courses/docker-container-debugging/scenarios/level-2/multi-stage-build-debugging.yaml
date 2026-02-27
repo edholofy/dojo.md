@@ -1,0 +1,76 @@
+meta:
+  id: multi-stage-build-debugging
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug multi-stage Docker builds — diagnose missing artifacts, stage naming issues, and layer optimization problems"
+  tags: [Docker, multi-stage, build, optimization, layers, intermediate]
+
+state: {}
+
+trigger: |
+  Your multi-stage build produces an image but the application binary
+  is missing at runtime:
+
+  Dockerfile:
+  FROM golang:1.22 AS builder
+  WORKDIR /src
+  COPY go.mod go.sum ./
+  RUN go mod download
+  COPY . .
+  RUN CGO_ENABLED=0 go build -o /app/server ./cmd/server
+
+  FROM alpine:3.19
+  WORKDIR /app
+  COPY --from=build /app/server .
+  CMD ["./server"]
+
+  $ docker build -t myapp .
+  Step 8/9: COPY --from=build /app/server .
+  ERROR: invalid from flag value build: not found
+
+  The COPY uses --from=build but the stage is named "builder"!
+  After fixing to --from=builder:
+
+  $ docker build -t myapp .
+  Successfully built abc123def456
+
+  $ docker run myapp
+  sh: ./server: not found
+
+  The binary exists but won't run! On alpine, the binary was compiled
+  with CGO_ENABLED=0 (static linking), which should work. But wait —
+  the binary was built for linux/amd64 and you're on an Apple Silicon
+  Mac (linux/arm64).
+
+  Fix: Add GOARCH=arm64 or use --platform:
+  RUN GOOS=linux GOARCH=$(go env GOARCH) CGO_ENABLED=0 go build ...
+
+  After fixing, the image works but is 150MB. The Go binary is only
+  8MB. Why is the image so big?
+
+  $ docker history myapp
+  Alpine base: 7MB, binary: 8MB, go module cache: 135MB
+
+  The go module cache was accidentally copied! The COPY . . in the
+  builder stage included the vendor directory.
+
+  Task: Explain multi-stage build debugging. Write: how multi-stage
+  builds work (multiple FROM, COPY --from), common stage naming issues,
+  how to inspect intermediate stages (--target), artifact path debugging,
+  cross-compilation issues, image size optimization, and when to use
+  distroless vs alpine vs scratch.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-stage mechanics are explained — each FROM starts a new stage, stages can be named with AS keyword, COPY --from=<stage> copies files from a previous stage. Only the final stage becomes the image. Intermediate stages are discarded. Use --target to build up to a specific stage for debugging. Stage names are case-sensitive and must match exactly"
+    weight: 0.35
+    description: "Multi-stage mechanics"
+  - type: llm_judge
+    criteria: "Common issues are diagnosed — stage name mismatch in COPY --from (most common error), binary not found at runtime (wrong platform, dynamic linking on static-only base), accidentally copying build artifacts (caches, source code) into final stage, missing runtime dependencies (libc on scratch/distroless). Use docker history to see layer sizes and find bloat"
+    weight: 0.35
+    description: "Common issues"
+  - type: llm_judge
+    criteria: "Base image selection is compared — scratch: 0MB, no shell, no libc (only for fully static binaries), alpine: ~7MB, has shell and musl libc (good for debugging), distroless: 10-50MB, no shell (secure, minimal attack surface). For Go: scratch or distroless. For Node/Python: language-specific slim/distroless. Trade-off: smaller = more secure but harder to debug"
+    weight: 0.30
+    description: "Base image selection"

@@ -1,0 +1,83 @@
+meta:
+  id: cte-optimization
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize CTEs and subqueries — understand materialization control and when CTEs help or hurt performance"
+  tags: [PostgreSQL, CTE, materialization, subquery, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  Your application uses CTEs (Common Table Expressions) extensively
+  for readability. After upgrading from PostgreSQL 11 to 16, some
+  queries got faster and some got slower. The team is confused about
+  CTE behavior.
+
+  Query 1 — CTE that got faster (auto-inlined in PG 12+):
+  WITH active_users AS (
+    SELECT * FROM users WHERE active = true
+  )
+  SELECT * FROM active_users WHERE created_at > '2026-01-01';
+
+  PG 11: Materialized the CTE (scanned all active users, then
+  filtered by date). Slow because active_users = 900K rows.
+  PG 16: Inlined the CTE (pushed date filter into the scan).
+  Fast because it reads only users active AND created after Jan 1.
+
+  Query 2 — CTE that got slower (inlined when it shouldn't be):
+  WITH expensive_calc AS (
+    SELECT customer_id, SUM(amount) as total
+    FROM orders GROUP BY customer_id
+  )
+  SELECT u.name, e.total FROM users u
+  JOIN expensive_calc e ON e.customer_id = u.id
+  WHERE u.tier = 'premium';
+
+  PG 11: Materialized (computed once, joined). Fine.
+  PG 16: Inlined (merged into main query). Now the aggregation
+  runs after the JOIN filter, but the planner pushes the filter
+  into the wrong place, making it slower.
+
+  Query 3 — CTE referenced multiple times:
+  WITH monthly_stats AS (
+    SELECT date_trunc('month', created_at) as month,
+           COUNT(*) as order_count, SUM(amount) as revenue
+    FROM orders GROUP BY 1
+  )
+  SELECT a.month, a.order_count, a.revenue,
+         a.revenue - b.revenue as growth
+  FROM monthly_stats a
+  JOIN monthly_stats b ON b.month = a.month - INTERVAL '1 month';
+
+  This CTE is referenced twice. Should it be materialized?
+
+  Query 4 — Recursive CTE (always materialized):
+  WITH RECURSIVE org_chart AS (
+    SELECT id, name, manager_id, 1 as depth
+    FROM employees WHERE manager_id IS NULL
+    UNION ALL
+    SELECT e.id, e.name, e.manager_id, oc.depth + 1
+    FROM employees e JOIN org_chart oc ON e.manager_id = oc.id
+  )
+  SELECT * FROM org_chart WHERE depth <= 5;
+
+  This is slow for a 100K employee table. Can it be optimized?
+
+  Task: For each query, explain the CTE behavior (materialized vs
+  inlined), when to force MATERIALIZED or NOT MATERIALIZED, and the
+  optimization strategy. Then write guidelines for CTE usage.
+
+assertions:
+  - type: llm_judge
+    criteria: "CTE materialization behavior is correctly explained — PG 12+ defaults to inlining CTEs referenced once, materializing when referenced multiple times. Query 1 benefits from inlining (filter pushdown), Query 2 needs explicit MATERIALIZED (compute-once benefit), Query 3 should be materialized (referenced twice), Query 4 is always materialized (recursive)"
+    weight: 0.35
+    description: "Correct materialization behavior"
+  - type: llm_judge
+    criteria: "MATERIALIZED/NOT MATERIALIZED hints are correctly applied — shows exact syntax, explains when each is needed, and addresses Query 2's regression (force MATERIALIZED to restore PG 11 behavior) and Query 4's optimization (add depth limit to recursive term, not just WHERE clause)"
+    weight: 0.35
+    description: "Correct hint application"
+  - type: llm_judge
+    criteria: "Guidelines are practical — provides decision tree for CTE materialization (referenced once → inline unless expensive, referenced multiple times → materialize, recursive → always materialized), and discusses alternatives to CTEs (subqueries, temporary tables, materialized views)"
+    weight: 0.30
+    description: "Practical CTE guidelines"

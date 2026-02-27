@@ -1,0 +1,66 @@
+meta:
+  id: explain-basics
+  level: 1
+  course: mysql-query-optimization
+  type: output
+  description: "Read MySQL EXPLAIN output — understand execution plans, access types, key usage, and rows examined to diagnose slow queries"
+  tags: [MySQL, EXPLAIN, execution-plan, access-types, beginner]
+
+state: {}
+
+trigger: |
+  You're a backend developer and your team lead asks you to investigate
+  why the product listing page takes 8 seconds to load. You've traced
+  it to this query:
+
+  SELECT p.*, c.name AS category_name, b.name AS brand_name
+  FROM products p
+  JOIN categories c ON c.id = p.category_id
+  JOIN brands b ON b.id = p.brand_id
+  WHERE p.status = 'active'
+    AND p.price BETWEEN 10 AND 100
+  ORDER BY p.created_at DESC
+  LIMIT 20;
+
+  You run EXPLAIN and get:
+
+  +----+------+-------+------+----------+------+----------+-----------+
+  | id | type | table | type | key      | rows | filtered | Extra     |
+  +----+------+-------+------+----------+------+----------+-----------+
+  |  1 | SIMPLE| p    | ALL  | NULL     | 2M   | 5.00     | Using where; Using filesort |
+  |  1 | SIMPLE| c    | eq_ref| PRIMARY | 1    | 100.00   | NULL      |
+  |  1 | SIMPLE| b    | eq_ref| PRIMARY | 1    | 100.00   | NULL      |
+  +----+------+-------+------+----------+------+----------+-----------+
+
+  The products table has 2 million rows. The EXPLAIN shows:
+  - type=ALL for products (full table scan)
+  - "Using filesort" in Extra (sorting on disk)
+  - rows=2M (examining all rows)
+  - filtered=5.00 (only 5% of rows match the WHERE)
+
+  Available indexes on products:
+  - PRIMARY (id)
+  - idx_category_id (category_id)
+  - idx_brand_id (brand_id)
+
+  No index covers the status + price + created_at combination.
+
+  Task: Explain what the EXPLAIN output means. Write: what each column
+  tells you (id, select_type, table, type, possible_keys, key, rows,
+  filtered, Extra), why this query is slow (full table scan + filesort),
+  what the access type hierarchy means (system > const > eq_ref > ref >
+  range > index > ALL), and what index you would add to fix this query.
+
+assertions:
+  - type: llm_judge
+    criteria: "EXPLAIN columns are correctly explained — id (query identifier), select_type (SIMPLE, SUBQUERY, DERIVED, etc.), table (which table), type (access method), possible_keys (candidate indexes), key (chosen index), rows (estimated rows examined), filtered (percentage matching WHERE), Extra (additional information like Using index, Using filesort, Using temporary)"
+    weight: 0.35
+    description: "EXPLAIN columns explained"
+  - type: llm_judge
+    criteria: "Access type hierarchy is explained — from best to worst: system (1 row), const (unique index lookup), eq_ref (unique index per join row), ref (non-unique index), range (index range scan), index (full index scan), ALL (full table scan). The current ALL type is identified as the problem, and the eq_ref for categories/brands is correctly identified as optimal"
+    weight: 0.35
+    description: "Access type hierarchy"
+  - type: llm_judge
+    criteria: "Fix is correct — recommends a composite index like (status, price, created_at) or (status, created_at) to eliminate both the full table scan and the filesort. Explains why column order matters in the index (equality columns first, then range, then sort)"
+    weight: 0.30
+    description: "Correct index fix"

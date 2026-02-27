@@ -1,0 +1,69 @@
+meta:
+  id: persistent-volume-issues
+  level: 2
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug PersistentVolume issues — diagnose PVC binding failures, mount errors, and storage class misconfigurations"
+  tags: [Kubernetes, PersistentVolume, PVC, storage, StorageClass, intermediate]
+
+state: {}
+
+trigger: |
+  Your StatefulSet for PostgreSQL won't start. The pods are stuck in
+  Pending because their PVCs can't bind:
+
+  $ kubectl get pods
+  NAME           READY   STATUS    RESTARTS   AGE
+  postgres-0     0/1     Pending   0          10m
+
+  $ kubectl get pvc
+  NAME                STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+  data-postgres-0     Pending                                      fast-ssd       10m
+
+  $ kubectl describe pvc data-postgres-0
+  Events:
+    Warning  ProvisioningFailed  2m  persistentvolume-controller
+    storageclass.storage.k8s.io "fast-ssd" not found
+
+  The StorageClass "fast-ssd" doesn't exist in this cluster. But there's
+  more — even after creating the StorageClass, a second issue appears:
+
+  $ kubectl get pvc
+  NAME                STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+  data-postgres-0     Pending                                      fast-ssd       15m
+
+  $ kubectl describe pvc data-postgres-0
+  Events:
+    Warning  ProvisioningFailed  1m  ebs.csi.aws.com_ebs-csi-controller
+    could not create volume in zone "us-east-1c": volume limit of 25
+    per node reached
+
+  The CSI driver can't provision because the node has hit its volume
+  attachment limit.
+
+  Key concepts:
+  - PV/PVC binding: PVCs request storage, PVs provide it
+  - StorageClass: defines how storage is provisioned dynamically
+  - Access modes: RWO, ROX, RWX — must match between PV and PVC
+  - volumeBindingMode: Immediate vs WaitForFirstConsumer
+  - CSI drivers: external storage providers
+
+  Task: Explain how Kubernetes persistent storage works and how to
+  debug issues. Write: the PV/PVC/StorageClass relationship, dynamic
+  vs static provisioning, access modes and their constraints, common
+  binding failures (missing StorageClass, capacity, access mode
+  mismatch, zone affinity), CSI driver issues, and volumeBindingMode.
+
+assertions:
+  - type: llm_judge
+    criteria: "PV/PVC/StorageClass relationship is explained — PVCs are requests for storage (size, access mode, StorageClass), PVs are the actual storage resources, StorageClass defines the provisioner and parameters for dynamic provisioning. When a PVC is created, the StorageClass provisioner automatically creates a PV. Static provisioning means pre-creating PVs for PVCs to bind to"
+    weight: 0.35
+    description: "Storage relationship explained"
+  - type: llm_judge
+    criteria: "Common binding failures are covered — missing StorageClass, insufficient capacity, access mode mismatch (requesting RWX when storage only supports RWO), zone affinity (PV in different zone than pod), CSI driver issues (volume attachment limits, driver not installed), volumeBindingMode Immediate creates PV immediately vs WaitForFirstConsumer waits until pod is scheduled (better for zone-aware provisioning)"
+    weight: 0.35
+    description: "Binding failures covered"
+  - type: llm_judge
+    criteria: "Debugging workflow is practical — check PVC status and events (kubectl describe pvc), check StorageClass exists (kubectl get sc), verify CSI driver pods running (kubectl get pods -n kube-system), check node volume limits, verify access modes match. For StatefulSets: PVCs persist even after pod deletion, must manually delete PVC to re-provision"
+    weight: 0.30
+    description: "Debugging workflow"

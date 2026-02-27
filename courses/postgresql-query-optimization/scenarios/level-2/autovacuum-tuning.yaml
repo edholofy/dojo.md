@@ -1,0 +1,76 @@
+meta:
+  id: autovacuum-tuning
+  level: 2
+  course: postgresql-query-optimization
+  type: output
+  description: "Tune autovacuum — configure per-table autovacuum settings for high-write tables and prevent table bloat"
+  tags: [PostgreSQL, autovacuum, VACUUM, table-bloat, maintenance, intermediate]
+
+state: {}
+
+trigger: |
+  Your database has a mix of tables with very different write patterns,
+  and the default autovacuum settings aren't working for all of them.
+
+  Table profiles:
+
+  Table 1 — events (high-write, append-only):
+  - 500M rows, 200GB
+  - 1M INSERTs/day, 0 UPDATEs, 0 DELETEs
+  - Dead tuples: 0 (no updates = no dead tuples)
+  - Issue: Autovacuum runs daily but there's nothing to vacuum.
+    Wastes I/O.
+
+  Table 2 — sessions (high-churn):
+  - 5M rows, 2GB (but should be 500MB)
+  - 2M INSERTs/day, 2M DELETEs/day (session created, then deleted)
+  - Dead tuples: 1.5M (always behind)
+  - Issue: Table is 4x bloated. Autovacuum can't keep up with the
+    DELETE rate. Index bloat growing too.
+
+  Table 3 — user_preferences (bulk-update):
+  - 2M rows, 400MB
+  - Weekly batch job updates ALL 2M rows at once
+  - Dead tuples: 2M after batch job (100% of table)
+  - Issue: After batch job, table is 200% bloated until autovacuum
+    runs. Queries are 3x slower for hours.
+
+  Table 4 — orders (mixed, hot table):
+  - 50M rows, 20GB
+  - 100K INSERTs/day + 500K UPDATEs/day (status changes)
+  - Dead tuples: varies, 50K-500K
+  - Issue: Autovacuum contends with production queries. During peak
+    hours, autovacuum slows down the API.
+
+  Table 5 — audit_logs (write-once, read-rarely):
+  - 1B rows, 500GB
+  - 5M INSERTs/day, never updated, never deleted
+  - Issue: Autovacuum runs for hours on this table, consuming I/O
+    that the other tables need.
+
+  Current settings (all default):
+  autovacuum_vacuum_threshold = 50
+  autovacuum_vacuum_scale_factor = 0.2
+  autovacuum_analyze_threshold = 50
+  autovacuum_analyze_scale_factor = 0.1
+  autovacuum_vacuum_cost_delay = 2ms
+  autovacuum_vacuum_cost_limit = 200
+
+  Task: Design per-table autovacuum settings for each of the 5 tables.
+  For each, calculate: when autovacuum triggers (threshold + scale
+  factor × rows), the optimal settings, and any additional strategies
+  (partitioning, pg_repack for bloat).
+
+assertions:
+  - type: llm_judge
+    criteria: "Per-table settings are correctly calculated — events table should have autovacuum disabled or very high thresholds, sessions table needs aggressive settings (low scale_factor, high cost_limit), user_preferences needs immediate vacuum after batch job, orders table needs throttled vacuum during peak hours, audit_logs should use partitioning to avoid vacuuming the entire table"
+    weight: 0.35
+    description: "Correct per-table settings"
+  - type: llm_judge
+    criteria: "Bloat remediation strategies are practical — recommends pg_repack for the sessions table (online table rebuild), partitioning for audit_logs (vacuum per partition), and scheduling manual VACUUM ANALYZE after the user_preferences batch job. Explains why VACUUM FULL is rarely the right answer (exclusive lock)"
+    weight: 0.35
+    description: "Practical bloat remediation"
+  - type: llm_judge
+    criteria: "Autovacuum monitoring is included — shows how to monitor autovacuum effectiveness using pg_stat_user_tables (n_dead_tup, last_autovacuum, autovacuum_count), how to detect tables where autovacuum is falling behind, and how to set up alerting on table bloat"
+    weight: 0.30
+    description: "Autovacuum monitoring"

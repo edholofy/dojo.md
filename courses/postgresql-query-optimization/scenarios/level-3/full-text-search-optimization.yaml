@@ -1,0 +1,66 @@
+meta:
+  id: full-text-search-optimization
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize full-text search — build fast, relevant search using tsvector, GIN indexes, and ranking functions"
+  tags: [PostgreSQL, full-text-search, tsvector, GIN, ranking, advanced]
+
+state: {}
+
+trigger: |
+  Your knowledge base has 5M articles and users complain that
+  search is "slow and returns irrelevant results." Current
+  implementation uses LIKE queries:
+
+  SELECT * FROM articles
+  WHERE title ILIKE '%postgresql performance%'
+  OR body ILIKE '%postgresql performance%'
+  ORDER BY created_at DESC LIMIT 20;
+
+  Problems:
+  1. ILIKE with leading wildcard: Seq Scan on 5M rows, 8 seconds
+  2. No relevance ranking: Results sorted by date, not relevance
+  3. No stemming: Searching "running" doesn't find "run" or "ran"
+  4. No phrase matching: "postgresql performance" matches articles
+     where "postgresql" and "performance" are in different paragraphs
+  5. No highlighting: Users can't see why a result matched
+
+  Requirements:
+  - Search must be < 100ms
+  - Results ranked by relevance (not just date)
+  - Support for phrases, stemming, and Boolean operators
+  - Highlight matching text in results
+  - Support for multiple languages (English, Spanish, German)
+  - Boosted ranking for title matches vs body matches
+
+  Articles table:
+  CREATE TABLE articles (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    language VARCHAR(10) DEFAULT 'english',
+    category VARCHAR(50),
+    published_at TIMESTAMP,
+    author_id INTEGER
+  );
+
+  Task: Migrate from ILIKE to full-text search. Write: the tsvector
+  column and GIN index setup, the search query with ts_query and
+  ranking, the relevance tuning (title boost, recency factor), the
+  multi-language support approach, and the maintenance plan
+  (index updates, dictionary management).
+
+assertions:
+  - type: llm_judge
+    criteria: "FTS implementation is correct — creates a generated tsvector column combining title (weight A) and body (weight B/C), GIN index on the tsvector column, search uses plainto_tsquery or websearch_to_tsquery, and ts_rank or ts_rank_cd for relevance scoring"
+    weight: 0.35
+    description: "Correct FTS implementation"
+  - type: llm_judge
+    criteria: "Relevance tuning addresses the requirements — title matches are boosted (using tsvector weights A/B/C/D), recency can factor into ranking (combined score of ts_rank + recency bonus), phrase matching uses phraseto_tsquery, and ts_headline provides result highlighting"
+    weight: 0.35
+    description: "Relevance tuning"
+  - type: llm_judge
+    criteria: "Multi-language and maintenance are addressed — uses language-specific text search configurations (english, spanish, german) per article, handles the GIN index maintenance (fastupdate setting, periodic reindex), and performance is estimated to be <100ms for the 5M article dataset with proper indexing"
+    weight: 0.30
+    description: "Multi-language and maintenance"

@@ -1,0 +1,66 @@
+meta:
+  id: container-security-architecture
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design container security architecture — implement defense-in-depth for containerized applications including runtime security, network policies, and incident response"
+  tags: [Docker, security, architecture, defense-in-depth, runtime, compliance, expert]
+
+state: {}
+
+trigger: |
+  After a security breach where an attacker gained access to a
+  container and attempted lateral movement, your CISO requests a
+  comprehensive container security architecture. The current state:
+
+  - All containers run as root
+  - No network segmentation — all containers on default bridge network
+  - Images pulled from public Docker Hub without scanning
+  - Docker socket mounted into several containers "for monitoring"
+  - No runtime threat detection
+  - Secrets in environment variables visible via docker inspect
+
+  Attack path reconstruction:
+  1. Attacker exploited an application vulnerability (RCE)
+  2. Gained shell inside container (as root)
+  3. Found Docker socket mounted → created a privileged container
+  4. Mounted host filesystem from privileged container
+  5. Accessed other containers' secrets via docker inspect
+  6. Exfiltrated data from database container
+
+  Defense-in-depth layers needed:
+
+  Layer 1 — Build time: scan images, use minimal base images, no
+  secrets in images, sign images
+
+  Layer 2 — Configuration: non-root, drop capabilities, read-only
+  filesystem, resource limits, no privileged containers
+
+  Layer 3 — Network: network segmentation, firewall rules between
+  service tiers (frontend can't reach database directly)
+
+  Layer 4 — Runtime: anomaly detection (unexpected processes,
+  network connections, file modifications), audit logging
+
+  Layer 5 — Secrets: Docker secrets or external vault, rotated
+  automatically, never in environment variables or images
+
+  Task: Design the container security architecture. Write: each
+  defense layer with specific controls, the Docker socket security
+  problem and alternatives, network segmentation for containers,
+  secrets management, runtime security monitoring, and compliance
+  requirements (SOC2, PCI-DSS) for containerized environments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Defense-in-depth layers are explained — Build: scan with Trivy/Scout, use distroless/alpine bases, multi-stage builds, sign images. Config: USER directive, --cap-drop ALL --cap-add <specific>, --read-only --tmpfs /tmp, no --privileged ever. Network: custom bridge networks per tier, frontend ↔ api ↔ database (no frontend → database). Runtime: Falco/Sysdig for anomaly detection (unexpected exec, network, file access). Secrets: Docker secrets, HashiCorp Vault, never env vars for sensitive data"
+    weight: 0.35
+    description: "Defense layers"
+  - type: llm_judge
+    criteria: "Docker socket and lateral movement prevention are covered — Docker socket = root access to host. NEVER mount into application containers. Alternatives: Docker API proxy with authorization (Tecnativa docker-socket-proxy), rootless Docker, monitoring via cAdvisor (read-only metrics without socket). Lateral movement prevention: network segmentation (containers can only reach needed services), no shared volumes between security tiers, separate Docker networks per service group"
+    weight: 0.35
+    description: "Socket and lateral movement"
+  - type: llm_judge
+    criteria: "Compliance and incident response are practical — SOC2/PCI-DSS requirements: audit logging of all container operations, access control (who can deploy, exec into containers), encryption at rest and in transit, vulnerability management program. Incident response for containers: preserve container (don't delete), capture filesystem (docker export), collect logs, analyze with forensic tools. Runtime monitoring: alert on docker exec in production, unexpected outbound connections, privilege escalation attempts"
+    weight: 0.30
+    description: "Compliance and response"

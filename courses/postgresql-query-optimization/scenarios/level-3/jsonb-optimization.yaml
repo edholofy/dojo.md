@@ -1,0 +1,88 @@
+meta:
+  id: jsonb-optimization
+  level: 3
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize JSONB queries — index and query JSON documents efficiently without sacrificing flexibility"
+  tags: [PostgreSQL, JSONB, JSON, indexing, semi-structured, advanced]
+
+state: {}
+
+trigger: |
+  Your SaaS platform stores product configurations in a JSONB column.
+  The schema-less flexibility was great for development, but now
+  queries are slow at scale (10M rows).
+
+  Table:
+  CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    tenant_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    config JSONB NOT NULL
+  );
+
+  Sample config JSONB:
+  {
+    "category": "electronics",
+    "brand": "Samsung",
+    "price": 999.99,
+    "specs": {
+      "weight": 0.5,
+      "dimensions": { "width": 15, "height": 7, "depth": 0.8 },
+      "colors": ["black", "white", "blue"]
+    },
+    "tags": ["premium", "flagship", "5G"],
+    "reviews_count": 2500,
+    "in_stock": true
+  }
+
+  Slow queries:
+
+  Q1: Filter by top-level key:
+  WHERE config->>'brand' = 'Samsung'
+  (Returns 500K rows, Seq Scan on 10M)
+
+  Q2: Filter by nested key:
+  WHERE config->'specs'->>'weight' < '1.0'
+  (Text comparison, not numeric! '9.5' < '1.0' = true)
+
+  Q3: Array containment:
+  WHERE config->'tags' @> '"premium"'
+  (Check if tags array contains 'premium')
+
+  Q4: Existence check:
+  WHERE config ? 'warranty'
+  (Does the key 'warranty' exist?)
+
+  Q5: Complex filter:
+  WHERE config @> '{"brand": "Samsung", "in_stock": true}'
+  AND (config->>'price')::numeric BETWEEN 500 AND 1000
+
+  Q6: Aggregation on JSONB:
+  SELECT config->>'category', AVG((config->>'price')::numeric)
+  FROM products GROUP BY config->>'category';
+
+  Performance issues:
+  - Q2 compares strings, not numbers (wrong results)
+  - Full GIN index is 2GB for 10M rows
+  - Some queries can't use GIN (numeric range)
+  - TOAST storage for large JSONB (>2KB) causes slowdown
+
+  Task: Optimize all 6 queries. For each, write: the correct query
+  syntax, the optimal index (GIN, expression, or partial), and the
+  expected performance. Then discuss when to extract JSONB fields
+  into regular columns vs keeping them in JSONB.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 queries are optimized with correct indexing — GIN with jsonb_ops or jsonb_path_ops for containment queries (Q3, Q4, Q5), expression indexes for specific field queries (Q1: (config->>'brand'), Q2: ((config->'specs'->>'weight')::numeric)), and explains why GIN can't help numeric range queries"
+    weight: 0.35
+    description: "Correct JSONB indexing"
+  - type: llm_judge
+    criteria: "Q2 type comparison bug is fixed — the text comparison issue is identified (string ordering vs numeric ordering), the fix uses explicit casting ((config->'specs'->>'weight')::numeric), and the expression index uses the cast to support the corrected query"
+    weight: 0.35
+    description: "Type comparison bug fixed"
+  - type: llm_judge
+    criteria: "Column extraction guidance is practical — recommends extracting frequently-queried, well-defined fields (brand, price, category) into regular columns with proper types, keeping flexible/rare fields in JSONB, and using generated columns for the hybrid approach. Discusses TOAST storage impact"
+    weight: 0.30
+    description: "Practical extraction guidance"

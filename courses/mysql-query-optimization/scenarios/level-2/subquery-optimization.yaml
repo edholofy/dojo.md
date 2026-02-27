@@ -1,0 +1,70 @@
+meta:
+  id: subquery-optimization
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL subqueries — understand semi-join, materialization, and how the optimizer transforms subqueries internally"
+  tags: [MySQL, subqueries, semi-join, materialization, optimizer, intermediate]
+
+state: {}
+
+trigger: |
+  Your application has several queries using subqueries, and some are
+  fast while others are unexpectedly slow. You need to understand how
+  MySQL's optimizer handles subqueries differently from JOINs.
+
+  Query 1 — Fast (uses semi-join optimization):
+  SELECT * FROM customers
+  WHERE id IN (SELECT customer_id FROM orders WHERE total > 1000);
+  -- EXPLAIN: Shows semi-join optimization (FirstMatch or Materialization)
+  -- Time: 50ms
+
+  Query 2 — Slow (correlated subquery, no optimization):
+  SELECT * FROM customers c
+  WHERE (SELECT SUM(total) FROM orders WHERE customer_id = c.id) > 10000;
+  -- EXPLAIN: Shows DEPENDENT SUBQUERY executed 500K times
+  -- Time: 30 seconds
+
+  Query 3 — Tricky (NOT IN with NULLs):
+  SELECT * FROM customers
+  WHERE id NOT IN (SELECT customer_id FROM orders);
+  -- If orders.customer_id can be NULL, MySQL can't use anti-join
+  -- Falls back to full scan with subquery-per-row
+  -- Time: 45 seconds
+
+  Query 4 — Derived table (materialized once):
+  SELECT c.*, order_stats.total_spent
+  FROM customers c
+  JOIN (SELECT customer_id, SUM(total) AS total_spent
+        FROM orders GROUP BY customer_id) AS order_stats
+    ON order_stats.customer_id = c.id
+  WHERE order_stats.total_spent > 10000;
+  -- Derived table materialized once, then joined
+  -- Time: 2 seconds (better than Query 2)
+
+  MySQL 8.0 subquery optimizations:
+  - Semi-join strategies: FirstMatch, LooseScan, Materialization,
+    DuplicateWeedout, TablePullout
+  - Derived table merging: optimizer may merge derived tables into
+    outer query instead of materializing
+  - optimizer_switch settings control which strategies are enabled
+
+  Task: Explain MySQL's subquery optimization. Write: how semi-join
+  transforms IN subqueries (the 5 strategies), why correlated
+  subqueries are expensive, the NOT IN NULL trap and how to avoid it,
+  derived table materialization vs merging, and when to manually
+  rewrite subqueries as JOINs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Semi-join strategies are explained — FirstMatch (stop at first match per outer row), LooseScan (scan inner table index, skip duplicates), Materialization (materialize subquery result into temp table), DuplicateWeedout (use temp table to remove duplicates), TablePullout (convert subquery to join when inner table is unique). Explains that these apply to IN/EXISTS subqueries"
+    weight: 0.35
+    description: "Semi-join strategies explained"
+  - type: llm_judge
+    criteria: "Correlated subquery and NOT IN issues are addressed — correlated subqueries with aggregate functions (Query 2) can't be semi-joined and execute once per outer row (500K times). NOT IN with nullable columns prevents anti-join optimization because NULL IN (...NULL...) is UNKNOWN. Fix: use NOT EXISTS, or add WHERE customer_id IS NOT NULL in the subquery"
+    weight: 0.35
+    description: "Correlated and NOT IN issues"
+  - type: llm_judge
+    criteria: "Practical rewrite guidance is provided — shows how to rewrite Query 2 as a JOIN (like Query 4), when the optimizer's automatic transformations are sufficient vs when manual rewriting helps, and how to check what the optimizer did (EXPLAIN FORMAT=JSON shows 'attached_subqueries' vs 'nested_loop' for semi-join)"
+    weight: 0.30
+    description: "Practical rewrite guidance"

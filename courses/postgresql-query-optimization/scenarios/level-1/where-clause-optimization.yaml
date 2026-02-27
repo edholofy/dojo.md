@@ -1,0 +1,74 @@
+meta:
+  id: where-clause-optimization
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "Optimize WHERE clauses — rewrite query filters to use indexes effectively and avoid common pitfalls"
+  tags: [PostgreSQL, WHERE, filters, optimization, SARGable, beginner]
+
+state: {}
+
+trigger: |
+  Your team has a users table (2 million rows) with indexes on email,
+  created_at, and status. But several queries are still doing full
+  table scans despite having indexes on the filtered columns.
+
+  Index definitions:
+  CREATE INDEX idx_users_email ON users(email);
+  CREATE INDEX idx_users_created ON users(created_at);
+  CREATE INDEX idx_users_status ON users(status);
+
+  Queries that aren't using indexes (and why):
+
+  Query 1 — Function on indexed column:
+  SELECT * FROM users WHERE LOWER(email) = 'john@example.com';
+  (Index on email exists but LOWER() prevents its use)
+
+  Query 2 — Implicit type cast:
+  SELECT * FROM users WHERE id = '12345';
+  (id is INTEGER, '12345' is TEXT — implicit cast)
+
+  Query 3 — Leading wildcard:
+  SELECT * FROM users WHERE email LIKE '%@gmail.com';
+  (Leading wildcard can't use B-tree index)
+
+  Query 4 — OR with different columns:
+  SELECT * FROM users WHERE email = 'john@example.com'
+  OR status = 'suspended';
+  (OR across columns prevents single index use)
+
+  Query 5 — Math on indexed column:
+  SELECT * FROM users WHERE created_at + INTERVAL '30 days' > NOW();
+  (Math on the column prevents index use)
+
+  Query 6 — NOT IN with subquery:
+  SELECT * FROM users WHERE id NOT IN
+  (SELECT user_id FROM deleted_users);
+  (NOT IN with NULL handling issues)
+
+  Query 7 — Coalesce on indexed column:
+  SELECT * FROM users WHERE COALESCE(status, 'unknown') = 'active';
+  (Function wrapping prevents index use)
+
+  Query 8 — Comparing to column instead of constant:
+  SELECT * FROM users WHERE created_at > updated_at;
+  (Two columns compared — no single index helps)
+
+  Task: Rewrite each of the 8 queries to use indexes effectively.
+  Explain the SARGable concept (Search ARGument ABLE) and why each
+  original query violates it. Show the EXPLAIN output before and
+  after each rewrite.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 8 queries are correctly rewritten — LOWER(email) uses a functional index or citext, type cast is fixed by matching types, leading wildcard uses pg_trgm or reverse index, OR uses UNION, math is moved to the constant side, NOT IN is replaced with NOT EXISTS or LEFT JOIN, COALESCE is eliminated, and column comparison is addressed"
+    weight: 0.35
+    description: "All queries correctly rewritten"
+  - type: llm_judge
+    criteria: "SARGable concept is clearly explained — defines what makes a WHERE clause SARGable (index-usable), the general rule (don't transform the indexed column), and provides the mental model for writing index-friendly filters"
+    weight: 0.35
+    description: "Clear SARGable explanation"
+  - type: llm_judge
+    criteria: "Before/after comparison shows the improvement — demonstrates that the rewritten queries use index scans instead of sequential scans, with approximate row counts and timing to illustrate the performance difference on 2M rows"
+    weight: 0.30
+    description: "Improvement demonstration"

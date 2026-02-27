@@ -1,0 +1,63 @@
+meta:
+  id: monitoring-alerting
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL monitoring and alerting — implement Percona PMM, define alert thresholds, and build performance dashboards"
+  tags: [MySQL, monitoring, PMM, alerting, dashboards, advanced]
+
+state: {}
+
+trigger: |
+  Your company has 15 MySQL servers and no unified monitoring. Last
+  month, a disk-full incident on the primary database caused 2 hours
+  of downtime — nobody noticed until customers reported errors. The
+  CTO mandates comprehensive monitoring by end of quarter.
+
+  Current state:
+  - 15 MySQL 8.0 instances (5 primaries, 10 replicas)
+  - No centralized monitoring (each team checks their own server)
+  - Basic CloudWatch metrics (CPU, disk, connections)
+  - No query-level visibility
+  - No alerting — issues discovered by customer complaints
+
+  Recent incidents that monitoring would have prevented:
+  1. Disk full: WAL files + binlog accumulated, 100% disk, crash
+  2. Replication lag: Replica fell 2 hours behind, stale data served
+  3. Slow query regression: New deployment added query scanning 10M rows
+  4. Connection exhaustion: max_connections hit during traffic spike
+  5. Table bloat: 500GB table with 300GB dead rows (no optimize)
+
+  Monitoring stack options:
+  A. Percona PMM (open-source, MySQL-focused)
+  B. Datadog Database Monitoring (commercial, broad integration)
+  C. Prometheus + Grafana + mysqld_exporter (DIY)
+  D. CloudWatch Enhanced Monitoring (AWS-native)
+
+  Key metrics to monitor:
+  - Query performance: QPS, latency percentiles, slow query count
+  - Replication: lag, binlog position, I/O and SQL thread status
+  - InnoDB: buffer pool hit ratio, dirty pages, row lock waits
+  - Resources: CPU, memory, disk I/O, disk space, connections
+  - Schema: table sizes, index sizes, unused indexes, fragmentation
+
+  Task: Design the monitoring and alerting system. Write: the
+  recommended monitoring stack (with justification), the metric
+  categories and specific metrics to track, the alerting thresholds
+  (warning and critical for each metric), the dashboard design (what
+  each audience needs), and the incident detection that would have
+  caught the 5 past incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Monitoring stack is justified — recommends PMM or Prometheus+Grafana with clear reasoning (PMM: MySQL-specific dashboards out of box, query analytics, advisor checks; Prometheus+Grafana: more customizable, broader ecosystem; Datadog: best integration but expensive). Covers installation and configuration overview"
+    weight: 0.35
+    description: "Monitoring stack justified"
+  - type: llm_judge
+    criteria: "Alerting thresholds are specific — defines warning and critical thresholds for: disk usage (warning 80%, critical 90%), replication lag (warning 30s, critical 300s), buffer pool hit ratio (warning <95%, critical <90%), connections (warning 80% of max, critical 95%), slow queries (warning 2x baseline, critical 5x). Each threshold has a response action"
+    weight: 0.35
+    description: "Specific alerting thresholds"
+  - type: llm_judge
+    criteria: "Past incidents would be caught — maps each of the 5 incidents to specific metrics and thresholds: disk full (disk usage alert at 80%), replication lag (lag alert at 30s), slow query regression (query latency change detection), connection exhaustion (connections approaching max), table bloat (table size growth rate or InnoDB free space). Demonstrates the monitoring prevents future incidents"
+    weight: 0.30
+    description: "Past incidents prevented"

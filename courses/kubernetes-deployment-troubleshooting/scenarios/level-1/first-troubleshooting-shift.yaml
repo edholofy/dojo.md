@@ -1,0 +1,65 @@
+meta:
+  id: first-troubleshooting-shift
+  level: 1
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Combined troubleshooting shift — diagnose multiple pod failures across a namespace using the full beginner debugging toolkit"
+  tags: [Kubernetes, troubleshooting, debugging, combined, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  You're on-call and get paged: "Multiple services down in staging
+  namespace." You run:
+
+  $ kubectl get pods -n staging
+  NAME                          READY   STATUS             RESTARTS   AGE
+  api-gw-5a6b7c8d-e9f0        0/1     CrashLoopBackOff   6          15m
+  user-svc-1g2h3i4j-k5l6      0/1     ImagePullBackOff   0          15m
+  order-svc-7m8n9o0p-q1r2     0/1     Pending            0          15m
+  payment-svc-3s4t5u6v-w7x8   1/1     Running            0          15m
+  notification-svc-9a0b-c1d2  0/1     Running            0          15m
+
+  Five services, four different problems:
+
+  1. api-gw — CrashLoopBackOff, exit code 1
+     Logs: "Error: REDIS_HOST environment variable not set"
+     The ConfigMap was deleted during a cleanup.
+
+  2. user-svc — ImagePullBackOff
+     Events: "Failed to pull image 'registry.company.com/user-svc:v3.2.1':
+     unauthorized"
+     The registry token expired overnight.
+
+  3. order-svc — Pending
+     Events: "0/3 nodes are available: 3 Insufficient memory"
+     Requests 4Gi memory but largest available is 2Gi.
+
+  4. payment-svc — Running but 0/1 Ready? No, it shows 1/1, but the
+     Service has no endpoints. Label mismatch: Service selector
+     app=payment, pod label app=payment-svc.
+
+  5. notification-svc — Running, 0/1 Ready
+     Readiness probe failing: HTTP 503 on /ready
+     The downstream email service is unreachable.
+
+  Task: Walk through diagnosing all five issues. Write: the triage
+  approach (start with kubectl get pods, identify status patterns), the
+  debugging steps for each issue type (CrashLoopBackOff → logs,
+  ImagePullBackOff → events, Pending → describe, Service issues →
+  endpoints, Readiness → probe config), and how to prioritize which to
+  fix first in a real incident.
+
+assertions:
+  - type: llm_judge
+    criteria: "All five issues are correctly diagnosed — (1) CrashLoopBackOff from missing ConfigMap causing missing env var, (2) ImagePullBackOff from expired registry credentials, (3) Pending from insufficient memory on nodes, (4) Service-pod label mismatch causing empty endpoints despite pod running, (5) Readiness probe failing due to downstream dependency. Each diagnosis maps to the correct kubectl command"
+    weight: 0.35
+    description: "All issues diagnosed"
+  - type: llm_judge
+    criteria: "Triage methodology is systematic — start with kubectl get pods for overview, group by status type, check most impactful services first. Use kubectl describe for events, kubectl logs for application errors, kubectl get endpoints for service connectivity. Prioritize: fix what unblocks the most services first (e.g., ConfigMap might affect multiple services)"
+    weight: 0.35
+    description: "Triage methodology"
+  - type: llm_judge
+    criteria: "Fixes and prioritization are practical — prioritize payment-svc (revenue-critical, quick label fix), then api-gw (gateway affects all downstream, recreate ConfigMap), then user-svc (refresh registry token), then order-svc (scale down request or add capacity), then notification-svc (investigate downstream dependency). Shows the actual kubectl fix commands"
+    weight: 0.30
+    description: "Fixes and prioritization"

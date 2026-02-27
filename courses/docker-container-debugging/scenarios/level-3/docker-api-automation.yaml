@@ -1,0 +1,72 @@
+meta:
+  id: docker-api-automation
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker API and automation issues — diagnose Docker SDK errors, API versioning problems, and container orchestration script failures"
+  tags: [Docker, API, SDK, automation, scripting, REST, advanced]
+
+state: {}
+
+trigger: |
+  Your container management script suddenly breaks after a Docker
+  Engine upgrade:
+
+  import docker
+  client = docker.from_env()
+  containers = client.containers.list(filters={"health": "unhealthy"})
+  for c in containers:
+      c.restart()
+      print(f"Restarted {c.name}")
+
+  Error:
+  docker.errors.APIError: 400 Client Error: Bad Request
+  ("invalid filter 'health'")
+
+  Investigation reveals several API issues:
+
+  1. API version mismatch — the script was written for Docker API 1.44
+     but the server now runs 1.45 which changed the filter syntax:
+     $ docker version --format '{{.Server.APIVersion}}'
+     1.45
+
+     Fix: pin API version in client:
+     client = docker.DockerClient(base_url='unix:///var/run/docker.sock',
+                                   version='1.44')
+
+  2. The script uses client.containers.list() to find containers,
+     but hits a race condition — between listing and restarting,
+     containers may have been removed by another process:
+     docker.errors.NotFound: 404 Client Error: Container not found
+
+  3. Direct API calls via curl for debugging:
+     $ curl --unix-socket /var/run/docker.sock \
+       http://localhost/v1.44/containers/json?filters={"health":["unhealthy"]}
+     $ curl --unix-socket /var/run/docker.sock \
+       http://localhost/v1.44/events?since=1700000000
+
+  4. The Docker socket permissions prevent the script from running
+     without root:
+     $ ls -la /var/run/docker.sock
+     srw-rw---- 1 root docker 0 Dec 01 10:00 /var/run/docker.sock
+     User not in docker group.
+
+  Task: Explain Docker API and automation debugging. Write: Docker
+  Engine API basics (REST over Unix socket), API versioning and
+  negotiation, Docker SDKs (Python, Go), common SDK errors and fixes,
+  race conditions in container management, socket permissions and
+  security, and using curl for raw API debugging.
+
+assertions:
+  - type: llm_judge
+    criteria: "Docker API fundamentals are explained — Docker Engine exposes a REST API over Unix socket (/var/run/docker.sock) or TCP. All Docker CLI commands are API calls under the hood. API versioning: client and server negotiate version. Pin version to avoid breaking changes. curl --unix-socket for raw API debugging. Key endpoints: /containers/json (list), /containers/{id}/start, /containers/{id}/logs, /events (stream), /images/json"
+    weight: 0.35
+    description: "API fundamentals"
+  - type: llm_judge
+    criteria: "SDK debugging is covered — Python SDK (docker-py): docker.from_env() reads DOCKER_HOST and DOCKER_TLS_VERIFY. Common errors: APIError (bad request/version mismatch), NotFound (container removed), ConnectionError (daemon not running). Always handle NotFound for race conditions. Use version parameter to pin API version. Go SDK (moby/moby/client): similar patterns. Check API compatibility: docker version shows client and server API versions"
+    weight: 0.35
+    description: "SDK debugging"
+  - type: llm_judge
+    criteria: "Security and best practices are practical — socket access = root-equivalent access (can mount host filesystem via API). Never expose Docker socket to untrusted containers. Socket permissions: add user to docker group (convenience) or use rootless Docker (security). For automation: handle race conditions (container may disappear), use docker events for reactive management instead of polling, implement retry logic with backoff, log all management actions for audit trail"
+    weight: 0.30
+    description: "Security and practices"

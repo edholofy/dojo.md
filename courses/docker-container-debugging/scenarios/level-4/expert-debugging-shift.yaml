@@ -1,0 +1,63 @@
+meta:
+  id: expert-debugging-shift
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Combined expert debugging shift — diagnose and design solutions for a production container platform with orchestration, security, performance, and operational challenges"
+  tags: [Docker, troubleshooting, combined, shift-simulation, expert]
+
+state: {}
+
+trigger: |
+  You're the newly hired container platform lead. On day one, you
+  discover the platform has accumulated significant technical debt.
+  The CTO wants a 90-day improvement plan.
+
+  Current state assessment:
+
+  Infrastructure: 20 Docker hosts, 150+ containers, Docker Compose
+  on each host, no orchestration. Manual deployments via SSH scripts.
+
+  Security audit findings:
+  - 40% of containers run as root with --privileged
+  - Docker socket mounted in 12 containers
+  - No image scanning — 3 containers have CRITICAL CVEs from 2023
+  - Secrets in docker-compose.yml files committed to git
+  - No network segmentation — all containers on default bridge
+
+  Performance issues:
+  - 5 containers with memory leaks, restarted nightly via cron
+  - No resource limits on 80% of containers
+  - Disk fills up monthly — manual cleanup each time
+  - No monitoring beyond Nagios ping checks
+
+  Operational gaps:
+  - No centralized logging — engineers SSH to each host for logs
+  - Deployments take 2 hours (manual process on 20 hosts)
+  - Rollback requires re-deploying the previous version manually
+  - Last week's incident: deployed wrong image tag to production,
+    took 4 hours to detect because no health checks
+
+  Team: 3 DevOps engineers, 30 developers, 0 security engineers
+
+  Budget: Can hire 2 more people, $50K/year for tooling
+
+  Task: Design the 90-day improvement plan. Write: the priority
+  ranking (what to fix first and why), quick wins vs long-term
+  improvements, orchestration decision, security remediation plan,
+  observability implementation, deployment automation strategy, team
+  structure and hiring priorities, and success metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority ranking is justified — Phase 1 (days 1-30): security remediation (remove --privileged, remove socket mounts, rotate exposed secrets, scan images) and quick wins (health checks, resource limits, log rotation, automated disk cleanup). Phase 2 (days 31-60): deployment automation (CI/CD pipeline, image registry, automated rollouts) and observability (centralized logging, container monitoring). Phase 3 (days 61-90): orchestration evaluation (Swarm vs K8s based on team and scale), network segmentation, performance optimization"
+    weight: 0.35
+    description: "Priority ranking"
+  - type: llm_judge
+    criteria: "Resource and team strategy is realistic — $50K budget allocation: private registry (Harbor, free), monitoring (Prometheus + Grafana, free), CI/CD (GitLab CI or GitHub Actions, existing). Hiring: 1 security-focused DevOps + 1 platform engineer. Team structure: platform team (3 existing + 2 new) owns infrastructure, provides self-service to 30 developers. Developer enablement: standardized Dockerfiles, CI templates, documentation. Don't try to do everything at once — incremental improvements with measurable outcomes"
+    weight: 0.35
+    description: "Resource strategy"
+  - type: llm_judge
+    criteria: "Success metrics are measurable — security: 0 CRITICAL CVEs, 0 --privileged containers, 0 exposed secrets. Performance: all containers with resource limits, automated disk management, no manual restarts. Operations: deployment time < 15 minutes (from 2 hours), rollback < 5 minutes, MTTR < 30 minutes. Observability: centralized logs for all containers, alerting on container health/resources, dashboard coverage. Track DORA metrics: deployment frequency, lead time, change failure rate, MTTR"
+    weight: 0.30
+    description: "Success metrics"

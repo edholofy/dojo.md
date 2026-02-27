@@ -1,0 +1,77 @@
+meta:
+  id: first-optimization-shift
+  level: 1
+  course: postgresql-query-optimization
+  type: output
+  description: "First optimization shift — triage and fix multiple slow queries during a production performance incident"
+  tags: [PostgreSQL, optimization, shift-simulation, triage, beginner]
+
+state: {}
+
+trigger: |
+  You're on-call for a SaaS application when alerts fire at 9:00 AM
+  Monday (peak traffic). Database CPU is at 95% and climbing.
+  Response times have tripled. Users are complaining on Twitter.
+
+  Your monitoring dashboard shows:
+
+  Active connections: 180/200 (at limit)
+  Query queue: 45 queries waiting
+  Longest running query: 180 seconds (and counting)
+  Database CPU: 95%
+  Disk I/O: 98% utilization
+
+  Top 5 queries by current CPU consumption:
+
+  1. (45% CPU) Running for 180 seconds:
+     SELECT * FROM audit_logs WHERE created_at > '2020-01-01'
+     ORDER BY created_at;
+     (audit_logs has 200M rows, no LIMIT, someone ran it from an
+     admin panel)
+
+  2. (20% CPU) Running 500 concurrent copies:
+     SELECT u.*, p.* FROM users u
+     JOIN profiles p ON p.user_id = u.id
+     WHERE u.email = $1;
+     (Seq Scan on users — missing index on email)
+
+  3. (15% CPU) Running 200 concurrent copies:
+     SELECT COUNT(*) FROM products
+     WHERE category_id = $1 AND active = true;
+     (Seq Scan on products — missing index)
+
+  4. (10% CPU) Running every 5 seconds (background job):
+     UPDATE notifications SET checked_at = NOW()
+     WHERE user_id = $1 AND checked_at IS NULL;
+     (Seq Scan + row lock contention)
+
+  5. (5% CPU) Running 50 concurrent copies:
+     SELECT * FROM orders WHERE customer_id = $1
+     ORDER BY created_at DESC LIMIT 10;
+     (Using an index but fetching too many columns)
+
+  Available actions:
+  - Kill specific queries (pg_terminate_backend)
+  - Create indexes (takes time on large tables)
+  - Modify application code (requires deploy)
+  - Add connection pooling (PgBouncer not yet set up)
+  - Scale up database instance
+
+  Task: Triage and fix this incident. Write: the immediate actions
+  (first 5 minutes), the short-term fixes (next hour), the medium-
+  term improvements (this week), and the monitoring setup to prevent
+  this from recurring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate triage is correct — kills the 200M-row audit_logs query first (45% CPU), considers killing or limiting long-running queries, and doesn't create indexes under 95% CPU load (would make things worse). Prioritizes by impact"
+    weight: 0.35
+    description: "Correct immediate triage"
+  - type: llm_judge
+    criteria: "Short-term fixes address root causes — index on users(email) for the most frequent query, index on products(category_id, active) for the product count, application-level statement_timeout to prevent unbounded queries, and connection pooling to handle the 180/200 connection pressure"
+    weight: 0.35
+    description: "Root cause fixes"
+  - type: llm_judge
+    criteria: "Prevention measures are practical — sets statement_timeout for different query types, implements pg_stat_statements monitoring, adds connection pooling, puts row limits on admin panel queries, and sets up alerting on slow queries and connection count before hitting limits"
+    weight: 0.30
+    description: "Practical prevention measures"

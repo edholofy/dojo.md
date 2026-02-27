@@ -1,0 +1,69 @@
+meta:
+  id: advanced-troubleshooting-shift
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Combined advanced troubleshooting shift — diagnose a production incident involving node failures, storage issues, service mesh, and monitoring gaps"
+  tags: [Kubernetes, troubleshooting, combined, shift-simulation, production-incident, advanced]
+
+state: {}
+
+trigger: |
+  3:00 AM alert: "Multiple services degraded in production." You're the
+  on-call SRE. The incident cascaded from a single root cause:
+
+  Timeline:
+  - 2:30 AM: worker-5 hits MemoryPressure, starts evicting pods
+  - 2:35 AM: Evicted pods reschedule to worker-2 and worker-3
+  - 2:40 AM: worker-2 runs out of disk space from container logs
+  - 2:45 AM: StatefulSet database pods fail to reschedule (PVC zone affinity)
+  - 2:50 AM: Services depending on the database start failing
+  - 2:55 AM: Alertmanager didn't page because Slack webhook expired
+  - 3:00 AM: Customer reports trigger manual investigation
+
+  Current state:
+  $ kubectl get nodes
+  NAME       STATUS                        ROLES    VERSION
+  worker-1   Ready                         worker   v1.29.0
+  worker-2   Ready,SchedulingDisabled      worker   v1.29.0
+  worker-3   Ready                         worker   v1.29.0
+  worker-4   Ready                         worker   v1.29.0
+  worker-5   NotReady,SchedulingDisabled   worker   v1.29.0
+
+  $ kubectl get pods -n critical --field-selector=status.phase!=Running
+  NAME                        STATUS    RESTARTS   AGE
+  postgres-1                  Pending   0          25m
+  search-indexer-7a8b-c9d0   Failed    0          25m
+  api-cache-1e2f-g3h4        Failed    0          25m
+
+  Issues to address:
+  1. worker-5 MemoryPressure — identify memory-hungry pod, assess if
+     node can recover or needs replacement
+  2. worker-2 DiskPressure — container log rotation not configured,
+     /var/lib/docker full
+  3. postgres-1 Pending — PVC bound to volume in worker-5's AZ, can't
+     reschedule to other AZ
+  4. Cascading failures — services failing because database unavailable
+  5. Monitoring gap — Alertmanager webhook expired, no backup channel
+  6. No PDB on critical services — evictions were uncontrolled
+
+  Task: Walk through this cascading incident. Write: the root cause
+  analysis (chain of events), immediate remediation steps for each
+  issue, how to restore service for the database (PVC zone affinity
+  options), why the monitoring gap let this escalate for 30 minutes,
+  and the post-incident improvements (PDBs, log rotation, monitoring
+  redundancy, capacity planning).
+
+assertions:
+  - type: llm_judge
+    criteria: "Cascading failure chain is explained — initial trigger was MemoryPressure on worker-5 causing evictions. Evicted pods redistributed, overloading worker-2 which then hit DiskPressure. StatefulSet pods couldn't reschedule due to PVC zone affinity. Dependent services failed. Monitoring gap delayed response by 30 minutes. Each failure amplified the next"
+    weight: 0.35
+    description: "Cascade chain explained"
+  - type: llm_judge
+    criteria: "Immediate remediation is practical — (1) free disk on worker-2 (truncate/rotate logs, clear unused images: crictl rmi --prune), (2) for postgres-1: either bring worker-5 back online or create new PV in available AZ and restore from backup, (3) restart failed pods once dependencies are back, (4) fix Alertmanager config immediately. Prioritize database recovery as it's the dependency for other services"
+    weight: 0.35
+    description: "Immediate remediation"
+  - type: llm_judge
+    criteria: "Post-incident improvements are comprehensive — add PodDisruptionBudgets for critical services, configure container log rotation (logrotate or container runtime config), add backup alerting channels (PagerDuty + Slack), implement capacity alerts before pressure (warn at 80%), use WaitForFirstConsumer for PVCs, run regular backup/restore tests, add pod anti-affinity to spread critical pods across nodes"
+    weight: 0.30
+    description: "Post-incident improvements"

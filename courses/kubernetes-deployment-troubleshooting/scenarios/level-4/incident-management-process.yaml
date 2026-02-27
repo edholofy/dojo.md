@@ -1,0 +1,59 @@
+meta:
+  id: incident-management-process
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes incident management process — escalation procedures, communication templates, postmortem culture, and SLA/SLO framework"
+  tags: [Kubernetes, incident-management, SRE, SLO, postmortem, process, expert]
+
+state: {}
+
+trigger: |
+  Your organization experienced 3 major Kubernetes incidents in the
+  past month, each lasting 2+ hours. Post-incident reviews revealed
+  systemic issues:
+
+  Incident 1 — Database Outage (3.5 hours):
+  - Root cause: Accidental ConfigMap update pushed to production
+  - Detection: Customer complaint after 45 minutes
+  - Impact: 100% of write operations failed
+  - Issue: No one knew who to page, no runbook existed
+
+  Incident 2 — Memory Leak Causing Cascading Failures (2.5 hours):
+  - Root cause: New deployment had memory leak, OOMKilled repeatedly
+  - Detection: Prometheus alert fired but went to wrong Slack channel
+  - Impact: 3 dependent services degraded
+  - Issue: No circuit breaker, no isolation between services
+
+  Incident 3 — Node Failure During Cluster Upgrade (2 hours):
+  - Root cause: Drain failed due to PDB, manual override corrupted state
+  - Detection: Immediate (during planned maintenance)
+  - Impact: 30% of pods evicted uncontrollably
+  - Issue: No change management process, no rollback plan
+
+  Common themes:
+  - No standardized severity levels
+  - No on-call rotation for Kubernetes platform
+  - No incident commander role defined
+  - Postmortems are blame-focused, findings not actioned
+  - No SLOs defined for the platform
+
+  Task: Design a Kubernetes incident management process. Write: severity
+  classification (SEV1-4), on-call structure and escalation paths,
+  incident response playbook for common Kubernetes failures, SLO/SLI
+  framework for the platform, blameless postmortem template, and how
+  to build a reliability culture.
+
+assertions:
+  - type: llm_judge
+    criteria: "Severity classification is defined — SEV1: full production outage affecting all users (15 min response, incident commander, all-hands), SEV2: partial outage affecting subset of users (30 min response, on-call lead), SEV3: degraded performance but functional (2h response, next business day), SEV4: minor issue no user impact (ticket-based). Clear criteria for each level based on user impact, revenue impact, and data integrity"
+    weight: 0.35
+    description: "Severity classification"
+  - type: llm_judge
+    criteria: "Incident response process is structured — on-call rotation for platform team (primary + secondary), incident commander role (coordinates communication, not debugging), dedicated incident Slack channel per SEV1/2, status page updates every 15 minutes, stakeholder communication templates. Playbooks for common Kubernetes failures: CrashLoopBackOff, node failure, storage issues, network partitions — with decision trees and kubectl commands"
+    weight: 0.35
+    description: "Incident response"
+  - type: llm_judge
+    criteria: "SLOs and postmortems are practical — SLIs: availability (% of successful requests), latency (P99 < Xms), error rate. SLOs: 99.9% availability = 43.8 min/month downtime budget. Error budget policy: when budget exhausted, freeze deployments until reliability improves. Blameless postmortem template: timeline, root cause, contributing factors, action items with owners and deadlines. Schedule postmortem within 48 hours, track action items to completion"
+    weight: 0.30
+    description: "SLOs and postmortems"

@@ -1,0 +1,62 @@
+meta:
+  id: high-availability-architecture
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Design PostgreSQL high availability — architect streaming replication, automatic failover, and multi-region deployments"
+  tags: [PostgreSQL, high-availability, replication, failover, Patroni, expert]
+
+state: {}
+
+trigger: |
+  Your company's SLA requires 99.99% database availability (52
+  minutes of downtime per year). Currently you have a single
+  PostgreSQL instance with no replication. Last year's downtime:
+  18 hours across 4 incidents.
+
+  Incidents that caused downtime:
+  1. Hardware failure (4 hours): Server disk died, restored from
+     backup. RPO: 1 hour of data lost.
+  2. Failed upgrade (6 hours): PG 15 → 16 upgrade failed, had to
+     roll back. No secondary to fail to.
+  3. DDL lock (3 hours): ALTER TABLE on 500M-row table took
+     AccessExclusive lock, blocking all queries.
+  4. Connection storm (5 hours): Application bug opened 10K
+     connections, server ran out of memory and crashed.
+
+  Requirements:
+  - 99.99% availability (< 52 minutes downtime/year)
+  - RPO < 5 minutes (maximum data loss in disaster)
+  - RTO < 2 minutes (time to recover from failure)
+  - Zero-downtime deployments (schema changes, PG upgrades)
+  - Multi-region for disaster recovery
+  - Read scaling for analytics workload
+
+  Architecture options:
+  A. Patroni + streaming replication (self-managed)
+  B. AWS RDS Multi-AZ
+  C. AWS Aurora PostgreSQL
+  D. Citus for horizontal scaling
+  E. Hybrid: Aurora primary + self-managed read replicas
+
+  Current infrastructure: AWS, 3 availability zones, 2 regions
+
+  Task: Design the HA architecture. Write: the architecture
+  recommendation (with justification against all 5 options), the
+  failover mechanism (automatic detection and promotion), the
+  replication topology (sync vs async, cascade), the zero-downtime
+  deployment strategy, and the DR plan (cross-region recovery).
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture choice is well-justified — evaluates all 5 options against the requirements (availability, RPO, RTO, zero-downtime, multi-region, read scaling), selects the best fit, and explains why the others don't meet requirements or are less optimal"
+    weight: 0.35
+    description: "Well-justified architecture choice"
+  - type: llm_judge
+    criteria: "Failover mechanism achieves RTO < 2 minutes — automatic failure detection (health checks, WAL lag monitoring), automatic promotion (Patroni consensus or Aurora automatic failover), application connection routing (DNS failover, connection string discovery), and the 4 past incidents would all be handled"
+    weight: 0.35
+    description: "RTO-achieving failover"
+  - type: llm_judge
+    criteria: "Zero-downtime deployments and DR are addressed — schema changes use online DDL techniques (CREATE INDEX CONCURRENTLY, pg_repack), PG upgrades use logical replication for live migration, and cross-region DR with async replication achieves RPO < 5 minutes"
+    weight: 0.30
+    description: "Zero-downtime and DR"

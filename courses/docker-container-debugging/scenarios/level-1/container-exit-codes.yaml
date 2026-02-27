@@ -1,0 +1,59 @@
+meta:
+  id: container-exit-codes
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug container exit codes — understand what different exit codes mean and how to diagnose why a container stopped"
+  tags: [Docker, exit-codes, container-lifecycle, debugging, beginner]
+
+state: {}
+
+trigger: |
+  You're running several containers and some keep stopping unexpectedly:
+
+  $ docker ps -a
+  CONTAINER ID   IMAGE          STATUS                      NAMES
+  a1b2c3d4e5f6   myapp:v1.2     Exited (1) 5 minutes ago    api-server
+  b2c3d4e5f6g7   worker:latest  Exited (137) 2 minutes ago  background-worker
+  c3d4e5f6g7h8   nginx:1.25     Exited (0) 10 minutes ago   web-proxy
+  d4e5f6g7h8i9   mydb:v3        Exited (139) 1 minute ago   database
+
+  Four containers, four different exit codes:
+  - Exit code 0: Completed successfully (normal termination)
+  - Exit code 1: General application error
+  - Exit code 137: Killed by SIGKILL (128 + 9) — OOM kill or docker kill
+  - Exit code 139: Segmentation fault (128 + 11)
+
+  $ docker logs api-server
+  Error: Cannot connect to database at localhost:5432
+  Error: Configuration validation failed
+  Process exited with code 1
+
+  $ docker inspect background-worker --format='{{.State.OOMKilled}}'
+  true
+
+  The background-worker was OOM killed — it exceeded its memory limit.
+  The api-server had an application error (database connection failure).
+  The web-proxy exited cleanly (exit code 0 means success).
+  The database had a segfault (exit code 139, likely corrupted data or
+  incompatible library).
+
+  Task: Explain Docker container exit codes. Write: the common exit
+  codes and what they mean (0, 1, 126, 127, 137, 139, 143), how to
+  investigate why a container stopped (docker logs, docker inspect),
+  the difference between SIGKILL (137) and SIGTERM (143), how to check
+  if OOM killed, and the container lifecycle states.
+
+assertions:
+  - type: llm_judge
+    criteria: "Common exit codes are explained — 0: success, 1: general error (application crash), 126: command not executable (permission denied), 127: command not found (wrong CMD/ENTRYPOINT), 137: SIGKILL (128+9, OOM kill or docker kill), 139: SIGSEGV segfault (128+11), 143: SIGTERM (128+15, graceful shutdown via docker stop). Codes > 128 indicate the process was killed by a signal (code = 128 + signal number)"
+    weight: 0.35
+    description: "Exit codes explained"
+  - type: llm_judge
+    criteria: "Investigation commands are shown — docker logs <container> for stdout/stderr output, docker inspect <container> for full state including OOMKilled flag and exit code, docker inspect --format='{{.State.ExitCode}}' for just the exit code, docker events for real-time container events. docker inspect also shows StartedAt/FinishedAt timestamps and RestartCount"
+    weight: 0.35
+    description: "Investigation commands"
+  - type: llm_judge
+    criteria: "Container lifecycle states are explained — created (container exists but never started), running (process active), paused (process frozen via cgroups), exited (process terminated, exit code available), dead (failed to remove, needs manual cleanup). docker ps shows running containers, docker ps -a shows all including stopped. SIGTERM vs SIGKILL: docker stop sends SIGTERM, waits grace period (default 10s), then SIGKILL"
+    weight: 0.30
+    description: "Lifecycle states"

@@ -1,0 +1,73 @@
+meta:
+  id: vendor-evaluation
+  level: 4
+  course: postgresql-query-optimization
+  type: output
+  description: "Evaluate PostgreSQL hosting vendors — compare RDS, Aurora, self-managed, Citus, and other options for enterprise workloads"
+  tags: [PostgreSQL, vendor-evaluation, RDS, Aurora, Citus, TCO, expert]
+
+state: {}
+
+trigger: |
+  Your company is evaluating PostgreSQL hosting options for a
+  platform migration. The CTO wants a comprehensive comparison
+  with TCO analysis over 3 years.
+
+  Current state: Self-managed PostgreSQL on bare metal
+  - 5 database clusters, 20 instances total
+  - 10TB total data
+  - 100K queries/second peak
+  - 3 DBAs managing the infrastructure
+  - Annual infrastructure cost: $800K
+  - Annual DBA salary cost: $600K
+  - Monthly operational incidents: 3 (average)
+
+  Vendors to evaluate:
+
+  1. AWS RDS for PostgreSQL:
+  - Managed service, automated backups, Multi-AZ
+  - db.r6g.4xlarge ($2.46/hr) × 20 instances
+
+  2. AWS Aurora PostgreSQL:
+  - Distributed storage, up to 15 read replicas
+  - db.r6g.4xlarge ($3.28/hr) × 10 instances (Aurora needs fewer)
+
+  3. Self-managed on AWS EC2:
+  - Full control, Patroni for HA
+  - r6g.4xlarge ($0.81/hr) × 20 instances + EBS storage
+
+  4. Citus Cloud (Azure):
+  - Distributed PostgreSQL, horizontal scaling
+  - Multi-tenant SaaS pattern support
+
+  5. Neon (serverless PostgreSQL):
+  - Scale to zero, branching, compute-storage separation
+  - Pay per compute-second
+
+  Evaluation criteria:
+  - Total Cost of Ownership (3-year)
+  - Performance (latency, throughput)
+  - Availability (SLA guarantees)
+  - Operational burden (DBA time saved)
+  - Migration complexity
+  - Lock-in risk
+  - Compliance (SOC 2, PCI DSS, HIPAA)
+
+  Task: Write the vendor evaluation report. Include: the TCO
+  comparison (3-year costs including hidden costs), the performance
+  benchmark plan, the migration risk assessment per vendor, the
+  recommendation with justification, and the executive summary.
+
+assertions:
+  - type: llm_judge
+    criteria: "TCO analysis includes hidden costs — considers not just instance pricing but also storage, IOPS, data transfer, backup storage, DBA time reduction (or increase), migration cost, training, and the cost of vendor lock-in. 3-year totals are calculated for each option"
+    weight: 0.35
+    description: "Comprehensive TCO analysis"
+  - type: llm_judge
+    criteria: "Evaluation is balanced — each vendor has pros and cons documented, the recommendation is justified by the company's specific needs (not just cheapest), and lock-in risk is honestly assessed (Aurora's proprietary storage layer, Citus's distributed query limitations)"
+    weight: 0.35
+    description: "Balanced vendor evaluation"
+  - type: llm_judge
+    criteria: "Migration risk and operational impact are assessed — estimates migration timeline per vendor, identifies features that don't transfer (extensions, custom configs), and calculates DBA staffing changes (managed services may reduce 3 DBAs to 1, but requires cloud expertise)"
+    weight: 0.30
+    description: "Migration and operational assessment"

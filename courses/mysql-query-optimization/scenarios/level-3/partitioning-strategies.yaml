@@ -1,0 +1,83 @@
+meta:
+  id: partitioning-strategies
+  level: 3
+  course: mysql-query-optimization
+  type: output
+  description: "Design MySQL partitioning — implement RANGE, LIST, HASH, and KEY partitioning with partition pruning for large table performance"
+  tags: [MySQL, partitioning, RANGE, LIST, HASH, partition-pruning, advanced]
+
+state: {}
+
+trigger: |
+  Your events table has grown to 2 billion rows (800GB) and queries
+  are slowing down despite proper indexing. The table receives 50K
+  inserts per second and most queries filter by date range. The DBA
+  team proposes partitioning but the engineers have concerns about
+  complexity.
+
+  Current table:
+  CREATE TABLE events (
+    id BIGINT AUTO_INCREMENT,
+    tenant_id INT NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    payload JSON,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_tenant_date (tenant_id, created_at),
+    INDEX idx_type_date (event_type, created_at)
+  ) ENGINE=InnoDB;
+
+  Query patterns:
+  1. (80%) Recent events by tenant:
+     WHERE tenant_id = ? AND created_at >= NOW() - INTERVAL 7 DAY
+  2. (15%) Events by type and date:
+     WHERE event_type = ? AND created_at BETWEEN ? AND ?
+  3. (5%) Data cleanup:
+     DELETE FROM events WHERE created_at < NOW() - INTERVAL 90 DAY
+
+  Partitioning options considered:
+  A. RANGE by created_at (monthly partitions):
+     PARTITION BY RANGE (TO_DAYS(created_at)) (
+       PARTITION p202501 VALUES LESS THAN (TO_DAYS('2025-02-01')),
+       PARTITION p202502 VALUES LESS THAN (TO_DAYS('2025-03-01')),
+       ...
+     )
+
+  B. LIST by tenant_id:
+     PARTITION BY LIST (tenant_id) (
+       PARTITION p_small VALUES IN (1,2,3,...100),
+       PARTITION p_medium VALUES IN (101,102,...200),
+       ...
+     )
+
+  C. HASH by tenant_id:
+     PARTITION BY HASH (tenant_id) PARTITIONS 16;
+
+  D. Composite: RANGE by date, sub-partitioned by tenant (not supported
+     natively in MySQL — would need application-level sharding)
+
+  Constraints:
+  - PRIMARY KEY must include the partition key in MySQL
+  - This means changing PK from (id) to (id, created_at) for RANGE
+  - UNIQUE indexes must include the partition key
+  - Foreign keys not supported on partitioned tables
+
+  Task: Design the partitioning strategy. Write: the recommended
+  partitioning scheme with justification, the table DDL changes
+  (including PK modification), the partition pruning explanation (how
+  queries benefit), the maintenance plan (adding/dropping partitions),
+  and the data cleanup improvement (DROP PARTITION vs DELETE).
+
+assertions:
+  - type: llm_judge
+    criteria: "RANGE partitioning by date is recommended — matches the dominant query pattern (80% filter by date range), enables partition pruning (queries touch only relevant monthly partitions instead of scanning 2B rows), and the 90-day cleanup becomes DROP PARTITION (instant) instead of DELETE (hours of I/O). Justifies why LIST/HASH are less optimal for this workload"
+    weight: 0.35
+    description: "RANGE partitioning justified"
+  - type: llm_judge
+    criteria: "PK modification is addressed — explains that MySQL requires partition key in the PK, so PK changes from (id) to (id, created_at). Discusses the impact: auto_increment still works but is now only unique per partition, UNIQUE constraints must include created_at, and foreign keys referencing this table need updates. Shows the DDL"
+    weight: 0.35
+    description: "PK modification addressed"
+  - type: llm_judge
+    criteria: "Maintenance plan is practical — includes automated partition creation (add new monthly partitions ahead of time via event scheduler or cron), partition pruning verification (EXPLAIN PARTITIONS shows which partitions are accessed), and data lifecycle management (DROP PARTITION for old data is instant vs DELETE which generates massive undo logs)"
+    weight: 0.30
+    description: "Practical maintenance plan"

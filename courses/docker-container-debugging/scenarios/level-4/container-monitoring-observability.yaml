@@ -1,0 +1,63 @@
+meta:
+  id: container-monitoring-observability
+  level: 4
+  course: docker-container-debugging
+  type: output
+  description: "Design container monitoring and observability — implement metrics, logging, and tracing for containerized applications at enterprise scale"
+  tags: [Docker, monitoring, observability, Prometheus, logging, tracing, expert]
+
+state: {}
+
+trigger: |
+  Your containerized platform has 100+ services. The current monitoring
+  is "docker stats on the host and hope for the best." Last month,
+  three production incidents were discovered by customers, not by your
+  team. You need to design a comprehensive observability strategy.
+
+  Current state:
+  - No centralized metrics — each team checks docker stats manually
+  - Logs go to docker logs (json-file driver) — no aggregation
+  - No distributed tracing — debugging request flows across services
+    requires correlating timestamps across multiple docker logs outputs
+  - Alert on "server down" only — no application-level alerts
+  - Post-incident: "we don't know what happened because logs rotated"
+
+  Target state (three pillars of observability):
+
+  1. Metrics — Prometheus + cAdvisor + Grafana:
+     - cAdvisor exports container metrics (CPU, memory, disk, network)
+     - Application metrics via /metrics endpoints (RED method)
+     - Grafana dashboards per service and per host
+     - Alerts: container restart > 3/hour, memory > 80%, error rate > 1%
+
+  2. Logging — Fluentd/Fluent Bit + Elasticsearch + Kibana:
+     - Structured JSON logging from applications
+     - Docker logging driver: fluentd (forward to aggregator)
+     - Centralized search, retention policies, log correlation
+     - Keep 30 days hot, 90 days warm, 1 year cold storage
+
+  3. Tracing — OpenTelemetry + Jaeger:
+     - Distributed trace propagation across services
+     - Trace ID in logs for correlation
+     - Latency analysis, dependency mapping
+     - Sampling strategy: 100% for errors, 10% for normal traffic
+
+  Task: Design the container observability strategy. Write: the three
+  pillars approach (metrics, logs, traces), tooling selection and
+  architecture, Docker-specific considerations (logging drivers, cAdvisor,
+  container labels for discovery), alert design (what to alert on),
+  and cost/complexity trade-offs for different organization sizes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Three pillars architecture is explained — Metrics: Prometheus scrapes cAdvisor (container metrics) and application /metrics endpoints. Service discovery via Docker labels or DNS. Grafana for visualization. Logging: structured JSON from apps, collected via Docker logging driver (fluentd) or sidecar, shipped to Elasticsearch/Loki. Tracing: OpenTelemetry SDK in applications, export to Jaeger/Tempo. Correlation: trace ID embedded in logs and metrics labels connects all three"
+    weight: 0.35
+    description: "Three pillars"
+  - type: llm_judge
+    criteria: "Docker-specific monitoring is covered — cAdvisor runs as privileged container, mounts /var/lib/docker and /sys for metrics. Docker logging drivers determine log pipeline: json-file (local only), fluentd (forward), journald (systemd). Dual logging (Docker 20.10+) allows docker logs to work alongside remote driver. Container labels for Prometheus service discovery. Health check status as a metric. docker events stream for container lifecycle tracking. Monitor the Docker daemon itself (memory, goroutines)"
+    weight: 0.35
+    description: "Docker-specific monitoring"
+  - type: llm_judge
+    criteria: "Alerting and scaling are practical — alert on symptoms not causes: error rate, latency percentile (p99), saturation (CPU/memory %). Avoid alert fatigue: page only for customer-impacting issues. Container-specific alerts: restart loops, OOM kills, health check failures, disk pressure. Scaling considerations: Prometheus needs storage planning, Elasticsearch is resource-intensive. For smaller orgs: Grafana Loki (lighter than Elasticsearch), Grafana Tempo (lighter than Jaeger). Cost grows with retention and cardinality"
+    weight: 0.30
+    description: "Alerting and scaling"

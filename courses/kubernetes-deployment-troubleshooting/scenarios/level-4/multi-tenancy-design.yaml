@@ -1,0 +1,55 @@
+meta:
+  id: multi-tenancy-design
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes multi-tenancy strategy — namespace isolation, RBAC, NetworkPolicy, ResourceQuota, and tenant troubleshooting workflows"
+  tags: [Kubernetes, multi-tenancy, isolation, RBAC, namespace, security, expert]
+
+state: {}
+
+trigger: |
+  Your company is consolidating from 12 separate Kubernetes clusters
+  (one per team) to 3 shared clusters. Each team currently has full
+  cluster-admin access. Leadership wants to reduce infrastructure costs
+  by 40% through better utilization.
+
+  Teams and their requirements:
+  | Team        | Services | CPU/Mem  | Compliance    | Access Level  |
+  |------------|----------|----------|---------------|---------------|
+  | Platform   | 15       | 32c/64G  | SOC2          | Cluster admin |
+  | Payments   | 8        | 16c/32G  | PCI-DSS       | Namespace     |
+  | ML/Data    | 6        | 64c/256G | None          | Namespace+GPU |
+  | Frontend   | 12       | 8c/16G   | None          | Namespace     |
+  | Backend    | 20       | 24c/48G  | None          | Namespace     |
+  | Mobile API | 10       | 16c/32G  | None          | Namespace     |
+
+  Concerns raised by teams:
+  1. Payments team: "PCI-DSS requires network isolation. How do we
+     ensure no other team's pods can reach our services?"
+  2. ML team: "We need GPU nodes. Other teams shouldn't schedule on them."
+  3. All teams: "We need to deploy without waiting for a platform team
+     ticket. We currently have cluster-admin."
+  4. Platform team: "How do we prevent one team from consuming all
+     cluster resources during a traffic spike?"
+  5. Security: "How do we audit who did what across all tenants?"
+
+  Task: Design a multi-tenancy strategy addressing all concerns. Write:
+  namespace isolation architecture (RBAC, NetworkPolicy, ResourceQuota
+  per team), PCI-DSS compliance approach for payments namespace, GPU
+  node isolation with taints/tolerations, self-service deployment model
+  (GitOps per team), resource fairness and priority, and audit logging.
+
+assertions:
+  - type: llm_judge
+    criteria: "Namespace isolation is comprehensive — each team gets dedicated namespace(s) with: RBAC roles scoped to their namespace (not cluster-admin), NetworkPolicy default-deny with allow rules only for intra-team and approved cross-team traffic, ResourceQuotas matching their allocation, LimitRanges for per-pod defaults. Platform team retains cluster-level access for infrastructure management"
+    weight: 0.35
+    description: "Namespace isolation"
+  - type: llm_judge
+    criteria: "Specific requirements are addressed — PCI-DSS: dedicated node pool with taints, strict NetworkPolicy (no ingress from non-payment namespaces), encrypted secrets, audit logging on all API access. GPU isolation: taints on GPU nodes (dedicated=gpu:NoSchedule), only ML namespace pods have tolerations. Self-service: ArgoCD AppProjects per team (can deploy to their namespace only). Priority classes for critical workloads"
+    weight: 0.35
+    description: "Specific requirements"
+  - type: llm_judge
+    criteria: "Operational model is practical — GitOps per team: each team owns their manifests in Git, ArgoCD syncs to their namespace. Resource fairness: ResourceQuotas prevent resource hogging, PriorityClasses ensure critical workloads (payments) aren't preempted. Audit: enable Kubernetes audit logging, ship to central SIEM, configure audit policy to log all write operations. Consider vCluster for teams needing CRDs or more isolation"
+    weight: 0.30
+    description: "Operational model"

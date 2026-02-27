@@ -1,0 +1,62 @@
+meta:
+  id: gitops-drift-detection
+  level: 3
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Debug GitOps drift — diagnose when cluster state diverges from Git and how ArgoCD/Flux detect and reconcile drift"
+  tags: [Kubernetes, GitOps, ArgoCD, Flux, drift-detection, reconciliation, advanced]
+
+state: {}
+
+trigger: |
+  Your ArgoCD dashboard shows several applications as "OutOfSync" and
+  one as "Degraded":
+
+  ArgoCD Applications:
+  | NAME          | SYNC STATUS | HEALTH STATUS | MESSAGE                |
+  |---------------|-------------|---------------|------------------------|
+  | api-gateway   | OutOfSync   | Healthy       | live != desired        |
+  | user-service  | Synced      | Degraded      | 0/3 pods available     |
+  | order-service | OutOfSync   | Healthy       | manual override        |
+  | monitoring    | Unknown     | Unknown       | ComparisonError        |
+
+  Investigation:
+
+  1. api-gateway (OutOfSync, Healthy) — someone used kubectl edit to
+     change the replica count from 2 to 5 directly in the cluster.
+     ArgoCD detects the drift but auto-sync is disabled, so it shows
+     OutOfSync without correcting it.
+
+  2. user-service (Synced, Degraded) — Git has the correct manifest but
+     the pods are failing. ArgoCD shows Synced because the desired state
+     matches Git, but the health check shows Degraded because pods
+     aren't running. The issue is in the application code, not GitOps.
+
+  3. order-service (OutOfSync, Healthy) — a Helm values override was
+     applied directly, bypassing the Git repo. The rendered manifests
+     differ from what Git produces.
+
+  4. monitoring (Unknown, ComparisonError) — ArgoCD can't compare the
+     desired state because a CRD was deleted from the cluster, making
+     the custom resources unresolvable.
+
+  Task: Explain GitOps drift detection and reconciliation. Write: what
+  drift means (cluster state differs from Git source of truth), how
+  ArgoCD detects drift (periodic comparison), sync vs health status,
+  auto-sync vs manual sync, why manual kubectl changes are problematic
+  in GitOps, how to handle legitimate emergency changes, and CRD
+  dependency management.
+
+assertions:
+  - type: llm_judge
+    criteria: "Drift detection is explained — ArgoCD periodically compares live cluster state with the desired state from Git. OutOfSync means live != Git. Sync status and health status are independent: an app can be Synced but Degraded (code bug), or OutOfSync but Healthy (manual scale change). Auto-sync automatically corrects drift by applying Git state. Manual sync requires human approval"
+    weight: 0.35
+    description: "Drift detection"
+  - type: llm_judge
+    criteria: "Manual changes problem is addressed — kubectl edit/apply bypasses Git, creating drift that ArgoCD flags. In GitOps, ALL changes should go through Git (PR → merge → sync). For emergencies: make the change directly BUT immediately commit the same change to Git so the source of truth is updated. ArgoCD self-heal option auto-reverts manual changes. Flux uses similar reconciliation loop"
+    weight: 0.35
+    description: "Manual changes problem"
+  - type: llm_judge
+    criteria: "CRD and operational issues are covered — CRD deletion causes ComparisonError because ArgoCD can't parse custom resources without the CRD. Fix: ensure CRDs are managed by ArgoCD with proper sync waves (CRDs before resources). Use app-of-apps pattern for dependency ordering. Monitor ArgoCD itself for health. Use argocd app diff to see what changed, argocd app sync --dry-run to preview"
+    weight: 0.30
+    description: "CRD and operations"

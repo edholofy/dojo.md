@@ -1,0 +1,77 @@
+meta:
+  id: advanced-debugging-shift
+  level: 3
+  course: docker-container-debugging
+  type: output
+  description: "Combined advanced debugging shift — diagnose a production Docker environment with daemon, security, networking, storage, and deployment issues simultaneously"
+  tags: [Docker, troubleshooting, combined, shift-simulation, advanced]
+
+state: {}
+
+trigger: |
+  You're called in for an urgent production issue. The Docker host
+  runs 15 services and "everything is degraded":
+
+  $ docker system df
+  TYPE            TOTAL   ACTIVE  SIZE      RECLAIMABLE
+  Images          200+    15      85GB      62GB (72%)
+  Containers      45      15      25GB      18GB
+  Local Volumes   80      20      120GB     85GB (70%)
+  Build Cache     -       -       45GB      45GB
+
+  275GB consumed. Disk is at 94%.
+
+  $ docker stats --no-stream
+  CONTAINER    CPU%    MEM USAGE/LIMIT    MEM%
+  api-1        180%    3.8GiB/4GiB        95%
+  api-2        175%    3.7GiB/4GiB        92%
+  worker-1     85%     1.2GiB/2GiB        60%
+  postgres     25%     2.1GiB/4GiB        52%
+  redis        5%      512MiB/1GiB        50%
+  nginx        2%      128MiB/256MiB      50%
+
+  Investigation reveals 6 interconnected issues:
+
+  1. API containers at 95% memory — memory leak in a recent deployment.
+     The previous image was tagged :latest and overwritten. No rollback
+     available. Must debug and fix forward.
+
+  2. Disk at 94% — 85GB of orphaned volumes from old database migrations
+     that were never cleaned up. 45GB of build cache. Containers can't
+     write logs.
+
+  3. Worker containers failing intermittently — overlay network between
+     worker and Redis has MTU issues. Large payloads fail, small ones
+     succeed. tcpdump shows fragmented packets.
+
+  4. Security audit alert — 3 containers running as root with
+     --privileged flag. One container has a writable root filesystem
+     with a suspicious file: /tmp/.backdoor.sh
+
+  5. Nginx proxy returns 502 for 10% of requests — during rolling
+     updates, traffic is routed to containers that haven't finished
+     starting. No health check-based routing.
+
+  6. Docker daemon itself is consuming 8GB of memory due to a known
+     bug with container event logging. Needs daemon restart but
+     live-restore isn't configured.
+
+  Task: Walk through the complete triage and resolution. Write: the
+  priority order (security incident first!), immediate stabilization
+  steps, disk cleanup (safe vs dangerous commands), network debugging,
+  deployment fix, daemon maintenance, and the post-incident action
+  items for long-term fixes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority triage is correct — (1) SECURITY FIRST: investigate the suspicious /tmp/.backdoor.sh file, check for container escape indicators, audit --privileged containers, preserve evidence before cleanup. (2) STABILITY: address 94% disk to prevent cascading failures — safe prune of build cache and dangling images first. (3) MEMORY: restart leaking API containers as immediate mitigation. (4) Fix networking MTU issue. (5) Fix deployment process for zero-downtime. (6) Plan daemon restart"
+    weight: 0.35
+    description: "Priority triage"
+  - type: llm_judge
+    criteria: "Immediate fixes and long-term actions are covered — immediate: quarantine compromised containers (don't delete — preserve for forensics), docker builder prune and docker image prune for safe disk recovery, restart API containers with memory limits, fix MTU on overlay network. Long-term: remove --privileged, implement non-root containers, tag images with versions (not :latest), configure live-restore in daemon.json, add health check-based routing, set up automated prune cron, implement monitoring and alerting"
+    weight: 0.35
+    description: "Fixes and actions"
+  - type: llm_judge
+    criteria: "Post-incident improvements are systematic — deploy monitoring: Prometheus + cAdvisor for container metrics, alert on memory/disk thresholds. Security: scan images in CI, enforce non-root, drop capabilities, read-only filesystems. Operations: automated cleanup policies, image retention limits, volume backup before prune. Deployment: rolling updates with health checks, image versioning, rollback capability. Documentation: runbook for disk emergencies, security incident response, update procedures"
+    weight: 0.30
+    description: "Post-incident improvements"

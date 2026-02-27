@@ -1,0 +1,71 @@
+meta:
+  id: composite-index-design
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Design composite indexes — understand column ordering, leftmost prefix rule, and how to cover multiple query patterns with fewer indexes"
+  tags: [MySQL, composite-index, column-ordering, leftmost-prefix, intermediate]
+
+state: {}
+
+trigger: |
+  Your e-commerce application has 8 different query patterns on the
+  orders table (50M rows), and the current 12 single-column indexes
+  are consuming 15GB of storage while not covering the most common
+  query patterns effectively.
+
+  The 8 query patterns (ordered by frequency):
+
+  1. (50K/day) Order lookup by customer:
+     WHERE customer_id = ? ORDER BY created_at DESC LIMIT 20
+
+  2. (30K/day) Recent orders by status:
+     WHERE status = ? AND created_at >= ? ORDER BY created_at DESC
+
+  3. (20K/day) Customer orders by status:
+     WHERE customer_id = ? AND status = ?
+
+  4. (10K/day) Date range with status:
+     WHERE created_at BETWEEN ? AND ? AND status = ?
+
+  5. (5K/day) Admin search:
+     WHERE status = ? AND total >= ? ORDER BY total DESC
+
+  6. (2K/day) Customer analytics:
+     SELECT customer_id, COUNT(*), SUM(total)
+     FROM orders WHERE created_at >= ? GROUP BY customer_id
+
+  7. (1K/day) Fulfillment queue:
+     WHERE status = 'pending' AND warehouse_id = ?
+     ORDER BY priority DESC, created_at ASC
+
+  8. (500/day) Revenue report:
+     SELECT DATE(created_at), SUM(total)
+     WHERE created_at BETWEEN ? AND ?
+     GROUP BY DATE(created_at)
+
+  Current single-column indexes:
+  idx_customer_id, idx_status, idx_created_at, idx_total,
+  idx_warehouse_id, idx_priority (plus 6 more on other columns)
+
+  Goal: Replace the 12 indexes with 4-5 well-designed composite indexes
+  that cover all 8 query patterns.
+
+  Task: Design the composite index strategy. Write: the indexes you
+  would create (with column order), which query patterns each index
+  serves, the leftmost prefix rule (why column order matters), how to
+  handle conflicting sort orders, and the storage savings estimate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Composite indexes are well-designed — proposes 4-5 indexes that cover all 8 query patterns using the leftmost prefix rule. For example: (customer_id, status, created_at), (status, created_at), (status, warehouse_id, priority, created_at). Column ordering follows equality-first, then range/sort"
+    weight: 0.35
+    description: "Well-designed composite indexes"
+  - type: llm_judge
+    criteria: "Leftmost prefix rule is explained — MySQL can use a composite index for queries that filter on the leftmost columns of the index. An index on (A, B, C) can serve queries on (A), (A, B), and (A, B, C) but NOT (B, C) or (C). This is why column order matters and why one composite index can serve multiple query patterns"
+    weight: 0.35
+    description: "Leftmost prefix rule"
+  - type: llm_judge
+    criteria: "Trade-offs are discussed — explains how equality columns should come before range columns in the index, why conflicting sort orders may need separate indexes, the write overhead of composite indexes (each insert/update must update all indexes), and the estimated storage reduction from 12 single-column to 4-5 composite indexes"
+    weight: 0.30
+    description: "Trade-offs discussed"

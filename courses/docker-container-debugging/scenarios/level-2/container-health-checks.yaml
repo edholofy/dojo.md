@@ -1,0 +1,73 @@
+meta:
+  id: container-health-checks
+  level: 2
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker health check issues — diagnose failing health checks, configure timing parameters, and design effective health endpoints"
+  tags: [Docker, health-checks, HEALTHCHECK, monitoring, reliability, intermediate]
+
+state: {}
+
+trigger: |
+  Your container keeps showing as "unhealthy" even though the
+  application works fine:
+
+  $ docker ps
+  CONTAINER ID   IMAGE     STATUS                   PORTS
+  a1b2c3d4e5f6   myapp     Up 5m (unhealthy)        8080/tcp
+
+  $ docker inspect myapp --format='{{json .State.Health}}' | jq
+  {
+    "Status": "unhealthy",
+    "FailingStreak": 5,
+    "Log": [
+      {
+        "Start": "2025-12-01T10:05:00Z",
+        "End": "2025-12-01T10:05:10Z",
+        "ExitCode": 1,
+        "Output": "  % Total    % Received\n  OCI runtime exec failed: exec failed: unable to start container process: exec: \"curl\": executable file not found in $PATH"
+      }
+    ]
+  }
+
+  The health check uses curl but the image doesn't have curl installed!
+
+  Dockerfile:
+  FROM node:20-alpine
+  HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+  ...
+
+  Alpine doesn't include curl. Options:
+  1. Install curl: RUN apk add --no-cache curl
+  2. Use wget (included in alpine): CMD wget -q -O- http://localhost:3000/health
+  3. Use Node.js: CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
+  After fixing, a second issue: the app takes 45 seconds to start but
+  the health check starts immediately with retries=3 and interval=30s.
+  After 90s (3 × 30s), it's marked unhealthy during startup.
+
+  Fix: Add start_period:
+  HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=3 \
+    CMD wget -q -O- http://localhost:3000/health || exit 1
+
+  Task: Explain Docker health checks in depth. Write: the HEALTHCHECK
+  instruction parameters (interval, timeout, retries, start-period,
+  start-interval), health check states (starting, healthy, unhealthy),
+  common health check failures (missing tools, wrong endpoint, timing),
+  how to design good health check endpoints, and health check debugging
+  with docker inspect.
+
+assertions:
+  - type: llm_judge
+    criteria: "HEALTHCHECK parameters are explained — interval: time between checks (default 30s), timeout: max time for check to complete (default 30s), retries: consecutive failures before unhealthy (default 3), start-period: grace period where failures don't count (default 0s), start-interval: check frequency during start-period (default 5s, Docker 25+). Total startup tolerance = start-period + (retries × interval)"
+    weight: 0.35
+    description: "HEALTHCHECK parameters"
+  - type: llm_judge
+    criteria: "Common failures are diagnosed — missing tools in image (curl/wget not installed), health endpoint returns error (wrong port, path, or status code), timing issues (app starts slowly, health check fails during startup), health check command syntax error (shell vs exec form), wrong process checked (health check hits sidecar not main app). Debug with docker inspect --format='{{json .State.Health}}'"
+    weight: 0.35
+    description: "Common failures"
+  - type: llm_judge
+    criteria: "Health endpoint design is covered — good health check: checks that the process can handle requests (not just that it's running), checks critical dependencies (database connection, cache), responds quickly (< 1 second), returns appropriate HTTP status code. Bad health check: checks that are too expensive (full database query), checks external services (makes health dependent on others), no timeout"
+    weight: 0.30
+    description: "Health endpoint design"

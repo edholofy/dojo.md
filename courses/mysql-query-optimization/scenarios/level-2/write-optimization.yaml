@@ -1,0 +1,63 @@
+meta:
+  id: write-optimization
+  level: 2
+  course: mysql-query-optimization
+  type: output
+  description: "Optimize MySQL writes — use bulk INSERT, LOAD DATA INFILE, transaction batching, and InnoDB flush settings for high-throughput writes"
+  tags: [MySQL, InnoDB, write-optimization, bulk-insert, LOAD-DATA, intermediate]
+
+state: {}
+
+trigger: |
+  Your data pipeline needs to insert 10 million rows per hour into MySQL.
+  Currently it takes 4 hours — you need to make it fit within 1 hour.
+
+  Current approach (slow):
+  for each row in data:
+      cursor.execute("INSERT INTO events VALUES (%s, %s, %s, ...)", row)
+      connection.commit()
+
+  Time: 4 hours for 10M rows (700 inserts/second)
+
+  Settings: All defaults (innodb_flush_log_at_trx_commit=1, autocommit=1)
+
+  Table: events (20 columns, 3 secondary indexes)
+  - PRIMARY KEY (id) — auto_increment BIGINT
+  - INDEX idx_user (user_id)
+  - INDEX idx_type_date (event_type, created_at)
+  - INDEX idx_session (session_id)
+
+  Benchmarks you've run:
+  A. Single-row INSERT with autocommit: 700/sec (current)
+  B. Multi-row INSERT (1000 per statement): 15,000/sec
+  C. Multi-row INSERT + batch commit (10K per txn): 50,000/sec
+  D. LOAD DATA INFILE: 200,000/sec
+  E. LOAD DATA INFILE + disabled indexes: 500,000/sec
+
+  The DBA warns about trade-offs:
+  1. innodb_flush_log_at_trx_commit=2 speeds up 30% but risks 1 second
+     of data loss on OS crash
+  2. Disabling unique_checks and foreign_key_checks speeds up 20% but
+     risks data integrity if data is bad
+  3. Dropping secondary indexes before load and rebuilding after is
+     faster but table is unusable during rebuild
+
+  Task: Design the write optimization strategy for the data pipeline.
+  Write: why single-row inserts are slow (per-row commit overhead),
+  the multi-row INSERT technique and optimal batch size, LOAD DATA
+  INFILE usage and best practices, the InnoDB flush settings trade-off,
+  and the index management strategy during bulk loads.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause of slow writes is explained — single-row inserts with autocommit=1 flush the redo log to disk on every INSERT (fsync per row). With 10M rows, that's 10M fsyncs. Batching reduces fsyncs: 1000-row batches = 10K fsyncs, transaction batching (10K rows per commit) = 1K fsyncs. LOAD DATA INFILE uses internal bulk loading with minimal logging"
+    weight: 0.35
+    description: "Write bottleneck explained"
+  - type: llm_judge
+    criteria: "Optimization techniques are ranked correctly — LOAD DATA INFILE is fastest (200K/sec), followed by multi-row INSERT with batch commits (50K/sec), then multi-row INSERT with autocommit (15K/sec). Explains optimal batch size (1000-10000 rows per INSERT statement, 10K-100K rows per transaction), and how innodb_flush_log_at_trx_commit=2 provides a balanced speed/safety trade-off"
+    weight: 0.35
+    description: "Techniques ranked correctly"
+  - type: llm_judge
+    criteria: "Index management strategy is practical — for large bulk loads, consider: (1) disable secondary indexes (ALTER TABLE DISABLE KEYS for MyISAM, or drop/recreate for InnoDB), (2) load data, (3) rebuild indexes. For ongoing ingestion, keep indexes but use INSERT IGNORE or ON DUPLICATE KEY UPDATE. Quantifies the trade-off between index maintenance overhead and query availability"
+    weight: 0.30
+    description: "Index management strategy"

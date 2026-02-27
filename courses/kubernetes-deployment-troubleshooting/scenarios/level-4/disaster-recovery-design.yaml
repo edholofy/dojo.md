@@ -1,0 +1,56 @@
+meta:
+  id: disaster-recovery-design
+  level: 4
+  course: kubernetes-deployment-troubleshooting
+  type: output
+  description: "Design Kubernetes disaster recovery strategy — backup architecture, recovery procedures, RPO/RTO targets, and DR testing"
+  tags: [Kubernetes, disaster-recovery, backup, Velero, RPO, RTO, expert]
+
+state: {}
+
+trigger: |
+  After a near-miss incident where an engineer accidentally deleted a
+  production namespace, leadership wants a comprehensive disaster
+  recovery strategy. Currently there are no cluster backups.
+
+  Requirements from leadership:
+  - RPO: Maximum 1 hour of data loss for critical services
+  - RTO: Maximum 15 minutes to restore critical services
+  - Scope: 3 production clusters, 2 staging, 150+ namespaces
+  - Compliance: SOC2 requires documented DR procedures and annual testing
+  - Budget: $15K/month for DR infrastructure
+
+  Current gaps:
+  1. No etcd backups — complete cluster loss means rebuilding from scratch
+  2. No PV snapshots — database data would be lost entirely
+  3. Manifests are in Git but not all (some resources created via kubectl)
+  4. No DR runbook exists — team has never practiced recovery
+  5. Secrets are stored only in the cluster (not in external vault)
+  6. No cross-region replication for any stateful services
+
+  Disaster scenarios to plan for:
+  A. Accidental namespace deletion (most common)
+  B. etcd corruption or loss
+  C. Complete cluster failure
+  D. Regional outage (entire AZ/region down)
+  E. Ransomware/security breach requiring clean rebuild
+
+  Task: Design a comprehensive Kubernetes DR strategy. Write: the backup
+  architecture (Velero + etcd snapshots + PV snapshots), recovery
+  procedures for each scenario, RPO/RTO analysis and trade-offs, DR
+  testing plan (chaos engineering, game days), secrets management for
+  DR, and the cost analysis for the proposed solution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Backup architecture is comprehensive — Velero for Kubernetes resource backup (scheduled, namespace-scoped), etcd snapshots for cluster state (every 30 min for 1-hour RPO), CSI volume snapshots for persistent data, cross-region backup storage (S3 cross-region replication). GitOps as source of truth for declarative resources. External secrets manager (HashiCorp Vault) so secrets survive cluster loss"
+    weight: 0.35
+    description: "Backup architecture"
+  - type: llm_judge
+    criteria: "Recovery procedures per scenario are defined — (A) Namespace deletion: Velero restore with namespace filter (< 5 min RTO), (B) etcd corruption: restore from etcd snapshot (10-15 min), (C) Cluster failure: provision new cluster + Velero full restore (30-60 min), (D) Regional outage: failover to DR cluster with pre-provisioned capacity (< 15 min with warm standby), (E) Security breach: clean cluster from IaC + restore verified backups (2-4 hours)"
+    weight: 0.35
+    description: "Recovery procedures"
+  - type: llm_judge
+    criteria: "Testing and cost analysis are practical — DR testing: quarterly game days simulating each scenario, automated backup verification (restore to test cluster nightly), chaos engineering with Litmus/Chaos Mesh for ongoing resilience. Cost breakdown: Velero + S3 storage ($2-3K/mo), cross-region replication ($3-5K/mo), warm standby cluster ($5-7K/mo). Justification: 1 hour of downtime costs more than a year of DR infrastructure"
+    weight: 0.30
+    description: "Testing and cost"

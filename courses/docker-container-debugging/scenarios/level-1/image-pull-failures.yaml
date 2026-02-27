@@ -1,0 +1,68 @@
+meta:
+  id: image-pull-failures
+  level: 1
+  course: docker-container-debugging
+  type: output
+  description: "Debug Docker image pull failures — diagnose authentication errors, rate limits, and wrong image references"
+  tags: [Docker, image-pull, registry, authentication, Docker-Hub, beginner]
+
+state: {}
+
+trigger: |
+  You can't pull or run Docker images and see different error messages:
+
+  Scenario 1 — Image not found:
+  $ docker pull mycompany/backend:v2.1.0
+  Error response from daemon: pull access denied for mycompany/backend,
+  repository does not exist or may require 'docker login'
+
+  Is the image name wrong? Is it a private repository?
+  The image is on a private registry (ghcr.io), not Docker Hub:
+  $ docker pull ghcr.io/mycompany/backend:v2.1.0
+
+  Scenario 2 — Authentication required:
+  $ docker pull ghcr.io/mycompany/backend:v2.1.0
+  Error response from daemon: Head "https://ghcr.io/v2/mycompany/backend/
+  manifests/v2.1.0": unauthorized: authentication required
+
+  $ docker login ghcr.io -u myuser
+  Login Succeeded
+
+  $ docker pull ghcr.io/mycompany/backend:v2.1.0
+  v2.1.0: Pulling from mycompany/backend
+
+  Scenario 3 — Docker Hub rate limit:
+  $ docker pull nginx:latest
+  Error response from daemon: toomanyrequests: You have reached your
+  pull rate limit. You may increase the limit by authenticating.
+
+  Docker Hub limits anonymous pulls to 100/6h and authenticated to
+  200/6h. In CI/CD, this gets exhausted fast.
+
+  Scenario 4 — Platform mismatch:
+  $ docker pull myimage:latest
+  WARNING: image with reference myimage:latest was found but does not
+  match the specified platform (linux/arm64)
+
+  You're on an Apple Silicon Mac (ARM) but the image is only built
+  for linux/amd64. The container will run via emulation (slow) or fail.
+
+  Task: Explain Docker image pull issues. Write: how Docker resolves
+  image references (registry/repository:tag), authentication (docker
+  login, credential stores), Docker Hub rate limits and workarounds,
+  image tags vs digests, multi-platform images, and how to verify an
+  image exists before pulling.
+
+assertions:
+  - type: llm_judge
+    criteria: "Image reference format is explained — full format: registry/repository:tag. If no registry specified, Docker Hub is assumed. If no tag, :latest is assumed. Private registries require full URL (ghcr.io/org/image:tag, registry.company.com/image:tag). Common mistake: forgetting the registry prefix for non-Docker Hub images"
+    weight: 0.35
+    description: "Image references"
+  - type: llm_judge
+    criteria: "Authentication and rate limits are covered — docker login stores credentials in ~/.docker/config.json (can use credential helpers for security). Docker Hub rate limits: 100 pulls/6h anonymous, 200/6h authenticated. Workarounds: authenticate in CI/CD, use a pull-through cache or mirror, use private registry. For GHCR/ECR/GCR, use specific login commands or credential helpers"
+    weight: 0.35
+    description: "Auth and rate limits"
+  - type: llm_judge
+    criteria: "Tags, digests, and platforms are explained — tags are mutable (latest can change), digests are immutable (sha256:abc...). Use digests for reproducible builds. Multi-platform images: docker manifest inspect shows supported platforms. --platform flag to pull specific architecture. Apple Silicon users: some images aren't built for arm64, causing emulation overhead or failures"
+    weight: 0.30
+    description: "Tags and platforms"

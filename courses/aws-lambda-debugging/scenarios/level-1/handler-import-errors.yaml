@@ -1,0 +1,71 @@
+meta:
+  id: handler-import-errors
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda handler and import errors — diagnose module not found, handler not found, and dependency packaging issues"
+  tags: [AWS, Lambda, handler, import, module-not-found, packaging, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails immediately on invocation:
+
+  {
+    "errorType": "Runtime.ImportModuleError",
+    "errorMessage": "Unable to import module 'handler': No module named 'requests'"
+  }
+
+  The function works locally but fails in Lambda. The issue: the
+  'requests' library isn't included in the deployment package.
+
+  Lambda runtimes only include standard library modules. Third-party
+  dependencies must be packaged with your code:
+
+  # Python — create deployment package with dependencies:
+  pip install requests -t ./package/
+  cd package && zip -r ../deployment.zip . && cd ..
+  zip deployment.zip handler.py
+
+  Another common error:
+  {
+    "errorType": "Runtime.HandlerNotFound",
+    "errorMessage": "Handler 'app.handler' missing on module 'app'"
+  }
+
+  Causes:
+  1. Wrong handler configuration — Lambda handler format is file.function
+     (Python: handler.lambda_handler, Node: index.handler)
+  2. File is in a subdirectory but handler doesn't include the path
+     (src/handler.lambda_handler won't work — zip must have handler.py
+     at the root)
+  3. Typo in function name
+
+  Node.js variant:
+  {
+    "errorType": "Runtime.UserCodeSyntaxError",
+    "errorMessage": "SyntaxError: Cannot use import statement outside a module"
+  }
+
+  Using ES modules (import/export) requires either:
+  - File extension .mjs, or
+  - "type": "module" in package.json
+
+  Task: Explain Lambda handler and import debugging. Write: the handler
+  format for each runtime (Python, Node.js, Java), common import/module
+  errors and their causes, how to package dependencies correctly (zip,
+  layers, container images), and the deployment package structure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Handler format is explained — Python: file_name.function_name (e.g., handler.lambda_handler). Node.js: file_name.export_name (e.g., index.handler). Java: package.Class::method. The handler file must be at the root of the zip or in the path specified. Runtime.HandlerNotFound: file or function doesn't exist at the expected location. Runtime.ImportModuleError: dependency not included in package. Always test with lambda invoke locally (SAM CLI) before deploying"
+    weight: 0.35
+    description: "Handler format"
+  - type: llm_judge
+    criteria: "Dependency packaging is covered — Python: pip install -t ./package/, include in zip. Use requirements.txt. Node.js: npm install in project, zip node_modules with code. Lambda Layers: shared dependencies across functions (up to 5 layers, 250MB unzipped total). Container images: full control over runtime and dependencies (up to 10GB). Common mistakes: installing for wrong OS (Lambda runs Amazon Linux — build on Linux or use Docker), missing native modules (needs compilation for Lambda architecture: x86_64 or arm64)"
+    weight: 0.35
+    description: "Dependency packaging"
+  - type: llm_judge
+    criteria: "Debugging workflow is practical — check CloudWatch Logs first (error type tells you the category). Runtime.ImportModuleError: dependency missing from package or layer. Runtime.HandlerNotFound: wrong handler config or file structure. Runtime.UserCodeSyntaxError: code syntax issue (ESM vs CJS for Node.js). Test locally: AWS SAM CLI (sam local invoke) simulates Lambda environment. Check package structure: unzip -l deployment.zip to verify file locations. Verify architecture: Lambda ARM (Graviton2) needs arm64 native dependencies"
+    weight: 0.30
+    description: "Debugging workflow"
