@@ -1,4 +1,4 @@
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ModelClient } from '../engine/model-client.js';
 import type { FailurePattern } from '../types/index.js';
@@ -123,7 +123,7 @@ Return the COMPLETE updated SKILL.md including the YAML frontmatter.`;
   /**
    * Read existing SKILL.md for a course.
    * If modelSlug is provided, checks model-specific path first.
-   * Falls back to generic, then legacy path.
+   * Falls back to generic, then legacy path, then any model-specific subdirectory.
    */
   readSkillFile(courseId: string, modelSlug?: string): string | null {
     const slug = modelSlug || this.modelSlug;
@@ -141,6 +141,24 @@ Return the COMPLETE updated SKILL.md including the YAML frontmatter.`;
     // Legacy path: .skills/<courseId>/SKILL.md
     const legacyPath = join(process.cwd(), LEGACY_SKILL_DIR, courseId, 'SKILL.md');
     if (existsSync(legacyPath)) return readFileSync(legacyPath, 'utf-8');
+
+    // Search any model-specific subdirectory (for MCP tools that don't know the model slug)
+    if (!slug) {
+      const courseDir = join(process.cwd(), SKILL_DIR, courseId);
+      if (existsSync(courseDir)) {
+        try {
+          const entries = readdirSync(courseDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              const subPath = join(courseDir, entry.name, 'SKILL.md');
+              if (existsSync(subPath)) return readFileSync(subPath, 'utf-8');
+            }
+          }
+        } catch {
+          // Directory read failed, ignore
+        }
+      }
+    }
 
     return null;
   }

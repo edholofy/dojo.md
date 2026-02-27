@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
 import { resolve } from 'node:path';
-import { loadCourse, loadCourseScenarios, findCoursePath as loaderFindCoursePath } from '../../engine/loader.js';
+import { loadCourse, loadCourseScenarios, findCoursePath } from '../../engine/loader.js';
 import { ensureApiKey } from '../setup.js';
 import { TrainingSession } from '../../engine/training.js';
 import { TrainingLoop } from '../../engine/training-loop.js';
@@ -277,10 +277,6 @@ async function runTrainingLoop(
     console.log(`  SKILL.md: ${chalk.dim(result.skillPath)}`);
   }
   console.log(chalk.bold('─────────────────────────────────────────────'));
-}
-
-function findCoursePath(courseId: string): string | null {
-  return loaderFindCoursePath(courseId);
 }
 
 function printSummary(score: number, levelResults: Array<{ level: number; passed: number; total: number }>, patternCount: number): void {

@@ -54,6 +54,7 @@ async function main() {
 
   const defaultClient = createModelClient('claude-sonnet-4-6');
   const agentBridge = new AgentBridge(defaultClient);
+  agentBridge.setCourseContext(course);
   const evaluator = new Evaluator(defaultClient);
   const skillGenerator = new SkillGenerator(defaultClient);
 
@@ -175,7 +176,7 @@ async function main() {
   divider('GENERATING SKILL.MD');
   const totalPassed = levelResults.reduce((s, lr) => s + lr.passed, 0);
   const totalScenarios = levelResults.reduce((s, lr) => s + lr.total, 0);
-  const overallScore = Math.round((totalPassed / totalScenarios) * 100);
+  const overallScore = totalScenarios > 0 ? Math.round((totalPassed / totalScenarios) * 100) : 0;
 
   if (failurePatterns.length > 0) {
     const skillContent = await skillGenerator.generate(courseId!, failurePatterns, overallScore);

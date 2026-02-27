@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto';
+import type Database from 'better-sqlite3';
 import type {
   DojoSession,
   ScenarioPrompt,
   SubmitResult,
   FinalResults,
-  Scenario,
   ScenarioResult,
   MockResponse,
+  TrainingRun,
+  LevelResult,
 } from '../types/index.js';
 import { MockSession } from '../mocks/session.js';
 import { getServiceTools } from '../mocks/registry.js';
@@ -25,11 +27,13 @@ export class SessionManager {
   private sessions: Map<string, DojoSession> = new Map();
   private evaluator: Evaluator;
   private skillGenerator: SkillGenerator;
+  private db: Database.Database;
 
   constructor() {
     const defaultClient = createModelClient('claude-sonnet-4-6');
     this.evaluator = new Evaluator(defaultClient);
     this.skillGenerator = new SkillGenerator(defaultClient);
+    this.db = initDatabase();
   }
 
   /**
@@ -38,7 +42,7 @@ export class SessionManager {
    * the first scenario prompt.
    */
   createSession(courseId: string, level?: number): ScenarioPrompt {
-    const coursePath = this.findCoursePath(courseId);
+    const coursePath = findCoursePath(courseId);
     if (!coursePath) {
       throw new Error(`Course "${courseId}" not found`);
     }
@@ -50,8 +54,7 @@ export class SessionManager {
       throw new Error(`No scenarios found for course "${courseId}"${level ? ` level ${level}` : ''}`);
     }
 
-    const db = initDatabase();
-    const runId = createRun(db, courseId);
+    const runId = createRun(this.db, courseId);
 
     const sessionId = randomUUID();
     const mockSessions = new Map<string, MockSession>();
@@ -164,9 +167,8 @@ export class SessionManager {
     session.results.push(result);
 
     // Record actions to DB
-    const db = initDatabase();
     for (const action of actionTrace) {
-      recordAction(db, session.runId, currentScenario.meta.id, action);
+      recordAction(this.db, session.runId, currentScenario.meta.id, action);
     }
 
     // Build feedback string
@@ -207,11 +209,9 @@ export class SessionManager {
       throw new Error('Session is still active. Submit all scenarios first.');
     }
 
-    const db = initDatabase();
-
     // Extract failure patterns
     const failurePatterns = await this.evaluator.extractFailurePatterns(session.results);
-    recordFailurePatterns(db, session.runId, failurePatterns);
+    recordFailurePatterns(this.db, session.runId, failurePatterns);
 
     // Calculate overall score
     const totalPassed = session.results.filter((r) => r.passed).length;
@@ -225,8 +225,21 @@ export class SessionManager {
       skillGenerated = true;
     }
 
-    // Complete the run in DB
-    completeRun(db, session.runId, overallScore);
+    // Build level results from session data for DB persistence
+    const levelResults = this.buildLevelResults(session);
+
+    // Complete the run in DB with full results
+    const trainingRun: TrainingRun = {
+      id: session.runId,
+      courseId: session.courseId,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      levelResults,
+      failurePatterns,
+      score: overallScore,
+      status: 'completed',
+    };
+    completeRun(this.db, session.runId, overallScore, trainingRun);
 
     // Clean up session
     this.sessions.delete(sessionId);
@@ -241,6 +254,30 @@ export class SessionManager {
       failure_patterns: failurePatterns,
       skill_generated: skillGenerated,
     };
+  }
+
+  /** Build level results from session scenario results */
+  private buildLevelResults(session: DojoSession): LevelResult[] {
+    const byLevel = new Map<number, ScenarioResult[]>();
+    for (let i = 0; i < session.results.length; i++) {
+      const scenario = session.scenarios[i];
+      const level = scenario.meta.level;
+      if (!byLevel.has(level)) byLevel.set(level, []);
+      byLevel.get(level)!.push(session.results[i]);
+    }
+
+    return [...byLevel.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([level, results]) => {
+        const passed = results.filter((r) => r.passed).length;
+        return {
+          level,
+          passed,
+          failed: results.length - passed,
+          total: results.length,
+          scenarioResults: results,
+        };
+      });
   }
 
   /** Build a ScenarioPrompt from the current session state */
@@ -280,9 +317,5 @@ export class SessionManager {
     }
 
     return prompt;
-  }
-
-  private findCoursePath(courseId: string): string | null {
-    return findCoursePath(courseId);
   }
 }

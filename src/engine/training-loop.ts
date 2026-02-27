@@ -61,6 +61,7 @@ export class TrainingLoop {
     const skillGenClient = createModelClient(this.options.judge); // Use judge model for quality
 
     const agentBridge = new AgentBridge(agentClient);
+    agentBridge.setCourseContext(this.course);
     const evaluator = new Evaluator(judgeClient);
     const skillGenerator = new SkillGenerator(skillGenClient, this.slug);
 

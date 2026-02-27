@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { discoverAllCourses, findCoursePath as loaderFindCoursePath, loadCourse, loadCourseScenarios } from '../engine/loader.js';
+import { discoverAllCourses, findCoursePath, loadCourse, loadCourseScenarios } from '../engine/loader.js';
 import { TrainingSession } from '../engine/training.js';
 import { initDatabase, getLatestRun } from '../recorder/db.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
@@ -139,8 +139,14 @@ export async function startMcpServer(): Promise<void> {
       params: z.record(z.unknown()).optional().default({}).describe('Parameters for the tool call'),
     },
     async ({ session_id, tool, params }) => {
-      const response = sessionManager.handleToolCall(session_id, tool, params);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(response, null, 2) }] };
+      try {
+        const response = sessionManager.handleToolCall(session_id, tool, params);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(response, null, 2) }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+        };
+      }
     },
   );
 
@@ -249,10 +255,6 @@ export async function startMcpServer(): Promise<void> {
   // Start the server
   const transport = new StdioServerTransport();
   await server.connect(transport);
-}
-
-function findCoursePath(courseId: string): string | null {
-  return loaderFindCoursePath(courseId);
 }
 
 // Allow running directly

@@ -70,6 +70,7 @@ export class TrainingSession {
       const defaultClient = createModelClient('claude-sonnet-4-6');
       this.agentBridge = new AgentBridge(defaultClient);
     }
+    this.agentBridge.setCourseContext(course);
 
     if (components?.evaluator) {
       this.evaluator = components.evaluator;

@@ -1,16 +1,39 @@
 import type { ModelClient } from './model-client.js';
-import type { ActionRecord, NormalizedMessage, NormalizedContentBlock } from '../types/index.js';
+import type { ActionRecord, CourseMeta, NormalizedMessage, NormalizedContentBlock } from '../types/index.js';
 import { MockSession } from '../mocks/session.js';
 import { getNormalizedToolDefinitions } from '../mocks/registry.js';
 
-const BASE_SYSTEM_PROMPT = `You are a customer support agent with access to Stripe tools. Your job is to handle customer requests by looking up relevant data and taking appropriate actions.
+/**
+ * Build a system prompt dynamically from course metadata.
+ * Falls back to a generic agent prompt when no course is set.
+ */
+function buildCoursePrompt(course: CourseMeta | null): string {
+  if (!course) {
+    return `You are an AI agent being evaluated on a training scenario. Your job is to handle the request by using the available tools and providing a clear response.
 
 Guidelines:
-- Always verify customer identity before making changes
-- Look up charges and customer data before processing refunds
-- Only refund charges that belong to the requesting customer
-- Inform the customer about the outcome of your actions
-- If something cannot be done (e.g., already refunded), explain why`;
+- Use the available tools to look up data before making decisions
+- Verify information before taking actions
+- Inform the user about the outcome of your actions
+- If something cannot be done, explain why`;
+  }
+
+  const services = course.services.length > 0
+    ? `You have access to ${course.services.join(', ')} tools.`
+    : 'You have access to mock service tools.';
+
+  return `You are an AI agent being evaluated on: ${course.name}.
+
+${course.description.trim()}
+
+${services}
+
+Guidelines:
+- Use the available tools to look up data before making decisions
+- Verify information before taking actions
+- Inform the user about the outcome of your actions
+- If something cannot be done, explain why`;
+}
 
 /**
  * AgentBridge drives an LLM agent through a scenario.
@@ -20,9 +43,15 @@ Guidelines:
 export class AgentBridge {
   private client: ModelClient;
   private skillContext: string | null = null;
+  private courseContext: CourseMeta | null = null;
 
   constructor(client: ModelClient) {
     this.client = client;
+  }
+
+  /** Set the course context for dynamic system prompt generation. */
+  setCourseContext(course: CourseMeta): void {
+    this.courseContext = course;
   }
 
   /**
@@ -34,12 +63,13 @@ export class AgentBridge {
   }
 
   /**
-   * Build the full system prompt, optionally with skill context appended.
+   * Build the full system prompt from course context + optional skill context.
    */
   private buildSystemPrompt(): string {
-    if (!this.skillContext) return BASE_SYSTEM_PROMPT;
+    const base = buildCoursePrompt(this.courseContext);
+    if (!this.skillContext) return base;
 
-    return `${BASE_SYSTEM_PROMPT}
+    return `${base}
 
 --- SKILL CONTEXT ---
 The following skill document contains learned patterns from previous training. Apply these rules:

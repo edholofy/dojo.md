@@ -207,7 +207,7 @@ export function MachineView({ isTouch }) {
           }}
         >
           {LINES.slice(0, visibleLines).map((line, i) => (
-            <div key={i}>{renderLine(line, i)}</div>
+            <div key={i}>{renderLine(line)}</div>
           ))}
           {visibleLines < LINES.length && (
             <span
