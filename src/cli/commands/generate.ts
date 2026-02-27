@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import { CourseGenerator, slugify } from '../../generator/course-generator.js';
 import type { GenerateOptions, GenerationResult } from '../../generator/course-generator.js';
 import { ensureApiKey } from '../setup.js';
+import { defaultModel } from '../../engine/model-utils.js';
 
 interface GenerateCliOptions {
   levels?: number;
@@ -19,7 +20,7 @@ interface GenerateCliOptions {
  * `dojo generate <skill>` — Generate a course from a skill description
  */
 export async function generateCommand(skill: string, options: GenerateCliOptions): Promise<void> {
-  const hasKey = await ensureApiKey('claude-sonnet-4-6');
+  const hasKey = await ensureApiKey(defaultModel());
   if (!hasKey) process.exit(1);
 
   // Batch mode: read skills from file

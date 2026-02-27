@@ -90,7 +90,7 @@ export class CourseGenerator {
     callbacks?: GenerationCallbacks;
   }) {
     this.anthropic = new Anthropic({ apiKey: options?.anthropicKey });
-    this.model = options?.model || 'claude-sonnet-4-6';
+    this.model = options?.model || defaultModel();
     this.callbacks = options?.callbacks || {};
 
     const perplexityKey = options?.perplexityKey || process.env.PERPLEXITY_API_KEY;
@@ -553,7 +553,7 @@ Return ONLY a valid JSON array of scenario objects. No markdown, no explanation.
    */
   private async validateLevel(scenarios: Scenario[]): Promise<number> {
     const evaluator = new Evaluator(createModelClient(defaultModel()));
-    const agentModel = 'claude-sonnet-4-6';
+    const agentModel = defaultModel();
     const scenario = scenarios[0];
 
     try {

@@ -51,7 +51,7 @@ async function main() {
   const scenarios = loadCourseScenarios(coursePath, level);
   console.log(`  Course: ${bold(course.name)}`);
   console.log(`  Scenarios: ${scenarios.length}`);
-  console.log(`  Model: claude-sonnet-4-6`);
+  console.log(`  Model: ${defaultModel()}`);
 
   const defaultClient = createModelClient(defaultModel());
   const agentBridge = new AgentBridge(defaultClient);
