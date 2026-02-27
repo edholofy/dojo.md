@@ -1,7 +1,7 @@
 import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ModelClient } from '../engine/model-client.js';
-import type { FailurePattern } from '../types/index.js';
+import type { FailurePattern, Scenario } from '../types/index.js';
 
 /** Output path for Claude Code skill discovery */
 const SKILL_DIR = '.claude/skills';
@@ -31,10 +31,17 @@ export class SkillGenerator {
   }
 
   /**
-   * Generate a SKILL.md from failure patterns and write it to disk.
+   * Generate a SKILL.md from training results and write it to disk.
+   * Combines curriculum knowledge (from scenarios) with corrections (from patterns).
+   * Always produces a document — even at 100/100, the course knowledge is valuable.
    * @returns The generated markdown content
    */
-  async generate(courseId: string, patterns: FailurePattern[], score: number): Promise<string> {
+  async generate(
+    courseId: string,
+    patterns: FailurePattern[],
+    score: number,
+    scenarios?: Scenario[],
+  ): Promise<string> {
     const severityWeight: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
     const sorted = [...patterns].sort((a, b) => {
       const weightA = (severityWeight[a.severity] || 1) * a.frequency;
@@ -45,10 +52,13 @@ export class SkillGenerator {
     const topPatterns = sorted.slice(0, 10);
     const categorized = this.categorizeByFreedom(topPatterns);
 
+    // Extract curriculum knowledge from scenarios
+    const curriculum = scenarios ? this.extractCurriculum(scenarios) : null;
+
     let markdown: string;
 
     try {
-      const prompt = this.buildGeneratePrompt(courseId, categorized, score);
+      const prompt = this.buildGeneratePrompt(courseId, categorized, score, curriculum);
       const response = await this.client.chat({
         messages: [{ role: 'user', content: prompt }],
         maxTokens: 4096,
@@ -69,6 +79,41 @@ export class SkillGenerator {
 
     this.writeSkillFile(courseId, markdown);
     return markdown;
+  }
+
+  /**
+   * Extract curriculum knowledge from scenario definitions.
+   * Pulls domain insights from triggers, assertion criteria, and descriptions.
+   */
+  private extractCurriculum(scenarios: Scenario[]): string {
+    const lines: string[] = [];
+
+    for (const s of scenarios) {
+      const topic = s.meta.description || s.meta.id;
+      const criteriaList = s.assertions
+        .filter((a) => a.criteria)
+        .map((a) => a.criteria!);
+      const expectedList = s.assertions
+        .filter((a) => a.expected)
+        .map((a) => a.expected!);
+
+      lines.push(`### ${topic}`);
+      if (criteriaList.length > 0) {
+        lines.push('Key knowledge tested:');
+        for (const c of criteriaList) {
+          lines.push(`- ${c}`);
+        }
+      }
+      if (expectedList.length > 0) {
+        lines.push('Expected outcomes:');
+        for (const e of expectedList) {
+          lines.push(`- ${e}`);
+        }
+      }
+      lines.push('');
+    }
+
+    return lines.join('\n');
   }
 
   /**
@@ -213,10 +258,16 @@ Return the COMPLETE updated SKILL.md including the YAML frontmatter.`;
     return `---\nname: ${name}\ndescription: >-\n  ${description}\n---`;
   }
 
-  private buildGeneratePrompt(courseId: string, patterns: CategorizedPattern[], score: number): string {
+  private buildGeneratePrompt(
+    courseId: string,
+    patterns: CategorizedPattern[],
+    score: number,
+    curriculum?: string | null,
+  ): string {
     const lowFreedom = patterns.filter((p) => p.freedom === 'low');
     const medFreedom = patterns.filter((p) => p.freedom === 'medium');
     const highFreedom = patterns.filter((p) => p.freedom === 'high');
+    const hasPatterns = patterns.length > 0;
 
     return `Generate a SKILL.md document following the Anthropic SKILL.md open standard.
 
@@ -227,8 +278,13 @@ Return the COMPLETE updated SKILL.md including the YAML frontmatter.`;
 Start with YAML frontmatter between --- markers:
 - name: "${courseId}" (kebab-case, max 64 chars)
 - description: Third person, format "Does X including Y. Use when Z." Max 1024 chars. Be specific about WHAT the skill does and WHEN to trigger it.
+${curriculum ? `
+## Curriculum Knowledge (distilled from ${courseId} training scenarios)
+This is domain knowledge embedded in the course. Distill the most valuable, non-obvious insights into the SKILL.md — these are things the agent should KNOW even if it scored well.
 
-## Failure Patterns by Freedom Level
+${curriculum}
+` : ''}
+${hasPatterns ? `## Failure/Improvement Patterns by Freedom Level
 
 ### LOW FREEDOM (exact instructions required — these keep failing):
 ${lowFreedom.length > 0
@@ -244,36 +300,48 @@ ${medFreedom.length > 0
 ${highFreedom.length > 0
   ? highFreedom.map((p) => `- [${p.severity}/${p.category}] ${p.description}\n  Fix: ${p.suggestedFix}`).join('\n')
   : '(none)'}
-
+` : ''}
 ## Required Body Sections (in this order):
 
-### 1. Quick Start
-The single most common scenario done correctly. Show the exact pattern agents keep getting wrong, fixed. Concrete example, not theory. This is what loads first when the skill triggers.
+### 1. Domain Knowledge
+${curriculum
+  ? `Distill the most valuable, non-obvious knowledge from the curriculum above. Focus on:
+- Specific numbers, thresholds, and benchmarks (not vague "best practices")
+- Counter-intuitive insights that contradict common assumptions
+- Frameworks and mental models for decision-making
+- Platform-specific rules and constraints
+This section is the most valuable — it's what separates a trained agent from an untrained one.`
+  : 'Skip this section if no curriculum data is available.'}
 
-### 2. Core Rules
-One rule per LOW/MEDIUM freedom pattern. Format:
+### 2. Quick Start
+The single most important pattern done correctly. Show concrete examples. This is what loads first when the skill triggers.
+
+### 3. Core Rules
+${hasPatterns
+  ? `One rule per failure/improvement pattern. Format:
 - LOW freedom: "ALWAYS [exact behavior]. [Brief why]."
 - MEDIUM freedom: Step-by-step pseudocode
-- HIGH freedom: "Prefer [X] over [Y] when [condition]."
+- HIGH freedom: "Prefer [X] over [Y] when [condition]."`
+  : 'Distill the key rules from the curriculum — the non-negotiable principles.'}
 
-### 3. Decision Tree
-If/then logic for the branching points where agents chose wrong.
+### 4. Decision Tree
+If/then logic for the key branching points.
 Format: "If [condition] → [correct action]"
 
-### 4. Edge Cases
-Every scenario where the agent failed. Show the trap and the correct handling. These are the highest-value parts.
+### 5. Edge Cases
+${hasPatterns ? 'Every scenario where the agent struggled. Show the trap and the correct handling.' : 'Tricky situations from the curriculum that require special handling.'}
 
-### 5. Anti-Patterns
+### 6. Anti-Patterns
 Format: "DON'T [wrong behavior]. Instead, [correct behavior]."
-Derived directly from the failure patterns.
 
 ## Critical Requirements:
-- Total body MUST be under 300 lines (optimize for token efficiency)
+- Total body MUST be under 400 lines (optimize for token efficiency)
 - Be opinionated — strong defaults, not menus of options
 - Challenge every token — don't explain what the agent already knows
 - Include concrete input → output examples, not abstract descriptions
-- First section (Quick Start) must be immediately actionable
-- NO generic advice — every instruction must trace to an actual failure pattern
+- First section must be immediately actionable
+- Prioritize NON-OBVIOUS knowledge — things an untrained agent wouldn't know
+- Domain Knowledge section should feel like "insider tips" not a textbook
 
 Return the COMPLETE SKILL.md starting with the --- frontmatter.
 Do NOT wrap the output in markdown code fences (\`\`\`). Return raw markdown directly.`;

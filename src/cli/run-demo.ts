@@ -179,14 +179,10 @@ async function main() {
   const totalScenarios = levelResults.reduce((s, lr) => s + lr.total, 0);
   const overallScore = totalScenarios > 0 ? Math.round((totalPassed / totalScenarios) * 100) : 0;
 
-  if (failurePatterns.length > 0) {
-    const skillContent = await skillGenerator.generate(courseId!, failurePatterns, overallScore);
-    console.log(dim('─'.repeat(60)));
-    console.log(skillContent);
-    console.log(dim('─'.repeat(60)));
-  } else {
-    console.log(`  ${dim('No failures to generate skill from.')}`);
-  }
+  const skillContent = await skillGenerator.generate(courseId!, failurePatterns, overallScore, scenarios);
+  console.log(dim('─'.repeat(60)));
+  console.log(skillContent);
+  console.log(dim('─'.repeat(60)));
 
   // ─── Final Summary ─────────────────────────────────────
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -199,9 +195,7 @@ async function main() {
     console.log(`  Level ${lr.level}: ${bar} ${lr.passed}/${lr.total}`);
   }
   console.log();
-  if (failurePatterns.length > 0) {
-    console.log(`  ${yellow(`${failurePatterns.length} failure pattern(s)`)} → .claude/skills/${courseId}/SKILL.md`);
-  }
+  console.log(`  SKILL.md → .claude/skills/${courseId}/SKILL.md`);
   console.log();
 }
 

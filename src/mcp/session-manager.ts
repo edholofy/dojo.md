@@ -236,12 +236,9 @@ export class SessionManager {
     const totalScenarios = session.results.length;
     const overallScore = totalScenarios > 0 ? Math.round((totalPassed / totalScenarios) * 100) : 0;
 
-    // Generate SKILL.md if there were failures
-    let skillGenerated = false;
-    if (failurePatterns.length > 0) {
-      await this.skillGenerator.generate(session.courseId, failurePatterns, overallScore);
-      skillGenerated = true;
-    }
+    // Generate SKILL.md — always, curriculum knowledge is valuable even at 100/100
+    await this.skillGenerator.generate(session.courseId, failurePatterns, overallScore, session.scenarios);
+    const skillGenerated = true;
 
     // Build level results from session data for DB persistence
     const levelResults = this.buildLevelResults(session);

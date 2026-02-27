@@ -117,11 +117,9 @@ export class TrainingSession {
       const totalPassed = levelResults.reduce((sum, lr) => sum + lr.passed, 0);
       const score = totalScenarios > 0 ? Math.round((totalPassed / totalScenarios) * 100) : 0;
 
-      // Generate skill document
+      // Generate skill document — always, even at 100/100 (curriculum knowledge is valuable)
       this.callbacks.onSkillGenStart?.();
-      if (failurePatterns.length > 0) {
-        await this.skillGenerator.generate(this.course.id, failurePatterns, score);
-      }
+      await this.skillGenerator.generate(this.course.id, failurePatterns, score, this.scenarios);
 
       const trainingRun: TrainingRun = {
         id: runId,
