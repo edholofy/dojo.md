@@ -1,5 +1,7 @@
 # dojo.md
 
+[![CI](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml/badge.svg)](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml)
+
 Training arena for AI agents. Run scenarios, find failures, generate SKILL.md documents that make agents better — no fine-tuning required.
 
 ```
