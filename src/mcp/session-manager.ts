@@ -25,15 +25,32 @@ import { initDatabase, createRun, recordAction, recordFailurePatterns, completeR
  */
 export class SessionManager {
   private sessions: Map<string, DojoSession> = new Map();
-  private evaluator: Evaluator;
-  private skillGenerator: SkillGenerator;
-  private db: Database.Database;
+  private _evaluator: Evaluator | null = null;
+  private _skillGenerator: SkillGenerator | null = null;
+  private _db: Database.Database | null = null;
 
-  constructor() {
-    const defaultClient = createModelClient('claude-sonnet-4-6');
-    this.evaluator = new Evaluator(defaultClient);
-    this.skillGenerator = new SkillGenerator(defaultClient);
-    this.db = initDatabase();
+  /** Lazy — only created when a session actually needs evaluation */
+  private get evaluator(): Evaluator {
+    if (!this._evaluator) {
+      const client = createModelClient('claude-sonnet-4-6');
+      this._evaluator = new Evaluator(client);
+    }
+    return this._evaluator;
+  }
+
+  private get skillGenerator(): SkillGenerator {
+    if (!this._skillGenerator) {
+      const client = createModelClient('claude-sonnet-4-6');
+      this._skillGenerator = new SkillGenerator(client);
+    }
+    return this._skillGenerator;
+  }
+
+  private get db(): Database.Database {
+    if (!this._db) {
+      this._db = initDatabase();
+    }
+    return this._db;
   }
 
   /**
