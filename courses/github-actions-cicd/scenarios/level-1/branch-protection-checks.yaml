@@ -1,0 +1,63 @@
+meta:
+  id: branch-protection-checks
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Set up branch protection with status checks — configure required CI checks that must pass before merging PRs"
+  tags: [github, actions, branch-protection, status-checks, merge-requirements, basics]
+
+state: {}
+
+trigger: |
+  You're the tech lead setting up branch protection for your team's
+  repository. Currently, anyone can push directly to main and merge
+  PRs without CI passing. After a broken deployment last week, the
+  team agreed to enforce CI checks.
+
+  Repository setup:
+  - Main branch: production deployments happen from here
+  - Develop branch: integration branch for features
+  - Feature branches: individual developer work
+
+  CI workflow (already exists):
+  - Job "lint": ESLint + TypeScript checks
+  - Job "test": Jest unit tests
+  - Job "e2e": Cypress E2E tests (sometimes flaky)
+  - Job "build": Production build
+
+  Requirements:
+  1. No direct pushes to main (all changes via PR)
+  2. At least 1 code review approval required
+  3. Required status checks before merging:
+     - lint must pass (always)
+     - test must pass (always)
+     - build must pass (always)
+     - e2e should be required but has a 10% flaky failure rate
+  4. Dismiss stale reviews when new commits are pushed
+  5. Require branches to be up to date with main before merging
+  6. Allow repository admins to bypass in emergencies
+
+  The team debates:
+  - "Should we make e2e tests required if they're flaky?"
+  - "What about hotfixes — do we need a fast path?"
+  - "How do we handle merge conflicts with 'require up to date'?"
+
+  Task: Write the complete branch protection configuration (as you
+  would set it in GitHub Settings or via the API), address the 3 team
+  debates with recommendations, explain how status checks interact
+  with GitHub Actions job names, and describe the developer workflow
+  under these new rules (from creating a branch to merging a PR).
+
+assertions:
+  - type: llm_judge
+    criteria: "Branch protection config is complete — requires PR, required reviewers (1), dismisses stale reviews, requires status checks (lint, test, build), requires branch up-to-date, and admin bypass is configured. The config is expressed clearly (either UI steps or API payload)"
+    weight: 0.35
+    description: "Complete branch protection config"
+  - type: llm_judge
+    criteria: "Team debates are resolved pragmatically — the flaky e2e question gets a nuanced answer (make required but add retry, or make non-required but track), hotfix fast-path is defined (admin bypass with post-merge review), and merge conflict mitigation is addressed (merge queue or frequent rebasing)"
+    weight: 0.35
+    description: "Pragmatic debate resolution"
+  - type: llm_judge
+    criteria: "Status check naming is explained — clarifies that required checks match job names in the workflow YAML, explains what happens when a workflow is skipped (path filters), and the developer workflow is described step-by-step from branch creation to merge"
+    weight: 0.30
+    description: "Clear status check and workflow explanation"

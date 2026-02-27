@@ -1,0 +1,62 @@
+meta:
+  id: first-cicd-shift
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "First CI/CD shift — handle a batch of CI/CD setup tasks and troubleshooting requests as the team's GitHub Actions go-to person"
+  tags: [github, actions, shift-simulation, troubleshooting, batch, basics]
+
+state: {}
+
+trigger: |
+  You're the designated GitHub Actions person for your team this week.
+  You have 5 requests to handle.
+
+  Request 1 — New project setup (from the tech lead):
+  "We're starting a new Python project (FastAPI + PostgreSQL). Need a
+  basic CI workflow: lint with ruff, type-check with mypy, test with
+  pytest, and build a Docker image. Use Python 3.12. We also need
+  PostgreSQL as a service container for integration tests."
+
+  Request 2 — Flaky test investigation (from a frustrated developer):
+  "My E2E tests pass locally but fail randomly in CI. About 30% of
+  the time. The error is always 'connection refused' when trying to
+  reach the API server. The workflow starts the server with
+  'npm start &' and immediately runs tests. I think it's a timing
+  issue."
+
+  Request 3 — Cost optimization (from the engineering manager):
+  "Our GitHub Actions bill jumped from $200 to $800 this month. Can
+  you figure out why and fix it? I see we have 15 workflows and some
+  run on every push to every branch."
+
+  Request 4 — Secret rotation (from the security team):
+  "We're rotating all AWS credentials. Please update the GitHub Secrets
+  and make sure the deployment workflow uses the new credentials
+  without any downtime. Also, we found that the old credentials are
+  hardcoded in a workflow file. Remove them."
+
+  Request 5 — Status badge request (from the PM):
+  "Can you add a CI status badge to our README? Also, the deploys page
+  should show the current deployed version. Can GitHub Actions help
+  with that?"
+
+  Task: Handle all 5 requests. For each, write: the solution (workflow
+  YAML, configuration, or investigation steps), the explanation (so
+  the requester understands what you did), and any follow-up
+  recommendations. Prioritize the requests by urgency and explain
+  your prioritization.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority order is sensible — secret rotation (security) and flaky test (blocking developer) are higher priority than cost optimization and badge requests. The hardcoded credentials in Request 4 are flagged as critical"
+    weight: 0.35
+    description: "Sensible priority order"
+  - type: llm_judge
+    criteria: "Solutions are technically correct — Python CI workflow uses correct setup-python and service container syntax, flaky test fix uses wait-for-it or health check before running tests, cost optimization identifies unnecessary triggers and suggests path filters/concurrency"
+    weight: 0.35
+    description: "Technically correct solutions"
+  - type: llm_judge
+    criteria: "Explanations are accessible — each response is written for the specific requester's context (tech lead gets YAML, frustrated developer gets root cause, manager gets cost breakdown, security gets rotation procedure, PM gets badge markdown)"
+    weight: 0.30
+    description: "Context-appropriate explanations"

@@ -1,0 +1,57 @@
+meta:
+  id: simple-ci-pipeline
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Build a simple CI pipeline — create a complete lint, test, and build pipeline with proper job dependencies and failure handling"
+  tags: [github, actions, CI, pipeline, lint, test, build, basics]
+
+state: {}
+
+trigger: |
+  You're creating a CI pipeline for a React + TypeScript project.
+  The pipeline should catch issues before code is merged to main.
+
+  Project setup:
+  - React 18 with TypeScript
+  - ESLint for linting
+  - Jest for unit tests
+  - Cypress for E2E tests (runs against a dev server)
+  - Vite for building
+
+  Pipeline requirements:
+  1. Lint job: Run ESLint and TypeScript type checking
+  2. Unit test job: Run Jest with coverage report
+  3. E2E test job: Start dev server, run Cypress tests, upload
+     screenshots on failure
+  4. Build job: Only run if lint and unit tests pass
+  5. The E2E tests should run in parallel with (not blocked by) the
+     build job
+  6. If any job fails, the PR should show a red status check
+  7. Cache node_modules to speed up subsequent runs
+
+  Additional context:
+  - The team currently runs everything locally before pushing, but
+    developers sometimes skip steps. The CI should be the safety net.
+  - E2E tests are flaky — about 10% failure rate. The team wants to
+    retry failed E2E tests once before marking as failed.
+
+  Task: Write the complete CI workflow. Include: the workflow YAML with
+  all 4 jobs and proper dependencies (needs), the caching configuration
+  for node_modules, the E2E test configuration with retry and failure
+  artifact upload, and an explanation of the job dependency graph
+  (which jobs run in parallel, which are sequential).
+
+assertions:
+  - type: llm_judge
+    criteria: "Job dependencies are correct — lint and unit tests can run in parallel, build needs lint + unit tests to pass, E2E runs independently or after lint, and the dependency graph is explicitly explained with a visual or textual representation"
+    weight: 0.35
+    description: "Correct job dependencies"
+  - type: llm_judge
+    criteria: "Caching and retry are properly configured — uses actions/cache or setup-node cache for node_modules with correct cache key (hash of package-lock.json), E2E test step has retry logic (either via Cypress retry or step-level continue-on-error with re-run), and failure artifacts are uploaded"
+    weight: 0.35
+    description: "Proper caching and retry configuration"
+  - type: llm_judge
+    criteria: "Pipeline is practical and complete — all 4 jobs have correct steps, the E2E test starts a dev server before running Cypress, coverage reports are generated, and the workflow would work in a real React + TypeScript project without modification"
+    weight: 0.30
+    description: "Practical complete pipeline"

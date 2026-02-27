@@ -1,0 +1,275 @@
+name: "Distributed Tracing and Error Correlation"
+level: 3
+difficulty: advanced
+description: "Track errors across multiple services using correlation IDs and distributed tracing"
+
+context: |
+  Build a microservice system where a single user request flows through Order Service
+  → Payment Service → Shipping Service. Implement distributed tracing with correlation
+  IDs to track errors across all services and perform root cause analysis.
+
+scenario:
+  state:
+    services:
+      order_service:
+        url: "http://order-api:3000"
+        status: "healthy"
+      payment_service:
+        url: "http://payment-api:3001"
+        status: "healthy"
+      shipping_service:
+        url: "http://shipping-api:3002"
+        status: "healthy"
+    orders:
+      "ord_001": { customer_id: "cust_1", total: 100, status: "pending" }
+
+  endpoint: "POST /api/v1/orders"
+
+  test_cases:
+    - name: "successful_order_with_trace"
+      request:
+        path: "/api/v1/orders"
+        body: { customer_id: "cust_1", items: ["item_1"] }
+        headers:
+          X-Correlation-ID: "trace_123"
+      service_calls:
+        - service: "order_service"
+          action: "create_order"
+          status: 201
+          trace_id: "trace_123"
+          span_id: "span_order_1"
+          duration_ms: 50
+        - service: "payment_service"
+          action: "charge_card"
+          status: 200
+          trace_id: "trace_123"
+          parent_span: "span_order_1"
+          span_id: "span_payment_1"
+          duration_ms: 200
+        - service: "shipping_service"
+          action: "create_shipment"
+          status: 201
+          trace_id: "trace_123"
+          parent_span: "span_order_1"
+          span_id: "span_shipping_1"
+          duration_ms: 100
+      expected_response:
+        status: 201
+        order_id: "ord_002"
+      expected_trace:
+        spans:
+          - span_order_1: "50ms"
+          - span_payment_1: "200ms"
+          - span_shipping_1: "100ms"
+        total_time: "350ms"
+
+    - name: "payment_service_timeout_traced"
+      request:
+        path: "/api/v1/orders"
+        body: { customer_id: "cust_1", items: ["item_1"] }
+        headers:
+          X-Correlation-ID: "trace_456"
+      service_calls:
+        - service: "order_service"
+          action: "create_order"
+          status: 201
+          trace_id: "trace_456"
+          span_id: "span_order_2"
+          duration_ms: 50
+        - service: "payment_service"
+          action: "charge_card"
+          status: 504
+          error: "gateway_timeout"
+          trace_id: "trace_456"
+          parent_span: "span_order_2"
+          span_id: "span_payment_2"
+          duration_ms: 30000
+          error_details:
+            message: "Payment processing took too long"
+            timeout_ms: 30000
+      expected_response:
+        status: 502
+        error:
+          code: "PAYMENT_SERVICE_UNAVAILABLE"
+      correlation_id: "trace_456"
+      distributed_trace:
+        spans:
+          - name: "POST /orders"
+            service: "order_service"
+            span_id: "span_order_2"
+            status: "error"
+          - name: "POST /charges"
+            service: "payment_service"
+            parent_span: "span_order_2"
+            span_id: "span_payment_2"
+            status: "error"
+            error_type: "timeout"
+
+    - name: "cascading_failure_visible_in_trace"
+      request:
+        path: "/api/v1/orders"
+        body: { customer_id: "cust_1", items: ["item_1"] }
+        headers:
+          X-Correlation-ID: "trace_789"
+      service_calls:
+        - service: "order_service"
+          action: "create_order"
+          status: 201
+          trace_id: "trace_789"
+          span_id: "span_order_3"
+        - service: "payment_service"
+          action: "charge_card"
+          status: 500
+          trace_id: "trace_789"
+          parent_span: "span_order_3"
+          span_id: "span_payment_3"
+          error: "database_connection_failed"
+        - service: "shipping_service"
+          action: "create_shipment"
+          status: 500
+          trace_id: "trace_789"
+          parent_span: "span_order_3"
+          span_id: "span_shipping_3"
+          error: "order_not_confirmed"
+      expected_response:
+        status: 502
+      distributed_trace:
+        critical_path: "trace_789 → order_service fails payment → shipping can't proceed"
+        error_summary: "Payment service database unavailable, causing cascade"
+
+    - name: "error_context_preserved_across_services"
+      request:
+        path: "/api/v1/orders"
+        headers:
+          X-Correlation-ID: "trace_101"
+          X-Request-ID: "req_101"
+          X-User-ID: "user_123"
+      propagated_headers:
+        - service: "order_service"
+          headers: { X-Correlation-ID: "trace_101", X-Request-ID: "req_101", X-User-ID: "user_123" }
+        - service: "payment_service"
+          headers: { X-Correlation-ID: "trace_101", X-Request-ID: "req_101", X-User-ID: "user_123" }
+        - service: "shipping_service"
+          headers: { X-Correlation-ID: "trace_101", X-Request-ID: "req_101", X-User-ID: "user_123" }
+      expected_behavior: "all services log with same correlation ID"
+
+    - name: "root_cause_analysis_via_trace"
+      incident:
+        symptom: "Orders taking 30+ seconds"
+        correlation_ids: ["trace_111", "trace_112", "trace_113"]
+      analysis:
+        - step: "1. Review distributed trace"
+          finding: "All traces show: order_service 50ms, payment_service 25000ms, shipping_service 5000ms"
+        - step: "2. Identify critical path"
+          finding: "Payment service is bottleneck"
+        - step: "3. Check payment service logs"
+          finding: "SELECT * FROM charges WHERE status='processing' returns 10000 rows"
+        - step: "4. Check metrics"
+          finding: "Database CPU at 95%, pending queries at 10000"
+        - step: "5. Root cause"
+          finding: "Payment processing queries missing index, causing full table scans"
+        - step: "6. Solution"
+          action: "Add index on charges(status, created_at)"
+
+    - name: "trace_context_loss_error"
+      request:
+        path: "/api/v1/orders"
+        headers:
+          X-Correlation-ID: "trace_202"
+      service_calls:
+        - service: "order_service"
+          trace_id: "trace_202"
+          passes_header: true
+        - service: "payment_service"
+          trace_id: "trace_202"
+          passes_header: false  # Bug: forgot to propagate
+          implicit_trace: "span_payment_lost"
+      expected_problem: "Payment service error not correlated with order trace"
+      solution: "Add middleware to always propagate X-Correlation-ID"
+
+assertions:
+  - type: "api_called"
+    description: "Correlation ID propagated to all services"
+    test: "X-Correlation-ID passed through service chain"
+
+  - type: "api_called"
+    description: "Trace IDs captured in logs"
+    test: "all log entries include trace_id"
+
+  - type: "outcome"
+    description: "Error path visible in distributed trace"
+    test: "trace shows which service failed and why"
+
+  - type: "api_called"
+    description: "Timing data collected per service"
+    test: "trace includes duration for each span"
+
+  - type: "outcome"
+    description: "Root cause identifiable from trace"
+    test: "cascading_failure_visible_in_trace shows error progression"
+
+learning_objectives:
+  - "Understand importance of correlation IDs in microservices"
+  - "Implement trace ID propagation across service calls"
+  - "Collect span timing for performance analysis"
+  - "Correlate logs across multiple services"
+  - "Identify root cause from distributed traces"
+  - "Detect cascading failures in real-time"
+  - "Perform effective post-mortem analysis"
+
+correlation_headers:
+  "X-Correlation-ID": "Unique ID for entire request"
+  "X-Request-ID": "Specific request identifier"
+  "X-Trace-ID": "OpenTelemetry trace ID"
+  "X-Span-ID": "OpenTelemetry span ID"
+  "X-Parent-Span-ID": "Parent span for nesting"
+
+trace_structure:
+  "trace_id": "abc123def456"
+  "spans":
+    - "span_id": "span_order_1"
+      "operation": "create_order"
+      "service": "order_service"
+      "start_time": "2024-01-01T10:00:00.000Z"
+      "duration_ms": 50
+      "status": "OK"
+      "child_spans": ["span_payment_1", "span_shipping_1"]
+    - "span_id": "span_payment_1"
+      "operation": "charge_card"
+      "service": "payment_service"
+      "start_time": "2024-01-01T10:00:00.050Z"
+      "duration_ms": 200
+      "status": "OK"
+      "parent_span": "span_order_1"
+
+tools:
+  "OpenTelemetry": "Standard instrumentation library"
+  "Jaeger": "Distributed tracing backend"
+  "Zipkin": "Alternative tracing system"
+  "Datadog APM": "Commercial observability"
+  "AWS X-Ray": "AWS distributed tracing"
+  "Google Cloud Trace": "GCP tracing"
+
+common_mistakes:
+  - "Not propagating correlation ID to called services"
+  - "No trace ID in error messages"
+  - "Losing context in async operations"
+  - "Not collecting timing data"
+  - "Insufficient log detail for debugging"
+  - "No central trace storage"
+  - "Can't query traces by error type"
+
+post_mortem_example: |
+  Timeline:
+  10:00:00 - Order received (trace_abc)
+  10:00:00 - Order created in order_service (50ms)
+  10:00:00 - Payment service called
+  10:00:25 - Payment timeout after 25 seconds
+  10:00:25 - Shipping service never called
+  10:00:25 - 502 Bad Gateway returned
+
+  Trace shows: Payment service database locked
+  Root cause: Concurrent deployment and query
+  Fix: Add connection pooling, query timeout
+
+  Prevention: Monitor query latency in traces

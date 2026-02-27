@@ -1,0 +1,69 @@
+meta:
+  id: review-data-architecture
+  level: 4
+  course: github-pr-review
+  type: output
+  description: "Design review data architecture — build the data infrastructure for review analytics, ML-powered insights, and compliance reporting"
+  tags: [github, pr-review, data-architecture, analytics, ML, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Data Engineering building the data infrastructure
+  for the company's review analytics platform. The system needs to
+  support real-time dashboards, ML-powered insights, and compliance
+  audit reports.
+
+  Data sources:
+  - GitHub Events API: PR events, review events, comment events,
+    check run events (estimated 50,000 events/day)
+  - GitHub REST API: PR details, file diffs, user profiles
+  - Slack: Review request/response timestamps
+  - Jira: Issue metadata, sprint data, priority levels
+  - Deployment system: Deploy events, rollback events
+  - Incident management: Incident data, root cause analysis
+
+  Analytics requirements:
+  1. Real-time dashboard: Current review queue, SLA status, team load
+     (refreshed every 5 minutes)
+  2. Historical analytics: Trends over 2 years, team comparisons,
+     seasonal patterns
+  3. ML features: Reviewer expertise scoring, PR risk prediction,
+     review time estimation, anomaly detection (rubber stamp detection)
+  4. Compliance reports: Audit trails, SOC 2 evidence, monthly
+     compliance scorecards
+  5. Developer experience: Individual review statistics (private to
+     the engineer), career growth tracking
+
+  Technical requirements:
+  - Event-driven ingestion (no polling GitHub API)
+  - Schema evolution support (GitHub API changes frequently)
+  - 2-year data retention with automated archival
+  - Sub-second query response for dashboards
+  - ML feature store for model training and serving
+  - GDPR compliance (engineer data deletion on request)
+
+  Budget: $150K/year infrastructure, 4 engineers for 6 months to build
+
+  Task: Design the data architecture. Write: the data model (entities,
+  relationships, derived metrics, slowly changing dimensions), the
+  ingestion pipeline (event processing, transformation, loading), the
+  storage strategy (which database for which use case — OLTP vs OLAP
+  vs time-series), the ML feature store design (feature computation,
+  serving, versioning), and the privacy/compliance layer (data masking,
+  retention, deletion). Include the schema for key tables and sample
+  queries for each analytics requirement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data model captures review complexity — models PRs, reviews, comments, review rounds, reviewer load, time-between-events, and derived metrics like 'review depth score' and 'rubber stamp probability'. Handles the GitHub event schema correctly"
+    weight: 0.35
+    description: "Complexity-capturing data model"
+  - type: llm_judge
+    criteria: "Storage strategy is appropriate — uses different storage for different patterns (event stream processing for real-time, columnar/OLAP for historical analytics, time-series for metrics, and a feature store for ML), within the $150K/year budget"
+    weight: 0.35
+    description: "Appropriate storage strategy"
+  - type: llm_judge
+    criteria: "ML feature store is practical — features include reviewer expertise score, PR complexity score, and review time prediction with clear computation logic, versioning for model reproducibility, and serving layer for real-time inference"
+    weight: 0.30
+    description: "Practical ML feature store"

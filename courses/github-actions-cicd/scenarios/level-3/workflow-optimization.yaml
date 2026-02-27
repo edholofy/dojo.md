@@ -1,0 +1,59 @@
+meta:
+  id: workflow-optimization
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Optimize workflow performance — reduce CI time from 30 to 10 minutes using parallelism, caching, and smart architecture"
+  tags: [github, actions, optimization, parallelism, performance, advanced]
+
+state: {}
+
+trigger: |
+  Your team's main CI workflow takes 30 minutes to complete. This is
+  the #1 developer experience complaint. The CTO wants it under 10
+  minutes. Here's the current workflow and timing breakdown:
+
+  Current workflow (sequential):
+  ```
+  checkout (30s) → install (3min) → lint (2min) → typecheck (3min) →
+  unit-tests (8min) → integration-tests (6min) → e2e-tests (5min) →
+  build (2min) → docker-build (1.5min) = 31 minutes total
+  ```
+
+  Additional data:
+  - Unit tests: 1,200 tests in 45 test files
+  - Integration tests: 80 tests requiring PostgreSQL + Redis
+  - E2E tests: 30 Cypress tests requiring a running dev server
+  - Build output: 12MB frontend bundle + Docker image
+  - Cache hit rate: 60% (should be 95%+)
+  - Runner: ubuntu-latest (2 CPU, 7GB RAM)
+
+  Optimization budget:
+  - Can split into multiple parallel jobs
+  - Can use larger runners (4 CPU, 16GB RAM) — 2x cost but 2x faster
+  - Can use test sharding (split tests across parallel workers)
+  - Can use remote caching (Turborepo remote cache or similar)
+  - Can restructure tests (some unit tests may actually be integration)
+
+  Task: Redesign the workflow for sub-10-minute completion. Write: the
+  optimized workflow YAML with parallel jobs, the test sharding
+  configuration (split unit tests across N workers), the caching
+  strategy (to achieve 95%+ hit rate), the runner sizing analysis
+  (standard vs larger runners — cost vs speed trade-off), and the
+  before/after comparison (timeline diagram showing parallel execution
+  vs sequential). Explain each optimization technique and its expected
+  impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "Workflow is redesigned for parallelism — lint, typecheck, and unit tests run in parallel (not sequential), e2e tests use sharding across multiple runners, and the critical path is identified and optimized to under 10 minutes"
+    weight: 0.35
+    description: "Parallel workflow redesign"
+  - type: llm_judge
+    criteria: "Test sharding is correctly implemented — unit tests split across N parallel workers using matrix strategy with test file distribution, integration tests use proper service containers, and e2e tests are sharded with Cypress's parallelization"
+    weight: 0.35
+    description: "Correct test sharding"
+  - type: llm_judge
+    criteria: "Before/after comparison is clear — shows the timeline diagram (text-based) of sequential vs parallel execution, quantifies each optimization's contribution, and the cost analysis compares standard vs larger runners at the new parallel configuration"
+    weight: 0.30
+    description: "Clear before/after comparison"

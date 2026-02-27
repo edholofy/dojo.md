@@ -1,0 +1,92 @@
+meta:
+  id: review-comment-basics
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Write review comments — learn to write clear, actionable, and respectful code review comments"
+  tags: [github, pr-review, comments, feedback, basics]
+
+state: {}
+
+trigger: |
+  You're reviewing a pull request from a mid-level developer. The PR
+  adds a user authentication feature to a Node.js Express app. Here
+  are 5 code snippets that need review comments:
+
+  Snippet 1 (security issue):
+  ```javascript
+  app.post('/login', (req, res) => {
+    const query = `SELECT * FROM users WHERE email = '${req.body.email}'
+      AND password = '${req.body.password}'`;
+    db.query(query, (err, results) => {
+      if (results.length > 0) {
+        res.json({ token: jwt.sign({ userId: results[0].id }, 'secret123') });
+      }
+    });
+  });
+  ```
+
+  Snippet 2 (logic bug):
+  ```javascript
+  function isAdmin(user) {
+    return user.role == 'admin' || user.role == 'superadmin';
+  }
+  // Used as: if (isAdmin(user)) { ... }
+  ```
+
+  Snippet 3 (style/readability):
+  ```javascript
+  const u = await getUser(id);
+  const p = u.permissions;
+  const r = p.filter(x => x.active).map(x => x.name);
+  ```
+
+  Snippet 4 (performance concern):
+  ```javascript
+  app.get('/users', async (req, res) => {
+    const users = await User.findAll();
+    const enriched = await Promise.all(
+      users.map(async (user) => {
+        const orders = await Order.findAll({ where: { userId: user.id } });
+        return { ...user, orderCount: orders.length };
+      })
+    );
+    res.json(enriched);
+  });
+  ```
+
+  Snippet 5 (good code — positive feedback):
+  ```javascript
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  app.post('/register', async (req, res) => {
+    if (!validateEmail(req.body.email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    // ... registration logic
+  });
+  ```
+
+  Task: Write a review comment for each snippet. Each comment should
+  include: the type of issue (security, bug, style, performance, or
+  praise), a clear explanation of the problem (or what's good), a
+  suggested fix (code example when appropriate), and the appropriate
+  tone (constructive, not condescending). Use the conventional prefix
+  format: "nit:", "suggestion:", "issue:", "question:", or "praise:".
+
+assertions:
+  - type: llm_judge
+    criteria: "Security and bug issues are identified correctly — SQL injection in Snippet 1 is caught with parameterized query suggestion, loose equality (==) vs strict (===) in Snippet 2 is noted, and both have clear fix suggestions"
+    weight: 0.35
+    description: "Correctly identified security and bugs"
+  - type: llm_judge
+    criteria: "Comments are constructive and actionable — each comment explains WHY something is an issue (not just WHAT), provides a concrete suggestion or code example, and uses appropriate prefix (issue/nit/suggestion)"
+    weight: 0.35
+    description: "Constructive actionable comments"
+  - type: llm_judge
+    criteria: "Positive feedback is included — Snippet 5 receives genuine praise for good practices (validation, early return), and the overall review tone is balanced (not all negative)"
+    weight: 0.30
+    description: "Balanced positive feedback"

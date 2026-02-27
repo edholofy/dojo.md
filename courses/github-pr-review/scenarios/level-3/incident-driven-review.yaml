@@ -1,0 +1,63 @@
+meta:
+  id: incident-driven-review
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Incident-driven review improvement — analyze post-incident review failures and redesign processes to catch similar issues"
+  tags: [github, pr-review, incidents, post-mortem, process-improvement, advanced]
+
+state: {}
+
+trigger: |
+  Three production incidents in the last quarter were traced back to
+  code review failures — issues that should have been caught in review
+  but weren't. You've been tasked with analyzing the failures and
+  improving the review process.
+
+  Incident 1 — Data loss (Severity: Critical):
+  A migration PR dropped a column that was still used by a background
+  job. The PR had 2 approvals and CI was green. Neither reviewer checked
+  the background job code. The column name appeared in 3 files that
+  weren't part of the PR diff.
+  Impact: 48 hours of data loss for 12,000 users
+  Review gap: Reviewers only looked at files in the diff, not at callers
+  of the changed code
+
+  Incident 2 — Security breach (Severity: Critical):
+  A PR added a debug endpoint that returned user data without
+  authentication. It was merged as part of a 1,200-line "feature
+  complete" PR. The endpoint was on line 847 of a 900-line file.
+  Impact: 500 user records exposed for 3 days
+  Review gap: The PR was too large to review effectively, the debug
+  endpoint was buried in a massive diff, and the reviewer admitted
+  to "skimming" the last 400 lines
+
+  Incident 3 — Financial miscalculation (Severity: High):
+  A PR changed a currency conversion formula. The unit test used the
+  same incorrect formula as the implementation (copy-pasted), so tests
+  passed. The reviewer approved based on "tests pass."
+  Impact: $47,000 in incorrect charges over 2 weeks
+  Review gap: Tests validated consistency, not correctness. No
+  independent verification of the business logic
+
+  Task: For each incident, write: the root cause analysis of the review
+  failure (why the review process didn't catch it), the specific process
+  change that would prevent recurrence, the detection mechanism (how to
+  know if the process change is working), and the review checklist
+  addition. Then write a synthesis: the systemic patterns across all 3
+  incidents, the comprehensive review process improvements, and the
+  training program to address the skill gaps revealed by these incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root causes go beyond blaming reviewers — identifies systemic issues: #1 reveals that reviews don't check callers/dependencies, #2 reveals that large PRs can't be reviewed effectively, #3 reveals that test-pass ≠ correctness and independent verification is needed"
+    weight: 0.35
+    description: "Systemic root cause analysis"
+  - type: llm_judge
+    criteria: "Process changes are specific and preventive — #1 adds dependency/caller analysis to reviews (or automated tooling), #2 enforces PR size limits and adds security-specific review for auth-related code, #3 requires independent test verification for business-critical calculations"
+    weight: 0.35
+    description: "Specific preventive process changes"
+  - type: llm_judge
+    criteria: "Synthesis identifies patterns — connects all 3 incidents to broader themes (over-reliance on CI, review depth vs PR size, domain-specific review expertise), and the training program addresses the revealed skill gaps without creating blame"
+    weight: 0.30
+    description: "Pattern-connecting synthesis"

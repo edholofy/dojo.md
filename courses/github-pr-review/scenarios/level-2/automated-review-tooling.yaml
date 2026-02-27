@@ -1,0 +1,53 @@
+meta:
+  id: automated-review-tooling
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Set up automated review tools — configure linters, CodeQL, and automated checks to catch issues before human review"
+  tags: [github, pr-review, automation, linting, CodeQL, CI, intermediate]
+
+state: {}
+
+trigger: |
+  Your team spends 40% of review time on issues that could be caught
+  automatically: formatting inconsistencies, unused imports, type errors,
+  known vulnerability patterns, and missing test coverage. You've been
+  tasked with setting up automated review tools to reduce this burden.
+
+  Current state:
+  - TypeScript/React monorepo with Node.js backend
+  - GitHub Actions CI runs build and tests only
+  - No linting in CI (only local, inconsistently used)
+  - No security scanning
+  - No automated review comments
+  - PRs average 3 review rounds before merge (1st round is mostly
+    formatting and lint issues)
+
+  Available tools to evaluate and configure:
+  1. ESLint + Prettier (formatting/linting)
+  2. GitHub CodeQL (security analysis)
+  3. Codecov/Coveralls (test coverage reporting)
+  4. danger.js (custom PR checks: size, description, labels)
+  5. GitHub branch protection rules
+
+  Task: Design the automated review pipeline. Write: the GitHub Actions
+  workflow file(s) for the automated checks, the configuration for each
+  tool (ESLint rules focused on bugs not style, Prettier config, CodeQL
+  queries, danger.js rules for PR hygiene), the branch protection rules
+  that require these checks to pass, and the team rollout plan (how to
+  introduce without disrupting existing workflows). Include the expected
+  impact on review time and number of review rounds.
+
+assertions:
+  - type: llm_judge
+    criteria: "GitHub Actions workflow is correct and complete — runs lint, type-check, CodeQL, coverage, and danger.js as separate jobs or steps, uses proper triggers (pull_request), caches dependencies, and handles monorepo paths correctly"
+    weight: 0.35
+    description: "Complete CI workflow"
+  - type: llm_judge
+    criteria: "Tool configurations are practical — ESLint focuses on bug-catching rules over style (since Prettier handles formatting), CodeQL uses relevant queries for JS/TS, danger.js checks PR size/description/labels, and coverage thresholds are reasonable"
+    weight: 0.35
+    description: "Practical tool configurations"
+  - type: llm_judge
+    criteria: "Rollout plan is realistic — addresses existing code that won't pass new rules (baseline approach), gradual enforcement strategy, team communication, and doesn't block all PRs on day one"
+    weight: 0.30
+    description: "Realistic rollout plan"

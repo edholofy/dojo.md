@@ -1,0 +1,65 @@
+meta:
+  id: compliance-error-handling
+  level: 4
+  course: rest-api-error-handling
+  type: output
+  description: "Design compliance-aware error handling — satisfy PCI DSS, HIPAA, GDPR, and SOC 2 requirements for API error responses and logging"
+  tags: [REST, API, compliance, PCI-DSS, HIPAA, GDPR, SOC-2, expert]
+
+state: {}
+
+trigger: |
+  Your healthcare fintech company processes both medical records
+  (HIPAA) and payment data (PCI DSS), serves European users (GDPR),
+  and undergoes annual SOC 2 audits. A compliance audit found 14
+  critical findings related to API error handling.
+
+  Critical findings:
+
+  PCI DSS violations:
+  1. API error logs contain full credit card numbers (not just last 4)
+  2. Error responses include cardholder name in validation messages
+  3. Debug mode was left on in production, exposing internal error
+     details including payment processor credentials
+  4. No audit trail for failed payment attempts
+
+  HIPAA violations:
+  5. API 500 errors return patient medical record IDs in stack traces
+  6. Error logs are stored unencrypted and accessible to all engineers
+  7. Patient-identifiable data appears in error correlation IDs
+     (using patient email as request ID)
+  8. No access logging for PHI-containing API endpoints
+
+  GDPR violations:
+  9. Error messages include user email addresses
+  10. Error logs retain personal data beyond the consent period
+  11. No mechanism to purge error logs when a user exercises right to
+      erasure (Article 17)
+  12. Cross-border error log storage (EU user data in US logs)
+
+  SOC 2 violations:
+  13. No evidence of error monitoring and response procedures
+  14. Incomplete audit trail — gaps in error logging during an outage
+
+  Remediation deadline: 90 days
+  Budget: $200K
+
+  Task: Design the compliance remediation plan for all 14 findings.
+  Write: the error response sanitization rules per regulation, the
+  error log data classification and handling policy, the audit trail
+  design that satisfies all 4 frameworks, the data residency solution
+  for error logs, and the ongoing compliance monitoring system.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 14 findings are remediated — PCI DSS: card data masked/removed from logs and responses, debug mode disabled, payment audit trails added. HIPAA: PHI removed from error outputs, logs encrypted and access-controlled, proper request IDs. GDPR: PII removed from errors, log retention aligned with consent, erasure mechanism built, data residency addressed. SOC 2: monitoring procedures documented, audit trail gaps prevented"
+    weight: 0.35
+    description: "All 14 findings remediated"
+  - type: llm_judge
+    criteria: "Unified compliance framework avoids conflicting rules — handles cases where regulations conflict (HIPAA requires audit trails but GDPR requires erasure), proposes a single error handling policy that satisfies all 4 frameworks simultaneously, and classifies data by sensitivity level"
+    weight: 0.35
+    description: "Unified compliance framework"
+  - type: llm_judge
+    criteria: "Implementation is feasible within 90 days and $200K — prioritizes critical findings, phases the work, and includes ongoing compliance monitoring (automated scans for PII/PHI in error logs, data residency checks, retention policy enforcement)"
+    weight: 0.30
+    description: "Feasible remediation plan"

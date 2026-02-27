@@ -1,0 +1,60 @@
+meta:
+  id: review-scope-sizing
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Evaluate PR scope and size — assess whether PRs are appropriately sized and suggest how to break up large PRs"
+  tags: [github, pr-review, scope, size, splitting, basics]
+
+state: {}
+
+trigger: |
+  You're the tech lead enforcing a "small PRs" policy. The team
+  agreed that PRs should be under 400 lines of meaningful code
+  changes (excluding generated files, tests, and config). Three PRs
+  arrived that need scope evaluation:
+
+  PR #101: "Add user management feature" (1,200 lines)
+  Changes:
+  - New User model with CRUD operations (200 lines)
+  - User API endpoints (150 lines)
+  - User list page UI (250 lines)
+  - User detail page UI (200 lines)
+  - User edit form UI (180 lines)
+  - API tests (150 lines)
+  - UI component tests (70 lines)
+
+  PR #102: "Fix login bug and add password reset" (350 lines)
+  Changes:
+  - Fix: Login fails when email has uppercase letters (15 lines)
+  - Feature: Complete password reset flow (335 lines, including new
+    API endpoint, email template, and reset page)
+
+  PR #103: "Update dependencies and fix lint errors" (2,500 lines)
+  Changes:
+  - package-lock.json update (2,200 lines, auto-generated)
+  - 5 lint fixes in existing files (30 lines)
+  - ESLint config update (20 lines)
+  - Update CI config for new Node version (50 lines)
+  - Update README with new setup instructions (200 lines)
+
+  Task: Evaluate each PR. For each, write: whether it violates the
+  size policy (considering meaningful code vs generated files), the
+  specific risks of reviewing it at its current size, a splitting
+  strategy (how to break it into smaller PRs, with the suggested PR
+  sequence and dependencies), and the review comment requesting the
+  split (if needed) — written diplomatically.
+
+assertions:
+  - type: llm_judge
+    criteria: "Size evaluation is nuanced — PR #101 is genuinely too large, PR #102 mixes a bug fix with a feature (scope issue), PR #103 is large in lines but mostly auto-generated (different evaluation)"
+    weight: 0.35
+    description: "Nuanced size evaluation"
+  - type: llm_judge
+    criteria: "Splitting strategies are practical — PR #101 has a logical split (model+API, then each UI page), PR #102 separates the bug fix from the feature, and the sequence respects dependencies"
+    weight: 0.35
+    description: "Practical splitting strategies"
+  - type: llm_judge
+    criteria: "Review comments are diplomatic — requests to split don't blame the author, acknowledge the work done, explain why smaller PRs help reviewers, and offer specific splitting guidance"
+    weight: 0.30
+    description: "Diplomatic review comments"

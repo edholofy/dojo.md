@@ -1,0 +1,61 @@
+meta:
+  id: codeowners-setup
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Configure CODEOWNERS — set up review routing so the right people automatically review the right code"
+  tags: [github, pr-review, CODEOWNERS, routing, automation, basics]
+
+state: {}
+
+trigger: |
+  You're setting up CODEOWNERS for a monorepo web application.
+  Currently, all PRs request review from the full team (8 people),
+  causing review fatigue and slow turnaround.
+
+  Repository structure:
+  ```
+  /
+  ├── src/
+  │   ├── api/          (Backend team: Alice, Bob)
+  │   ├── web/          (Frontend team: Carol, David, Eve)
+  │   ├── mobile/       (Mobile team: Frank, Grace)
+  │   └── shared/       (Any 2 reviewers from any team)
+  ├── infra/
+  │   ├── terraform/    (DevOps: Alice, Harold)
+  │   ├── docker/       (DevOps: Alice, Harold)
+  │   └── ci/           (DevOps: Alice, Harold)
+  ├── docs/             (Anyone can review)
+  ├── package.json      (Tech Lead: Alice must review)
+  ├── .env.example      (Security: Bob must review)
+  └── database/
+      └── migrations/   (DBA: Bob must review, Alice should review)
+  ```
+
+  Requirements:
+  - Each PR should require exactly 2 approvals
+  - PR authors shouldn't be required reviewers of their own PR
+  - Critical files (package.json, .env.example, migrations) need
+    specific reviewers
+  - The shared/ directory needs cross-team review
+  - Documentation PRs should be easy to merge (1 approval)
+
+  Task: Write the CODEOWNERS file. Include: the file contents with
+  comments explaining each rule, the order of rules (noting that
+  later rules override earlier ones), the branch protection settings
+  to complement CODEOWNERS (required reviews, dismiss stale reviews),
+  and the team setup (GitHub teams vs individual users — pros/cons).
+
+assertions:
+  - type: llm_judge
+    criteria: "CODEOWNERS rules are correct — paths match the directory structure, the order handles overrides properly, critical files have specific reviewers, and the syntax is valid"
+    weight: 0.35
+    description: "Correct CODEOWNERS rules"
+  - type: llm_judge
+    criteria: "Routing reduces review fatigue — each PR only requests the relevant 2-3 reviewers (not all 8), cross-team review for shared/ is handled, and the setup prevents bottlenecks"
+    weight: 0.35
+    description: "Fatigue-reducing routing"
+  - type: llm_judge
+    criteria: "Branch protection complements CODEOWNERS — required reviews, stale review dismissal, and the interaction between CODEOWNERS and branch protection rules are explained"
+    weight: 0.30
+    description: "Complementary branch protection"

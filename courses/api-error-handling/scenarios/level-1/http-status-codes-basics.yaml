@@ -1,0 +1,90 @@
+name: "HTTP Status Code Fundamentals"
+level: 1
+difficulty: beginner
+description: "Understand 2xx success, 4xx client error, and 5xx server error status codes"
+
+context: |
+  You're building a user authentication API endpoint. You need to return the correct
+  HTTP status codes for different scenarios: successful login, invalid credentials,
+  missing required fields, and server outages.
+
+scenario:
+  state:
+    user_database:
+      "user123@example.com": { password_hash: "hashed_pwd_123", name: "John Doe" }
+      "user456@example.com": { password_hash: "hashed_pwd_456", name: "Jane Smith" }
+    service_status: "healthy"
+
+  endpoint: "POST /api/v1/auth/login"
+
+  test_cases:
+    - name: "successful_login"
+      request:
+        body: { email: "user123@example.com", password: "correct_password" }
+      expected_status: 200
+      expected_response:
+        token: "jwt_token_here"
+        user_id: "user123@example.com"
+
+    - name: "invalid_credentials"
+      request:
+        body: { email: "user123@example.com", password: "wrong_password" }
+      expected_status: 401
+      expected_response_contains: "Unauthorized"
+
+    - name: "missing_email_field"
+      request:
+        body: { password: "some_password" }
+      expected_status: 400
+      expected_response_contains: "email is required"
+
+    - name: "malformed_email"
+      request:
+        body: { email: "not-an-email", password: "password123" }
+      expected_status: 400
+      expected_response_contains: "invalid email format"
+
+    - name: "user_not_found"
+      request:
+        body: { email: "nonexistent@example.com", password: "password" }
+      expected_status: 401
+
+    - name: "server_error_scenario"
+      request:
+        body: { email: "user123@example.com", password: "correct_password" }
+        simulate_error: "database_connection_failed"
+      expected_status: 500
+      expected_response_contains: "Internal Server Error"
+
+assertions:
+  - type: "http_status"
+    description: "2xx codes indicate successful operations"
+    test: "successful_login returns 200"
+
+  - type: "http_status"
+    description: "401 Unauthorized for authentication failures"
+    test: "invalid_credentials returns 401"
+
+  - type: "http_status"
+    description: "400 Bad Request for malformed requests"
+    test: "missing required fields returns 400"
+
+  - type: "http_status"
+    description: "400 for invalid data format"
+    test: "malformed_email returns 400"
+
+  - type: "http_status"
+    description: "5xx codes indicate server-side errors"
+    test: "database failure returns 500"
+
+learning_objectives:
+  - "Understand HTTP status code categories (2xx, 3xx, 4xx, 5xx)"
+  - "Know when to use 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error"
+  - "Distinguish between client errors (4xx) and server errors (5xx)"
+  - "Return appropriate status codes for different error scenarios"
+
+key_concepts:
+  - "2xx Success Codes: Indicate successful request processing"
+  - "4xx Client Error Codes: Client-side issues - malformed requests, auth failures, not found"
+  - "5xx Server Error Codes: Server-side issues - database failures, unhandled exceptions"
+  - "Status code semantics matter: Never return 200 with an error message"

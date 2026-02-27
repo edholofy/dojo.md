@@ -1,0 +1,65 @@
+meta:
+  id: github-environments
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Configure GitHub Environments — set up deployment protection rules, approval gates, and environment-specific secrets"
+  tags: [github, actions, environments, protection-rules, deployment-gates, advanced]
+
+state: {}
+
+trigger: |
+  Your company needs a multi-environment deployment pipeline with
+  proper gates and controls. Currently, deployments go directly to
+  production with no staging or approval process.
+
+  Environment requirements:
+  1. Development (dev):
+     - Auto-deploy on every push to feature branches
+     - Ephemeral environments (one per PR, destroyed on merge)
+     - No approval required
+     - Uses development database and mock services
+
+  2. Staging:
+     - Auto-deploy on merge to main
+     - Protected: only deployable from main branch
+     - Runs smoke tests after deployment
+     - Uses staging database with anonymized production data
+     - Secrets: staging-specific AWS credentials, API keys
+
+  3. Production:
+     - Manual approval required (2 reviewers from @devops team)
+     - Deployment window: weekdays 9AM-4PM ET (no weekend deploys)
+     - Wait timer: 5-minute delay after approval (for last-minute
+       cancellation)
+     - Branch restriction: only main branch
+     - Secrets: production AWS credentials, API keys, DB connection
+     - Required: all staging smoke tests must have passed
+
+  4. Canary (subset of production):
+     - Deploy to 5% of production traffic first
+     - Monitor error rates for 15 minutes
+     - Auto-promote to full production if error rate < 0.5%
+     - Auto-rollback if error rate > 1%
+
+  Task: Configure all 4 environments. Write: the GitHub Environment
+  settings for each (protection rules, secrets, deployment branch
+  policy), the deployment workflow that uses all 4 environments in
+  sequence, the canary deployment logic (traffic splitting and
+  monitoring), and the ephemeral environment management for dev (create
+  on PR open, destroy on PR close). Include the IAM and infrastructure
+  setup needed to support environment-specific secrets.
+
+assertions:
+  - type: llm_judge
+    criteria: "GitHub Environment configuration is correct — each environment has appropriate protection rules (required reviewers for production, wait timer, branch policy), environment-specific secrets are properly scoped, and the deployment window restriction uses custom deployment protection rules"
+    weight: 0.35
+    description: "Correct environment configuration"
+  - type: llm_judge
+    criteria: "Deployment workflow uses environments correctly — references environments with 'environment:' key in each job, environment approvals pause the workflow, secrets are accessed per-environment, and the sequential flow (dev → staging → canary → production) is properly orchestrated"
+    weight: 0.35
+    description: "Correct environment workflow usage"
+  - type: llm_judge
+    criteria: "Canary and ephemeral environments are practical — canary deployment includes traffic splitting logic and monitoring-based auto-promote/rollback, ephemeral dev environments are created/destroyed via PR lifecycle events, and the infrastructure requirements are addressed"
+    weight: 0.30
+    description: "Practical canary and ephemeral environments"

@@ -1,0 +1,62 @@
+meta:
+  id: job-dependencies-outputs
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Configure job dependencies and outputs — use needs, outputs, and conditional execution to create structured workflow graphs"
+  tags: [github, actions, jobs, needs, outputs, conditional, basics]
+
+state: {}
+
+trigger: |
+  You're building a deployment workflow that requires careful job
+  orchestration. Different jobs need to pass data to each other and
+  execute conditionally.
+
+  Workflow requirements:
+  1. Job: "determine-changes" — Detect what changed in the PR
+     - Output: "backend_changed" (true/false)
+     - Output: "frontend_changed" (true/false)
+     - Output: "infra_changed" (true/false)
+     - Uses git diff to check which directories have changes
+
+  2. Job: "test-backend" — Only runs if backend code changed
+     - Needs: determine-changes
+     - Condition: only if backend_changed == 'true'
+     - Output: "test_status" (passed/failed)
+
+  3. Job: "test-frontend" — Only runs if frontend code changed
+     - Needs: determine-changes
+     - Condition: only if frontend_changed == 'true'
+     - Output: "test_status" (passed/failed)
+
+  4. Job: "deploy" — Runs only if relevant tests passed
+     - Needs: test-backend AND test-frontend
+     - Should run even if one of the test jobs was skipped (because
+       that directory didn't change)
+     - Should NOT run if any test job actually failed
+
+  5. Job: "notify" — Always runs, even if previous jobs fail
+     - Reports the final status to Slack
+     - Needs access to outputs from all previous jobs
+
+  Task: Write the complete workflow YAML. Explain: how to set and
+  read job outputs (the $GITHUB_OUTPUT syntax), how 'needs' creates
+  the dependency graph, how 'if' conditions work with job outputs and
+  status functions (success(), failure(), always(), cancelled()), and
+  the tricky behavior when a needed job is skipped (the deploy job
+  scenario).
+
+assertions:
+  - type: llm_judge
+    criteria: "Job outputs are correctly configured — uses echo 'key=value' >> $GITHUB_OUTPUT syntax, outputs are declared in job-level outputs section, and downstream jobs reference them correctly with needs.<job>.outputs.<name>"
+    weight: 0.35
+    description: "Correct job output configuration"
+  - type: llm_judge
+    criteria: "Conditional execution handles the tricky cases — the deploy job runs when tests pass OR are skipped (not failed), using the correct combination of if: conditions and status check functions. The notify job uses if: always() to run regardless"
+    weight: 0.35
+    description: "Correct conditional execution"
+  - type: llm_judge
+    criteria: "Explanations clarify confusing behaviors — explains that skipped jobs cause downstream 'needs' jobs to also skip by default, how to use 'if: always()' or '!cancelled()' to override, and the difference between a job being skipped vs failing"
+    weight: 0.30
+    description: "Clear behavior explanations"

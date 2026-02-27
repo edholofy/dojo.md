@@ -1,0 +1,61 @@
+meta:
+  id: deployment-workflows
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Build deployment workflows — create staging and production deployment pipelines with approval gates and rollback"
+  tags: [github, actions, deployment, staging, production, rollback, intermediate]
+
+state: {}
+
+trigger: |
+  You're building deployment workflows for a web application that needs
+  to deploy to staging automatically and to production with manual
+  approval. The application runs on AWS (ECS for the API, S3 + CloudFront
+  for the frontend).
+
+  Deployment requirements:
+  1. Staging deployment:
+     - Automatically deploy when PR is merged to main
+     - Deploy both frontend (S3) and backend (ECS)
+     - Run smoke tests after deployment
+     - Notify #staging Slack channel with deployment URL
+
+  2. Production deployment:
+     - Requires manual approval from a team lead
+     - Uses GitHub Environments with protection rules
+     - Deploy frontend first, then backend (ordered)
+     - Run health checks between each deployment step
+     - If health check fails, automatically rollback
+     - Notify #production Slack channel
+
+  3. Rollback workflow:
+     - Manual trigger (workflow_dispatch) with version input
+     - Rolls back to the specified previous version
+     - Can also be triggered automatically from deployment failure
+
+  4. Environment configuration:
+     - Staging: auto-deploy, no approval, 5-minute timeout
+     - Production: manual approval (2 required reviewers), deployment
+       window (weekdays 9AM-4PM ET only)
+
+  Task: Write all 3 workflow files (deploy-staging.yml, deploy-
+  production.yml, rollback.yml). Include: the GitHub Environment
+  configuration (protection rules, secrets per environment), the
+  deployment steps with health checks, the rollback mechanism, and
+  the Slack notification integration. Explain the deployment strategy
+  (blue-green, rolling, or canary) and why you chose it.
+
+assertions:
+  - type: llm_judge
+    criteria: "GitHub Environments are correctly used — staging environment has no protection rules (auto-deploy), production has required reviewers and deployment branch restriction (main only), and environment-specific secrets are referenced correctly"
+    weight: 0.35
+    description: "Correct GitHub Environment usage"
+  - type: llm_judge
+    criteria: "Deployment and rollback are properly orchestrated — staging deploys automatically on merge, production requires approval, health checks run between steps, failures trigger automatic rollback, and the manual rollback workflow accepts a version input"
+    weight: 0.35
+    description: "Proper deployment orchestration"
+  - type: llm_judge
+    criteria: "Deployment strategy is explained and implemented — the chosen strategy (blue-green, rolling, or canary) is justified for the architecture (ECS + S3), the implementation matches the strategy, and the rollback mechanism is consistent with the deployment approach"
+    weight: 0.30
+    description: "Explained deployment strategy"

@@ -1,0 +1,69 @@
+meta:
+  id: intermediate-error-shift
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Intermediate error handling shift — manage a complex multi-service outage with cascading error scenarios"
+  tags: [REST, API, error-handling, shift-simulation, outage, intermediate]
+
+state: {}
+
+trigger: |
+  You're the on-call engineer for a travel booking API. It's peak
+  summer booking season and the system processes $2M in bookings daily.
+  At 2:15 PM, alerts start firing.
+
+  Timeline of events:
+
+  2:15 PM — Hotel availability service starts returning 503
+  - Error rate: 100% on hotel searches
+  - Impact: Users can't search hotels, but flights still work
+  - Root cause unknown
+
+  2:20 PM — The booking service starts timing out
+  - Users who already found hotels are trying to book
+  - Booking service calls hotel availability to verify → timeout
+  - Bookings in progress are hanging (payment already charged but
+    booking not confirmed)
+
+  2:25 PM — Payment service reports "orphaned charges"
+  - 47 customers were charged but bookings weren't created
+  - Refund system requires a booking ID to process refunds
+  - Manual refund takes 3-5 business days
+
+  2:30 PM — Customer support flooded
+  - "I was charged $500 but have no booking confirmation"
+  - "The search page is spinning forever"
+  - "I booked a flight but can't add a hotel"
+  - API consumers (partner sites) are getting 504s from your gateway
+
+  2:35 PM — You discover the hotel service's database ran out of
+  connections due to a connection leak in a deploy at 1:45 PM
+
+  Available actions:
+  - Roll back hotel service to previous version
+  - Enable circuit breaker to bypass hotel availability check
+  - Manually refund the 47 orphaned charges
+  - Return cached hotel data (stale by 2 hours)
+  - Put up a maintenance page
+
+  Task: Handle this incident from the API error handling perspective.
+  Write: the immediate error response changes for each endpoint
+  during the outage, the orphaned payment recovery plan, the
+  customer communication (API status page updates), the partner
+  API consumer communication, and the post-incident improvements
+  to prevent this error cascade.
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate response handles each service appropriately — hotel search returns 503 with Retry-After (or cached data with staleness indicator), booking endpoint returns clear error about hotel unavailability without charging, existing orphaned payments are identified and handled, and flight-only flows remain functional"
+    weight: 0.35
+    description: "Appropriate immediate response"
+  - type: llm_judge
+    criteria: "Orphaned payment recovery is thorough — identifies all 47 affected customers, has a plan to refund without booking IDs (use payment timestamps), communicates proactively to affected customers, and designs a reconciliation process to catch any missed orphans"
+    weight: 0.35
+    description: "Thorough payment recovery"
+  - type: llm_judge
+    criteria: "Post-incident improvements prevent cascade — circuit breakers to isolate hotel service failures, payment-before-booking flow redesigned (or compensating transactions), connection pool monitoring and alerting, and deploy-time health checks that would have caught the connection leak"
+    weight: 0.30
+    description: "Cascade prevention improvements"

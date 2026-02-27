@@ -1,0 +1,55 @@
+meta:
+  id: oidc-cloud-deployments
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Deploy with OIDC — configure keyless authentication to AWS, GCP, and Azure using GitHub Actions OIDC tokens"
+  tags: [github, actions, OIDC, AWS, GCP, Azure, cloud-auth, advanced]
+
+state: {}
+
+trigger: |
+  Your company deploys to all 3 major cloud providers and currently
+  uses long-lived credentials stored as GitHub Secrets. The security
+  team mandates a migration to OIDC (keyless authentication) within
+  30 days. No more static credentials in GitHub Secrets.
+
+  Current setup (to be replaced):
+  - AWS: IAM user access key + secret key in GitHub Secrets
+  - GCP: Service account key JSON file in GitHub Secrets
+  - Azure: Service principal client ID + secret in GitHub Secrets
+
+  Deployment targets:
+  - AWS: ECS (API), S3 + CloudFront (frontend), Lambda (serverless)
+  - GCP: Cloud Run (microservices), GCS (static assets)
+  - Azure: AKS (Kubernetes), Azure Functions (serverless)
+
+  Requirements:
+  - Each cloud provider should only trust tokens from specific repos
+  - Production deployments should only be allowed from the main branch
+  - Staging deployments should be allowed from any branch
+  - Each cloud role should have minimum required permissions
+  - The OIDC configuration should work with GitHub Environments
+
+  Task: Configure OIDC for all 3 cloud providers. For each, write:
+  the identity provider setup (cloud-side configuration), the trust
+  policy (limiting which repos/branches can assume the role), the
+  IAM role with minimum permissions, the workflow changes (replacing
+  static credentials with OIDC), and the testing/verification steps.
+  Include: a comparison of OIDC across the 3 providers, the common
+  pitfalls, and the migration checklist for removing old static
+  credentials safely.
+
+assertions:
+  - type: llm_judge
+    criteria: "AWS OIDC is correctly configured — IAM OIDC provider with GitHub's thumbprint, IAM role trust policy with conditions on repo and branch (sub claim), workflow uses aws-actions/configure-aws-credentials with role-to-assume and no static credentials"
+    weight: 0.35
+    description: "Correct AWS OIDC configuration"
+  - type: llm_judge
+    criteria: "GCP and Azure OIDC are also configured — GCP uses Workload Identity Federation with correct attribute mapping, Azure uses federated credentials on the app registration, and both have branch-restricted trust policies matching the AWS pattern"
+    weight: 0.35
+    description: "Complete multi-cloud OIDC"
+  - type: llm_judge
+    criteria: "Migration plan is safe — includes a parallel-running period (both OIDC and static credentials work), verification steps before removing static credentials, rollback plan if OIDC fails, and the credential rotation/deletion checklist"
+    weight: 0.30
+    description: "Safe migration plan"

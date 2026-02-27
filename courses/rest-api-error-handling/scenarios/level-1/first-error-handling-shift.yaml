@@ -1,0 +1,67 @@
+meta:
+  id: first-error-handling-shift
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "First error handling shift — handle a stream of real-time API errors during a product launch event"
+  tags: [REST, API, error-handling, shift-simulation, launch, beginner]
+
+state: {}
+
+trigger: |
+  You're on your first on-call shift for a ticket marketplace API.
+  The company is launching sales for a major concert tonight and
+  traffic will spike 10x. Your job is to review the API's error
+  handling before the launch.
+
+  During your pre-launch review, you find these issues:
+
+  Issue 1 — No global error handler:
+  If any route throws an unhandled exception, Express returns:
+  <!DOCTYPE html><html><body><pre>TypeError: Cannot read property
+  'email' of undefined<br>&nbsp; at /app/src/routes/tickets.js:45
+  </pre></body></html>
+  (HTML error page with stack trace)
+
+  Issue 2 — Inconsistent error shapes:
+  - /tickets returns { "error": "..." }
+  - /orders returns { "message": "...", "code": 123 }
+  - /payments returns { "errors": ["..."] }
+  - /users returns { "status": "fail", "data": { "message": "..." } }
+
+  Issue 3 — Database errors leak:
+  When the database constraint prevents duplicate ticket purchases:
+  "duplicate key value violates unique constraint
+  'orders_user_id_ticket_id_key'"
+
+  Issue 4 — No rate limiting on search:
+  GET /tickets/search has no rate limit. During the last sale, bots
+  made 50,000 requests/second and the API crashed.
+
+  Issue 5 — Payment errors are too vague:
+  POST /orders/:id/pay returns 400 { "error": "Payment failed" }
+  for every payment issue (declined card, insufficient funds,
+  expired card, processing timeout, fraud detection).
+
+  Issue 6 — Timeout errors unhandled:
+  The external payment processor sometimes takes 30+ seconds. The API
+  has no timeout, so requests hang until the client gives up.
+
+  Task: Fix all 6 issues before the launch. For each, write: what's
+  wrong (the risk for tonight's launch), the fix (code structure or
+  configuration), and the expected error response after the fix.
+  Prioritize the fixes by launch impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 issues are fixed with correct solutions — global error handler catches unhandled exceptions (no HTML/stack traces), error format is standardized, database errors are translated to user-friendly messages, rate limiting is implemented for search, payment errors are specific but secure, and timeout handling is added with appropriate status codes"
+    weight: 0.35
+    description: "All issues fixed correctly"
+  - type: llm_judge
+    criteria: "Prioritization is sound — identifies which issues pose the greatest risk for a high-traffic launch event (no global error handler and no rate limiting are critical, inconsistent formats are important but not urgent). Each fix includes the expected error response"
+    weight: 0.35
+    description: "Sound prioritization"
+  - type: llm_judge
+    criteria: "Solutions are launch-ready — fixes are quick to implement (no major refactors), handle the specific high-traffic scenario (10x spike), and include monitoring so the on-call engineer can see errors in real-time during the launch"
+    weight: 0.30
+    description: "Launch-ready solutions"

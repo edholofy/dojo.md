@@ -1,0 +1,61 @@
+meta:
+  id: cross-team-review
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Cross-team code review — review PRs outside your domain expertise, ask effective questions, and provide value without deep context"
+  tags: [github, pr-review, cross-team, knowledge-sharing, communication, intermediate]
+
+state: {}
+
+trigger: |
+  You're a frontend engineer asked to review 3 PRs from teams outside
+  your usual domain. You need to provide valuable feedback despite not
+  being a domain expert.
+
+  PR #401 — From the Data team: "Add real-time analytics pipeline"
+  You don't know Kafka or Spark, but the PR touches shared API contracts
+  your frontend consumes. Changes include:
+  - New event schema for user interactions (affects your tracking code)
+  - API response format change for the analytics dashboard endpoint
+  - New WebSocket endpoint for real-time data
+  The PR has 400 lines, good tests, but the API changes aren't
+  documented and the response format breaks backward compatibility.
+
+  PR #402 — From the Infrastructure team: "Migrate to Kubernetes"
+  You don't know K8s well, but the PR modifies environment variables and
+  deployment configuration that affect your app. Changes include:
+  - New environment variable naming convention (REACT_APP_ → NEXT_PUBLIC_)
+  - Health check endpoint added (your app needs to implement /healthz)
+  - Changed base URL configuration from hardcoded to dynamic
+  The PR is 600 lines of YAML and config, with a migration guide buried
+  in a comment.
+
+  PR #403 — From the Mobile team: "Add shared component library"
+  The mobile team is creating a shared React Native component library
+  that should share design tokens with your web components. Changes:
+  - New design token format (different from your current CSS variables)
+  - Shared TypeScript types for API responses
+  - A utility function that duplicates logic from your web codebase
+  The PR is 250 lines with no mention of the web team in the description.
+
+  Task: Review all 3 PRs. For each, write: what you can and can't
+  evaluate as a non-domain expert, the specific feedback you can provide
+  (API contracts, compatibility, shared code), the questions to ask the
+  authors (framed constructively, not "I don't understand"), and the
+  cross-team concerns to raise. Include a meta-analysis of what this
+  cross-team review experience reveals about organizational communication.
+
+assertions:
+  - type: llm_judge
+    criteria: "Reviews add value despite limited domain knowledge — identifies API contract breaks in #401, environment variable migration risks in #402, and code duplication in #403, all from the frontend perspective without pretending to understand Kafka/K8s internals"
+    weight: 0.35
+    description: "Value-adding cross-team reviews"
+  - type: llm_judge
+    criteria: "Questions are constructive and specific — asks about backward compatibility plans (not 'will this break things?'), migration timeline for env vars, and design token unification strategy, showing respect for the authors' domain expertise"
+    weight: 0.35
+    description: "Constructive cross-team questions"
+  - type: llm_judge
+    criteria: "Organizational patterns are identified — notes that cross-team PRs need better API change documentation, shared code should have cross-team visibility, and suggests process improvements (RFC for cross-team changes, shared API contract tests)"
+    weight: 0.30
+    description: "Organizational pattern recognition"

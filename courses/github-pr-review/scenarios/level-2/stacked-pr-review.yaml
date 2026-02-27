@@ -1,0 +1,65 @@
+meta:
+  id: stacked-pr-review
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Review stacked PRs — handle dependent PR chains, manage merge order, and review incremental changes effectively"
+  tags: [github, pr-review, stacked-prs, dependencies, workflow, intermediate]
+
+state: {}
+
+trigger: |
+  A senior engineer has submitted a stack of 4 dependent PRs for a
+  payment processing feature. They've asked you to review the full
+  stack. The PRs must be merged in order.
+
+  PR #301 (base: main) — "Add Payment model and database migration"
+  - 120 lines: new Payment table, migration, model with validations
+  - Status: CI green, no other reviews yet
+  - The migration adds columns: amount, currency, status, stripe_id,
+    created_at, updated_at
+  - You notice: no index on stripe_id, status enum uses strings instead
+    of an integer enum, no soft delete support
+
+  PR #302 (base: PR #301) — "Add payment processing service"
+  - 200 lines: PaymentService class, Stripe integration, error handling
+  - Status: CI green (includes #301's changes)
+  - Handles: create, capture, refund, webhook processing
+  - You notice: good error handling, but the refund method doesn't
+    check if the payment was already refunded, and the webhook handler
+    doesn't validate the Stripe signature
+
+  PR #303 (base: PR #302) — "Add payment API endpoints"
+  - 150 lines: REST endpoints, request validation, authentication
+  - Status: CI green
+  - You notice: endpoints look good, but there's no rate limiting on
+    the create-payment endpoint, and error responses leak internal
+    error messages to the client
+
+  PR #304 (base: PR #303) — "Add payment UI components"
+  - 180 lines: React components, form validation, loading states
+  - Status: CI green
+  - You notice: good UX, but the payment form doesn't disable the
+    submit button after click (double-charge risk), and there's no
+    idempotency key sent with the request
+
+  Task: Review the full stack. Write: the review strategy (how to
+  approach reviewing dependent PRs — top-down vs bottom-up, what to
+  focus on at each layer), the review for each PR (noting which issues
+  block the entire stack vs just that PR), the guidance on which issues
+  to fix before merging vs address in follow-ups, and the merge plan
+  (order, timing, what to verify between merges).
+
+assertions:
+  - type: llm_judge
+    criteria: "Review strategy is sound — reviews bottom-up (data layer first), identifies which issues are stack-blocking (migration issues in #301 block everything) vs local (UI issues in #304 only affect that PR), and reviews each PR in the context of the full feature"
+    weight: 0.35
+    description: "Sound stacked PR review strategy"
+  - type: llm_judge
+    criteria: "Issues are correctly categorized — missing stripe_id index and webhook signature validation are blocking issues, double-submit in UI is important but could be a follow-up, and the review recognizes that some issues span PRs (idempotency needs both API and UI changes)"
+    weight: 0.35
+    description: "Correct issue categorization"
+  - type: llm_judge
+    criteria: "Merge plan is practical — addresses the risks of merging a stack (what happens if #301 merges but #302 needs changes), suggests rebasing strategy, and handles the case where a middle PR needs significant changes"
+    weight: 0.30
+    description: "Practical merge plan"

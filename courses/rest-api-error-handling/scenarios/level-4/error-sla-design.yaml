@@ -1,0 +1,65 @@
+meta:
+  id: error-sla-design
+  level: 4
+  course: rest-api-error-handling
+  type: output
+  description: "Design API error SLAs — create enforceable service level agreements for error rates, response times, and error resolution"
+  tags: [REST, API, SLA, contracts, reliability, penalties, expert]
+
+state: {}
+
+trigger: |
+  Your API platform serves 500 enterprise customers. Three major
+  customers are threatening to leave because of error-related
+  issues, and they're demanding formal SLAs.
+
+  Customer A (payments processor, $5M ARR):
+  "We need guarantees on error rates. Last month your payment
+  endpoint had a 2% error rate for 4 hours. That cost us $200K
+  in failed transactions. We want financial penalties if errors
+  exceed thresholds."
+
+  Customer B (healthcare platform, $3M ARR):
+  "When errors occur, your error messages don't help us debug.
+  We need SLAs on error message quality — every error must include
+  an actionable message and a correlation ID we can reference with
+  your support team."
+
+  Customer C (e-commerce aggregator, $2M ARR):
+  "Your error response times are inconsistent. Sometimes errors
+  return in 50ms, sometimes in 30 seconds (timeout). We need
+  SLAs on error response latency so our circuit breakers work
+  predictably."
+
+  Your sales team wants to create three SLA tiers:
+  - Platinum ($50K+/mo): strictest SLAs, dedicated support
+  - Gold ($10K+/mo): standard SLAs, priority support
+  - Silver (<$10K/mo): best-effort, standard support
+
+  Questions from legal:
+  1. "How do we measure error rate? Does a client-caused 400 count?"
+  2. "What are appropriate financial penalties? Credits or cash?"
+  3. "How do we handle force majeure (upstream provider outages)?"
+  4. "How do we prevent SLA gaming (customers triggering errors to
+     claim credits)?"
+
+  Task: Design the complete SLA framework. Write: the SLA tiers
+  with specific metrics and thresholds for each customer concern
+  (error rate, error quality, error response time), the measurement
+  methodology (how to calculate without disputes), the penalty
+  structure (credits, escalation), the exclusions (what doesn't
+  count), and the internal engineering requirements to meet the SLAs.
+
+assertions:
+  - type: llm_judge
+    criteria: "SLA metrics are precisely defined — error rate excludes client errors (4xx) and counts only server errors (5xx) and timeouts, error quality is measurable (correlation ID present, actionable message, correct status code), and error response latency has clear P99 targets per tier. All three customer concerns are addressed"
+    weight: 0.35
+    description: "Precisely defined SLA metrics"
+  - type: llm_judge
+    criteria: "Penalty structure is fair and enforceable — service credits are proportional to impact, excludes force majeure and client-caused errors, has anti-gaming provisions, and the measurement methodology prevents disputes (shared monitoring dashboard, agreed-upon measurement points)"
+    weight: 0.35
+    description: "Fair enforceable penalties"
+  - type: llm_judge
+    criteria: "Internal engineering requirements are realistic — identifies what the platform team must build to meet the SLAs (per-customer error tracking, error quality validation, guaranteed timeout behavior), and the SLA tiers are achievable without over-committing"
+    weight: 0.30
+    description: "Realistic engineering requirements"

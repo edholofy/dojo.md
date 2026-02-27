@@ -1,0 +1,68 @@
+meta:
+  id: intermediate-cicd-shift
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Intermediate CI/CD shift — handle complex workflow issues, optimization requests, and deployment incidents simultaneously"
+  tags: [github, actions, shift-simulation, troubleshooting, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  You're the CI/CD on-call engineer handling multiple requests during
+  a busy shift. Handle all 4 situations.
+
+  Situation 1 — Deployment rollback needed:
+  Production deployment just completed but monitoring shows 500 errors
+  spiking from 0.1% to 5%. The deployment was triggered by a merge
+  to main 10 minutes ago. You need to:
+  - Identify which commit caused the issue
+  - Trigger a rollback to the previous version
+  - The rollback workflow exists but has never been used — you need
+    to verify it works and execute it
+  - Prevent further auto-deployments until the issue is resolved
+
+  Situation 2 — Matrix build timeout:
+  The cross-platform test matrix has been running for 2 hours (normal
+  is 20 minutes). Investigation shows: macOS runner is stuck on "Set
+  up job" with no logs. This is blocking a critical security patch PR.
+  You need to:
+  - Unblock the security patch
+  - Fix the matrix build for future runs
+  - Decide if you should rerun the entire matrix or just the failed job
+
+  Situation 3 — Secret exposure alert:
+  GitHub sent a secret scanning alert: an AWS access key was found in
+  a workflow file committed 2 hours ago. The key was in a hardcoded
+  env value (not using secrets). You need to:
+  - Assess the exposure (was the key used in any workflow runs?)
+  - Remediate immediately (rotate key, remove from code)
+  - Prevent recurrence (how to block secret commits)
+
+  Situation 4 — Cache corruption:
+  Multiple teams report that their CI workflows are failing with
+  "Module not found" errors despite no code changes. Investigation
+  shows the shared cache (node_modules) was corrupted by a workflow
+  that ran during a failed npm publish. You need to:
+  - Clear the corrupted cache for affected repos
+  - Fix the failing workflows immediately
+  - Prevent cache corruption from happening again
+
+  Task: Handle all 4 situations. For each, write: the immediate action
+  (what to do in the next 5 minutes), the resolution steps, the root
+  cause analysis, and the prevention measures. Prioritize and explain
+  your priority order.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority order is correct — secret exposure (Situation 3) and production errors (Situation 1) are highest priority, matrix timeout (Situation 2) is medium (blocks security patch), and cache corruption (Situation 4) is handled but less urgent. The security patch PR gets unblocked quickly"
+    weight: 0.35
+    description: "Correct priority order"
+  - type: llm_judge
+    criteria: "Resolutions are technically sound — rollback uses the existing workflow with correct version targeting, secret remediation includes key rotation AND code removal AND history rewriting if needed, cache clearing uses correct GitHub API or CLI, and matrix fix addresses the macOS runner issue"
+    weight: 0.35
+    description: "Technically sound resolutions"
+  - type: llm_judge
+    criteria: "Prevention measures are systemic — secret scanning with push protection, pre-commit hooks for secrets, cache key design that prevents corruption (immutable keys), macOS runner fallback strategy, and deployment safeguards (canary, automatic rollback on error rate)"
+    weight: 0.30
+    description: "Systemic prevention measures"

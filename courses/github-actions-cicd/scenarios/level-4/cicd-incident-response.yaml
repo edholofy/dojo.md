@@ -1,0 +1,60 @@
+meta:
+  id: cicd-incident-response
+  level: 4
+  course: github-actions-cicd
+  type: output
+  description: "Respond to CI/CD incidents — handle platform outages, security breaches, and deployment failures at the organizational level"
+  tags: [github, actions, incident-response, outage, security, postmortem, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Platform Engineering handling 3 major CI/CD
+  incidents simultaneously. Each requires a different response strategy.
+
+  Incident 1 — GitHub Actions outage (Severity: P1):
+  GitHub Actions has been experiencing degraded performance for 2 hours.
+  Workflow runs are queuing but not starting. GitHub's status page says
+  "Investigating." Your entire engineering org (500 developers) is
+  blocked. 15 production deployments are queued, including a critical
+  security patch. The CEO asks: "When will engineering be unblocked?"
+  You need to: determine the blast radius, activate the business
+  continuity plan, get the security patch deployed manually, and
+  communicate to the organization.
+
+  Incident 2 — Credential leak via CI logs (Severity: P1):
+  A workflow accidentally printed a database connection string (with
+  password) to the build logs. The logs are public (open-source repo).
+  The credentials provide read/write access to the production database
+  containing 2M user records. The log has been visible for 6 hours.
+  You need to: assess data exposure, rotate credentials, scrub the
+  logs, notify the security team, and determine if data was accessed.
+
+  Incident 3 — Deployment pipeline corruption (Severity: P2):
+  A misconfigured reusable workflow update caused all deployments to
+  deploy to the wrong environment. For 4 hours, staging deployments
+  went to production and production deployments went to staging. 3
+  untested features are now in production, and production data is being
+  written by staging code. No data loss yet, but data consistency is
+  at risk.
+
+  Task: Handle all 3 incidents. For each, write: the incident
+  commander's playbook (first 15 minutes, first hour, resolution),
+  the communication plan (who gets told what and when), the technical
+  resolution steps, and the post-incident review (root cause, corrective
+  actions, process improvements). Include: the unified incident report
+  for the CTO and the long-term platform resilience improvements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident response follows proper IC protocol — establishes incident commander, defines clear communication channels, provides regular status updates, and each incident has a clear escalation path and resolution criteria"
+    weight: 0.35
+    description: "Proper IC protocol"
+  - type: llm_judge
+    criteria: "Technical resolutions are correct — GitHub outage has a BCP (fallback to self-hosted or manual deploy for security patch), credential leak has immediate rotation + log scrubbing + access audit, and environment swap is fixed with immediate rollback and data integrity verification"
+    weight: 0.35
+    description: "Correct technical resolutions"
+  - type: llm_judge
+    criteria: "Post-incident improvements are systemic — identifies that all 3 incidents reveal platform resilience gaps (no GitHub fallback, secrets in logs possible, environment config as single point of failure) and proposes permanent fixes"
+    weight: 0.30
+    description: "Systemic post-incident improvements"

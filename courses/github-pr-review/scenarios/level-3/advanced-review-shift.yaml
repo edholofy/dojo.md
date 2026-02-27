@@ -1,0 +1,65 @@
+meta:
+  id: advanced-review-shift
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Advanced review shift — handle cross-functional reviews, compliance requirements, and process improvements simultaneously"
+  tags: [github, pr-review, shift-simulation, cross-functional, compliance, advanced]
+
+state: {}
+
+trigger: |
+  You're the review lead for the week. Your shift involves complex
+  reviews that span organizational boundaries and require process-level
+  decisions.
+
+  Situation 1 — Compliance-critical PR:
+  PR #601: "Add PCI DSS logging to payment endpoints" (180 lines)
+  The PR adds audit logging but the implementation logs full credit card
+  numbers in the "debug" log level. The author says debug logs are "only
+  for development" but you know they're enabled in staging which shares
+  infrastructure with production logs. This PR is blocking a PCI audit
+  next week.
+  Two reviewers have already approved it.
+
+  Situation 2 — Cross-team architecture dispute:
+  PR #602: "Shared authentication library v2" (450 lines)
+  The platform team submitted a breaking change to the auth library.
+  Three consuming teams have pushed back in the PR comments — 87
+  comments over 5 days with no resolution. The backend team wants OAuth,
+  the mobile team wants JWT, and the frontend team wants session-based.
+  The platform team is frustrated and threatening to merge without
+  consensus.
+
+  Situation 3 — Review process failure:
+  A production incident occurred because a PR was merged with a stale
+  approval — the code changed significantly after the approval, but
+  GitHub didn't require re-review. The CTO wants a fix before end of
+  week.
+
+  Situation 4 — Culture challenge:
+  A junior engineer comes to you privately saying a senior reviewer has
+  been leaving dismissive comments like "this is obviously wrong" and
+  "any competent developer would know this." The junior wants to change
+  teams. You check the PR history and confirm the pattern — 15 PRs with
+  similar comments in the last month.
+
+  Task: Handle all 4 situations. For each, write: the immediate action
+  (what to do right now), the resolution (how to resolve the core issue),
+  the process improvement (how to prevent recurrence), and the
+  communication (what to say and to whom). Include a weekly review lead
+  summary for the engineering leadership.
+
+assertions:
+  - type: llm_judge
+    criteria: "Compliance situation is handled correctly — the PCI logging issue is flagged as a blocker despite 2 existing approvals, the approval is dismissed/review requested, and the fix addresses the credit card logging in all environments, not just production"
+    weight: 0.35
+    description: "Correct compliance handling"
+  - type: llm_judge
+    criteria: "Architecture dispute is resolved constructively — doesn't pick a side in the PR, escalates to an architectural decision record (ADR) or RFC process, proposes an in-person/sync discussion, and addresses the platform team's frustration with a timeline commitment"
+    weight: 0.35
+    description: "Constructive dispute resolution"
+  - type: llm_judge
+    criteria: "Culture issue is addressed seriously — the senior reviewer's behavior is addressed through management (not publicly in PRs), the junior engineer is supported, and the systemic fix includes reviewer conduct expectations and a feedback mechanism"
+    weight: 0.30
+    description: "Serious culture issue handling"

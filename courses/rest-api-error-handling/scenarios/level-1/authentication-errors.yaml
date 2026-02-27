@@ -1,0 +1,71 @@
+meta:
+  id: authentication-errors
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Handle authentication errors — design error responses for auth failures without leaking security information"
+  tags: [REST, API, authentication, 401, 403, security, beginner]
+
+state: {}
+
+trigger: |
+  You're working on the authentication error handling for a healthcare
+  appointment booking API. The security team reviewed your error
+  responses and flagged several issues.
+
+  Current error responses (flagged as problematic):
+
+  1. Missing token:
+     401 { "error": "No Authorization header provided" }
+     Security note: "This is fine, but be consistent"
+
+  2. Malformed token:
+     401 { "error": "JWT format invalid: expected 3 parts, got 1" }
+     Security note: "Reveals token implementation (JWT)"
+
+  3. Expired token:
+     401 { "error": "Token expired at 2026-02-26T14:30:00Z, current
+     time is 2026-02-27T08:15:00Z" }
+     Security note: "Reveals server clock — useful for timing attacks"
+
+  4. Invalid signature:
+     401 { "error": "JWT signature verification failed using RS256" }
+     Security note: "Reveals signing algorithm"
+
+  5. Valid token but user deactivated:
+     401 { "error": "User account deactivated since 2026-01-15" }
+     Security note: "Confirms account existence and status"
+
+  6. Valid token but wrong role (patient trying admin endpoint):
+     403 { "error": "User john.doe@email.com has role 'patient',
+     requires role 'admin'" }
+     Security note: "Reveals user email and role system"
+
+  7. Valid token but IP not in allowlist:
+     403 { "error": "IP 192.168.1.50 not in allowlist for admin API" }
+     Security note: "Reveals IP allowlist exists"
+
+  8. API key instead of bearer token:
+     401 { "error": "Expected Bearer token, received API key
+     sk-abc...xyz" }
+     Security note: "Echoes back the credential!"
+
+  Task: Rewrite all 8 error responses to be secure (no information
+  leakage) while still being useful enough for legitimate developers
+  to debug. Explain the security principle behind each change. Then
+  write guidelines for the team on what authentication errors should
+  and should not reveal.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rewritten errors eliminate information leakage — no JWT implementation details, no server timestamps, no user emails, no role system details, no IP allowlist information, and absolutely no credential echoing. Each response gives enough information to debug without revealing security internals"
+    weight: 0.35
+    description: "Secure error responses"
+  - type: llm_judge
+    criteria: "Security principles are correctly explained — covers information disclosure risks (token type, algorithm, clock), account enumeration prevention, principle of least information, and the difference between logging detailed errors server-side vs returning generic errors to clients"
+    weight: 0.35
+    description: "Correct security principles"
+  - type: llm_judge
+    criteria: "Team guidelines are practical — provides clear do/don't list for auth error messages, explains server-side logging of detailed errors for debugging, and addresses the balance between security and developer experience"
+    weight: 0.30
+    description: "Practical team guidelines"

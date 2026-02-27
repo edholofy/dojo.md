@@ -1,0 +1,59 @@
+meta:
+  id: matrix-builds
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Configure matrix builds — test across multiple OS, language versions, and configurations using strategy.matrix"
+  tags: [github, actions, matrix, cross-platform, multi-version, intermediate]
+
+state: {}
+
+trigger: |
+  You maintain an open-source Node.js library that must work across
+  multiple environments. The library is used by projects running
+  different Node.js versions, operating systems, and package managers.
+
+  Test matrix requirements:
+  - Node.js versions: 18, 20, 22
+  - Operating systems: ubuntu-latest, windows-latest, macos-latest
+  - Package managers: npm, yarn, pnpm
+  - Full matrix = 3 x 3 x 3 = 27 combinations
+
+  Constraints:
+  - The full matrix takes too long (45 minutes) and costs too much
+  - Node 18 on Windows with pnpm has a known incompatibility — exclude
+    this combination
+  - Node 22 is experimental — failures shouldn't block the PR
+  - macOS runners cost 10x more than Linux runners — minimize usage
+  - You want to add a specific combination not in the matrix: Node 21
+    (nightly) on ubuntu-latest with npm
+
+  Additional requirements:
+  - If any matrix job fails, you want to see all results (don't cancel
+    other jobs immediately)
+  - The matrix should generate a human-readable job name like
+    "Test (node-20, ubuntu-latest, npm)"
+  - After all matrix jobs complete, a summary job should report which
+    combinations passed/failed
+
+  Task: Write the complete matrix workflow. Include: the matrix
+  configuration with include, exclude, and fail-fast settings, the
+  strategy for reducing the 27-combination matrix to a practical subset
+  (explain your reasoning for which to cut), the Node 22 experimental
+  configuration using continue-on-error, and the summary job that
+  collects all matrix results. Explain the cost implications of your
+  matrix choices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Matrix syntax is correct — uses strategy.matrix with proper include/exclude syntax, fail-fast: false, continue-on-error for Node 22, and the exclude for Node 18 + Windows + pnpm is correctly specified"
+    weight: 0.35
+    description: "Correct matrix syntax"
+  - type: llm_judge
+    criteria: "Matrix reduction is well-reasoned — reduces the 27-combination matrix to a practical subset (maybe 12-15), justifies which combinations to keep (e.g., full Linux matrix, reduced macOS to save cost), and the cost analysis shows the savings"
+    weight: 0.35
+    description: "Well-reasoned matrix reduction"
+  - type: llm_judge
+    criteria: "Summary job correctly aggregates results — uses needs with the matrix job, accesses matrix job outcomes, and produces a clear pass/fail report for all combinations. The workflow would work correctly in a real repository"
+    weight: 0.30
+    description: "Correct summary aggregation"

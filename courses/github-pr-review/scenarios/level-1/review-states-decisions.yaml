@@ -1,0 +1,68 @@
+meta:
+  id: review-states-decisions
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Make review decisions — practice choosing between Approve, Request Changes, and Comment for different PR scenarios"
+  tags: [github, pr-review, decisions, approve, request-changes, basics]
+
+state: {}
+
+trigger: |
+  You're reviewing 5 different PRs. For each, decide the appropriate
+  review action (Approve, Request Changes, or Comment) and write
+  the review summary.
+
+  PR #1: "Add user profile page"
+  - 120 lines changed across 3 files
+  - All tests pass, CI is green
+  - Code is clean and follows conventions
+  - One minor style issue: a variable named `d` instead of `data`
+  - No security issues, no performance concerns
+
+  PR #2: "Fix payment processing timeout"
+  - 45 lines changed in 1 file
+  - Tests pass, but there's no test for the timeout scenario
+  - The fix works but doesn't handle the edge case where the payment
+    API returns a partial response
+  - This is a hotfix for a production issue affecting 5% of payments
+
+  PR #3: "Update lodash from 4.17.20 to 4.17.21"
+  - 1 file changed (package-lock.json, 200 lines auto-generated)
+  - Dependabot PR for a security vulnerability (CVE-2021-23337)
+  - CI passes
+  - Changelog shows only security patch, no breaking changes
+
+  PR #4: "Implement new dashboard analytics"
+  - 800 lines changed across 12 files
+  - New feature, partially tested (60% coverage)
+  - Contains a raw SQL query that could be vulnerable to injection
+  - Performance: loads all analytics data in one query (could be slow
+    for large datasets)
+  - Missing error handling for the analytics API
+
+  PR #5: "Refactor user service to use repository pattern"
+  - 400 lines changed across 8 files
+  - All existing tests pass, no new tests added
+  - Refactor is clean but changes the public API of 3 internal modules
+  - No functional changes — purely structural
+  - The PR description says "Part 1 of 3" but doesn't link to a plan
+
+  Task: For each PR, write: the review decision (Approve, Request
+  Changes, or Comment) with justification, the review summary comment,
+  the specific feedback for any issues found, and whether each issue
+  is blocking or non-blocking.
+
+assertions:
+  - type: llm_judge
+    criteria: "Review decisions match severity — the security vulnerability dependency update is straightforward to approve, the SQL injection PR requires changes, and the hotfix decision balances urgency with quality"
+    weight: 0.35
+    description: "Severity-matched decisions"
+  - type: llm_judge
+    criteria: "Blocking vs non-blocking is calibrated correctly — security issues and missing error handling block, style nits and test coverage suggestions don't block, and the hotfix urgency is factored into blocking decisions"
+    weight: 0.35
+    description: "Correctly calibrated blocking"
+  - type: llm_judge
+    criteria: "Review summaries provide clear next steps — each summary tells the author exactly what needs to change (if Request Changes), acknowledges good work, and is specific enough to act on"
+    weight: 0.30
+    description: "Clear-next-steps summaries"

@@ -1,8 +1,67 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import yaml from 'js-yaml';
 import type { CourseMeta, Scenario } from '../types/index.js';
 import { courseMetaSchema, scenarioSchema } from '../types/schemas.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/**
+ * Returns the path to the bundled courses/ directory inside the npm package.
+ * Works whether running from src/ (tsx) or dist/ (compiled).
+ */
+export function getBundledCoursesPath(): string {
+  // __dirname is src/engine/ or dist/engine/ — go up 2 levels to package root
+  return resolve(__dirname, '..', '..', 'courses');
+}
+
+/**
+ * Returns all directories to search for courses, in priority order:
+ * 1. ./courses/ (CWD — for local development)
+ * 2. Package's bundled courses/ (npm install)
+ * 3. ~/.dojo/courses/ (user-installed)
+ */
+export function getCourseSearchPaths(): string[] {
+  return [
+    resolve('courses'),
+    getBundledCoursesPath(),
+    resolve(homedir(), '.dojo', 'courses'),
+  ];
+}
+
+/**
+ * Find a course directory by ID across all search paths.
+ * Returns the first match or null.
+ */
+export function findCoursePath(courseId: string): string | null {
+  for (const basePath of getCourseSearchPaths()) {
+    const candidate = join(basePath, courseId);
+    if (existsSync(join(candidate, 'course.yaml'))) return candidate;
+  }
+  return null;
+}
+
+/**
+ * Discover all courses across all search paths (deduped by ID).
+ */
+export function discoverAllCourses(): CourseMeta[] {
+  const seen = new Set<string>();
+  const courses: CourseMeta[] = [];
+
+  for (const basePath of getCourseSearchPaths()) {
+    for (const course of discoverCourses(basePath)) {
+      if (!seen.has(course.id)) {
+        seen.add(course.id);
+        courses.push(course);
+      }
+    }
+  }
+
+  return courses;
+}
 
 /**
  * Load and validate a course metadata file.

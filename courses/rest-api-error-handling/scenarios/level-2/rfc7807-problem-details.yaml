@@ -1,0 +1,60 @@
+meta:
+  id: rfc7807-problem-details
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Implement RFC 7807 Problem Details — adopt the standard error format for consistent, machine-readable API error responses"
+  tags: [REST, API, RFC-7807, problem-details, standard, intermediate]
+
+state: {}
+
+trigger: |
+  Your company has 12 microservices, each with its own error format.
+  The API gateway team is frustrated because they can't build unified
+  error handling. The CTO mandates adopting RFC 7807 (Problem Details
+  for HTTP APIs) as the company standard.
+
+  Current service error formats:
+  - User service: { "error": { "code": "USR001", "msg": "..." } }
+  - Order service: { "status": "error", "message": "..." }
+  - Payment service: { "errors": [{ "field": "...", "message": "..." }] }
+  - Inventory service: { "fault": { "type": "...", "detail": "..." } }
+  - Notification service: plain text error messages
+
+  You need to migrate all services to RFC 7807. The standard defines:
+  - type (URI): identifies the error type
+  - title: short human-readable summary
+  - status: HTTP status code
+  - detail: human-readable explanation specific to this occurrence
+  - instance (URI): identifies this specific occurrence
+
+  Challenges to address:
+  1. How to define the "type" URI — what namespace? Public or internal?
+  2. How to handle validation errors (multiple fields) within RFC 7807
+  3. How to extend the standard with custom fields (error codes,
+     timestamps, retry-after)
+  4. How the API gateway should aggregate errors from multiple services
+  5. How to version error types when error semantics change
+  6. Backward compatibility — how existing API consumers handle the
+     format change
+
+  Task: Design the RFC 7807 implementation for the company. Write:
+  the error type URI scheme, example Problem Details responses for
+  5 common error scenarios (validation, not found, auth, rate limit,
+  server error), the extension strategy for custom fields, the
+  migration plan for the 5 services, and the API gateway error
+  aggregation approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "RFC 7807 implementation is technically correct — all required fields (type, title, status, detail) are present, type URIs are well-designed (resolvable or documented namespace), instance URIs uniquely identify error occurrences, and the Content-Type is application/problem+json"
+    weight: 0.35
+    description: "Technically correct RFC 7807"
+  - type: llm_judge
+    criteria: "Extension strategy is practical — handles validation errors with an 'errors' array extension, adds useful custom fields (error_code, timestamp, request_id) without conflicting with standard fields, and the type URI scheme supports versioning and categorization"
+    weight: 0.35
+    description: "Practical extension strategy"
+  - type: llm_judge
+    criteria: "Migration plan is realistic — phases the 5 services by complexity, addresses backward compatibility (content negotiation, dual-format period), handles API gateway aggregation of errors from services at different migration stages, and includes client SDK updates"
+    weight: 0.30
+    description: "Realistic migration plan"

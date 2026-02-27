@@ -1,0 +1,71 @@
+meta:
+  id: api-gateway-errors
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Design API gateway error handling — manage errors at the gateway layer for routing, transformation, and aggregation"
+  tags: [REST, API, gateway, routing, transformation, aggregation, advanced]
+
+state: {}
+
+trigger: |
+  You're architecting the error handling for an API gateway that
+  fronts 40 microservices. The gateway handles authentication, rate
+  limiting, routing, request/response transformation, and response
+  aggregation.
+
+  Current problems:
+
+  1. Gateway errors vs backend errors are indistinguishable:
+     When the gateway itself fails (routing error, transform error),
+     it returns the same format as backend errors. Clients can't tell
+     if their request never reached the backend or if the backend
+     failed.
+
+  2. Error format translation:
+     - Service A returns RFC 7807
+     - Service B returns { "error": "...", "code": 123 }
+     - Service C returns XML errors
+     - Service D returns plain text
+     Gateway currently passes through whatever the backend returns.
+
+  3. Aggregated endpoint errors:
+     GET /dashboard calls 5 services. If 2 fail:
+     - Currently returns 500 (entire dashboard fails)
+     - Wanted: partial response with errors for failed sections
+
+  4. Authentication at gateway vs service level:
+     Gateway validates JWT, service validates permissions. If the
+     service returns 403, should the gateway override, pass through,
+     or add context?
+
+  5. Timeout ambiguity:
+     Gateway timeout is 30s, but Service A has internal timeout of
+     10s. When Service A times out at 10s and returns 504, gateway
+     sees 504 from Service A — is this a gateway timeout or a service
+     timeout? The error is different.
+
+  6. Circuit breaker at gateway level:
+     When a service is down, the gateway's circuit breaker returns
+     503 — but the response lacks the backend's normal error format,
+     confusing clients.
+
+  Task: Design the gateway error handling architecture. Write: the
+  gateway error vs backend error distinction (with different error
+  envelope), the error format normalization layer, the partial
+  failure response format for aggregated endpoints, the auth error
+  handling strategy, and the circuit breaker error responses.
+
+assertions:
+  - type: llm_judge
+    criteria: "Gateway vs backend errors are clearly distinguished — gateway errors have a different envelope or indicator (e.g., error source field), clients can programmatically determine whether to retry at the same endpoint or if the backend is down, and each error includes enough context for debugging"
+    weight: 0.35
+    description: "Clear gateway vs backend distinction"
+  - type: llm_judge
+    criteria: "Error format normalization handles all 4 service formats — transforms RFC 7807, custom JSON, XML, and plain text into a unified format, preserves original error details in a nested field for debugging, and the aggregated endpoint returns partial success with per-section error details"
+    weight: 0.35
+    description: "Format normalization"
+  - type: llm_judge
+    criteria: "Advanced scenarios are handled — auth error layering (gateway vs service-level), timeout disambiguation, circuit breaker responses match the expected backend format, and the design considers caching error responses to reduce backend load during outages"
+    weight: 0.30
+    description: "Advanced scenario handling"

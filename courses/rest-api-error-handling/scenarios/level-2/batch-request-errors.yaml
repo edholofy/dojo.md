@@ -1,0 +1,61 @@
+meta:
+  id: batch-request-errors
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Handle batch request errors — design error responses when some items in a batch succeed and others fail"
+  tags: [REST, API, batch, partial-failure, bulk-operations, intermediate]
+
+state: {}
+
+trigger: |
+  Your CRM API has a batch endpoint for importing contacts:
+  POST /contacts/batch with an array of up to 1,000 contacts.
+
+  A customer imports 500 contacts and gets back a 400 error:
+  { "error": "Validation failed" }
+
+  They're frustrated: "Which contacts failed? The 490 valid ones
+  didn't get created either. I have to fix the 10 bad ones and
+  re-submit all 500?"
+
+  Scenarios to handle:
+
+  1. All 500 succeed — easy case
+  2. 10 of 500 fail validation (duplicate emails, missing required
+     fields) — what happens to the other 490?
+  3. 250 succeed, then the database goes down — 250 are created,
+     250 are not. What's the response?
+  4. Request contains 2,000 contacts (over the 1,000 limit)
+  5. One contact has an email that triggers a rate limit on the
+     email verification service — should it block the whole batch?
+  6. Request is 50MB (massive batch) — how to handle before even
+     parsing
+
+  Design decisions needed:
+  - All-or-nothing (transaction) vs partial success?
+  - What HTTP status code for partial success? (200? 207? 202?)
+  - How to report per-item errors while keeping the response
+     navigable?
+  - How to handle the case where the client needs to retry only
+     the failed items?
+
+  Task: Design the batch error handling system. Write: the batch
+  response format (showing per-item success/failure), the HTTP status
+  code strategy, the error detail for each of the 6 scenarios, the
+  transaction vs partial-success decision (with trade-offs), and the
+  retry guidance for failed items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Batch response format is clear — each item in the batch has an individual success/failure status with the item's index or identifier, specific error details for failed items, and a summary (total, succeeded, failed). The format allows clients to identify and retry only failed items"
+    weight: 0.35
+    description: "Clear batch response format"
+  - type: llm_judge
+    criteria: "All 6 scenarios have appropriate responses — full success (200/201), partial failure with a suitable status code (207 Multi-Status or similar), request too large (413), database mid-batch failure is handled (either transactionally or with clear partial status), and the rate limit scenario is isolated to the affected item"
+    weight: 0.35
+    description: "All scenarios handled"
+  - type: llm_judge
+    criteria: "Transaction vs partial-success trade-off is well-analyzed — discusses when all-or-nothing is appropriate (financial operations) vs when partial success is better (data imports), and the chosen approach is justified for the CRM contact import use case. Retry guidance tells clients how to re-submit only failed items"
+    weight: 0.30
+    description: "Well-analyzed trade-offs"

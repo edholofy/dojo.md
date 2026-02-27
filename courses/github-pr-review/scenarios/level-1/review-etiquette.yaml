@@ -1,0 +1,62 @@
+meta:
+  id: review-etiquette
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Practice review etiquette — rewrite harsh review comments to be constructive while maintaining the technical feedback"
+  tags: [github, pr-review, etiquette, tone, communication, basics]
+
+state: {}
+
+trigger: |
+  You're the engineering manager reviewing your team's code review
+  comments. You found 5 comments that are technically correct but
+  poorly worded. Rewrite each to be constructive while keeping the
+  same technical feedback.
+
+  Comment 1 (from Senior to Junior):
+  "This is wrong. You clearly don't understand how async/await works.
+  This will crash in production. Fix it."
+  Context: The junior developer used `await` inside a `forEach` loop.
+
+  Comment 2 (from Peer to Peer):
+  "Why would you write it this way? This is the most convoluted
+  solution I've ever seen. Just use a simple map/filter."
+  Context: The developer wrote a nested for loop instead of using
+  functional array methods.
+
+  Comment 3 (from Lead to Team):
+  "I've told the team 3 times not to do this. Read the coding
+  standards before submitting PRs."
+  Context: The developer used default exports instead of named exports
+  (against team convention).
+
+  Comment 4 (from Reviewer to External Contributor):
+  "This doesn't follow our patterns at all. Did you even look at how
+  the rest of the codebase does it? NACK."
+  Context: An open source contributor wrote a feature using a different
+  coding pattern than the project's convention.
+
+  Comment 5 (from Junior to Senior):
+  "I don't think this is right but I'm probably wrong..."
+  Context: The junior correctly identified a potential race condition
+  in a senior developer's code.
+
+  Task: Rewrite each comment. For each, include: the rewritten comment
+  (same technical feedback, better tone), an explanation of what was
+  wrong with the original (which review anti-patterns it exhibited),
+  and a general principle for review communication that it illustrates.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rewritten comments preserve technical accuracy — the same issues are flagged (async forEach, nested loops, naming conventions, coding patterns, race condition) but with constructive framing"
+    weight: 0.35
+    description: "Accuracy-preserving rewrites"
+  - type: llm_judge
+    criteria: "Anti-patterns are correctly identified — personal attacks, condescension, public shaming, gatekeeping of OSS contributors, and self-deprecation are each named and explained"
+    weight: 0.35
+    description: "Correctly identified anti-patterns"
+  - type: llm_judge
+    criteria: "Communication principles are actionable — each principle can be applied by engineers in future reviews, covers the power dynamics at play (senior-junior, maintainer-contributor), and promotes psychological safety"
+    weight: 0.30
+    description: "Actionable communication principles"

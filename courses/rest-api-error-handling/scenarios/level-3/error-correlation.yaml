@@ -1,0 +1,58 @@
+meta:
+  id: error-correlation
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Build error correlation across services — connect related errors across distributed systems to identify root causes"
+  tags: [REST, API, correlation, distributed-tracing, root-cause, advanced]
+
+state: {}
+
+trigger: |
+  Your platform has 25 microservices generating 50,000 errors per
+  day. Most are correlated (one root cause triggers errors across
+  many services), but your current monitoring treats each error as
+  independent. This creates noise and delays root cause analysis.
+
+  Recent incident example:
+  - 3:00 PM: Database connection pool exhausted on User Service
+  - 3:01 PM: 500 errors spike on Order Service (calls User Service)
+  - 3:01 PM: 500 errors spike on Cart Service (calls User Service)
+  - 3:02 PM: 500 errors spike on Payment Service (calls Order Service)
+  - 3:02 PM: Timeout errors on API Gateway (all downstream failing)
+  - 3:03 PM: 50 PagerDuty alerts fire simultaneously
+  - 3:15 PM: On-call engineer still investigating which service is
+    the root cause (15 minutes wasted)
+
+  The 50 alerts were all caused by ONE root cause (DB connection pool).
+  But the engineer had to manually trace through 5 service dashboards
+  to figure that out.
+
+  Your error data sources:
+  - Application logs (JSON, in Elasticsearch)
+  - Distributed traces (Jaeger, using OpenTelemetry)
+  - Metrics (Prometheus, Grafana)
+  - Error tracking (Sentry, per-service)
+  - Kubernetes events
+  - Cloud provider health (AWS CloudWatch)
+
+  Task: Design the error correlation system. Write: the correlation
+  algorithm (how to group related errors across services), the root
+  cause identification logic (dependency graph + error timing), the
+  unified error view (single dashboard showing correlated errors),
+  the alert deduplication strategy (50 alerts → 1 incident), and
+  the automated root cause suggestion system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Correlation algorithm is sound — uses trace IDs to link errors across services, uses temporal proximity and dependency graphs to group errors without trace IDs, and correctly handles the case where one root cause generates errors in 5 dependent services"
+    weight: 0.35
+    description: "Sound correlation algorithm"
+  - type: llm_judge
+    criteria: "Root cause identification is effective — leverages the service dependency graph to identify upstream causes, uses error timing (first service to error is likely the cause), and the automated suggestion system would have identified the DB connection pool issue in minutes rather than 15+"
+    weight: 0.35
+    description: "Effective root cause identification"
+  - type: llm_judge
+    criteria: "Alert deduplication is practical — groups related alerts into a single incident, identifies the root service, suppresses downstream noise, and the unified dashboard shows the error cascade visually with the root cause highlighted"
+    weight: 0.30
+    description: "Practical alert deduplication"

@@ -1,0 +1,63 @@
+meta:
+  id: content-negotiation-errors
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Handle content negotiation errors — respond correctly when clients send or request unsupported content types"
+  tags: [REST, API, content-type, accept, 406, 415, beginner]
+
+state: {}
+
+trigger: |
+  You're building an API that primarily serves JSON but also supports
+  XML for legacy enterprise clients. Users keep hitting confusing
+  errors related to content types.
+
+  Support tickets this week:
+
+  Ticket 1: "I'm sending a POST with form data (Content-Type:
+  application/x-www-form-urlencoded) but getting a 500 error with
+  'Unexpected token' in the response."
+
+  Ticket 2: "I set Accept: text/html but got back JSON anyway. My XML
+  parser is choking on it."
+
+  Ticket 3: "I'm uploading a file with Content-Type: multipart/
+  form-data to the /reports endpoint but it says 'invalid JSON'."
+
+  Ticket 4: "My request works in Postman but fails in my code. I
+  think it's because Postman auto-sets Content-Type but my HTTP
+  library doesn't."
+
+  Ticket 5: "I'm sending JSON but with Content-Type: text/plain
+  and getting a 400 error that says 'Request body is empty' — but
+  the body is definitely there!"
+
+  Ticket 6: "I need CSV export of my data. GET /reports with Accept:
+  text/csv returns JSON. Is CSV supported?"
+
+  Current behavior: The API ignores the Accept header entirely and
+  always returns JSON. For request bodies, it tries to parse
+  everything as JSON regardless of Content-Type, causing cryptic
+  errors.
+
+  Task: Design the correct content negotiation error handling. For
+  each ticket, explain: what's going wrong, what the correct HTTP
+  status code and response should be, and what headers the response
+  should include. Then write the content negotiation middleware logic
+  that handles both request (Content-Type) and response (Accept)
+  negotiation properly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Correct status codes for each scenario — 415 Unsupported Media Type when the server can't parse the request body's content type, 406 Not Acceptable when the server can't produce the client's requested format, and appropriate error messages explaining what formats are supported"
+    weight: 0.35
+    description: "Correct content negotiation status codes"
+  - type: llm_judge
+    criteria: "All 6 tickets are addressed with clear explanations — explains why form-encoded data fails JSON parsing, why missing Content-Type causes issues, how Accept header should drive response format, and includes the supported content types in error responses"
+    weight: 0.35
+    description: "All tickets addressed"
+  - type: llm_judge
+    criteria: "Middleware logic is complete — validates Content-Type on requests with bodies, negotiates Accept header for responses, falls back to JSON when no Accept header is sent, and includes proper Content-Type header on all responses including error responses"
+    weight: 0.30
+    description: "Complete middleware logic"

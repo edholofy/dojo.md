@@ -1,0 +1,64 @@
+meta:
+  id: review-disagreement-resolution
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Resolve review disagreements — handle conflicting reviewer opinions, technical disputes, and author pushback constructively"
+  tags: [github, pr-review, conflict-resolution, disagreement, communication, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior engineer mediating review disagreements on 3 PRs
+  where reviewers and authors have reached an impasse.
+
+  Dispute #1 — Architecture disagreement:
+  PR "Refactor user service to microservice" has been open for 2 weeks.
+  - Author (mid-level): Extracted the user service into a separate
+    microservice with its own database. Says it improves scalability.
+  - Reviewer A (staff engineer): "This adds unnecessary complexity.
+    We're a 10-person team. Keep it as a module in the monolith."
+  - Reviewer B (senior): "I agree with the extraction but the API
+    contract is wrong — it should use gRPC, not REST."
+  - Author: "I've already spent 3 weeks on this. I'm not rewriting it."
+  Both reviewers have valid points. The PR has 1,500 lines changed.
+
+  Dispute #2 — Style/preference war:
+  PR "Add error handling to checkout flow" has 47 review comments.
+  - Reviewer keeps requesting changes for style preferences not in the
+    style guide: single quotes vs double quotes, trailing commas,
+    function declarations vs arrow functions.
+  - Author: "These are personal preferences, not bugs. Our style guide
+    doesn't cover this. I'm not changing them."
+  - The actual error handling logic hasn't been reviewed at all.
+
+  Dispute #3 — Testing philosophy clash:
+  PR "Add payment retry logic" has 2 reviewers disagreeing:
+  - Reviewer A: "These tests mock too much. They don't test real
+    behavior. Write integration tests."
+  - Reviewer B: "Integration tests are slow and flaky. Unit tests with
+    mocks are the right approach. Ship it."
+  - Author: "I wrote what Reviewer B asked for last time. Now Reviewer A
+    wants something different. Which is it?"
+  The team has no documented testing strategy.
+
+  Task: For each dispute, write: the root cause of the disagreement
+  (technical, process, or interpersonal), the mediation approach (how
+  to move forward without picking sides), the specific resolution with
+  rationale, the process improvement to prevent recurrence, and the
+  actual review comments you would post. Include a summary of when to
+  escalate vs mediate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root causes are correctly diagnosed — Dispute #1 is a scope/architecture issue (PR too large, decision should have been made before coding), #2 is a process issue (style guide gaps), #3 is a documentation/alignment issue (no testing strategy)"
+    weight: 0.35
+    description: "Correct root cause diagnosis"
+  - type: llm_judge
+    criteria: "Resolutions are practical and fair — doesn't just pick a side, suggests concrete paths forward (e.g., for #1: scope down to module extraction without separate service, for #2: end the style war and focus on the error handling, for #3: define testing strategy then apply)"
+    weight: 0.35
+    description: "Practical and fair resolutions"
+  - type: llm_judge
+    criteria: "Process improvements prevent recurrence — suggests architectural decision records (ADRs) for #1, style guide expansion and linter rules for #2, documented testing strategy for #3, and general guidelines for when reviewers disagree"
+    weight: 0.30
+    description: "Recurrence-preventing process improvements"

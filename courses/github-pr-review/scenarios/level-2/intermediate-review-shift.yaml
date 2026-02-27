@@ -1,0 +1,66 @@
+meta:
+  id: intermediate-review-shift
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Intermediate review shift — handle a complex batch of PRs requiring security, performance, and cross-team review skills"
+  tags: [github, pr-review, shift-simulation, batch-review, intermediate]
+
+state: {}
+
+trigger: |
+  You're doing a review shift with 4 challenging PRs. Each requires
+  different intermediate skills.
+
+  PR #501 (critical, 2 hours old): "Hotfix: Rate limit the signup
+  endpoint"
+  Author: On-call engineer. Context: The signup endpoint is being
+  abused — 10,000 fake accounts created in the last hour. The fix adds
+  Redis-based rate limiting: 5 signups per IP per hour.
+  Code concern: The rate limit key is based only on IP address (easily
+  bypassed with proxies), the Redis connection has no error handling (if
+  Redis is down, all signups fail), and the rate limit response doesn't
+  include Retry-After header.
+  Urgency: Active abuse happening now.
+
+  PR #502 (medium, 1 day old): "Add real-time notifications via SSE"
+  Author: Mid-level engineer. 350 lines adding Server-Sent Events for
+  notification delivery. The implementation keeps all SSE connections in
+  a Map in memory, with no connection limit, no heartbeat, and no
+  cleanup of dead connections. In production with 50K concurrent users,
+  this would exhaust memory.
+  Tests: Only tests the happy path with 1 connection.
+
+  PR #503 (low urgency, 3 days old): "Migrate from Moment.js to
+  date-fns"
+  Author: Junior engineer. 800 lines of date library migration. Most
+  changes are mechanical (moment().format() → format(new Date())), but
+  3 timezone conversions are incorrect — they use local timezone instead
+  of UTC, which would break for users in non-UTC timezones.
+  CI: Green (tests don't cover timezone edge cases).
+
+  PR #504 (medium, 4 hours old): "Stacked PR 2/3: Add payment webhooks"
+  This is the second PR in a 3-PR stack. PR 1/3 (payment model) was
+  merged with a review comment about adding an index that was never
+  addressed. This PR adds webhook handling but references the unindexed
+  column in queries that will be called for every webhook event.
+
+  Task: Review all 4 PRs. For each, write: the priority order with
+  justification, a focused review addressing the key technical concern,
+  the decision (approve/request changes/comment) with rationale, and
+  specific code-level feedback. End with a shift summary noting patterns
+  and team-level observations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority order balances urgency with risk — PR #501 is first (active abuse), but the review still catches security gaps in the rate limit implementation rather than rubber-stamping the hotfix. The stacked PR #504 gets attention for the carried-over tech debt"
+    weight: 0.35
+    description: "Urgency-balanced priority order"
+  - type: llm_judge
+    criteria: "Technical depth is appropriate per PR — #501 gets security-focused review (rate limit bypass, Redis failure mode), #502 gets scalability review (memory exhaustion, connection management), #503 catches timezone bugs, #504 addresses the unresolved index issue from the previous PR"
+    weight: 0.35
+    description: "Appropriate technical depth"
+  - type: llm_judge
+    criteria: "Shift summary identifies systemic issues — notes patterns across PRs (missing error handling, insufficient test coverage for edge cases, tech debt carried across stacked PRs) and recommends team-level improvements"
+    weight: 0.30
+    description: "Systemic issue identification"

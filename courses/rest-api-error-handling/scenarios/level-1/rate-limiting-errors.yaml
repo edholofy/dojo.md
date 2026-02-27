@@ -1,0 +1,56 @@
+meta:
+  id: rate-limiting-errors
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Implement rate limiting errors — design 429 responses with proper headers and retry guidance for API consumers"
+  tags: [REST, API, rate-limiting, 429, throttling, beginner]
+
+state: {}
+
+trigger: |
+  You're building a weather data API that offers free and paid tiers.
+  The current rate limiting returns 429 with this response:
+
+  HTTP/1.1 429
+  { "error": "Too many requests" }
+
+  Customers are complaining:
+  - "When can I retry? 1 second? 1 hour?"
+  - "How many requests do I have left?"
+  - "I didn't even know there was a rate limit until my app broke"
+  - "My batch job got rate limited and I lost 2 hours of processing"
+  - "The paid plan says 1000 requests/minute but I got limited at 800"
+
+  Rate limit tiers:
+  - Free: 60 requests/minute, 1000 requests/day
+  - Basic ($29/mo): 600 requests/minute, 50,000 requests/day
+  - Pro ($99/mo): 3000 requests/minute, unlimited daily
+  - Enterprise: custom limits
+
+  Additional rules:
+  - Burst allowance: 2x the per-minute limit for up to 10 seconds
+  - Different limits for different endpoints (search: 10/min free,
+    forecast: 60/min free)
+  - Authenticated vs unauthenticated requests have different limits
+
+  Task: Design the complete rate limiting error response. Include:
+  the 429 response body with all necessary information, the rate
+  limit headers (standard and custom), the response headers that
+  should appear on ALL responses (not just 429) so clients can
+  proactively manage their usage, and a guide for API consumers
+  on how to handle rate limits gracefully (backoff strategies).
+
+assertions:
+  - type: llm_judge
+    criteria: "429 response includes standard rate limit headers — X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset (or Retry-After), with clear documentation of header semantics. Response body includes retry timing, current limit, and which limit was hit (per-minute vs daily)"
+    weight: 0.35
+    description: "Proper 429 response with headers"
+  - type: llm_judge
+    criteria: "Rate limit information appears on ALL responses — successful responses include remaining quota and reset time so clients can proactively avoid hitting limits. The design handles the complexity of multiple limit windows (per-minute and daily) and per-endpoint limits"
+    weight: 0.35
+    description: "Proactive rate limit headers"
+  - type: llm_judge
+    criteria: "Consumer guidance is practical — explains exponential backoff with jitter, how to read rate limit headers proactively, how to build a request queue that respects limits, and addresses the batch processing use case (how to process large workloads within rate limits)"
+    weight: 0.30
+    description: "Practical consumer guidance"

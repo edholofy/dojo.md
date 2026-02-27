@@ -1,0 +1,64 @@
+meta:
+  id: compliance-review-process
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Design compliance-aware review — build review processes that satisfy SOX, SOC 2, HIPAA, and PCI DSS audit requirements"
+  tags: [github, pr-review, compliance, SOX, SOC2, audit, advanced]
+
+state: {}
+
+trigger: |
+  Your fintech company is preparing for SOC 2 Type II and PCI DSS
+  audits. The auditors will examine your code review process as part
+  of change management controls. Currently your process has gaps that
+  would fail the audit.
+
+  Audit requirements:
+  1. SOC 2 — Change Management (CC8.1):
+     - All production changes must be reviewed by someone other than
+       the author
+     - Reviews must be documented and traceable
+     - Emergency changes must have post-deployment review within 24 hrs
+     - Separation of duties: developer cannot approve and deploy
+
+  2. PCI DSS — Requirement 6.5:
+     - Code reviews must check for OWASP Top 10 vulnerabilities
+     - Security-focused review must be documented
+     - All custom code changes in the cardholder data environment must
+       be reviewed before deployment
+
+  3. SOX (if applicable to financial reporting code):
+     - Changes to financial calculation code require dual approval
+     - Complete audit trail of who reviewed, when, and what was decided
+
+  Current gaps:
+  - 15% of PRs are merged by the author (self-merge after auto-approve
+    from CI)
+  - No documented security review checklist
+  - Emergency hotfixes bypass review entirely
+  - No separation between code approval and deployment
+  - Review comments are sometimes deleted or edited after merge
+  - No way to prove a human reviewed the code (vs rubber stamp)
+
+  Task: Design the compliance-aware review process. Write: the branch
+  protection rules that enforce separation of duties, the security
+  review checklist (OWASP-focused, documented per PR), the emergency
+  change process (fast but auditable), the audit trail requirements
+  (what to log, how to preserve, how to present to auditors), and the
+  GitHub configuration (rulesets, required reviews, CODEOWNERS for
+  sensitive code paths). Include sample audit evidence you would present.
+
+assertions:
+  - type: llm_judge
+    criteria: "Compliance controls are complete — prevents self-merge (branch protection), requires documented security review for PCI-scoped code, enforces dual approval for SOX-scope financial code, and creates an immutable audit trail"
+    weight: 0.35
+    description: "Complete compliance controls"
+  - type: llm_judge
+    criteria: "Emergency process balances speed with compliance — allows expedited merges with reduced (but not zero) review requirements, mandates post-deployment review within 24 hours, and creates an audit trail even for emergency changes"
+    weight: 0.35
+    description: "Balanced emergency process"
+  - type: llm_judge
+    criteria: "Audit evidence is convincing — includes sample reports, GitHub configurations that create tamper-proof trails, and the process for presenting review history to auditors. Addresses the gap of edited/deleted review comments"
+    weight: 0.30
+    description: "Convincing audit evidence"

@@ -1,0 +1,90 @@
+meta:
+  id: workflow-debugging
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Debug GitHub Actions workflows — diagnose and fix common workflow failures, read logs effectively, and use debug mode"
+  tags: [github, actions, debugging, troubleshooting, logs, basics]
+
+state: {}
+
+trigger: |
+  You're helping a junior developer debug their first GitHub Actions
+  workflow. They've hit 5 different errors and can't figure out what's
+  wrong. For each error, diagnose the problem and provide the fix.
+
+  Error 1 — Workflow not triggering:
+  "I pushed to my feature branch but the workflow didn't run at all.
+  No entry in the Actions tab."
+  Their trigger config:
+  ```yaml
+  on:
+    push:
+      branches: [main]
+    pull_request:
+      branches: [main]
+  ```
+  They pushed to the branch 'feature/login' without opening a PR.
+
+  Error 2 — Permission denied:
+  ```
+  Error: HttpError: Resource not accessible by integration
+  ```
+  Their workflow tries to comment on a PR using the GITHUB_TOKEN.
+  The workflow is triggered by pull_request from a fork.
+
+  Error 3 — Action not found:
+  ```
+  Error: Can't find 'action.yml', 'action.yaml' or 'Dockerfile'
+  under '/home/runner/work/_actions/actions/setup-node/4'
+  ```
+  Their step: `uses: actions/setup-node@4` (missing the 'v' prefix)
+
+  Error 4 — Cache miss every time:
+  "My workflow takes 8 minutes because npm install runs fresh every
+  time. I added caching but it never hits."
+  ```yaml
+  - uses: actions/cache@v4
+    with:
+      path: node_modules
+      key: npm-${{ hashFiles('package.json') }}
+  ```
+  The issue: they're hashing package.json not package-lock.json.
+
+  Error 5 — Job output not available:
+  "My second job can't read the output from my first job. It's always
+  empty."
+  ```yaml
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - run: echo "version=1.2.3" >> $GITHUB_OUTPUT
+    deploy:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - run: echo "Deploying ${{ needs.build.outputs.version }}"
+  ```
+  They forgot to declare outputs at the job level.
+
+  Task: For each error, write: the diagnosis (what went wrong and why),
+  the fix (corrected YAML or configuration), the prevention strategy
+  (how to avoid this in the future), and the debugging technique (how
+  to find this type of error faster). Include a general GitHub Actions
+  debugging guide covering: enabling debug logging, reading workflow
+  run logs effectively, and the act tool for local testing.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 errors are correctly diagnosed — trigger scope for Error 1, fork PR permissions for Error 2, version tag format for Error 3, cache key using wrong file for Error 4, and missing job-level outputs declaration for Error 5"
+    weight: 0.35
+    description: "Correct error diagnoses"
+  - type: llm_judge
+    criteria: "Fixes are specific and correct — each fix shows the corrected YAML snippet, and the fixes address the root cause (not just the symptom). Error 2's fix addresses the fundamental fork permission model, not just a workaround"
+    weight: 0.35
+    description: "Specific correct fixes"
+  - type: llm_judge
+    criteria: "Debugging guide is practical — covers ACTIONS_RUNNER_DEBUG and ACTIONS_STEP_DEBUG secrets, how to navigate workflow run logs in the GitHub UI, the 'act' tool for local workflow testing, and at least 3 prevention strategies (linting, local testing, PR templates)"
+    weight: 0.30
+    description: "Practical debugging guide"

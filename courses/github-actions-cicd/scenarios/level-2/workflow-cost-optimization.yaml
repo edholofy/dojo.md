@@ -1,0 +1,61 @@
+meta:
+  id: workflow-cost-optimization
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Optimize workflow costs — reduce GitHub Actions spend through caching, concurrency, path filters, and runner selection"
+  tags: [github, actions, cost, optimization, billing, runners, intermediate]
+
+state: {}
+
+trigger: |
+  Your engineering manager just received the GitHub Actions bill:
+  $4,200/month for a 25-person team. They want you to cut it by 50%
+  without sacrificing CI quality. Here's the current usage breakdown:
+
+  Billing data (last month):
+  - Total minutes used: 42,000
+  - Linux runners: 28,000 min ($280 at $0.008/min)
+  - macOS runners: 8,000 min ($640 at $0.08/min)
+  - Windows runners: 6,000 min ($96 at $0.016/min)
+  - Storage (artifacts + packages): $180
+  - Overage beyond free tier: $3,000
+
+  Workflow analysis:
+  | Workflow          | Runs/month | Avg duration | Total min | Cost  |
+  |-------------------|-----------|-------------|-----------|-------|
+  | ci.yml            | 1,200     | 15 min      | 18,000    | $1,440|
+  | deploy.yml        | 60        | 8 min       | 480       | $38   |
+  | nightly-tests.yml | 30        | 45 min      | 1,350     | $108  |
+  | e2e-all-os.yml    | 400       | 30 min      | 12,000    | $1,560|
+  | lint-on-save.yml  | 2,000     | 3 min       | 6,000     | $480  |
+  | security-scan.yml | 200       | 12 min      | 2,400     | $192  |
+  | stale-cleanup.yml | 30        | 5 min       | 150       | $12   |
+
+  Key observations:
+  - ci.yml runs on every push (even draft PRs, even docs-only changes)
+  - e2e-all-os.yml runs full matrix on all 3 OSes for every PR
+  - lint-on-save.yml triggers on every push including commit amends
+  - nightly-tests.yml runs a full test suite even when nothing changed
+  - Artifacts are retained for 90 days (default)
+
+  Task: Create the cost optimization plan. For each workflow, write:
+  the specific optimization (with YAML changes), the expected savings,
+  and any quality trade-offs. Include: the optimized billing projection,
+  the comparison of GitHub-hosted vs self-hosted runner economics for
+  this team's usage, and a monitoring dashboard design for ongoing
+  cost tracking. Target: reduce from $4,200 to under $2,100/month.
+
+assertions:
+  - type: llm_judge
+    criteria: "Optimizations are specific and impactful — ci.yml gets path filters and draft PR skip, e2e-all-os runs full matrix only on main (reduced matrix on PRs), lint-on-save gets concurrency cancel-in-progress, artifact retention is reduced, and each optimization has a dollar-value estimate"
+    weight: 0.35
+    description: "Specific impactful optimizations"
+  - type: llm_judge
+    criteria: "Cost reduction achieves the target — the total projected savings reach or exceed 50% ($2,100 target), each optimization's savings are calculated from the billing data, and the math is consistent and reasonable"
+    weight: 0.35
+    description: "Target-achieving cost reduction"
+  - type: llm_judge
+    criteria: "Self-hosted runner analysis is included — compares the monthly cost of GitHub-hosted vs self-hosted for this usage level, considers the maintenance overhead of self-hosted, and makes a clear recommendation with break-even analysis"
+    weight: 0.30
+    description: "Self-hosted runner analysis"

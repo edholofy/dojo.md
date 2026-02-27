@@ -1,0 +1,60 @@
+meta:
+  id: cross-functional-review
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Cross-functional PR review — coordinate reviews involving design, security, legal, and product stakeholders beyond engineering"
+  tags: [github, pr-review, cross-functional, design-review, security-review, advanced]
+
+state: {}
+
+trigger: |
+  You're leading the review process for a major feature PR that requires
+  input from multiple non-engineering stakeholders. The PR implements
+  GDPR consent management and data deletion for EU users.
+
+  The PR ("Implement GDPR consent and right-to-erasure"):
+  - 600 lines across 15 files
+  - Changes: consent UI, data collection APIs, deletion pipeline, audit
+    logging, cookie management, privacy policy integration
+
+  Required reviewers and their concerns:
+  1. Engineering (2 reviewers): Code quality, architecture, test coverage
+  2. Security team: Data handling, encryption at rest, access controls,
+     deletion completeness
+  3. Legal/Privacy: Consent language accuracy, deletion scope compliance
+     with Article 17, data retention exceptions
+  4. Design: Consent banner UX, accessibility, user flow clarity
+  5. Product: Feature completeness against GDPR requirements spec,
+     analytics impact (what tracking stops)
+
+  Challenges:
+  - Legal doesn't use GitHub — they review via email/Confluence
+  - Design reviews in Figma, not in code
+  - Security wants to run their own penetration test before approval
+  - Product wants to verify in a staging environment
+  - Each stakeholder has different availability (legal is 2 weeks out)
+  - The PR is too large for a single review session
+
+  Task: Design the cross-functional review process. Write: the review
+  coordination plan (who reviews what, in what order, with timeline),
+  the PR splitting strategy (if the 600-line PR should be broken up for
+  different reviewers), the tooling integration (how to bring GitHub,
+  Figma, Confluence, and email reviews into a single audit trail), the
+  sign-off process (how each stakeholder formally approves), and the
+  template for cross-functional PRs. Address the legal reviewer's 2-week
+  availability constraint.
+
+assertions:
+  - type: llm_judge
+    criteria: "Review coordination is realistic — sequences reviews logically (legal/design first since they have longest lead time, security pen test in parallel with code review, product verification last in staging), and the timeline accounts for the legal 2-week constraint"
+    weight: 0.35
+    description: "Realistic review coordination"
+  - type: llm_judge
+    criteria: "Tooling integration creates a single audit trail — brings email/Confluence legal feedback, Figma design comments, and GitHub code review into a traceable record, handles stakeholders who don't use GitHub"
+    weight: 0.35
+    description: "Unified audit trail"
+  - type: llm_judge
+    criteria: "The process is repeatable — the template and sign-off process could be reused for future cross-functional features, balances thoroughness with velocity, and doesn't create a 6-week review bottleneck"
+    weight: 0.30
+    description: "Repeatable cross-functional process"

@@ -1,0 +1,52 @@
+meta:
+  id: not-found-errors
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Handle not-found errors — distinguish between missing resources, wrong URLs, and deleted content with appropriate responses"
+  tags: [REST, API, 404, not-found, routing, beginner]
+
+state: {}
+
+trigger: |
+  You're maintaining a blog API and users are reporting confusing
+  behavior. All of these return the same generic 404 response:
+
+  { "error": "Not found" }
+
+  But they represent very different situations:
+
+  1. GET /posts/42 — Post exists but is in draft status (not published)
+  2. GET /posts/99999 — Post ID doesn't exist at all
+  3. GET /posts/abc — Post ID is not a valid integer
+  4. GET /postz/42 — Typo in the URL path (postz instead of posts)
+  5. GET /posts/42 — Post existed but was deleted 3 days ago
+  6. GET /posts/42 — Post exists but belongs to a different tenant
+     in your multi-tenant system
+  7. GET /users/5/posts/42 — User 5 exists but post 42 belongs to
+     user 8
+  8. GET /v1/posts/42 — API v1 is deprecated, only v2 exists
+
+  The frontend developer says: "I can't tell if the user mistyped
+  the URL, if the post was deleted, if it's a permission issue, or
+  if the endpoint doesn't exist. They all look the same!"
+
+  Task: Design the appropriate response for each of the 8 scenarios.
+  Not all of them should be 404 — decide which HTTP status code
+  fits each case and explain why. Write the response body for each
+  scenario. Then create a decision tree for "when the resource isn't
+  there" that the team can follow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Status code selection is correct for each case — distinguishes between 404 (truly not found), 400 (invalid ID format), 410 Gone (deleted content), 403 (wrong tenant/ownership), and appropriate handling for draft content and deprecated API versions. Not all 8 should be 404"
+    weight: 0.35
+    description: "Correct status code selection"
+  - type: llm_judge
+    criteria: "Response bodies are helpful without leaking information — draft posts don't reveal that the post exists (security consideration in multi-tenant), deleted posts may use 410 Gone with deletion context, invalid IDs explain the expected format, and deprecated versions redirect to the current version"
+    weight: 0.35
+    description: "Helpful secure responses"
+  - type: llm_judge
+    criteria: "Decision tree is clear and usable — provides a logical flow for developers to determine the right response when a resource isn't found, considers security implications (don't confirm existence to unauthorized users), and handles edge cases like soft deletes and multi-tenancy"
+    weight: 0.30
+    description: "Clear decision tree"

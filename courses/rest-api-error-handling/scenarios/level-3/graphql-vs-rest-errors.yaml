@@ -1,0 +1,73 @@
+meta:
+  id: graphql-vs-rest-errors
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Compare GraphQL and REST error handling — design error strategies for APIs that serve both protocols"
+  tags: [REST, API, GraphQL, error-comparison, dual-protocol, advanced]
+
+state: {}
+
+trigger: |
+  Your company exposes the same backend through both REST and GraphQL
+  APIs. The error handling is inconsistent between them, and teams
+  building both interfaces need a unified strategy.
+
+  Current inconsistencies:
+
+  1. Auth errors:
+     REST: 401 { "error": "Invalid token" }
+     GraphQL: 200 { "data": null, "errors": [{ "message": "Invalid
+     token" }] }
+     Problem: GraphQL always returns 200, making monitoring tools
+     think everything is fine.
+
+  2. Validation errors:
+     REST: 400 { "errors": [{ "field": "email", "message": "..." }] }
+     GraphQL: 200 { "data": null, "errors": [{ "message": "...",
+     "extensions": { "field": "email" } }] }
+     Problem: Different shapes for the same validation failure.
+
+  3. Partial failures:
+     REST aggregated endpoint: returns 500 if any sub-call fails
+     GraphQL: returns partial data with errors for failed fields
+     Problem: GraphQL handles partial failure better, but how to
+     achieve similar in REST?
+
+  4. Rate limiting:
+     REST: 429 with X-RateLimit headers
+     GraphQL: all queries hit one endpoint — per-field or per-query
+     rate limiting?
+     Problem: A single GraphQL query can be equivalent to 50 REST
+     requests.
+
+  5. Error codes:
+     REST: well-defined (HTTP status codes)
+     GraphQL: no standard error code system (just "message" strings)
+     Problem: Clients can't programmatically handle GraphQL errors.
+
+  6. Deprecation:
+     REST: version URL + Sunset header
+     GraphQL: field-level @deprecated directive
+     Problem: How to communicate the same deprecation through both?
+
+  Task: Design the unified error handling strategy for dual-protocol
+  APIs. Write: the error mapping between REST and GraphQL for each
+  scenario, the GraphQL error extension standard (to match REST's
+  machine-readability), the monitoring strategy that works for both
+  (catching errors when GraphQL always returns 200), and the shared
+  error catalog that both protocols use.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error mapping is thorough — maps each REST error pattern (status code + body) to its GraphQL equivalent (200 + errors array), handles the 200-problem for monitoring (custom error extensions with severity/code), and addresses partial failure handling for both protocols"
+    weight: 0.35
+    description: "Thorough error mapping"
+  - type: llm_judge
+    criteria: "GraphQL error extensions are well-designed — adds machine-readable codes, severity levels, retry guidance, and field-level error attribution. The extensions make GraphQL errors as actionable as REST errors for programmatic handling. Addresses rate limiting for complex queries (query cost analysis)"
+    weight: 0.35
+    description: "Well-designed GraphQL extensions"
+  - type: llm_judge
+    criteria: "Shared error catalog is practical — defines errors once (shared between protocols), translates automatically to REST format or GraphQL format, and the monitoring strategy correctly identifies errors in both protocols (using error extensions, not HTTP status codes, for GraphQL)"
+    weight: 0.30
+    description: "Practical shared catalog"

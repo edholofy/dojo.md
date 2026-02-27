@@ -1,0 +1,63 @@
+meta:
+  id: cicd-platform-architecture
+  level: 4
+  course: github-actions-cicd
+  type: output
+  description: "Architect a CI/CD platform — design the internal platform that manages runners, workflows, and deployments at enterprise scale"
+  tags: [github, actions, platform, architecture, runners, scaling, expert]
+
+state: {}
+
+trigger: |
+  You're the Staff Engineer designing the internal CI/CD platform for
+  a 800-engineer organization. The platform sits between GitHub Actions
+  and the cloud infrastructure, providing a managed experience.
+
+  Platform requirements:
+  1. Runner management: Auto-scaled runner pools for different workloads
+     (CI, deployment, ML training, iOS builds)
+  2. Workflow orchestration: Standard deployment pipelines that teams
+     adopt via reusable workflows
+  3. Secret management: Centralized secret store (HashiCorp Vault)
+     integrated with GitHub Actions via OIDC
+  4. Artifact management: Central artifact store with retention policies
+  5. Observability: Metrics, logs, and traces for all workflow runs
+  6. Cost management: Per-team cost allocation and budget enforcement
+
+  Scale requirements:
+  - 5,000 workflow runs per day
+  - 200 concurrent jobs during peak
+  - 4 runner pools: Linux CI (150 runners), Linux GPU (10), macOS (20),
+    Windows (20)
+  - 99.9% uptime (CI platform down = all teams blocked)
+  - < 30 second job startup time (cold start)
+
+  Technical constraints:
+  - Runs on existing Kubernetes cluster (AWS EKS)
+  - Must use actions-runner-controller (ARC) for runner management
+  - Must integrate with existing Vault, Datadog, and PagerDuty
+  - Must support both GitHub Enterprise Cloud and self-hosted runners
+  - Budget: $500K/year for infrastructure
+
+  Task: Design the CI/CD platform architecture. Write: the system
+  architecture (components, data flow, integrations), the runner
+  auto-scaling design (scale-to-zero, warm pools, GPU scheduling),
+  the observability stack (metrics to collect, dashboards, alerts),
+  the cost management system (per-team tracking, budget alerts),
+  and the disaster recovery plan (what happens when the platform goes
+  down). Include architecture diagrams (text-based) and capacity
+  planning calculations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture handles the scale — ARC configuration supports 200 concurrent jobs with proper auto-scaling policies, runner pool isolation prevents noisy-neighbor issues, cold start is addressed with warm pools, and the $500K budget is allocated across compute, storage, and networking"
+    weight: 0.35
+    description: "Scale-handling architecture"
+  - type: llm_judge
+    criteria: "Observability is comprehensive — tracks runner utilization, job queue depth, wait time, success rates, and cost per team. Integrates with Datadog for metrics and PagerDuty for alerts. Dashboards are designed for different audiences (engineers, managers, finance)"
+    weight: 0.35
+    description: "Comprehensive observability"
+  - type: llm_judge
+    criteria: "Disaster recovery is enterprise-grade — defines RTO and RPO for the CI platform, has a fallback plan when the platform is down (GitHub-hosted runners as failover), and the 99.9% uptime target is addressed with redundancy and monitoring"
+    weight: 0.30
+    description: "Enterprise-grade disaster recovery"

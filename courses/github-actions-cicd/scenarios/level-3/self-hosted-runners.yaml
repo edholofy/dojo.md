@@ -1,0 +1,60 @@
+meta:
+  id: self-hosted-runners
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Manage self-hosted runners — set up, secure, scale, and maintain self-hosted runner infrastructure for GitHub Actions"
+  tags: [github, actions, self-hosted-runners, infrastructure, scaling, advanced]
+
+state: {}
+
+trigger: |
+  Your company is migrating from GitHub-hosted to self-hosted runners
+  for 3 reasons: cost reduction (spending $15K/month on GitHub runners),
+  specialized hardware needs (GPU for ML model testing), and compliance
+  requirements (code must not leave your network).
+
+  Infrastructure requirements:
+  - 80 engineers, 300 workflow runs per day
+  - Peak: 50 concurrent jobs during 10AM-2PM
+  - Job types: CI (80%), deployment (15%), ML training (5%)
+  - Runner OS: Linux (90%), macOS (10% for iOS builds)
+  - Security: runners must be ephemeral (clean state per job)
+  - Network: runners need access to internal services but not
+    unrestricted internet access
+
+  Architecture options to evaluate:
+  1. Bare metal servers in your data center
+  2. VMs on existing VMware infrastructure
+  3. Kubernetes with actions-runner-controller (ARC)
+  4. Auto-scaled cloud VMs (AWS EC2 with runner auto-scaler)
+
+  Security concerns:
+  - How to prevent a malicious workflow from compromising the runner
+  - How to handle secrets on self-hosted runners
+  - How to ensure runners are patched and updated
+  - How to isolate runners between teams/repos
+  - How to prevent crypto mining on organization runners
+
+  Task: Design the self-hosted runner infrastructure. Write: the
+  architecture recommendation (which option and why), the runner
+  configuration (labels, groups, scaling policies), the security
+  hardening guide (ephemeral runners, network isolation, secret
+  handling), the monitoring and alerting setup (runner health, queue
+  depth, job wait times), and the cost comparison (self-hosted vs
+  GitHub-hosted for your usage). Include the runner registration
+  automation and the disaster recovery plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture recommendation is well-reasoned — evaluates all 4 options with pros/cons for the specific requirements, likely recommends ARC or cloud auto-scaling for ephemeral runners, and addresses GPU needs for ML jobs separately from general CI"
+    weight: 0.35
+    description: "Well-reasoned architecture"
+  - type: llm_judge
+    criteria: "Security hardening is comprehensive — covers ephemeral runners (clean state per job), network isolation (firewall rules, no internet for sensitive repos), runner groups for team isolation, automatic patching, and protection against malicious workflows"
+    weight: 0.35
+    description: "Comprehensive security hardening"
+  - type: llm_judge
+    criteria: "Cost comparison is data-driven — calculates the total cost of self-hosted (hardware, maintenance, networking, engineer time) vs GitHub-hosted ($15K/month), identifies the break-even point, and the monitoring setup tracks runner utilization to optimize costs"
+    weight: 0.30
+    description: "Data-driven cost comparison"

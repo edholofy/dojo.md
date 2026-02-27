@@ -1,0 +1,56 @@
+meta:
+  id: workflow-triggers
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Configure workflow triggers — set up push, pull_request, schedule, workflow_dispatch, and release triggers with filters"
+  tags: [github, actions, triggers, events, schedule, workflow-dispatch, basics]
+
+state: {}
+
+trigger: |
+  You're configuring triggers for an e-commerce application's CI/CD
+  pipeline. The team needs 5 different workflow files, each with a
+  specific trigger configuration.
+
+  Workflow 1 — CI Tests (ci.yml):
+  - Run on every push to any branch
+  - Run on every pull request to the main branch
+  - Only run when source code changes (src/** or package.json), NOT
+    when only documentation (docs/**) or README changes
+
+  Workflow 2 — Nightly Cleanup (nightly.yml):
+  - Run every day at 2:00 AM UTC
+  - Also allow manual triggering for on-demand cleanup
+
+  Workflow 3 — Production Deploy (deploy.yml):
+  - Manual trigger only (workflow_dispatch)
+  - Accept an input parameter "environment" with options: staging, production
+  - Accept an input parameter "version" (required, string)
+
+  Workflow 4 — Release (release.yml):
+  - Trigger when a GitHub Release is published
+  - Should NOT trigger on draft releases or pre-releases
+
+  Workflow 5 — Dependency Update (deps.yml):
+  - Run every Monday at 9:00 AM UTC
+  - Also trigger when package-lock.json changes on push to main
+
+  Task: Write the complete 'on:' section for each workflow file. For
+  each, explain: when it will trigger, when it will NOT trigger, and
+  one common pitfall to avoid. Also explain the difference between
+  'paths' and 'paths-ignore' filters, and when to use each.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 trigger configurations are syntactically correct — push with branch and path filters, schedule with valid cron expressions (0 2 * * * for daily 2AM, 0 9 * * 1 for Monday 9AM), workflow_dispatch with typed inputs, release with types: [published]"
+    weight: 0.35
+    description: "Syntactically correct triggers"
+  - type: llm_judge
+    criteria: "Trigger behavior is accurately explained — each workflow's trigger and non-trigger conditions are correct, the paths/paths-ignore distinction is clear, and pitfalls are practical (e.g., schedule cron runs on default branch only, workflow_dispatch only works on default branch)"
+    weight: 0.35
+    description: "Accurate trigger behavior explanation"
+  - type: llm_judge
+    criteria: "Pitfalls and edge cases are noted — mentions that paths filters don't work with schedule triggers, that release published excludes drafts, that cron schedules can be delayed by GitHub load, and that workflow_dispatch inputs have no runtime validation by default"
+    weight: 0.30
+    description: "Practical pitfalls and edge cases"

@@ -16,17 +16,17 @@ description: >-
 ## Quick Start
 
 \`\`\`bash
-npx dojo-md train stripe-refunds --model claude-sonnet-4-6
+npx dojo.md train stripe-refunds
 \`\`\`
 
 ## What It Does
 
-run scenarios → evaluate failures → generate SKILL.md → inject → repeat
+run scenarios \u2192 evaluate failures \u2192 generate SKILL.md \u2192 inject \u2192 repeat
 
 ## Architecture
 
-Scenario YAML → Engine → Mock Layer → Evaluator → Skill Generator
-                             ↕              ↕
+Scenario YAML \u2192 Engine \u2192 Mock Layer \u2192 Evaluator \u2192 Skill Generator
+                             \u2195              \u2195
                          SQLite         ModelClient
 
 ## Core Loop
@@ -39,10 +39,10 @@ if score < target:
 
 ## Supported Models
 
-- anthropic/claude-sonnet-4-6  → Anthropic direct
-- openai/gpt-4o               → OpenRouter
-- meta-llama/llama-3.1-70b    → OpenRouter
-- any model on OpenRouter      → auto-detected
+- anthropic/claude-sonnet-4-6  \u2192 Anthropic direct
+- openai/gpt-4o               \u2192 OpenRouter
+- meta-llama/llama-3.1-70b    \u2192 OpenRouter
+- any model on OpenRouter      \u2192 auto-detected
 
 ## Assertion Types
 
@@ -57,7 +57,7 @@ if score < target:
 ## Install
 
 \`\`\`
-npm install dojo-md
+npm install dojo.md
 \`\`\`
 
 ## Protocol
@@ -75,12 +75,10 @@ MIT`;
 
 const LINES = SKILL_MD.split('\n');
 
-export function MachineView() {
+export function MachineView({ isTouch }) {
   const mouse = useMousePosition();
   const [visibleLines, setVisibleLines] = useState(0);
   const [blinkCursor, setBlinkCursor] = useState(true);
-  const containerRef = useRef(null);
-  const renderMsRef = useRef('0.0');
   const [renderMs, setRenderMs] = useState('0.0');
 
   // Typewriter effect
@@ -110,7 +108,6 @@ export function MachineView() {
     let raf;
     const measure = () => {
       const start = performance.now();
-      // Force layout read
       void document.body.offsetHeight;
       const dur = performance.now() - start;
       setRenderMs(dur.toFixed(1));
@@ -120,7 +117,7 @@ export function MachineView() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const renderLine = useCallback((line, idx) => {
+  const renderLine = useCallback((line) => {
     if (line.startsWith('# ')) {
       return (
         <span style={{ color: '#111', fontWeight: 600, fontSize: '1.1em' }}>
@@ -129,9 +126,7 @@ export function MachineView() {
       );
     }
     if (line.startsWith('## ')) {
-      return (
-        <span style={{ color: '#333', fontWeight: 500 }}>{line}</span>
-      );
+      return <span style={{ color: '#333', fontWeight: 500 }}>{line}</span>;
     }
     if (line.startsWith('```')) {
       return <span style={{ color: '#888' }}>{line}</span>;
@@ -163,86 +158,37 @@ export function MachineView() {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        flexDirection: 'column',
-        cursor: 'none',
-        fontFamily: 'var(--font-mono)',
-        overflow: 'hidden',
-      }}
-    >
+    <div className="machine-view" style={{ cursor: isTouch ? 'auto' : 'none' }}>
       {/* Corner indices */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 'var(--pad)',
-          left: 'var(--pad)',
-          fontFamily: 'var(--font-main)',
-          fontWeight: 500,
-          fontSize: '2.5rem',
-          lineHeight: 1,
-          zIndex: 1000,
-          color: 'var(--text-color)',
-        }}
-      >
-        d
-      </div>
-      <div
-        style={{
-          position: 'fixed',
-          top: 'var(--pad)',
-          right: 'var(--pad)',
-          fontFamily: 'var(--font-main)',
-          fontWeight: 500,
-          fontSize: '2.5rem',
-          lineHeight: 1,
-          zIndex: 1000,
-          color: 'var(--text-color)',
-        }}
-      >
-        m
-      </div>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 'var(--pad)',
-          left: 'var(--pad)',
-          fontFamily: 'var(--font-main)',
-          fontWeight: 500,
-          fontSize: '2.5rem',
-          lineHeight: 1,
-          zIndex: 1000,
-          color: 'var(--text-color)',
-        }}
-      >
-        0
-      </div>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 'var(--pad)',
-          right: 'var(--pad)',
-          fontFamily: 'var(--font-main)',
-          fontWeight: 500,
-          fontSize: '2.5rem',
-          lineHeight: 1,
-          zIndex: 1000,
-          color: 'var(--text-color)',
-        }}
-      >
-        1
-      </div>
+      {['d', 'm', '0', '1'].map((ch, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'fixed',
+            ...([
+              { top: 'var(--pad)', left: 'var(--pad)' },
+              { top: 'var(--pad)', right: 'var(--pad)' },
+              { bottom: 'var(--pad)', left: 'var(--pad)' },
+              { bottom: 'var(--pad)', right: 'var(--pad)' },
+            ][i]),
+            fontFamily: 'var(--font-main)',
+            fontWeight: 500,
+            fontSize: isTouch ? '1.2rem' : '2.5rem',
+            lineHeight: 1,
+            zIndex: 1000,
+            color: 'var(--text)',
+          }}
+        >
+          {ch}
+        </div>
+      ))}
 
       {/* Main SKILL.md content */}
       <div
         style={{
           flex: 1,
-          padding: '80px var(--pad) var(--pad)',
-          overflow: 'hidden',
+          padding: isTouch ? '60px var(--pad) var(--pad)' : '80px var(--pad) var(--pad)',
+          overflow: 'auto',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -251,7 +197,7 @@ export function MachineView() {
           style={{
             flex: 1,
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.78rem',
+            fontSize: isTouch ? '0.72rem' : '0.78rem',
             lineHeight: 1.65,
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
@@ -271,7 +217,7 @@ export function MachineView() {
                 fontWeight: 700,
               }}
             >
-              ▊
+              \u258A
             </span>
           )}
         </pre>
@@ -280,20 +226,22 @@ export function MachineView() {
       {/* Bottom telemetry bar */}
       <div
         style={{
-          borderTop: '1px solid var(--hairline)',
+          borderTop: '1px solid var(--border)',
           padding: '8px var(--pad)',
           display: 'flex',
           justifyContent: 'space-between',
           fontFamily: 'var(--font-mono)',
-          fontSize: '0.65rem',
-          color: 'var(--secondary-color)',
+          fontSize: isTouch ? '0.6rem' : '0.65rem',
+          color: 'var(--secondary)',
           flexShrink: 0,
         }}
       >
-        <span>SKILL.md v1.0 · MIT · dojo.md</span>
-        <span>
-          RENDER: {renderMs}ms · X: {mouse.x} Y: {mouse.y}
-        </span>
+        <span>SKILL.md v1.0 &middot; MIT &middot; dojo.md</span>
+        {!isTouch && (
+          <span>
+            RENDER: {renderMs}ms &middot; X: {mouse.x} Y: {mouse.y}
+          </span>
+        )}
       </div>
     </div>
   );

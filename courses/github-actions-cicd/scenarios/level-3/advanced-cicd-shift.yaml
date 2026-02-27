@@ -1,0 +1,64 @@
+meta:
+  id: advanced-cicd-shift
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Advanced CI/CD shift — handle security incidents, compliance failures, and infrastructure emergencies in GitHub Actions"
+  tags: [github, actions, shift-simulation, security, compliance, incident, advanced]
+
+state: {}
+
+trigger: |
+  You're the CI/CD platform engineer handling an intense shift with
+  4 critical issues arriving within the same hour.
+
+  Issue 1 — Supply chain attack detected (Critical):
+  GitHub's secret scanning alerted that a popular action you use
+  (actions/setup-python@v4) had its v4 tag overwritten 30 minutes ago
+  by a compromised maintainer account. The malicious version exfiltrates
+  environment variables (including secrets) to an external server. Your
+  organization has 25 repos using this action. 8 workflow runs have
+  already executed since the compromise.
+  Immediate: Determine which repos are affected, assess exposure, and
+  block further execution.
+
+  Issue 2 — SOC 2 audit finding (High):
+  The SOC 2 auditor found that your required workflow (security scan)
+  can be bypassed. A developer discovered they can modify the workflow
+  file in their PR to skip the security scan, and since the modified
+  workflow is what runs, the bypass succeeds. This is a critical control
+  failure.
+
+  Issue 3 — Runner fleet failure (High):
+  Your self-hosted runner fleet (Kubernetes with ARC) is experiencing
+  cascading failures. The runner controller pod is in CrashLoopBackOff,
+  new jobs are queueing but not starting, and 15 deployments are
+  blocked. The last change was a Kubernetes cluster upgrade 2 hours ago.
+
+  Issue 4 — Cost spike (Medium):
+  GitHub Actions billing shows a 400% cost spike in the last 24 hours.
+  Investigation reveals a workflow with an infinite loop — a workflow
+  triggers on push, creates a commit, which triggers another push,
+  creating another commit. It's been running for 18 hours creating
+  5,000+ commits.
+
+  Task: Handle all 4 issues. For each, write: the immediate containment
+  action (what to do in the next 5 minutes), the investigation and
+  remediation steps, the root cause analysis, and the permanent fix.
+  Include: the incident communication (what to tell the security team,
+  auditors, and engineering org), and the post-incident improvements
+  to prevent all 4 types of issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Supply chain attack response is comprehensive — identifies all 25 affected repos, assesses which 8 runs were compromised, immediately pins to SHA or blocks the action, rotates all exposed secrets, and reports the compromised action to GitHub"
+    weight: 0.35
+    description: "Comprehensive supply chain response"
+  - type: llm_judge
+    criteria: "Audit finding is remediated correctly — explains that required workflows from the calling repo can be modified, the fix uses organization-level required workflows (which run the org's version, not the PR's), and the auditor is given a corrective action plan"
+    weight: 0.35
+    description: "Correct audit finding remediation"
+  - type: llm_judge
+    criteria: "Infinite loop and runner issues are resolved — the infinite loop is stopped by disabling the workflow or adding recursion prevention ([skip ci] or checking github.actor), the runner fleet recovery addresses the K8s upgrade issue, and permanent fixes prevent both recurrence"
+    weight: 0.30
+    description: "Loop and runner resolution"

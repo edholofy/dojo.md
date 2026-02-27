@@ -1,0 +1,131 @@
+name: "Error Response Format and Structure"
+level: 1
+difficulty: beginner
+description: "Learn to structure consistent, meaningful error responses with proper JSON format"
+
+context: |
+  Your API needs to return consistent error responses so clients can parse and handle
+  errors programmatically. Design error response objects with status code, error code,
+  message, and request ID for tracing.
+
+scenario:
+  state:
+    products:
+      "prod_001": { name: "Laptop", price: 999.99 }
+      "prod_002": { name: "Mouse", price: 29.99 }
+
+  endpoint: "POST /api/v1/products/{productId}/order"
+
+  test_cases:
+    - name: "valid_order"
+      request:
+        path: "/api/v1/products/prod_001/order"
+        body: { quantity: 1 }
+      expected_response:
+        status: 201
+        body:
+          order_id: "order_123"
+          product_id: "prod_001"
+          quantity: 1
+
+    - name: "product_not_found_consistent_format"
+      request:
+        path: "/api/v1/products/prod_999/order"
+        body: { quantity: 1 }
+      expected_status: 404
+      expected_response:
+        status: 404
+        error:
+          code: "PRODUCT_NOT_FOUND"
+          message: "The product you requested does not exist"
+          details:
+            product_id: "prod_999"
+
+    - name: "invalid_quantity_format"
+      request:
+        path: "/api/v1/products/prod_001/order"
+        body: { quantity: "not_a_number" }
+      expected_status: 400
+      expected_response:
+        status: 400
+        error:
+          code: "INVALID_REQUEST_BODY"
+          message: "Invalid request format"
+          details:
+            field: "quantity"
+            expected_type: "number"
+            received_type: "string"
+
+    - name: "missing_required_field"
+      request:
+        path: "/api/v1/products/prod_001/order"
+        body: {}
+      expected_status: 400
+      expected_response:
+        status: 400
+        error:
+          code: "MISSING_REQUIRED_FIELD"
+          message: "Required field missing"
+          details:
+            field: "quantity"
+
+    - name: "negative_quantity"
+      request:
+        path: "/api/v1/products/prod_001/order"
+        body: { quantity: -5 }
+      expected_status: 400
+      expected_response:
+        status: 400
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Quantity must be positive"
+
+assertions:
+  - type: "api_called"
+    description: "Error responses include machine-readable error code"
+    test: "error responses always include error.code field"
+
+  - type: "api_called"
+    description: "Error responses include human-readable message"
+    test: "error responses always include error.message field"
+
+  - type: "api_called"
+    description: "Error responses are consistent in structure"
+    test: "all 4xx errors use same response envelope format"
+
+  - type: "api_called"
+    description: "Additional error details provided where helpful"
+    test: "validation errors include field information in details"
+
+  - type: "outcome"
+    description: "Consistent error format improves client error handling"
+    test: "clients can parse error responses without special cases for each endpoint"
+
+learning_objectives:
+  - "Design consistent error response envelope format"
+  - "Include error code, message, and optional details in responses"
+  - "Provide machine-readable error codes for programmatic handling"
+  - "Include request tracing information for debugging"
+  - "Document error codes in API specification"
+
+key_concepts:
+  - "Error Response Envelope: Consistent structure across all error responses"
+  - "Error Codes: Machine-readable identifiers (PRODUCT_NOT_FOUND, INVALID_REQUEST_BODY)"
+  - "Error Message: Human-readable description of the problem"
+  - "Details Field: Additional context like field name for validation errors"
+  - "Request ID: Correlation ID for request tracing"
+
+example_error_response: |
+  {
+    "status": 400,
+    "error": {
+      "code": "INVALID_REQUEST_BODY",
+      "message": "Invalid or missing required field",
+      "details": {
+        "field": "email",
+        "expected_type": "string",
+        "constraint": "valid email format"
+      }
+    },
+    "request_id": "req_abc123def456"
+  }

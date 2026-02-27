@@ -1,0 +1,60 @@
+meta:
+  id: retry-and-idempotency
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Design retry and idempotency patterns — build resilient API error recovery without duplicate side effects"
+  tags: [REST, API, retry, idempotency, resilience, intermediate]
+
+state: {}
+
+trigger: |
+  Your payment processing API has a critical bug: when the network
+  drops between your server and the payment processor, the client
+  retries and customers get charged twice. This has happened 47 times
+  in the last month, costing $12,000 in refunds and significant
+  customer trust.
+
+  The flow that's failing:
+  1. Client: POST /payments { amount: 100, card: "..." }
+  2. Server: calls Stripe to charge $100 → succeeds
+  3. Server: tries to respond 200 to client → network timeout
+  4. Client: sees timeout, retries POST /payments { same data }
+  5. Server: calls Stripe again → charges another $100
+  6. Customer charged $200 instead of $100
+
+  Your API has these endpoints that need retry safety:
+  - POST /payments — charge a customer
+  - POST /orders — create an order (generates order number)
+  - POST /refunds — issue a refund
+  - PUT /orders/:id/status — update order status
+  - POST /notifications/send — send push notification
+  - DELETE /orders/:id — cancel an order
+
+  Questions from the team:
+  1. "Which endpoints need idempotency keys and which are naturally
+     idempotent?"
+  2. "Where do we store the idempotency keys? Redis? Database?"
+  3. "How long do we keep them? Forever?"
+  4. "What if two concurrent requests have the same idempotency key?"
+  5. "What status codes should trigger a client retry vs not?"
+
+  Task: Design the idempotency and retry system. Write: which
+  endpoints need idempotency keys (with reasoning), the idempotency
+  key implementation (storage, TTL, concurrency handling), the client
+  retry policy (which status codes to retry, backoff strategy), and
+  the API error responses that communicate retry safety to clients.
+
+assertions:
+  - type: llm_judge
+    criteria: "Idempotency analysis is correct — POST /payments and POST /orders need idempotency keys, PUT is naturally idempotent, DELETE is naturally idempotent, POST /refunds needs keys. Explains why GET is safe, PUT is safe, and POST is dangerous for retries"
+    weight: 0.35
+    description: "Correct idempotency analysis"
+  - type: llm_judge
+    criteria: "Implementation handles edge cases — addresses concurrent duplicate requests (locking), idempotency key TTL (not forever, with rationale), storage choice (Redis vs DB with trade-offs), what to return when a duplicate request arrives (cached response vs 409), and how to handle in-flight requests"
+    weight: 0.35
+    description: "Edge case handling"
+  - type: llm_judge
+    criteria: "Client retry policy is specific — lists retryable status codes (503, 429, 408, network errors) and non-retryable codes (400, 401, 403, 404, 409, 422), includes exponential backoff with jitter, sets max retry count, and the error responses include Retry-After headers where appropriate"
+    weight: 0.30
+    description: "Specific client retry policy"

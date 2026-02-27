@@ -1,0 +1,56 @@
+meta:
+  id: pr-review-checklist
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Create a review checklist — design a structured PR review checklist that covers correctness, security, performance, and style"
+  tags: [github, pr-review, checklist, review-process, quality, basics]
+
+state: {}
+
+trigger: |
+  You're setting up the review process for a new team. The team
+  builds a web application with a React frontend, Node.js API, and
+  PostgreSQL database. Previous reviews were inconsistent — some
+  reviewers only check style, others only check logic, and nobody
+  consistently checks for security issues.
+
+  Common issues found in production (that should have been caught
+  in review):
+  - SQL injection in 2 endpoints (no parameterized queries)
+  - XSS vulnerability in user-generated content display
+  - Missing error handling causing unhandled promise rejections
+  - N+1 database queries causing page load timeouts
+  - Race condition in concurrent order processing
+  - Sensitive data logged to console in production
+  - Missing input validation on API endpoints
+  - Broken accessibility (missing alt text, wrong ARIA roles)
+
+  Team conventions:
+  - TypeScript strict mode
+  - Named exports only
+  - Async/await (no .then chains)
+  - All API endpoints have input validation
+  - All database queries use parameterized queries
+  - Error responses follow RFC 7807 (Problem Details)
+
+  Task: Create the PR review checklist. Write: the checklist organized
+  by category (Correctness, Security, Performance, Error Handling,
+  Style/Convention, Testing, Documentation, Accessibility), with 3-5
+  specific items per category, a priority indicator for each item
+  (must-check vs. nice-to-check), and guidance on when to request
+  changes vs. approve with comments vs. just comment.
+
+assertions:
+  - type: llm_judge
+    criteria: "Checklist covers the production issues — SQL injection, XSS, error handling, N+1 queries, race conditions, sensitive data logging, input validation, and accessibility are all explicitly addressed"
+    weight: 0.35
+    description: "Production-issue-covering checklist"
+  - type: llm_judge
+    criteria: "Categories are well-organized and practical — security and correctness items are prioritized, style items are clearly lower priority, and each item is specific enough to be actionable during a review"
+    weight: 0.35
+    description: "Well-organized practical categories"
+  - type: llm_judge
+    criteria: "Review decision guidance is clear — criteria for request-changes vs approve-with-comments are defined (security issues always block, style issues don't), preventing both rubber-stamping and nit-picking paralysis"
+    weight: 0.30
+    description: "Clear review decision guidance"

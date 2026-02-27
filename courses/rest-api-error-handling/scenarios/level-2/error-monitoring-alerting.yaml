@@ -1,0 +1,53 @@
+meta:
+  id: error-monitoring-alerting
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Set up error monitoring and alerting — build an alerting system that catches real issues without alert fatigue"
+  tags: [REST, API, monitoring, alerting, observability, intermediate]
+
+state: {}
+
+trigger: |
+  Your API team has a monitoring problem: too many alerts that nobody
+  acts on. Last month, the team received 2,847 alerts. Of those:
+  - 2,100 were "5xx error rate above 0.1%" (most were single errors)
+  - 400 were "response time above 500ms" (during daily batch jobs)
+  - 200 were "disk space above 80%" (on log servers, always at 82%)
+  - 100 were "connection pool exhausted" (recovered in seconds)
+  - 47 were real incidents requiring action
+
+  The real incidents that were missed or delayed because of alert
+  fatigue:
+  - Payment endpoint returning 500 for 15 minutes (buried in noise)
+  - Database connection leak causing gradual degradation over 3 hours
+  - Authentication service returning wrong 200 responses (not caught
+    by status code monitoring)
+  - Third-party API silently returning stale data
+
+  Your API handles:
+  - 10M requests/day across 30 endpoints
+  - Baseline error rate: 0.05% (mostly 404s from bots)
+  - P99 latency: 200ms (varies by endpoint)
+  - 5 downstream dependencies
+
+  Task: Redesign the alerting system. Write: the alert taxonomy
+  (severity levels and routing), the specific alert rules for each
+  error category (with thresholds that avoid false positives), the
+  escalation policy, the dashboard design for real-time error
+  visibility, and the process for tuning alerts as traffic patterns
+  change.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert taxonomy reduces noise — defines severity levels (critical/warning/info) with clear criteria, routes alerts appropriately (PagerDuty for critical, Slack for warning, dashboard for info), and the new thresholds would have caught the 47 real incidents while eliminating most of the 2,800 false alerts"
+    weight: 0.35
+    description: "Noise-reducing alert taxonomy"
+  - type: llm_judge
+    criteria: "Alert rules are specific and contextual — uses error rate changes (not absolute thresholds), per-endpoint alerting (not global), anomaly detection for latency, and monitors for correctness issues (like the authentication service returning wrong 200s). Addresses the 4 missed incidents specifically"
+    weight: 0.35
+    description: "Specific contextual alert rules"
+  - type: llm_judge
+    criteria: "Escalation and tuning process is practical — defines who gets alerted at each severity, time-based escalation for unacknowledged alerts, and a regular process for reviewing alert effectiveness (false positive rate, mean time to detect)"
+    weight: 0.30
+    description: "Practical escalation and tuning"

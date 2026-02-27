@@ -1,0 +1,69 @@
+meta:
+  id: review-incident-postmortem
+  level: 4
+  course: github-pr-review
+  type: output
+  description: "Conduct review process postmortems — lead blameless investigations into systemic review failures and implement organizational improvements"
+  tags: [github, pr-review, postmortem, incident-response, process-improvement, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Engineering conducting a postmortem after the most
+  serious review-related incident in company history. A payment
+  processing bug caused $2.3M in duplicate charges over 72 hours before
+  detection.
+
+  Incident timeline:
+  - Day 0: PR #4521 "Optimize payment batch processing" submitted by a
+    senior engineer (800 lines, refactoring payment job scheduler)
+  - Day 1: First review by a mid-level engineer — "LGTM, nice refactor"
+    (spent 8 minutes on 800 lines based on GitHub activity timestamps)
+  - Day 1: Second review by another mid-level — requested minor naming
+    change, then approved after the change was made
+  - Day 2: PR merged after CI passed (all 247 tests green)
+  - Day 3: Deployed to production via automated pipeline
+  - Day 5: Customer reports duplicate charges. Investigation begins
+  - Day 6: Root cause identified — race condition in the batch scheduler
+    that causes payment jobs to be processed twice under high load
+  - Day 8: Hotfix deployed. Customer refund process begins
+
+  Review failures identified:
+  1. Neither reviewer had payment domain expertise (CODEOWNERS didn't
+     include the batch scheduler directory)
+  2. The 8-minute review of 800 lines was clearly insufficient
+  3. The race condition was subtle but identifiable with careful review
+     of the concurrency logic
+  4. Test coverage was high (85%) but no tests simulated concurrent
+     execution or high-load conditions
+  5. The PR was marked "refactoring" which reduced perceived risk
+  6. The senior author's reputation created unconscious trust bias
+
+  Additional context:
+  - The payment team lost their tech lead 2 months ago (not replaced)
+  - CODEOWNERS for payment code points to a team that was reorganized
+  - The review SLA pressure (merge within 1 day) may have rushed reviews
+  - 3 similar but smaller incidents occurred in the past year
+
+  Task: Lead the postmortem. Write: the blameless incident analysis
+  (contributing factors at the individual, team, process, and
+  organizational levels), the immediate fixes (what changes this week),
+  the systemic improvements (what changes in 30/60/90 days), the review
+  process changes specifically for payment/financial code, and the
+  executive summary for the board (including financial impact and
+  remediation plan). Address the pattern of 3 similar incidents and why
+  previous fixes didn't prevent this one.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis is truly blameless — doesn't blame the 8-minute reviewer or the senior author, instead identifies systemic factors: outdated CODEOWNERS, missing domain expertise after tech lead departure, SLA pressure encouraging superficial reviews, and trust bias toward senior engineers"
+    weight: 0.35
+    description: "Truly blameless analysis"
+  - type: llm_judge
+    criteria: "Improvements address all levels — individual (reviewer training on concurrency), team (payment domain expertise gap), process (CODEOWNERS update, risk-based review requirements), and organizational (SLA policy that doesn't incentivize rubber-stamping)"
+    weight: 0.35
+    description: "Multi-level improvements"
+  - type: llm_judge
+    criteria: "Pattern analysis explains why previous fixes failed — the 3 prior incidents likely led to narrow fixes (fix the specific bug) rather than systemic changes, and this postmortem addresses the meta-problem of why postmortem action items aren't preventing recurrence"
+    weight: 0.30
+    description: "Pattern-breaking analysis"

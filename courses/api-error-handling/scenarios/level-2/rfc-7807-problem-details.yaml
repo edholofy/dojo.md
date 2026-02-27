@@ -1,0 +1,178 @@
+name: "RFC 7807 Problem Details Standard"
+level: 2
+difficulty: intermediate
+description: "Implement standardized error responses using RFC 7807 Problem Details format"
+
+context: |
+  Migrate your API error responses to the RFC 7807 standard. This standardized format
+  improves interoperability across tools and clients. Implement problem details with
+  type URI, title, status, detail, and instance fields.
+
+scenario:
+  state:
+    bank_accounts:
+      "acc_001": { balance: 5000, account_holder: "John Doe" }
+      "acc_002": { balance: 100, account_holder: "Jane Smith" }
+
+  endpoint: "POST /api/v1/accounts/{accountId}/transfer"
+
+  test_cases:
+    - name: "successful_transfer"
+      request:
+        path: "/api/v1/accounts/acc_001/transfer"
+        body:
+          to_account: "acc_002"
+          amount: 100
+      expected_status: 200
+      expected_response:
+        transaction_id: "txn_123"
+        status: "completed"
+
+    - name: "insufficient_funds_rfc7807"
+      request:
+        path: "/api/v1/accounts/acc_002/transfer"
+        body:
+          to_account: "acc_001"
+          amount: 500
+      expected_status: 422
+      expected_response:
+        type: "https://api.example.com/errors/insufficient-funds"
+        title: "Insufficient Funds"
+        status: 422
+        detail: "Account acc_002 has balance of 100 but requires 500 for this transfer"
+        instance: "/api/v1/accounts/acc_002/transfer"
+        balance: 100
+        required_amount: 500
+
+    - name: "account_not_found_rfc7807"
+      request:
+        path: "/api/v1/accounts/acc_999/transfer"
+        body:
+          to_account: "acc_001"
+          amount: 100
+      expected_status: 404
+      expected_response:
+        type: "https://api.example.com/errors/account-not-found"
+        title: "Account Not Found"
+        status: 404
+        detail: "The account acc_999 does not exist in the system"
+        instance: "/api/v1/accounts/acc_999/transfer"
+
+    - name: "invalid_amount_validation"
+      request:
+        path: "/api/v1/accounts/acc_001/transfer"
+        body:
+          to_account: "acc_002"
+          amount: -50
+      expected_status: 400
+      expected_response:
+        type: "https://api.example.com/errors/validation-error"
+        title: "Validation Error"
+        status: 400
+        detail: "The request body contains invalid values"
+        instance: "/api/v1/accounts/acc_001/transfer"
+        validation_errors:
+          - field: "amount"
+            message: "Amount must be positive"
+            rejected_value: -50
+
+    - name: "self_transfer_error"
+      request:
+        path: "/api/v1/accounts/acc_001/transfer"
+        body:
+          to_account: "acc_001"
+          amount: 100
+      expected_status: 409
+      expected_response:
+        type: "https://api.example.com/errors/invalid-operation"
+        title: "Invalid Operation"
+        status: 409
+        detail: "Cannot transfer funds to the same account"
+        instance: "/api/v1/accounts/acc_001/transfer"
+
+assertions:
+  - type: "api_called"
+    description: "type field contains URI identifying problem"
+    test: "error response includes type field with URI"
+
+  - type: "api_called"
+    description: "title field is human-readable problem type"
+    test: "title field is constant for same error type"
+
+  - type: "api_called"
+    description: "status field echoes HTTP status code"
+    test: "status field matches HTTP response status"
+
+  - type: "api_called"
+    description: "detail field explains specific instance"
+    test: "detail contains instance-specific information"
+
+  - type: "api_called"
+    description: "instance field identifies affected resource"
+    test: "instance field contains request path"
+
+  - type: "api_called"
+    description: "Extensions included for domain-specific details"
+    test: "error response includes custom fields as extensions"
+
+  - type: "outcome"
+    description: "RFC 7807 enables standard error tooling"
+    test: "error responses conform to standard specification"
+
+learning_objectives:
+  - "Understand RFC 7807 Problem Details specification"
+  - "Map problem types to type URIs"
+  - "Distinguish between title (constant) and detail (instance-specific)"
+  - "Include appropriate HTTP status codes in problem details"
+  - "Extend RFC 7807 with domain-specific fields"
+  - "Communicate problem details to generic HTTP clients"
+
+rfc7807_fields:
+  "type": "URI identifying problem type (required, should dereference to documentation)"
+  "title": "Short human-readable summary of problem type (required, same for same type)"
+  "status": "HTTP status code (optional, but recommended)"
+  "detail": "Human-readable explanation of specific problem instance (optional, instance-specific)"
+  "instance": "URI identifying specific problem occurrence (optional, usually request path)"
+
+example_error_responses: |
+  Example 1: Insufficient Funds
+  {
+    "type": "https://api.example.com/errors/insufficient-funds",
+    "title": "Insufficient Funds",
+    "status": 422,
+    "detail": "Account acc_002 has balance of 100 but requires 500 for this transfer",
+    "instance": "/api/v1/accounts/acc_002/transfer",
+    "balance": 100,
+    "required_amount": 500
+  }
+
+  Example 2: Validation Error
+  {
+    "type": "https://api.example.com/errors/validation-error",
+    "title": "Validation Error",
+    "status": 400,
+    "detail": "The request body contains invalid values",
+    "instance": "/api/v1/accounts/acc_001/transfer",
+    "validation_errors": [
+      {
+        "field": "amount",
+        "message": "Amount must be positive",
+        "rejected_value": -50
+      }
+    ]
+  }
+
+advantages:
+  - "Standard format recognized by HTTP tools and libraries"
+  - "Generic clients can handle errors without API-specific code"
+  - "Clear semantics: type vs title vs detail"
+  - "Extensibility through custom fields"
+  - "Easier debugging and error tracking"
+  - "Better integration with API gateways and monitoring"
+
+content_type:
+  "application/problem+json": "Standard MIME type for RFC 7807 responses"
+
+references:
+  - "https://datatracker.ietf.org/doc/html/rfc7807"
+  - "https://datatracker.ietf.org/doc/html/rfc9457 (RFC 9457 - Problem Details for HTTP APIs)"

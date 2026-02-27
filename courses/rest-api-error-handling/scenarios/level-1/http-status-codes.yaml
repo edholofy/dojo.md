@@ -1,0 +1,46 @@
+meta:
+  id: http-status-codes
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Classify HTTP status codes — match API scenarios to correct status codes across 2xx, 4xx, and 5xx families"
+  tags: [REST, API, HTTP, status-codes, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior backend developer who just joined a team building a
+  task management API. During your first code review, the senior
+  developer flagged that your endpoints return wrong status codes.
+
+  Your current mistakes:
+  1. POST /tasks returns 200 when a task is created (should be 201)
+  2. DELETE /tasks/:id returns 200 with empty body (should be 204)
+  3. GET /tasks/:id returns 200 with { error: "not found" } when the
+     task doesn't exist (should be 404)
+  4. POST /tasks with missing "title" field returns 500 (should be 400)
+  5. GET /tasks with expired auth token returns 403 (should be 401)
+  6. PUT /tasks/:id on someone else's task returns 404 (should be 403)
+  7. POST /tasks when the database is down returns 400 (should be 503)
+  8. PATCH /tasks/:id with Content-Type: text/plain returns 500
+     (should be 415)
+
+  Task: For each of the 8 mistakes, explain: (1) why your current
+  status code is wrong, (2) what the correct status code is and why,
+  and (3) the general rule for when to use that status code. Then
+  create a quick-reference cheat sheet mapping common API scenarios
+  to their correct HTTP status codes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly identifies all 8 status code fixes — 201 Created for resource creation, 204 No Content for successful deletion, 404 Not Found for missing resources, 400 Bad Request for validation errors, 401 Unauthorized for expired/missing auth, 403 Forbidden for insufficient permissions, 503 Service Unavailable for downstream failures, 415 Unsupported Media Type for wrong content types"
+    weight: 0.35
+    description: "Correct status code identification"
+  - type: llm_judge
+    criteria: "Explanations demonstrate understanding of status code semantics — distinguishes between 401 (identity unknown) and 403 (identity known, permission denied), between 400 (client mistake) and 500 (server mistake), and between 200 (response body) and 204 (no body)"
+    weight: 0.35
+    description: "Status code semantic understanding"
+  - type: llm_judge
+    criteria: "Cheat sheet is practical and organized — groups status codes by family (2xx success, 4xx client error, 5xx server error), covers common API scenarios beyond just the 8 mistakes, and is formatted for quick reference"
+    weight: 0.30
+    description: "Practical cheat sheet"

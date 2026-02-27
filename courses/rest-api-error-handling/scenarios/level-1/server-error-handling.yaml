@@ -1,0 +1,55 @@
+meta:
+  id: server-error-handling
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Handle 5xx server errors — implement safe error handling for unexpected failures without exposing internals"
+  tags: [REST, API, 5xx, server-errors, error-handling, beginner]
+
+state: {}
+
+trigger: |
+  You're on-call when the monitoring dashboard lights up. Your API is
+  returning 500 errors with full stack traces in the response body.
+  A customer screenshots one and posts it on Twitter:
+
+  {
+    "error": "DatabaseError: connection refused to postgres://admin:
+    s3cretP@ss@db-prod-01.internal.company.com:5432/users_db",
+    "stack": "at Pool.connect (/app/node_modules/pg/lib/pool.js:332)\n
+    at UserService.getUser (/app/src/services/user.ts:47)\n
+    at UserController.get (/app/src/controllers/user.ts:23)\n..."
+  }
+
+  The tweet goes viral. Security is panicking because the response
+  exposed: database credentials, internal hostnames, database name,
+  technology stack (Node.js, pg, TypeScript), and code structure.
+
+  Your team lead wants you to fix this immediately. The API has these
+  failure modes that can cause 500 errors:
+  1. Database connection failures
+  2. Unhandled null pointer exceptions in business logic
+  3. Third-party API timeouts (payment processor)
+  4. Out of memory errors during large report generation
+  5. File system permission errors when writing uploads
+
+  Task: Write the global error handler that catches all unhandled
+  errors and returns safe responses. Show: the safe 500 error response
+  format (what the client sees), the server-side error logging format
+  (what goes to your logging system), how to add request correlation
+  IDs so support can link a user's error to the server log, and how
+  each of the 5 failure modes should be handled differently.
+
+assertions:
+  - type: llm_judge
+    criteria: "Safe error responses never expose internals — no stack traces, database credentials, internal hostnames, technology details, or code structure in client-facing responses. Returns a generic message with a correlation ID that support can use to look up the full error"
+    weight: 0.35
+    description: "Safe error responses"
+  - type: llm_judge
+    criteria: "Server-side logging captures full diagnostic information — logs stack trace, error type, request details, correlation ID, and context. The 5 failure modes are handled differently where appropriate (503 for DB/third-party failures vs 500 for unhandled exceptions)"
+    weight: 0.35
+    description: "Comprehensive server-side logging"
+  - type: llm_judge
+    criteria: "Correlation ID system is well-designed — explains how IDs are generated (UUID), how they flow through the request lifecycle, how they appear in both the error response and server logs, and how support uses them to debug customer-reported errors"
+    weight: 0.30
+    description: "Correlation ID system"

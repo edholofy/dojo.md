@@ -1,0 +1,99 @@
+meta:
+  id: performance-review-patterns
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Performance-focused code review — identify N+1 queries, memory leaks, and inefficient patterns in pull requests"
+  tags: [github, pr-review, performance, N+1, memory-leaks, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR titled "Add order history page with product
+  details." The PR loads a user's order history and displays product
+  information. Review these code sections for performance issues:
+
+  Section 1 — API endpoint:
+  ```javascript
+  app.get('/api/orders', async (req, res) => {
+    const orders = await Order.findAll({ where: { userId: req.user.id } });
+    const result = [];
+    for (const order of orders) {
+      const items = await OrderItem.findAll({ where: { orderId: order.id } });
+      for (const item of items) {
+        item.product = await Product.findOne({ where: { id: item.productId } });
+        item.reviews = await Review.findAll({ where: { productId: item.productId } });
+      }
+      result.push({ ...order.toJSON(), items });
+    }
+    res.json(result);
+  });
+  ```
+
+  Section 2 — React component:
+  ```jsx
+  function OrderHistory() {
+    const [orders, setOrders] = useState([]);
+    const [enrichedOrders, setEnrichedOrders] = useState([]);
+
+    useEffect(() => {
+      fetch('/api/orders').then(r => r.json()).then(setOrders);
+    }, []);
+
+    useEffect(() => {
+      orders.forEach(async (order) => {
+        const shipping = await fetch(`/api/shipping/${order.id}`).then(r => r.json());
+        setEnrichedOrders(prev => [...prev, { ...order, shipping }]);
+      });
+    }, [orders]);
+
+    return (
+      <div>
+        {enrichedOrders.map(order => (
+          <OrderCard key={order.id} order={order} />
+        ))}
+      </div>
+    );
+  }
+  ```
+
+  Section 3 — Utility function:
+  ```javascript
+  function formatOrdersForExport(orders) {
+    const allProducts = [];
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        allProducts.push(JSON.parse(JSON.stringify(item.product)));
+      });
+    });
+    return allProducts.map(p => ({
+      ...p,
+      formattedPrice: new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD'
+      }).format(p.price)
+    }));
+  }
+  ```
+
+  The user has 50 orders on average, each with 3-5 items. The page
+  currently takes 8 seconds to load.
+
+  Task: Write a performance-focused review. For each section: name the
+  performance anti-pattern, estimate the impact (number of queries,
+  memory usage, render cycles), provide the optimized solution with code,
+  and explain why the optimization works. Include a summary of expected
+  performance improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "N+1 query problem is identified and fixed — Section 1 has nested N+1 queries (orders → items → products → reviews), and the fix uses eager loading (includes/joins) or batch queries to reduce from O(n*m) queries to O(1) or O(k)"
+    weight: 0.35
+    description: "N+1 query identification and fix"
+  - type: llm_judge
+    criteria: "Frontend performance issues are identified — Section 2 causes waterfall API calls (one per order), causes re-renders on every setState in the loop, and has a race condition with the enrichedOrders accumulation. Fix uses Promise.all or batched endpoint"
+    weight: 0.35
+    description: "Frontend performance issues"
+  - type: llm_judge
+    criteria: "Memory and computation waste identified — Section 3 deep-clones objects unnecessarily with JSON.parse/JSON.stringify, creates a new Intl.NumberFormat for each item instead of reusing it, and the fixes show proper optimization with minimal memory allocation"
+    weight: 0.30
+    description: "Memory and computation optimization"

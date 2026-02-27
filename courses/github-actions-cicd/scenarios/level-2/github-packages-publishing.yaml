@@ -1,0 +1,59 @@
+meta:
+  id: github-packages-publishing
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Publish to GitHub Packages — automate npm, Docker, and container registry publishing with versioning and access control"
+  tags: [github, actions, packages, npm, Docker, registry, intermediate]
+
+state: {}
+
+trigger: |
+  Your organization has internal libraries and Docker images that need
+  to be published to GitHub Packages. You need to set up automated
+  publishing workflows for 3 different package types.
+
+  Package 1 — npm library (@myorg/shared-utils):
+  - Publish to GitHub Packages npm registry (not npmjs.com)
+  - Version from package.json
+  - Publish on GitHub Release creation
+  - Include provenance attestation
+  - Scoped to the organization (@myorg/*)
+
+  Package 2 — Docker image (myorg/api-server):
+  - Build and push to GitHub Container Registry (ghcr.io)
+  - Tag with: git SHA, branch name, semver from git tag, and "latest"
+  - Multi-architecture build (amd64 + arm64)
+  - Push on merge to main (tagged as latest + SHA)
+  - Push on release (tagged with version)
+
+  Package 3 — Python package (myorg-sdk):
+  - Build wheel and sdist
+  - Publish to GitHub Packages (not PyPI)
+  - Include in the same workflow as tests
+
+  Access control requirements:
+  - Internal packages: readable by all org members
+  - Docker images: public (for open-source project)
+  - npm packages: scoped to org, installable with GITHUB_TOKEN
+
+  Task: Write the publishing workflows for all 3 package types.
+  Include: the workflow YAML, the package.json / Dockerfile / setup.py
+  configuration needed for GitHub Packages, the authentication setup
+  (GITHUB_TOKEN permissions, .npmrc configuration), and the versioning
+  strategy for each package type. Explain the difference between GitHub
+  Packages and external registries.
+
+assertions:
+  - type: llm_judge
+    criteria: "npm publishing is correctly configured — uses .npmrc with GitHub Packages registry URL, GITHUB_TOKEN authentication, publishConfig in package.json, provenance attestation with --provenance flag, and the workflow triggers on release published"
+    weight: 0.35
+    description: "Correct npm publishing"
+  - type: llm_judge
+    criteria: "Docker publishing uses GHCR correctly — authenticates with ghcr.io, uses docker/metadata-action for smart tagging (SHA, branch, semver), multi-arch build with docker/build-push-action and QEMU, and the image is properly tagged for both main and release triggers"
+    weight: 0.35
+    description: "Correct Docker GHCR publishing"
+  - type: llm_judge
+    criteria: "Access control and versioning are properly explained — differentiates package visibility settings, explains GITHUB_TOKEN vs PAT for cross-repo access, and the versioning strategy is consistent across package types (semver from git tags or package.json)"
+    weight: 0.30
+    description: "Proper access control and versioning"

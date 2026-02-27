@@ -1,0 +1,135 @@
+name: "Rate Limiting and 429 Errors"
+level: 1
+difficulty: beginner
+description: "Implement rate limiting to protect APIs and return 429 Too Many Requests errors"
+
+context: |
+  Build a rate-limited API endpoint that allows 10 requests per minute per user.
+  When the limit is exceeded, return 429 status with information about rate limit reset.
+
+scenario:
+  state:
+    rate_limits:
+      user_123: { requests_in_window: 0, window_start: "2024-01-01T00:00:00Z", limit: 10, window_seconds: 60 }
+      user_456: { requests_in_window: 10, window_start: "2024-01-01T00:00:00Z", limit: 10, window_seconds: 60 }
+      user_789: { requests_in_window: 5, window_start: "2024-01-01T00:00:30Z", limit: 10, window_seconds: 60 }
+
+  endpoint: "GET /api/v1/data/{resource_id}"
+
+  test_cases:
+    - name: "request_within_limit"
+      request:
+        path: "/api/v1/data/resource_1"
+        headers:
+          authorization: "Bearer token_user_123"
+        current_time: "2024-01-01T00:00:05Z"
+      expected_status: 200
+      expected_response_headers:
+        - "X-RateLimit-Limit: 10"
+        - "X-RateLimit-Remaining: 9"
+        - "X-RateLimit-Reset: 2024-01-01T00:01:00Z"
+
+    - name: "request_at_limit"
+      request:
+        path: "/api/v1/data/resource_1"
+        headers:
+          authorization: "Bearer token_user_456"
+        current_time: "2024-01-01T00:00:30Z"
+      expected_status: 429
+      expected_response:
+        error:
+          code: "RATE_LIMIT_EXCEEDED"
+          message: "Too many requests. Please retry after some time."
+      expected_response_headers:
+        - "X-RateLimit-Limit: 10"
+        - "X-RateLimit-Remaining: 0"
+        - "X-RateLimit-Reset: 2024-01-01T00:01:00Z"
+        - "Retry-After: 30"
+
+    - name: "request_exceeds_limit"
+      request:
+        path: "/api/v1/data/resource_1"
+        headers:
+          authorization: "Bearer token_user_456"
+        current_time: "2024-01-01T00:00:45Z"
+      expected_status: 429
+      expected_response:
+        error:
+          code: "RATE_LIMIT_EXCEEDED"
+      expected_response_headers:
+        - "Retry-After: 15"
+
+    - name: "window_reset_allows_new_requests"
+      request:
+        path: "/api/v1/data/resource_1"
+        headers:
+          authorization: "Bearer token_user_456"
+        current_time: "2024-01-01T00:01:05Z"
+      expected_status: 200
+      expected_response_headers:
+        - "X-RateLimit-Remaining: 9"
+
+    - name: "anonymous_user_lower_limit"
+      request:
+        path: "/api/v1/data/resource_1"
+        headers: {}
+        current_time: "2024-01-01T00:00:10Z"
+      expected_status: 200
+      expected_response_headers:
+        - "X-RateLimit-Limit: 5"
+
+assertions:
+  - type: "http_status"
+    description: "429 returned when rate limit exceeded"
+    test: "rate_limit_exceeded returns 429"
+
+  - type: "api_called"
+    description: "Rate limit headers included in all responses"
+    test: "X-RateLimit-Limit header present in responses"
+
+  - type: "api_called"
+    description: "Retry-After header provided in 429 response"
+    test: "429 response includes Retry-After header"
+
+  - type: "api_called"
+    description: "Rate limit reset time communicated"
+    test: "X-RateLimit-Reset header shows window reset time"
+
+  - type: "api_called"
+    description: "Remaining requests tracked"
+    test: "X-RateLimit-Remaining decrements with each request"
+
+  - type: "outcome"
+    description: "Rate limits are enforced per user"
+    test: "different users have independent rate limit windows"
+
+learning_objectives:
+  - "Understand rate limiting purpose: protect API from abuse and ensure fair usage"
+  - "Implement per-user rate limiting windows"
+  - "Return 429 Too Many Requests when limit exceeded"
+  - "Include rate limit information in response headers"
+  - "Provide Retry-After header for client backoff guidance"
+  - "Differentiate rate limits for authenticated vs anonymous users"
+  - "Reset rate limit windows at appropriate intervals"
+
+standard_headers:
+  "X-RateLimit-Limit": "Maximum requests allowed in window"
+  "X-RateLimit-Remaining": "Requests remaining in current window"
+  "X-RateLimit-Reset": "Unix timestamp or ISO 8601 when window resets"
+  "Retry-After": "Seconds to wait before retrying (429 only)"
+
+best_practices:
+  - "Include rate limit headers in all responses, not just 429"
+  - "Use consistent rate limit windows (typically 1-60 seconds)"
+  - "Consider different limits for different user tiers"
+  - "Log rate limit violations for monitoring"
+  - "Include Retry-After guidance for clients"
+  - "Reset windows in predictable intervals to avoid thundering herd"
+
+common_mistakes:
+  - "Returning 500 instead of 429 for rate limit violations"
+  - "Not including rate limit headers in responses"
+  - "Applying same limits to all user types"
+  - "Using unclear Retry-After values"
+  - "Not resetting rate limit windows"
+  - "Blocking entire IP address instead of per-user limiting"

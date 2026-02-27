@@ -1,0 +1,63 @@
+meta:
+  id: security-hardening
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Harden GitHub Actions security — prevent supply chain attacks, pin actions by SHA, implement OIDC, and secure workflows"
+  tags: [github, actions, security, supply-chain, OIDC, hardening, advanced]
+
+state: {}
+
+trigger: |
+  Your security team conducted an audit of your GitHub Actions setup
+  and found critical vulnerabilities. You need to remediate all findings
+  and implement a security hardening plan.
+
+  Audit findings:
+
+  Finding 1 — Supply chain risk (Critical):
+  All 45 third-party actions are referenced by tag (e.g., @v4) not by
+  SHA. A compromised action tag could execute malicious code in your
+  CI. Example: `uses: some-popular-action/upload@v3` — if that
+  maintainer's account is compromised, v3 could be overwritten.
+
+  Finding 2 — Overly permissive GITHUB_TOKEN (High):
+  All workflows run with default GITHUB_TOKEN permissions (read+write
+  on all scopes). Most workflows only need read access to contents
+  and write access to pull-requests.
+
+  Finding 3 — Fork PR vulnerability (High):
+  Workflows triggered by pull_request_target have access to secrets
+  and run in the context of the base branch. A malicious fork could
+  submit a PR that exfiltrates secrets.
+
+  Finding 4 — No OIDC authentication (Medium):
+  AWS deployments use long-lived access keys stored as GitHub Secrets.
+  These keys never rotate and would be exposed if a workflow is
+  compromised. Should use OIDC for keyless authentication.
+
+  Finding 5 — Script injection (Medium):
+  Several workflows use github.event.pull_request.title directly in
+  run: commands. A PR title containing backticks or $() could execute
+  arbitrary commands.
+
+  Task: Remediate all 5 findings. For each, write: the vulnerability
+  explanation (how it could be exploited), the remediation (specific
+  YAML changes), the verification steps (how to confirm the fix works),
+  and the ongoing prevention strategy. Include: the complete OIDC setup
+  for AWS (IAM role, trust policy, workflow changes), the GITHUB_TOKEN
+  permission lockdown, and a security checklist for all future workflows.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 vulnerabilities are remediated correctly — actions pinned by full SHA, GITHUB_TOKEN permissions restricted with permissions: key at workflow and job level, pull_request_target secured against fork attacks, OIDC configured for AWS, and script injection prevented with environment variables"
+    weight: 0.35
+    description: "Correct vulnerability remediation"
+  - type: llm_judge
+    criteria: "OIDC setup is complete — includes the AWS IAM OIDC identity provider, the IAM role trust policy with correct GitHub conditions (repo, branch, environment), the workflow changes to use aws-actions/configure-aws-credentials with OIDC, and explains why this is more secure than static keys"
+    weight: 0.35
+    description: "Complete OIDC setup"
+  - type: llm_judge
+    criteria: "Security checklist is actionable — covers at least 10 security practices for GitHub Actions, is formatted as a PR review checklist, and includes automated enforcement options (e.g., CodeQL for workflow scanning, required workflow for org-wide security policy)"
+    weight: 0.30
+    description: "Actionable security checklist"

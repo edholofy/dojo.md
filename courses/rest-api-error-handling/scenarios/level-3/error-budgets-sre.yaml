@@ -1,0 +1,61 @@
+meta:
+  id: error-budgets-sre
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Implement error budgets — design SLO/SLI/SLA framework for API reliability with error budget policies"
+  tags: [REST, API, SRE, error-budgets, SLO, SLI, SLA, advanced]
+
+state: {}
+
+trigger: |
+  Your API platform serves 50M requests/day across 200 endpoints for
+  3,000 API consumers. The VP of Engineering wants to move from
+  "fight every error" to "error budget-based reliability management."
+
+  Current state:
+  - Overall error rate: 0.3% (150,000 errors/day)
+  - But it's unevenly distributed:
+    - GET endpoints: 0.05% error rate (mostly 404s from invalid IDs)
+    - POST /payments: 2.1% error rate (mostly declined cards — 402)
+    - POST /orders: 0.8% error rate (inventory conflicts — 409)
+    - Search endpoints: 0.4% error rate (timeout under load)
+  - P99 latency: 800ms overall (but payment is 2.5s)
+  - Availability: 99.85% (monthly)
+
+  Questions from the VP:
+  1. "What's our SLO? How do we define 'error' for error budget
+     purposes? Is a 402 Declined Card an 'error'?"
+  2. "How much error budget do we have? When should we stop shipping
+     features and fix reliability?"
+  3. "How do we allocate error budget across teams? The payments team
+     has a higher 'error rate' but most are expected business errors."
+  4. "What's the difference between our SLO (internal target) and SLA
+     (customer promise)? How much buffer do we need?"
+  5. "How do we calculate error budget burn rate? I want an alert when
+     we're burning budget too fast."
+
+  Your API consumers have different needs:
+  - Enterprise (10 consumers): need 99.99% availability, <200ms p99
+  - Standard (200 consumers): need 99.9% availability, <500ms p99
+  - Free tier (2,790 consumers): best effort
+
+  Task: Design the complete error budget framework. Write: the SLI
+  definitions (what counts as an error), the SLO targets per tier,
+  the error budget calculation (with the 402/409 classification
+  decision), the burn rate alerting system, and the error budget
+  policy (what happens when budget is exhausted).
+
+assertions:
+  - type: llm_judge
+    criteria: "SLI/SLO definitions are precise — clearly defines what counts as an error (5xx yes, 4xx depends on type), distinguishes between expected business errors (402 declined, 409 conflict) and unexpected errors (500, 503), and sets different SLOs for different endpoint categories and consumer tiers"
+    weight: 0.35
+    description: "Precise SLI/SLO definitions"
+  - type: llm_judge
+    criteria: "Error budget math is correct — calculates monthly budget from SLO (e.g., 99.9% = 0.1% budget = 50,000 errors at 50M req/day), explains burn rate computation (fast burn vs slow burn), and the alerting thresholds catch budget exhaustion before it happens"
+    weight: 0.35
+    description: "Correct error budget math"
+  - type: llm_judge
+    criteria: "Error budget policy is actionable — defines what happens when budget is exhausted (feature freeze, reliability sprint), how to allocate budget across teams, the SLO-to-SLA buffer rationale, and how the policy integrates with sprint planning and release decisions"
+    weight: 0.30
+    description: "Actionable budget policy"

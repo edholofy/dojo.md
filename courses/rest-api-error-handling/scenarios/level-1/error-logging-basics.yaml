@@ -1,0 +1,63 @@
+meta:
+  id: error-logging-basics
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Set up API error logging — design structured error logs that make debugging fast without logging sensitive data"
+  tags: [REST, API, logging, debugging, structured-logs, beginner]
+
+state: {}
+
+trigger: |
+  You're debugging a production issue on a food delivery API.
+  Customers are getting 500 errors when placing orders, but your
+  current logs look like this:
+
+  2026-02-27 10:15:33 ERROR: Something went wrong
+  2026-02-27 10:15:34 ERROR: Something went wrong
+  2026-02-27 10:15:35 ERROR: null
+  2026-02-27 10:15:36 ERROR: Something went wrong
+  2026-02-27 10:15:37 ERROR: [object Object]
+
+  You have no idea: which endpoint failed, what the request was,
+  which user was affected, what the actual error was, or how to
+  reproduce it.
+
+  After 2 hours of blind debugging, you find it's a null pointer
+  in the restaurant menu lookup. You realize you need proper error
+  logging.
+
+  Your API has these components:
+  - Order placement (POST /orders)
+  - Payment processing (POST /orders/:id/pay)
+  - Restaurant communication (POST /restaurants/:id/notify)
+  - Delivery assignment (POST /deliveries)
+  - User notifications (POST /notifications)
+
+  Sensitive data that must NOT appear in logs:
+  - Credit card numbers, CVVs
+  - User passwords
+  - Full addresses (only city/zip is OK)
+  - API keys and tokens
+  - Phone numbers (mask all but last 4)
+
+  Task: Design the structured error logging system. Show: the log
+  format (structured JSON), what fields every error log must include,
+  what sensitive fields must be masked or excluded, example log entries
+  for 3 different error types (validation error, third-party timeout,
+  unhandled exception), and how to search these logs to debug the
+  original "customers getting 500 errors" issue quickly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Log format is structured and searchable — uses JSON format with consistent fields (timestamp, level, request_id, method, path, status_code, error_type, message, duration_ms, user_id). Includes enough context to reproduce issues without needing to add more logging"
+    weight: 0.35
+    description: "Structured searchable log format"
+  - type: llm_judge
+    criteria: "Sensitive data handling is thorough — credit cards, passwords, tokens are never logged. Phone numbers and addresses are properly masked. Explains the masking strategy (middleware vs per-field) and how to prevent accidental logging of request/response bodies containing sensitive data"
+    weight: 0.35
+    description: "Thorough sensitive data handling"
+  - type: llm_judge
+    criteria: "Example log entries are realistic and the debugging workflow is practical — shows how to filter logs by request_id, status_code, error_type to quickly identify the root cause. The 3 example entries demonstrate different error severities and contexts"
+    weight: 0.30
+    description: "Realistic examples and debugging workflow"

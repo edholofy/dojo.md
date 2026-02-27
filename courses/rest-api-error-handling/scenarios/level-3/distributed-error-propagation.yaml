@@ -1,0 +1,63 @@
+meta:
+  id: distributed-error-propagation
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Design distributed error propagation — manage error context across microservice call chains without information loss"
+  tags: [REST, API, distributed, microservices, error-propagation, advanced]
+
+state: {}
+
+trigger: |
+  Your e-commerce platform has a 6-service call chain for placing an
+  order:
+
+  API Gateway → Order Service → Inventory Service → Payment Service
+                                                   → Shipping Service
+                                                   → Notification Service
+
+  A customer reports: "I got an error 'Something went wrong' when
+  placing my order." Your support team traces the request and finds:
+
+  - API Gateway returned: 500 { "error": "Internal server error" }
+  - Order Service logged: "PaymentError: upstream service failed"
+  - Payment Service logged: "HTTP 503 from Stripe"
+  - Stripe's actual error: "Card issuer declined — insufficient funds"
+
+  The real error (insufficient funds) is a 402 client error, but by
+  the time it reached the customer, it became a 500 server error.
+  Nobody in the chain translated it correctly.
+
+  Other propagation problems:
+  1. Inventory Service returns 409 (conflict: item reserved by another
+     user) → Order Service converts to 500 → customer sees "server
+     error" instead of "item no longer available"
+  2. Shipping Service returns 422 (address validation failed) → gets
+     lost in the chain → customer's order fails with no useful message
+  3. Two services fail simultaneously (payment and shipping) → only
+     one error reaches the customer
+  4. A service returns 200 with an error in the body (legacy service)
+     → downstream treats it as success
+  5. Timeout at layer 3 of 6 → unclear if the operation partially
+     completed
+
+  Task: Design the error propagation framework. Write: the error
+  context object that flows through the service chain (preserving
+  original error while adding context at each hop), the error
+  translation rules (when to propagate vs wrap vs replace errors),
+  the distributed tracing integration, the multi-error aggregation
+  strategy, and the client-facing error derivation logic.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error context preservation is thorough — errors carry the original cause through the chain (structured error chain, not string concatenation), each service adds its context without losing upstream detail, and the full chain is available in logs/traces while only safe information reaches the client"
+    weight: 0.35
+    description: "Thorough error context preservation"
+  - type: llm_judge
+    criteria: "Error translation rules are correct — client errors (4xx) from downstream are translated appropriately for the current context (402 from Stripe becomes a meaningful payment error for the customer), server errors (5xx) are not exposed to the client as the downstream service's error, and the 5 specific problems are all addressed"
+    weight: 0.35
+    description: "Correct translation rules"
+  - type: llm_judge
+    criteria: "Distributed tracing integration is practical — uses correlation IDs (trace ID, span ID) to link errors across services, integrates with standard tracing (OpenTelemetry), and enables support to trace a customer's error back through the full service chain in minutes rather than hours"
+    weight: 0.30
+    description: "Practical tracing integration"

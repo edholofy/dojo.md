@@ -1,0 +1,58 @@
+meta:
+  id: dependency-caching
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Optimize dependency caching — configure actions/cache and built-in caching to dramatically reduce CI build times"
+  tags: [github, actions, caching, dependencies, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  Your team's CI workflow takes 12 minutes per run, and 8 of those
+  minutes are spent installing dependencies. With 80 CI runs per day,
+  that's over 10 hours wasted on dependency installation daily. You
+  need to implement an effective caching strategy.
+
+  Project details:
+  - Monorepo with 3 packages (frontend, backend, shared)
+  - Frontend: npm (package-lock.json)
+  - Backend: pip (requirements.txt + requirements-dev.txt)
+  - Shared: Go modules (go.sum)
+  - Docker builds: multi-stage Dockerfile for backend
+
+  Current (no caching) timing:
+  - npm ci: 3 minutes
+  - pip install: 2 minutes
+  - go mod download: 1.5 minutes
+  - Docker build: 1.5 minutes (downloads base images each time)
+
+  Caching scenarios to solve:
+  1. Basic npm caching using actions/setup-node's built-in cache
+  2. Advanced npm caching using actions/cache with fallback keys
+  3. pip caching with multiple requirements files as cache key
+  4. Go module caching
+  5. Docker layer caching (using actions/cache or buildx cache)
+  6. Cross-branch cache sharing (feature branch uses main's cache)
+
+  Task: Implement caching for all 5 dependency types. For each, write:
+  the cache configuration (key, restore-keys, path), the explanation
+  of the cache key strategy (why hash this file, what happens on
+  cache miss), the expected time savings, and common caching pitfalls
+  to avoid. Include a comparison of built-in caching (setup-node,
+  setup-python) vs explicit actions/cache, and explain when each is
+  preferred.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cache keys are correctly designed — npm uses hashFiles('**/package-lock.json'), pip uses hashFiles of requirements files, Go uses hashFiles('**/go.sum'), restore-keys provide fallback for partial matches, and the cross-branch sharing strategy is explained"
+    weight: 0.35
+    description: "Correctly designed cache keys"
+  - type: llm_judge
+    criteria: "All 5 dependency types are cached — npm, pip, Go modules, and Docker layers all have correct cache configurations with appropriate paths (node_modules or ~/.npm, ~/.cache/pip, ~/go/pkg/mod) and the Docker caching uses buildx with cache-from/cache-to or actions/cache"
+    weight: 0.35
+    description: "Complete caching for all types"
+  - type: llm_judge
+    criteria: "Pitfalls and trade-offs are addressed — explains cache size limits (10GB per repo), cache eviction policy (LRU, 7-day expiry), the danger of caching node_modules vs ~/.npm, and when built-in caching (setup-node cache: npm) is simpler than explicit actions/cache"
+    weight: 0.30
+    description: "Pitfalls and trade-offs addressed"

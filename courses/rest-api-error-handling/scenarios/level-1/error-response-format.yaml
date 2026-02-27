@@ -1,0 +1,58 @@
+meta:
+  id: error-response-format
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Design error response format — create a consistent JSON error response structure for a REST API"
+  tags: [REST, API, error-response, JSON, format, beginner]
+
+state: {}
+
+trigger: |
+  You're building a recipe sharing API and different endpoints return
+  errors in completely different formats. Your team lead says this is
+  confusing for frontend developers and asks you to standardize.
+
+  Current inconsistent error responses across your API:
+
+  Endpoint 1 - POST /recipes (validation error):
+  { "error": "Title is required" }
+
+  Endpoint 2 - GET /recipes/999 (not found):
+  { "message": "Recipe not found", "code": 404 }
+
+  Endpoint 3 - POST /recipes (auth error):
+  { "status": "error", "reason": "Invalid token" }
+
+  Endpoint 4 - POST /recipes/5/reviews (rate limit):
+  "Too many requests, please try again later"
+
+  Endpoint 5 - PATCH /recipes/5 (validation errors):
+  { "errors": ["Title too long", "Invalid category"] }
+
+  Frontend developers are complaining:
+  - "I never know which field to check for the error message"
+  - "Sometimes I get a string, sometimes an object"
+  - "Validation errors come in different shapes"
+  - "I can't tell if an error is my fault or the server's fault"
+  - "There's no way to show specific field errors in the form"
+
+  Task: Design a unified error response format for the entire API.
+  Show: the standard error response schema (with required and optional
+  fields), examples for each of the 5 error types above rewritten in
+  the new format, guidelines for when to include each optional field,
+  and the implementation approach (middleware vs per-handler).
+
+assertions:
+  - type: llm_judge
+    criteria: "Error format is well-designed — includes a machine-readable error code/type, a human-readable message, and the HTTP status code. Handles single errors and multiple validation errors in the same structure. Includes a way to associate errors with specific fields for form validation"
+    weight: 0.35
+    description: "Well-designed error format"
+  - type: llm_judge
+    criteria: "All 5 error types are rewritten consistently — validation errors show field-level detail, not-found errors include resource identification, auth errors distinguish authentication vs authorization, rate limit errors include retry-after information, and all follow the same top-level structure"
+    weight: 0.35
+    description: "Consistent error rewrites"
+  - type: llm_judge
+    criteria: "Implementation guidance is practical — recommends middleware/error handler pattern for consistency, explains how to throw standardized errors from route handlers, and addresses how to prevent internal error details from leaking to the client"
+    weight: 0.30
+    description: "Practical implementation guidance"

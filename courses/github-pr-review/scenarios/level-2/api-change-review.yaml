@@ -1,0 +1,82 @@
+meta:
+  id: api-change-review
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Review API changes — evaluate backward compatibility, versioning strategy, and migration paths in API-modifying PRs"
+  tags: [github, pr-review, API, backward-compatibility, versioning, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR titled "Update user API — v2 endpoints." The PR
+  modifies the public REST API consumed by 3 mobile apps and 12 third-
+  party integrations. The changes include:
+
+  Change 1 — Response format change:
+  ```
+  // Before (v1)
+  GET /api/users/123
+  { "id": 123, "name": "Jane Doe", "email": "jane@example.com",
+    "created": "2024-01-15" }
+
+  // After (v2 in this PR)
+  GET /api/users/123
+  { "id": "usr_123", "fullName": "Jane Doe",
+    "contact": { "email": "jane@example.com" },
+    "metadata": { "createdAt": "2024-01-15T00:00:00Z" } }
+  ```
+
+  Change 2 — Endpoint restructuring:
+  ```
+  // Before
+  GET /api/users/:id/orders
+  POST /api/users/:id/orders
+
+  // After
+  GET /api/v2/users/:id/orders?include=items,shipping
+  POST /api/v2/orders  (userId in request body instead of URL)
+  ```
+
+  Change 3 — Authentication change:
+  ```
+  // Before: API key in query parameter
+  GET /api/users?api_key=abc123
+
+  // After: Bearer token in header
+  GET /api/v2/users
+  Authorization: Bearer <token>
+  ```
+
+  Change 4 — New pagination:
+  ```
+  // Before: offset-based
+  GET /api/users?page=2&per_page=20
+
+  // After: cursor-based
+  GET /api/v2/users?cursor=eyJpZCI6MTIzfQ&limit=20
+  ```
+
+  The PR has no migration guide, no deprecation timeline, and the old
+  endpoints are removed (not deprecated).
+
+  Task: Review the API changes. Write: the backward compatibility
+  assessment (what breaks and for whom), the versioning strategy
+  recommendation (how v1 and v2 should coexist), the migration plan for
+  consumers (timeline, communication, tooling), the review comments for
+  each change (what to keep, what to change, what to add), and the
+  checklist for future API-breaking PRs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Breaking changes are comprehensively identified — field renames (name→fullName), nested restructuring (email→contact.email), ID format change (123→usr_123), endpoint moves, auth mechanism change, and pagination model change are all flagged as breaking"
+    weight: 0.35
+    description: "Comprehensive breaking change identification"
+  - type: llm_judge
+    criteria: "Versioning strategy is sound — recommends keeping v1 endpoints active with deprecation timeline (not immediate removal), API versioning approach (URL path vs header), and coexistence strategy during migration period"
+    weight: 0.35
+    description: "Sound versioning strategy"
+  - type: llm_judge
+    criteria: "Migration plan is actionable — includes consumer communication (changelog, migration guide), timeline with milestones, tooling suggestions (compatibility layer, SDK updates), and a checklist that would prevent this situation in future API PRs"
+    weight: 0.30
+    description: "Actionable migration plan"

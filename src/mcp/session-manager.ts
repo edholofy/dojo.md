@@ -1,7 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { resolve } from 'node:path';
-import { homedir } from 'node:os';
-import { existsSync } from 'node:fs';
 import type {
   DojoSession,
   ScenarioPrompt,
@@ -13,7 +10,7 @@ import type {
 } from '../types/index.js';
 import { MockSession } from '../mocks/session.js';
 import { getServiceTools } from '../mocks/registry.js';
-import { loadCourse, loadCourseScenarios } from '../engine/loader.js';
+import { findCoursePath, loadCourse, loadCourseScenarios } from '../engine/loader.js';
 import { Evaluator } from '../evaluator/judge.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
 import { createModelClient } from '../engine/model-client.js';
@@ -286,12 +283,6 @@ export class SessionManager {
   }
 
   private findCoursePath(courseId: string): string | null {
-    const localPath = resolve('courses', courseId);
-    if (existsSync(resolve(localPath, 'course.yaml'))) return localPath;
-
-    const homePath = resolve(homedir(), '.dojo', 'courses', courseId);
-    if (existsSync(resolve(homePath, 'course.yaml'))) return homePath;
-
-    return null;
+    return findCoursePath(courseId);
   }
 }

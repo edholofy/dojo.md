@@ -1,0 +1,61 @@
+meta:
+  id: review-automation-platform
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Build a review automation platform — design GitHub Apps and bots that automate review assignment, checks, and notifications"
+  tags: [github, pr-review, automation, GitHub-Apps, bots, platform, advanced]
+
+state: {}
+
+trigger: |
+  You're building an internal review automation platform (GitHub App)
+  for your 200-engineer organization. The platform should automate the
+  repetitive parts of the review process while keeping humans in the
+  loop for judgment calls.
+
+  Requirements:
+  1. Smart reviewer assignment: Based on code expertise (git blame),
+     current load, timezone overlap, and review history
+  2. PR categorization: Automatically label PRs by type (feature, bug,
+     refactor, dependency), size (S/M/L/XL), and risk (low/medium/high)
+  3. Review reminders: Escalating notifications when SLAs are missed
+  4. Stale review detection: Alert when reviews are approved but code
+     changed after approval
+  5. Merge readiness: Check all requirements met before allowing merge
+  6. Review analytics: Weekly digests for team leads
+
+  Technical constraints:
+  - Must use GitHub App (not personal access tokens)
+  - Must handle 500+ PRs per week across 30 repos
+  - Must be resilient to GitHub API rate limits (5,000 requests/hour)
+  - Must handle webhook delivery failures gracefully
+  - Must not expose any internal code or review data externally
+
+  The platform needs to integrate with:
+  - GitHub (webhooks + API)
+  - Slack (notifications)
+  - Jira (issue linking)
+  - PagerDuty (on-call reviewer for urgent PRs)
+
+  Task: Design the review automation platform. Write: the system
+  architecture (webhook handlers, job queues, data store, integrations),
+  the reviewer assignment algorithm (inputs, weighting, edge cases),
+  the PR categorization rules (heuristics for type, size, and risk),
+  the notification and escalation logic, and the API rate limit strategy.
+  Include the GitHub App manifest, webhook event list, and a sample
+  webhook handler for the PR opened event.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture handles scale — uses webhook-driven processing with a job queue (not synchronous), handles 500+ PRs/week within GitHub API rate limits, has retry logic for webhook failures, and separates concerns (assignment, categorization, notifications)"
+    weight: 0.35
+    description: "Scalable architecture"
+  - type: llm_judge
+    criteria: "Reviewer assignment algorithm is sophisticated — considers code expertise (git blame/log), current review load, timezone, and rotation, with fallbacks when primary reviewers are unavailable. Edge cases like vacation, new hires, and single-expert code areas are handled"
+    weight: 0.35
+    description: "Sophisticated assignment algorithm"
+  - type: llm_judge
+    criteria: "PR categorization is practical — risk assessment considers files changed (config, auth, financial code = high risk), size buckets are meaningful (not just line count — considers file count and complexity), and categorization drives review requirements (high-risk PRs need more reviewers)"
+    weight: 0.30
+    description: "Practical PR categorization"

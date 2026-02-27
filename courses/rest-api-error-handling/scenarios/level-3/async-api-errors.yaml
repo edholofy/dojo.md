@@ -1,0 +1,67 @@
+meta:
+  id: async-api-errors
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Handle async API errors — design error handling for long-running operations, polling, and callback-based APIs"
+  tags: [REST, API, async, long-running, polling, callbacks, advanced]
+
+state: {}
+
+trigger: |
+  Your document processing API handles large file uploads that take
+  1-30 minutes to process. You've implemented an async pattern:
+
+  1. POST /documents → 202 Accepted { "job_id": "abc123" }
+  2. GET /documents/jobs/abc123 → { "status": "processing" }
+  3. GET /documents/jobs/abc123 → { "status": "completed", "result": {...} }
+
+  But error handling for this async flow is broken:
+
+  Problem 1 — Immediate validation vs deferred validation:
+  User uploads a 500MB file. Should you validate the file format
+  immediately (synchronous, but adds latency) or defer validation
+  to the background job (fast acceptance, but error arrives later)?
+  Currently you accept everything and fail later.
+
+  Problem 2 — Job failure notification:
+  When processing fails (corrupted PDF, unsupported format, OCR
+  failure), the job status just shows "failed" with no details.
+  Polling clients have to guess what went wrong.
+
+  Problem 3 — Partial failure:
+  A 100-page document: 95 pages processed successfully, 5 pages had
+  OCR errors. Is this a success or failure? Currently it's marked
+  as "failed" and the 95 good pages are thrown away.
+
+  Problem 4 — Timeout and abandonment:
+  Job has been "processing" for 2 hours (expected max: 30 min).
+  Is it stuck? Dead? Still running? No way to tell.
+
+  Problem 5 — Callback errors:
+  Client registered a callback URL. The callback fails (404, timeout).
+  The result is ready but the client doesn't know. No retry.
+
+  Problem 6 — Concurrent operations:
+  Two jobs on the same document submitted accidentally. They race
+  and produce conflicting results.
+
+  Task: Design the async error handling system. Write: the sync vs
+  async validation strategy, the job failure response format (with
+  error details, partial results, progress), the timeout detection
+  and recovery mechanism, the callback retry and dead-letter system,
+  and the concurrency control approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Validation strategy balances immediacy and thoroughness — validates file size, format header, and auth synchronously (fail fast on obvious issues), defers content validation to async processing (OCR quality, page parsing), and communicates which validations are immediate vs deferred"
+    weight: 0.35
+    description: "Balanced validation strategy"
+  - type: llm_judge
+    criteria: "Job failure format is detailed and handles partial success — includes error type, affected items (which pages failed), partial results (the 95 good pages), progress percentage, and distinguishes between retryable failures (temporary resource issues) and permanent failures (unsupported format)"
+    weight: 0.35
+    description: "Detailed job failure format"
+  - type: llm_judge
+    criteria: "Timeout, callback, and concurrency issues are all addressed — stuck job detection with heartbeats or deadlines, callback retry with exponential backoff and dead letter queue, and duplicate job prevention (idempotency key or resource locking)"
+    weight: 0.30
+    description: "All async issues addressed"

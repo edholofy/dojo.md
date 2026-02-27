@@ -1,0 +1,68 @@
+meta:
+  id: monorepo-review-process
+  level: 3
+  course: github-pr-review
+  type: output
+  description: "Design monorepo review process — handle review routing, ownership, and CI for PRs that touch multiple packages in a monorepo"
+  tags: [github, pr-review, monorepo, CODEOWNERS, CI, routing, advanced]
+
+state: {}
+
+trigger: |
+  Your company just migrated 12 microservice repos into a single
+  monorepo using Turborepo. The review process that worked for individual
+  repos is now broken. Key problems:
+
+  Monorepo structure:
+  ```
+  /
+  ├── apps/
+  │   ├── web/           (Frontend team, 8 devs)
+  │   ├── api/           (Backend team, 10 devs)
+  │   ├── mobile/        (Mobile team, 6 devs)
+  │   └── admin/         (Platform team, 4 devs)
+  ├── packages/
+  │   ├── ui/            (Design system — shared)
+  │   ├── auth/          (Auth library — shared)
+  │   ├── database/      (DB client — backend + platform)
+  │   ├── config/        (Shared config — everyone)
+  │   └── types/         (Shared types — everyone)
+  ├── infra/             (DevOps, 3 devs)
+  └── tools/             (DX team, 2 devs)
+  ```
+
+  Current problems:
+  - A PR touching `packages/types` requests review from ALL 33 engineers
+  - CI runs all tests for every PR (45 minutes), even single-line changes
+  - CODEOWNERS from individual repos were concatenated — conflicts and
+    overlaps everywhere
+  - Cross-package PRs (e.g., API change + type update + web update) have
+    no clear review strategy
+  - Shared packages have no clear ownership — everyone and no one
+
+  A recent incident: A change to `packages/auth` broke mobile login but
+  the mobile team wasn't requested as reviewers. It took 2 days to
+  discover the break.
+
+  Task: Design the monorepo review process. Write: the CODEOWNERS
+  strategy (ownership model for shared packages, cross-team routing),
+  the CI optimization (affected-package detection, selective test runs),
+  the cross-package PR guidelines (when to split PRs, when one PR is
+  fine, who reviews what), the shared package governance model (who
+  owns shared code, how changes are reviewed), and the incident
+  prevention strategy (ensuring breaking changes are caught by affected
+  teams). Include the CODEOWNERS file and a sample CI workflow.
+
+assertions:
+  - type: llm_judge
+    criteria: "CODEOWNERS handles the monorepo correctly — shared packages have designated owners plus affected-team routing (not all 33 engineers), apps have team ownership, and cross-package PRs are handled with both source and consumer team reviews"
+    weight: 0.35
+    description: "Correct monorepo CODEOWNERS"
+  - type: llm_judge
+    criteria: "CI optimization is practical — uses affected-package detection (Turborepo's --filter or similar), runs only relevant tests, but still runs shared-package tests when shared code changes. Reduces 45-minute CI to relevant-only runs"
+    weight: 0.35
+    description: "Practical CI optimization"
+  - type: llm_judge
+    criteria: "Incident prevention is addressed — the auth-breaking-mobile scenario is prevented through consumer-team notification on shared package changes, integration test requirements for cross-package changes, and a shared package change RFC process"
+    weight: 0.30
+    description: "Cross-package incident prevention"

@@ -1,0 +1,76 @@
+meta:
+  id: test-coverage-review
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Review test coverage — evaluate whether PR tests are adequate, meaningful, and cover the right scenarios"
+  tags: [github, pr-review, testing, coverage, test-quality, basics]
+
+state: {}
+
+trigger: |
+  You're reviewing the test coverage for a PR that adds a shopping
+  cart feature. The PR has 85% line coverage (the team target) but
+  you need to evaluate whether the tests are actually meaningful.
+
+  The feature: Add/remove items from cart, apply discount codes,
+  calculate total with tax.
+
+  The tests submitted:
+
+  ```javascript
+  describe('Cart', () => {
+    test('should create a cart', () => {
+      const cart = new Cart();
+      expect(cart).toBeDefined();
+      expect(cart.items).toEqual([]);
+    });
+
+    test('should add item', () => {
+      const cart = new Cart();
+      cart.addItem({ id: 1, name: 'Widget', price: 10, quantity: 1 });
+      expect(cart.items.length).toBe(1);
+    });
+
+    test('should remove item', () => {
+      const cart = new Cart();
+      cart.addItem({ id: 1, name: 'Widget', price: 10, quantity: 1 });
+      cart.removeItem(1);
+      expect(cart.items.length).toBe(0);
+    });
+
+    test('should calculate total', () => {
+      const cart = new Cart();
+      cart.addItem({ id: 1, name: 'Widget', price: 10, quantity: 2 });
+      expect(cart.getTotal()).toBe(20);
+    });
+
+    test('should apply discount', () => {
+      const cart = new Cart();
+      cart.addItem({ id: 1, name: 'Widget', price: 100, quantity: 1 });
+      cart.applyDiscount('SAVE10');
+      expect(cart.getTotal()).toBe(90);
+    });
+  });
+  ```
+
+  Task: Review the test coverage. Write: the assessment of existing
+  tests (what they cover well, what's superficial), the missing test
+  cases (edge cases, error scenarios, boundary conditions that should
+  be tested), the specific test cases to add (with descriptions, not
+  full code), and the review comment requesting the additional tests
+  (constructive, explaining why each missing case matters).
+
+assertions:
+  - type: llm_judge
+    criteria: "Missing test cases are identified — edge cases (empty cart total, removing non-existent item, negative quantities, duplicate items), error scenarios (invalid discount code, expired discount), and boundary conditions (max items, zero price) are flagged"
+    weight: 0.35
+    description: "Identified missing test cases"
+  - type: llm_judge
+    criteria: "Assessment distinguishes coverage from quality — recognizes that 85% line coverage can exist with poor test quality, identifies tests that just check existence rather than behavior, and notes the tax calculation is untested"
+    weight: 0.35
+    description: "Quality-distinguishing assessment"
+  - type: llm_judge
+    criteria: "Review comment is constructive — acknowledges the tests that are good, explains why specific edge cases matter (with real examples), and prioritizes which additional tests are most important"
+    weight: 0.30
+    description: "Constructive review comment"

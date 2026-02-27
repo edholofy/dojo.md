@@ -1,0 +1,59 @@
+meta:
+  id: request-validation-errors
+  level: 1
+  course: rest-api-error-handling
+  type: output
+  description: "Handle request validation errors — implement input validation with clear, actionable error messages for API consumers"
+  tags: [REST, API, validation, error-messages, input, beginner]
+
+state: {}
+
+trigger: |
+  You're building a user registration endpoint for an e-commerce API.
+  The endpoint POST /users accepts:
+
+  {
+    "email": "string (required, valid email)",
+    "password": "string (required, 8-64 chars, 1 uppercase, 1 number)",
+    "name": "string (required, 2-100 chars)",
+    "phone": "string (optional, E.164 format)",
+    "date_of_birth": "string (optional, ISO 8601, must be 13+)",
+    "referral_code": "string (optional, 8 alphanumeric chars)"
+  }
+
+  A frontend developer sends this request and gets back a 400 error
+  with the message "Invalid input" — nothing else. They're frustrated:
+  "Which field is wrong? What's wrong with it? How do I fix it?"
+
+  Test cases to handle:
+  1. Empty body: {}
+  2. Missing required fields: { "email": "test@example.com" }
+  3. Invalid email: { "email": "not-an-email", "password": "Abc12345",
+     "name": "Jo" }
+  4. Weak password: { "email": "a@b.com", "password": "short",
+     "name": "Jo" }
+  5. Multiple errors: { "email": "bad", "password": "x", "name": "",
+     "phone": "12345", "date_of_birth": "not-a-date" }
+  6. Valid request with unknown extra fields:
+     { "email": "a@b.com", "password": "Abc12345", "name": "Jo",
+       "admin": true, "role": "superuser" }
+
+  Task: Write the validation error responses for all 6 test cases.
+  Each response should tell the consumer exactly what's wrong and
+  how to fix it. Then write the validation strategy: should you fail
+  on the first error or collect all errors? How do you handle unknown
+  fields? What about nested objects?
+
+assertions:
+  - type: llm_judge
+    criteria: "Error responses are field-specific and actionable — each validation error names the exact field, describes what's wrong, and indicates what's expected. Multiple errors are returned together (not fail-fast) so the consumer can fix everything in one attempt"
+    weight: 0.35
+    description: "Field-specific actionable errors"
+  - type: llm_judge
+    criteria: "All 6 test cases produce appropriate responses — empty body lists all required fields, missing fields identifies which are missing, invalid formats explain the expected format, multiple errors are collected into an array, and unknown fields are handled safely (stripped or rejected with explanation)"
+    weight: 0.35
+    description: "All test cases handled"
+  - type: llm_judge
+    criteria: "Validation strategy is well-reasoned — explains collect-all-errors approach, addresses unknown/extra field handling (security implications of accepting 'admin: true'), and considers validation ordering (format before business logic)"
+    weight: 0.30
+    description: "Well-reasoned validation strategy"

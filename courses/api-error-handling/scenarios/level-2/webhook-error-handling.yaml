@@ -1,0 +1,211 @@
+name: "Webhook Error Handling and Retry Logic"
+level: 2
+difficulty: intermediate
+description: "Implement webhook delivery with exponential backoff retry strategy and dead letter queues"
+
+context: |
+  Build a webhook delivery system for payment events. Handle failed deliveries with
+  exponential backoff, respect HTTP error codes (don't retry 4xx), and move permanently
+  failed webhooks to dead letter queue for inspection.
+
+scenario:
+  state:
+    webhooks:
+      "wh_payment_complete":
+        url: "https://customer-1.example.com/webhooks/payments"
+        status: "active"
+        retry_count: 0
+        last_attempt: null
+    events:
+      "evt_001": { type: "payment.completed", customer_id: "cust_1", status: "pending" }
+      "evt_002": { type: "payment.completed", customer_id: "cust_2", status: "pending" }
+    webhook_endpoints:
+      "https://customer-1.example.com/webhooks/payments":
+        response_status: 500
+        consecutive_failures: 0
+      "https://customer-2.example.com/webhooks/payments":
+        response_status: 404
+        consecutive_failures: 0
+
+  endpoint: "Internal: Webhook Delivery System"
+
+  test_cases:
+    - name: "successful_webhook_delivery"
+      event: "evt_001"
+      webhook_url: "https://customer-1.example.com/webhooks/payments"
+      endpoint_status: 200
+      expected_result: "delivered"
+      expected_retry_count: 0
+
+    - name: "temporary_failure_retry"
+      event: "evt_001"
+      webhook_url: "https://customer-1.example.com/webhooks/payments"
+      endpoint_status: 503
+      retry_strategy: "exponential_backoff"
+      expected_retries:
+        - attempt: 1
+          delay: 1
+          endpoint_status: 503
+        - attempt: 2
+          delay: 5
+          endpoint_status: 503
+        - attempt: 3
+          delay: 30
+          endpoint_status: 200
+          result: "delivered"
+
+    - name: "timeout_is_retriable"
+      event: "evt_001"
+      webhook_url: "https://customer-1.example.com/webhooks/payments"
+      endpoint_behavior: "timeout"
+      endpoint_timeout_ms: 35000
+      expected_retries:
+        - attempt: 1
+          delay: 1
+          result: "timeout"
+        - attempt: 2
+          delay: 5
+          result: "timeout"
+        - attempt: 3
+          delay: 30
+          endpoint_status: 200
+          result: "delivered"
+
+    - name: "404_not_found_not_retried"
+      event: "evt_001"
+      webhook_url: "https://nonexistent.example.com/webhooks/payments"
+      endpoint_status: 404
+      expected_retries: 0
+      expected_result: "dead_letter_queue"
+      expected_reason: "endpoint_not_found"
+
+    - name: "401_unauthorized_not_retried"
+      event: "evt_001"
+      webhook_url: "https://customer-2.example.com/webhooks/payments"
+      endpoint_status: 401
+      expected_retries: 0
+      expected_result: "dead_letter_queue"
+      expected_reason: "authorization_failed"
+
+    - name: "400_bad_request_not_retried"
+      event: "evt_001"
+      webhook_url: "https://customer-3.example.com/webhooks/payments"
+      endpoint_status: 400
+      expected_retries: 0
+      expected_result: "dead_letter_queue"
+      expected_reason: "malformed_request"
+
+    - name: "max_retries_exceeded"
+      event: "evt_001"
+      webhook_url: "https://customer-1.example.com/webhooks/payments"
+      endpoint_status: 502
+      max_retries: 5
+      expected_retries:
+        - attempt: 1
+          delay: 1
+          endpoint_status: 502
+        - attempt: 2
+          delay: 5
+          endpoint_status: 502
+        - attempt: 3
+          delay: 30
+          endpoint_status: 502
+        - attempt: 4
+          delay: 120
+          endpoint_status: 502
+        - attempt: 5
+          delay: 300
+          endpoint_status: 502
+      expected_result: "dead_letter_queue"
+      expected_reason: "max_retries_exceeded"
+
+    - name: "jitter_prevents_thundering_herd"
+      events_count: 100
+      all_failing: true
+      retry_schedule: "exponential_with_jitter"
+      expected_behavior: "retry_attempts_spread_across_time"
+
+    - name: "idempotency_prevents_duplicates"
+      event: "evt_001"
+      webhook_url: "https://customer-1.example.com/webhooks/payments"
+      attempt_1_result: "timeout"
+      attempt_1_delivered: true
+      attempt_2_result: 200
+      expected_behavior: "idempotent_delivery (delivered once)"
+
+assertions:
+  - type: "api_called"
+    description: "Webhook called with event payload"
+    test: "webhook POST includes event data"
+
+  - type: "api_called"
+    description: "5xx errors are retried"
+    test: "502/503 errors trigger retry"
+
+  - type: "api_called"
+    description: "4xx errors are not retried"
+    test: "404/401/400 moved to dead letter queue"
+
+  - type: "outcome"
+    description: "Exponential backoff used"
+    test: "retry delays follow: 1s, 5s, 30s, 120s, 300s"
+
+  - type: "api_called"
+    description: "Jitter added to prevent thundering herd"
+    test: "retry_schedule uses jitter"
+
+  - type: "api_called"
+    description: "Dead letter queue stores permanently failed"
+    test: "max_retries_exceeded moves to DLQ"
+
+  - type: "outcome"
+    description: "Idempotent delivery"
+    test: "webhook called once despite retries"
+
+learning_objectives:
+  - "Understand transient vs permanent webhook failures"
+  - "Implement exponential backoff retry strategy"
+  - "Distinguish retriable (5xx) vs non-retriable (4xx) errors"
+  - "Add jitter to prevent synchronized retries"
+  - "Implement dead letter queue for manual inspection"
+  - "Track retry attempts and timing"
+  - "Handle webhook idempotency"
+
+retry_strategy:
+  "retriable_status_codes": [408, 429, 500, 502, 503, 504]
+  "non_retriable_status_codes": [400, 401, 403, 404, 405, 410]
+  "transient_failures": ["timeout", "connection_reset", "dns_failure"]
+  "backoff_pattern": "exponential: 1s, 5s, 30s, 120s, 300s"
+  "max_attempts": 5
+  "jitter": "random 0-10% of delay"
+
+headers:
+  "X-Webhook-ID": "Unique webhook endpoint identifier"
+  "X-Event-ID": "Unique event identifier for idempotency"
+  "X-Delivery-Attempt": "Attempt number (1, 2, 3, ...)"
+  "X-Webhook-Signature": "HMAC signature for verification"
+
+dead_letter_queue:
+  "storage": "Separate database table or queue"
+  "retention": "30 days minimum for inspection"
+  "alerting": "Alert ops team after 10 DLQ entries"
+  "manual_retry": "Allow manual redelivery from UI"
+
+monitoring:
+  "metrics":
+    - "delivery_success_rate"
+    - "delivery_latency_p50/p95/p99"
+    - "retry_count_distribution"
+    - "dlq_entries_rate"
+  "alerts":
+    - "delivery_success_rate < 95%"
+    - "dlq_entries > 100 in 1 hour"
+
+common_mistakes:
+  - "Retrying 404 Not Found (never succeeds)"
+  - "No exponential backoff (overwhelming server)"
+  - "No jitter (thundering herd effect)"
+  - "Unbounded retries (never gives up)"
+  - "Not idempotent (duplicate deliveries)"
+  - "No dead letter queue (lost events)"
+  - "Not respecting Retry-After header"

@@ -1,0 +1,61 @@
+meta:
+  id: review-summary-writing
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "Write review summaries — craft clear review summary comments that contextualize your feedback and guide the PR author"
+  tags: [github, pr-review, summary, feedback, communication, basics]
+
+state: {}
+
+trigger: |
+  You've finished reviewing 3 different PRs and need to write the
+  review summary for each. The summary should tie together your
+  individual line comments and provide an overall assessment.
+
+  PR #1: "Refactor payment module" (you're requesting changes)
+  Your line comments found:
+  - 1 security issue (API key hardcoded in a config file)
+  - 2 performance issues (unnecessary database round trips)
+  - 3 style issues (inconsistent naming)
+  - 5 positive observations (good abstraction, clean interfaces)
+  Overall: Good direction but the security issue must be fixed
+
+  PR #2: "Add search functionality" (you're approving with comments)
+  Your line comments found:
+  - 0 blocking issues
+  - 2 suggestions for better UX (loading indicator, empty state)
+  - 1 nit (typo in an error message)
+  - The implementation is solid and well-tested
+  Overall: Ship it, consider the UX suggestions for a follow-up
+
+  PR #3: "Initial implementation of notification service" (you're
+  requesting changes — architectural concern)
+  Your line comments found:
+  - No bugs or security issues
+  - Fundamental architectural concern: the PR tightly couples the
+    notification service to the user service, making it impossible
+    to add new notification channels later
+  - The implementation works for the current use case but will need
+    a complete rewrite when email notifications are added next quarter
+  Overall: Need to discuss the architecture before proceeding
+
+  Task: Write the review summary for each PR. Each summary should:
+  start with the overall assessment and decision, summarize the key
+  points (not repeat every line comment), explain the reasoning
+  behind "Request Changes" decisions, provide clear next steps for
+  the author, and end on a constructive note.
+
+assertions:
+  - type: llm_judge
+    criteria: "Summaries lead with the decision — the overall assessment (approve/request changes) is clear upfront, the reasoning is concise, and the author knows exactly what to do next"
+    weight: 0.35
+    description: "Decision-leading summaries"
+  - type: llm_judge
+    criteria: "Summaries contextualize without repeating — key issues are summarized at a higher level than line comments, positive observations balance the criticism, and the architectural concern in PR #3 is explained strategically (not just technically)"
+    weight: 0.35
+    description: "Contextualizing summaries"
+  - type: llm_judge
+    criteria: "Next steps are actionable — PR #1 has a clear fix-list, PR #2 suggests a follow-up PR for UX improvements, and PR #3 proposes a discussion format (sync meeting, RFC, or async) for the architectural concern"
+    weight: 0.30
+    description: "Actionable next steps"

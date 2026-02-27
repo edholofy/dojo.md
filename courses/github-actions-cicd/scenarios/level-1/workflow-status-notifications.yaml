@@ -1,0 +1,59 @@
+meta:
+  id: workflow-status-notifications
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Configure workflow notifications — set up status badges, Slack alerts, and PR comments to communicate CI results effectively"
+  tags: [github, actions, notifications, badges, Slack, PR-comments, basics]
+
+state: {}
+
+trigger: |
+  Your team wants better visibility into CI status. Currently, the
+  only way to know if CI passed is to click into the Actions tab.
+  You need to set up 3 notification channels.
+
+  Channel 1 — README status badges:
+  - Add build status badge to README.md
+  - Show status for the main branch
+  - Include separate badges for: CI tests, deploy status, and
+    code coverage percentage
+
+  Channel 2 — Slack notifications:
+  - Send a message to #engineering-ci channel when:
+    * A deployment to production succeeds (green message)
+    * Any CI run on main fails (red message with link to logs)
+  - Do NOT notify on:
+    * Successful PR CI runs (too noisy)
+    * Cancelled workflows
+  - Include: commit message, author, branch, link to workflow run
+
+  Channel 3 — PR comments:
+  - Post a comment on the PR with:
+    * Test results summary (X passed, Y failed, Z skipped)
+    * Code coverage percentage (from coverage report)
+    * Build size comparison (current vs main)
+    * Link to full logs
+  - Update the existing comment instead of posting a new one each
+    time (avoid comment spam)
+
+  Task: Write the workflow additions for all 3 channels. Include: the
+  status badge markdown for the README, the Slack notification workflow
+  job (using a Slack webhook or action), the PR comment job (using
+  actions/github-script or similar), and the logic to update existing
+  comments instead of creating new ones. Explain the trade-offs of each
+  notification approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Status badges are correct — uses the correct GitHub badge URL format (https://github.com/OWNER/REPO/actions/workflows/FILE/badge.svg?branch=main), includes multiple badges, and the markdown syntax is valid for README.md"
+    weight: 0.35
+    description: "Correct status badges"
+  - type: llm_judge
+    criteria: "Slack notification is properly conditional — only sends on main branch failures and production deploy successes, uses correct if: conditions to filter events, and the message includes all required context (commit, author, link)"
+    weight: 0.35
+    description: "Properly conditional Slack notification"
+  - type: llm_judge
+    criteria: "PR comment uses find-and-update pattern — searches for existing bot comment (by marker text or comment body pattern), updates if found or creates if not, includes test results and coverage, and the implementation uses GitHub API correctly"
+    weight: 0.30
+    description: "Smart PR comment updates"

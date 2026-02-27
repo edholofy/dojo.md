@@ -1,0 +1,189 @@
+name: "Circuit Breaker Pattern for Resilience"
+level: 2
+difficulty: intermediate
+description: "Implement circuit breaker pattern to prevent cascading failures and graceful degradation"
+
+context: |
+  Your API depends on an external payment provider. Implement a circuit breaker that
+  monitors failures. When failure rate exceeds threshold, trip the circuit to stop
+  requests for a cool-down period, preventing cascading failures.
+
+scenario:
+  state:
+    circuit_breaker:
+      state: "CLOSED"
+      failure_count: 0
+      success_count: 0
+      failure_threshold: 5
+      success_threshold: 2
+      timeout_seconds: 30
+    payment_provider:
+      healthy: true
+      failure_rate: 0
+
+  endpoint: "POST /api/v1/charges"
+
+  test_cases:
+    - name: "circuit_closed_request_succeeds"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "CLOSED"
+      provider_status: "healthy"
+      expected_status: 200
+      expected_response:
+        charge_id: "charge_001"
+        status: "succeeded"
+
+    - name: "circuit_closed_provider_fails_once"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "CLOSED"
+      provider_status: "failing"
+      expected_status: 502
+      expected_response:
+        error:
+          code: "PAYMENT_PROVIDER_ERROR"
+
+    - name: "circuit_accumulates_failures"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "CLOSED"
+      provider_status: "failing"
+      consecutive_failures: 5
+      expected_status: 502
+      circuit_state_after: "OPEN"
+
+    - name: "circuit_open_request_fails_immediately"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "OPEN"
+      expected_status: 503
+      expected_response:
+        error:
+          code: "SERVICE_UNAVAILABLE"
+          message: "Payment service temporarily unavailable. Please retry later."
+      response_time_ms: "< 10"
+
+    - name: "circuit_returns_fallback_response"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "OPEN"
+      fallback_enabled: true
+      expected_status: 202
+      expected_response:
+        charge_id: "charge_002"
+        status: "pending"
+        message: "Charge queued for processing when service recovers"
+
+    - name: "circuit_half_open_test_request"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "HALF_OPEN"
+      provider_status: "healthy"
+      expected_status: 200
+      expected_response:
+        charge_id: "charge_003"
+        status: "succeeded"
+      circuit_state_after: "CLOSED"
+
+    - name: "circuit_half_open_test_fails_reopens"
+      request:
+        body:
+          amount: 100
+          card_token: "tok_visa"
+      circuit_state: "HALF_OPEN"
+      provider_status: "failing"
+      expected_status: 502
+      circuit_state_after: "OPEN"
+
+    - name: "circuit_timeout_moves_to_half_open"
+      circuit_state: "OPEN"
+      timeout_elapsed: 30
+      current_request: false
+      circuit_state_after: "HALF_OPEN"
+
+assertions:
+  - type: "api_called"
+    description: "Circuit breaker monitors failure rate"
+    test: "failure_count increments on provider errors"
+
+  - type: "outcome"
+    description: "Circuit trips when threshold exceeded"
+    test: "circuit_accumulates_failures transitions to OPEN state"
+
+  - type: "api_called"
+    description: "Open circuit fails immediately without trying provider"
+    test: "circuit_open_request_fails_immediately responds quickly"
+
+  - type: "api_called"
+    description: "Fallback behavior when circuit open"
+    test: "circuit_returns_fallback_response provides degraded service"
+
+  - type: "api_called"
+    description: "Circuit half-open allows test request"
+    test: "circuit_half_open_test_request sent to provider"
+
+  - type: "outcome"
+    description: "Successful test request closes circuit"
+    test: "circuit_half_open_test_fails_reopens transitions correctly"
+
+learning_objectives:
+  - "Understand circuit breaker states: CLOSED, OPEN, HALF_OPEN"
+  - "Monitor failures to detect persistent provider issues"
+  - "Trip circuit to prevent cascading failures"
+  - "Implement cool-down period for recovery"
+  - "Test recovery with half-open state"
+  - "Return appropriate status codes for circuit states"
+  - "Implement fallback strategies for open circuits"
+
+circuit_breaker_states:
+  "CLOSED": "Normal operation, requests flow to provider"
+  "OPEN": "Too many failures, requests fail immediately, no provider calls"
+  "HALF_OPEN": "Cool-down period elapsed, allow test request to check if provider recovered"
+
+state_transitions:
+  "CLOSED → OPEN": "When failure_count exceeds threshold"
+  "OPEN → HALF_OPEN": "When timeout_seconds elapsed"
+  "HALF_OPEN → CLOSED": "When test request succeeds"
+  "HALF_OPEN → OPEN": "When test request fails"
+
+implementation_considerations:
+  "failure_detection": "Monitor 5xx errors and timeouts"
+  "failure_threshold": "Typically 5-10 consecutive failures"
+  "cool_down_period": "30-60 seconds typical"
+  "half_open_testing": "Allow single request through to test recovery"
+  "fallback_strategy": "Queue requests, return degraded response, or fail fast"
+  "metrics": "Track state transitions, time in each state"
+
+fallback_strategies:
+  "fast_fail": "Return 503 Service Unavailable immediately"
+  "queue_requests": "Enqueue for async processing when provider recovers"
+  "degraded_mode": "Use cached data or return partial results"
+  "alternate_provider": "Failover to backup provider"
+
+common_mistakes:
+  - "Not implementing circuit breaker for external dependencies"
+  - "Allowing too many failures before tripping circuit"
+  - "Cool-down period too short (allows rapid retries)"
+  - "Not monitoring time spent in OPEN state"
+  - "Failing to test recovery in HALF_OPEN state"
+  - "Not logging circuit state changes"
+  - "Returning ambiguous status codes (500 vs 503)"
+
+libraries:
+  "hystrix": "Netflix Hystrix - Java circuit breaker library"
+  "polly": ".NET resilience and transient-fault-handling library"
+  "opossum": "Node.js circuit breaker"
+  "pybreaker": "Python implementation"

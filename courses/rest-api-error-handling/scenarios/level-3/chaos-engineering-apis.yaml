@@ -1,0 +1,62 @@
+meta:
+  id: chaos-engineering-apis
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Apply chaos engineering to APIs — design experiments that validate error handling under controlled failure conditions"
+  tags: [REST, API, chaos-engineering, fault-injection, resilience, advanced]
+
+state: {}
+
+trigger: |
+  Your API platform claims to handle failures gracefully, but you've
+  never tested it. After a major outage where circuit breakers didn't
+  fire, retries caused thundering herds, and error messages were
+  wrong, the CTO mandates chaos engineering.
+
+  Your API architecture:
+  - 15 microservices
+  - API gateway (Kong)
+  - PostgreSQL (primary + 2 replicas)
+  - Redis (caching + rate limiting)
+  - RabbitMQ (async processing)
+  - 3 external APIs (Stripe, SendGrid, Twilio)
+
+  Failure modes to test:
+  1. Latency injection: What happens when a service responds in 5s
+     instead of 50ms? Do timeouts fire? Do circuit breakers trip?
+  2. Error injection: What if a service returns 500 for 10% of
+     requests? Is the error budget consumed correctly?
+  3. Connection failure: What if Redis goes down? Does rate limiting
+     fail open or closed? Do cached error responses work?
+  4. Partial network partition: Service A can reach B but not C.
+     Does the error propagation handle this?
+  5. Data corruption: What if the database returns truncated data?
+     Does the API validate response data from downstream?
+  6. Clock skew: What if JWT validation fails because of 30-second
+     clock drift between services?
+  7. Resource exhaustion: What if thread pools or connection pools
+     fill up? Does the API respond with 503 or just hang?
+  8. Cascading failure: What if a failure in service D causes A, B,
+     and C to degrade?
+
+  Task: Design the chaos engineering program for your APIs. Write:
+  the experiment design for each of the 8 failure modes (hypothesis,
+  injection method, success criteria, abort conditions), the safety
+  guardrails (blast radius limits, kill switches), the progressive
+  rollout (start in staging, expand to production), and the error
+  handling improvements discovered template.
+
+assertions:
+  - type: llm_judge
+    criteria: "Experiment designs are rigorous — each has a clear hypothesis (e.g., 'circuit breaker should trip within 10s of 50% error rate'), specific injection method (proxy, sidecar, library), measurable success criteria, and abort conditions that prevent customer impact"
+    weight: 0.35
+    description: "Rigorous experiment designs"
+  - type: llm_judge
+    criteria: "All 8 failure modes are tested with practical approaches — latency injection via proxy, error injection via feature flags, connection failures via network policies, and resource exhaustion via controlled load. Each experiment validates specific error handling behavior (not just 'does it survive')"
+    weight: 0.35
+    description: "All failure modes tested"
+  - type: llm_judge
+    criteria: "Safety guardrails are comprehensive — blast radius limits (percentage of traffic, specific services), kill switches (automatic and manual), staging-first progression, and the results template captures what error handling worked, what didn't, and the remediation plan"
+    weight: 0.30
+    description: "Comprehensive safety guardrails"

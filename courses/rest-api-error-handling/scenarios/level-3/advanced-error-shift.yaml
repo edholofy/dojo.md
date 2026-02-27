@@ -1,0 +1,72 @@
+meta:
+  id: advanced-error-shift
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Advanced error handling shift — manage a distributed system failure with data consistency implications"
+  tags: [REST, API, error-handling, shift-simulation, distributed, advanced]
+
+state: {}
+
+trigger: |
+  You're the principal engineer on-call for a financial services
+  platform. At 11:45 PM on a Friday (month-end processing), you
+  receive a cascade of alerts.
+
+  The system:
+  - 30 microservices processing $50M in daily transactions
+  - PostgreSQL primary with 4 read replicas
+  - Redis cluster (6 nodes) for caching and distributed locking
+  - RabbitMQ for async event processing
+  - API gateway serving 500 requests/second
+
+  11:45 PM — Alert: Redis cluster node 3 failed
+  - Redis cluster reshards, 15-second disruption
+  - Distributed locks are lost during reshard
+  - Two instances of the payment processor run simultaneously
+    (lock was protecting against this)
+
+  11:46 PM — Alert: Duplicate transactions detected
+  - 23 payments processed twice (total $47,000 in duplicates)
+  - Some customers charged twice, some merchants paid twice
+  - The idempotency keys were stored in the Redis node that failed
+
+  11:48 PM — Alert: Read replica lag at 45 seconds
+  - Month-end batch job is hammering the primary
+  - API reads from replicas are returning stale data
+  - Account balance checks are approving payments they shouldn't
+    (stale balance data)
+
+  11:50 PM — Alert: RabbitMQ dead letter queue growing
+  - 5,000 events in DLQ — all "balance update" events
+  - These events normally update cached balances in Redis
+  - But Redis was resharding, so events failed delivery
+  - Now balances in Redis don't match balances in PostgreSQL
+
+  11:55 PM — Business impact:
+  - 23 duplicate transactions ($47K)
+  - Unknown number of over-approved payments (stale balances)
+  - Event backlog growing (15,000 now in DLQ)
+  - Month-end reconciliation report will be wrong
+  - Customer-facing error rate: 8% and climbing
+
+  Task: Navigate this crisis from the error handling perspective.
+  Write: the triage prioritization, the immediate containment
+  actions, the data consistency recovery plan (duplicate transactions,
+  stale balances, DLQ replay), the API error responses during
+  recovery (what clients see), and the post-incident architectural
+  changes to prevent this cascade.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage is prioritized correctly — stops the bleeding first (halt new payments to prevent more duplicates), then contains (identify all affected transactions), then recovers (resolve duplicates, replay DLQ, reconcile balances). Financial integrity takes precedence over availability"
+    weight: 0.35
+    description: "Correct triage prioritization"
+  - type: llm_judge
+    criteria: "Data consistency recovery is thorough — identifies all 23 duplicates for reversal, detects over-approved payments from stale balances, plans DLQ replay with idempotency checks, and includes a full reconciliation process to verify PostgreSQL and Redis are consistent before resuming"
+    weight: 0.35
+    description: "Thorough data consistency recovery"
+  - type: llm_judge
+    criteria: "Post-incident changes prevent cascade — moves idempotency keys to PostgreSQL (not Redis), implements read-your-writes consistency for balance checks, adds Redis cluster monitoring with automatic payment pause, and designs the DLQ replay to handle out-of-order processing safely"
+    weight: 0.30
+    description: "Cascade prevention changes"

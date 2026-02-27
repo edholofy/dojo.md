@@ -1,0 +1,79 @@
+meta:
+  id: database-error-handling
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Handle database errors in APIs — translate database failures into appropriate API responses without leaking internals"
+  tags: [REST, API, database, PostgreSQL, errors, translation, advanced]
+
+state: {}
+
+trigger: |
+  Your API uses PostgreSQL and you're auditing how database errors
+  surface to API consumers. You find that many database errors leak
+  directly into API responses or are handled incorrectly.
+
+  Problematic error translations found in your codebase:
+
+  1. Unique constraint violation:
+     DB: ERROR 23505: duplicate key value violates unique constraint
+     "users_email_key"
+     API returns: 500 { "error": "duplicate key value violates unique
+     constraint \"users_email_key\"" }
+     Should be: 409 Conflict with user-friendly message
+
+  2. Foreign key violation:
+     DB: ERROR 23503: insert or update on table "orders" violates
+     foreign key constraint "orders_user_id_fkey"
+     API returns: 500 with the raw DB error
+     Should be: 400 or 422 with "Referenced user does not exist"
+
+  3. Connection pool exhausted:
+     DB: TimeoutError: acquiring connection from pool timed out
+     API returns: hangs until client timeout
+     Should be: 503 with Retry-After
+
+  4. Deadlock detected:
+     DB: ERROR 40P01: deadlock detected
+     API returns: 500 { "error": "deadlock detected" }
+     Should be: automatically retried, then 503 if retries exhausted
+
+  5. Check constraint violation:
+     DB: ERROR 23514: new row for relation "products" violates check
+     constraint "products_price_check" (price must be > 0)
+     API returns: 500 with the constraint name
+     Should be: 422 with "Price must be greater than zero"
+
+  6. Read replica lag:
+     User creates a post (writes to primary), immediately fetches
+     their posts (reads from replica) — post is missing
+     API returns: 200 { "posts": [] } (incorrect but no "error")
+     Should be: consistency-aware response
+
+  7. Long query timeout:
+     Complex search query exceeds statement_timeout (30s)
+     DB: ERROR 57014: canceling statement due to statement timeout
+     API returns: 504 with no context
+     Should be: 408 or 504 with search refinement suggestions
+
+  Task: Design the database error translation layer. Write: the
+  mapping from PostgreSQL error codes to HTTP status codes, the
+  error message translation strategy (constraint names to human
+  messages), the automatic retry logic for transient errors
+  (deadlocks, connection issues), the read replica consistency
+  handling, and the implementation architecture (middleware vs
+  per-query vs ORM-level).
+
+assertions:
+  - type: llm_judge
+    criteria: "Error code mapping is comprehensive — maps PostgreSQL error classes (23xxx constraint violations, 40xxx transaction errors, 53xxx resource errors, 57xxx timeout errors) to appropriate HTTP status codes, with different handling for client-caused vs server-caused database errors"
+    weight: 0.35
+    description: "Comprehensive error code mapping"
+  - type: llm_judge
+    criteria: "Error message translation is secure and helpful — constraint names are translated to user-friendly messages without revealing table/column names, unique violations identify the conflicting field, and the translation is configurable (not hardcoded). Internal database details never leak to the API response"
+    weight: 0.35
+    description: "Secure helpful message translation"
+  - type: llm_judge
+    criteria: "Transient error handling is robust — deadlocks are auto-retried with backoff, connection pool exhaustion triggers 503 with monitoring alerts, read replica lag is detected and handled (read-your-writes consistency or causal consistency), and the architecture centralizes translation without coupling business logic to database specifics"
+    weight: 0.30
+    description: "Robust transient error handling"

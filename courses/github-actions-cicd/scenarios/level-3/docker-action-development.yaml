@@ -1,0 +1,65 @@
+meta:
+  id: docker-action-development
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Build custom Docker actions — create isolated, language-agnostic actions using Docker containers with proper testing and publishing"
+  tags: [github, actions, Docker, custom-actions, containers, advanced]
+
+state: {}
+
+trigger: |
+  Your security team needs 3 custom Docker-based actions for their
+  compliance pipeline. Docker actions are required (not JavaScript)
+  because they need specific CLI tools, language runtimes, and
+  isolation guarantees.
+
+  Action 1 — "compliance-scanner":
+  Purpose: Run a compliance scan against CIS benchmarks for Docker
+  images and Kubernetes manifests. Must include specific tools
+  (trivy, kubesec, conftest) that aren't available as standalone
+  actions with the versions you need.
+  Inputs: scan-type (docker/k8s), target (image name or manifest path),
+  severity-threshold (critical/high/medium), policy-dir (OPA policies)
+  Outputs: findings-count, report-path, pass/fail status
+  Requirements: Multi-stage Dockerfile, report in SARIF format,
+  integration with GitHub Security tab
+
+  Action 2 — "license-auditor":
+  Purpose: Audit all dependencies for license compliance. Must support
+  npm, pip, Go, and Java (Maven) in a single action. Uses a Python
+  script with specific libraries.
+  Inputs: package-manager, allowed-licenses (JSON array), fail-on-deny
+  Outputs: audit-report-path, denied-licenses-count
+  Requirements: Should generate a license bill of materials (BOM)
+
+  Action 3 — "secret-detector":
+  Purpose: Scan PR diffs for accidentally committed secrets using
+  custom regex patterns and entropy analysis. Runs in isolated
+  container for security (action itself handles sensitive data).
+  Inputs: custom-patterns (file path to regex list), entropy-threshold
+  Outputs: secrets-found-count, findings-path
+  Requirements: Must NOT log the actual secret values, must annotate
+  the PR with findings location
+
+  Task: Build all 3 Docker actions. For each, write: the Dockerfile
+  (multi-stage for size optimization), the entrypoint script, the
+  action.yml metadata, the test workflow (how to test a Docker action),
+  and the CI/CD for the action itself (building, testing, and publishing
+  the action). Include: the Docker caching strategy for action builds,
+  the versioning approach, and the security considerations for Docker
+  actions that handle sensitive data.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dockerfiles are well-designed — uses multi-stage builds to minimize image size, includes all required tools, entrypoint scripts handle inputs from environment variables correctly, and the action.yml files have complete metadata with all inputs/outputs"
+    weight: 0.35
+    description: "Well-designed Docker actions"
+  - type: llm_judge
+    criteria: "Testing strategy is practical — includes unit tests for the scripts, integration tests using a test workflow (workflow_dispatch or push to test branch), and explains how to test Docker actions locally before publishing"
+    weight: 0.35
+    description: "Practical testing strategy"
+  - type: llm_judge
+    criteria: "Security considerations are addressed — the secret-detector doesn't log secrets, Docker actions run in isolation, the compliance-scanner SARIF output integrates with GitHub Security tab, and the versioning approach uses SHA-pinned tags"
+    weight: 0.30
+    description: "Security considerations addressed"

@@ -1,0 +1,68 @@
+meta:
+  id: monorepo-ci
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Design monorepo CI — build efficient CI pipelines for monorepos with path filters, dynamic matrices, and selective testing"
+  tags: [github, actions, monorepo, path-filters, dynamic-matrix, turborepo, advanced]
+
+state: {}
+
+trigger: |
+  Your company migrated 8 microservices into a Turborepo monorepo.
+  The current CI runs ALL tests for every PR, taking 35 minutes and
+  costing $800/month unnecessarily. You need to make CI smart enough
+  to only test what changed.
+
+  Monorepo structure:
+  ```
+  /
+  ├── apps/
+  │   ├── web/          (React, 12,000 lines)
+  │   ├── api/          (Express, 8,000 lines)
+  │   ├── mobile/       (React Native, 10,000 lines)
+  │   └── admin/        (Next.js, 5,000 lines)
+  ├── packages/
+  │   ├── ui/           (Shared components, used by web + mobile + admin)
+  │   ├── auth/         (Auth library, used by api + web + admin)
+  │   ├── database/     (Prisma client, used by api + admin)
+  │   └── config/       (Shared config, used by all)
+  ├── turbo.json
+  └── package.json
+  ```
+
+  Dependency graph:
+  - web depends on: ui, auth, config
+  - api depends on: auth, database, config
+  - mobile depends on: ui, auth, config
+  - admin depends on: ui, auth, database, config
+
+  Requirements:
+  1. Only run tests for changed packages and their dependents
+  2. If packages/auth changes, test web, api, mobile, and admin
+  3. If apps/web changes, only test web
+  4. If packages/config changes, test everything (affects all)
+  5. Generate the test matrix dynamically based on affected packages
+  6. Run Turborepo's --filter for selective builds
+  7. Cache Turborepo's .turbo directory across workflow runs
+
+  Task: Write the monorepo CI workflow. Include: the change detection
+  job (determines which packages are affected), the dynamic matrix
+  generation (creates a matrix from affected packages), the selective
+  test execution (only tests affected packages), the Turborepo
+  integration (using --filter and caching), and the deployment trigger
+  logic (deploy web only if web or its dependencies changed).
+
+assertions:
+  - type: llm_judge
+    criteria: "Change detection correctly identifies affected packages — uses git diff with path matching, understands the dependency graph (changing auth affects all consumers), and handles the transitive dependency case (config affects everything)"
+    weight: 0.35
+    description: "Correct change detection"
+  - type: llm_judge
+    criteria: "Dynamic matrix is properly generated — the detection job outputs a JSON array of affected packages, the test job uses fromJson() to create a dynamic matrix, and the matrix correctly handles the case where no packages are affected (skips testing)"
+    weight: 0.35
+    description: "Proper dynamic matrix generation"
+  - type: llm_judge
+    criteria: "Turborepo integration is correct — uses turbo run test --filter with correct syntax, caches .turbo directory between runs, and the cost savings are estimated (from 35 minutes for all packages to X minutes for affected only)"
+    weight: 0.30
+    description: "Correct Turborepo integration"

@@ -1,0 +1,63 @@
+meta:
+  id: cicd-data-architecture
+  level: 4
+  course: github-actions-cicd
+  type: output
+  description: "Design CI/CD data architecture — build analytics pipelines for workflow metrics, cost tracking, and predictive insights"
+  tags: [github, actions, data-architecture, analytics, metrics, DORA, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Data Engineering building the data infrastructure
+  for CI/CD analytics. The platform team needs data to track DORA
+  metrics, optimize costs, and predict failures. Currently there's no
+  centralized CI/CD data — metrics are scattered across GitHub API
+  responses, runner logs, and deployment systems.
+
+  Data sources:
+  - GitHub Actions API: Workflow runs, job details, step timings, costs
+  - GitHub webhooks: Real-time workflow events (50,000+ events/day)
+  - Self-hosted runner metrics: CPU, memory, queue depth (Prometheus)
+  - Cloud provider APIs: Deployment status, resource costs
+  - Incident management: PagerDuty alerts, incident timelines
+  - Git data: Commit frequency, PR merge times, branch patterns
+
+  Analytics requirements:
+  1. DORA metrics dashboard (deployment frequency, lead time, MTTR,
+     change failure rate) — real-time, per team, trending
+  2. Cost analytics (per-team, per-repo, per-workflow cost allocation
+     with budget alerts)
+  3. Failure prediction (ML model to predict which PRs will have CI
+     failures based on files changed, time of day, author history)
+  4. Performance trending (workflow duration trends, bottleneck
+     detection, runner utilization optimization)
+  5. Compliance reporting (automated evidence for SOC 2 audits)
+
+  Constraints:
+  - Budget: $100K/year for data infrastructure
+  - Must handle 50K+ events/day without data loss
+  - DORA dashboard must update within 5 minutes of events
+  - Cost data must be accurate to within $1 per team per month
+  - 2-year data retention for compliance
+
+  Task: Design the CI/CD data architecture. Write: the data model
+  (entities, relationships, derived metrics), the ingestion pipeline
+  (webhook processing, API polling, stream processing), the storage
+  strategy (time-series for metrics, OLAP for analytics, feature store
+  for ML), the DORA metrics computation logic, and the ML pipeline for
+  failure prediction. Include the cost breakdown for the $100K budget.
+
+assertions:
+  - type: llm_judge
+    criteria: "DORA metrics computation is correct — deployment frequency counts production deploys per day, lead time measures commit-to-deploy, MTTR measures incident-open-to-resolved, change failure rate is failed-deploys/total-deploys, and all are computed per-team with correct time windows"
+    weight: 0.35
+    description: "Correct DORA metrics computation"
+  - type: llm_judge
+    criteria: "Architecture fits the $100K budget — uses cost-effective technologies (not enterprise tools), handles 50K+ events/day reliably, and the cost breakdown accounts for compute, storage, and data transfer across all components"
+    weight: 0.35
+    description: "Budget-fitting architecture"
+  - type: llm_judge
+    criteria: "ML failure prediction is practical — identifies useful features (files changed, test history, time of day, PR size, author failure rate), proposes a reasonable model (not over-engineered), and the feature store design supports both batch training and real-time inference"
+    weight: 0.30
+    description: "Practical ML failure prediction"

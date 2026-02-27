@@ -1,0 +1,65 @@
+meta:
+  id: caching-error-scenarios
+  level: 3
+  course: rest-api-error-handling
+  type: output
+  description: "Handle caching error scenarios — manage stale data, cache failures, and thundering herds in API caching layers"
+  tags: [REST, API, caching, Redis, stale-data, thundering-herd, advanced]
+
+state: {}
+
+trigger: |
+  Your API has a Redis caching layer that serves 80% of read traffic.
+  Recent incidents revealed that your caching error handling is
+  inadequate.
+
+  Incident 1 — Cache stampede (thundering herd):
+  Popular product page cache expired. 10,000 concurrent requests
+  all missed the cache simultaneously and hit the database. Database
+  connection pool exhausted, API returned 503 for 45 seconds.
+
+  Incident 2 — Stale data served during outage:
+  Redis cluster failed over (30 seconds). During failover, the API
+  fell back to direct database queries. When Redis came back, it
+  served stale cached data (pre-outage prices) for products whose
+  prices were updated during the outage. Customers saw wrong prices.
+
+  Incident 3 — Negative caching trap:
+  A product was temporarily out of stock. The "out of stock" response
+  was cached for 1 hour. When inventory was restocked 10 minutes
+  later, customers still saw "out of stock" for 50 minutes.
+
+  Incident 4 — Cache poisoning:
+  A downstream service returned an error (500), which was cached as
+  if it were a valid response. The cached error was served to all
+  users for the TTL duration (15 minutes).
+
+  Incident 5 — Inconsistent cache state:
+  User updated their profile. The profile cache was updated, but the
+  user list cache still showed the old data. Different endpoints
+  returned different data for the same user.
+
+  Incident 6 — Cache memory exhaustion:
+  Redis ran out of memory. Eviction policy kicked in and removed
+  frequently-accessed keys. Error rates spiked because "cache misses"
+  on critical data overwhelmed the database.
+
+  Task: Design the caching error handling strategy. For each of the
+  6 incidents, write: the root cause, the prevention mechanism, the
+  API's behavior when the cache fails (degrade gracefully vs error),
+  and the cache headers the API should return to communicate data
+  freshness to clients.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 incidents have prevention mechanisms — stampede protection (singleflight/lock, stale-while-revalidate), stale data detection (version tracking or invalidation), negative caching with short TTL, error response exclusion from cache, cache invalidation patterns (event-driven), and memory management (eviction policies, monitoring)"
+    weight: 0.35
+    description: "All incidents prevented"
+  - type: llm_judge
+    criteria: "Graceful degradation strategy is clear — defines when to serve stale data vs return an error vs fall back to the database, uses Cache-Control headers to communicate freshness, and handles the Redis failure scenario with circuit breakers and fallback behavior"
+    weight: 0.35
+    description: "Clear degradation strategy"
+  - type: llm_judge
+    criteria: "Cache headers communicate data state — uses Cache-Control, ETag, Age, and custom headers to tell clients if data is fresh, stale, or from a fallback source. The strategy prevents clients from caching error responses and handles CDN caching layers"
+    weight: 0.30
+    description: "Communicative cache headers"

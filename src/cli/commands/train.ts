@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
-import { resolve, join } from 'node:path';
-import { existsSync } from 'node:fs';
-import { loadCourse, loadCourseScenarios } from '../../engine/loader.js';
+import { resolve } from 'node:path';
+import { loadCourse, loadCourseScenarios, findCoursePath as loaderFindCoursePath } from '../../engine/loader.js';
+import { ensureApiKey } from '../setup.js';
 import { TrainingSession } from '../../engine/training.js';
 import { TrainingLoop } from '../../engine/training-loop.js';
 import { AgentBridge } from '../../engine/agent-bridge.js';
@@ -35,8 +35,23 @@ export async function trainCommand(courseId: string, options: TrainOptions): Pro
   const coursePath = findCoursePath(courseId);
   if (!coursePath) {
     console.error(chalk.red(`Course "${courseId}" not found.`));
-    console.error(chalk.dim('Looked in: ./courses/, ~/.dojo/courses/'));
+    console.error(chalk.dim('Run: dojo list  to see available courses'));
     process.exit(1);
+  }
+
+  // Check API keys before doing anything expensive
+  const agentModel = options.model || 'claude-sonnet-4-6';
+  const judgeModel = options.judge || 'claude-sonnet-4-6';
+
+  const hasAgentKey = await ensureApiKey(agentModel);
+  if (!hasAgentKey) process.exit(1);
+
+  // If judge uses a different provider, check that key too
+  const agentIsOpenRouter = agentModel.includes('/') || agentModel.startsWith('openrouter:');
+  const judgeIsOpenRouter = judgeModel.includes('/') || judgeModel.startsWith('openrouter:');
+  if (agentIsOpenRouter !== judgeIsOpenRouter) {
+    const hasJudgeKey = await ensureApiKey(judgeModel);
+    if (!hasJudgeKey) process.exit(1);
   }
 
   const spinner = ora('Loading course...').start();
@@ -52,9 +67,6 @@ export async function trainCommand(courseId: string, options: TrainOptions): Pro
 
     spinner.succeed(`Loaded ${chalk.bold(course.name)} — ${scenarios.length} scenarios`);
 
-    // Show model info
-    const agentModel = options.model || 'claude-sonnet-4-6';
-    const judgeModel = options.judge || 'claude-sonnet-4-6';
     console.log(`  Agent: ${chalk.cyan(agentModel)}`);
     console.log(`  Judge: ${chalk.cyan(judgeModel)}`);
     console.log();
@@ -268,15 +280,7 @@ async function runTrainingLoop(
 }
 
 function findCoursePath(courseId: string): string | null {
-  // Check local courses directory
-  const localPath = resolve('courses', courseId);
-  if (existsSync(join(localPath, 'course.yaml'))) return localPath;
-
-  // Check ~/.dojo/courses/
-  const homePath = resolve(process.env.HOME || '~', '.dojo', 'courses', courseId);
-  if (existsSync(join(homePath, 'course.yaml'))) return homePath;
-
-  return null;
+  return loaderFindCoursePath(courseId);
 }
 
 function printSummary(score: number, levelResults: Array<{ level: number; passed: number; total: number }>, patternCount: number): void {

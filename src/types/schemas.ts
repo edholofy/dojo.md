@@ -33,14 +33,18 @@ export const scenarioSchema = z.object({
 export const courseMetaSchema = z.object({
   id: z.string(),
   name: z.string(),
-  author: z.string(),
-  version: z.string(),
+  author: z.string().default('dojo.md'),
+  version: z.string().default('1.0.0'),
   description: z.string(),
-  services: z.array(z.string()),
+  services: z.array(z.string()).default([]),
   levels: z.number().int().min(1),
-  scenario_count: z.number().int().min(0),
+  scenario_count: z.number().int().min(0).optional(),
+  scenarios_per_level: z.number().int().min(0).optional(),
   tags: z.array(z.string()).default([]),
-});
+}).transform((data) => ({
+  ...data,
+  scenario_count: data.scenario_count ?? (data.scenarios_per_level ? data.scenarios_per_level * data.levels : 0),
+}));
 
 export const mockParamSchema = z.object({
   type: z.string(),

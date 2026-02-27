@@ -1,10 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { discoverCourses, loadCourse, loadCourseScenarios } from '../engine/loader.js';
+import { discoverAllCourses, findCoursePath as loaderFindCoursePath, loadCourse, loadCourseScenarios } from '../engine/loader.js';
 import { TrainingSession } from '../engine/training.js';
 import { initDatabase, getLatestRun } from '../recorder/db.js';
 import { SkillGenerator } from '../generator/skill-generator.js';
@@ -28,17 +25,7 @@ export async function startMcpServer(): Promise<void> {
     'Search for available training courses',
     { query: z.string().optional().describe('Search query to filter courses') },
     async ({ query }) => {
-      const localCourses = discoverCourses(resolve('courses'));
-      const homeCourses = discoverCourses(resolve(homedir(), '.dojo', 'courses'));
-      let courses = [...localCourses, ...homeCourses];
-
-      // Deduplicate
-      const seen = new Set<string>();
-      courses = courses.filter((c) => {
-        if (seen.has(c.id)) return false;
-        seen.add(c.id);
-        return true;
-      });
+      let courses = discoverAllCourses();
 
       if (query) {
         const q = query.toLowerCase();
@@ -265,13 +252,7 @@ export async function startMcpServer(): Promise<void> {
 }
 
 function findCoursePath(courseId: string): string | null {
-  const localPath = resolve('courses', courseId);
-  if (existsSync(resolve(localPath, 'course.yaml'))) return localPath;
-
-  const homePath = resolve(homedir(), '.dojo', 'courses', courseId);
-  if (existsSync(resolve(homePath, 'course.yaml'))) return homePath;
-
-  return null;
+  return loaderFindCoursePath(courseId);
 }
 
 // Allow running directly

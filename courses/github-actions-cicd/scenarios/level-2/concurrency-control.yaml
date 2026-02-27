@@ -1,0 +1,58 @@
+meta:
+  id: concurrency-control
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Manage workflow concurrency — prevent duplicate runs, configure merge queues, and handle parallel deployments safely"
+  tags: [github, actions, concurrency, merge-queue, parallel, intermediate]
+
+state: {}
+
+trigger: |
+  Your team's CI/CD has several concurrency problems causing wasted
+  resources and deployment conflicts:
+
+  Problem 1 — Duplicate CI runs:
+  A developer pushes 3 commits in quick succession. Each push triggers
+  a separate CI run. The first 2 runs are wasted because only the
+  latest commit matters. This wastes 24 minutes of runner time per
+  occurrence, happening ~20 times per day.
+
+  Problem 2 — Deployment conflicts:
+  Two PRs merge to main within seconds of each other. Both trigger
+  deployment workflows. The deployments race — sometimes deployment B
+  starts before deployment A finishes, causing a partially deployed
+  state. Last week this caused a 30-minute outage.
+
+  Problem 3 — PR merge bottleneck:
+  With "require branch up to date with main" enabled, only one PR can
+  merge at a time. Each PR merge triggers CI again. With 15 PRs per
+  day, this creates a 2-hour queue. The team is considering GitHub's
+  merge queue feature.
+
+  Problem 4 — Resource contention:
+  Self-hosted runners (4 total) are overwhelmed during peak hours
+  (10AM-2PM). 12 workflows queue up for runners, and some time out
+  after 30 minutes waiting.
+
+  Task: Solve all 4 problems. For each, write: the root cause analysis,
+  the solution using GitHub Actions concurrency features (concurrency
+  groups, cancel-in-progress, merge queue), the workflow YAML changes,
+  and the trade-offs of each solution. Include: the concurrency group
+  naming strategy (how to scope groups by PR, branch, or workflow),
+  the merge queue configuration, and the runner capacity planning
+  recommendations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Concurrency groups are correctly configured — uses concurrency with group names scoped appropriately (e.g., ci-${{ github.ref }} for CI, deploy-production for deployments), cancel-in-progress: true for CI but false for deployments, and the naming strategy prevents accidental conflicts"
+    weight: 0.35
+    description: "Correct concurrency configuration"
+  - type: llm_judge
+    criteria: "All 4 problems are solved — duplicate runs cancelled with concurrency groups, deployments serialized with concurrency (no cancel), merge queue configured to batch PRs, and runner capacity recommendations address peak load (scaling, priority queues)"
+    weight: 0.35
+    description: "All problems solved"
+  - type: llm_judge
+    criteria: "Trade-offs are explained — notes that cancel-in-progress means intermediate results are lost, serialized deployments slow down when many PRs merge, merge queue adds complexity, and runner scaling has cost implications"
+    weight: 0.30
+    description: "Trade-offs explained"

@@ -1,0 +1,208 @@
+name: "Request Validation Error Handling"
+level: 1
+difficulty: beginner
+description: "Handle common validation errors: missing fields, invalid types, constraint violations"
+
+context: |
+  Implement comprehensive input validation for a user registration endpoint.
+  Handle missing fields, invalid formats, constraint violations, and size limits.
+
+scenario:
+  state:
+    existing_users:
+      - email: "john@example.com"
+      - email: "jane@example.com"
+    validation_rules:
+      email: "required, valid email format, unique"
+      password: "required, minimum 8 characters"
+      name: "required, non-empty string, max 100 characters"
+      age: "optional, integer, must be 18+"
+
+  endpoint: "POST /api/v1/users/register"
+
+  test_cases:
+    - name: "valid_registration"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "SecurePassword123"
+          name: "New User"
+          age: 25
+      expected_status: 201
+      expected_response:
+        user_id: "user_new_123"
+        email: "newuser@example.com"
+
+    - name: "missing_email"
+      request:
+        body:
+          password: "SecurePassword123"
+          name: "New User"
+      expected_status: 400
+      expected_response:
+        error:
+          code: "MISSING_REQUIRED_FIELD"
+          details:
+            field: "email"
+
+    - name: "missing_password"
+      request:
+        body:
+          email: "newuser@example.com"
+          name: "New User"
+      expected_status: 400
+      expected_response:
+        error:
+          code: "MISSING_REQUIRED_FIELD"
+          details:
+            field: "password"
+
+    - name: "invalid_email_format"
+      request:
+        body:
+          email: "not-an-email"
+          password: "SecurePassword123"
+          name: "New User"
+      expected_status: 400
+      expected_response:
+        error:
+          code: "INVALID_EMAIL_FORMAT"
+          message: "Email must be a valid email address"
+
+    - name: "password_too_short"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "short"
+          name: "New User"
+      expected_status: 400
+      expected_response:
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Password must be at least 8 characters"
+
+    - name: "name_exceeds_max_length"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "SecurePassword123"
+          name: "A" * 101
+      expected_status: 400
+      expected_response:
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Name must not exceed 100 characters"
+
+    - name: "empty_name"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "SecurePassword123"
+          name: ""
+      expected_status: 400
+      expected_response:
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Name cannot be empty"
+
+    - name: "age_below_minimum"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "SecurePassword123"
+          name: "Young User"
+          age: 17
+      expected_status: 400
+      expected_response:
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Age must be 18 or older"
+
+    - name: "age_invalid_type"
+      request:
+        body:
+          email: "newuser@example.com"
+          password: "SecurePassword123"
+          name: "User"
+          age: "twenty-five"
+      expected_status: 400
+      expected_response:
+        error:
+          code: "INVALID_FIELD_TYPE"
+          details:
+            field: "age"
+            expected_type: "integer"
+            received_type: "string"
+
+    - name: "duplicate_email"
+      request:
+        body:
+          email: "john@example.com"
+          password: "SecurePassword123"
+          name: "John Copy"
+      expected_status: 409
+      expected_response:
+        error:
+          code: "EMAIL_ALREADY_EXISTS"
+          message: "An account with this email already exists"
+
+    - name: "multiple_validation_errors"
+      request:
+        body:
+          password: "short"
+          name: ""
+          age: 10
+      expected_status: 400
+      expected_response:
+        error:
+          code: "VALIDATION_ERROR"
+          message: "Multiple validation errors"
+          details:
+            errors:
+              - field: "email"
+                code: "MISSING_REQUIRED_FIELD"
+              - field: "password"
+                code: "TOO_SHORT"
+              - field: "name"
+                code: "EMPTY"
+
+assertions:
+  - type: "http_status"
+    description: "400 Bad Request for validation errors"
+    test: "all validation errors return 400 status"
+
+  - type: "api_called"
+    description: "Missing required fields identified"
+    test: "MISSING_REQUIRED_FIELD error for absent email"
+
+  - type: "api_called"
+    description: "Invalid format errors detected"
+    test: "INVALID_EMAIL_FORMAT error for malformed email"
+
+  - type: "api_called"
+    description: "Constraint violations reported"
+    test: "Password length constraint violation returns error"
+
+  - type: "http_status"
+    description: "409 Conflict for duplicate unique fields"
+    test: "duplicate email returns 409"
+
+  - type: "api_called"
+    description: "Multiple errors reported together"
+    test: "multiple validation errors returned as array"
+
+learning_objectives:
+  - "Validate required vs optional fields"
+  - "Check data type correctness before processing"
+  - "Validate format constraints (email, URL, phone number)"
+  - "Enforce business rule constraints (min/max, uniqueness)"
+  - "Report multiple validation errors together"
+  - "Use 409 Conflict for duplicate unique constraints"
+
+common_mistakes:
+  - "Failing to validate email format before storage"
+  - "Not checking for duplicate emails/unique constraints"
+  - "Accepting invalid data types without type checking"
+  - "Returning 200 OK with validation error message"
+  - "Only reporting first error instead of all validation issues"
+  - "Not providing enough detail about what validation failed"

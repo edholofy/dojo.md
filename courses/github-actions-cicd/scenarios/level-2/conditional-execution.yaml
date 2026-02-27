@@ -1,0 +1,60 @@
+meta:
+  id: conditional-execution
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Master conditional execution — use if expressions, status functions, and context variables to control when jobs and steps run"
+  tags: [github, actions, conditional, if-expressions, contexts, intermediate]
+
+state: {}
+
+trigger: |
+  You're building a sophisticated deployment workflow that must behave
+  differently based on various conditions. The workflow needs to handle
+  multiple deployment targets, branch-specific logic, and failure
+  recovery.
+
+  Scenarios to implement:
+
+  Scenario 1 — Branch-based deployment:
+  - Push to main → deploy to staging
+  - Push with tag v*.*.* → deploy to production
+  - Push to feature/* → deploy to preview environment
+  - Pull request → run tests only (no deployment)
+
+  Scenario 2 — Conditional step execution:
+  - Run database migrations only if migration files changed
+  - Send Slack notification only on failure
+  - Skip expensive E2E tests if the PR is labeled "skip-e2e"
+  - Run security scan only on PRs touching src/auth/** files
+
+  Scenario 3 — Context-based decisions:
+  - Use different AWS accounts based on environment (staging/production)
+  - Set different resource limits based on runner type
+  - Include debug logging only when triggered manually with debug=true
+
+  Scenario 4 — Error recovery:
+  - If deployment fails, automatically run rollback
+  - If rollback also fails, page the on-call engineer
+  - Always run cleanup steps regardless of failure
+  - Produce a deployment report with pass/fail status for each step
+
+  Task: Write the workflow YAML covering all 4 scenarios. For each
+  condition, explain: the expression syntax, the available context
+  variables (github.event_name, github.ref, contains(), startsWith()),
+  and the evaluation rules (when does a condition short-circuit). Include
+  a cheat sheet of the most useful conditional expressions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Conditional expressions are syntactically correct — uses github.ref, github.event_name, contains(), startsWith(), success(), failure(), always(), and the expressions handle all 4 scenarios correctly including tag matching for semver"
+    weight: 0.35
+    description: "Correct conditional expressions"
+  - type: llm_judge
+    criteria: "Error recovery pattern is sound — deployment failure triggers rollback step (if: failure()), rollback failure triggers paging, cleanup runs with if: always(), and the deployment report captures status from all steps using step outcomes"
+    weight: 0.35
+    description: "Sound error recovery pattern"
+  - type: llm_judge
+    criteria: "Cheat sheet is comprehensive and practical — covers the most common 10+ conditional patterns, explains boolean logic in expressions, notes that secrets context is not available in if: conditions, and clarifies the difference between job-level and step-level if:"
+    weight: 0.30
+    description: "Comprehensive conditional cheat sheet"

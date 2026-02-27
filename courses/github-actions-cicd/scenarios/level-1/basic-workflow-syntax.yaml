@@ -1,0 +1,52 @@
+meta:
+  id: basic-workflow-syntax
+  level: 1
+  course: github-actions-cicd
+  type: output
+  description: "Write basic GitHub Actions workflows — learn YAML structure, jobs, steps, and runners to create your first CI pipeline"
+  tags: [github, actions, workflow, YAML, CI, basics]
+
+state: {}
+
+trigger: |
+  You're setting up GitHub Actions for a new Node.js project for the
+  first time. The team needs a CI workflow that runs on every push and
+  pull request. The project uses Node.js 20, npm for package management,
+  and has lint, test, and build scripts defined in package.json.
+
+  Requirements:
+  1. File location: .github/workflows/ci.yml
+  2. Triggers: push to main branch AND all pull requests
+  3. Runner: ubuntu-latest
+  4. Steps needed:
+     - Check out the repository code
+     - Set up Node.js 20
+     - Install dependencies with npm ci
+     - Run linting (npm run lint)
+     - Run tests (npm test)
+     - Build the project (npm run build)
+  5. Include a descriptive workflow name
+  6. Set NODE_ENV=test as an environment variable for the test step
+
+  Additionally, a teammate asks these questions:
+  - "What's the difference between 'npm install' and 'npm ci' in CI?"
+  - "Why do we use 'actions/checkout@v4' instead of just cloning?"
+  - "Should lint, test, and build be separate jobs or steps in one job?"
+
+  Task: Write the complete workflow YAML file and answer all 3 questions.
+  Explain the purpose of each section of the workflow (name, on, jobs,
+  steps) and note any best practices you're following.
+
+assertions:
+  - type: llm_judge
+    criteria: "Workflow YAML is correct and complete — proper indentation, name/on/jobs structure, correct trigger syntax for push (main) and pull_request, uses actions/checkout@v4 and actions/setup-node@v4 with node-version: 20, all 6 steps present, NODE_ENV set correctly"
+    weight: 0.35
+    description: "Correct and complete workflow YAML"
+  - type: llm_judge
+    criteria: "Questions are answered accurately — npm ci vs npm install (ci uses lockfile, faster, clean install), actions/checkout provides optimized shallow clone with auth token, and the single-job-vs-multiple-jobs trade-off is explained (single job is simpler for small projects, multiple jobs allow parallelism)"
+    weight: 0.35
+    description: "Accurate question answers"
+  - type: llm_judge
+    criteria: "Best practices are explained — why npm ci is preferred in CI, why action versions should be pinned, why ubuntu-latest is the default choice, and each workflow section is explained clearly for someone new to GitHub Actions"
+    weight: 0.30
+    description: "Best practices explanation"

@@ -1,0 +1,66 @@
+meta:
+  id: api-versioning-errors
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Handle API versioning errors — manage error responses during API version transitions and deprecation"
+  tags: [REST, API, versioning, deprecation, migration, intermediate]
+
+state: {}
+
+trigger: |
+  Your API is migrating from v1 to v2. The changes include:
+  - Different error response format (custom JSON → RFC 7807)
+  - Some endpoints removed (POST /users/bulk → use /users/import)
+  - Field renames (user.firstName → user.first_name)
+  - Stricter validation (email regex is now RFC 5322 compliant)
+  - New required fields (POST /orders now requires shipping_address)
+
+  Timeline:
+  - v2 launched 3 months ago
+  - v1 sunset in 6 months
+  - Currently 60% of traffic is v1, 40% is v2
+
+  Customer issues during the migration:
+
+  1. Customer sends v1-format request to v2 endpoint:
+     POST /v2/users { "firstName": "John" }
+     Gets 400 but doesn't understand why (field was renamed)
+
+  2. Customer uses removed v1 endpoint:
+     POST /v1/users/bulk [...]
+     Gets 404 (endpoint already removed from v1 ahead of schedule)
+
+  3. Customer on v1 gets different error format than v2 customer
+     for the same underlying issue — confusing for shared tooling
+
+  4. Customer tries to use v2 features via v1:
+     POST /v1/orders { "shipping_method": "express" }
+     (shipping_method only exists in v2)
+
+  5. v1 validation passes but v2 validation rejects the same input
+     (stricter email regex)
+
+  6. No version specified:
+     POST /users { ... }
+     Which version should be assumed?
+
+  Task: Design the versioning error handling strategy. Write: how
+  each of the 6 issues should be handled (status codes, error
+  messages, migration hints), the deprecation warning system (headers,
+  response fields), the sunset timeline communication in error
+  responses, and the version negotiation logic.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 6 versioning issues have clear solutions — renamed fields get migration hints in the error message, removed endpoints return 410 Gone (not 404) with the replacement URL, version-specific validation differences are documented in errors, and missing version defaults are clearly defined"
+    weight: 0.35
+    description: "All versioning issues solved"
+  - type: llm_judge
+    criteria: "Deprecation communication is proactive — uses Sunset header (RFC 8594) and Deprecation header, includes deprecation warnings on successful v1 responses (not just errors), and provides migration documentation links in responses"
+    weight: 0.35
+    description: "Proactive deprecation communication"
+  - type: llm_judge
+    criteria: "Version negotiation is well-designed — explains how to handle missing version (default policy), URL path vs header vs query param versioning approach, and how the error format itself should be versioned (v1 clients get v1 errors, v2 clients get RFC 7807)"
+    weight: 0.30
+    description: "Well-designed version negotiation"

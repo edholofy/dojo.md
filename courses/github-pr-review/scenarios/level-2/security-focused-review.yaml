@@ -1,0 +1,87 @@
+meta:
+  id: security-focused-review
+  level: 2
+  course: github-pr-review
+  type: output
+  description: "Security-focused code review — identify OWASP Top 10 vulnerabilities and security anti-patterns in pull requests"
+  tags: [github, pr-review, security, OWASP, vulnerability, intermediate]
+
+state: {}
+
+trigger: |
+  You're a security-conscious reviewer evaluating a PR titled "Add user
+  authentication and admin panel." The PR introduces login functionality
+  and an admin dashboard. Review these code snippets for security issues:
+
+  Snippet 1 — Login endpoint:
+  ```javascript
+  app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = await db.query(
+      `SELECT * FROM users WHERE email = '${email}' AND password = '${password}'`
+    );
+    if (user.rows.length > 0) {
+      const token = jwt.sign({ userId: user.rows[0].id, role: user.rows[0].role },
+        'my-secret-key-2024');
+      res.json({ token });
+    } else {
+      res.status(401).json({ error: 'Invalid email or password' });
+    }
+  });
+  ```
+
+  Snippet 2 — Admin authorization middleware:
+  ```javascript
+  const isAdmin = (req, res, next) => {
+    const token = req.headers.authorization;
+    const decoded = jwt.decode(token);
+    if (decoded.role === 'admin') {
+      next();
+    } else {
+      res.status(403).json({ error: 'Not authorized' });
+    }
+  };
+  ```
+
+  Snippet 3 — Password reset:
+  ```javascript
+  app.post('/reset-password', async (req, res) => {
+    const { email, newPassword } = req.body;
+    await db.query(
+      `UPDATE users SET password = '${newPassword}' WHERE email = '${email}'`
+    );
+    res.json({ message: 'Password updated' });
+  });
+  ```
+
+  Snippet 4 — Admin user search:
+  ```javascript
+  app.get('/admin/users', isAdmin, async (req, res) => {
+    const search = req.query.q;
+    const users = await db.query(
+      `SELECT id, email, role FROM users WHERE email LIKE '%${search}%'`
+    );
+    res.json(users.rows);
+  });
+  ```
+
+  Task: Write a security-focused review. For each snippet: identify the
+  specific vulnerability (name the OWASP category), explain the attack
+  vector (how an attacker would exploit it), rate the severity (critical/
+  high/medium/low), provide the secure fix with code, and write the review
+  comment as you would post it on the PR. End with a summary of the
+  overall security posture and whether this PR is safe to merge.
+
+assertions:
+  - type: llm_judge
+    criteria: "All critical vulnerabilities are identified — SQL injection in snippets 1, 3, and 4, plaintext password storage (no hashing), hardcoded JWT secret, jwt.decode vs jwt.verify in admin middleware (no signature verification), and missing authentication on password reset"
+    weight: 0.35
+    description: "Comprehensive vulnerability identification"
+  - type: llm_judge
+    criteria: "Attack vectors are concrete — explains exactly how SQL injection would be exploited (e.g., email input of ' OR 1=1 --), how jwt.decode allows token forgery, and how the password reset endpoint allows any user's password to be changed without verification"
+    weight: 0.35
+    description: "Concrete attack vector explanations"
+  - type: llm_judge
+    criteria: "Secure fixes are complete and correct — uses parameterized queries, bcrypt for passwords, environment variables for JWT secret, jwt.verify instead of jwt.decode, and adds authentication/token verification to password reset"
+    weight: 0.30
+    description: "Complete secure fixes"

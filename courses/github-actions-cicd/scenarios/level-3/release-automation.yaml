@@ -1,0 +1,61 @@
+meta:
+  id: release-automation
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Automate releases — build semantic versioning, changelog generation, and GitHub Release workflows"
+  tags: [github, actions, releases, semantic-versioning, changelog, automation, advanced]
+
+state: {}
+
+trigger: |
+  Your team currently releases manually: someone bumps the version in
+  package.json, writes a changelog entry, creates a git tag, builds
+  the artifacts, and creates a GitHub Release. This takes 45 minutes
+  and has caused errors (wrong version, missing changelog entries,
+  forgotten tags). You need to fully automate the release process.
+
+  Requirements:
+  1. Semantic versioning based on commit messages:
+     - feat: → minor bump (1.2.0 → 1.3.0)
+     - fix: → patch bump (1.2.0 → 1.2.1)
+     - BREAKING CHANGE: → major bump (1.2.0 → 2.0.0)
+     - Use conventional commits to determine version bump
+
+  2. Automated changelog generation:
+     - Generate from conventional commits since last release
+     - Group by type: Features, Bug Fixes, Breaking Changes
+     - Include PR links and author attributions
+     - Update CHANGELOG.md in the repo
+
+  3. Release artifacts:
+     - Build production bundles (frontend + backend)
+     - Generate Docker images tagged with version
+     - Create source code archives (zip + tar.gz)
+     - Sign artifacts with cosign/sigstore
+
+  4. Release workflow triggers:
+     - Option A: Automatically release on merge to main (CD)
+     - Option B: Manual trigger with version override
+     - Option C: Release PR workflow (create a "release PR" that
+       shows the changelog for review before publishing)
+
+  Task: Implement all 3 release workflow options. For each, write: the
+  complete workflow YAML, the tooling configuration (semantic-release,
+  release-please, or changesets — compare all 3), the changelog format
+  and generation logic, and the artifact signing configuration. Recommend
+  which option works best for different team sizes and release cadences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Semantic versioning is correctly automated — conventional commits are parsed, version bumps follow semver rules, package.json version is updated, git tag is created, and BREAKING CHANGE triggers a major bump correctly"
+    weight: 0.35
+    description: "Correct semantic versioning automation"
+  - type: llm_judge
+    criteria: "Tool comparison is informative — compares semantic-release, release-please, and changesets on features, complexity, customization, and team fit. Makes a clear recommendation for different scenarios (OSS vs enterprise, mono vs multi-repo)"
+    weight: 0.35
+    description: "Informative tool comparison"
+  - type: llm_judge
+    criteria: "All 3 workflow options are implemented — automatic CD, manual trigger with override, and release PR workflow are all provided with complete YAML, and the recommendation explains when each is appropriate"
+    weight: 0.30
+    description: "All release workflow options"

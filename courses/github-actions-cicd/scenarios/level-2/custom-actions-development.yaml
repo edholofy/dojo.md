@@ -1,0 +1,55 @@
+meta:
+  id: custom-actions-development
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Develop custom GitHub Actions — build JavaScript, Docker, and composite actions for team-specific automation needs"
+  tags: [github, actions, custom-actions, JavaScript, Docker, composite, intermediate]
+
+state: {}
+
+trigger: |
+  Your team has 3 automation needs that aren't covered by existing
+  marketplace actions. You need to build custom actions.
+
+  Action 1 — "deployment-notifier" (Composite action):
+  Purpose: Post a formatted deployment summary to Slack and update
+  a GitHub deployment status. Used in 8 repos.
+  Inputs: environment, version, status (success/failure), slack-webhook
+  Behavior: Posts Slack message with deployment details, creates GitHub
+  deployment status, and writes a summary to $GITHUB_STEP_SUMMARY
+
+  Action 2 — "pr-size-labeler" (JavaScript action):
+  Purpose: Automatically label PRs by size (XS, S, M, L, XL) based
+  on lines changed. Also warn if the PR exceeds 500 lines.
+  Inputs: github-token, size-thresholds (JSON: {XS: 10, S: 50, ...})
+  Behavior: Reads PR diff stats, applies label, posts warning comment
+  if over threshold
+
+  Action 3 — "security-context-check" (Docker action):
+  Purpose: Scan environment for leaked secrets, check that no
+  hardcoded credentials exist in the code, and verify .env files
+  aren't committed. Runs in an isolated Docker container for security.
+  Inputs: scan-paths, exclude-patterns, severity-threshold
+  Outputs: findings-count, report-path
+
+  Task: Build all 3 actions. For each, write: the action.yml metadata
+  file, the implementation (shell script for composite, index.js for
+  JavaScript, Dockerfile + entrypoint for Docker), the test strategy
+  (how to test custom actions), and the publishing approach (how to
+  version and release). Compare the 3 action types: when to use each,
+  performance differences, and maintenance considerations.
+
+assertions:
+  - type: llm_judge
+    criteria: "action.yml files are correctly structured — each has proper name, description, inputs with types/defaults/required, outputs where applicable, runs section matching the action type (composite/node20/docker), and branding metadata"
+    weight: 0.35
+    description: "Correct action.yml structure"
+  - type: llm_judge
+    criteria: "Implementations are functional — composite action uses correct shell syntax with ${{ inputs.* }}, JavaScript action uses @actions/core and @actions/github packages correctly, Docker action has proper Dockerfile and entrypoint script receiving inputs as env vars"
+    weight: 0.35
+    description: "Functional implementations"
+  - type: llm_judge
+    criteria: "Comparison helps decision-making — explains when to choose composite (simple, no build step), JavaScript (rich API access, fast startup), or Docker (isolation, any language), and covers testing strategies, versioning with tags, and the marketplace publishing process"
+    weight: 0.30
+    description: "Decision-helping comparison"

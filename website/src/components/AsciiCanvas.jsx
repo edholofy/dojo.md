@@ -4,6 +4,15 @@ import { useMousePosition } from '../hooks/useMousePosition';
 const DENSITY_CHARS = " .'`^,:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 const CHAR_SIZE = 12;
 
+// Training vocabulary tiled across the canvas — revealed by cursor
+const TRAINING_TEXT =
+  'TRAIN EVAL SKILL SCORE +26 PASS JUDGE LOOP +14 INJECT FAIL MOCK +6 ' +
+  '42→68→82→88→90 ✓ SKILL.md RETRAIN TARGET ASSERT SCENARIO YAML ' +
+  'PATTERN PROMPT AGENT MODEL RUN ITERATE CONVERGE ';
+
+// Characters that should render green in the lens
+const GREEN_CHARS = new Set(['+', '✓', '→']);
+
 function simpleNoise(x, y, t) {
   return (
     Math.sin(x * 0.05 + t) * Math.cos(y * 0.05 + t) +
@@ -82,20 +91,47 @@ export function AsciiCanvas({ onRenderMs }) {
             alpha = 1 - normalizedY * 2;
           }
 
-          if (dist < 150) {
-            const lensStrength = 1 - dist / 150;
-            if (Math.random() > 0.5) {
-              char = Math.random() > 0.5 ? '0' : '1';
-              ctx.fillStyle = `rgba(0, 0, 0, ${lensStrength})`;
+          if (dist < 160) {
+            const lensStrength = 1 - dist / 160;
+            const t = timeRef.current;
+
+            // Deterministic: position hash decides training vs terrain
+            const posHash = (x * 7919 + y * 104729) % 100;
+
+            if (posHash < 65) {
+              // Slow character cycling — shifts every ~2s so text drifts
+              const slowCycle = Math.floor(t * 0.5);
+              const textIdx =
+                ((y * 37 + x + slowCycle) * 3) % TRAINING_TEXT.length;
+              char = TRAINING_TEXT[textIdx];
+
+              if (char === ' ') continue;
+
+              // Color: green for scores/arrows/checkmarks, black for words
+              if (
+                GREEN_CHARS.has(char) ||
+                (char >= '0' && char <= '9')
+              ) {
+                ctx.fillStyle = `rgba(74, 222, 128, ${lensStrength * 0.9})`;
+              } else {
+                ctx.fillStyle = `rgba(0, 0, 0, ${lensStrength * 0.85})`;
+              }
             } else {
-              ctx.fillStyle = `rgba(100, 100, 100, ${alpha})`;
+              ctx.fillStyle = `rgba(100, 100, 100, ${alpha * 0.5})`;
             }
-            const shiftX = (dx / dist) * 10 * lensStrength;
-            const shiftY = (dy / dist) * 10 * lensStrength;
+
+            // Cursor displacement — pushes characters outward
+            const shiftX = dist > 0 ? (dx / dist) * 8 * lensStrength : 0;
+            const shiftY = dist > 0 ? (dy / dist) * 8 * lensStrength : 0;
+
+            // Slow breathing wobble — keeps everything alive
+            const wobbleX = Math.sin(t * 0.6 + x * 0.4) * 2.5 * lensStrength;
+            const wobbleY = Math.cos(t * 0.5 + y * 0.4) * 2.5 * lensStrength;
+
             ctx.fillText(
               char,
-              posX + CHAR_SIZE / 2 - shiftX,
-              posY + CHAR_SIZE / 2 - shiftY
+              posX + CHAR_SIZE / 2 - shiftX + wobbleX,
+              posY + CHAR_SIZE / 2 - shiftY + wobbleY
             );
           } else if (char) {
             ctx.fillStyle = `rgba(100, 100, 100, ${alpha})`;

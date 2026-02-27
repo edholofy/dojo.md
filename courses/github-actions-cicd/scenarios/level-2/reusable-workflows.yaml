@@ -1,0 +1,61 @@
+meta:
+  id: reusable-workflows
+  level: 2
+  course: github-actions-cicd
+  type: output
+  description: "Build reusable workflows — create DRY CI/CD with reusable workflows, composite actions, and workflow templates"
+  tags: [github, actions, reusable-workflows, composite-actions, DRY, intermediate]
+
+state: {}
+
+trigger: |
+  Your organization has 15 Node.js repositories that all have nearly
+  identical CI/CD workflows. When you need to update the Node version
+  or add a security scan, you have to modify 15 files across 15 repos.
+  Last month, someone forgot to update 3 repos and they broke.
+
+  Current duplication:
+  - All 15 repos: checkout → setup-node → install → lint → test → build
+  - 8 repos: + deploy to staging on merge to main
+  - 5 repos: + deploy to production on release
+  - All repos: same Slack notification on failure
+
+  You need to create reusable components:
+
+  Component 1 — Reusable workflow (workflow_call):
+  Create a reusable CI workflow that accepts inputs:
+  - node-version (default: 20)
+  - run-e2e (boolean, default: false)
+  - deploy-target (string: none/staging/production)
+  And passes secrets:
+  - AWS credentials (for deployment)
+  - Slack webhook URL (for notifications)
+
+  Component 2 — Composite action:
+  Create a composite action "setup-and-test" that bundles:
+  - Checkout, setup-node, cache, install, lint, test
+  Into a single reusable action that can be used in any workflow
+
+  Component 3 — Workflow template (organization level):
+  Create a starter workflow template that new repos can adopt from
+  the "Actions" tab, pre-configured with your org's standards
+
+  Task: Build all 3 components. For each, write: the complete YAML
+  files, the calling workflow that uses them, and the comparison (when
+  to use reusable workflows vs composite actions vs templates). Include
+  the migration plan for moving the 15 repos from duplicated workflows
+  to the reusable approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Reusable workflow is correctly structured — uses workflow_call trigger with typed inputs and secrets, the calling workflow uses 'uses: org/repo/.github/workflows/file.yml@main' syntax, and secrets are passed correctly (secrets: inherit or explicit)"
+    weight: 0.35
+    description: "Correct reusable workflow structure"
+  - type: llm_judge
+    criteria: "Composite action is properly defined — has action.yml with inputs/outputs, uses 'composite' runs type, steps use correct shell specification, and the calling workflow uses it with 'uses: org/repo/path@version' syntax"
+    weight: 0.35
+    description: "Proper composite action definition"
+  - type: llm_judge
+    criteria: "Comparison is clear and practical — explains when to choose reusable workflows (full job reuse, secret passing), composite actions (step-level reuse, can run in existing jobs), and templates (one-time setup for new repos), with a migration plan that doesn't break existing CI"
+    weight: 0.30
+    description: "Clear comparison and migration plan"

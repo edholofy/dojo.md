@@ -1,0 +1,62 @@
+meta:
+  id: error-code-taxonomy
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Design an error code taxonomy — create a structured system of application-level error codes beyond HTTP status codes"
+  tags: [REST, API, error-codes, taxonomy, documentation, intermediate]
+
+state: {}
+
+trigger: |
+  Your fintech API returns HTTP status codes but customers want more
+  granular error identification. They're asking: "I got a 400 — but
+  was it a missing field, an invalid format, a business rule violation,
+  or a duplicate request? I need to handle each differently in my
+  code."
+
+  Examples of why HTTP status codes alone aren't enough:
+
+  All of these return 400 Bad Request:
+  - Missing required field (title)
+  - Invalid email format
+  - Amount exceeds daily transfer limit ($10,000)
+  - Transfer to self not allowed
+  - Account is in read-only mode (regulatory hold)
+  - Duplicate idempotency key
+
+  All of these return 403 Forbidden:
+  - User doesn't have the 'transfers' permission
+  - IP address not in allowlist
+  - Account requires 2FA for this operation
+  - Compliance hold on account
+  - Operation not available in user's country
+
+  Customer requirements:
+  - "I need machine-readable codes I can switch on in my code"
+  - "I need to show different UI messages for different errors"
+  - "I need to know if the error is permanent or temporary"
+  - "I need error codes to be stable — don't change them without
+    warning"
+  - "I need documentation for every error code"
+
+  Task: Design the error code taxonomy. Write: the naming convention
+  (format, namespacing by domain), the complete error code catalog
+  for the examples above, the error code documentation template,
+  the governance process (how new codes are added, how existing
+  codes are deprecated), and the client SDK integration (how error
+  codes map to typed exceptions).
+
+assertions:
+  - type: llm_judge
+    criteria: "Error code system is well-structured — uses a consistent format (e.g., DOMAIN_CATEGORY_SPECIFIC like TRANSFER_LIMIT_EXCEEDED), is hierarchical enough for programmatic handling, and each code maps to a specific HTTP status code. Distinguishes between transient and permanent errors"
+    weight: 0.35
+    description: "Well-structured error code system"
+  - type: llm_judge
+    criteria: "Error catalog is complete and documented — all examples from the trigger are assigned codes, each code has a description, common causes, resolution steps, and whether it's retryable. Documentation template is thorough enough for API consumers to self-serve"
+    weight: 0.35
+    description: "Complete documented catalog"
+  - type: llm_judge
+    criteria: "Governance and SDK integration are practical — defines who can create new codes, versioning policy for codes, deprecation process, and shows how error codes translate to typed exceptions in client SDKs (making switch statements possible)"
+    weight: 0.30
+    description: "Practical governance and SDK integration"

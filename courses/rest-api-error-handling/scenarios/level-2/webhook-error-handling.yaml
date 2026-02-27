@@ -1,0 +1,55 @@
+meta:
+  id: webhook-error-handling
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Handle webhook delivery errors — design retry, dead letter queues, and error reporting for outbound webhook systems"
+  tags: [REST, API, webhooks, retry, delivery, dead-letter, intermediate]
+
+state: {}
+
+trigger: |
+  Your SaaS platform sends webhooks to customer endpoints when events
+  occur (order created, payment received, subscription changed). The
+  webhook system is unreliable and customers are losing data.
+
+  Current problems:
+  1. If a customer's endpoint returns 500, you retry 3 times with no
+     delay and then give up permanently — events are lost
+  2. If a customer's endpoint is slow (>5s), you timeout and retry,
+     causing duplicate deliveries
+  3. Customer's endpoint returns 301 redirect — you don't follow it
+     and mark the delivery as failed
+  4. Customer's SSL certificate expired — you fail silently, no
+     notification to the customer
+  5. Customer's endpoint returns 200 but the response body says
+     { "error": "processing failed" } — you mark it as delivered
+  6. Events arrive out of order (order.paid before order.created)
+     because retries for the earlier event haven't completed
+  7. A customer's endpoint is down for 3 days — you've queued 50,000
+     events and when they come back online, you flood them
+
+  Customer complaints:
+  - "We missed 200 payment events last month and our accounting is off"
+  - "We get duplicate events and our system processes them twice"
+  - "We had no idea our endpoint was failing until we lost data"
+
+  Task: Redesign the webhook error handling system. Write: the retry
+  policy (backoff schedule, max attempts, retry-after logic), the
+  dead letter queue design, the customer notification system for
+  delivery failures, the duplicate prevention mechanism, and the
+  endpoint health monitoring and automatic disable logic.
+
+assertions:
+  - type: llm_judge
+    criteria: "Retry policy is robust — uses exponential backoff with jitter (not fixed intervals), retries over hours/days (not seconds), has a maximum retry window (e.g., 72 hours), and handles different failure types appropriately (4xx vs 5xx vs timeout vs DNS failure)"
+    weight: 0.35
+    description: "Robust retry policy"
+  - type: llm_judge
+    criteria: "Dead letter queue and notification system prevents data loss — failed events after max retries go to a DLQ that customers can inspect and replay, customers are notified of delivery failures (email/dashboard), and the system tracks delivery status with full history per event"
+    weight: 0.35
+    description: "Data loss prevention"
+  - type: llm_judge
+    criteria: "Addresses all 7 problems — duplicate prevention (idempotency keys in webhook payloads), ordering guarantees or handling (sequence numbers), flood protection (rate limiting replays), SSL/redirect handling, response body validation, and automatic endpoint disabling with re-enable flow"
+    weight: 0.30
+    description: "All problems addressed"

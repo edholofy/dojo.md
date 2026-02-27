@@ -5,8 +5,23 @@ import { MachineView } from './components/MachineView';
 import { HumanView } from './components/HumanView';
 
 function App() {
-  const [mode, setMode] = useState('machine');
+  const [mode, setMode] = useState('human');
   const [transitioning, setTransitioning] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    const touch =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(hover: none)').matches;
+    setIsTouch(touch);
+    if (!touch) {
+      document.body.style.cursor = 'none';
+    }
+    return () => {
+      document.body.style.cursor = '';
+    };
+  }, []);
 
   const toggle = () => {
     setTransitioning(true);
@@ -16,18 +31,10 @@ function App() {
     }, 400);
   };
 
-  // Set cursor: none on body
-  useEffect(() => {
-    document.body.style.cursor = 'none';
-    return () => {
-      document.body.style.cursor = '';
-    };
-  }, []);
-
   return (
     <>
-      <CustomCursor />
-      <ModeToggle mode={mode} onToggle={toggle} />
+      {!isTouch && <CustomCursor />}
+      <ModeToggle mode={mode} onToggle={toggle} isTouch={isTouch} />
 
       {/* Transition overlay */}
       <div
@@ -42,7 +49,11 @@ function App() {
         }}
       />
 
-      {mode === 'machine' ? <MachineView /> : <HumanView />}
+      {mode === 'machine' ? (
+        <MachineView isTouch={isTouch} />
+      ) : (
+        <HumanView isTouch={isTouch} />
+      )}
     </>
   );
 }

@@ -1,0 +1,159 @@
+name: "Idempotency and Retry Logic"
+level: 2
+difficulty: intermediate
+description: "Implement idempotent operations and safe retry strategies to prevent duplicate processing"
+
+context: |
+  Design payment processing APIs that are idempotent. Clients send a unique idempotency
+  key with each request. If a retry arrives with the same key, return the same result
+  without processing again. This prevents double-charging when networks fail.
+
+scenario:
+  state:
+    payments:
+      "pay_001": { customer_id: "cust_1", amount: 100, status: "completed" }
+    customers:
+      "cust_1": { balance: 1000 }
+      "cust_2": { balance: 500 }
+    idempotency_keys:
+      "idem_key_123": { payment_id: "pay_001", status: "completed", created_at: "2024-01-01T10:00:00Z" }
+
+  endpoint: "POST /api/v1/payments"
+
+  test_cases:
+    - name: "initial_payment_request"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+        headers:
+          Idempotency-Key: "idem_key_456"
+      expected_status: 201
+      expected_response:
+        payment_id: "pay_002"
+        customer_id: "cust_2"
+        amount: 50
+        status: "completed"
+
+    - name: "retry_same_idempotency_key_returns_same_result"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+        headers:
+          Idempotency-Key: "idem_key_456"
+      expected_status: 201
+      expected_response:
+        payment_id: "pay_002"
+        customer_id: "cust_2"
+        amount: 50
+        status: "completed"
+
+    - name: "duplicate_charge_prevented"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+        headers:
+          Idempotency-Key: "idem_key_456"
+      expected_effect: "customer balance unchanged (only charged once)"
+
+    - name: "different_key_different_charge"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+        headers:
+          Idempotency-Key: "idem_key_789"
+      expected_status: 201
+      expected_response:
+        payment_id: "pay_003"
+
+    - name: "missing_idempotency_key_warning"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+      expected_status: 201
+      expected_response:
+        warning: "Idempotency-Key not provided. Retries may result in duplicate charges."
+
+    - name: "request_in_progress"
+      request:
+        body:
+          customer_id: "cust_2"
+          amount: 50
+        headers:
+          Idempotency-Key: "idem_key_processing"
+        concurrent_request: true
+      expected_status: 409
+      expected_response:
+        error:
+          code: "REQUEST_IN_PROGRESS"
+          message: "Request with this Idempotency-Key is currently being processed"
+
+assertions:
+  - type: "api_called"
+    description: "Idempotency-Key header required for non-idempotent operations"
+    test: "POST /payments accepts Idempotency-Key header"
+
+  - type: "api_called"
+    description: "Same idempotency key returns same result"
+    test: "retry_same_idempotency_key_returns_same_result succeeds"
+
+  - type: "outcome"
+    description: "Duplicate processing prevented"
+    test: "duplicate_charge_prevented prevents second charge"
+
+  - type: "api_called"
+    description: "Different keys processed as different requests"
+    test: "different_key_different_charge creates separate payment"
+
+  - type: "api_called"
+    description: "Concurrent requests with same key handled"
+    test: "request_in_progress returns 409 for concurrent calls"
+
+learning_objectives:
+  - "Understand idempotency and why it's critical for financial operations"
+  - "Implement idempotency key tracking and storage"
+  - "Return consistent results for duplicate idempotent requests"
+  - "Prevent double-processing with idempotent operations"
+  - "Handle request-in-progress scenarios"
+  - "Design safe retry strategies with exponential backoff"
+  - "Distinguish between idempotent and non-idempotent operations"
+
+idempotency_implementation:
+  "storage": "Idempotency keys stored with request ID, status, and result"
+  "cache_ttl": "Keep entries for 24 hours minimum for safety"
+  "duplicate_detection": "Check key before processing, return stored result if found"
+  "status_tracking": "Track PENDING, COMPLETED, FAILED states"
+
+retry_strategy:
+  "idempotent_operations": "GET, PUT, DELETE - safe to retry with backoff"
+  "non_idempotent_operations": "POST typically requires idempotency key"
+  "backoff_pattern": "exponential: 1s, 2s, 4s, 8s, 16s"
+  "max_retries": "Typically 5-10 depending on SLA"
+
+headers:
+  "Idempotency-Key": "Unique identifier for the logical operation (required for POST/PATCH)"
+  "Idempotency-Replay": "Boolean indicating if this is a replay of previous request"
+
+common_mistakes:
+  - "Not implementing idempotency for payment operations"
+  - "Charging twice due to missing idempotency checks"
+  - "Not persisting idempotency keys long enough"
+  - "Retrying non-idempotent operations blindly"
+  - "Not informing clients of idempotency requirements"
+  - "Failing to handle requests in progress"
+
+example_idempotent_operations: |
+  POST /api/v1/payments (with Idempotency-Key header)
+  POST /api/v1/orders (with Idempotency-Key header)
+  POST /api/v1/subscriptions (with Idempotency-Key header)
+
+  These modify state and must be idempotent to prevent duplicates.
+
+  Safe to retry without idempotency key:
+  GET /api/v1/users (read-only)
+  DELETE /api/v1/users/{id} (idempotent - deleting twice = same result)
+  PUT /api/v1/users/{id} (idempotent - updating twice with same data = same result)

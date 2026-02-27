@@ -1,0 +1,52 @@
+meta:
+  id: circuit-breaker-pattern
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Implement circuit breaker pattern — prevent cascading failures when downstream services fail"
+  tags: [REST, API, circuit-breaker, resilience, cascading-failures, intermediate]
+
+state: {}
+
+trigger: |
+  Your e-commerce API depends on 5 downstream services. Last Tuesday,
+  the recommendation service went down for 30 minutes. Because your
+  API makes a synchronous call to it on every product page request,
+  ALL product pages became unusable — 100% failure rate when only the
+  recommendation service (a non-critical feature) was down.
+
+  The cascade:
+  1. Recommendation service starts timing out (30s timeout)
+  2. Your API's thread pool fills up waiting for recommendations
+  3. No threads available to serve product data (which is fine)
+  4. Users see 504 Gateway Timeout on all product pages
+  5. Cart and checkout also slow down (shared thread pool)
+  6. Revenue loss: $150,000 in 30 minutes
+
+  Your downstream services:
+  - Product catalog (critical): 99.95% uptime, 50ms p99
+  - Inventory (critical): 99.9% uptime, 100ms p99
+  - Recommendations (nice-to-have): 99.5% uptime, 200ms p99
+  - Reviews (nice-to-have): 99.7% uptime, 150ms p99
+  - Pricing (critical): 99.95% uptime, 75ms p99
+
+  Task: Design the circuit breaker system. Write: the circuit breaker
+  configuration for each service (thresholds, timeouts, fallbacks),
+  the state machine (closed → open → half-open), the fallback
+  strategies for each service (what to return when the circuit is
+  open), the error responses when circuit breakers are active, and
+  the monitoring dashboard that shows circuit breaker state.
+
+assertions:
+  - type: llm_judge
+    criteria: "Circuit breaker design differentiates by criticality — critical services (catalog, inventory, pricing) have different thresholds and fallback strategies than nice-to-have services (recommendations, reviews). Nice-to-have services fail open with degraded responses, critical services may fail closed with proper error responses"
+    weight: 0.35
+    description: "Criticality-aware circuit breaker"
+  - type: llm_judge
+    criteria: "State machine is complete — defines closed (normal), open (failing fast), and half-open (testing recovery) states with specific thresholds (failure count/percentage, timeout window, half-open success count). Explains what triggers each state transition"
+    weight: 0.35
+    description: "Complete state machine"
+  - type: llm_judge
+    criteria: "Fallback strategies are practical — recommendations return empty array or cached data, reviews show 'reviews unavailable', critical service failures return clear error responses. Error responses indicate degraded mode to clients. Monitoring shows real-time circuit state"
+    weight: 0.30
+    description: "Practical fallback strategies"

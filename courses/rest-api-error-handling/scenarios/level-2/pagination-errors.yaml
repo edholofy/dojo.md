@@ -1,0 +1,66 @@
+meta:
+  id: pagination-errors
+  level: 2
+  course: rest-api-error-handling
+  type: output
+  description: "Handle pagination errors — design error responses for cursor-based and offset-based pagination edge cases"
+  tags: [REST, API, pagination, cursor, offset, edge-cases, intermediate]
+
+state: {}
+
+trigger: |
+  Your social media API supports both offset-based and cursor-based
+  pagination. Users are hitting confusing edge cases:
+
+  Bug reports this sprint:
+
+  1. Offset out of range: GET /posts?offset=999999&limit=20
+     Returns: 200 { "data": [], "total": 500 }
+     User says: "Is this an error? Should I get 404? How do I know
+     I've gone past the end?"
+
+  2. Negative offset: GET /posts?offset=-5&limit=20
+     Returns: 500 Internal Server Error (database throws)
+
+  3. Limit too large: GET /posts?limit=10000
+     Returns: 200 (but takes 45 seconds and OOMs the server)
+
+  4. Invalid cursor: GET /posts?cursor=abc123invalid
+     Returns: 200 { "data": [] }
+     User says: "Is the cursor expired or invalid? Same response
+     as 'no more data'."
+
+  5. Expired cursor: GET /posts?cursor=eyJ0...  (valid format but
+     references a deleted post)
+     Returns: 500 with database error
+
+  6. Both offset and cursor provided:
+     GET /posts?offset=10&cursor=eyJ0...
+     Returns: uses offset, ignores cursor (confusing)
+
+  7. Data changes during pagination: User fetches page 1, new posts
+     are added, page 2 has duplicates from page 1
+
+  8. Zero limit: GET /posts?limit=0
+     Returns: 200 { "data": [], "total": 500 }
+     (Wastes a database query)
+
+  Task: Design the error handling for all 8 pagination edge cases.
+  For each, decide: is it an error or expected behavior? What status
+  code? What response? Then write pagination error handling guidelines
+  that cover both offset-based and cursor-based approaches, including
+  the response format that helps clients paginate correctly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each of the 8 edge cases has a clear, reasoned response — 400 for invalid parameters (negative offset, zero limit, conflicting params), enforced max limit to prevent OOM, distinct responses for invalid vs expired cursors (not the same as 'no more data'), and offset-out-of-range returns empty array with metadata showing total"
+    weight: 0.35
+    description: "All 8 edge cases handled"
+  - type: llm_judge
+    criteria: "Pagination response format prevents client confusion — includes total count, has_more flag, next_cursor or next_offset, and clear indication when the client has reached the end of results. The format makes it impossible to confuse 'no more data' with 'invalid request'"
+    weight: 0.35
+    description: "Clear pagination format"
+  - type: llm_judge
+    criteria: "Guidelines cover both pagination styles — explains trade-offs between offset and cursor pagination, how each handles data consistency (the duplicate data problem), and recommends cursor-based for feeds/timelines and offset-based for stable datasets with known totals"
+    weight: 0.30
+    description: "Comprehensive pagination guidelines"

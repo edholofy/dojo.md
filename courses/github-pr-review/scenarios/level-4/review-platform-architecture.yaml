@@ -1,0 +1,64 @@
+meta:
+  id: review-platform-architecture
+  level: 4
+  course: github-pr-review
+  type: output
+  description: "Architect a review platform — design the technical architecture for a company-wide review automation and analytics platform"
+  tags: [github, pr-review, architecture, platform, automation, expert]
+
+state: {}
+
+trigger: |
+  You're the Staff Engineer tasked with building an internal "Review
+  Platform" — a centralized system that orchestrates code review across
+  your 600-engineer organization. The platform replaces a patchwork of
+  scripts, bots, and manual processes.
+
+  Platform requirements:
+  1. Unified reviewer assignment across all repos and GitHub orgs
+  2. Risk-based review routing (auto-classify PRs by risk level and
+     route to appropriate reviewers)
+  3. Real-time review analytics dashboard
+  4. Compliance audit trail generator
+  5. Integration with GitHub, GitLab, Slack, Jira, PagerDuty
+  6. AI-assisted review suggestions (flag potential issues before human
+     review)
+  7. Custom review workflows (different flows for different teams/repos)
+
+  Scale requirements:
+  - 200+ repos across 3 GitHub orgs
+  - 1,500 PRs per week
+  - 50ms p99 latency for webhook processing
+  - 99.9% uptime (review platform down = all merges blocked)
+  - 30-day event replay for debugging
+  - Horizontal scalability for 3x growth
+
+  Technical constraints:
+  - Must run on existing Kubernetes cluster
+  - Must use existing PostgreSQL and Redis infrastructure
+  - GitHub API rate limits: 5,000/hour per installation
+  - Must handle GitHub webhook delivery guarantees (at-least-once)
+  - Must support gradual rollout (repo by repo)
+
+  Task: Design the platform architecture. Write: the system design
+  (components, data flow, storage, event processing), the API design
+  (internal APIs for team customization), the scalability strategy
+  (how to handle 1,500 PRs/week within rate limits, horizontal scaling
+  plan), the reliability design (what happens when the platform is down,
+  circuit breakers, graceful degradation), and the deployment strategy
+  (gradual rollout, feature flags, rollback plan). Include architecture
+  diagrams (text-based) and key technical decisions with trade-offs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture handles the scale — event-driven design with webhook receivers, job queues, and workers that handle 1,500 PRs/week within API rate limits. Includes rate limit pooling across 3 GitHub orgs and back-pressure mechanisms"
+    weight: 0.35
+    description: "Scale-handling architecture"
+  - type: llm_judge
+    criteria: "Reliability is enterprise-grade — graceful degradation when platform is down (PRs can still be merged manually), circuit breakers for external services, idempotent webhook processing (at-least-once handling), and 30-day event replay for debugging"
+    weight: 0.35
+    description: "Enterprise-grade reliability"
+  - type: llm_judge
+    criteria: "Deployment strategy is low-risk — gradual rollout repo by repo, feature flags for each capability, rollback plan that doesn't disrupt ongoing reviews, and the platform can be disabled per-repo without affecting others"
+    weight: 0.30
+    description: "Low-risk deployment strategy"

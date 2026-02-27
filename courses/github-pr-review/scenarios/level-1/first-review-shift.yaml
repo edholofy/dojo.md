@@ -1,0 +1,58 @@
+meta:
+  id: first-review-shift
+  level: 1
+  course: github-pr-review
+  type: output
+  description: "First review shift — review a batch of 5 PRs with different sizes, types, and quality levels"
+  tags: [github, pr-review, shift-simulation, batch-review, basics]
+
+state: {}
+
+trigger: |
+  You're doing your first review shift. You have 5 PRs to review in
+  the next 2 hours. Prioritize and review each one.
+
+  PR #201 (2 hours old, 15 lines): "Hotfix: Fix null pointer in
+  payment webhook handler"
+  Author: Senior engineer. Fix for a production bug causing 2% of
+  webhook events to fail silently. The fix adds a null check. No tests
+  added. The author says "Need this merged ASAP — production impact."
+
+  PR #202 (1 day old, 300 lines): "Add user profile settings page"
+  Author: Mid-level engineer. New feature with React components, API
+  endpoint, and database migration. Tests cover the API but not the UI.
+  CI is green.
+
+  PR #203 (3 days old, 50 lines): "Update README with deployment docs"
+  Author: New team member (first week). Documentation-only PR. Has
+  some formatting issues and a few inaccurate commands.
+
+  PR #204 (4 hours old, 80 lines): "Upgrade React from 18 to 19"
+  Author: Tech lead. Major dependency upgrade. CI passes but there's
+  a deprecation warning in the build output. No functional changes in
+  the code.
+
+  PR #205 (2 days old, 500 lines): "Implement WebSocket notifications"
+  Author: Junior engineer. Large feature PR with no description, no
+  linked issue, and no tests. The code works but has potential memory
+  leaks (event listeners not cleaned up) and no authentication on the
+  WebSocket connection.
+
+  Task: Review all 5 PRs. Write: the review priority order (which to
+  review first and why), the review for each PR (decision, summary,
+  key feedback), and the shift summary (patterns noticed, anything
+  to flag for the team). Keep reviews proportional to PR importance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority order reflects urgency and risk — the production hotfix gets reviewed first, the security-risk WebSocket PR gets thorough attention, and documentation gets a lighter review"
+    weight: 0.35
+    description: "Urgency-reflecting priority order"
+  - type: llm_judge
+    criteria: "Reviews are proportional to risk — the hotfix gets a focused security/correctness review, the large WebSocket PR gets detailed feedback on memory leaks and auth, and the docs PR gets friendly, encouraging feedback for the new team member"
+    weight: 0.35
+    description: "Risk-proportional reviews"
+  - type: llm_judge
+    criteria: "Shift summary adds value — patterns across PRs are noted (e.g., test coverage gaps), the new team member's onboarding is supported, and actionable items for the team are flagged"
+    weight: 0.30
+    description: "Value-adding shift summary"

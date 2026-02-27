@@ -1,0 +1,68 @@
+meta:
+  id: compliance-automation
+  level: 3
+  course: github-actions-cicd
+  type: output
+  description: "Automate compliance in CI/CD — embed SOC 2, PCI DSS, and HIPAA controls into GitHub Actions workflows"
+  tags: [github, actions, compliance, SOC2, PCI-DSS, HIPAA, audit, advanced]
+
+state: {}
+
+trigger: |
+  Your fintech company processes healthcare payments (both PCI DSS and
+  HIPAA apply) and is pursuing SOC 2 Type II certification. The
+  auditors want to see that compliance controls are automated in CI/CD,
+  not just documented.
+
+  Required automated controls:
+
+  1. Change management (SOC 2 CC8.1):
+     - Every production change has an approved PR (no direct pushes)
+     - PR approval is from someone other than the author
+     - All CI checks pass before merge
+     - Deployment creates an auditable record (who, when, what, why)
+
+  2. Security testing (PCI DSS 6.5):
+     - SAST scan on every PR (CodeQL or Semgrep)
+     - Dependency vulnerability scan (Dependabot or Snyk)
+     - Secret scanning with push protection
+     - Container image scanning before deployment
+
+  3. Data protection (HIPAA):
+     - No PHI in logs (log sanitization check)
+     - Encryption verification (TLS, at-rest encryption config checks)
+     - Access audit log generation for every deployment
+
+  4. Evidence collection:
+     - All workflow runs produce compliance artifacts
+     - Artifacts are retained for 7 years (regulatory requirement)
+     - Evidence must be tamper-proof (signed, immutable)
+     - Monthly compliance report generation (automated)
+
+  Current gaps:
+  - Some repos don't have branch protection
+  - Security scans exist but are not required (can be skipped)
+  - No centralized compliance artifact storage
+  - Deployment audit logs are in plain text files, easy to modify
+
+  Task: Build the compliance automation pipeline. Write: the required
+  workflows (as organization-level required workflows), the branch
+  protection rulesets (org-wide enforcement), the security scan
+  configuration (CodeQL + Dependabot + secret scanning), the evidence
+  collection system (artifact storage, retention, signing), and the
+  monthly compliance report workflow. Include: the auditor-facing
+  documentation explaining how the automation satisfies each control.
+
+assertions:
+  - type: llm_judge
+    criteria: "Controls are automated correctly — organization-level required workflows enforce security scans on all repos, branch protection rulesets prevent self-merge and require CI, and deployment audit records are generated automatically with tamper-proof signatures"
+    weight: 0.35
+    description: "Correctly automated controls"
+  - type: llm_judge
+    criteria: "Evidence collection meets regulatory requirements — compliance artifacts are stored with 7-year retention (not default 90 days), artifacts are signed for tamper-proofing, and the monthly report aggregates compliance data across all repos"
+    weight: 0.35
+    description: "Regulatory-meeting evidence collection"
+  - type: llm_judge
+    criteria: "Auditor documentation maps controls to workflows — each SOC 2/PCI/HIPAA control has a corresponding workflow or configuration with evidence of automation, and the documentation would satisfy an auditor (not just an engineer)"
+    weight: 0.30
+    description: "Auditor-satisfying documentation"
