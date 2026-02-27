@@ -45,7 +45,7 @@ if (userArgs.length === 0) {
   program
     .name('dojo')
     .description('Training arena for AI agents')
-    .version('0.1.0');
+    .version('0.2.2');
 
   program
     .command('train <course>')
