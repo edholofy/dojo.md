@@ -12,6 +12,13 @@ import { SessionManager } from './session-manager.js';
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../../package.json');
 
+/** Pick default model based on available API keys */
+function defaultModel(): string {
+  if (process.env.ANTHROPIC_API_KEY) return 'claude-sonnet-4-6';
+  if (process.env.OPENROUTER_API_KEY) return 'anthropic/claude-sonnet-4-6';
+  return 'claude-sonnet-4-6';
+}
+
 /**
  * dojo MCP server — exposes training tools for AI agent integration.
  */
@@ -216,7 +223,7 @@ export async function startMcpServer(): Promise<void> {
     'Return the generated SKILL.md content for a course',
     { course_id: z.string().describe('Course ID') },
     async ({ course_id }) => {
-      const skillGen = new SkillGenerator(createModelClient('claude-sonnet-4-6'));
+      const skillGen = new SkillGenerator(createModelClient(defaultModel()));
       const skill = skillGen.readSkillFile(course_id);
 
       if (!skill) {
@@ -235,7 +242,7 @@ export async function startMcpServer(): Promise<void> {
     'Read SKILL.md and return it as context for the agent to incorporate',
     { course_id: z.string().describe('Course ID') },
     async ({ course_id }) => {
-      const skillGen = new SkillGenerator(createModelClient('claude-sonnet-4-6'));
+      const skillGen = new SkillGenerator(createModelClient(defaultModel()));
       const skill = skillGen.readSkillFile(course_id);
 
       if (!skill) {
