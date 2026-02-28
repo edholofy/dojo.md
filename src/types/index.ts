@@ -286,6 +286,46 @@ export interface SubmitResult {
   next?: ScenarioPrompt | null;
 }
 
+// ─── Arena Types ───────────────────────────────────────────────
+
+/** Full arena benchmark results */
+export interface ArenaResults {
+  courseId: string;
+  courseName: string;
+  judge: string;
+  timestamp: string;
+  level?: number;
+  models: ArenaModelResult[];
+}
+
+/** Per-model results in an arena run */
+export interface ArenaModelResult {
+  model: string;
+  displayName: string;
+  score: number;
+  passed: number;
+  failed: number;
+  total: number;
+  scenarioResults: ArenaScenarioResult[];
+}
+
+/** Per-scenario result for a single model */
+export interface ArenaScenarioResult {
+  scenarioId: string;
+  passed: boolean;
+  score: number;
+  assertions: ArenaAssertionDetail[];
+}
+
+/** Assertion detail for arena output */
+export interface ArenaAssertionDetail {
+  description: string;
+  type: string;
+  passed: boolean;
+  score?: number;
+  reasoning?: string;
+}
+
 /** What dojo_results returns after session completion */
 export interface FinalResults {
   session_id: string;

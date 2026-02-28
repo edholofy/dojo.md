@@ -42,6 +42,7 @@ Scenario YAML → Loader → Engine → Mock Layer → Evaluator → Skill Gener
 | `src/types/schemas.ts` | Zod schemas for YAML validation |
 | `src/engine/loader.ts` | Parse + validate YAML scenarios |
 | `src/engine/runner.ts` | Execute single scenario against mocks |
+| `src/engine/arena-runner.ts` | Arena benchmarking — multi-model fair comparison |
 | `src/engine/training.ts` | Orchestrate full training run (levels, eval, skill gen) |
 | `src/engine/training-loop.ts` | Auto-training loop with convergence detection |
 | `src/engine/agent-bridge.ts` | Drive agent via ModelClient + skill context injection |
@@ -115,6 +116,18 @@ courses/stripe-refunds/
 | `dojo add <course>` | Install a course |
 | `dojo remove <course>` | Remove a course |
 | `dojo generate <skill>` | Generate a course from a skill description |
+| `dojo arena <course>` | Benchmark multiple models on the same course |
+| `dojo arena <course> --models m1,m2,m3` | Arena with custom model list |
+| `dojo arena <course> -l 1 -o results.json` | Arena on Level 1, custom output |
+
+### Arena Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--models <m1,m2,...>` | Comma-separated model list | 5 top models |
+| `-j, --judge <model>` | Shared judge model | `claude-sonnet-4-6` |
+| `-l, --level <n>` | Run specific level only | all |
+| `-o, --output <path>` | Output JSON path | `arena-<course>-<timestamp>.json` |
 
 ### Train Options
 
@@ -132,9 +145,33 @@ courses/stripe-refunds/
 | Input | Provider | Model |
 |-------|----------|-------|
 | `claude-sonnet-4-6` | Anthropic | `claude-sonnet-4-6` |
-| `openai/gpt-4o` | OpenRouter | `openai/gpt-4o` |
-| `meta-llama/llama-3.1-70b` | OpenRouter | `meta-llama/llama-3.1-70b` |
+| `openai/gpt-5.2` | OpenRouter | `openai/gpt-5.2` |
+| `google/gemini-3-flash-preview` | OpenRouter | `google/gemini-3-flash-preview` |
+| `deepseek/deepseek-v3.2` | OpenRouter | `deepseek/deepseek-v3.2` |
+| `openrouter/google/gemini-pro-1.5` | OpenRouter | `google/gemini-pro-1.5` (prefix stripped) |
 | `openrouter:anthropic/claude-sonnet-4-6` | OpenRouter (forced) | `anthropic/claude-sonnet-4-6` |
+
+### Popular OpenRouter Models
+
+| Model | Name |
+|-------|------|
+| `anthropic/claude-opus-4-6` | Claude Opus 4.6 |
+| `anthropic/claude-sonnet-4-6` | Claude Sonnet 4.6 |
+| `openai/gpt-5.2` | GPT-5.2 |
+| `openai/gpt-5-mini` | GPT-5 Mini |
+| `openai/gpt-5-nano` | GPT-5 Nano |
+| `google/gemini-3-flash-preview` | Gemini 3 Flash |
+| `google/gemini-3.1-pro-preview` | Gemini 3.1 Pro |
+| `google/gemini-2.5-pro` | Gemini 2.5 Pro |
+| `google/gemini-2.5-flash` | Gemini 2.5 Flash |
+| `deepseek/deepseek-v3.2` | DeepSeek V3.2 |
+| `x-ai/grok-4.1-fast` | Grok 4.1 Fast |
+| `minimax/minimax-m2.5` | MiniMax M2.5 |
+| `moonshotai/kimi-k2.5` | Kimi K2.5 |
+| `qwen/qwen3-235b-a22b-instruct-2507` | Qwen3 235B |
+| `mistralai/mistral-nemo` | Mistral Nemo |
+| `meta-llama/llama-3.3-70b-instruct` | Llama 3.3 70B |
+| `xiaomi/mimo-v2-flash` | MiMo V2 Flash |
 
 ## MCP Integration
 

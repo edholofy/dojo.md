@@ -18,6 +18,7 @@ import { addCommand } from './commands/add.js';
 import { removeCommand } from './commands/remove.js';
 import { retrainCommand } from './commands/retrain.js';
 import { generateCommand } from './commands/generate.js';
+import { arenaCommand } from './commands/arena.js';
 import { startMcpServer } from '../mcp/server.js';
 import { discoverAllCourses } from '../engine/loader.js';
 
@@ -106,6 +107,15 @@ if (userArgs.length === 0) {
     .option('-v, --verbose', 'Show detailed output')
     .option('--batch <file>', 'Batch mode: read skills from file (one per line)')
     .action(generateCommand);
+
+  program
+    .command('arena <course>')
+    .description('Benchmark multiple models on the same course (fair comparison)')
+    .option('--models <models>', 'Comma-separated model list (default: 5 top models)')
+    .option('-j, --judge <model>', 'Judge model (default: claude-sonnet-4-6)')
+    .option('-l, --level <number>', 'Run only a specific level', parseInt)
+    .option('-o, --output <path>', 'Output JSON path (default: arena-<course>-<timestamp>.json)')
+    .action(arenaCommand);
 
   program
     .command('mcp')

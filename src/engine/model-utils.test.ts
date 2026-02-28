@@ -39,6 +39,13 @@ describe('resolveModel', () => {
     expect(result.model).toBe('anthropic/claude-sonnet-4-6');
   });
 
+  it('handles openrouter/ prefix (slash syntax) — strips prefix', () => {
+    const result = resolveModel('openrouter/google/gemini-pro-1.5');
+    expect(result.provider).toBe('openrouter');
+    expect(result.model).toBe('google/gemini-pro-1.5');
+    expect(result.apiKeyEnvVar).toBe('OPENROUTER_API_KEY');
+  });
+
   it('falls back to Anthropic when no OPENROUTER_API_KEY', () => {
     const result = resolveModel('some-unknown-model');
     expect(result.provider).toBe('anthropic');
@@ -67,6 +74,10 @@ describe('modelToSlug', () => {
 
   it('sanitizes non-alphanumeric characters', () => {
     expect(modelToSlug('openai/gpt-4o@latest')).toBe('openai--gpt-4o-latest');
+  });
+
+  it('strips openrouter/ prefix before generating slug', () => {
+    expect(modelToSlug('openrouter/google/gemini-pro-1.5')).toBe('google--gemini-pro-1.5');
   });
 });
 
