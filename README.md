@@ -1,84 +1,96 @@
 # dojo.md
 
-[![CI](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml/badge.svg)](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml)
+<p align="center">
+  <img src="hero.svg" alt="dojo.md — University for AI agents" width="100%"/>
+</p>
 
-Training arena for AI agents. Run scenarios, find failures, generate SKILL.md documents that make agents better — no fine-tuning required.
+**University for AI agents.**
+
+Train any model through scenario-based courses. Graduate with a [SKILL.md](https://agentskills.io) — portable expertise that makes agents reliable in production. No fine-tuning. No weight modification. Just knowledge, distilled and proven.
+
+[![npm](https://img.shields.io/npm/v/dojo.md)](https://www.npmjs.com/package/dojo.md) [![CI](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml/badge.svg)](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](https://opensource.org/licenses/MIT)
+
+> *Works with Claude Code, OpenClaw, Cursor, Windsurf, and any MCP-compatible agent framework.*
 
 ```
-Scenario YAML → Engine → Mock Services → Evaluator → SKILL.md
-                              ↕               ↕
-                          SQLite DB      Judge Model
+dojo train stripe-refunds --model openai/gpt-4o --target 85
+
+Level 1: ████████████ 3/3 (100%)
+Level 2: ████████░░░░ 2/3 (67%)
+Score: 83/100
+
+Domain knowledge distilled:
+  → "Verify customer identity before ANY charge lookup"
+  → "Duplicate charges within 5 min window = single refund"
+  → "Always explain refund timeline (5-10 business days)"
+
+SKILL.md written → .claude/skills/stripe-refunds/openai--gpt-4o/SKILL.md
 ```
 
-## What It Does
+## The Problem
 
-1. **Runs agents through scenarios** — YAML-defined test cases with mock services (Stripe, etc.)
-2. **Judges performance** — deterministic assertions + LLM-judged criteria
-3. **Finds failure patterns** — clusters errors into categories (wrong tool, missing validation, etc.)
-4. **Generates SKILL.md** — structured corrective knowledge injected into the agent's context
-5. **Auto-retrains** — loops until target score or plateau, improving each iteration
+AI agents are unreliable in production. They demo well but fail on edge cases, skip validation steps, call wrong tools, and miss domain-specific knowledge that practitioners take for granted. Fine-tuning is expensive, slow, and model-locked. Prompt engineering is fragile and doesn't scale.
 
-The output is a [SKILL.md](https://agentskills.io) document that makes the agent better at that specific task, without touching model weights.
+## The Solution
+
+dojo.md runs agents through progressively difficult scenarios, evaluates them with a hybrid deterministic + LLM-judged assertion system, extracts both failure corrections AND curriculum knowledge from the course itself, and distills everything into a SKILL.md document that gets injected into the agent's context.
+
+The SKILL.md is a **knowledge graduation document** — not just corrections. Even an agent scoring 100% graduates with a SKILL.md, because the domain expertise embedded in the course (specific thresholds, counter-intuitive strategies, platform rules) has standalone value.
+
+```
+Scenario YAML → Engine → Mock Services → Evaluator → Skill Generator
+                              ↕               ↕              ↕
+                          Isolated        LLM Judge    extractCurriculum()
+                          State           + Deterministic    ↓
+                                          Assertions    SKILL.md
+```
 
 ## Quick Start
 
 ```bash
-# Install
 npm install -g dojo.md
 
-# Set API key
-export ANTHROPIC_API_KEY=sk-ant-...
+export ANTHROPIC_API_KEY=sk-ant-...    # For Claude models
+export OPENROUTER_API_KEY=sk-or-...    # For OpenRouter models
 
-# Train on a course
+# Train Claude on customer support
 dojo train stripe-refunds
-```
 
-Output:
-```
-Level 1: ████████████ 3/3 (100%)
-Level 2: ██████░░░░░░ 1.5/3 (50%)
-Score: 75/100
-
-Failure patterns:
-  [critical] missed_edge_case: Failed to detect duplicate charges
-  [high] incomplete_resolution: Did not explain refund timeline
-
-SKILL.md written → .claude/skills/stripe-refunds/SKILL.md
-```
-
-## Multi-Model Support
-
-Train any model via [OpenRouter](https://openrouter.ai). Each model gets its own SKILL.md because different models fail differently.
-
-```bash
-# Train GPT-4o, judged by Claude Sonnet
+# Train GPT-4o, judged by Claude
 dojo train stripe-refunds --model openai/gpt-4o --judge claude-sonnet-4-6
 
-# Train Llama
-dojo train stripe-refunds --model meta-llama/llama-3.1-70b
-
-# Force a model through OpenRouter even if it's Anthropic
-dojo train stripe-refunds --model openrouter:anthropic/claude-sonnet-4-6
+# Auto-loop until 90% or plateau
+dojo train stripe-refunds --model openai/gpt-4o --target 90
 ```
 
-Per-model SKILL.md paths:
+## Why It Works
+
+### Two data streams, one artifact
+
+| Source | What it captures | When present |
+|--------|-----------------|--------------|
+| **Failure patterns** | What the agent *struggled with* — wrong tools, missing validation, missed edge cases | When score < 100 |
+| **Curriculum extraction** | What the course *intended to teach* — domain knowledge from assertion criteria | Always |
+
+At 92/100, your SKILL.md contains the domain knowledge from all scenarios PLUS specific corrections for the 8-point gap. At 100/100, it contains pure domain expertise — the graduation diploma.
+
+### Per-model skills
+
+Different models fail differently. Claude misses edge cases. GPT-4o picks wrong tools. Llama hallucinates parameters. Each gets its own SKILL.md:
+
 ```
 .claude/skills/stripe-refunds/
-├── anthropic--claude-sonnet-4-6/SKILL.md
-├── openai--gpt-4o/SKILL.md
-└── meta-llama--llama-3.1-70b/SKILL.md
+├── anthropic--claude-sonnet-4-6/SKILL.md    # Claude's blind spots
+├── openai--gpt-4o/SKILL.md                  # GPT-4o's blind spots
+└── meta-llama--llama-3.1-70b/SKILL.md       # Llama's blind spots
 ```
 
-## Auto-Training Loop
+### Auto-training loop
 
-Set a target score and dojo loops automatically: train → evaluate → generate SKILL.md → retrain with SKILL.md injected → repeat.
+Set a target. Dojo loops: train → evaluate → generate SKILL.md → re-inject → retrain. Stops on target reached, plateau, or max iterations.
 
 ```bash
-# Loop until 85/100 or plateau
-dojo train stripe-refunds --model openai/gpt-4o --target 85
-
-# Limit iterations
-dojo train stripe-refunds --model openai/gpt-4o --target 90 --max-retrain 3
+dojo train stripe-refunds --model openai/gpt-4o --target 85 --max-retrain 5
 ```
 
 ```
@@ -86,83 +98,136 @@ Iteration 1: 25/100
 Iteration 2: 50/100 (+25) — SKILL.md injected
 Iteration 3: 68/100 (+18)
 Iteration 4: 72/100 (+4) — plateau detected, stopping
-
-SKILL.md written → .claude/skills/stripe-refunds/openai--gpt-4o/SKILL.md
 ```
 
-Convergence stops when:
-- Target score reached
-- Plateau detected (<5 point improvement for 2 consecutive iterations)
-- Max iterations reached
+## Any Model
 
-## Environment
-
-Create a `.env` file (gitignored):
+Train any model via [OpenRouter](https://openrouter.ai). 200+ models supported:
 
 ```bash
-# Required for Anthropic models (claude-*)
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Required for OpenRouter models (openai/gpt-4o, meta-llama/*, etc.)
-OPENROUTER_API_KEY=sk-or-...
+dojo train cold-email-b2b --model openai/gpt-4o
+dojo train cold-email-b2b --model google/gemini-2.5-pro
+dojo train cold-email-b2b --model meta-llama/llama-3.3-70b-instruct
+dojo train cold-email-b2b --model deepseek/deepseek-v3.2
+dojo train cold-email-b2b --model x-ai/grok-4.1-fast
 ```
 
-Load before running:
+## 47 Pre-Built Courses
+
+Agents graduate with domain expertise across:
+
+**Customer Support** — stripe-refunds, escalation handling, churn prevention, SLA breach communication, onboarding sequences
+
+**Sales** — cold email B2B, objection handling, proposal writing, competitive battlecards, follow-up sequences
+
+**Marketing** — Google Ads copy, Meta/Facebook ads, SEO blog writing, social media content, email campaigns
+
+**DevOps** — incident response, deployment alerts, bug triage, GitHub issue management
+
+**Content** — newsletter writing, Twitter/X threads, product launches, brand voice documentation
+
 ```bash
-source .env && dojo train stripe-refunds
+dojo list                    # See all courses
+dojo generate "Handle Zendesk ticket routing and priority assignment"  # Create your own
 ```
 
-Or use `dotenv` (loaded automatically if `.env` is in cwd).
+## Works With Everything
+
+dojo.md generates [AgentSkills](https://agentskills.io)-standard SKILL.md files. They work anywhere skills work.
+
+### Claude Code
+
+Train agents from inside your IDE. dojo.md is an MCP server:
+
+```json
+{
+  "mcpServers": {
+    "dojo": {
+      "command": "npx",
+      "args": ["tsx", "path/to/dojomd/src/mcp/server.ts"],
+      "env": { "ANTHROPIC_API_KEY": "sk-ant-..." }
+    }
+  }
+}
+```
+
+MCP tools: `dojo_discover`, `dojo_train`, `dojo_results`, `dojo_skill`, `dojo_apply` — full training workflow without leaving your editor.
+
+### OpenClaw
+
+Drop your graduated SKILL.md into OpenClaw's skill directory and your agent has instant domain expertise. dojo.md skills follow the same AgentSkills standard that OpenClaw uses — they're cross-compatible by design.
+
+```bash
+# Train a skill
+dojo train stripe-refunds --model claude-sonnet-4-6
+
+# Graduated SKILL.md is ready for OpenClaw, Claude Code, Cursor, Windsurf, or any MCP agent
+cat .claude/skills/stripe-refunds/anthropic--claude-sonnet-4-6/SKILL.md
+```
+
+ClawHub has 13,000+ community skills. The difference: **dojo skills are earned, not written.** Every SKILL.md that comes out of dojo has a training score, scenarios it was validated against, and failure patterns it addresses. It's a diploma, not a blog post.
+
+### Cursor, Windsurf, and any MCP-compatible agent
+
+Same MCP server config. Same SKILL.md output. The skills are portable — train once, use everywhere.
+
+## The SKILL.md Standard
+
+Generated skills follow the [Anthropic Agent Skills](https://agentskills.io) open standard. Portable across any MCP-compatible framework:
+
+```markdown
+---
+name: stripe-refunds
+description: >-
+  Handle Stripe refund requests correctly. Use when processing
+  refunds, duplicate charges, or customer disputes.
+---
+
+## Domain Knowledge
+[Non-obvious insights distilled from training curriculum]
+
+## Quick Start
+[Most common failure, corrected]
+
+## Core Rules
+[Freedom-calibrated: ALWAYS/step-by-step/prefer]
+
+## Decision Tree
+[If/then branching logic]
+
+## Edge Cases
+[Every trap, with correct handling]
+
+## Anti-Patterns
+[DON'T X. Instead, Y.]
+```
+
+The `description` triggers loading — ~100 tokens idle, ~5,000 tokens when activated. Progressive disclosure keeps context clean.
 
 ## CLI Reference
 
 | Command | Description |
 |---------|-------------|
 | `dojo train <course>` | Run training session |
-| `dojo retrain <course>` | Auto-loop with defaults (target 90, max 5 iterations) |
-| `dojo results [course]` | Show latest run results |
+| `dojo train <course> -m openai/gpt-4o -j claude-sonnet-4-6 -t 85` | Full multi-model auto-loop |
+| `dojo retrain <course>` | Auto-loop with defaults (target 90, max 5) |
+| `dojo arena <course>` | Benchmark multiple models head-to-head |
+| `dojo results [course]` | Show latest results |
 | `dojo list` | List installed courses |
-| `dojo add <path>` | Install a course from directory |
-| `dojo remove <course>` | Remove an installed course |
-| `dojo generate <skill>` | Generate a course from a skill description |
+| `dojo generate <skill>` | Generate a course from description |
 
 ### Train Options
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `-m, --model <model>` | Agent model | `claude-sonnet-4-6` |
-| `-j, --judge <model>` | Judge model | `claude-sonnet-4-6` |
-| `-t, --target <score>` | Target score (enables auto-loop) | — |
-| `--max-retrain <n>` | Max loop iterations | `5` |
-| `--level <n>` | Run specific level only | all |
-| `-v, --verbose` | Detailed output | `false` |
-| `--report <path>` | Save report to file | — |
+| `-m, --model` | Agent model | `claude-sonnet-4-6` |
+| `-j, --judge` | Judge model | `claude-sonnet-4-6` |
+| `-t, --target` | Target score (enables auto-loop) | — |
+| `--max-retrain` | Max loop iterations | `5` |
+| `--level` | Run specific level only | all |
+| `--report` | Save detailed report | — |
 
-### Generate Options
-
-```bash
-# Generate a single course
-dojo generate "Handle Stripe subscription cancellations and prorations"
-
-# Batch generate from file
-dojo generate --batch skills.txt
-```
-
-## Course Structure
-
-```
-courses/stripe-refunds/
-├── course.yaml                    # Course metadata
-└── scenarios/
-    ├── level-1/
-    │   ├── simple-refund.yaml
-    │   └── customer-not-found.yaml
-    └── level-2/
-        ├── duplicate-charge.yaml
-        └── partial-refund.yaml
-```
-
-### Scenario Format
+## Scenario Format
 
 ```yaml
 meta:
@@ -170,8 +235,7 @@ meta:
   level: 1
   course: stripe-refunds
   description: Process a straightforward refund
-  tags: [refund, happy-path]
-  type: tool  # or 'output' for text generation
+  type: tool
 
 state:
   customers:
@@ -181,143 +245,49 @@ state:
   charges:
     - id: ch_001
       amount: 5000
-      currency: usd
       customer: cus_001
       status: succeeded
-      refunded: false
-      amount_refunded: 0
 
 trigger: >
-  Customer Alice Johnson (cus_001) is requesting a refund
-  for charge ch_001 ($50.00).
+  Customer Alice Johnson (cus_001) is requesting
+  a refund for charge ch_001 ($50.00).
 
 assertions:
   - type: api_called
     tool: stripe_customers_retrieve
-    description: Should verify customer identity
+    description: Verify customer identity
   - type: api_called
     tool: stripe_refunds_create
-    params:
-      charge: ch_001
-    description: Should create the refund
-  - type: outcome
-    expected: Agent confirms the refund was processed
-    description: Should communicate success to customer
+    params: { charge: ch_001 }
+    description: Create the refund
+  - type: llm_judge
+    criteria: >
+      Agent confirms refund was processed and explains
+      the 5-10 business day timeline for the credit
+      to appear on the customer's statement.
+    description: Communicate success with timeline
 ```
-
-### Assertion Types
-
-| Type | Category | Description |
-|------|----------|-------------|
-| `api_called` | Deterministic | Verify a tool was called with params |
-| `api_not_called` | Deterministic | Verify a tool was NOT called |
-| `response_contains` | Deterministic | Check for keywords in response |
-| `outcome` | LLM-judged | Judge overall outcome quality |
-| `state_changed` | LLM-judged | Judge mock state mutations |
-| `llm_judge` | LLM-judged | Score text output (0-100) against rubric |
-
-## MCP Server
-
-dojo.md exposes an MCP server for integration with Claude Code, Cursor, Windsurf, and other MCP-compatible tools.
-
-Add to your Claude Code config (`~/.claude.json`):
-
-```json
-{
-  "mcpServers": {
-    "dojo": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/dojomd/src/mcp/server.ts"],
-      "env": {
-        "ANTHROPIC_API_KEY": "sk-ant-..."
-      }
-    }
-  }
-}
-```
-
-### MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `dojo_discover` | List available courses |
-| `dojo_preview` | Preview course scenarios and levels |
-| `dojo_train` | Start training (interactive or headless) |
-| `dojo_tool` | Execute a tool call in an active session |
-| `dojo_submit` | Submit response for evaluation |
-| `dojo_results` | Get training results and failure patterns |
-| `dojo_skill` | Generate SKILL.md from results |
-| `dojo_apply` | Get SKILL.md content for context injection |
-
-## Course Library
-
-47 pre-built courses across domains:
-
-- **Customer Support**: stripe-refunds, customer-support-escalation, sla-breach-communication
-- **Sales**: cold-email-b2b, sales-proposal-writing, sales-objection-handling
-- **Marketing**: ad-copy-google-ads, ad-copy-meta-facebook, blog-post-seo-writing
-- **Legal**: contract-review-saas, privacy-policy-compliance
-- **DevOps**: incident-response, github-issue-triage
-- **Content**: newsletter-writing, youtube-thumbnail-design, social-media-content
-
-Run `dojo list` to see all available courses.
 
 ## Development
 
 ```bash
-git clone https://github.com/eduardcristea/dojo.md
+git clone https://github.com/edholofy/dojo.md
 cd dojo.md
 npm install
 npm run build
 npm test
 
-# Run CLI in dev mode
+# Dev mode
 npm run dev -- train stripe-refunds
 ```
 
-### Project Structure
+## Mission
 
-```
-src/
-├── cli/          # CLI commands (Commander.js)
-├── engine/       # Core engine, agent bridge, model clients, training loop
-├── evaluator/    # Deterministic + LLM-judged assertions
-├── generator/    # SKILL.md and course generation
-├── mocks/        # Mock service handlers (Stripe)
-├── mcp/          # MCP server
-├── recorder/     # SQLite persistence
-└── types/        # TypeScript types + Zod schemas
-```
+**Turn experience into expertise for AI agents.**
 
-## How SKILL.md Works
-
-Generated SKILL.md documents follow the [Anthropic Agent Skills](https://agentskills.io) standard:
-
-```markdown
----
-name: stripe-refunds
-description: >-
-  Handle Stripe refund requests correctly, avoiding common failure modes.
-  Use when processing refunds, duplicate charges, or customer disputes.
----
-
-## Quick Start
-[Most common failure, corrected]
-
-## Core Rules
-[One rule per high-impact failure pattern]
-
-## Decision Tree
-[If/then logic for branching points]
-
-## Edge Cases
-[Every scenario the agent failed, with correct handling]
-
-## Anti-Patterns
-[DON'T X. Instead, Y.]
-```
-
-The `description` field triggers loading — when an agent encounters a matching task, the full SKILL.md body (~5,000 tokens) is injected into context. This progressive disclosure keeps idle cost at ~100 tokens (frontmatter only).
+Today: Author courses, train models, graduate with SKILL.md.
+Tomorrow: Production feedback loops that generate new scenarios from real failures.
+Future: The open knowledge layer for agent expertise — proven, portable, model-agnostic.
 
 ## License
 
