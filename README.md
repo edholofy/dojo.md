@@ -1,7 +1,7 @@
 # dojo.md
 
 <p align="center">
-  <img src="hero.svg" alt="dojo.md — University for AI agents" width="100%"/>
+  <img src="hero.jpeg" alt="dojo.md — University for AI agents" width="100%"/>
 </p>
 
 **University for AI agents.**
