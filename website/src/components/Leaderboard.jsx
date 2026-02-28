@@ -16,6 +16,9 @@ const SCENARIO_NAMES = {
 
 const SCENARIO_IDS = Object.keys(SCENARIO_NAMES);
 
+/* ── GitHub base URL for SKILL.md files ── */
+const SKILL_BASE = 'https://github.com/edholofy/dojo.md/blob/main/.claude/skills/ad-copy-google-ads';
+
 /* ── Arena results data (ad-copy-google-ads, Level 1) ── */
 const ARENA_DATA = {
   course: 'Ad Copy Writing for Google Ads',
@@ -26,36 +29,49 @@ const ARENA_DATA = {
   scenarios: 10,
   models: [
     {
-      name: 'Claude Opus 4.6', model: 'anthropic/claude-opus-4-6', score: 84, passed: 6, total: 10, cost: '$5 / $25',
-      results: { 'ad-copy-formulas': [80, false], 'ad-extensions-copy': [86, true], 'complete-search-ad': [73, false], 'cta-and-urgency': [86, false], 'dynamic-keyword-insertion': [82, true], 'google-ads-copy-mistakes': [94, true], 'quality-score-fundamentals': [89, true], 'rsa-description-writing': [83, true], 'rsa-headline-writing': [78, false], 'search-intent-matching': [86, true] },
+      name: 'Claude Opus 4.6', model: 'anthropic/claude-opus-4-6', score: 84, skillScore: 92, cost: '$5 / $25',
+      skillSlug: 'anthropic--claude-opus-4-6',
+      results: { 'ad-copy-formulas': [80], 'ad-extensions-copy': [86], 'complete-search-ad': [73], 'cta-and-urgency': [86], 'dynamic-keyword-insertion': [82], 'google-ads-copy-mistakes': [94], 'quality-score-fundamentals': [89], 'rsa-description-writing': [83], 'rsa-headline-writing': [78], 'search-intent-matching': [86] },
     },
     {
-      name: 'Claude Sonnet 4.6', model: 'anthropic/claude-sonnet-4-6', score: 84, passed: 4, total: 10, cost: '$3 / $15',
-      results: { 'ad-copy-formulas': [81, false], 'ad-extensions-copy': [68, false], 'complete-search-ad': [76, false], 'cta-and-urgency': [85, false], 'dynamic-keyword-insertion': [92, true], 'google-ads-copy-mistakes': [94, true], 'quality-score-fundamentals': [92, true], 'rsa-description-writing': [79, false], 'rsa-headline-writing': [82, false], 'search-intent-matching': [90, true] },
+      name: 'Claude Sonnet 4.6', model: 'anthropic/claude-sonnet-4-6', score: 84, skillScore: 92, cost: '$3 / $15',
+      skillSlug: 'anthropic--claude-sonnet-4-6',
+      results: { 'ad-copy-formulas': [81], 'ad-extensions-copy': [68], 'complete-search-ad': [76], 'cta-and-urgency': [85], 'dynamic-keyword-insertion': [92], 'google-ads-copy-mistakes': [94], 'quality-score-fundamentals': [92], 'rsa-description-writing': [79], 'rsa-headline-writing': [82], 'search-intent-matching': [90] },
     },
     {
-      name: 'GLM 5', model: 'z-ai/glm-5', score: 79, passed: 4, total: 10, cost: '$0.95 / $2.55',
-      results: { 'ad-copy-formulas': [74, false], 'ad-extensions-copy': [72, false], 'complete-search-ad': [77, false], 'cta-and-urgency': [78, false], 'dynamic-keyword-insertion': [87, true], 'google-ads-copy-mistakes': [86, true], 'quality-score-fundamentals': [87, true], 'rsa-description-writing': [74, false], 'rsa-headline-writing': [69, false], 'search-intent-matching': [88, true] },
+      name: 'GPT-5.2', model: 'openai/gpt-5.2', score: 82, skillScore: 89, cost: '$2 / $10',
+      skillSlug: 'openai--gpt-5.2',
+      results: { 'ad-copy-formulas': [78], 'ad-extensions-copy': [82], 'complete-search-ad': [76], 'cta-and-urgency': [83], 'dynamic-keyword-insertion': [85], 'google-ads-copy-mistakes': [90], 'quality-score-fundamentals': [86], 'rsa-description-writing': [80], 'rsa-headline-writing': [75], 'search-intent-matching': [85] },
     },
     {
-      name: 'Gemini 3 Flash', model: 'google/gemini-3-flash-preview', score: 76, passed: 3, total: 10, cost: '$0.50 / $3',
-      results: { 'ad-copy-formulas': [69, false], 'ad-extensions-copy': [74, false], 'complete-search-ad': [75, false], 'cta-and-urgency': [75, false], 'dynamic-keyword-insertion': [72, false], 'google-ads-copy-mistakes': [83, true], 'quality-score-fundamentals': [78, false], 'rsa-description-writing': [84, true], 'rsa-headline-writing': [74, false], 'search-intent-matching': [80, true] },
+      name: 'GLM 5', model: 'z-ai/glm-5', score: 79, skillScore: 86, cost: '$0.95 / $2.55',
+      skillSlug: 'z-ai--glm-5',
+      results: { 'ad-copy-formulas': [74], 'ad-extensions-copy': [72], 'complete-search-ad': [77], 'cta-and-urgency': [78], 'dynamic-keyword-insertion': [87], 'google-ads-copy-mistakes': [86], 'quality-score-fundamentals': [87], 'rsa-description-writing': [74], 'rsa-headline-writing': [69], 'search-intent-matching': [88] },
     },
     {
-      name: 'MiniMax M2.5', model: 'minimax/minimax-m2.5', score: 73, passed: 3, total: 10, cost: '$0.30 / $1.20',
-      results: { 'ad-copy-formulas': [79, false], 'ad-extensions-copy': [70, false], 'complete-search-ad': [68, false], 'cta-and-urgency': [74, false], 'dynamic-keyword-insertion': [69, false], 'google-ads-copy-mistakes': [91, true], 'quality-score-fundamentals': [87, true], 'rsa-description-writing': [58, false], 'rsa-headline-writing': [56, false], 'search-intent-matching': [82, true] },
+      name: 'Gemini 3 Flash', model: 'google/gemini-3-flash-preview', score: 76, skillScore: 83, cost: '$0.50 / $3',
+      skillSlug: 'google--gemini-3-flash-preview',
+      results: { 'ad-copy-formulas': [69], 'ad-extensions-copy': [74], 'complete-search-ad': [75], 'cta-and-urgency': [75], 'dynamic-keyword-insertion': [72], 'google-ads-copy-mistakes': [83], 'quality-score-fundamentals': [78], 'rsa-description-writing': [84], 'rsa-headline-writing': [74], 'search-intent-matching': [80] },
     },
     {
-      name: 'Grok 4.1 Fast', model: 'x-ai/grok-4.1-fast', score: 73, passed: 3, total: 10, cost: '$0.20 / $0.50',
-      results: { 'ad-copy-formulas': [73, false], 'ad-extensions-copy': [84, true], 'complete-search-ad': [66, false], 'cta-and-urgency': [75, false], 'dynamic-keyword-insertion': [65, false], 'google-ads-copy-mistakes': [83, true], 'quality-score-fundamentals': [88, true], 'rsa-description-writing': [60, false], 'rsa-headline-writing': [67, false], 'search-intent-matching': [70, false] },
+      name: 'MiniMax M2.5', model: 'minimax/minimax-m2.5', score: 73, skillScore: 79, cost: '$0.30 / $1.20',
+      skillSlug: 'minimax--minimax-m2.5',
+      results: { 'ad-copy-formulas': [79], 'ad-extensions-copy': [70], 'complete-search-ad': [68], 'cta-and-urgency': [74], 'dynamic-keyword-insertion': [69], 'google-ads-copy-mistakes': [91], 'quality-score-fundamentals': [87], 'rsa-description-writing': [58], 'rsa-headline-writing': [56], 'search-intent-matching': [82] },
     },
     {
-      name: 'DeepSeek V3.2', model: 'deepseek/deepseek-v3.2', score: 71, passed: 2, total: 10, cost: '$0.25 / $0.40',
-      results: { 'ad-copy-formulas': [70, false], 'ad-extensions-copy': [63, false], 'complete-search-ad': [67, false], 'cta-and-urgency': [74, false], 'dynamic-keyword-insertion': [65, false], 'google-ads-copy-mistakes': [79, true], 'quality-score-fundamentals': [80, false], 'rsa-description-writing': [64, false], 'rsa-headline-writing': [60, false], 'search-intent-matching': [83, true] },
+      name: 'Grok 4.1 Fast', model: 'x-ai/grok-4.1-fast', score: 73, skillScore: 78, cost: '$0.20 / $0.50',
+      skillSlug: 'x-ai--grok-4.1-fast',
+      results: { 'ad-copy-formulas': [73], 'ad-extensions-copy': [84], 'complete-search-ad': [66], 'cta-and-urgency': [75], 'dynamic-keyword-insertion': [65], 'google-ads-copy-mistakes': [83], 'quality-score-fundamentals': [88], 'rsa-description-writing': [60], 'rsa-headline-writing': [67], 'search-intent-matching': [70] },
     },
     {
-      name: 'Kimi K2.5', model: 'moonshotai/kimi-k2.5', score: 71, passed: 2, total: 10, cost: '$0.45 / $2.20',
-      results: { 'ad-copy-formulas': [82, true], 'ad-extensions-copy': [78, false], 'complete-search-ad': [82, false], 'cta-and-urgency': [84, false], 'dynamic-keyword-insertion': [75, false], 'google-ads-copy-mistakes': [85, true], 'quality-score-fundamentals': [0, false], 'rsa-description-writing': [74, false], 'rsa-headline-writing': [75, false], 'search-intent-matching': [78, false] },
+      name: 'DeepSeek V3.2', model: 'deepseek/deepseek-v3.2', score: 71, skillScore: 76, cost: '$0.25 / $0.40',
+      skillSlug: 'deepseek--deepseek-v3.2',
+      results: { 'ad-copy-formulas': [70], 'ad-extensions-copy': [63], 'complete-search-ad': [67], 'cta-and-urgency': [74], 'dynamic-keyword-insertion': [65], 'google-ads-copy-mistakes': [79], 'quality-score-fundamentals': [80], 'rsa-description-writing': [64], 'rsa-headline-writing': [60], 'search-intent-matching': [83] },
+    },
+    {
+      name: 'Kimi K2.5', model: 'moonshotai/kimi-k2.5', score: 71, skillScore: 75, cost: '$0.45 / $2.20',
+      skillSlug: 'moonshotai--kimi-k2.5',
+      results: { 'ad-copy-formulas': [82], 'ad-extensions-copy': [78], 'complete-search-ad': [82], 'cta-and-urgency': [84], 'dynamic-keyword-insertion': [75], 'google-ads-copy-mistakes': [85], 'quality-score-fundamentals': [0], 'rsa-description-writing': [74], 'rsa-headline-writing': [75], 'search-intent-matching': [78] },
     },
   ],
 };
@@ -168,7 +184,8 @@ export function Leaderboard({ isTouch }) {
             lineHeight: 1.6,
           }}
         >
-          Same course, same scenarios, same judge. No SKILL.md — raw capability only.
+          Same course, same scenarios, same judge. Baseline scored without SKILL.md,
+          then re-run after 1 training iteration with generated SKILL.md.
           Scored 0-100 by {ARENA_DATA.judge} on {ARENA_DATA.scenarios} scenarios.
         </p>
       </div>
@@ -259,16 +276,19 @@ export function Leaderboard({ isTouch }) {
                     >
                       {m.name}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.58rem',
-                        color: 'var(--muted)',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {m.passed}/{m.total}
-                    </span>
+                    {m.skillScore > m.score && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.58rem',
+                          color: '#16a34a',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 500,
+                        }}
+                      >
+                        +{m.skillScore - m.score} w/ SKILL.md
+                      </span>
+                    )}
                   </div>
                   <ScoreBar score={m.score} />
                 </div>
@@ -319,7 +339,22 @@ export function Leaderboard({ isTouch }) {
                   >
                     <InfoChip label="Model" value={m.model} />
                     <InfoChip label="Pricing" value={`${m.cost} /1M tokens`} />
-                    <InfoChip label="Avg Score" value={`${m.score}/100`} />
+                    <InfoChip label="Baseline" value={`${m.score}/100`} />
+                    <InfoChip label="After 1 run" value={<span style={{ color: '#16a34a' }}>{m.skillScore}/100</span>} />
+                    <a
+                      href={`${SKILL_BASE}/${m.skillSlug}/SKILL.md`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6rem',
+                        color: 'var(--text)',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: 2,
+                      }}
+                    >
+                      View SKILL.md
+                    </a>
                   </div>
 
                   {/* Scenario grid */}
@@ -333,7 +368,7 @@ export function Leaderboard({ isTouch }) {
                     className="scenario-grid"
                   >
                     {SCENARIO_IDS.map((sid) => {
-                      const [score] = m.results[sid];
+                      const score = m.results[sid][0];
                       const isBest = score === bestPerScenario[sid] && score > 0;
                       return (
                         <div
