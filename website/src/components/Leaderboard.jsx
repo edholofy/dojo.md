@@ -232,6 +232,7 @@ export function Leaderboard({ isTouch }) {
           return (
             <div key={m.model}>
               <div
+                className="leaderboard-row"
                 onClick={() => setExpanded(isExpanded ? null : i)}
                 style={{
                   display: 'grid',
@@ -279,6 +280,7 @@ export function Leaderboard({ isTouch }) {
                     </span>
                     {m.skillScore > m.score && (
                       <span
+                        className="skill-badge"
                         style={{
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.58rem',
@@ -287,7 +289,7 @@ export function Leaderboard({ isTouch }) {
                           fontWeight: 500,
                         }}
                       >
-                        +{m.skillScore - m.score} w/ SKILL.md
+                        +{m.skillScore - m.score}<span className="skill-badge-label"> w/ SKILL.md</span>
                       </span>
                     )}
                   </div>
@@ -330,6 +332,7 @@ export function Leaderboard({ isTouch }) {
                 <div style={{ padding: '4px 16px 20px 16px' }}>
                   {/* Info row */}
                   <div
+                    className="leaderboard-expanded"
                     style={{
                       display: 'flex',
                       gap: 16,
@@ -366,7 +369,7 @@ export function Leaderboard({ isTouch }) {
                       gap: 4,
                       paddingLeft: 32,
                     }}
-                    className="scenario-grid"
+                    className="scenario-grid leaderboard-expanded"
                   >
                     {SCENARIO_IDS.map((sid) => {
                       const score = m.results[sid][0];
