@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMousePosition } from '../hooks/useMousePosition';
 import { AsciiCanvas } from './AsciiCanvas';
+import { Leaderboard } from './Leaderboard';
 
 /* ── Terminal wrapper with chrome + copy ── */
 function Terminal({ label, copyText, children }) {
@@ -477,6 +478,9 @@ export function HumanView({ isTouch }) {
         </div>
       </section>
 
+      {/* ── Arena Leaderboard ── */}
+      <Leaderboard isTouch={isTouch} />
+
       {/* ── Auto-Training Loop (animated) ── */}
       <section className="section">
         <div className="section-label">Auto-Training Loop</div>
@@ -492,6 +496,179 @@ export function HumanView({ isTouch }) {
         >
           Works with Claude, DeepSeek, Grok, Gemini, MiniMax, Kimi — any model
           on OpenRouter. The loop stops when it hits the target or plateaus.
+        </p>
+      </section>
+
+      {/* ── Under The Hood ── */}
+      <section
+        className="section"
+        style={{ borderTop: '1px solid var(--border)' }}
+      >
+        <div className="section-label">Under The Hood</div>
+        <p
+          style={{
+            fontSize: '0.95rem',
+            color: 'var(--secondary)',
+            maxWidth: 620,
+            lineHeight: 1.65,
+            marginBottom: 32,
+          }}
+        >
+          A single training run orchestrates two models — a cheap agent that
+          does the work and a strong judge that evaluates quality. Here's
+          what happens inside each iteration.
+        </p>
+
+        {/* Architecture diagram */}
+        <div
+          style={{
+            background: 'var(--code-bg)',
+            borderRadius: 10,
+            border: '1px solid #1a1a1a',
+            padding: '32px 28px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'clamp(0.58rem, 1.1vw, 0.72rem)',
+            lineHeight: 1.8,
+            color: '#888',
+            overflowX: 'auto',
+            whiteSpace: 'pre',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+{`  ┌──────────────────────────────────────────────────┐
+  │              Training Session                     │
+  │  dojo train <course> -m agent -j judge            │
+  └──────────────────────┬───────────────────────────-─┘
+                         │
+     ╔═══════════════════╧═══════════════════════════╗
+     ║           Per Scenario  (×N)                  ║
+     ║                                               ║
+     ║   `}<span style={{color:'#67e8f9'}}>{'Agent Model'}</span>{`  ─── 1 call ──────────────────╢
+     ║   (DeepSeek, Gemini, etc.)                    ║
+     ║       │                                       ║
+     ║       │ trigger → response                    ║
+     ║       │    (+ mock tool calls)                ║
+     ║       │                                       ║
+     ║   `}<span style={{color:'#fbbf24'}}>{'Judge Model'}</span>{`  ─── 4 calls ─────────────────╢
+     ║   (Opus, Sonnet, etc.)                        ║
+     ║       │                                       ║
+     ║       ├── assertion 1: "Score quality 0-100"  ║
+     ║       ├── assertion 2: "Score structure"      ║
+     ║       ├── assertion 3: "Score accuracy"       ║
+     ║       └── assertion 4: "Score completeness"   ║
+     ║                                               ║
+     ║       → PASS (≥70) or FAIL                    ║
+     ╚═══════════════════╤═══════════════════════════╝
+                         │
+     ┌───────────────────┴──────────────────────────-─┐
+     │  `}<span style={{color:'#fbbf24'}}>{'Judge'}</span>{`: Extract Failure Patterns (1-2 calls)  │
+     │  "Analyze all failures → structured JSON"      │
+     └───────────────────┬───────────────────────────-─┘
+                         │
+     ┌───────────────────┴──────────────────────────-─┐
+     │  `}<span style={{color:'#fbbf24'}}>{'Judge'}</span>{`: Generate SKILL.md (1 call)              │
+     │  "Distill patterns → skill document"           │
+     └───────────────────┬───────────────────────────-─┘
+                         │
+                         ▼
+     ┌──────────────────────────────────────────────-──┐
+     │  .claude/skills/<course>/<model>/SKILL.md       │
+     │  Injected into agent system prompt next run     │
+     └──────────────────────────────────────────────-──┘`}
+        </div>
+
+        {/* Call ratio breakdown */}
+        <div
+          style={{
+            marginTop: 32,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 16,
+            maxWidth: 520,
+          }}
+        >
+          <div
+            style={{
+              padding: 20,
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                color: 'var(--muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 8,
+              }}
+            >
+              Agent (cheap)
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 300 }}>
+              N <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>calls</span>
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem',
+                color: 'var(--secondary)',
+                marginTop: 4,
+              }}
+            >
+              1 per scenario
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: 20,
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                color: 'var(--muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 8,
+              }}
+            >
+              Judge (strong)
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 300 }}>
+              ~4N+3 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>calls</span>
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.72rem',
+                color: 'var(--secondary)',
+                marginTop: 4,
+              }}
+            >
+              assertions + eval + skill gen
+            </div>
+          </div>
+        </div>
+
+        <p
+          style={{
+            fontSize: '0.85rem',
+            color: 'var(--muted)',
+            marginTop: 24,
+            maxWidth: 620,
+            lineHeight: 1.65,
+          }}
+        >
+          The ratio is intentional — use a cheap, fast model as the agent
+          and a strong model as the judge. For a 10-scenario course with
+          4 assertions each: ~10 agent calls ($0.01) vs ~43 judge calls ($0.80).
+          The judge does the expensive quality work so the agent doesn't have to.
         </p>
       </section>
 
