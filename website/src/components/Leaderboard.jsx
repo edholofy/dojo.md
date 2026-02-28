@@ -105,10 +105,10 @@ function ScoreBar({ score }) {
   );
 }
 
-function ScenarioCell({ score, passed, isBest }) {
+function ScenarioCell({ score, isBest }) {
   const color =
     score === 0 ? '#ddd' :
-    passed ? '#16a34a' :
+    score >= 80 ? '#16a34a' :
     score >= 70 ? '#ca8a04' :
     '#dc2626';
 
@@ -134,16 +134,6 @@ function ScenarioCell({ score, passed, isBest }) {
         }}
       >
         {score}
-      </span>
-      <span
-        style={{
-          fontSize: '0.5rem',
-          color: passed ? '#16a34a' : '#dc2626',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.04em',
-        }}
-      >
-        {passed ? 'PASS' : 'FAIL'}
       </span>
     </div>
   );
@@ -343,7 +333,7 @@ export function Leaderboard({ isTouch }) {
                     className="scenario-grid"
                   >
                     {SCENARIO_IDS.map((sid) => {
-                      const [score, passed] = m.results[sid];
+                      const [score] = m.results[sid];
                       const isBest = score === bestPerScenario[sid] && score > 0;
                       return (
                         <div
@@ -374,7 +364,7 @@ export function Leaderboard({ isTouch }) {
                           >
                             {SCENARIO_NAMES[sid]}
                           </span>
-                          <ScenarioCell score={score} passed={passed} isBest={isBest} />
+                          <ScenarioCell score={score} isBest={isBest} />
                         </div>
                       );
                     })}
@@ -386,21 +376,39 @@ export function Leaderboard({ isTouch }) {
         })}
       </div>
 
-      {/* ── Footer note ── */}
-      <p
+      {/* ── Footer: legend + run command ── */}
+      <div
         style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.65rem',
-          color: 'var(--muted)',
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          alignItems: 'center',
           marginTop: 24,
-          lineHeight: 1.6,
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.6rem',
+          color: 'var(--muted)',
         }}
       >
-        Run your own arena:{' '}
-        <span style={{ color: 'var(--secondary)' }}>
-          dojo arena {ARENA_DATA.courseId} --level {ARENA_DATA.level}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#16a34a', display: 'inline-block' }} />
+          80+
         </span>
-      </p>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#ca8a04', display: 'inline-block' }} />
+          70–79
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#dc2626', display: 'inline-block' }} />
+          &lt;70
+        </span>
+        <span style={{ color: 'var(--border)' }}>|</span>
+        <span>
+          Run your own:{' '}
+          <span style={{ color: 'var(--secondary)' }}>
+            dojo arena {ARENA_DATA.courseId} --level {ARENA_DATA.level}
+          </span>
+        </span>
+      </div>
     </section>
   );
 }
