@@ -1,0 +1,67 @@
+meta:
+  id: automated-workflow-design
+  level: 2
+  course: patient-appointment-reminder-messaging
+  type: output
+  description: "Design an automated appointment reminder workflow — logic rules, triggers, exceptions, and EHR integration for a practice management system"
+  tags: [automation, workflow-design, ehr-integration, intermediate]
+
+state: {}
+
+trigger: |
+  Design an automated appointment reminder workflow
+  that integrates with the practice's EHR system and
+  handles complex scheduling scenarios.
+
+  EHR system: Epic (or equivalent tier-1 EHR)
+  Practice: Multi-specialty group (8 specialties,
+  25 providers, 400 daily appointments)
+
+  Automation requirements:
+
+  Trigger rules:
+  - New appointment booked → immediate confirmation
+  - 7 days before → first reminder
+  - 3 days before → second reminder with prep instructions
+  - 1 day before → final reminder
+  - Morning of → same-day logistics
+
+  Exception handling:
+  - Urgent/same-day appointments → skip sequence, send
+    immediate confirmation only
+  - Recurring appointments → condensed sequence
+  - Cancelled appointments → stop all reminders
+  - Rescheduled → restart sequence with updated info
+  - Provider schedule change → proactive notification
+  - Practice closure (weather, holiday) → cancellation blast
+
+  Content personalization variables:
+  - Patient name and preferred name
+  - Provider name and credentials
+  - Appointment type → specific prep instructions
+  - Patient age → communication style
+  - Language preference → template selection
+  - Channel preference → delivery method
+  - Special needs → accessibility accommodations
+
+  Create:
+  1. Complete workflow diagram with decision logic
+  2. Trigger rules and exception handling
+  3. Template variable system design
+  4. EHR integration specifications
+  5. Error handling and monitoring
+  6. Staff override capabilities
+
+assertions:
+  - type: llm_judge
+    criteria: "Workflow logic handles edge cases robustly — multiple appointments on same day don't send duplicate reminders, rescheduled appointments properly restart sequences, and cancelled appointments stop all pending messages cleanly."
+    weight: 0.35
+    description: "EdgeCaseHandling"
+  - type: llm_judge
+    criteria: "Template variable system enables meaningful personalization — not just name insertion but appointment-type-specific content, age-appropriate tone, and language selection; the system produces genuinely different messages for different patients."
+    weight: 0.35
+    description: "PersonalizationDepth"
+  - type: llm_judge
+    criteria: "Error handling prevents harm — addresses what happens when messages fail to send, patient contact info is wrong, or the EHR feed provides bad data; the system doesn't silently fail when a patient misses a critical reminder."
+    weight: 0.30
+    description: "ErrorHandlingSafety"

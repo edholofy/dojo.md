@@ -1,0 +1,76 @@
+meta:
+  id: beginner-intake-shift
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Beginner shift simulation — process a morning batch of patient intake forms with various errors, missing information, insurance issues, and consent gaps"
+  tags: [shift-simulation, batch-processing, multi-patient, beginner]
+
+state: {}
+
+trigger: |
+  You are the intake coordinator starting your morning
+  shift. Process these five patients checking in for
+  their appointments in the next 90 minutes.
+
+  PATIENT 1 (8:00 AM appointment — arriving now):
+  New patient, Angela Morris, age 31
+  - Registration form: Complete except emergency contact
+    phone number is missing
+  - Insurance card: Provided, but card shows "Angela K.
+    Morris" while form says "Angela Morris"
+  - Medical history: Left current medications blank but
+    checked "yes" for taking medications
+  - Consent forms: All signed and dated
+
+  PATIENT 2 (8:30 AM — arrived early):
+  Returning patient, James Williams, age 55
+  - Says "nothing has changed" when handed update form
+  - Front desk notes show last update was 14 months ago
+  - Insurance on file: Employer-sponsored BCBS
+  - Patient mentions he retired last month
+
+  PATIENT 3 (9:00 AM — checking in by phone for
+  telehealth visit):
+  New patient, Priya Sharma, age 28
+  - Submitted forms online, all complete
+  - Insurance: Medicaid managed care (Molina)
+  - Listed specialist as PCP (the visit is with a
+    specialist — may need referral)
+  - Telehealth consent form: Not signed
+
+  PATIENT 4 (9:00 AM — walk-in same-day appointment):
+  Established patient, David Kim, age 42
+  - No forms to update, last visit 2 weeks ago
+  - Wants to add his wife to his HIPAA authorization
+  - Also wants to change his pharmacy
+  - Seems rushed, says "just add her, I'll sign later"
+
+  PATIENT 5 (9:30 AM — arriving with parent):
+  New patient, Sophia Rodriguez, age 15
+  - Mother completing all forms
+  - Father (listed as insurance subscriber) is not present
+  - Insurance card is in father's name
+  - Mother's ID provided but no custody documentation
+  - Appointment type: Gynecology consultation
+
+  Process all five patients:
+  1. Triage and prioritize check-in order
+  2. Identify issues for each patient
+  3. Resolution steps for each issue
+  4. Documentation of all actions taken
+  5. Escalation items for supervisor
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly prioritizes — Patient 1 (8:00 AM appointment, arriving now) needs immediate check-in despite minor gaps; Patient 2's insurance change is critical (retirement means employer coverage likely ended); Patient 4 cannot sign 'later' for HIPAA authorization changes."
+    weight: 0.35
+    description: "TriagePrioritization"
+  - type: llm_judge
+    criteria: "Catches the critical insurance issue for Patient 2 — retirement means his employer-sponsored BCBS likely terminated; verifying current coverage is essential before the appointment proceeds to avoid an uninsured visit and claim denial."
+    weight: 0.35
+    description: "RetirementInsuranceFlag"
+  - type: llm_judge
+    criteria: "Handles Patient 5's minor gynecology visit appropriately — considers state-specific minor consent laws for reproductive health (many states allow minors to consent independently for reproductive care); addresses the custody/guardian authority question and insurance subscriber absence."
+    weight: 0.30
+    description: "MinorGynecologyConsent"

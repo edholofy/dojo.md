@@ -1,0 +1,63 @@
+meta:
+  id: warranty-clause-summary
+  level: 1
+  course: contract-clause-summarization
+  type: output
+  description: "Summarize warranty and disclaimer clauses — explain what is warranted, the scope of warranties, disclaimer of implied warranties, and available remedies"
+  tags: [warranty, disclaimers, remedies, beginner]
+
+state: {}
+
+trigger: |
+  Summarize the following warranty and disclaimer
+  clauses from a SaaS subscription agreement for a
+  product manager evaluating the vendor.
+
+  CLAUSE TEXT:
+  "5.1 Provider Warranties. Provider warrants that:
+  (a) the Service will perform materially in accordance
+  with the Documentation during the Subscription Term;
+  (b) Provider will perform Professional Services in
+  a workmanlike manner consistent with generally
+  accepted industry standards; (c) Provider has the
+  right to provide the Service and grant the licenses
+  contemplated herein; (d) the Service will comply
+  with all applicable laws and regulations.
+
+  5.2 Remedies. Client's exclusive remedy for breach
+  of the warranty in Section 5.1(a) shall be, at
+  Provider's option, (i) repair or replacement of the
+  non-conforming Service, or (ii) if Provider is unable
+  to remedy the non-conformance within thirty (30)
+  days, termination of this Agreement and a pro-rata
+  refund of prepaid fees.
+
+  5.3 DISCLAIMER. EXCEPT AS EXPRESSLY SET FORTH IN
+  SECTION 5.1, THE SERVICE IS PROVIDED 'AS IS' AND
+  PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+  TITLE, AND NON-INFRINGEMENT. PROVIDER DOES NOT
+  WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED,
+  ERROR-FREE, OR COMPLETELY SECURE."
+
+  Create:
+  1. Plain-language summary of what's warranted
+  2. What's explicitly NOT warranted (disclaimers)
+  3. Remedy options if the service fails
+  4. Gap analysis (promises vs. expectations)
+  5. Questions to ask the vendor
+
+assertions:
+  - type: llm_judge
+    criteria: "Gap analysis between warranties and typical expectations is clear — the warranty says 'materially in accordance with Documentation' (not 'will work perfectly'); the disclaimer says no guarantee of uninterrupted or error-free service; a product manager expecting 99.99% uptime needs to understand these warranties don't promise that unless the documentation specifically states it."
+    weight: 0.35
+    description: "GapAnalysis"
+  - type: llm_judge
+    criteria: "Exclusive remedy limitation is flagged as a significant constraint — 'at Provider's option' means the provider chooses whether to fix or refund; the client can't demand specific performance or damages beyond a pro-rata refund; this is a major limitation that the product manager needs to weigh against the contract value."
+    weight: 0.35
+    description: "ExclusiveRemedyWarning"
+  - type: llm_judge
+    criteria: "Questions to ask the vendor are targeted at closing the gaps — asks about SLA commitments (uptime guarantees with credits), security warranties beyond 'not completely secure,' and whether the documentation contains specific performance standards that would be covered by warranty 5.1(a)."
+    weight: 0.30
+    description: "TargetedVendorQuestions"

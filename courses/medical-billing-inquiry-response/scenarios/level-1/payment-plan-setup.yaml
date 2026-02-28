@@ -1,0 +1,62 @@
+meta:
+  id: payment-plan-setup
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Set up a patient payment plan — assess financial situation, explain payment options, and create an affordable plan for outstanding medical balance"
+  tags: [payment-plan, financial-counseling, patient-assistance, beginner]
+
+state: {}
+
+trigger: |
+  A patient contacts the billing department about a
+  large balance they cannot afford to pay in full.
+
+  Patient: Rosa Martinez, age 38
+  Insurance: Medicaid managed care (Molina)
+  Outstanding balance: $1,200
+  Source of balance: Emergency room visit co-pays
+  and charges for services Medicaid didn't cover
+  (dental-related ER visit classified as non-covered)
+
+  Patient situation:
+  - Single mother, two children
+  - Works part-time (restaurant)
+  - Monthly income: Approximately $2,200
+  - Has received 3 billing statements over 4 months
+  - Account is approaching 120 days past due
+  - Next step would be collections referral
+  - Patient is anxious and apologetic
+
+  Practice payment plan options:
+  - Standard: 6-month plan, no interest
+  - Extended: 12-month plan, no interest (manager approval)
+  - Hardship: 18-month plan, possible balance reduction
+    (financial assistance application required)
+  - Charity care: Full or partial write-off for patients
+    below 200% FPL (application required)
+
+  Federal poverty level reference (2026):
+  - Family of 3: $26,400 (100% FPL)
+  - 200% FPL for family of 3: $52,800
+
+  Create:
+  1. Financial assessment of patient's situation
+  2. Payment plan recommendation
+  3. Charity care eligibility screening
+  4. Patient communication script
+  5. Documentation for the account
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies charity care eligibility — patient's annual income is approximately $26,400 (family of 3), which is right at 100% FPL and well below the 200% FPL threshold for charity care; the patient should be screened for full or partial balance write-off before setting up a payment plan."
+    weight: 0.35
+    description: "CharityCareScreening"
+  - type: llm_judge
+    criteria: "Communication script is empathetic and non-judgmental — acknowledges the patient's stress, avoids blame language, explains options clearly, and empowers the patient to choose the best path; doesn't pressure the patient into a plan they can't afford."
+    weight: 0.35
+    description: "EmpathicCommunication"
+  - type: llm_judge
+    criteria: "Addresses the collections timeline appropriately — the account at 120 days should NOT go to collections while a payment plan or charity care application is being processed; documents the patient's engagement to prevent premature collections referral."
+    weight: 0.30
+    description: "CollectionsProtection"

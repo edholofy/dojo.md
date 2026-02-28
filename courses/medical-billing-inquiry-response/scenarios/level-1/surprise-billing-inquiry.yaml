@@ -1,0 +1,62 @@
+meta:
+  id: surprise-billing-inquiry
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Handle a surprise billing inquiry — explain the No Surprises Act protections, identify if a surprise bill violates federal law, and guide the patient through the dispute process"
+  tags: [surprise-billing, no-surprises-act, patient-protection, beginner]
+
+state: {}
+
+trigger: |
+  A patient calls about a bill they received for
+  $3,800 from an anesthesiologist after a surgery
+  at an in-network hospital.
+
+  Patient: Jennifer Walsh, age 52
+  Insurance: Anthem BCBS PPO
+  Surgery: Laparoscopic cholecystectomy (gallbladder
+  removal) at Memorial Hospital (in-network)
+  Date of surgery: 6 weeks ago
+
+  The patient's complaint:
+  "I had my gallbladder out at Memorial Hospital,
+  which is in my network. I was told my out-of-pocket
+  cost would be about $800 after insurance. I paid
+  that. Now I'm getting a separate bill for $3,800
+  from 'Valley Anesthesia Associates' saying they're
+  out-of-network and I owe the full amount. I didn't
+  choose my anesthesiologist! I didn't even know they
+  were out-of-network!"
+
+  Billing details:
+  - Hospital bill: $12,500 — processed in-network,
+    patient paid $800 (copay + coinsurance)
+  - Surgeon bill: $4,200 — processed in-network,
+    included in hospital claim
+  - Anesthesia bill: $5,200 — Valley Anesthesia is
+    out-of-network for Anthem BCBS
+  - Valley Anesthesia billed patient: $3,800
+    (balance after insurance paid $1,400 at out-of-
+    network rate)
+
+  Create:
+  1. No Surprises Act applicability assessment
+  2. Explanation of patient's protections
+  3. Dispute filing guidance
+  4. Communication to the patient
+  5. Communication to Valley Anesthesia Associates
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly identifies this as a No Surprises Act violation — an out-of-network anesthesiologist providing services at an in-network facility for an emergency/scheduled procedure is exactly the scenario the No Surprises Act addresses; the patient should only owe in-network cost-sharing amounts."
+    weight: 0.35
+    description: "NSAApplicability"
+  - type: llm_judge
+    criteria: "Patient protection explanation is clear — the patient should NOT pay the $3,800 balance bill; under the No Surprises Act, the patient is only responsible for what they would have owed if the anesthesiologist were in-network; the dispute is between the provider and insurance, not the patient."
+    weight: 0.35
+    description: "PatientProtectionExplanation"
+  - type: llm_judge
+    criteria: "Dispute guidance is actionable — tells the patient how to file a complaint with CMS or the state insurance commissioner, advises not to pay the balance bill, and explains the independent dispute resolution process between the provider and insurer."
+    weight: 0.30
+    description: "DisputeGuidance"

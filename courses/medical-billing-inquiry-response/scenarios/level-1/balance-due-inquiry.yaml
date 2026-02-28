@@ -1,0 +1,62 @@
+meta:
+  id: balance-due-inquiry
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Respond to a patient questioning an unexpected balance due — investigate the charge, verify insurance processing, and explain why the patient owes the amount"
+  tags: [balance-due, patient-inquiry, charge-explanation, beginner]
+
+state: {}
+
+trigger: |
+  A patient calls upset about receiving a bill for
+  $340 from a specialist visit they thought was
+  fully covered by insurance.
+
+  Patient: David Park, age 45
+  Insurance: Blue Cross Blue Shield PPO
+  Visit: Dermatology consultation 6 weeks ago
+  Provider: Dr. Sarah Kim (in-network)
+
+  Patient statement:
+  "I don't understand why I owe $340. When I called
+  to make the appointment, I was told my copay would
+  be $50 for specialists. I paid the $50 at the visit.
+  Now I'm getting a bill for $340. This has to be a
+  mistake."
+
+  Billing system information:
+  - Office visit (99204): $285 — processed, patient
+    owes $50 copay (paid)
+  - Skin biopsy (11102): $180 — processed, subject
+    to deductible
+  - Pathology (88305): $225 — processed, subject to
+    deductible
+  - Total charges: $690
+  - Insurance allowed: $520
+  - Insurance paid: $180
+  - Patient responsibility: $340
+  - Patient's deductible: $2,000 individual
+  - Deductible met at time of service: $800
+  - Remaining deductible applied to this claim: $340
+
+  Create:
+  1. Explanation of why the patient owes $340
+  2. Breakdown of each service and how it was processed
+  3. Deductible explanation in plain language
+  4. Response to "I was told $50 copay" concern
+  5. Payment options to offer the patient
+
+assertions:
+  - type: llm_judge
+    criteria: "Explains that the $50 copay applied to the office visit, but the biopsy and pathology were separate procedures subject to the deductible — the patient only expected a copay because they didn't know additional procedures would be performed; the $340 is the deductible portion that insurance didn't cover."
+    weight: 0.35
+    description: "DeductibleExplanation"
+  - type: llm_judge
+    criteria: "Addresses the 'I was told $50' concern empathetically — acknowledges the patient was told correctly about the specialist copay for the office visit; the additional procedures (biopsy, pathology) are separate charges that the patient may not have been informed about in advance."
+    weight: 0.35
+    description: "CopayMiscommunication"
+  - type: llm_judge
+    criteria: "Offers practical payment options — presents a payment plan option, discusses whether the provider offers prompt-pay discount, and explains how this claim moves the patient closer to meeting their full $2,000 deductible."
+    weight: 0.30
+    description: "PaymentOptions"

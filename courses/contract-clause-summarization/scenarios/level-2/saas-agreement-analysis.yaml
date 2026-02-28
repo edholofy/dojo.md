@@ -1,0 +1,74 @@
+meta:
+  id: saas-agreement-analysis
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Analyze a complete SaaS agreement — summarize key clauses, identify risks, compare against industry standards, and provide negotiation recommendations for a technology procurement"
+  tags: [saas-agreement, full-contract-review, technology-procurement, intermediate]
+
+state: {}
+
+trigger: |
+  Analyze a SaaS subscription agreement for a company
+  evaluating an enterprise CRM platform. The legal
+  team needs a comprehensive risk summary.
+
+  Contract highlights to analyze:
+
+  SERVICE: Enterprise CRM platform
+  TERM: 3 years, auto-renew for 1-year periods
+  VALUE: $480,000/year ($1.44M total)
+  USERS: 500 named users
+
+  KEY CLAUSES:
+
+  SLA: 99.5% monthly uptime, measured excluding
+  scheduled maintenance (up to 8 hours/month).
+  Remedy: Service credits of 5% of monthly fee per
+  0.1% below target. Credits capped at 30% of monthly
+  fee. Credits are sole and exclusive remedy.
+
+  DATA: Provider may use anonymized and aggregated
+  Customer Data for product improvement, benchmarking,
+  and publication of industry reports. Customer retains
+  ownership of Customer Data.
+
+  SECURITY: SOC 2 Type II certified. Data encrypted
+  at rest (AES-256) and in transit (TLS 1.2+). Annual
+  penetration testing. No specific data residency
+  commitment.
+
+  LIABILITY: Capped at 12 months of fees paid.
+  Excludes consequential damages. Carve-outs for IP
+  indemnification and willful misconduct only.
+
+  TERMINATION: For cause with 30-day cure. For
+  convenience: only by Provider with 180-day notice.
+  Client cannot terminate for convenience. Early
+  termination fee: 100% of remaining contract value.
+
+  IP: Provider retains all IP. Customer granted
+  non-exclusive, non-transferable license during term.
+  Any customizations created by Provider are Provider's
+  IP.
+
+  Create:
+  1. Executive risk summary (1 page)
+  2. Clause-by-clause risk analysis
+  3. Industry benchmark comparison
+  4. Negotiation priority list (ranked)
+  5. Alternative clause language recommendations
+
+assertions:
+  - type: llm_judge
+    criteria: "Risk analysis identifies the asymmetric termination as the highest risk — the client cannot terminate for convenience but the provider can; combined with 100% early termination fee, the client is locked into a $1.44M commitment with no exit; this is the most critical negotiation point and should be flagged prominently."
+    weight: 0.35
+    description: "AsymmetricTerminationRisk"
+  - type: llm_judge
+    criteria: "Data usage clause is flagged as a significant concern — 'anonymized and aggregated Customer Data for benchmarking and publication' means the provider can publish insights derived from the client's data; even anonymized data can reveal competitive information; the analysis recommends limiting this to internal product improvement only."
+    weight: 0.35
+    description: "DataUsageConcern"
+  - type: llm_judge
+    criteria: "SLA analysis demonstrates the gap between perception and reality — 99.5% sounds high but allows 3.6 hours of downtime per month PLUS 8 hours of maintenance; total potential monthly unavailability is 11.6 hours; credits capped at 30% provide minimal financial remedy for significant business disruption; this is below industry standard for enterprise CRM."
+    weight: 0.30
+    description: "SLAGapAnalysis"

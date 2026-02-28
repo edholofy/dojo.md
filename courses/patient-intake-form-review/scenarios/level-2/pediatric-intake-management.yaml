@@ -1,0 +1,72 @@
+meta:
+  id: pediatric-intake-management
+  level: 2
+  course: patient-intake-form-review
+  type: output
+  description: "Manage pediatric patient intake complexities — handle guardian verification, custody documentation, minor consent laws, immunization records, and school/daycare form requirements"
+  tags: [pediatric-intake, guardian-verification, minor-consent, intermediate]
+
+state: {}
+
+trigger: |
+  Manage complex pediatric intake scenarios at a
+  pediatric primary care practice.
+
+  Case 1 — Divorced parents, shared custody:
+  Patient: Emma Wilson, age 8
+  Mother brought child for a well-child visit.
+  Father called ahead demanding to be notified of
+  all visits and wants copies of all records.
+  Custody agreement on file shows "joint legal
+  custody" but mother has "primary physical custody."
+  Father's insurance (Aetna) is primary; mother has
+  BCBS secondary. Father's address on insurance
+  doesn't match the address on intake form.
+
+  Case 2 — Grandparent as caregiver:
+  Patient: Marcus Johnson, age 4
+  Grandmother brings child for sick visit (fever, cough).
+  No parent present. Grandmother has no legal guardianship
+  documents. Says "I watch him every day, his parents
+  are at work." The child's insurance card is in the
+  mother's name. Grandmother cannot answer several
+  medical history questions.
+
+  Case 3 — Adolescent confidentiality:
+  Patient: Sophia Chen, age 16
+  Arriving alone for appointment requested through
+  patient portal. Parent (on insurance account) was
+  not notified. Patient requests visit be kept
+  confidential from parents. Visit reason listed as
+  "personal health concern." State law allows minors
+  age 14+ to consent to reproductive health and
+  mental health services without parental involvement.
+
+  Case 4 — Foster care child:
+  Patient: Jayden Smith, age 6
+  New patient. Foster parent bringing child in.
+  Has Medicaid. Foster parent has a placement letter
+  but not full legal guardianship. Child has been in
+  3 placements in 2 years. Medical records are
+  fragmented — no complete vaccination record available.
+
+  Create:
+  1. Intake protocol for each scenario
+  2. Consent and authorization determination
+  3. Insurance and billing guidance
+  4. Medical records access policy for each
+  5. Staff decision guide for pediatric intake
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly navigates divorced parent scenario — joint legal custody means both parents have the right to access medical records and make medical decisions; primary physical custody determines which parent can bring the child for routine visits; father's insurance is primary per subscriber rule."
+    weight: 0.35
+    description: "CustodyNavigation"
+  - type: llm_judge
+    criteria: "Adolescent confidentiality is properly protected — Sophia's right to confidential reproductive and mental health services under state law is upheld even though she's on her parent's insurance; identifies billing privacy considerations (EOB disclosure to policyholder) as a practical challenge."
+    weight: 0.35
+    description: "AdolescentConfidentiality"
+  - type: llm_judge
+    criteria: "Foster care intake addresses records fragmentation — uses state immunization registry, contacts previous placements for records, coordinates with foster care agency for medical authorization, and creates a comprehensive intake despite missing history."
+    weight: 0.30
+    description: "FosterCareIntake"

@@ -1,0 +1,73 @@
+meta:
+  id: intermediate-tutorial-shift
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write three different technical tutorials simultaneously — a migration guide, an architecture decision record, and a runbook — for the same system change"
+  tags: [multi-format, migration, adr, runbook, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  You're a staff engineer leading your company's
+  migration from a monolithic Express.js API to
+  microservices. You need to create three technical
+  documents for different audiences, all related
+  to the same migration.
+
+  Migration context:
+  - Current: Monolithic Express.js API (Node.js,
+    PostgreSQL, deployed on a single EC2 instance)
+  - Target: 3 microservices (User Service, Order
+    Service, Notification Service) deployed on
+    Kubernetes (EKS)
+  - Communication: REST between services, RabbitMQ
+    for async events
+  - Timeline: 6-month migration, service-by-service
+
+  Document 1 — Migration Tutorial:
+  Write a developer-facing tutorial for "How to
+  Extract the User Service from the Monolith."
+  The tutorial should walk a mid-level developer
+  through the process of extracting one service:
+  identifying the boundaries, extracting the code,
+  setting up the new service, implementing the API
+  gateway, and running both in parallel during
+  migration (strangler fig pattern). Include code
+  examples and architecture diagram descriptions.
+
+  Document 2 — Architecture Decision Record (ADR):
+  Write ADR-007: "Use RabbitMQ for Inter-Service
+  Communication." The ADR should document the
+  decision to use RabbitMQ over alternatives
+  (Kafka, Redis Pub/Sub, gRPC), including the
+  context, decision, consequences, and the
+  evaluation criteria used. Follow the standard
+  ADR format (Status, Context, Decision, Consequences).
+
+  Document 3 — Runbook:
+  Write a production runbook for "Responding to
+  User Service Outage." The runbook should guide
+  an on-call engineer through diagnosing and
+  resolving issues with the newly extracted User
+  Service, including: health check procedures,
+  common failure modes, rollback procedure (routing
+  traffic back to the monolith), and escalation
+  paths.
+
+  Task: Create all three documents, each formatted
+  appropriately for its purpose and audience.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates three distinct technical documents — the migration tutorial follows a step-by-step format with code examples and architecture diagrams; the ADR follows standard format (Status, Context, Decision, Consequences) with clear evaluation of alternatives; the runbook is structured for incident response (diagnosis → resolution → rollback → escalation); each document serves its specific audience and purpose; the three documents are technically consistent (same architecture, same decisions)."
+    weight: 0.35
+    description: "ThreeDocuments"
+  - type: llm_judge
+    criteria: "Response demonstrates technical depth across all three formats — the migration tutorial explains the strangler fig pattern correctly; the ADR evaluates RabbitMQ vs alternatives with genuine trade-off analysis (not just 'RabbitMQ is better'); the runbook handles real failure modes with specific diagnostic commands; the code examples in the tutorial are production-quality; all three documents reflect staff-engineer-level technical understanding."
+    weight: 0.35
+    description: "TechnicalDepth"
+  - type: llm_judge
+    criteria: "Response formats each document for its specific use case — the tutorial is educational (teaches the migration approach); the ADR is archival (documents a decision for future reference); the runbook is operational (guides action during an incident); each document would be useful in its intended context; the overall documentation suite would support a successful microservices migration."
+    weight: 0.30
+    description: "FormatAppropriateness"

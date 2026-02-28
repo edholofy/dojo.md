@@ -1,0 +1,55 @@
+meta:
+  id: new-patient-registration-review
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Review a new patient registration form for completeness and accuracy — identify missing fields, formatting errors, and inconsistencies before data entry into the EHR"
+  tags: [new-patient, registration, completeness-check, beginner]
+
+state: {}
+
+trigger: |
+  Review a new patient registration form for
+  completeness and accuracy before entering data
+  into the electronic health record.
+
+  Submitted form information:
+  - Patient name: Sarah J. Mitchel
+  - Date of birth: 03/15/1988
+  - Gender: Female
+  - Address: 1425 Oak Street, Springfield
+  - Phone: (555) 123-456
+  - Email: sarah.mitchel@email
+  - Emergency contact: James Mitchell (husband)
+  - Emergency phone: (left blank)
+  - SSN: 555-12-3456
+  - Primary insurance: Blue Cross Blue Shield
+  - Policy number: BCB-2847561
+  - Group number: (left blank)
+  - Subscriber: Self
+  - PCP referral: (left blank, but practice requires referrals)
+  - Preferred pharmacy: Walgreens
+  - Pharmacy address: (left blank)
+  - Reason for visit: "stomach problems"
+  - Signature: Present
+  - Date signed: (left blank)
+
+  Create:
+  1. List of all errors and missing information found
+  2. Prioritized correction list (critical vs. minor)
+  3. Patient communication script requesting corrections
+  4. Data entry notes for EHR team
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies all errors and missing fields — catches the phone number with only 6 digits, email missing domain extension, last name spelling inconsistency (Mitchel vs Mitchell on emergency contact), missing emergency contact phone, missing group number, missing pharmacy address, missing date signed, and missing referral."
+    weight: 0.35
+    description: "ErrorIdentification"
+  - type: llm_judge
+    criteria: "Prioritizes corrections appropriately — critical items (phone number, insurance group number, emergency contact phone, referral) that affect care delivery and billing are flagged as urgent; minor items (pharmacy address, email format) are lower priority."
+    weight: 0.35
+    description: "PrioritizedCorrections"
+  - type: llm_judge
+    criteria: "Patient communication script is professional and efficient — requests all corrections in one contact rather than multiple follow-ups; uses clear, non-jargon language; doesn't make the patient feel they did something wrong."
+    weight: 0.30
+    description: "PatientCommunication"

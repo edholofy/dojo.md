@@ -1,0 +1,79 @@
+meta:
+  id: employment-agreement-review
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Review an executive employment agreement — summarize compensation, restrictive covenants, termination provisions, and change-of-control protections for a C-suite candidate"
+  tags: [employment-agreement, executive-compensation, restrictive-covenants, intermediate]
+
+state: {}
+
+trigger: |
+  Review an executive employment agreement for a
+  VP of Engineering candidate who needs to understand
+  the full terms before accepting.
+
+  KEY PROVISIONS:
+
+  COMPENSATION:
+  - Base salary: $325,000
+  - Target bonus: 40% of base ($130,000), discretionary
+  - Equity: 50,000 stock options, 4-year vest with
+    1-year cliff, strike price at FMV on grant date
+  - Signing bonus: $75,000, subject to 2-year repayment
+    if voluntarily terminated
+
+  NON-COMPETE:
+  "For a period of twenty-four (24) months following
+  termination for any reason, Employee shall not,
+  directly or indirectly, engage in or become
+  associated with any Competing Business within the
+  United States. 'Competing Business' means any
+  business engaged in the development, marketing, or
+  sale of enterprise software solutions for supply
+  chain management."
+
+  NON-SOLICITATION:
+  "For twenty-four (24) months following termination,
+  Employee shall not solicit, recruit, or hire any
+  employee, contractor, or consultant of the Company,
+  or solicit any customer or prospective customer
+  with whom Employee had material contact during the
+  last twelve (12) months of employment."
+
+  IP ASSIGNMENT:
+  "Employee hereby assigns to the Company all right,
+  title, and interest in any Inventions conceived,
+  developed, or reduced to practice during the period
+  of employment, whether or not during working hours,
+  if such Inventions relate to the Company's business
+  or result from Company resources."
+
+  TERMINATION:
+  - Without cause: 6 months severance + COBRA + pro-
+    rata bonus + 6 months accelerated vesting
+  - For cause: No severance, immediate termination
+  - Voluntary resignation: 30 days notice required
+  - Change of control: Double-trigger acceleration
+    (change of control + termination within 12 months)
+
+  Create:
+  1. Plain-language summary of all terms
+  2. Financial analysis (total compensation modeling)
+  3. Restrictive covenant risk assessment
+  4. Negotiation recommendations
+  5. Questions to ask before signing
+
+assertions:
+  - type: llm_judge
+    criteria: "Non-compete analysis identifies enforceability concerns — 24 months nationwide for supply chain software is very broad; many states limit non-competes (California bans them entirely); the analysis should assess enforceability based on scope, duration, and geography, and recommend narrowing to a specific geographic area or shorter duration."
+    weight: 0.35
+    description: "NonCompeteEnforceability"
+  - type: llm_judge
+    criteria: "Financial analysis models total compensation including risks — models Year 1-4 compensation including base, bonus (at target and below), equity value at various valuations, and signing bonus; highlights the signing bonus repayment risk if the candidate leaves within 2 years; calculates the true 'golden handcuff' effect of the vesting schedule."
+    weight: 0.35
+    description: "TotalCompensationModeling"
+  - type: llm_judge
+    criteria: "IP assignment clause is flagged for personal project impact — 'whether or not during working hours' and 'relate to the Company's business' means personal side projects in adjacent areas could be claimed by the company; the analysis should recommend carving out pre-existing IP and personal projects unrelated to the company's specific products."
+    weight: 0.30
+    description: "IPAssignmentScope"

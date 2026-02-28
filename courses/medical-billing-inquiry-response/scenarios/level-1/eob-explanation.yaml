@@ -1,0 +1,58 @@
+meta:
+  id: eob-explanation
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Explain an Explanation of Benefits statement to a confused patient — translate insurance jargon into plain language and clarify what the patient owes"
+  tags: [eob, patient-education, insurance-jargon, beginner]
+
+state: {}
+
+trigger: |
+  A patient calls confused about an Explanation of
+  Benefits (EOB) they received from their insurance
+  company after a recent office visit.
+
+  Patient: Margaret Chen, age 62
+  Insurance: Aetna PPO
+  Visit: Office visit with Dr. Williams (internal medicine)
+  Date of service: 3 weeks ago
+
+  EOB details the patient is reading to you:
+  - Billed amount: $450.00
+  - Allowed amount: $285.00
+  - Plan paid: $228.00
+  - Adjustments: $165.00
+  - Copay: $35.00
+  - Deductible applied: $0.00
+  - Coinsurance (20%): $22.00
+  - Patient responsibility: $57.00
+
+  Patient's questions:
+  1. "Why did the doctor charge $450 but insurance only
+     allowed $285? Am I being overcharged?"
+  2. "What's the $165 adjustment? Did they take money away?"
+  3. "I already paid my $35 copay at the office. Why do
+     I owe more?"
+  4. "What's coinsurance? I thought I just had a copay."
+  5. "Is this a bill? Do I need to pay $57 right now?"
+
+  Create:
+  1. Clear explanation of each EOB line item
+  2. Answers to all five patient questions
+  3. Summary of what the patient actually owes
+  4. Guidance on next steps
+
+assertions:
+  - type: llm_judge
+    criteria: "Explains the billed vs. allowed amount correctly — the $450 is the provider's standard charge, the $285 is the negotiated rate between the provider and Aetna, and the $165 adjustment is the contractual write-off that neither the patient nor insurance pays; the patient is NOT being overcharged."
+    weight: 0.35
+    description: "BilledVsAllowedExplanation"
+  - type: llm_judge
+    criteria: "Clarifies the relationship between copay and coinsurance — the $35 copay was paid at the visit, the $22 coinsurance is an additional amount (20% of the remaining allowed amount after copay); the total patient responsibility is $57 ($35 copay + $22 coinsurance)."
+    weight: 0.35
+    description: "CopayCoinsuranceClarification"
+  - type: llm_judge
+    criteria: "Correctly distinguishes EOB from bill — explains that the EOB is NOT a bill; it's an explanation from insurance of how the claim was processed; the patient should wait for an actual bill from the provider showing the $22 remaining balance."
+    weight: 0.30
+    description: "EOBvsBillDistinction"

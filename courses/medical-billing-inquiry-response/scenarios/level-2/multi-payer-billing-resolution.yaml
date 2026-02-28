@@ -1,0 +1,67 @@
+meta:
+  id: multi-payer-billing-resolution
+  level: 2
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Resolve billing issues across multiple payer types — navigate commercial, Medicare, Medicaid, workers' comp, and auto insurance billing simultaneously for complex patient scenarios"
+  tags: [multi-payer, billing-resolution, cross-payer, intermediate]
+
+state: {}
+
+trigger: |
+  Resolve billing issues for patients with complex
+  multi-payer situations where standard billing
+  procedures have failed.
+
+  Case 1 — Medicare + Medicaid (dual eligible):
+  Patient: Helen Foster, age 72
+  Medicare Part B + State Medicaid
+  Service: Home health services (10 visits)
+  Issue: Medicare paid for 8 visits but denied the last
+  2 as "not medically necessary." Medicaid was billed
+  for the remaining 2 visits but denied stating
+  "Medicare is primary — must exhaust Medicare appeals
+  first." Patient is being billed $450 for the 2 visits.
+  Dual-eligible patients should have zero cost-sharing.
+
+  Case 2 — Commercial + workers' comp dispute:
+  Patient: Carlos Mendez, age 45
+  Commercial: Cigna | Workers' comp: Hartford
+  Service: Back surgery ($42,000)
+  Issue: Hartford denied the workers' comp claim
+  (dispute about whether injury was work-related).
+  Cigna was billed but denied saying "workers' comp
+  is primary for work-related injuries." Neither payer
+  is paying. Patient received a $42,000 bill.
+
+  Case 3 — Medicare Advantage + commercial (COB):
+  Patient: Barbara Kim, age 66
+  Medicare Advantage (Humana) + employer BCBS (still
+  working part-time)
+  Service: Cardiac catheterization ($18,500)
+  Issue: Both plans processed as primary. Humana paid
+  $8,200. BCBS paid $7,800. Provider received $16,000
+  but the combined payments exceed the allowed amount
+  of $12,400. Now provider must refund $3,600 to one
+  payer. Which one?
+
+  Create:
+  1. Resolution strategy for each case
+  2. Payer communication templates
+  3. Patient financial protection measures
+  4. Correct billing sequence for each scenario
+  5. Prevention strategies
+
+assertions:
+  - type: llm_judge
+    criteria: "Case 1 correctly protects the dual-eligible patient — dual-eligible patients should NOT receive bills for Medicare-covered services; Medicaid covers Medicare cost-sharing for dual-eligibles; the practice should pursue the Medicare appeal while simultaneously requesting Medicaid payment for the cost-sharing portion."
+    weight: 0.35
+    description: "DualEligibleProtection"
+  - type: llm_judge
+    criteria: "Case 2 identifies the patient protection issue — the patient should not bear the $42,000 cost while payers dispute liability; the correct approach is to file a formal WC dispute/appeal, submit to Cigna as a backup (noting WC dispute is pending), and hold the patient harmless during the resolution process."
+    weight: 0.35
+    description: "PayerDisputePatientProtection"
+  - type: llm_judge
+    criteria: "Case 3 correctly determines which payer to refund — for a Medicare Advantage beneficiary who also works and has employer coverage, employer group coverage is typically primary when the employer has 20+ employees (MSP rules); the refund should go to Humana, and the claim should be reprocessed with BCBS as primary."
+    weight: 0.30
+    description: "COBRefundDetermination"

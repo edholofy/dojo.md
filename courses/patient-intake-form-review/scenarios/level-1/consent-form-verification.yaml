@@ -1,0 +1,72 @@
+meta:
+  id: consent-form-verification
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Verify patient consent forms for completeness and validity — check signatures, dates, witness requirements, and scope of consent before procedures"
+  tags: [consent-forms, signature-verification, legal-compliance, beginner]
+
+state: {}
+
+trigger: |
+  Verify consent forms for a patient scheduled for
+  an outpatient procedure tomorrow.
+
+  Patient: David Park, age 58
+  Procedure: Colonoscopy with possible polypectomy
+  Provider: Dr. Sarah Kim, Gastroenterology
+  Facility: Sunrise Ambulatory Surgery Center
+
+  Forms submitted:
+
+  1. General Consent for Treatment:
+  - Patient signature: Present
+  - Date: 2 weeks ago (02/13/2026)
+  - Witness signature: Missing
+  - Printed name matches signature: Yes
+
+  2. Procedure-Specific Informed Consent:
+  - Procedure listed: "Colonoscopy"
+  - Polypectomy not mentioned on the form
+  - Risks listed: bleeding, perforation, reaction to sedation
+  - Benefits listed: (left blank)
+  - Alternatives listed: (left blank)
+  - Patient signature: Present
+  - Physician signature: Missing
+  - Date: 02/13/2026
+
+  3. Anesthesia Consent:
+  - Type of anesthesia: "Moderate sedation (conscious)"
+  - Patient signature: Present
+  - Anesthesiologist name: (left blank)
+  - Date: 02/13/2026
+
+  4. HIPAA Notice of Privacy Practices:
+  - Acknowledgment signature: Present
+  - Date: 02/13/2026
+
+  5. Financial Responsibility Agreement:
+  - Patient signature: Present but appears to be a
+    different signature style than other forms
+  - Date: 02/13/2026
+
+  Create:
+  1. Consent form audit findings
+  2. Required corrections before procedure
+  3. Legal risk assessment for each deficiency
+  4. Corrective action plan with timeline
+  5. Communication to clinical team
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies critical consent deficiencies — missing physician signature on procedure consent (invalid without it), polypectomy not included in procedure consent (if polyps are found, there's no consent to remove them), missing witness signature on general consent, and blank benefits/alternatives sections on informed consent."
+    weight: 0.35
+    description: "ConsentDeficiencies"
+  - type: llm_judge
+    criteria: "Legal risk assessment correctly prioritizes — the missing polypectomy consent is the highest risk (performing an unconsented procedure); the missing physician signature renders the consent potentially invalid; the different signature style on the financial form may warrant identity verification."
+    weight: 0.35
+    description: "LegalRiskAssessment"
+  - type: llm_judge
+    criteria: "Corrective action plan ensures the procedure can still proceed on schedule — identifies which corrections must be completed before the procedure (physician signature, polypectomy consent) vs. which can be corrected day-of (witness signature, anesthesiologist name); provides a timeline that works within the 24-hour window."
+    weight: 0.30
+    description: "CorrectiveActionTimeline"

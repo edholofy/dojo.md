@@ -1,0 +1,74 @@
+meta:
+  id: saas-agreement-review
+  level: 1
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review a SaaS subscription agreement and summarize key terms, auto-renewal provisions, data ownership, and SLA commitments for a small business buyer"
+  tags: [saas, subscription, software, beginner]
+
+state: {}
+
+trigger: |
+  You're the Office Manager at a 50-person marketing
+  agency. The company wants to subscribe to a project
+  management SaaS tool ($2,400/month for 50 seats). The
+  vendor has sent their standard subscription agreement.
+  Your boss (the COO) wants you to review and summarize
+  it before signing.
+
+  Key terms of the SaaS agreement:
+  - Subscription term: 12 months, auto-renewing for
+    successive 12-month periods
+  - Cancellation: Must provide written notice 90 days
+    before renewal date; otherwise auto-renews at then-
+    current pricing
+  - Pricing: $48/user/month; "Vendor reserves the right
+    to adjust pricing with 30 days written notice prior
+    to renewal"
+  - Payment: Annual prepayment required; no refunds for
+    early termination
+  - Data ownership: "Customer retains ownership of
+    Customer Data. Vendor is granted a non-exclusive,
+    worldwide license to use, copy, and process Customer
+    Data to provide the Services and to improve Vendor's
+    products and services"
+  - Data portability: "Upon termination, Customer may
+    export data in CSV format within 30 days. After 30
+    days, Vendor shall delete Customer Data"
+  - SLA: 99.5% uptime measured monthly, excluding
+    scheduled maintenance (up to 8 hours/month);
+    credits: 5% of monthly fee for each 0.1% below SLA
+  - Liability: "Vendor's total liability shall not exceed
+    the fees paid by Customer in the 12 months preceding
+    the claim. In no event shall Vendor be liable for
+    indirect, incidental, or consequential damages"
+  - Security: "Vendor shall implement commercially
+    reasonable security measures. Vendor shall notify
+    Customer of any data breach within 72 hours"
+  - Indemnification: Customer indemnifies Vendor against
+    claims arising from Customer's use of the service;
+    Vendor provides no indemnification to Customer
+  - Modifications: "Vendor may modify these Terms at any
+    time by posting updated Terms on its website.
+    Continued use constitutes acceptance"
+  - Governing law: State of California
+
+  Task: Write a summary for your COO covering: what
+  you're agreeing to, the total financial commitment,
+  key risks and red flags, comparison to industry norms,
+  and specific clauses you recommend negotiating before
+  signing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a clear business-focused summary — translates the agreement into plain language a non-lawyer COO can understand; calculates total financial commitment ($28,800/year with auto-renewal risk); highlights the auto-renewal trap (90-day notice requirement); explains data ownership vs license distinction; covers SLA in practical terms (what 99.5% uptime means in real downtime hours); organized for quick decision-making."
+    weight: 0.35
+    description: "ClearBusinessSummary"
+  - type: llm_judge
+    criteria: "Response identifies red flags and risks — flags the one-sided indemnification (customer indemnifies vendor but not vice versa); flags the unilateral terms modification clause; flags the broad data license ('improve products and services' could mean training AI on your data); flags no refund for early termination combined with auto-renewal; flags unlimited pricing increase at renewal; compares these terms to industry norms (what's standard vs what's aggressive for a SaaS agreement)."
+    weight: 0.35
+    description: "RedFlagsIdentified"
+  - type: llm_judge
+    criteria: "Response provides negotiation recommendations — identifies specific clauses to negotiate with suggested alternative language or positions; prioritizes negotiations (most important changes vs nice-to-haves); the recommendations are realistic for a 50-person company negotiating with a SaaS vendor; balances risk mitigation with the reality that vendors may not change standard terms for a $28,800/year deal."
+    weight: 0.30
+    description: "NegotiationRecommendations"

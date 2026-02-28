@@ -1,0 +1,54 @@
+meta:
+  id: multiple-listing-inquiry
+  level: 1
+  course: buyer-inquiry-response
+  type: output
+  description: "Respond to a buyer inquiring about multiple listings simultaneously — prioritize and guide without overwhelming"
+  tags: [multiple-listings, prioritization, buyer-guidance, beginner]
+
+state: {}
+
+trigger: |
+  You're a buyer's agent who received this email
+  from a new lead:
+
+  "Hi, I've been browsing Realtor.com and I'm
+  interested in these properties:
+  1. 123 Main St - $310K (the blue one with the porch)
+  2. 456 Elm Ave - $285K (looks like it needs work)
+  3. 789 Pine Rd - $340K (love the kitchen)
+  4. 22 Birch Ct - $295K (is this in a good area?)
+  5. 101 Spruce Dr - $365K (might be too expensive)
+
+  Can I see all of them this weekend? I'm pre-approved
+  up to $325K. — Lisa T."
+
+  Your knowledge of these listings:
+  - 123 Main St: Active, 4 bed, great condition
+  - 456 Elm Ave: Active, needs $40K+ in repairs
+  - 789 Pine Rd: UNDER CONTRACT (accepted offer
+    yesterday)
+  - 22 Birch Ct: Active, 3 bed, nice subdivision
+  - 101 Spruce Dr: Active but above her pre-approval
+
+  Write a response that:
+  1. Acknowledges her enthusiasm and research
+  2. Gently notes which properties fit her budget
+  3. Informs her that 789 Pine Rd is under contract
+  4. Addresses the fixer-upper realistically
+  5. Suggests 2-3 alternative listings she might like
+  6. Proposes a showing plan for the weekend
+
+assertions:
+  - type: llm_judge
+    criteria: "Response accurately addresses all five listings — notes 789 Pine Rd is under contract, flags 101 Spruce Dr exceeds her $325K pre-approval, addresses 456 Elm Ave repair costs honestly, and confirms which listings are viable for showing."
+    weight: 0.35
+    description: "ListingStatusAccuracy"
+  - type: llm_judge
+    criteria: "Response is diplomatic and encouraging — doesn't make Lisa feel bad about her choices, redirects her toward viable options, suggests alternatives, and proposes a practical weekend showing plan."
+    weight: 0.35
+    description: "DiplomaticGuidance"
+  - type: llm_judge
+    criteria: "Response would convert Lisa from a browser to a client — it demonstrates market expertise, shows she'll get honest guidance, and creates a concrete plan rather than leaving things vague."
+    weight: 0.30
+    description: "BrowserToClientConversion"

@@ -1,0 +1,56 @@
+meta:
+  id: medication-list-reconciliation
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Reconcile a patient's self-reported medication list with pharmacy records — identify discrepancies, potential safety issues, and documentation gaps"
+  tags: [medication-reconciliation, pharmacy-records, patient-safety, beginner]
+
+state: {}
+
+trigger: |
+  Reconcile a patient's self-reported medication list
+  from the intake form with the pharmacy records
+  obtained from the e-prescribing system.
+
+  Patient: Helen Foster, age 68
+  Appointment: Follow-up with cardiologist
+
+  Patient-reported medications (intake form):
+  1. "Blood pressure pill — small white one, take in morning"
+  2. Metformin 500mg twice daily
+  3. "Cholesterol medicine"
+  4. Baby aspirin daily
+  5. Vitamin D
+  6. "Something for my stomach, starts with O"
+  7. Tylenol PM (as needed for sleep)
+
+  Pharmacy records (e-prescribing):
+  1. Lisinopril 20mg daily — last filled 2 months ago
+  2. Metformin 1000mg twice daily — last filled 3 weeks ago
+  3. Atorvastatin 40mg daily — last filled 6 months ago
+  4. Aspirin 81mg daily — OTC, not in pharmacy records
+  5. Omeprazole 20mg daily — last filled 1 month ago
+  6. Warfarin 5mg daily — last filled 1 week ago
+  7. Amlodipine 5mg daily — last filled 3 weeks ago
+
+  Create:
+  1. Medication reconciliation report
+  2. Discrepancy analysis
+  3. Safety flags for provider review
+  4. Questions to ask the patient
+  5. Recommendations for updating the medication record
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies critical safety concern — patient is taking Warfarin (per pharmacy records) but did NOT report it on intake form; Warfarin combined with aspirin increases bleeding risk; also patient takes Tylenol PM (contains diphenhydramine and acetaminophen) which has interactions with Warfarin."
+    weight: 0.35
+    description: "WarfarinSafetyFlag"
+  - type: llm_judge
+    criteria: "Catches dosage discrepancy — patient reports Metformin 500mg but pharmacy shows 1000mg (dose was likely increased); also notes Atorvastatin hasn't been filled in 6 months suggesting possible non-adherence; and patient has Amlodipine in pharmacy records but didn't list it."
+    weight: 0.35
+    description: "DosageDiscrepancies"
+  - type: llm_judge
+    criteria: "Questions for the patient are specific and safety-focused — asks about Warfarin specifically ('Are you taking a blood thinner?'), clarifies if Metformin dose changed, determines if Atorvastatin was discontinued or just not refilled, and identifies the 'small white pill' and Amlodipine relationship."
+    weight: 0.30
+    description: "PatientQuestions"

@@ -1,0 +1,61 @@
+meta:
+  id: good-faith-estimate-explanation
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Provide and explain a Good Faith Estimate to an uninsured patient — calculate expected costs, explain patient rights, and document the estimate per No Surprises Act requirements"
+  tags: [good-faith-estimate, uninsured-patient, no-surprises-act, beginner]
+
+state: {}
+
+trigger: |
+  Provide a Good Faith Estimate (GFE) to an uninsured
+  patient scheduling an elective procedure, as required
+  by the No Surprises Act.
+
+  Patient: Michael Torres, age 50
+  Insurance: None (self-pay)
+  Scheduled procedure: Knee arthroscopy with meniscus
+  repair at an outpatient surgery center
+  Surgeon: Dr. Amanda Lee, Orthopedic Surgery
+  Facility: Sunrise Ambulatory Surgery Center
+  Scheduled date: 3 weeks from now
+
+  Components to estimate:
+  - Surgeon's professional fee (CPT 29881): $3,200
+  - Facility fee (surgery center): $6,500
+  - Anesthesia (estimated 90 minutes): $1,800
+  - Pre-op labs (basic metabolic panel, CBC): $180
+  - Post-op knee brace: $350
+  - Pre-op office visit (already completed): $250
+  - Post-op follow-up visit (1): $175
+  - Physical therapy (estimated 8 sessions): $1,600
+
+  Total estimated cost: $14,055
+
+  Practice self-pay discount policy:
+  - 30% discount on professional fees for self-pay
+  - Facility offers 20% self-pay discount
+  - Anesthesia: 25% self-pay discount
+  - Payment plan available: 12 months, 0% interest
+
+  Create:
+  1. Good Faith Estimate document
+  2. Patient-friendly cost summary
+  3. Self-pay discount explanation
+  4. Patient rights under the No Surprises Act
+  5. Payment plan options
+
+assertions:
+  - type: llm_judge
+    criteria: "Good Faith Estimate includes all required components — lists each provider and their expected charges, includes all reasonably expected items and services for the episode of care (pre-op, surgery, anesthesia, post-op, PT), and is provided at least 3 business days before the scheduled service."
+    weight: 0.35
+    description: "GFECompleteness"
+  - type: llm_judge
+    criteria: "Self-pay discounts are applied correctly and the adjusted total is clearly presented — surgeon fee drops from $3,200 to $2,240 (30%), facility from $6,500 to $5,200 (20%), anesthesia from $1,800 to $1,350 (25%); the patient sees both the undiscounted and discounted totals."
+    weight: 0.35
+    description: "SelfPayDiscountApplication"
+  - type: llm_judge
+    criteria: "Patient rights under NSA are explained — if the final bill exceeds the GFE by $400 or more, the patient can dispute through the federal patient-provider dispute resolution process; the $25 filing fee is mentioned; the 120-day filing window is noted."
+    weight: 0.30
+    description: "NSAPatientRights"

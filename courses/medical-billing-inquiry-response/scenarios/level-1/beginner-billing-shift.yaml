@@ -1,0 +1,69 @@
+meta:
+  id: beginner-billing-shift
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Beginner shift simulation — handle a morning of patient billing calls including an EOB question, a payment plan request, a surprise bill complaint, and a coding error dispute"
+  tags: [shift-simulation, multi-call, billing-calls, beginner]
+
+state: {}
+
+trigger: |
+  You are a patient billing representative handling
+  incoming calls during a busy morning shift. Respond
+  to each patient appropriately.
+
+  CALL 1 (8:05 AM):
+  Patient Mary Chen, age 70, Medicare + Medigap
+  "I got three separate bills for my colonoscopy —
+  one from the doctor, one from the surgery center,
+  and one from the anesthesiologist. My neighbor had
+  a colonoscopy and only got one bill. Why am I
+  getting three?"
+
+  CALL 2 (8:25 AM):
+  Patient Tom Harris, age 35, UHC PPO
+  "I went to the ER two months ago and I just got a
+  bill for $8,500. My insurance didn't pay anything
+  because they said it wasn't a real emergency. I had
+  chest pains! How is that not an emergency?"
+
+  CALL 3 (8:45 AM):
+  Patient Sarah Lopez, age 28, no insurance
+  "I just got a bill for $1,200 for my visit last
+  month. I'm a student and I can't afford this. Is
+  there anything I can do? I'm scared it'll go to
+  collections."
+
+  CALL 4 (9:10 AM):
+  Patient James Park, age 55, BCBS EPO
+  "My bill shows I was charged for two office visits
+  on the same day. I only went to the doctor once.
+  This is fraud and I want it fixed immediately."
+
+  CALL 5 (9:30 AM):
+  Patient Karen White, age 45, Cigna HMO
+  "I already paid my copay of $40 at the visit. Now
+  I'm getting a bill for another $40 copay. I'm not
+  paying it twice."
+
+  Handle all five calls:
+  1. Appropriate response to each patient
+  2. Investigation steps for each issue
+  3. Resolution or next steps for each
+  4. Documentation of each call
+  5. Escalation items if any
+
+assertions:
+  - type: llm_judge
+    criteria: "Call 2 response addresses the prudent layperson standard — under most insurance plans and state laws, ER visits are covered based on symptoms (chest pain) not final diagnosis; if the patient presented with chest pain, coverage should apply regardless of whether it turned out to be cardiac; advises filing an appeal."
+    weight: 0.35
+    description: "PrudentLaypersonStandard"
+  - type: llm_judge
+    criteria: "Call 3 response provides genuine financial assistance options — doesn't just offer a payment plan; screens for charity care eligibility (student likely qualifies), explains financial assistance application process, and assures the patient the account won't go to collections while assistance is being evaluated."
+    weight: 0.35
+    description: "FinancialAssistanceOptions"
+  - type: llm_judge
+    criteria: "Call 4 investigation doesn't dismiss the patient's concern — takes the duplicate charge seriously, checks if it might be two separate services on the same day (E/M + procedure), or an actual billing error; explains the difference between fraud (intentional) and billing error (correctable) without being dismissive."
+    weight: 0.30
+    description: "DuplicateChargeInvestigation"

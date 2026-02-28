@@ -1,0 +1,93 @@
+meta:
+  id: first-contract-review-shift
+  level: 1
+  course: legal-contract-review-summaries
+  type: output
+  description: "Handle a simulated shift reviewing multiple contracts under time pressure with competing priorities"
+  tags: [shift-simulation, multi-contract, time-pressure, beginner]
+
+state: {}
+
+trigger: |
+  You're the Office Manager at a 40-person marketing
+  agency. It's Monday morning and the following three
+  contracts have landed on your desk, all needing
+  review summaries by end of day because the CEO is
+  traveling tomorrow:
+
+  CONTRACT 1 — New Client Engagement Letter:
+  A Fortune 500 CPG company wants to hire your agency
+  for a $180,000 brand refresh campaign (6 months).
+  Their engagement letter includes:
+  - Payment: Net 60 terms (your standard is Net 30)
+  - IP: "All work product shall be owned by Client upon
+    creation" (work-for-hire)
+  - Scope changes: "Additional services outside the
+    original scope shall be performed at the same hourly
+    rates upon Client's written request"
+  - Indemnification: Agency indemnifies Client for any
+    IP infringement, negligence, or breach; Client
+    provides no indemnification to Agency
+  - Termination: Client may terminate with 15 days'
+    notice; no kill fee; Agency must deliver all work
+    in progress
+  - Non-compete: "Agency shall not provide services to
+    any direct competitor of Client during the engagement
+    and for 6 months after"
+  - Liability cap: None stated
+
+  CONTRACT 2 — Office Copier Lease:
+  Your current copier lease expires Friday. The vendor
+  is offering a new 36-month lease:
+  - Monthly payment: $450/month ($16,200 total)
+  - Equipment: Refurbished model (your current one is
+    also refurbished and breaks down monthly)
+  - Maintenance: "Included except for damage caused by
+    misuse or unauthorized supplies/toner"
+  - Early termination: "Lessee shall pay all remaining
+    monthly payments plus a 20% early termination fee"
+  - Auto-renewal: Automatically renews for successive
+    12-month periods unless cancelled 60 days before
+    expiration
+  - End of term: "Lessee shall return equipment in good
+    working condition or purchase at then-fair-market
+    value (estimated $2,800)"
+  - Personal guarantee: "An authorized officer of Lessee
+    shall personally guarantee all obligations"
+
+  CONTRACT 3 — Freelance Photographer Agreement:
+  You need a photographer for a client shoot next week.
+  The photographer's contract says:
+  - Fee: $3,500 for one full-day shoot
+  - IP: Photographer retains copyright; grants Agency a
+    "non-exclusive license for use in the specific
+    campaign described in the SOW"
+  - Usage: "License is limited to North American digital
+    and print media for 12 months from delivery"
+  - Model releases: "Client is responsible for obtaining
+    all necessary model/property releases"
+  - Cancellation: "If cancelled within 72 hours of shoot
+    date, full fee is due"
+  - Portfolio: Photographer may use images in portfolio
+    after campaign launch
+  - Equipment/expenses: Not included; estimated $800
+    additional for studio rental, lighting, assistant
+
+  Task: Write a prioritized summary memo for your CEO
+  covering all three contracts — what to sign, what to
+  negotiate, and what to flag as urgent. Include a
+  recommended action for each contract.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response summarizes all three contracts clearly — provides concise, plain-language summaries of each contract's key terms; correctly prioritizes by urgency and financial impact (the $180K client engagement is highest value, the copier lease has a Friday deadline, the photographer is needed next week); organizes the memo for quick CEO review with clear action items for each contract."
+    weight: 0.35
+    description: "ClearPrioritizedSummaries"
+  - type: llm_judge
+    criteria: "Response identifies key risks across all three contracts — for the client engagement: flags one-sided indemnification, no liability cap, non-compete breadth, Net 60 cash flow impact, no kill fee; for the copier lease: flags personal guarantee, auto-renewal trap, early termination penalty, refurbished equipment risk; for the photographer: flags IP license limitations (only 12 months, North America), model release responsibility, and the conflict with the client engagement's work-for-hire requirement (agency promises client ownership but photographer retains copyright)."
+    weight: 0.35
+    description: "KeyRisksAcrossContracts"
+  - type: llm_judge
+    criteria: "Response provides actionable recommendations for each contract — gives a clear sign/negotiate/decline recommendation for each; suggests specific negotiation points prioritized by importance; recognizes the IP conflict between the client engagement (work-for-hire) and photographer agreement (license only) and proposes a solution; the recommendations are practical for a 40-person agency with realistic leverage assessments."
+    weight: 0.30
+    description: "ActionableRecommendations"

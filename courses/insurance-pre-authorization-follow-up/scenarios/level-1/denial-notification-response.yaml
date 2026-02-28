@@ -1,0 +1,58 @@
+meta:
+  id: denial-notification-response
+  level: 1
+  course: insurance-pre-authorization-follow-up
+  type: output
+  description: "Respond to a pre-authorization denial notification — understand the denial reason, communicate to the provider, and outline initial appeal options"
+  tags: [denial-response, appeal-options, provider-communication, beginner]
+
+state: {}
+
+trigger: |
+  A pre-authorization request has been denied. Write
+  the initial response communications and outline
+  appeal options.
+
+  Denial details:
+  - Patient: Jennifer Martinez
+  - Insurance: Aetna
+  - Procedure: Knee arthroscopy (CPT 29881)
+  - Denial reason: "Medical necessity not established.
+    Documentation does not demonstrate failure of
+    conservative treatment for minimum 6 weeks."
+  - Denial code: PR-197 (Medical necessity)
+  - Denial date: Today
+  - Appeal deadline: 60 days from denial
+
+  Clinical context:
+  - Patient has had knee pain for 8 weeks
+  - MRI shows meniscal tear
+  - Patient completed 3 weeks of physical therapy
+    (stopped due to pain increase)
+  - Provider notes document NSAIDs prescribed
+  - X-rays performed at initial visit
+  - Orthopedic surgeon recommendation: surgery needed
+
+  The denial appears based on insufficient conservative
+  treatment duration (3 weeks vs required 6 weeks).
+
+  Create:
+  1. Summary of denial for the ordering physician
+  2. Analysis of the denial reason and gap
+  3. Options memo: continue conservative treatment vs appeal
+  4. If appealing: what additional documentation is needed
+  5. Patient notification about the denial (letter/call)
+
+assertions:
+  - type: llm_judge
+    criteria: "Denial analysis correctly identifies the specific gap — recognizes that 3 weeks of PT vs 6 weeks required is the issue, not the overall clinical picture; this precision is essential for either appealing or addressing the gap."
+    weight: 0.35
+    description: "DenialAnalysisPrecision"
+  - type: llm_judge
+    criteria: "Options memo presents both paths honestly — continuing conservative treatment for 3 more weeks may satisfy criteria but delays surgery; appealing may succeed but requires strong documentation that the PT was appropriately stopped; provider can make an informed decision."
+    weight: 0.35
+    description: "OptionsHonesty"
+  - type: llm_judge
+    criteria: "Patient notification is empathetic and non-alarming — explains the denial in plain language without medical jargon, reassures the patient that this is common and there are next steps, and doesn't blame anyone."
+    weight: 0.30
+    description: "PatientNotificationEmpathy"

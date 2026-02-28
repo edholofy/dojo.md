@@ -1,0 +1,51 @@
+meta:
+  id: cancellation-rescheduling-message
+  level: 1
+  course: patient-appointment-reminder-messaging
+  type: output
+  description: "Write cancellation confirmation and rescheduling prompt messages — handle appointment changes gracefully while encouraging rebooking"
+  tags: [cancellation, rescheduling, rebooking, beginner]
+
+state: {}
+
+trigger: |
+  Write messages for when a patient cancels an
+  appointment — a cancellation confirmation and a
+  rescheduling prompt to encourage rebooking.
+
+  Scenario: Patient David Kim called to cancel his
+  upcoming dental cleaning appointment.
+
+  Cancelled appointment:
+  - Provider: Dr. Sarah Thompson, General Dentistry
+  - Original date: Friday, March 22, 3:00 PM
+  - Reason given: Work conflict
+
+  Practice information:
+  - Next available cleaning: April 5, 8:30 AM or
+    April 8, 1:00 PM
+  - Online scheduling available at scheduling URL
+  - Cancellation policy: No fee for 24+ hour notice
+  - Patient is due for cleaning (last one was 7 months ago)
+
+  Create:
+  1. Immediate cancellation confirmation (SMS or email)
+  2. Rescheduling prompt (sent same day)
+  3. Follow-up if no reschedule within 1 week
+
+  Each message should encourage rebooking without
+  being pushy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cancellation confirmation is clear and professional — confirms the specific appointment was cancelled, notes no fee applies, and gently opens the door for rescheduling without pressure."
+    weight: 0.35
+    description: "CancellationConfirmation"
+  - type: llm_judge
+    criteria: "Rescheduling prompt offers specific available times — doesn't just say 'call us to reschedule' but provides concrete options that make rebooking easy; includes online scheduling as a convenience option."
+    weight: 0.35
+    description: "ReschedulingConvenience"
+  - type: llm_judge
+    criteria: "Follow-up message is caring, not guilt-tripping — emphasizes the importance of regular dental care for the patient's benefit without shaming them for cancelling; tone is 'we care about your health' not 'you owe us an appointment.'"
+    weight: 0.30
+    description: "FollowUpTone"

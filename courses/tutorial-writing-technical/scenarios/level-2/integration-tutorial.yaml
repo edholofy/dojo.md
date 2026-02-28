@@ -1,0 +1,71 @@
+meta:
+  id: integration-tutorial
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a tutorial for integrating two services together, handling authentication, webhooks, error handling, and data transformation between systems"
+  tags: [integration, webhooks, third-party, intermediate]
+
+state: {}
+
+trigger: |
+  You're a developer advocate at Stripe. You need
+  to write a tutorial called "Accept Payments in
+  Your Next.js App with Stripe Checkout" — one of
+  the most-requested guides from the developer
+  community. The tutorial should take a developer
+  from zero Stripe integration to a working
+  checkout flow.
+
+  Tutorial parameters:
+  - Framework: Next.js 14+ (App Router)
+  - Payment flow: Stripe Checkout (hosted page)
+  - Features: One-time payments, webhooks for
+    order fulfillment, success/cancel pages
+  - Audience: Frontend developers who haven't
+    integrated payments before
+  - Language: TypeScript
+
+  Integration steps:
+  1. Set up Stripe account and get API keys
+  2. Install Stripe SDK (stripe + @stripe/stripe-js)
+  3. Create the product/price in Stripe dashboard
+  4. Build the checkout button (client-side)
+  5. Create the API route to create a Checkout
+     Session (server-side)
+  6. Handle the redirect to Stripe Checkout
+  7. Build success and cancellation pages
+  8. Set up webhooks for order fulfillment
+     - Create the webhook endpoint
+     - Verify webhook signatures
+     - Handle checkout.session.completed event
+  9. Test with Stripe CLI (stripe listen --forward-to)
+  10. Go-live checklist (test mode → live mode)
+
+  Technical challenges to address:
+  - API keys: Test vs live, environment variables,
+    never expose secret key client-side
+  - Webhook signature verification (security)
+  - Idempotency (handling duplicate webhook events)
+  - Error handling (network failures, Stripe
+    errors, invalid requests)
+  - The raw body requirement for webhook
+    verification in Next.js
+
+  Task: Write the complete integration tutorial
+  with all 10 steps, security best practices,
+  error handling, and the go-live checklist.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete Stripe integration tutorial — covers all 10 steps from account setup to go-live; code examples are complete and use Next.js App Router patterns correctly; the checkout flow works end-to-end (button → API route → Stripe Checkout → redirect → webhook); TypeScript types are used throughout; the tutorial produces a working payment integration."
+    weight: 0.35
+    description: "IntegrationCompleteness"
+  - type: llm_judge
+    criteria: "Response handles security and error concerns properly — API key management is explained (test vs live, environment variables, client vs server); webhook signature verification is implemented correctly; idempotency handling for duplicate events is addressed; error handling covers Stripe-specific errors and network failures; the raw body requirement for Next.js webhooks is addressed; security practices would pass a code review."
+    weight: 0.35
+    description: "SecurityAndErrors"
+  - type: llm_judge
+    criteria: "Response is practical for frontend developers — the tutorial doesn't assume payment integration experience; the Stripe CLI testing workflow is explained; the go-live checklist prevents common production mistakes; the tutorial bridges the gap between frontend knowledge and full-stack payment integration; the overall guide would give a frontend developer confidence to ship a payment flow."
+    weight: 0.30
+    description: "PracticalValue"

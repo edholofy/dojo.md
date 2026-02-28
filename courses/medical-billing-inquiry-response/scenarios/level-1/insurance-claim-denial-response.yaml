@@ -1,0 +1,58 @@
+meta:
+  id: insurance-claim-denial-response
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Respond to a patient whose insurance claim was denied — explain the denial reason, determine if an error occurred, and guide the patient through next steps"
+  tags: [claim-denial, denial-response, patient-guidance, beginner]
+
+state: {}
+
+trigger: |
+  A patient calls after receiving a notice that their
+  insurance claim was denied and they now owe the full
+  amount of $2,400.
+
+  Patient: Kevin O'Brien, age 40
+  Insurance: Cigna PPO
+  Service: MRI of lumbar spine (CPT 72148)
+  Provider: RadiologyFirst Imaging Center (in-network)
+  Referring physician: Dr. Patel (PCP)
+  Date of service: 5 weeks ago
+
+  Denial notice information:
+  - Denial code: PR-197
+  - Denial reason: "Prior authorization required.
+    No authorization on file for this service."
+  - Amount denied: $2,400
+
+  Investigation findings:
+  - Dr. Patel's office ordered the MRI
+  - Dr. Patel's referral notes mention "PA pending"
+  - Cigna requires prior authorization for all MRIs
+    under this plan
+  - No PA was obtained before the service was performed
+  - The imaging center did not verify PA before
+    performing the MRI
+  - Patient was never informed that PA was needed
+
+  Create:
+  1. Explanation of the denial to the patient
+  2. Determination of responsible party
+  3. Action plan for resolving the denial
+  4. Patient rights explanation
+  5. Communication to referring provider
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly identifies that the patient should NOT be responsible for this charge — the patient was never informed that PA was needed; responsibility falls on either the referring provider (who noted 'PA pending' but didn't complete it) or the imaging center (who should have verified PA before performing the service)."
+    weight: 0.35
+    description: "ResponsibilityDetermination"
+  - type: llm_judge
+    criteria: "Action plan includes both provider and insurance pathways — contacts Dr. Patel's office to request retroactive PA submission, contacts Cigna to request retro-authorization review, and if both fail, explains the patient's right to appeal the denial."
+    weight: 0.35
+    description: "DualPathwayResolution"
+  - type: llm_judge
+    criteria: "Patient rights are clearly communicated — explains that patients have the right to appeal, that they should not pay the $2,400 while the dispute is being resolved, and that the provider cannot send the balance to collections while an appeal is pending."
+    weight: 0.30
+    description: "PatientRightsExplanation"

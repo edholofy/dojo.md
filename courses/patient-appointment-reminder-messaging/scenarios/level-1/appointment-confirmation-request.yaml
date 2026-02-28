@@ -1,0 +1,52 @@
+meta:
+  id: appointment-confirmation-request
+  level: 1
+  course: patient-appointment-reminder-messaging
+  type: output
+  description: "Write an appointment confirmation request message — prompt patients to confirm attendance with clear response options and deadline"
+  tags: [confirmation-request, response-options, attendance, beginner]
+
+state: {}
+
+trigger: |
+  Write an appointment confirmation request that
+  prompts the patient to actively confirm their
+  attendance. This is sent 3 days before the appointment.
+
+  Patient: Jennifer Lee
+  Appointment: Dermatology skin check
+  Provider: Dr. Rachel Torres, Dermatology
+  Date: Monday, March 18
+  Time: 11:00 AM
+  Location: Skin Health Clinic, 789 Wellness Blvd
+
+  Confirmation requirements:
+  - Patient must confirm by Saturday, March 16 at 5 PM
+  - If not confirmed, appointment may be released to
+    waitlisted patients
+  - Response options: Confirm, Reschedule, Cancel
+  - Multiple response channels (text reply, call, portal)
+
+  Context:
+  - This provider has a 4-week wait for new appointments
+  - High demand means no-shows are costly
+  - 15 patients on the waitlist
+  - Practice policy: unconfirmed appointments released
+    48 hours before
+
+  Create the confirmation request message (SMS format
+  with clear response instructions).
+
+assertions:
+  - type: llm_judge
+    criteria: "Confirmation deadline is clear and creates appropriate urgency — specifies the exact date and time by which to confirm, explains the consequence (appointment may be released) without being threatening; motivates action."
+    weight: 0.35
+    description: "DeadlineClarity"
+  - type: llm_judge
+    criteria: "Response options are simple and multi-channel — provides text reply codes (e.g., '1 to confirm'), phone number for calling, and portal option; makes confirming as frictionless as possible."
+    weight: 0.35
+    description: "ResponseSimplicity"
+  - type: llm_judge
+    criteria: "Message balances firmness with warmth — communicates the policy clearly without sounding punitive; the patient feels valued even while being told their spot may be given away."
+    weight: 0.30
+    description: "FirmnessWarmthBalance"

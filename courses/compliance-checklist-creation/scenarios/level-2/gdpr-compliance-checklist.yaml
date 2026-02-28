@@ -1,0 +1,63 @@
+meta:
+  id: gdpr-compliance-checklist
+  level: 2
+  course: compliance-checklist-creation
+  type: output
+  description: "Create a GDPR compliance checklist for a US-based SaaS company expanding to serve European customers"
+  tags: [gdpr, data-protection, international, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Head of Legal at a US-based B2B SaaS
+  company (150 employees, $22M ARR). The company is
+  expanding to serve European customers for the first
+  time — you've signed 3 EU enterprise customers and
+  have 15 more in the pipeline. Your CEO says: "We
+  need to be GDPR compliant in 90 days before the next
+  EU sales push."
+
+  Current state:
+  - Product: Project management platform processing
+    user names, email addresses, profile photos, IP
+    addresses, usage analytics, and customer-uploaded
+    files (which may contain any type of data)
+  - Infrastructure: AWS us-east-1 (Virginia) — no EU
+    data centers
+  - Privacy policy: US-focused, last updated 2023
+  - Data processing: No DPA template; no Records of
+    Processing Activities (ROPA)
+  - Cookie consent: Basic banner ("By using this site
+    you agree to cookies") — not GDPR-compliant
+  - Marketing: Mailchimp for email marketing to all
+    users globally; no consent tracking
+  - Analytics: Google Analytics 4, Mixpanel, Hotjar
+    (session recordings)
+  - Data retention: No formal policy — data kept
+    indefinitely
+  - Sub-processors: 28 SaaS tools used in operations
+    (Slack, Salesforce, Zendesk, AWS, Stripe, etc.)
+  - Data subject requests: No process for handling GDPR
+    rights requests (access, deletion, portability)
+  - DPO: Not appointed
+  - Employee training: No GDPR-specific training
+  - Breach response: No documented incident response plan
+
+  Task: Create a comprehensive GDPR compliance checklist
+  covering all requirements (Articles 5-49) with specific
+  action items tailored to this company's situation,
+  organized by priority for the 90-day timeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a comprehensive GDPR checklist — covers data processing principles (Art. 5), lawful bases (Art. 6), consent requirements (Art. 7), data subject rights (Art. 12-23: access, rectification, erasure, portability, restriction, objection), DPO assessment (Art. 37-39), DPIA requirements (Art. 35), Records of Processing Activities (Art. 30), Data Protection by Design and Default (Art. 25), breach notification (Art. 33-34), cross-border transfer mechanisms (Art. 44-49), and processor obligations (Art. 28); each item references the specific GDPR Article."
+    weight: 0.35
+    description: "ComprehensiveGDPRChecklist"
+  - type: llm_judge
+    criteria: "Response addresses the company's specific situation — evaluates whether a DPO is required (likely yes based on monitoring of EU data subjects at scale); addresses the US-only data center issue (need EU hosting or valid transfer mechanism — SCCs, adequacy decision, DPF); flags the cookie consent banner as non-compliant (requires granular opt-in consent per purpose, not blanket acceptance); addresses Hotjar session recordings (likely requires explicit consent, DPIA); addresses the marketing consent gap (GDPR requires opt-in consent for marketing, not US-style opt-out); identifies all 28 sub-processors needing DPA review; addresses the data retention policy gap (Art. 5(1)(e) storage limitation)."
+    weight: 0.35
+    description: "CompanySpecificGaps"
+  - type: llm_judge
+    criteria: "Response provides a realistic 90-day implementation plan — acknowledges that full GDPR compliance in 90 days is ambitious and identifies minimum viable compliance vs comprehensive compliance; prioritizes by risk (data transfer mechanism and cookie consent are highest priority for customer-facing compliance; ROPA, DPIAs, and policy documentation are essential but can be iterative); recommends specific tools and solutions (cookie consent platform, DPA template, DSAR workflow tool); identifies which items need external counsel or consultants; the plan is aggressive but achievable for a 150-person company with dedicated effort."
+    weight: 0.30
+    description: "Realistic90DayPlan"

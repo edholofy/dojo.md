@@ -1,0 +1,80 @@
+meta:
+  id: insurance-coverage-review
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Analyze insurance and indemnification requirements in a commercial contract — assess coverage adequacy, identify gaps between required and actual coverage, and evaluate additional insured provisions"
+  tags: [insurance-requirements, indemnification, coverage-gap, intermediate]
+
+state: {}
+
+trigger: |
+  Analyze the insurance requirements in a
+  construction management contract and identify
+  coverage gaps between what's required and what
+  the contractor currently carries.
+
+  CONTRACTUAL INSURANCE REQUIREMENTS:
+
+  COMMERCIAL GENERAL LIABILITY:
+  - $2,000,000 per occurrence
+  - $5,000,000 general aggregate
+  - $2,000,000 products-completed operations
+  - Must include: XCU hazards, contractual liability,
+    broad form property damage
+  - Additional insured: Owner, Architect, and their
+    officers, directors, and employees
+  - Primary and non-contributory endorsement required
+  - Waiver of subrogation required
+
+  PROFESSIONAL LIABILITY (E&O):
+  - $5,000,000 per claim / $5,000,000 aggregate
+  - Claims-made policy; must maintain for 3 years
+    after project completion
+  - No exclusion for construction management services
+
+  AUTOMOBILE LIABILITY:
+  - $1,000,000 combined single limit
+  - Must cover owned, hired, and non-owned vehicles
+
+  UMBRELLA/EXCESS LIABILITY:
+  - $10,000,000 per occurrence and aggregate
+  - Must follow form of underlying CGL and auto
+
+  WORKERS' COMPENSATION:
+  - Statutory limits
+  - Employer's liability: $1,000,000 each accident
+
+  BUILDER'S RISK:
+  - Owner-provided; contractor must comply with
+    policy terms
+
+  CONTRACTOR'S CURRENT COVERAGE:
+  - CGL: $1,000,000/$3,000,000 (no XCU, no
+    primary/non-contributory endorsement)
+  - Professional Liability: $2,000,000/$2,000,000
+    (has construction management exclusion)
+  - Auto: $500,000 CSL (non-owned vehicles excluded)
+  - Umbrella: $5,000,000
+  - Workers' Comp: Statutory/$500,000
+
+  Create:
+  1. Gap analysis table (required vs. actual)
+  2. Cost estimate for increasing coverage
+  3. Risk assessment for each coverage gap
+  4. Additional insured provision analysis
+  5. Recommendations for contract negotiation
+
+assertions:
+  - type: llm_judge
+    criteria: "Gap analysis identifies all critical coverage shortfalls — CGL limits are half of required ($1M vs $2M per occurrence), missing XCU hazards and primary/non-contributory endorsement; Professional Liability has a construction management exclusion that directly defeats the purpose; auto is half required and excludes non-owned vehicles; umbrella is half required; workers' comp employer's liability is half; each gap is quantified."
+    weight: 0.35
+    description: "CoverageGapAnalysis"
+  - type: llm_judge
+    criteria: "Professional liability exclusion is flagged as the most critical issue — a professional liability policy that excludes construction management services provides zero protection for the primary service being contracted; this is not just a limits issue but a fundamental coverage gap; the analysis recommends either obtaining a policy without this exclusion or negotiating the contract requirement."
+    weight: 0.35
+    description: "ProfessionalLiabilityExclusion"
+  - type: llm_judge
+    criteria: "Additional insured and subrogation waiver requirements are explained — primary and non-contributory means the contractor's policy pays first before the owner's policy; waiver of subrogation prevents the contractor's insurer from suing the owner; these provisions protect the owner but increase the contractor's insurance costs; the analysis evaluates whether these are negotiable."
+    weight: 0.30
+    description: "AdditionalInsuredAnalysis"

@@ -1,0 +1,88 @@
+meta:
+  id: loan-agreement-review
+  level: 2
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review a commercial loan agreement and summarize financial covenants, default triggers, and borrower obligations for a growing business"
+  tags: [loan, financial-covenants, default, intermediate]
+
+state: {}
+
+trigger: |
+  You're the CFO of a 150-person manufacturing company
+  ($28M annual revenue, growing 15% year-over-year).
+  Your company is taking on a $5M term loan to finance
+  a new production line. The bank has sent a 45-page
+  commercial loan agreement. Your CEO wants a summary
+  focused on the financial covenants and what could
+  trigger a default.
+
+  Key loan agreement terms:
+  - Loan amount: $5,000,000 term loan
+  - Interest rate: SOFR + 3.25%, adjusted quarterly;
+    floor of 5.5%
+  - Term: 5 years; monthly principal and interest payments
+  - Amortization: 7-year amortization schedule with
+    balloon payment at Year 5 (~$2.1M balloon)
+  - Prepayment: "Borrower may prepay without penalty
+    after Year 2. Prepayment in Years 1-2 subject to
+    1% prepayment premium"
+  - Collateral: First lien on all business assets
+    (accounts receivable, inventory, equipment, IP);
+    also requires assignment of key-man life insurance
+    ($3M) on CEO
+  - Personal guarantee: CEO and majority shareholder
+    personally guarantee the loan (unlimited)
+  - Financial covenants (tested quarterly):
+    * Debt Service Coverage Ratio (DSCR): Minimum 1.25x
+    * Total leverage ratio: Maximum 3.5x (total debt /
+      EBITDA)
+    * Minimum working capital: $2,000,000
+    * Capital expenditure limit: Not to exceed $1.5M per
+      fiscal year without lender consent
+  - Reporting requirements: Monthly financial statements
+    within 30 days; annual audited financials within
+    120 days; quarterly compliance certificates signed
+    by CFO; annual operating budget by December 1
+  - Affirmative covenants: Maintain insurance, pay taxes,
+    comply with laws, maintain corporate existence,
+    provide notice of litigation or material changes
+  - Negative covenants (require lender consent):
+    * Additional indebtedness exceeding $250,000
+    * Dividends or distributions (except tax
+      distributions)
+    * Asset sales exceeding $100,000
+    * Changes in management or ownership (>20%)
+    * Acquisitions
+    * New leases exceeding $50,000/year
+  - Events of default: Covenant breach (15-day cure for
+    financial covenants, 30 days for non-financial);
+    payment default (5-day grace period); material
+    adverse change ("any event that in Lender's
+    reasonable judgment materially impairs Borrower's
+    ability to repay"); cross-default on other
+    obligations exceeding $100,000
+  - Remedies upon default: Acceleration of all amounts
+    due; default interest rate (additional 3%);
+    realization on collateral
+  - Governing law: State of Ohio
+
+  Task: Write a comprehensive summary for your CEO and
+  Board covering the financial covenants (with specific
+  examples of what could trigger violations), the
+  operational restrictions, default scenarios, and
+  recommended negotiation points.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response clearly explains financial covenants — translates each financial covenant into practical terms with specific numerical examples based on the company's financials ($28M revenue, 15% growth); explains what DSCR 1.25x means in dollar terms; calculates how close the company currently is to covenant thresholds; explains the balloon payment risk at Year 5 ($2.1M); explains the amortization vs term mismatch; presents covenant analysis in a format the Board can understand."
+    weight: 0.35
+    description: "ClearCovenantExplanation"
+  - type: llm_judge
+    criteria: "Response identifies default triggers and business risks — maps out realistic scenarios that could trigger covenant violations (revenue decline, margin compression, unexpected capex, customer loss); flags the 'material adverse change' clause as subjective and dangerous; identifies the cross-default risk ($100,000 threshold is low); evaluates the restrictive negative covenants (capex cap of $1.5M may be too low for a growing manufacturer; $250K indebtedness limit restricts equipment financing; dividend restriction affects tax distributions); flags the balloon payment refinancing risk; evaluates the personal guarantee scope."
+    weight: 0.35
+    description: "DefaultTriggersIdentified"
+  - type: llm_judge
+    criteria: "Response provides specific negotiation recommendations — suggests covenant levels that provide more headroom while remaining acceptable to the bank; recommends expanding cure periods; suggests modifying the MAC clause to include objective criteria; recommends higher thresholds for negative covenants; suggests financial covenant holiday during production line ramp-up; recommends prepayment flexibility; the recommendations are realistic for a $5M term loan and reflect understanding of bank lending practices."
+    weight: 0.30
+    description: "NegotiationRecommendations"

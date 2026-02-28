@@ -1,0 +1,73 @@
+meta:
+  id: employment-offer-review
+  level: 1
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review an employment offer letter and summarize compensation, restrictive covenants, and key terms for a prospective hire"
+  tags: [employment, offer-letter, non-compete, beginner]
+
+state: {}
+
+trigger: |
+  You're the HR Manager at a 60-person fintech startup.
+  You're about to extend an offer to a senior software
+  engineer you've been recruiting for 3 months. Your CEO
+  has asked you to review the company's standard offer
+  letter template before it goes out, because the last
+  hire's lawyer flagged several issues that delayed the
+  start date by 3 weeks.
+
+  Key terms of the offer letter:
+  - Position: Senior Software Engineer, reporting to VP
+    of Engineering
+  - Compensation: $165,000 base salary, paid semi-monthly
+  - Signing bonus: $15,000, repayable on a pro-rata basis
+    if employee voluntarily leaves within 24 months
+  - Equity: 12,000 stock options, 4-year vesting with
+    1-year cliff, strike price set at FMV on grant date
+  - Benefits: Standard benefits package (health, dental,
+    vision, 401k with 4% match), "subject to change at
+    company's sole discretion"
+  - PTO: "Unlimited PTO" with manager approval
+  - At-will employment: "Either party may terminate the
+    employment relationship at any time, with or without
+    cause, with or without notice"
+  - Invention assignment: "Employee assigns to Company all
+    right, title, and interest in any inventions,
+    discoveries, or works of authorship conceived or
+    developed during Employee's employment, whether or not
+    during working hours or using Company resources"
+  - Non-compete: "For 12 months after termination,
+    Employee shall not work for any Competing Business
+    within the United States. 'Competing Business' means
+    any entity that provides financial technology
+    products or services"
+  - Non-solicitation: "For 18 months after termination,
+    Employee shall not solicit any customer, client, or
+    employee of the Company"
+  - Confidentiality: Perpetual obligation; broadly defined
+    to include "all information relating to Company's
+    business"
+  - Arbitration: "All disputes shall be resolved through
+    binding arbitration in San Francisco, CA"
+  - Governing law: State of California
+
+  Task: Write a memo to your CEO reviewing the offer
+  letter template, identifying problematic clauses that
+  could scare away candidates or create legal exposure,
+  and recommending specific changes to make the offer
+  competitive and enforceable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a clear review of the offer — explains the compensation structure clearly (base, bonus clawback period, equity vesting terms); identifies the at-will employment implications; explains what the invention assignment clause means in practical terms; the review is accessible to a CEO who isn't an employment lawyer."
+    weight: 0.35
+    description: "ClearOfferReview"
+  - type: llm_judge
+    criteria: "Response identifies key legal and competitive risks — flags the overly broad non-compete (12 months, entire US, broad 'fintech' definition — likely unenforceable in California and many other states); flags the broad invention assignment (capturing personal projects); flags the 24-month signing bonus clawback as aggressive; identifies the 'unlimited PTO' issues (no payout obligation but potential culture problems); flags the one-sided arbitration clause; evaluates enforceability of each restrictive covenant."
+    weight: 0.35
+    description: "LegalAndCompetitiveRisks"
+  - type: llm_judge
+    criteria: "Response provides specific recommended changes — suggests narrowing the non-compete or removing it (especially given California law); recommends carving out personal projects from invention assignment; suggests reducing signing bonus clawback period; recommends adding specific termination notice period; the recommendations balance protecting the company with making the offer attractive to competitive candidates in a tight engineering market."
+    weight: 0.30
+    description: "SpecificRecommendations"

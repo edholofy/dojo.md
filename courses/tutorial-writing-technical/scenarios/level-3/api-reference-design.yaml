@@ -1,0 +1,85 @@
+meta:
+  id: api-reference-design
+  level: 3
+  course: tutorial-writing-technical
+  type: output
+  description: "Design and write a complete API reference documentation system, including endpoint documentation, authentication guide, rate limiting, pagination, and error reference"
+  tags: [api-reference, documentation-system, rest-api, advanced]
+
+state: {}
+
+trigger: |
+  You're the lead technical writer at a fintech
+  startup that provides a banking-as-a-service API.
+  The API is launching publicly and you need to
+  create comprehensive API reference documentation.
+  Your competitors (Plaid, Stripe, Twilio) set a
+  very high bar for API docs.
+
+  API details:
+  - Name: BankConnect API
+  - Base URL: https://api.bankconnect.io/v1
+  - Auth: OAuth 2.0 (client credentials + user
+    authorization)
+  - Format: JSON; ISO 8601 dates; amounts in cents
+  - Versioning: URL-based (/v1/)
+  - Rate limits: 100 req/min (standard), 1000
+    req/min (enterprise)
+
+  Endpoints to document (representative set):
+  - Authentication: POST /oauth/token
+  - Accounts: GET/POST /accounts, GET /accounts/:id
+  - Transactions: GET /accounts/:id/transactions
+    (with filtering, pagination, date range)
+  - Transfers: POST /transfers, GET /transfers/:id,
+    POST /transfers/:id/cancel
+  - Webhooks: POST /webhooks, GET /webhooks/:id,
+    DELETE /webhooks/:id
+
+  Documentation sections:
+  1. API Overview (base URL, versioning, content
+     types, idempotency)
+  2. Authentication Guide (OAuth 2.0 flow with
+     diagrams, scopes, token management)
+  3. Error Handling (error format, error codes,
+     retry guidance)
+  4. Pagination (cursor-based, with examples)
+  5. Rate Limiting (headers, backoff strategy)
+  6. Webhooks Guide (event types, signature
+     verification, retry policy)
+  7. Endpoint Reference (each endpoint with
+     parameters, request/response examples, error
+     cases)
+  8. SDKs and Libraries (Node.js, Python, Ruby
+     quick start)
+  9. Changelog
+
+  Quality requirements:
+  - Every endpoint shows request AND response
+    examples
+  - Error responses are documented for each
+    endpoint
+  - Pagination example shows real cursor-based
+    navigation
+  - Webhook signature verification has complete
+    code examples
+  - The docs should compete with Stripe's
+    documentation quality
+
+  Task: Write the complete API reference
+  documentation with all 9 sections, endpoint
+  documentation, and authentication flow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes comprehensive API reference documentation — all 9 sections are covered; endpoint documentation includes request parameters, request/response examples, and error cases; the authentication guide explains OAuth 2.0 clearly with the client credentials and user authorization flows; pagination shows cursor-based navigation with working examples; webhooks include signature verification code; the documentation is complete enough for a developer to integrate without additional support."
+    weight: 0.35
+    description: "ReferenceCompleteness"
+  - type: llm_judge
+    criteria: "Response meets best-in-class API documentation standards — every endpoint shows both request and response examples with realistic data; error responses include specific error codes and human-readable messages; rate limiting documentation includes response headers and backoff strategies; idempotency is explained with a practical use case; the overall documentation quality is competitive with Stripe/Plaid/Twilio; the writing is precise and unambiguous."
+    weight: 0.35
+    description: "DocumentationQuality"
+  - type: llm_judge
+    criteria: "Response is developer-experience optimized — the API overview provides enough context to start integrating quickly; SDK quick starts accelerate time-to-first-call; webhook signature verification code is copy-pasteable; the documentation structure supports both sequential reading and random access; error handling guidance reduces developer frustration; the overall reference would drive successful API integration."
+    weight: 0.30
+    description: "DeveloperExperience"

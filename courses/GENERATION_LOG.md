@@ -1172,3 +1172,133 @@ Tracks all auto-generated courses for dojo.md.
 - **Level 3 (Advanced)**: Enterprise FAQ strategy (5 products, 12,000 questions, $2M transformation), AI-powered FAQ system ($750K investment, semantic search, auto-generation), multilingual program (10 languages, $200K budget, RTL support), regulated industry (health insurance, CMS/HIPAA/ACA compliance), dynamic personalization (SaaS, user context, role/plan/device adaptation), content operations (fintech, 200 FAQs, 2 writers, sprint methodology), accessible government FAQ redesign (DMV, WCAG 2.1 AA, Section 508), FAQ platform migration (insurance, 350 entries, SEO preservation, Contentful), community-FAQ integration (gaming platform, 8M players, moderation/incentives), shift simulation (crisis communications + product sunset + marketplace dual-sided)
 - **Level 4 (Expert)**: FAQ consulting practice (FAQ Health Score, 5-7 services, 3 proposals), research study (200 SaaS companies, FAQ Effectiveness Index, benchmarking), technology platform (FAQly $4M seed, AI authoring, marketplace model), governance framework (pharma, FDA/EMA/PMDA, MLR review, pharmacovigilance), certification program (SSCI, 3-tier, 8-10 competencies), book proposal (The FAQ Advantage, Self-Service Maturity Model, 2 chapters), platform ecosystem (e-commerce, 4 audiences, merchant FAQ builder), transformation case ($500M ARR company, $800K budget, 8% to 25%+ deflection), knowledge graph (LMS, ontology, journey mapping, gap detection), shift simulation (space tourism + autonomous vehicles + DeFi protocol)
 - **Level 5 (Master)**: Thought leadership (Question Economy keynote, Self-Service Manifesto, HBR article, TEDx), global standards body (ISCSSC, SCQS-1000, CSSP credential), graduate program (MS in Self-Service Information Design, 4 concentrations, research center), social enterprise (Answers For All, immigrants/elderly/rural/disabled), existential challenges (pandemic FAQ system + climate migration + AI workforce transition), memoir (Every Question Matters, 3 chapters, 20-year career), technology unicorn (AnswerIQ $60M Series C, $600M valuation, Intelligent Self-Service category), research handbook (Self-Service Information Science, 25 chapters, 3 authored), government policy (Digital Information Access Act, 6 titles, plain language mandates), shift simulation (AI FAQ paradox + information desert + trust collapse + cognitive accessibility + legacy)
+
+---
+
+## Glossary and Terminology Guides
+- **Course ID**: glossary-and-terminology-guides
+- **Generated**: 2026-02-27
+- **Topics researched**: ISO 704/1087 terminology standards, Eugen Wüster's General Theory of Terminology, controlled vocabularies vs taxonomies vs ontologies, terminology management systems (SDL MultiTerm, memoQ, TermBase), SNOMED CT/ICD-10/LOINC medical terminologies, enterprise terminology governance, AI-powered term extraction (NLP/NER), multilingual terminology harmonization, terminology lifecycle management, MedDRA pharmacovigilance coding
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Sources**: ISO TC 37 standards, TermNet (International Network for Terminology), European Association for Terminology (EAFT), American Translators Association terminology resources, W3C ontology specifications
+- **Level 1 (Beginner)**: Basic tech glossary (cloud computing, 25 terms, non-technical users), marketing glossary (digital marketing, 20 terms, small business owners), healthcare patient glossary (medical/insurance, grade 6 reading level), financial literacy glossary (personal finance, Gen Z 18-25), legal plain-language glossary (tenant rights, grade 7-8), software dev glossary (dev terms for PMs, bridge technical/non-technical), e-commerce glossary (online selling, first-time sellers), sustainability glossary (ESG terms, manufacturing employees), acronym guide (government HUD, 25 entries, 4 categories), shift simulation (coffee roaster + cybersecurity training + fitness app, 3 formats)
+- **Level 2 (Intermediate)**: Glossary style guide (multi-product consistency, 800+ definitions, before/after), interactive glossary design (tooltips, search, progressive disclosure, WCAG), SEO optimization (legal services, hub-and-spoke, JSON-LD), controlled vocabulary (support KB, 30+ term groups, search synonyms), multilingual glossary (financial app, 5 languages, cultural adaptation), glossary analytics (tech media, 500 terms, 80K views), version control (AI startup, term lifecycle, deprecation workflow), visual glossary (construction tech, illustrations/diagrams), onboarding terminology guide (analytics platform, role-based, learning sequences), shift simulation (medical device regulatory + REST API + wine terminology)
+- **Level 3 (Advanced)**: Enterprise terminology strategy (4 divisions, 2,000+ terms, 340 conflicts, $1.5M), ontology design (healthcare, 200 hospitals, ICD-10/SNOMED/LOINC/FHIR), terminology management platform (pharma, 15,000 terms, 18 languages, memoQ), AI-powered glossary (DocuFlow, auto-extract, inconsistency detection, $400K), regulatory compliance (wealth management, SEC/FINRA, 500 advisors), accessibility program (government, WCAG 2.1 AA, 3 reading levels, Section 508), glossary migration (enterprise, 800 terms, Confluence to TermBase Pro), industry standard glossary (Climate Technology Alliance, 25 terms, adoption strategy), content operations (SaaS, 450 terms, single owner departing, SME collaboration), shift simulation (clinical trial ICF + international trade agreement + blockchain whitepaper)
+- **Level 4 (Expert)**: Terminology consulting practice (THI methodology, 6 services, 3 proposals), research study (150 enterprises, Terminology Maturity Model, business impact), glossary platform product (TerminusAI $5M seed, AI extraction, marketplace), governance framework (biopharma, FDA/EMA/PMDA, MedDRA, 25 languages), certification program (ITPA 3-tier, 8 competencies, credentialing), book proposal (The Terminology Advantage, TMM framework, 2 chapters), terminology for M&A ($3B merger, AlphaCloud + BetaData, terminology harmonization), knowledge graph glossary (ScienceHub, 5,000 terms, semantic relationships), transformation case (DataCorp $400M ARR, $500K budget, 65% confusion rate), shift simulation (quantum computing + indigenous language preservation + space agency)
+- **Level 5 (Master)**: Thought leadership (Vocabulary of Everything keynote, Terminology Manifesto, HBR, TEDx), global standards body (GTSC, TQS-1000, CTP credential, ISO TC 37), graduate program (MS in Terminology Science, 4 concentrations, research center), social enterprise (Clear Words, immigrants/patients/safety workers/elderly), existential challenges (AI governance + pandemic + climate policy terminology), memoir (Defining the Undefinable, 3 chapters, 25-year career), technology unicorn (LexiconAI $50M Series C, $500M valuation, Terminology Intelligence category), research handbook (Oxford Handbook of Terminology Science, 28 chapters, Wüster to Wikidata), government policy (Terminology Standardization Act, 5 titles, plain language mandates), shift simulation (AI definition crisis + Babel crisis + health literacy + knowledge extinction + legacy)
+
+---
+
+## Study Guide Creation
+- **Course ID**: study-guide-creation
+- **Generated**: 2026-02-27
+- **Topics researched**: Study guide formats (Cornell, mind map, outline, SQ3R), Bloom's taxonomy alignment, spaced repetition integration, active recall techniques, UDL/accessibility, digital vs print guides, assessment alignment, learning objective mapping, Kirkpatrick evaluation model, competency-based education, adaptive learning, knowledge graphs for learning paths
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Sources**: Cornell University Learning Strategies Center, CAST UDL Guidelines, Bloom's taxonomy resources (University of Arkansas, UIC), active recall research (BCU, University of Arizona), spaced repetition studies (York, PubMed), Kirkpatrick Model, CMU Teaching Excellence
+- **Level 1 (Beginner)**: Intro biology study guide (cell biology/genetics/evolution, 120 freshmen), US history midterm (Civil War through Reconstruction, timeline/essay outlines), college algebra final (7 topics, no-calculator strategies, math anxiety), NCLEX-RN fundamentals (mnemonics, 2-week schedule, test-taking strategies), CompTIA A+ certification (5 domains, 30-day plan, comparison charts), Spanish 201 intermediate (grammar/vocabulary, oral exam phrases), corporate compliance training (AML/privacy/conduct/safety, cheat sheet), AP Psychology Units 1-3 (exam weights, FRQ model, flashcard lists), Python self-study (8-week plan, marketing professional, capstone project), shift simulation (organic chemistry + real estate licensing + Sunday school)
+- **Level 2 (Intermediate)**: Spaced repetition system (medical terminology, 450+ terms, 16-week calendar, interleaving), Bloom's taxonomy redesign (environmental science, 60 questions across 6 levels, self-assessment rubric), visual study guide (cardiovascular anatomy, concept maps, draw-it-yourself exercises), active recall transformation (abnormal psychology, case study snapshots, compare/contrast matrix), multi-format guide (economics in 4 formats: outline/Cornell/mind map/flashcards), assessment-aligned guide (law school contracts, IRAC templates, issue-spotting checklists), digital interactive guide (chemistry II, Canvas LMS, adaptive pathways, mobile-first), study schedule design (5 finals in 8 days, day-by-day plan, triage strategy), collaborative study guide (biochemistry study group of 6, peer review, teach-back), shift simulation (bar exam retake + corporate sales onboarding + TOEFL preparation)
+- **Level 3 (Advanced)**: Enterprise certification program (Fortune 500 insurance, 12,000 employees, 4 certifications, $1.2M), adaptive learning system (USMLE Step 1, AI-powered, 3 performance personas, knowledge mapping), accessibility redesign (35,000-student university, WCAG 2.1 AA, 5 disability categories), cross-disciplinary capstone (biomedical engineering, biology/chemistry/statistics/ethics integration), competency-based nursing program (BSN, AACN Essentials, clinical judgment, NCLEX recovery), multilingual medical school (Caribbean, 40+ countries, 18% performance gap, Clear English standards), learning analytics optimization (85,000 students, A/B testing, predictive model, quarterly review), CME hospital system (600-bed, 2,400 staff, 8 specialties, microlearning for shift workers), neurodiverse study guides (ADHD/dyslexia/autism, evidence-based accommodations, strengths-based), shift simulation (military promotion board + medical residency ITE + K-12 standardized test prep)
+- **Level 4 (Expert)**: Consulting practice (LearnCraft, GUIDE Framework, 5-7 services, 3 sector proposals), research study (2,500 students, 5 formats head-to-head, $350K NSF grant, 2-year design), platform product (StudyForge $3M seed, AI generation, 3 personas, campus growth), governance framework (healthcare system, 4,200+ guides, patient safety incident, lifecycle management), certification program (IALMD, CLMD credential, 3 tiers, 8 competencies, exam blueprint), book proposal (The Science of Study Guides, 12 chapters, 2 sample chapters ~3,000 words each), crisis education (pandemic, 30 countries, 72-hour deployment, 15 languages, offline delivery), knowledge graph system (CS education, 2,500 concepts, 8,000 prerequisites, 4 use cases), transformation case (PrepMaster $45M, declining pass rates, 18-month turnaround), shift simulation (astronaut training + judicial continuing education + indigenous knowledge preservation)
+- **Level 5 (Master)**: Thought leadership (Learning Material Revolution keynote, Study Guide Manifesto, HBR $50B article, TEDx), global standards body (ICLMS, LMQS-1000, CLMS credential, 5-year plan), graduate program (MS in Learning Material Science, 4 concentrations, PhD, research center), social enterprise (StudyBridge, refugees/incarcerated/rural/first-gen, theory of change), existential challenges (AI workforce transition + climate adaptation + global health literacy), memoir (The Guide Maker, 3 chapters, flashcard/hospital/WHO stories), technology unicorn (LearnForge $60M Series C, $600M valuation, Intelligent Learning Material Systems), research handbook (Cambridge Handbook, 25 chapters, 3 authored chapters), government policy (Educational Material Quality Act, 6 titles, $50M research fund), shift simulation (AI learning crisis + credential crisis + equity emergency + attention crisis + legacy)
+
+---
+
+## Property Listing Description Writing
+- **Course ID**: property-listing-description-writing
+- **Generated**: 2026-02-27
+- **Topics researched**: MLS listing standards, feature vs benefit language, emotional storytelling in listings, SEO for real estate, Fair Housing Act compliance (protected classes, banned phrases), luxury property marketing, commercial vs residential listings, virtual tour descriptions, neighborhood descriptions, listing syndication (Zillow/Realtor.com/Redfin), international buyer marketing, new construction marketing, condo/co-op requirements, listing templates and frameworks
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Sources**: NAR Handbook on Multiple Listing Policy, Fair Housing Institute, McKissock real estate education, Luxury Presence, Sierra Interactive SEO, WebFX real estate SEO, Inman News, RESO Data Dictionary standards
+- **Level 1 (Beginner)**: Starter home listing (3 bed ranch, $245K, first-time buyers, 4 deliverables), urban condo (1 bed penthouse, Walk Score 92, lifestyle marketing), family home (4 bed colonial, schools 9/10, open house flyer), fixer-upper (as-is bungalow, investor ARV analysis), rental listing (2 bed apartment, Apartments.com + Craigslist), new construction (craftsman, builder incentive, spec sheet), vacant land (1.2 acres, builder + dream home marketing), townhouse (end unit, lock-and-leave lifestyle), investment duplex (financial metrics, cap rate, GRM), shift simulation (lakefront cottage + downtown loft + horse property, 3 tones)
+- **Level 2 (Intermediate)**: SEO optimization (Mediterranean $1.15M, keyword strategy, schema markup, image alt text), Fair Housing compliance (3 listings with violations, identify/rewrite/explain, compliance checklist), luxury estate ($4.2M waterfront, lifestyle narrative, brochure, private showing), multimedia marketing (photo captions, Matterport, video script, social teaser), neighborhood descriptions (4 areas, Fair Housing-compliant, Do's/Don'ts guide), A/B testing (3 properties, hypothesis-driven, methodology), commercial listings (retail/office/industrial, LoopNet descriptions), brokerage style guide (65 agents, brand voice, formatting, before/after), international buyer marketing (Miami condo, Brazilian/Canadian/Middle Eastern), shift simulation (historic home + short sale + multi-family conversion)
+- **Level 3 (Advanced)**: Enterprise CMS (500+ agents, AI-assisted, Fair Housing screening, syndication QA), AI listing generator (proptech startup, compliance engine, personalization, 3 demos), global localization (8 countries, UK/Australia/Germany/Japan/UAE/Brazil/Canada terminology), listing analytics (12,000 descriptions, NLP correlation, agent benchmarking), development marketing (120-unit condo, brand narrative, 4 floor plans, investor package), REO portfolio (5 bank-owned properties, legal constraints, investor summaries), accessible listings (WCAG 2.1 AA, screen reader, alt text, multilingual), content operations (50+ listings/week, 4-hour SLA, seasonal scaling), compliance audit (85 agents, Fair Housing/MLS/state, 10 violation examples, remediation), shift simulation (former grow house + celebrity estate + mixed-use building)
+- **Level 4 (Expert)**: Consulting practice (SELL Framework, 6 services, 3 proposals), research study ($280K NAR Foundation, experimental + NLP + qualitative, behavioral economics), technology product (ListingIQ $4.5M seed, Series A pitch, enterprise strategy), governance framework (2,000+ offices, 12 countries, AI policy, $2.5M settlement prevention), certification program (CLS designation with NAR, 6 competencies, 16-hour curriculum), book proposal (Words That Sell Houses, 14 chapters, 2 sample chapters), emerging markets (STR/co-living/fractional/tokenized, templates + samples), transformation case (Summit Realty, 78% showing increase, 5 initiatives), knowledge graph (property features → buyer personas → language patterns, recommendation engine), shift simulation (smart city + underwater hotel + Mars habitat)
+- **Level 5 (Master)**: Thought leadership (250 Words That Move Markets keynote, Listing Manifesto, Inman $2B article, TEDx), global standards body (IPLSC, PLQS-1000, CLP credential), graduate certificate (Real Estate Marketing Communications, 6 courses, 3 tracks), social enterprise (ListingEquity, affordable housing/rural/FSBO/minority brokerages), existential challenges (climate-vulnerable + post-disaster + declining communities), memoir (Selling Dreams, 3 chapters, widow's home/Fair Housing/global cultures), technology unicorn (ListingGenius $55M Series C, $550M, Listing Intelligence category), research handbook (22 chapters, classified ads to AI, linguistics of listings), government policy (Real Estate Listing Transparency Act, 6 titles, AI disclosure), shift simulation (AI authenticity + climate disclosure + housing access + attention collapse + legacy)
+
+## Course 106: buyer-inquiry-response
+- **Status**: COMPLETE
+- **Generated**: 2026-02-27
+- **Total scenarios**: 50/50
+- **Level 1** (10/10): property-info-inquiry, showing-request-response, price-reduction-inquiry, neighborhood-question-response, financing-question-response, multiple-listing-inquiry, open-house-follow-up, online-chat-inquiry, after-hours-inquiry, beginner-inquiry-shift
+- **Level 2** (10/10): speed-to-lead-system, lead-qualification-framework, drip-campaign-sequences, objection-handling-responses, crm-response-templates, video-response-scripts, buyer-persona-responses, social-media-inquiry-handling, competitive-situation-response, intermediate-inquiry-shift
+- **Level 3** (10/10): enterprise-inquiry-platform, ai-chatbot-design, international-buyer-program, inquiry-analytics-optimization, crisis-inquiry-management, accessibility-inquiry-program, team-training-curriculum, multi-office-standardization, inquiry-compliance-audit, advanced-inquiry-shift
+- **Level 4** (10/10): inquiry-consulting-practice, inquiry-research-study, inquiry-technology-product, inquiry-governance-framework, inquiry-certification-program, inquiry-book-proposal, inquiry-behavioral-economics, inquiry-transformation-case, inquiry-knowledge-graph, expert-inquiry-shift
+- **Level 5** (10/10): inquiry-thought-leadership, global-inquiry-standards, inquiry-graduate-program, inquiry-social-enterprise, inquiry-for-existential-challenges, inquiry-memoir, inquiry-technology-unicorn, inquiry-research-handbook, inquiry-government-policy, master-inquiry-shift
+
+## Course 107: showing-feedback-follow-up
+- **Status**: COMPLETE
+- **Generated**: 2026-02-27
+- **Total scenarios**: 50/50
+- **Level 1** (10/10): first-showing-follow-up, listing-agent-feedback-request, seller-feedback-report, negative-feedback-delivery, buyer-second-showing-request, open-house-feedback-collection, virtual-showing-follow-up, no-response-follow-up, multiple-property-comparison, beginner-feedback-shift
+- **Level 2** (10/10): feedback-automation-system, feedback-to-pricing-strategy, emotional-buyer-follow-up, competitive-offer-follow-up, feedback-objection-resolution, showing-feedback-analytics, staging-feedback-loop, agent-collaboration-feedback, feedback-driven-marketing, intermediate-feedback-shift
+- **Level 3** (10/10): enterprise-feedback-platform, ai-feedback-analysis, cross-market-feedback-study, seller-psychology-feedback, feedback-compliance-framework, luxury-feedback-protocol, new-construction-feedback, team-feedback-culture, feedback-technology-integration, advanced-feedback-shift
+- **Level 4** (10/10): feedback-consulting-practice, feedback-research-study, feedback-technology-product, feedback-governance-framework, feedback-certification-program, feedback-book-proposal, feedback-behavioral-science, feedback-transformation-case, feedback-knowledge-graph, expert-feedback-shift
+- **Level 5** (10/10): feedback-thought-leadership, global-feedback-standards, feedback-graduate-program, feedback-social-enterprise, feedback-for-existential-challenges, feedback-memoir, feedback-technology-unicorn, feedback-research-handbook, feedback-government-policy, master-feedback-shift
+
+---
+
+## Market Analysis Summary
+- **Course ID**: market-analysis-summary
+- **Generated**: 2026-02-27
+- **Topics researched**: CMA methodology, key market metrics (median price, DOM, absorption rate, months supply), data sources (MLS, public records, Census), market condition indicators, neighborhood micro-market analysis, visual data presentation, trend narrative writing, seasonal adjustments, commercial vs residential analysis, pricing strategy, predictive modeling, AVM methodologies
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Level 1** (10/10): basic-cma-report, monthly-market-snapshot, neighborhood-comparison, listing-presentation-market-section, buyer-market-overview, seasonal-market-trends, price-per-sqft-analysis, days-on-market-analysis, inventory-supply-analysis, beginner-market-shift
+- **Level 2** (10/10): advanced-cma-adjustments, market-trend-narrative, investment-property-analysis, absorption-rate-deep-dive, interest-rate-impact-analysis, new-construction-market-impact, luxury-market-analysis, distressed-property-market, rental-vs-buy-analysis, intermediate-market-shift
+- **Level 3** (10/10): enterprise-market-intelligence, predictive-market-modeling, cross-market-comparative, commercial-market-analysis, demographic-shift-analysis, market-risk-assessment, data-visualization-strategy, market-segmentation-framework, economic-impact-study, advanced-market-shift
+- **Level 4** (10/10): market-consulting-practice, market-research-methodology, market-analytics-product, market-governance-framework, market-certification-program, market-book-proposal, market-behavioral-economics, market-transformation-case, market-knowledge-graph, expert-market-shift
+- **Level 5** (10/10): market-thought-leadership, global-market-standards, market-graduate-program, market-social-enterprise, market-for-existential-challenges, market-memoir, market-technology-unicorn, market-research-handbook, market-government-policy, master-market-shift
+
+---
+
+## Offer Negotiation Communication
+- **Course ID**: offer-negotiation-communication
+- **Generated**: 2026-02-27
+- **Topics researched**: Initial offer presentation, counter-offer communication, multiple offer situations (highest and best), escalation clauses, buyer's vs listing agent dynamics, earnest money negotiations, contingency negotiations, deadline management, emotional management, verbal vs written protocols, dual agency, lowball offers, bidding wars, post-inspection negotiation, appraisal gap strategies, NAR settlement impact
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Level 1** (10/10): initial-offer-presentation, counter-offer-response, multiple-offer-notification, seller-offer-review, inspection-negotiation, appraisal-gap-communication, lowball-offer-handling, earnest-money-dispute, closing-extension-request, beginner-negotiation-shift
+- **Level 2** (10/10): escalation-clause-strategy, multi-offer-management, contingency-negotiation-framework, dual-agency-negotiation, creative-deal-structuring, relocation-negotiation, estate-sale-negotiation, new-construction-negotiation, investor-offer-strategy, intermediate-negotiation-shift
+- **Level 3** (10/10): enterprise-negotiation-system, ai-negotiation-assistant, cross-cultural-negotiation, commercial-lease-negotiation, litigation-prevention-communication, luxury-negotiation-protocol, team-negotiation-training, distressed-property-negotiation, negotiation-analytics-platform, advanced-negotiation-shift
+- **Level 4** (10/10): negotiation-consulting-practice, negotiation-research-study, negotiation-technology-product, negotiation-governance-framework, negotiation-certification-program, negotiation-book-proposal, negotiation-behavioral-science, negotiation-transformation-case, negotiation-knowledge-graph, expert-negotiation-shift
+- **Level 5** (10/10): negotiation-thought-leadership, global-negotiation-standards, negotiation-graduate-program, negotiation-social-enterprise, negotiation-for-existential-challenges, negotiation-memoir, negotiation-technology-unicorn, negotiation-research-handbook, negotiation-government-policy, master-negotiation-shift
+
+## Course 110: open-house-promotional-content
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 111: patient-appointment-reminder-messaging
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 112: insurance-pre-authorization-follow-up
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 113: patient-intake-form-review
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 114: medical-billing-inquiry-response
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 115: health-education-content-writing
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+---
+
+## Course 116: contract-clause-summarization
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete

@@ -1,0 +1,49 @@
+meta:
+  id: after-hours-inquiry
+  level: 1
+  course: buyer-inquiry-response
+  type: output
+  description: "Create an after-hours auto-response and next-morning follow-up — maintain engagement when you can't respond immediately"
+  tags: [after-hours, auto-response, follow-up, beginner]
+
+state: {}
+
+trigger: |
+  It's 11:42 PM on a Tuesday. You receive a Zillow
+  inquiry from a buyer:
+
+  "I need to find a home ASAP — my lease ends March
+  31 and I need to close before then. Budget is
+  $280-320K, need at least 3 bedrooms, prefer south
+  side of town. I've been looking for weeks and I'm
+  stressed. Please help! — Kevin W."
+
+  Context:
+  - Today is February 15
+  - Kevin has ~6 weeks until his lease ends
+  - You have 8 active listings that match his criteria
+  - Your office hours: 9 AM - 7 PM daily
+  - You use an auto-responder for after-hours inquiries
+
+  Create two messages:
+  1. The auto-response that sends immediately (should
+     acknowledge urgency, set expectations for response
+     time, and provide something useful)
+  2. Your personal follow-up the next morning at
+     8:30 AM (should demonstrate you took his situation
+     seriously, provide specific next steps, and show
+     you already did some work for him)
+
+assertions:
+  - type: llm_judge
+    criteria: "The auto-response acknowledges Kevin's urgency, sets a clear expectation for when he'll hear back (next morning), and provides something useful in the meantime — such as links to search tools, general guidance, or reassurance about the timeline."
+    weight: 0.35
+    description: "AutoResponseQuality"
+  - type: llm_judge
+    criteria: "The morning follow-up demonstrates proactive effort — references his specific criteria ($280-320K, 3+ bed, south side), mentions the 8 matching listings, addresses the March 31 timeline with a realistic plan, and proposes immediate action."
+    weight: 0.35
+    description: "MorningFollowUpQuality"
+  - type: llm_judge
+    criteria: "Together, both messages would retain Kevin as a lead despite the overnight delay — the auto-response prevents him from moving to another agent, and the morning follow-up convinces him he found the right person to help."
+    weight: 0.30
+    description: "LeadRetentionEffectiveness"

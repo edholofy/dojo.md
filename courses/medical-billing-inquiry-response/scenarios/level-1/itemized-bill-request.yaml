@@ -1,0 +1,60 @@
+meta:
+  id: itemized-bill-request
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Process a patient's request for an itemized bill — generate the detailed breakdown, explain each charge, and verify accuracy before sending"
+  tags: [itemized-bill, charge-breakdown, transparency, beginner]
+
+state: {}
+
+trigger: |
+  A patient requests an itemized bill after receiving
+  a summary statement showing $4,200 owed for a
+  hospital outpatient visit.
+
+  Patient: Robert Kim, age 63
+  Insurance: Humana Medicare Advantage
+  Visit: Emergency department visit for chest pain
+  Date of service: 3 weeks ago
+  Outcome: Cardiac workup completed, discharged same day
+
+  Summary statement shows only:
+  "Emergency Department Services: $4,200"
+  "Insurance payment: $3,100"
+  "Patient responsibility: $1,100"
+
+  Detailed charges from billing system:
+  1. ED visit, high complexity (99285): $850
+  2. 12-lead EKG (93010): $125
+  3. Chest X-ray, 2 views (71046): $280
+  4. Troponin I, serial (84484 x3): $195
+  5. Basic metabolic panel (80048): $85
+  6. CBC with differential (85025): $65
+  7. D-dimer (85379): $110
+  8. CT angiography chest (71275): $1,650
+  9. IV administration (96360): $180
+  10. Normal saline 1L (J7040): $35
+  11. Cardiac monitoring, 4 hours (99354): $385
+  12. ED facility fee: $240
+
+  Create:
+  1. Patient-ready itemized bill
+  2. Plain language description of each charge
+  3. Verification of charge accuracy
+  4. Comparison to EOB if available
+  5. Cover letter explaining the itemized bill
+
+assertions:
+  - type: llm_judge
+    criteria: "Itemized bill translates medical codes into plain language — each line item has both the code and a description the patient can understand (e.g., '84484 - Blood test to check for heart damage (troponin), done 3 times to monitor levels')."
+    weight: 0.35
+    description: "PlainLanguageTranslation"
+  - type: llm_judge
+    criteria: "Charge accuracy is verified — confirms that charges are consistent with documented services, checks that serial troponin was indeed ordered 3 times, and verifies the CT angiography charge ($1,650) against the facility's chargemaster; flags any charges that seem inconsistent."
+    weight: 0.35
+    description: "ChargeAccuracyVerification"
+  - type: llm_judge
+    criteria: "Cover letter helps the patient understand their $1,100 responsibility — explains how the $4,200 total was processed through Humana MA, why $3,100 was covered, and what makes up the $1,100 patient portion (deductible, copay, coinsurance breakdown)."
+    weight: 0.30
+    description: "ResponsibilityExplanation"

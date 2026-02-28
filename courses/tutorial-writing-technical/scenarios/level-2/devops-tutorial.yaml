@@ -1,0 +1,78 @@
+meta:
+  id: devops-tutorial
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a DevOps tutorial teaching CI/CD pipeline setup from scratch, with infrastructure-as-code, automated testing, and deployment stages"
+  tags: [devops, ci-cd, deployment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a DevOps engineer writing a tutorial for
+  your company's engineering wiki called "Set Up
+  a Production CI/CD Pipeline with GitHub Actions."
+  The team currently deploys manually ("ssh into
+  the server and git pull"), and you want to
+  automate everything.
+
+  Tutorial parameters:
+  - CI/CD platform: GitHub Actions
+  - App: Node.js (Express) API with PostgreSQL
+  - Deployment target: AWS ECS (Elastic Container
+    Service)
+  - Audience: Backend developers who have never
+    set up CI/CD
+  - Goal: Every push to main automatically tests,
+    builds, and deploys
+
+  Pipeline stages to build:
+  1. Lint and type-check (ESLint + TypeScript)
+  2. Run unit and integration tests (Vitest)
+  3. Build Docker image
+  4. Push to container registry (ECR)
+  5. Deploy to staging (automatic on merge to main)
+  6. Run smoke tests against staging
+  7. Deploy to production (manual approval gate)
+  8. Post-deployment health check
+
+  Tutorial structure:
+  1. Why CI/CD matters (no more "it works on my
+     machine")
+  2. Prerequisites (GitHub repo, AWS account, Docker)
+  3. Stage 1: Basic CI (lint + test on every PR)
+  4. Stage 2: Docker build and push
+  5. Stage 3: Deploy to staging (ECS service update)
+  6. Stage 4: Smoke tests and manual approval
+  7. Stage 5: Production deployment
+  8. Secrets management (GitHub Secrets, AWS IAM)
+  9. Monitoring and rollback strategy
+  10. Complete workflow file (final version)
+
+  Requirements:
+  - Show the GitHub Actions YAML incrementally
+    (build it up stage by stage, not dump the
+    final file)
+  - Explain each YAML key and value (developers
+    haven't seen GitHub Actions before)
+  - Include the Dockerfile
+  - Address secrets securely (never hardcode)
+  - Include rollback strategy
+
+  Task: Write the complete CI/CD tutorial with
+  all 10 sections, incremental workflow building,
+  and deployment best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete CI/CD tutorial — covers all 10 sections from motivation through final workflow; the GitHub Actions YAML is built incrementally (not dumped all at once); each pipeline stage is explained and tested individually; the Dockerfile is included; secrets management uses GitHub Secrets properly; the complete workflow file at the end integrates all stages; the tutorial achieves the goal of automated deployment on every push to main."
+    weight: 0.35
+    description: "TutorialCompleteness"
+  - type: llm_judge
+    criteria: "Response teaches CI/CD concepts effectively — each YAML key/value is explained for newcomers; the incremental approach builds understanding; the staging → approval → production flow teaches deployment best practices; the rollback strategy addresses what happens when things go wrong; the monitoring section prevents 'deploy and forget'; the overall tutorial transforms manual deployment into a professional pipeline."
+    weight: 0.35
+    description: "TeachingEffectiveness"
+  - type: llm_judge
+    criteria: "Response follows DevOps best practices — secrets are never hardcoded; the pipeline has proper stages (lint → test → build → deploy); the manual approval gate prevents accidental production deployments; smoke tests verify staging before production; IAM permissions follow least privilege; the Docker image build is optimized; the overall pipeline would be production-ready, not a tutorial toy."
+    weight: 0.30
+    description: "DevOpsPractices"

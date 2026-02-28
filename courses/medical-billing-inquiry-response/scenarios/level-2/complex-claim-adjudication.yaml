@@ -1,0 +1,66 @@
+meta:
+  id: complex-claim-adjudication
+  level: 2
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Navigate complex claim adjudication issues — resolve claims with multiple denial codes, partial payments, contractual adjustments, and coordination of benefits complications"
+  tags: [claim-adjudication, denial-resolution, partial-payments, intermediate]
+
+state: {}
+
+trigger: |
+  Navigate complex claim adjudication issues for a
+  multi-specialty practice dealing with problematic
+  claims that standard resolution pathways haven't fixed.
+
+  Case 1 — Partial payment with multiple denial codes:
+  Patient: Amanda Clark, age 48
+  Insurance: Aetna PPO
+  Service: Outpatient shoulder surgery (CPT 23430)
+  Billed: $8,500 | Allowed: $6,200 | Paid: $2,480
+  Denial codes on remaining $3,720:
+  - CO-4 (procedure code inconsistent with modifier)
+  - PR-96 (non-covered charge)
+  - CO-45 (exceeds fee schedule maximum)
+  The claim has been partially paid but $3,720 remains
+  unresolved across three different denial categories.
+
+  Case 2 — COB nightmare:
+  Patient: Robert Chen, age 42
+  Primary: Own employer BCBS | Secondary: Wife's Cigna
+  Service: MRI knee ($2,800)
+  BCBS processed and paid $1,680 (allowed $2,100,
+  applied $420 to deductible). Cigna denied the
+  secondary claim stating "Primary payer responsibility
+  not exhausted" because BCBS's EOB format doesn't
+  include the COB fields Cigna requires.
+
+  Case 3 — Timely filing dispute:
+  Patient: Lisa Park, age 55
+  Insurance: Medicare Advantage (Humana)
+  Service: Series of PT visits (12 sessions, $3,600)
+  Original claim filed 45 days after service.
+  Humana denied: "Claims must be filed within 30 days"
+  Practice policy and Medicare rules allow 365 days.
+  Humana citing MA plan-specific filing deadline.
+
+  Create:
+  1. Resolution strategy for each case
+  2. Appeal letters where needed
+  3. Documentation requirements
+  4. Escalation pathways
+  5. Prevention strategies for each issue type
+
+assertions:
+  - type: llm_judge
+    criteria: "Case 1 strategy addresses each denial code separately — CO-4 requires modifier correction and resubmission, PR-96 needs medical necessity documentation, CO-45 requires fee schedule review and possible appeal; doesn't treat multiple denial codes as a single problem."
+    weight: 0.35
+    description: "MultiDenialCodeStrategy"
+  - type: llm_judge
+    criteria: "Case 2 resolution addresses the EOB format issue — the problem isn't clinical or coverage-related; it's that BCBS's EOB doesn't contain the COB data fields Cigna's system expects; solution involves obtaining a COB-formatted statement from BCBS or submitting a manual COB override to Cigna."
+    weight: 0.35
+    description: "COBFormatResolution"
+  - type: llm_judge
+    criteria: "Case 3 challenges the MA plan's filing deadline — Medicare Advantage plans cannot impose filing deadlines shorter than original Medicare (365 days for most claims); the 30-day deadline may violate CMS regulations for MA plans; appeal should cite CMS MA regulations."
+    weight: 0.30
+    description: "TimelyFilingChallenge"

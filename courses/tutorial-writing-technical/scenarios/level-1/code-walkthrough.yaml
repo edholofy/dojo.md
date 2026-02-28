@@ -1,0 +1,77 @@
+meta:
+  id: code-walkthrough
+  level: 1
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a code walkthrough tutorial that explains an existing codebase feature, breaking down each function and design decision for new team members"
+  tags: [code-walkthrough, codebase, onboarding, beginner]
+
+state: {}
+
+trigger: |
+  You're a senior engineer at a startup. A new
+  developer is joining the team next week and
+  you need to write a code walkthrough of the
+  authentication system — the most complex part
+  of the codebase. Previous new hires have said
+  "the auth code is impossible to understand
+  without someone explaining it."
+
+  Authentication system overview:
+  - Framework: Express.js with TypeScript
+  - Auth method: JWT with refresh tokens
+  - Files involved:
+    - auth/middleware.ts (JWT verification
+      middleware)
+    - auth/controller.ts (login, register, refresh,
+      logout endpoints)
+    - auth/tokens.ts (JWT creation, verification,
+      refresh token rotation)
+    - auth/types.ts (TypeScript interfaces)
+    - auth/errors.ts (custom auth error classes)
+
+  Code walkthrough requirements:
+  - Target reader: Mid-level developer joining the
+    team who knows TypeScript and Express but hasn't
+    seen this codebase
+  - Structure: Start with the high-level flow
+    (request → middleware → controller → tokens),
+    then dive into each file
+  - For each file:
+    - Purpose (one sentence)
+    - Key functions with inline commentary
+    - Design decisions explained ("we chose X
+      because...")
+    - Gotchas and non-obvious behavior
+  - Include a sequence diagram description for the
+    login flow
+  - Include a sequence diagram description for the
+    token refresh flow
+  - End with "things you might need to change"
+    (common modification scenarios)
+
+  Design decisions to explain:
+  - Why refresh token rotation (not static refresh
+    tokens)
+  - Why short-lived access tokens (15 min)
+  - Why custom error classes (not generic errors)
+  - Why middleware pattern (not per-route auth)
+
+  Task: Write the complete code walkthrough with
+  the high-level overview, per-file breakdowns,
+  design decision explanations, sequence diagram
+  descriptions, and modification guide.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete code walkthrough — starts with high-level flow before diving into details; covers all 5 files with purpose, key functions, design decisions, and gotchas; the sequence diagram descriptions for login and token refresh are clear and accurate; the walkthrough ends with common modification scenarios; the progression from overview to detail mirrors how a new developer would explore the codebase."
+    weight: 0.35
+    description: "WalkthroughCompleteness"
+  - type: llm_judge
+    criteria: "Response explains design decisions effectively — each design decision (refresh token rotation, short-lived tokens, custom errors, middleware pattern) is explained with the reasoning behind it (not just what it does); the explanations connect technical choices to practical benefits; gotchas and non-obvious behavior are highlighted; the walkthrough would prevent the 'the auth code is impossible to understand' complaint from future new hires."
+    weight: 0.35
+    description: "DesignDecisions"
+  - type: llm_judge
+    criteria: "Response is appropriate for onboarding — the walkthrough assumes TypeScript and Express knowledge but not codebase familiarity; code examples are representative (showing real patterns, not contrived examples); the modification guide helps the new developer become productive faster; the tone is welcoming and informative; the overall walkthrough would be a valuable reference document for the team."
+    weight: 0.30
+    description: "OnboardingValue"

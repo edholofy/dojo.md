@@ -1,0 +1,62 @@
+meta:
+  id: coding-error-identification
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Identify and correct common billing coding errors — review a patient's bill for incorrect CPT codes, diagnosis code mismatches, and duplicate charges"
+  tags: [coding-errors, cpt-codes, billing-correction, beginner]
+
+state: {}
+
+trigger: |
+  A patient has requested an itemized bill after
+  receiving a statement for $1,850 from an orthopedic
+  visit. Review the itemized charges for potential
+  billing errors.
+
+  Patient: James Wilson, age 55
+  Insurance: UnitedHealthcare EPO
+  Visit: Orthopedic evaluation for knee pain
+  Date of service: 4 weeks ago
+  Chief complaint: Right knee pain after fall
+
+  Itemized charges:
+  1. Office visit, new patient, comprehensive (99205):
+     $380 — but patient has been seen here before
+     (last visit 8 months ago)
+  2. X-ray, knee, bilateral (73562): $220 — but only
+     right knee was examined per clinical notes
+  3. X-ray, knee, right (73560): $165 — appears to be
+     a duplicate imaging charge
+  4. Knee injection, right (20611): $285 — matches
+     clinical notes
+  5. Corticosteroid (J1040): $45 — matches injection
+  6. Office visit, established patient (99214): $195 —
+     appears to be a duplicate E/M charge
+  7. Knee brace, prefabricated (L1820): $360 — patient
+     did receive a knee brace
+  8. Physical therapy evaluation (97161): $200 — patient
+     was not seen by physical therapy
+
+  Total billed: $1,850
+
+  Create:
+  1. Error identification report
+  2. Corrected itemized bill
+  3. Explanation of each error found
+  4. Patient communication about corrections
+  5. Process improvement recommendations
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies all billing errors — new patient code (99205) should be established patient code (patient seen 8 months ago), bilateral X-ray code when only right knee was examined, duplicate X-ray charge, duplicate E/M code (99205 and 99214 for same visit), and physical therapy charge for service not rendered."
+    weight: 0.35
+    description: "ErrorIdentification"
+  - type: llm_judge
+    criteria: "Corrected bill reflects accurate charges — replaces 99205 with appropriate established patient code (99213 or 99214), removes bilateral X-ray or keeps only the correct unilateral code, removes duplicate E/M charge, removes PT evaluation charge; the corrected total is significantly lower than $1,850."
+    weight: 0.35
+    description: "CorrectedBill"
+  - type: llm_judge
+    criteria: "Patient communication is transparent and apologetic — acknowledges the errors, explains what was wrong, provides the corrected amount, and assures the patient that the corrections will be made and any overpayment refunded."
+    weight: 0.30
+    description: "PatientCommunication"

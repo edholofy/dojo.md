@@ -1,0 +1,68 @@
+meta:
+  id: hipaa-acknowledgment-review
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Review HIPAA acknowledgment and privacy forms — verify patient understanding of privacy rights, authorization for information sharing, and proper documentation"
+  tags: [hipaa, privacy-acknowledgment, information-sharing, beginner]
+
+state: {}
+
+trigger: |
+  Review HIPAA-related intake forms for patients
+  checked in today to ensure compliance with privacy
+  requirements.
+
+  Patient 1: Jennifer Walsh, age 35
+  - HIPAA Notice of Privacy Practices acknowledgment:
+    Signed and dated correctly
+  - Authorization for release of information:
+    * Authorized person: "My mom, Patricia Walsh"
+    * Phone number for authorized person: Provided
+    * Information to share: Checked "All medical records"
+    * Expiration: Left blank
+    * Signature: Present, dated today
+
+  Patient 2: Michael Torres, age 17
+  - HIPAA Notice: Signed by patient
+  - Authorization for release: Signed by patient
+  - No parent/guardian signature on either form
+  - Appointment type: Sports physical
+
+  Patient 3: Anna Petrov, age 72
+  - HIPAA Notice: Signed with an "X" mark
+  - Authorization for release:
+    * Authorized person: "My daughter Elena"
+    * No last name provided for daughter
+    * Information to share: "Everything"
+    * Signed with "X" mark
+    * No witness to the "X" mark signatures
+
+  Patient 4: Carlos Mendez, age 45
+  - HIPAA Notice: Signed and dated
+  - Authorization for release:
+    * Authorized persons: Lists 6 different people
+      (wife, 3 adult children, brother, pastor)
+    * Information to share: "All information including
+      mental health and substance abuse records"
+    * No expiration date
+
+  Create:
+  1. Compliance review for each patient
+  2. Required corrections or additional documentation
+  3. Staff guidance for handling each situation
+  4. Training points for front desk team
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies the minor patient issue — Patient 2 (age 17) may or may not need parental consent depending on state law and the nature of services; for a sports physical, most states require parent/guardian authorization for a minor; this is a compliance gap."
+    weight: 0.35
+    description: "MinorConsentIssue"
+  - type: llm_judge
+    criteria: "Addresses X-mark signature requirements — Patient 3's X-mark signatures require a witness under most state laws and healthcare facility policies; also flags that 'Everything' is too vague for an authorization scope and the authorized person needs a full name for proper identification."
+    weight: 0.35
+    description: "XMarkWitnessRequirement"
+  - type: llm_judge
+    criteria: "Flags substance abuse and mental health record authorization concerns — Patient 4's blanket authorization including mental health and substance abuse records may conflict with 42 CFR Part 2 requirements; these records typically require separate, specific consent; also notes the lack of expiration date on all authorizations."
+    weight: 0.30
+    description: "SpecialRecordAuthorization"

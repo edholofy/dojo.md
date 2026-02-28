@@ -1,0 +1,72 @@
+meta:
+  id: migration-guide
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a migration guide for a major version upgrade of a popular library, covering breaking changes, automated codemods, and step-by-step migration path"
+  tags: [migration, breaking-changes, version-upgrade, intermediate]
+
+state: {}
+
+trigger: |
+  You're the lead maintainer of "DataGrid" — a
+  popular React table component library with 45,000
+  weekly npm downloads. You're releasing v4.0 which
+  has significant breaking changes from v3.x. The
+  community is anxious about migrating. You need
+  to write a comprehensive migration guide.
+
+  Breaking changes in v4.0:
+  1. Props renamed: "columns" → "columnDefs",
+     "data" → "rowData", "onSort" → "onSortChange"
+  2. Column definition format changed: "accessor"
+     (string) → "field" (string) + "valueGetter"
+     (function) for computed columns
+  3. Styling: CSS class names changed from
+     "dg-*" to "datagrid-*" prefix
+  4. Removed features: Built-in export (use new
+     @datagrid/export plugin), inline editing
+     (replaced with @datagrid/editable)
+  5. New required prop: "getRowId" (function) —
+     rows must have unique IDs
+  6. Event handler signature changed: (event) →
+     ({ data, rowIndex, column, event })
+  7. TypeScript: Generic types changed from
+     DataGrid<T> to DataGrid<TData, TValue>
+  8. Peer dependencies: React 18+ required (was
+     React 16+), dropped IE11 support
+
+  Available tooling:
+  - Codemod: npx @datagrid/codemod v3-to-v4 (handles
+    changes 1, 3, and parts of 6 automatically)
+  - Compatibility mode: import { DataGridCompat }
+    from '@datagrid/compat' (temporary bridge)
+
+  Migration guide requirements:
+  - Estimated effort section (how long will this
+    take based on codebase size)
+  - Before you start (checklist)
+  - Automated migration (codemod usage)
+  - Manual migration steps for each breaking change
+  - Before/after code comparisons
+  - Compatibility mode documentation
+  - Testing checklist
+  - FAQ from beta testers
+
+  Task: Write the complete migration guide with
+  all sections, before/after code examples, and
+  practical advice for each breaking change.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a comprehensive migration guide — covers all 8 breaking changes with clear before/after code comparisons; the estimated effort section helps teams plan; the codemod section explains what's automated vs manual; the compatibility mode provides a gradual migration path; the testing checklist ensures nothing is missed; the guide is organized so teams can migrate incrementally, not all-at-once."
+    weight: 0.35
+    description: "MigrationCompleteness"
+  - type: llm_judge
+    criteria: "Response demonstrates migration guide best practices — before/after code examples are clear and realistic; the migration order is strategic (easy changes first to build momentum); the compatibility mode is positioned as temporary (with deprecation timeline); TypeScript changes are explained with updated type annotations; the FAQ addresses real concerns from beta testers; the guide reduces migration anxiety rather than increasing it."
+    weight: 0.35
+    description: "MigrationBestPractices"
+  - type: llm_judge
+    criteria: "Response is practical and team-friendly — the estimated effort section is honest (not 'it's easy!'); the checklist format allows tracking progress; the guide can be followed by any team member (not just the library expert); the codemod instructions are copy-pasteable; the overall guide would enable a team to migrate from v3 to v4 confidently and completely."
+    weight: 0.30
+    description: "PracticalUsability"

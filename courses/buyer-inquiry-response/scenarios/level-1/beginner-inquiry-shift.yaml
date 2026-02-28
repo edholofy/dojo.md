@@ -1,0 +1,53 @@
+meta:
+  id: beginner-inquiry-shift
+  level: 1
+  course: buyer-inquiry-response
+  type: output
+  description: "Shift simulation — handle three simultaneous inquiries across different channels requiring different response styles"
+  tags: [shift-simulation, multi-channel, beginner]
+
+state: {}
+
+trigger: |
+  It's Saturday at 10 AM — your busiest time. Three
+  inquiries arrive within minutes of each other:
+
+  === INQUIRY 1: Urgent Text ===
+  "Hey, I'm standing outside 44 River Rd right now.
+  Is this place still available? Can I get in to see
+  it today? — Amy"
+  Property: Active listing, $315K, vacant, lockbox
+  access available
+
+  === INQUIRY 2: Zillow Email ===
+  "We're a military family relocating to your area in
+  June (PCS move). We need a 4-bedroom home near the
+  base, budget $350-400K. We'll be visiting for 3 days
+  in March to house-hunt. Can you help us plan an
+  efficient trip? — SSgt. Carlos & Maria R."
+  Context: Fort Campbell area, VA loan eligible,
+  BAH covers up to $1,800/month
+
+  === INQUIRY 3: Instagram DM ===
+  "Love your posts! How much does a house cost in your
+  area? I'm 24 and just started saving. Is it even
+  possible for me to buy? 😅"
+  Context: No name provided, no specific criteria
+
+  Write responses for all three inquiries, each
+  matching the appropriate channel, urgency level,
+  and buyer stage.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles all three inquiries — Amy gets an immediate text confirming availability and offering same-day access; Carlos & Maria get a detailed email about VA loans, base-area properties, and a 3-day tour plan; the Instagram DM gets an encouraging, casual response about first-time buying."
+    weight: 0.35
+    description: "ThreeInquiryCompleteness"
+  - type: llm_judge
+    criteria: "Each response matches its channel — text is short and action-oriented; email is detailed and professional; Instagram DM is casual and approachable — while all maintain professionalism and advance the relationship."
+    weight: 0.35
+    description: "ChannelMatchAccuracy"
+  - type: llm_judge
+    criteria: "Each response would convert at its buyer stage — Amy would get a showing today; the military family would book a planning call; the Instagram follower would engage further and eventually share contact info."
+    weight: 0.30
+    description: "StageAppropriateConversion"

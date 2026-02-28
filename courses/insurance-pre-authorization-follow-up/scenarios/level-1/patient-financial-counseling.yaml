@@ -1,0 +1,53 @@
+meta:
+  id: patient-financial-counseling
+  level: 1
+  course: insurance-pre-authorization-follow-up
+  type: output
+  description: "Provide patient financial counseling about pre-authorization — explain the process, set expectations, and discuss financial implications in plain language"
+  tags: [patient-counseling, financial-literacy, plain-language, beginner]
+
+state: {}
+
+trigger: |
+  A patient needs help understanding the pre-authorization
+  process and its financial implications. Explain
+  everything in plain, non-clinical language.
+
+  Patient: Sarah Johnson
+  Situation: Dr. recommended a hip replacement surgery.
+  Insurance told her it needs "prior authorization."
+  She's confused and worried.
+
+  Patient's questions:
+  1. "What is prior authorization? Why do I need it?"
+  2. "How long will this take? My hip hurts so much."
+  3. "What happens if they say no?"
+  4. "Will I have to pay for the surgery myself?"
+  5. "My friend said her insurance denied her surgery
+     three times before approving. Is that going to happen?"
+  6. "What can I do to help this go faster?"
+
+  Context:
+  - Patient is 62 years old, on employer-sponsored PPO plan
+  - Hip replacement typically approved when criteria met
+  - Patient has completed required conservative treatment
+  - Out-of-pocket maximum: $6,500 (already met $2,100)
+  - Surgery estimated at $45,000 (facility + surgeon)
+  - Patient is anxious and has limited health literacy
+
+  Create patient-facing answers to all 6 questions,
+  plus a simple timeline handout.
+
+assertions:
+  - type: llm_judge
+    criteria: "Explanations use truly plain language — no jargon ('pre-authorization' is explained, not assumed understood), uses analogies if helpful, and a 10th-grade reading level; the patient will actually understand what's happening."
+    weight: 0.35
+    description: "PlainLanguageClarity"
+  - type: llm_judge
+    criteria: "Financial information is specific and reassuring — explains that PA is about insurance approval not personal payment, mentions the out-of-pocket maximum as a safety net, and clarifies what the patient's actual costs would be."
+    weight: 0.35
+    description: "FinancialReassurance"
+  - type: llm_judge
+    criteria: "Timeline handout is simple and visual — shows the PA process steps with expected timeframes, what happens at each stage, and who is responsible; the patient can tape it to her fridge and track progress."
+    weight: 0.30
+    description: "TimelineHandoutSimplicity"

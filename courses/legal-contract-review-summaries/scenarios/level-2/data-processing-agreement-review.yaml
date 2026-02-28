@@ -1,0 +1,86 @@
+meta:
+  id: data-processing-agreement-review
+  level: 2
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review a Data Processing Agreement for GDPR compliance and summarize data protection obligations, cross-border transfer mechanisms, and breach notification requirements"
+  tags: [dpa, gdpr, data-protection, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Data Protection Officer at a mid-size
+  European fintech company (400 employees, headquartered
+  in Berlin). Your company is contracting with a US-based
+  cloud analytics provider to process customer transaction
+  data. The vendor has sent their standard Data Processing
+  Agreement (DPA). Your company processes data of 2.3
+  million EU customers, so GDPR compliance is critical.
+
+  Key DPA terms:
+  - Roles: Your company is the Data Controller; Vendor is
+    the Data Processor
+  - Data categories: Customer names, email addresses,
+    transaction histories, IP addresses, device
+    identifiers, location data
+  - Processing purposes: "To provide analytics services
+    as described in the Service Agreement, and to improve
+    Processor's products and services through aggregated
+    and anonymized analysis"
+  - Sub-processors: "Processor may engage sub-processors
+    without prior specific authorization from Controller.
+    Processor shall maintain an up-to-date list of sub-
+    processors on its website. Controller may object to
+    a new sub-processor within 30 days of notification"
+  - Data transfers: "Data may be processed in the United
+    States, European Union, or other jurisdictions where
+    Processor or its sub-processors maintain facilities.
+    Processor relies on Standard Contractual Clauses
+    (SCCs) for EU-US transfers"
+  - Security measures: "Processor shall implement
+    appropriate technical and organizational measures,
+    including encryption at rest and in transit, access
+    controls, and regular security assessments"
+  - Breach notification: "Processor shall notify
+    Controller of any Personal Data Breach within 72
+    hours of becoming aware of the breach"
+  - Data subject rights: "Processor shall assist
+    Controller in responding to Data Subject requests,
+    subject to reasonable fees for assistance beyond
+    standard request handling"
+  - Data retention: "Processor shall retain Personal Data
+    for the duration of the Service Agreement plus 90
+    days. Upon request, Processor shall delete or return
+    Personal Data within 60 days"
+  - Audit rights: "Controller may audit Processor's
+    compliance once per year with 60 days' written
+    notice. Controller shall bear all audit costs.
+    Processor may satisfy audit requests by providing
+    its most recent SOC 2 Type II report"
+  - DPIA: "Processor shall reasonably assist Controller
+    in conducting Data Protection Impact Assessments
+    where required"
+  - Liability: "Processor's liability for data protection
+    breaches is limited to 2x the annual fees paid under
+    the Service Agreement"
+  - Governing law: State of California
+
+  Task: Write a GDPR compliance assessment memo for
+  your Chief Legal Officer evaluating the DPA against
+  GDPR requirements, identifying gaps and non-compliant
+  provisions, and recommending specific changes needed
+  before signing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a thorough GDPR compliance assessment — evaluates each DPA provision against specific GDPR articles (Art. 28 processor requirements, Art. 32 security, Art. 33 breach notification, Art. 44-49 cross-border transfers); identifies the processing purpose scope issue ('improve products and services' goes beyond Controller's instructions, violating Art. 28(3)(a)); evaluates the SCCs mechanism post-Schrems II; assesses sub-processor provisions against Art. 28(2) and (4); the assessment is technically accurate and specific."
+    weight: 0.35
+    description: "ThoroughGDPRAssessment"
+  - type: llm_judge
+    criteria: "Response identifies specific compliance gaps — flags the 'improve products and services' processing purpose as exceeding Controller instructions; flags the general sub-processor authorization without specific consent mechanism; evaluates the 72-hour breach notification (matches GDPR but should be 'without undue delay' to Controller, separate from the 72-hour supervisory authority window); flags the audit limitations (SOC 2 substitution may not satisfy Art. 28(3)(h)); flags governing law conflict (California vs EU member state); identifies missing provisions (records of processing, data localization options, DPO contact information); evaluates the liability cap adequacy given 2.3M customer records."
+    weight: 0.35
+    description: "ComplianceGapsIdentified"
+  - type: llm_judge
+    criteria: "Response provides GDPR-specific recommendations — suggests specific DPA amendments with reference to GDPR articles; recommends supplementary measures for cross-border transfers (Schrems II compliance); suggests data localization requirements; recommends specific sub-processor authorization mechanism; proposes audit rights improvements; the recommendations are practical for a Controller-Processor relationship and reflect current EDPB guidance; considers enforcement risk and potential fines (up to 4% global turnover or EUR 20M)."
+    weight: 0.30
+    description: "GDPRSpecificRecommendations"

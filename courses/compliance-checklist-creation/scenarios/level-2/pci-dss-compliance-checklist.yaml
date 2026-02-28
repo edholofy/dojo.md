@@ -1,0 +1,67 @@
+meta:
+  id: pci-dss-compliance-checklist
+  level: 2
+  course: compliance-checklist-creation
+  type: output
+  description: "Create a PCI DSS v4.0 compliance checklist for a mid-size e-commerce company transitioning from v3.2.1"
+  tags: [pci-dss, payment-security, e-commerce, intermediate]
+
+state: {}
+
+trigger: |
+  You're the IT Director at a mid-size e-commerce
+  company (200 employees, $85M annual revenue, 1.2M
+  card transactions per year). Your company is classified
+  as a PCI Level 2 merchant (1-6M transactions). You
+  were compliant under PCI DSS v3.2.1, but need to
+  transition to v4.0, which has new requirements that
+  took full effect March 31, 2025.
+
+  Your payment environment:
+  - Website: Custom platform processing card-present
+    and card-not-present transactions
+  - Payment gateway: Stripe (handles tokenization)
+  - POS: 3 retail locations using Square terminals
+  - Call center: 8 agents take phone orders (card data
+    entered into web portal)
+  - Stored data: Tokenized card data in PostgreSQL;
+    some legacy tables may contain full PAN from
+    pre-tokenization era (2019)
+  - Network: Flat network (no segmentation between
+    payment and non-payment systems)
+  - Remote access: VPN for remote employees; MFA on
+    VPN but not on all CDE systems
+  - Logging: Basic server logs; no centralized SIEM
+  - Vulnerability scanning: Quarterly ASV scans; no
+    internal scanning program
+  - Employee training: Annual PCI awareness training
+
+  PCI DSS v4.0 new requirements you need to address:
+  - Customized approach option (vs. defined approach)
+  - Enhanced authentication requirements (MFA for all
+    CDE access)
+  - Targeted risk analyses for each control
+  - Anti-phishing mechanisms
+  - Automated log review
+  - Internal vulnerability scanning
+  - Payment page script management
+  - Enhanced encryption requirements
+
+  Task: Create a comprehensive PCI DSS v4.0 transition
+  checklist covering all 12 requirements, highlighting
+  the new v4.0 requirements, identifying your specific
+  gaps, and providing a remediation plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a comprehensive PCI DSS v4.0 checklist — covers all 12 requirements (1: network security controls, 2: secure configurations, 3: stored account data protection, 4: encryption in transit, 5: malware protection, 6: secure development, 7: access restriction, 8: user identification/authentication, 9: physical access, 10: logging/monitoring, 11: security testing, 12: information security policies); highlights specific v4.0 changes within each requirement; distinguishes between 'defined approach' and 'customized approach' options; includes both existing controls to verify and new controls to implement."
+    weight: 0.35
+    description: "ComprehensivePCIChecklist"
+  - type: llm_judge
+    criteria: "Response addresses the company's specific gaps — flags the flat network as a critical gap (Requirement 1: network segmentation needed between CDE and non-CDE); addresses the legacy PAN data (Requirement 3: discovery scan needed, secure deletion required); addresses call center agent card data handling (Requirement 3/4: secure entry methods, no PAN display after entry); addresses the MFA gap (Requirement 8: v4.0 requires MFA for all access to CDE, not just remote); addresses the lack of SIEM (Requirement 10: automated log review is a new v4.0 requirement); addresses internal vulnerability scanning (Requirement 11: new v4.0 requirement for authenticated internal scanning); addresses payment page script management (Requirement 6: new v4.0 requirement for script integrity monitoring)."
+    weight: 0.35
+    description: "SpecificGapsAddressed"
+  - type: llm_judge
+    criteria: "Response provides a practical remediation plan — prioritizes by risk and compliance deadline; estimates implementation effort and cost for major gaps (network segmentation, SIEM deployment, MFA expansion, script monitoring); identifies which items can be addressed quickly (policy updates, training) vs require significant investment (network redesign); addresses the targeted risk analysis requirement (new v4.0 requirement for documenting risk analysis for each flexible-frequency control); recommends whether to use defined or customized approach for each requirement; the plan is realistic for a Level 2 merchant preparing for a SAQ or ROC assessment."
+    weight: 0.30
+    description: "PracticalRemediation"

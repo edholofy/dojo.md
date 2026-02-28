@@ -1,0 +1,83 @@
+meta:
+  id: construction-subcontract-review
+  level: 2
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review a construction subcontract agreement and summarize payment terms, indemnification, change order procedures, and insurance requirements"
+  tags: [construction, subcontract, indemnification, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Project Manager at a mid-size general
+  contractor ($45M annual revenue). You've been awarded
+  a $3.2M commercial office build-out project. You're
+  hiring a mechanical subcontractor for the HVAC scope
+  ($680,000). The sub has sent their standard subcontract
+  for your review. Your company's attorney is on vacation
+  for 2 weeks, so the VP of Operations has asked you to
+  do an initial review and flag issues.
+
+  Key subcontract terms:
+  - Scope: HVAC installation per plans and specifications
+    dated Jan 15, 2026
+  - Contract sum: $680,000 (fixed price)
+  - Payment: Monthly progress payments based on
+    percentage of completion; Net 30 from GC's receipt
+    of payment from Owner ("pay-when-paid")
+  - Retainage: 10% retained from each payment; released
+    within 45 days of substantial completion of sub's
+    work — "provided GC has received corresponding
+    retainage from Owner"
+  - Change orders: "No changes shall be performed without
+    prior written authorization from GC. Sub shall
+    provide pricing within 5 business days of GC's
+    request. GC shall respond within 15 business days.
+    Sub shall not delay work pending change order
+    approval"
+  - Schedule: "Sub shall commence and complete work per
+    the GC's project schedule. Sub is responsible for
+    delays caused by Sub's workforce, materials, or
+    equipment. Liquidated damages of $1,500/day for
+    delays attributable to Sub"
+  - Indemnification: "Sub shall indemnify, defend, and
+    hold harmless GC, Owner, and Architect from any and
+    all claims, damages, losses, and expenses arising
+    out of or resulting from Sub's performance of the
+    work, regardless of whether caused in part by a
+    party indemnified hereunder" (broad form)
+  - Insurance: Sub must carry: $2M GL, $1M auto, $1M
+    workers' comp, $1M umbrella; GC and Owner as
+    additional insureds
+  - Warranty: Sub warrants work for 2 years from
+    substantial completion; manufacturer warranties
+    assigned to Owner
+  - Lien waiver: "Sub shall provide conditional lien
+    waivers with each payment application and
+    unconditional waivers upon receipt of payment"
+  - Dispute resolution: Non-binding mediation, then
+    litigation in county of project location
+  - Flow-down: "All terms and conditions of the Prime
+    Contract between GC and Owner are incorporated by
+    reference and shall be binding on Sub to the extent
+    applicable to Sub's scope of work"
+  - No provision for: material escalation, force majeure,
+    scope overlap resolution, back-charges procedure
+
+  Task: Write a review memo for your VP of Operations
+  identifying the key risks, evaluating each major clause,
+  and recommending changes before executing the subcontract.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response clearly explains the subcontract terms — translates construction contract language into business terms the VP can act on; explains the pay-when-paid vs pay-if-paid distinction and its cash flow implications; clarifies what 'broad form' indemnification means and why it's problematic; explains the flow-down clause implications (Sub is bound by a prime contract they may not have seen); the review is organized by risk priority."
+    weight: 0.35
+    description: "ClearSubcontractReview"
+  - type: llm_judge
+    criteria: "Response identifies construction-specific risks — flags the broad form indemnification (Sub indemnifies even for GC's partial negligence — may be unenforceable in many states with anti-indemnification statutes); flags the pay-when-paid conditional payment (cash flow risk if Owner delays payment); flags the 'continue work pending change order approval' requirement (Sub bears cost risk for unapproved changes); flags liquidated damages without a cap; flags missing material escalation clause for a $680K HVAC contract; flags the flow-down clause without Sub having reviewed the prime contract; identifies missing force majeure and back-charge procedures."
+    weight: 0.35
+    description: "ConstructionRisksIdentified"
+  - type: llm_judge
+    criteria: "Response provides construction-industry-appropriate recommendations — suggests converting to comparative fault indemnification; recommends pay-when-paid time limit (e.g., 'within 45 days of GC's invoice regardless of Owner payment'); recommends LD cap and mutual delay provisions; suggests change order procedure requiring written authorization before work proceeds; recommends reviewing the prime contract before signing; the recommendations reflect construction industry standards and are practical for a $680K subcontract."
+    weight: 0.30
+    description: "IndustryAppropriateRecommendations"

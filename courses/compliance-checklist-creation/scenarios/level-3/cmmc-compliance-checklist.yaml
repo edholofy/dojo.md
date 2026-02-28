@@ -1,0 +1,73 @@
+meta:
+  id: cmmc-compliance-checklist
+  level: 3
+  course: compliance-checklist-creation
+  type: output
+  description: "Create a CMMC Level 2 compliance checklist for a defense contractor preparing for third-party assessment"
+  tags: [cmmc, nist-800-171, defense, advanced]
+
+state: {}
+
+trigger: |
+  You're the CISO at a 450-person defense contractor
+  ($180M revenue) that manufactures precision components
+  for military aircraft and ships. Your largest customer
+  (a prime contractor representing 55% of revenue) has
+  notified you that CMMC Level 2 certification will be
+  required for contract renewal in 18 months. You need
+  to pass a Certified Third-Party Assessment Organization
+  (C3PAO) assessment.
+
+  Current state:
+  - NIST 800-171 self-assessment score: 82 out of 110
+    (28 controls with POA&Ms)
+  - SPRS score: 82 (submitted to DoD)
+  - CUI environment: 3 enclaves — engineering (CAD/CAM
+    systems with CUI drawings), business (contracts,
+    proposals), and manufacturing (CNC machines with
+    controlled technical data)
+  - Network: Partially segmented; CUI enclave separated
+    by VLAN but not fully isolated
+  - Encryption: Encryption at rest on endpoints but not
+    on all file servers; FIPS 140-2 validated encryption
+    not confirmed on all systems
+  - Access control: Active Directory with MFA on VPN;
+    MFA not implemented on all CUI systems
+  - Audit logging: Windows event logs collected but not
+    centrally managed; no SIEM
+  - Incident response: Basic plan exists but never
+    tested; DFARS 7012 breach reporting procedure not
+    documented
+  - Media protection: No policy for controlling USB
+    devices or removable media on CUI systems
+  - Personnel security: Background checks for all
+    employees; no formal personnel screening for CUI
+    access
+  - Physical security: Facility has perimeter security
+    and badge access; server room has separate access
+    control; manufacturing floor has limited visitor
+    controls
+  - Supply chain: 35 suppliers have access to CUI;
+    only 8 have provided SPRS scores
+  - SSP (System Security Plan): Partially complete;
+    last updated 8 months ago
+
+  Task: Create a comprehensive CMMC Level 2 compliance
+  checklist covering all 110 NIST SP 800-171 Rev 2
+  controls organized by family, identifying your
+  specific gaps, remediation requirements, and an
+  18-month timeline for C3PAO assessment readiness.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a comprehensive CMMC Level 2 checklist — covers all 14 NIST 800-171 control families (Access Control, Awareness and Training, Audit and Accountability, Configuration Management, Identification and Authentication, Incident Response, Maintenance, Media Protection, Personnel Security, Physical Protection, Risk Assessment, Security Assessment, System and Communications Protection, System and Information Integrity); addresses all 110 security requirements; identifies the 28 controls with POA&Ms and provides specific remediation requirements for each; each control has an implementation status (Met, Not Met, Partially Met), evidence requirement, and remediation action."
+    weight: 0.35
+    description: "ComprehensiveCMMCChecklist"
+  - type: llm_judge
+    criteria: "Response addresses defense-contractor-specific challenges — addresses CUI scoping across 3 enclaves (engineering, business, manufacturing); evaluates CNC machine security (operational technology in CUI environment); addresses FIPS 140-2 validated encryption requirement (critical for CMMC — non-FIPS encryption is insufficient); designs SIEM implementation for audit log collection and review; addresses the DFARS 252.204-7012 breach reporting requirement (72-hour notification to DoD CIO); addresses supply chain CUI flow-down requirements (35 suppliers needing SPRS scores); evaluates the network segmentation against CMMC requirements; addresses controlled unclassified information marking and handling procedures."
+    weight: 0.35
+    description: "DefenseContractorSpecific"
+  - type: llm_judge
+    criteria: "Response provides a realistic 18-month timeline — phases implementation: Phase 1 (months 1-3: complete CUI scoping, finalize SSP, prioritize 28 POA&M items by risk); Phase 2 (months 4-9: implement critical controls — FIPS encryption, MFA expansion, SIEM deployment, network segmentation, media protection); Phase 3 (months 10-14: policy development, training, supply chain assessment, incident response testing); Phase 4 (months 15-18: pre-assessment readiness review, mock assessment, remediation, C3PAO scheduling); estimates budget for major investments (SIEM, encryption, network segmentation, C3PAO assessment costs); the timeline is realistic for achieving Level 2 with 28 open POA&Ms."
+    weight: 0.30
+    description: "EighteenMonthTimeline"

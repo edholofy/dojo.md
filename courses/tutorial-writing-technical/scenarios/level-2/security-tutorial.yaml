@@ -1,0 +1,95 @@
+meta:
+  id: security-tutorial
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a security-focused tutorial that teaches developers to identify and fix common web vulnerabilities, with vulnerable code examples and secure alternatives"
+  tags: [security, owasp, vulnerabilities, intermediate]
+
+state: {}
+
+trigger: |
+  You're a security engineer writing a tutorial
+  for your company's developer education program
+  called "Top 5 Web Security Vulnerabilities Every
+  Developer Must Know (and How to Fix Them)." A
+  recent security audit found that 4 of these 5
+  vulnerabilities exist in your company's codebase.
+
+  Tutorial parameters:
+  - Audience: Full-stack developers (not security
+    specialists)
+  - Language: TypeScript (Node.js/Express backend,
+    React frontend)
+  - Approach: Show vulnerable code → explain the
+    attack → show the fix → explain why the fix
+    works
+
+  Vulnerabilities to cover:
+  1. SQL Injection
+     - Vulnerable: String concatenation in queries
+     - Attack scenario: Login bypass
+     - Fix: Parameterized queries with pg library
+     - Bonus: ORM-level protection
+
+  2. Cross-Site Scripting (XSS)
+     - Vulnerable: dangerouslySetInnerHTML, unsanitized
+       user input in DOM
+     - Attack scenario: Stored XSS in a comment system
+     - Fix: Output encoding, Content Security Policy,
+       DOMPurify
+     - Bonus: React's built-in XSS protection
+
+  3. Cross-Site Request Forgery (CSRF)
+     - Vulnerable: State-changing GET requests, no
+       CSRF tokens
+     - Attack scenario: Unauthorized fund transfer
+     - Fix: CSRF tokens, SameSite cookies, origin
+       checking
+     - Bonus: Framework-level CSRF protection
+
+  4. Broken Authentication
+     - Vulnerable: Weak password storage (MD5),
+       no rate limiting, session fixation
+     - Attack scenario: Credential stuffing
+     - Fix: bcrypt, rate limiting, secure session
+       management
+     - Bonus: MFA implementation
+
+  5. Insecure Direct Object References (IDOR)
+     - Vulnerable: Sequential IDs in URLs without
+       authorization checks
+     - Attack scenario: Accessing other users' data
+       by changing the ID
+     - Fix: Authorization middleware, UUIDs,
+       ownership verification
+     - Bonus: Access control patterns
+
+  Requirements:
+  - Each vulnerability needs: vulnerable code,
+    attack explanation, exploit demonstration,
+    secure code, and explanation of why the fix
+    works
+  - Code examples must be realistic (not
+    contrived)
+  - Include a security checklist at the end
+  - Tone: Urgent but not fear-mongering
+
+  Task: Write the complete security tutorial with
+  all 5 vulnerabilities, vulnerable/secure code
+  pairs, attack scenarios, and the security
+  checklist.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete security tutorial — covers all 5 vulnerabilities with vulnerable code, attack explanation, fix, and why-it-works explanation; code examples use TypeScript with Express/React as specified; attack scenarios are realistic and clearly demonstrate the risk; secure code examples follow current best practices; the security checklist provides an actionable summary; the tutorial would educate developers about real-world security risks."
+    weight: 0.35
+    description: "TutorialCompleteness"
+  - type: llm_judge
+    criteria: "Response teaches security concepts effectively — each vulnerability is explained in a way non-security developers can understand; the vulnerable → attack → fix → explanation flow makes the learning stick; code examples are realistic (not contrived toy examples); the fixes explain WHY they work (not just 'use this library'); the tutorial builds security awareness without fear-mongering; developers would recognize these patterns in their own code."
+    weight: 0.35
+    description: "SecurityEducation"
+  - type: llm_judge
+    criteria: "Response follows responsible security tutorial practices — code examples don't provide ready-to-use exploit tools; the focus is on defense, not attack methodology; the tutorial is technically accurate (correct vulnerability classifications, correct fix implementations); bcrypt is used correctly (not md5 or sha256 for passwords); the security checklist is comprehensive and actionable; the overall tutorial would measurably improve a team's security posture."
+    weight: 0.30
+    description: "ResponsiblePractices"

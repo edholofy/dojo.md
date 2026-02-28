@@ -1,0 +1,53 @@
+meta:
+  id: crm-response-templates
+  level: 2
+  course: buyer-inquiry-response
+  type: output
+  description: "Create a CRM template library — merge-field-ready response templates for 8 common inquiry scenarios"
+  tags: [crm-templates, merge-fields, automation, intermediate]
+
+state: {}
+
+trigger: |
+  You're building a CRM template library for your
+  brokerage's Follow Up Boss system. Templates must
+  use merge fields for personalization.
+
+  Available merge fields:
+  - {{contact.first_name}}, {{contact.last_name}}
+  - {{property.address}}, {{property.price}}
+  - {{property.beds}}, {{property.baths}}
+  - {{property.status}} (Active, Pending, Sold)
+  - {{agent.first_name}}, {{agent.phone}}, {{agent.email}}
+  - {{inquiry.source}} (Zillow, Website, Referral, etc.)
+  - {{inquiry.date}}
+
+  Create templates for these 8 scenarios:
+  1. Initial inquiry auto-response (immediate)
+  2. Property-specific follow-up (within 5 minutes)
+  3. Showing confirmation
+  4. Post-showing follow-up
+  5. New listing alert matching criteria
+  6. Price reduction notification
+  7. "Haven't heard from you" re-engagement
+  8. Anniversary/check-in (past client nurture)
+
+  Each template must include:
+  - Subject line with merge fields
+  - Email body with merge fields
+  - Suggested SMS version (under 160 characters)
+  - Send timing recommendation
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates all 8 templates with subject lines, email bodies using merge fields correctly, SMS versions under 160 characters, and send timing recommendations for each scenario."
+    weight: 0.35
+    description: "TemplateCompleteness"
+  - type: llm_judge
+    criteria: "Templates use merge fields naturally — personalization feels genuine not robotic; merge fields are placed where they add value (names, property details, dates); templates read as if written personally despite being automated."
+    weight: 0.35
+    description: "MergeFieldNaturalness"
+  - type: llm_judge
+    criteria: "Templates would work in a real CRM system — they cover the full buyer journey from initial inquiry to past-client nurture, timing recommendations are realistic, and the library would increase agent efficiency without sacrificing personalization."
+    weight: 0.30
+    description: "PracticalCRMValue"

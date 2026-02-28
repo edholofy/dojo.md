@@ -1,0 +1,72 @@
+meta:
+  id: regulatory-compliance-clauses
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Analyze regulatory compliance clauses — review GDPR, CCPA, HIPAA, and SOX provisions in vendor agreements and assess adequacy against regulatory requirements"
+  tags: [regulatory-compliance, gdpr, ccpa, hipaa, intermediate]
+
+state: {}
+
+trigger: |
+  Analyze the regulatory compliance clauses in a
+  data analytics vendor agreement for a healthcare
+  company that handles both patient data (HIPAA) and
+  consumer data (CCPA/GDPR).
+
+  VENDOR: DataInsight Analytics
+  SERVICE: Patient outcome analytics platform
+  DATA TYPES: PHI (patient health information),
+  consumer marketing data, employee data
+
+  COMPLIANCE CLAUSES:
+
+  HIPAA: "Vendor acknowledges that it may receive
+  Protected Health Information and agrees to comply
+  with applicable provisions of HIPAA. Vendor will
+  enter into a Business Associate Agreement
+  substantially in the form attached as Exhibit C."
+
+  GDPR: "To the extent Vendor processes Personal Data
+  of EU/EEA data subjects, Vendor agrees to comply
+  with GDPR. Standard Contractual Clauses are
+  incorporated by reference. Vendor shall maintain
+  appropriate technical and organizational measures."
+
+  CCPA: "Vendor is a 'Service Provider' as defined
+  by CCPA and shall not sell, share, or use Personal
+  Information for any purpose other than the business
+  purpose specified in this Agreement."
+
+  DATA BREACH: "Vendor shall notify Client of any
+  Security Incident within seventy-two (72) hours of
+  discovery."
+
+  AUDIT: "Client may audit Vendor's compliance with
+  this Agreement once per calendar year upon 30 days
+  notice, at Client's expense."
+
+  DATA RETENTION: "Vendor shall retain data only for
+  the duration of the Agreement and shall delete all
+  data within 60 days of termination."
+
+  Create:
+  1. Compliance gap analysis (by regulation)
+  2. Missing or inadequate provisions identified
+  3. Risk assessment for each regulatory framework
+  4. Recommended additional clause language
+  5. Compliance checklist for contract finalization
+
+assertions:
+  - type: llm_judge
+    criteria: "Gap analysis identifies specific HIPAA inadequacies — 'agrees to comply with applicable provisions of HIPAA' is vague; the BAA should be reviewed for specific requirements (encryption standards, access controls, breach notification within 60 days per HIPAA vs. 72 hours in the contract, subcontractor requirements, data disposal standards); the analysis identifies what's missing."
+    weight: 0.35
+    description: "HIPAAGapAnalysis"
+  - type: llm_judge
+    criteria: "GDPR compliance analysis identifies cross-border transfer risks — 'Standard Contractual Clauses incorporated by reference' needs verification that the correct SCCs version is used (post-Schrems II), that transfer impact assessments have been conducted, and that supplementary measures are documented; 'appropriate technical and organizational measures' is too vague without specifics."
+    weight: 0.35
+    description: "GDPRTransferRiskAnalysis"
+  - type: llm_judge
+    criteria: "Data breach notification timing is analyzed across all frameworks — 72 hours aligns with GDPR but HIPAA requires notification within 60 days; CCPA has no specific timing but requires 'expeditious' notification; the analysis recommends harmonizing to the most restrictive standard and ensuring the contract addresses all notification requirements."
+    weight: 0.30
+    description: "BreachNotificationHarmonization"

@@ -1,0 +1,83 @@
+meta:
+  id: architecture-tutorial
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write an architecture tutorial explaining how to design and implement a specific system pattern, with diagrams, trade-offs, and production-ready code"
+  tags: [architecture, system-design, patterns, intermediate]
+
+state: {}
+
+trigger: |
+  You're a staff engineer writing for your
+  company's engineering blog. The topic: "Building
+  a Rate Limiter from Scratch: A Practical Guide."
+  You want to explain rate limiting architecture
+  so clearly that a mid-level developer could
+  implement one in production.
+
+  Tutorial parameters:
+  - Audience: Mid-level backend developers (know
+    HTTP, Redis, basic system design)
+  - Language: TypeScript (Node.js)
+  - Algorithms to cover:
+    1. Fixed window counter (simplest)
+    2. Sliding window log (more accurate)
+    3. Token bucket (most flexible)
+  - Implementation: Redis-backed for distributed
+    systems
+  - Production concerns: Race conditions, cluster
+    mode, monitoring, graceful degradation
+
+  Tutorial structure:
+  1. Why rate limiting matters (DDoS, cost control,
+     fair usage, API quotas)
+  2. Architecture overview (where rate limiting
+     sits in the request lifecycle)
+  3. Algorithm 1: Fixed window counter
+     - How it works (with diagram description)
+     - Implementation in TypeScript + Redis
+     - Pros/cons and edge cases
+  4. Algorithm 2: Sliding window log
+     - How it works (with diagram description)
+     - Implementation
+     - When to use over fixed window
+  5. Algorithm 3: Token bucket
+     - How it works (with diagram description)
+     - Implementation
+     - Configuring for different use cases
+  6. Comparison table (all 3 algorithms)
+  7. Production considerations
+     - Race conditions (Redis MULTI/EXEC)
+     - Distributed systems (consistent hashing)
+     - Monitoring and alerting
+     - Graceful degradation (what happens when
+       Redis is down?)
+  8. Middleware integration (Express.js example)
+
+  Requirements:
+  - Each algorithm needs: explanation, diagram
+    description, complete implementation, pros/cons
+  - Code must be production-quality (error handling,
+    types, edge cases)
+  - Include a comparison table for choosing the
+    right algorithm
+  - Address what happens in failure modes
+
+  Task: Write the complete architecture tutorial
+  with all 8 sections, 3 algorithm implementations,
+  diagram descriptions, and production guidance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a comprehensive architecture tutorial — covers all 3 algorithms with explanations, diagram descriptions, and complete TypeScript implementations; the comparison table helps developers choose the right algorithm; production considerations address real concerns (race conditions, distributed mode, failure); the Express middleware integration ties everything together; the tutorial builds from simple (fixed window) to complex (token bucket)."
+    weight: 0.35
+    description: "TutorialCompleteness"
+  - type: llm_judge
+    criteria: "Response demonstrates deep technical understanding — each algorithm is explained correctly with accurate time/space complexity; the Redis implementations handle edge cases (race conditions with MULTI/EXEC); the production considerations reflect real-world experience; the comparison acknowledges trade-offs honestly (no algorithm is 'best'); the code is production-quality (proper TypeScript types, error handling, configuration); the tutorial would teach a mid-level developer to implement rate limiting in production."
+    weight: 0.35
+    description: "TechnicalDepth"
+  - type: llm_judge
+    criteria: "Response balances theory and practice — each algorithm is explained conceptually before showing code; diagram descriptions make the algorithms visual; the 'why rate limiting matters' section motivates the entire tutorial; the failure mode discussion is practical (not theoretical); the overall tutorial could be used as both a learning resource and an implementation reference; the writing demonstrates the staff engineer perspective."
+    weight: 0.30
+    description: "TheoryPracticeBalance"

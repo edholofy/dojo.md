@@ -1,0 +1,73 @@
+meta:
+  id: demographic-data-validation
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Validate patient demographic data from intake forms — check for data entry errors, formatting issues, and discrepancies that could affect billing, records matching, and care coordination"
+  tags: [demographics, data-validation, billing-accuracy, beginner]
+
+state: {}
+
+trigger: |
+  Validate demographic data from five patient intake
+  forms before batch entry into the EHR system.
+
+  Patient 1:
+  - Name: JOHNSON, Mary Beth
+  - DOB: 6/31/1990
+  - Gender: F
+  - SSN: 123-45-6789
+  - Address: 456 Main St, Apt 2B, Chicago IL 60601
+  - Phone: 312-555-0142
+
+  Patient 2:
+  - Name: smith, john a.
+  - DOB: 11/15/82
+  - Gender: Male
+  - SSN: 987-65-4321
+  - Address: 789 Oak Ave, Chicago, IL
+  - Phone: 312.555.0198
+
+  Patient 3:
+  - Name: O'Brien-Martinez, Catalina
+  - DOB: 02/29/2001
+  - Gender: Female
+  - SSN: 456-78-9012
+  - Address: 1010 Lake Shore Dr #1205, Chicago IL, 60611
+  - Phone: (312) 555-0167
+
+  Patient 4:
+  - Name: Williams, Robert
+  - DOB: 03/14/1955
+  - Gender: M
+  - SSN: 321-54-6789
+  - Address: 222 Elm Street, Evanston IL 60201
+  - Phone: 847-555-0134
+
+  Patient 5:
+  - Name: Nguyen, Thi Thanh
+  - DOB: 08/20/1968
+  - Gender: Female
+  - SSN: (declined to provide)
+  - Address: 555 W. Division St, Chicago IL 60610
+  - Phone: 312-555-0156
+
+  Create:
+  1. Data validation report for each patient
+  2. Error list with corrections needed
+  3. Formatting standardization recommendations
+  4. EHR data entry guidelines
+
+assertions:
+  - type: llm_judge
+    criteria: "Catches the impossible date — June 31 (Patient 1) does not exist; also catches February 29, 2001 (Patient 3) which was not a leap year (2001 is not divisible by 4); both DOBs require patient verification."
+    weight: 0.35
+    description: "DateValidation"
+  - type: llm_judge
+    criteria: "Identifies formatting inconsistencies requiring standardization — mixed case names (JOHNSON vs smith), different phone formats (dashes, dots, parentheses), incomplete dates (82 vs 1982), missing zip code (Patient 2), and guides toward consistent EHR entry standards."
+    weight: 0.35
+    description: "FormattingStandardization"
+  - type: llm_judge
+    criteria: "Handles the SSN situations appropriately — Patient 1's SSN (123-45-6789) is a commonly known test/fake number and should be flagged; Patient 5 declined to provide SSN, which is their right and should be documented as 'declined' not left blank."
+    weight: 0.30
+    description: "SSNHandling"

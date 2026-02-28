@@ -1,0 +1,74 @@
+meta:
+  id: complex-insurance-scenarios
+  level: 2
+  course: patient-intake-form-review
+  type: output
+  description: "Navigate complex insurance verification scenarios during intake — coordination of benefits, coverage transitions, workers' compensation, and auto accident claims"
+  tags: [complex-insurance, coordination-of-benefits, workers-comp, intermediate]
+
+state: {}
+
+trigger: |
+  Navigate complex insurance verification scenarios
+  encountered during patient intake that go beyond
+  standard eligibility checks.
+
+  Case 1 — Coordination of Benefits:
+  Patient: Amanda Clark, age 32
+  Has dual coverage:
+  - Primary: Own employer plan (Cigna PPO)
+  - Secondary: Spouse's employer plan (BCBS PPO)
+  Patient listed BCBS as primary on intake form.
+  She is the subscriber on the Cigna plan, and a
+  dependent on the BCBS plan through her husband.
+  Both plans are active.
+
+  Case 2 — Coverage transition:
+  Patient: Mark Thompson, age 26
+  - Turned 26 two months ago
+  - Was on parents' insurance (Aetna)
+  - New employer insurance (UHC) started 3 weeks ago
+  - Provided both insurance cards at check-in
+  - Has a pending claim from 6 weeks ago (when he was
+    still on Aetna)
+  - Today's visit is under new UHC coverage
+
+  Case 3 — Workers' compensation:
+  Patient: Carlos Rivera, age 38
+  - Presenting for shoulder injury at work
+  - Has personal insurance (Humana HMO)
+  - Workers' comp claim filed but not yet approved
+  - Employer: Midwest Manufacturing
+  - WC carrier: Unknown to patient
+  - Patient says "just bill my insurance for now"
+
+  Case 4 — Motor vehicle accident:
+  Patient: Susan Lee, age 45
+  - Presenting for neck/back pain from car accident
+    3 days ago
+  - Has health insurance (Anthem BCBS)
+  - Auto insurance: State Farm (PIP coverage unknown)
+  - Attorney involvement: None yet
+  - Other driver was at fault
+  - Police report filed
+
+  Create:
+  1. Correct billing order for each case
+  2. Required documentation for each scenario
+  3. Patient communication for each situation
+  4. Staff guidance for complex insurance intake
+  5. Common pitfalls to avoid
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly determines coordination of benefits for Case 1 — the Birthday Rule typically applies, but since Amanda is the subscriber on Cigna (her own employer plan), Cigna is primary and BCBS (spouse's plan where she's a dependent) is secondary; the patient had them reversed."
+    weight: 0.35
+    description: "COBDetermination"
+  - type: llm_judge
+    criteria: "Workers' comp case correctly prevents billing personal insurance — Case 3 should NOT be billed to Humana; workers' comp is primary for work-related injuries regardless of patient preference; identifies steps to determine the WC carrier through the employer and advises the patient accordingly."
+    weight: 0.35
+    description: "WorkersCompBilling"
+  - type: llm_judge
+    criteria: "MVA case identifies the complexity of liability insurance — Case 4 requires determining PIP/MedPay availability, whether health insurance should be billed primary or secondary, lien/subrogation considerations, and documentation requirements for potential future claims."
+    weight: 0.30
+    description: "MVAInsuranceComplexity"

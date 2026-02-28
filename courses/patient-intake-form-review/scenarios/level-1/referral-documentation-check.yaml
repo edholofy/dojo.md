@@ -1,0 +1,70 @@
+meta:
+  id: referral-documentation-check
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Check referral documentation for specialist visits — verify referral validity, authorization requirements, and completeness before the patient's specialist appointment"
+  tags: [referral-check, specialist-visit, authorization, beginner]
+
+state: {}
+
+trigger: |
+  Check referral documentation for patients scheduled
+  to see specialists this week. Verify that referrals
+  are valid, complete, and meet insurance requirements.
+
+  Patient 1: Lisa Chang
+  Insurance: Cigna HMO (referral required for specialists)
+  Specialist: Dermatology
+  Referral from: Dr. Williams (PCP)
+  Referral document:
+  - Referral number: Present
+  - Referring provider NPI: Present
+  - Diagnosis: "Skin rash" (no ICD-10 code)
+  - Number of authorized visits: 1
+  - Expiration date: 30 days from issue (15 days remaining)
+  - Specialist named: "Any in-network dermatologist"
+
+  Patient 2: Thomas Brown
+  Insurance: UnitedHealthcare PPO (no referral required)
+  Specialist: Orthopedics
+  Referral from: Urgent care clinic
+  Referral document:
+  - Referral letter from urgent care PA (not MD)
+  - States: "Please evaluate left knee pain"
+  - No imaging results included
+  - No referral number
+  - Mentions X-rays were taken but not attached
+
+  Patient 3: Maria Rossi
+  Insurance: Medicare (no referral required, but
+  practice policy asks for one)
+  Specialist: Cardiology
+  Referral from: Dr. Patel (PCP, different health system)
+  Referral document:
+  - Referral is a faxed letter, partially illegible
+  - Appears to request "cardiac workup"
+  - EKG results mentioned but not attached
+  - Patient has been seen by a cardiologist at our
+    practice before — last visit 18 months ago
+
+  Create:
+  1. Referral status assessment for each patient
+  2. Action items for incomplete referrals
+  3. Insurance-specific referral requirements guide
+  4. Communication to patients about any issues
+  5. Internal process checklist for referral verification
+
+assertions:
+  - type: llm_judge
+    criteria: "Correctly distinguishes referral requirements by insurance — Cigna HMO requires formal referral with specific elements; UHC PPO does not require referral (the urgent care letter is informational, not a PA requirement); Medicare doesn't require referral but clinical records transfer is still important."
+    weight: 0.35
+    description: "InsuranceRequirementDistinction"
+  - type: llm_judge
+    criteria: "Identifies Patient 1's referral gaps — missing ICD-10 code could cause claim denial, only 1 visit authorized (may need more), and 15 days remaining may be tight if follow-up is needed; proactive action should request updated referral with diagnosis code."
+    weight: 0.35
+    description: "ReferralGapAnalysis"
+  - type: llm_judge
+    criteria: "Addresses missing clinical information across all patients — X-rays mentioned but not included for Patient 2, EKG results referenced but not attached for Patient 3; these should be obtained before the specialist visit so the provider has complete information."
+    weight: 0.30
+    description: "MissingClinicalDocs"

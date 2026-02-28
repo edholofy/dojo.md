@@ -1,0 +1,108 @@
+meta:
+  id: intermediate-kb-shift
+  level: 2
+  course: knowledge-base-article-writing
+  type: output
+  description: "Shift simulation — write a developer-facing API reference article, a consumer hardware setup guide, and an internal employee knowledge base article for a new HR policy"
+  tags: [shift-simulation, api-reference, hardware-setup, internal-kb, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior technical writer handling three
+  different KB projects. Each requires a different
+  audience, tone, and format.
+
+  === ARTICLE 1: Developer API Reference ===
+  Client: PayGate, a payment processing API
+  Write an API reference article for the "Create
+  Charge" endpoint.
+
+  Endpoint details:
+  - POST /v2/charges
+  - Authentication: Bearer token (API key)
+  - Request body (JSON):
+    * amount (integer, required): Amount in cents
+    * currency (string, required): 3-letter ISO code
+    * source (string, required): Payment token or
+      customer ID
+    * description (string, optional): Charge description
+    * metadata (object, optional): Key-value pairs
+    * capture (boolean, optional, default: true):
+      Whether to capture immediately
+    * idempotency_key (string, recommended): Prevent
+      duplicate charges
+  - Response: Charge object with id, status, amount,
+    created timestamp
+  - Error codes: 400 (invalid params), 402 (card
+    declined), 409 (duplicate idempotency key),
+    429 (rate limited), 500 (server error)
+  - Rate limit: 100 requests/second
+
+  Include: Endpoint description, authentication,
+  request parameters table, code examples (cURL,
+  Python, Node.js), response schema, error codes
+  table, and best practices.
+
+  === ARTICLE 2: Consumer Hardware Setup Guide ===
+  Client: SoundWave, a wireless speaker company
+  Write a setup guide for the SoundWave 360
+  Bluetooth speaker.
+
+  Product details:
+  - Bluetooth 5.3, WiFi 6, AirPlay 2, Chromecast
+  - Setup: Unbox → charge → download app → pair
+    via Bluetooth or WiFi → configure EQ
+  - Multi-room: Can group with other SoundWave
+    speakers
+  - Voice assistant: Works with Alexa and Google
+    Assistant
+  - Common issues: Won't pair, Bluetooth keeps
+    disconnecting, WiFi setup fails
+
+  Include: What's in the box, charging, app download,
+  Bluetooth pairing, WiFi setup, multi-room
+  configuration, voice assistant setup, and
+  troubleshooting.
+
+  === ARTICLE 3: Internal Employee KB Article ===
+  Client: A 500-person tech company's HR department
+  Write an internal KB article explaining the new
+  flexible work policy.
+
+  Policy details:
+  - Hybrid model: 3 days in office (Tue-Thu), 2
+    days remote (Mon, Fri)
+  - Core hours: 10am-3pm in employee's timezone
+  - "Flex Fridays": Once per month, teams can work
+    fully remote the entire week with manager approval
+  - Equipment: $500 home office stipend for new
+    employees
+  - International remote work: Up to 4 weeks per
+    year from approved countries (tax compliance)
+  - Exceptions: Customer-facing roles, lab roles,
+    and new hires in first 90 days are full-time
+    in-office
+  - Manager responsibilities: Approve flexible
+    arrangements, ensure team coverage
+
+  Include: Policy overview, who it applies to,
+  schedule details, how to request exceptions,
+  equipment and stipend info, international remote
+  rules, manager guide, and FAQ (8-10 questions).
+
+  Task: Write all three complete KB articles.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates three complete articles — API reference with endpoint description, parameters table, code examples in 3 languages, response schema, error codes, and best practices; hardware setup with unboxing through troubleshooting; internal HR article with policy details, exceptions, manager guide, and 8-10 FAQ questions."
+    weight: 0.35
+    description: "ThreeArticleCompleteness"
+  - type: llm_judge
+    criteria: "Response demonstrates audience-appropriate writing — the API reference uses developer conventions (code blocks, parameter tables, HTTP verbs); the hardware guide uses consumer-friendly language with simple steps; the internal KB uses professional but approachable HR tone; each article matches the expectations and technical level of its audience."
+    weight: 0.35
+    description: "AudienceAdaptation"
+  - type: llm_judge
+    criteria: "Response would serve each audience — developers would successfully integrate the Create Charge endpoint; consumers would set up their speaker without calling support; employees would understand the flexible work policy without asking HR; each article is comprehensive enough to be the single source of truth for its topic."
+    weight: 0.30
+    description: "MultiAudienceOutcome"

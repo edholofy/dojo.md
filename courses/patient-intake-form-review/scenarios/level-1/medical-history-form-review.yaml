@@ -1,0 +1,63 @@
+meta:
+  id: medical-history-form-review
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Review a patient medical history form for completeness, clinical significance, and flags that require provider attention before the appointment"
+  tags: [medical-history, clinical-review, provider-alerts, beginner]
+
+state: {}
+
+trigger: |
+  Review a patient's medical history form submitted
+  online before their first appointment with a new
+  primary care physician.
+
+  Patient: Maria Garcia, age 42, Female
+  Reason for visit: "Annual physical, establish care"
+
+  Medical history form responses:
+  - Current medications:
+    * Metformin 500mg twice daily
+    * Lisinopril 10mg daily
+    * "A vitamin — not sure which one"
+    * "Something for my thyroid"
+  - Allergies: "Penicillin — makes me break out"
+  - Past surgeries: "Appendix removed, 2015"
+  - Chronic conditions:
+    * Diabetes (checked yes)
+    * High blood pressure (checked yes)
+    * Thyroid problems (checked yes)
+    * Depression (checked yes, then crossed out)
+  - Family history:
+    * Father: heart attack at age 55
+    * Mother: diabetes
+    * Siblings: "don't know"
+  - Social history:
+    * Smoking: "quit 3 years ago"
+    * Alcohol: "socially"
+    * Exercise: "not really"
+  - Current symptoms: (left entirely blank)
+  - Last physical exam: "Maybe 4-5 years ago"
+  - Immunizations: "Not sure, probably not up to date"
+  - OB/GYN: Last pap smear "a while ago"
+
+  Create:
+  1. Form completeness assessment
+  2. Clinical flags for provider review
+  3. Follow-up questions for the patient
+  4. Pre-visit preparation checklist for clinical staff
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies clinically significant gaps — unknown thyroid medication and unknown vitamin need clarification before the visit (drug interactions), crossed-out depression suggests possible undisclosed mental health concern, vague allergy description needs reaction type classification (rash vs. anaphylaxis)."
+    weight: 0.35
+    description: "ClinicalGapIdentification"
+  - type: llm_judge
+    criteria: "Provider alerts highlight actionable clinical concerns — diabetes on metformin without recent labs, hypertension management review needed, overdue preventive care (pap smear, immunizations), family history of early heart disease with her own cardiovascular risk factors."
+    weight: 0.35
+    description: "ProviderAlerts"
+  - type: llm_judge
+    criteria: "Follow-up questions are specific and efficient — doesn't just say 'complete the form'; asks targeted questions like 'What is the name of your thyroid medication?', 'Can you describe what happens when you take penicillin?', 'When was your last pap smear?'"
+    weight: 0.30
+    description: "TargetedFollowUp"

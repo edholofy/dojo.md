@@ -1,0 +1,78 @@
+meta:
+  id: beginner-clause-shift
+  level: 1
+  course: contract-clause-summarization
+  type: output
+  description: "Beginner shift simulation — summarize multiple contract clauses from different agreements for various business stakeholders in a busy contract review day"
+  tags: [shift-simulation, multi-clause, multi-stakeholder, beginner]
+
+state: {}
+
+trigger: |
+  You are a contract analyst at a mid-size company.
+  Handle these clause summarization requests that
+  came in today from different business stakeholders.
+
+  REQUEST 1 — From the Sales VP:
+  "We're about to sign a deal with a new channel
+  partner. Can you explain what this non-compete
+  clause means?"
+
+  CLAUSE: "During the term of this Agreement and for
+  a period of twelve (12) months following termination,
+  Partner shall not directly or indirectly promote,
+  sell, or distribute any products that are
+  substantially similar to or competitive with the
+  Products within the Territory, as defined in
+  Exhibit B."
+
+  REQUEST 2 — From the IT Director:
+  "Our cloud provider just sent an updated SLA. What
+  does this actually guarantee?"
+
+  CLAUSE: "Provider commits to a Monthly Uptime
+  Percentage of 99.9% for the Service. 'Monthly
+  Uptime Percentage' is calculated as: (total minutes
+  in month - downtime minutes) / total minutes in
+  month × 100. Scheduled maintenance windows (up to
+  4 hours per month, with 48 hours advance notice)
+  are excluded from downtime calculations. Service
+  Credits: 10% of monthly fee for uptime below 99.9%,
+  25% for below 99.0%, 50% for below 95.0%. Service
+  Credits shall not exceed 50% of the monthly fee
+  and are Client's sole and exclusive remedy."
+
+  REQUEST 3 — From the HR Manager:
+  "A departing employee wants to know if they can
+  work for our competitor. What does their employment
+  agreement say?"
+
+  CLAUSE: "Employee agrees that for a period of
+  eighteen (18) months following the termination of
+  employment, Employee shall not, within a fifty (50)
+  mile radius of any Company office, engage in, or
+  become employed by, any business that competes with
+  the Company's core business lines, provided that
+  this restriction shall not apply if Employee is
+  terminated without cause."
+
+  Summarize all three clauses:
+  1. Channel partner non-compete analysis
+  2. SLA uptime guarantee breakdown
+  3. Employee non-compete explanation
+  4. Key risks and action items for each stakeholder
+  5. Appropriate reading for each audience
+
+assertions:
+  - type: llm_judge
+    criteria: "SLA summary translates 99.9% into real numbers — 99.9% means approximately 43 minutes of downtime per month, but scheduled maintenance (up to 4 hours) doesn't count; the actual guaranteed availability after maintenance windows could be lower; service credits cap at 50% of monthly fee, so the IT director knows the maximum financial remedy."
+    weight: 0.35
+    description: "SLAQuantification"
+  - type: llm_judge
+    criteria: "Employee non-compete advice is practically useful — identifies the key carve-out (doesn't apply if terminated without cause); explains the 50-mile geographic limitation and 18-month duration; for the HR manager, provides guidance on what to tell the departing employee based on how their employment ended."
+    weight: 0.35
+    description: "EmployeeNonCompeteClarity"
+  - type: llm_judge
+    criteria: "Each summary is tailored to its specific stakeholder — the Sales VP gets revenue and partnership implications; the IT Director gets technical availability analysis; the HR Manager gets employee communication guidance; the language and focus adapt to what each person actually needs to know and do."
+    weight: 0.30
+    description: "StakeholderTailoring"

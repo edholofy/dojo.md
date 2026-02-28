@@ -1,0 +1,61 @@
+meta:
+  id: insurance-verification-review
+  level: 1
+  course: patient-intake-form-review
+  type: output
+  description: "Review and verify patient insurance information from intake forms — check coverage status, confirm eligibility, and identify discrepancies before the appointment"
+  tags: [insurance-verification, eligibility, coverage-check, beginner]
+
+state: {}
+
+trigger: |
+  Review and verify insurance information from a
+  patient intake form before their scheduled appointment
+  tomorrow morning.
+
+  Patient-provided insurance information:
+  - Patient: Robert Chen, DOB 09/22/1975
+  - Primary insurance: Aetna
+  - Plan type: PPO
+  - Member ID: W289456123
+  - Group number: 78542
+  - Subscriber: Robert Chen (self)
+  - Subscriber DOB: 09/22/1975
+  - Employer: TechCorp Solutions
+  - Effective date: 01/01/2026
+  - Copay amount: $35 (patient reported)
+
+  Verification findings from insurance portal:
+  - Member ID matches but name shows "Robert S. Chen"
+  - Plan type shows as "EPO" not "PPO"
+  - Group number matches
+  - Coverage status: Active
+  - Effective date: 01/01/2026 confirmed
+  - Specialist copay: $50 (not $35 as patient reported)
+  - PCP copay: $25
+  - Deductible: $1,500 individual, $800 met YTD
+  - Prior authorization required for imaging services
+  - Out-of-network benefits: None (EPO plan)
+
+  The practice is a specialist office (cardiology).
+
+  Create:
+  1. Insurance verification summary
+  2. Discrepancy list with resolution steps
+  3. Patient notification about copay difference
+  4. Financial responsibility documentation
+  5. Notes for front desk staff
+
+assertions:
+  - type: llm_judge
+    criteria: "Identifies all discrepancies between patient-reported and verified information — PPO vs. EPO plan type (critical — affects out-of-network coverage), $35 vs. $50 copay (financial impact), and middle initial discrepancy (minor but should be noted); explains the significance of each."
+    weight: 0.35
+    description: "DiscrepancyIdentification"
+  - type: llm_judge
+    criteria: "EPO vs. PPO distinction is flagged as critical — EPO has NO out-of-network benefits, which means if this specialist is out-of-network for the patient's EPO plan, the entire visit may not be covered; verifying network status is the most urgent action item."
+    weight: 0.35
+    description: "EPOImplication"
+  - type: llm_judge
+    criteria: "Patient notification about the copay difference is handled sensitively — informs the patient that the specialist copay is $50 (not $35) before the visit so there are no surprises; presents it as clarification, not correction."
+    weight: 0.30
+    description: "CopayNotification"

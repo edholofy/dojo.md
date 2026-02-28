@@ -1,0 +1,88 @@
+meta:
+  id: performance-tutorial
+  level: 2
+  course: tutorial-writing-technical
+  type: output
+  description: "Write a performance optimization tutorial that teaches profiling, identifying bottlenecks, and applying fixes with measurable before/after benchmarks"
+  tags: [performance, optimization, profiling, intermediate]
+
+state: {}
+
+trigger: |
+  You're a performance engineer writing a tutorial
+  for your company's blog called "How We Made Our
+  React App 4x Faster: A Step-by-Step Performance
+  Guide." The tutorial uses your real experience
+  optimizing a dashboard app that was too slow.
+
+  App context:
+  - React 18 with TypeScript
+  - Dashboard with data tables, charts, and filters
+  - Problem: Initial load takes 8 seconds, filter
+    interactions take 2-3 seconds, scrolling is
+    janky
+  - Goal: Initial load under 2 seconds, interactions
+    under 200ms, smooth 60fps scrolling
+
+  Tutorial structure:
+  1. Measuring before optimizing (the cardinal
+     rule — never optimize without data)
+     - Chrome DevTools Performance tab
+     - Lighthouse scores
+     - React DevTools Profiler
+     - Custom performance marks/measures
+  2. Fix 1: Bundle size reduction
+     - Analyze with webpack-bundle-analyzer
+     - Dynamic imports for route-based code splitting
+     - Replace moment.js with date-fns (tree-
+       shaking)
+     - Before: 2.4MB → After: 680KB
+  3. Fix 2: Render performance
+     - Identify unnecessary re-renders (React
+       Profiler)
+     - React.memo for expensive components
+     - useMemo/useCallback for derived data
+     - Virtualization for large lists (react-window)
+     - Before: 340 re-renders → After: 12 re-renders
+  4. Fix 3: Data fetching optimization
+     - Problem: Waterfall requests on load
+     - Solution: Parallel fetching, data prefetching,
+       React Query caching
+     - Before: 6 sequential requests → After: 3
+       parallel + cache
+  5. Fix 4: Image and asset optimization
+     - Lazy loading images
+     - WebP/AVIF format conversion
+     - Responsive images (srcset)
+     - Before: 4.2MB images → After: 380KB
+  6. Results summary (before/after comparison
+     table)
+  7. When NOT to optimize (premature optimization
+     warning)
+
+  Requirements:
+  - Every optimization must show before/after
+    metrics
+  - Include the profiling commands/steps used to
+    identify each issue
+  - Code examples are production-quality
+  - Address when optimization is NOT worth the
+    complexity
+
+  Task: Write the complete performance tutorial
+  with all 7 sections, before/after metrics, and
+  profiling methodology.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete performance tutorial — covers all 7 sections including profiling methodology and 4 optimization categories; every optimization shows specific before/after metrics; profiling steps are actionable (not just 'use DevTools'); code examples demonstrate real fixes (code splitting, React.memo, react-window, React Query); the results summary shows the overall improvement; the tutorial achieves the stated goals (8s → 2s load, smooth scrolling)."
+    weight: 0.35
+    description: "TutorialCompleteness"
+  - type: llm_judge
+    criteria: "Response follows performance engineering best practices — emphasizes measurement before optimization; the profiling methodology is rigorous (Chrome DevTools, Lighthouse, React Profiler, custom marks); each fix addresses a specific, measured bottleneck; the 'when NOT to optimize' section prevents premature optimization; trade-offs between optimization and code complexity are acknowledged; the metrics are realistic and credible."
+    weight: 0.35
+    description: "PerformancePractices"
+  - type: llm_judge
+    criteria: "Response is educational and replicable — developers can apply the same profiling methodology to their own apps; the fixes are explained well enough to adapt to different contexts; the tutorial teaches a performance optimization mindset, not just specific fixes; the before/after comparison table is compelling; the overall tutorial would be a popular engineering blog post that developers bookmark and share."
+    weight: 0.30
+    description: "EducationalValue"

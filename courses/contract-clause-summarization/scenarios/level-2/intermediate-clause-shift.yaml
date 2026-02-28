@@ -1,0 +1,85 @@
+meta:
+  id: intermediate-clause-shift
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Handle a complex multi-contract analysis shift — triage incoming contract review requests, prioritize by risk and deadline, and deliver comprehensive summaries across different contract types"
+  tags: [shift-simulation, multi-contract, triage, intermediate]
+
+state: {}
+
+trigger: |
+  You are a contract analyst handling an afternoon
+  shift. You have 4 hours to review and summarize
+  the following contracts that have been flagged
+  by the legal team. Prioritize by deadline and
+  risk level.
+
+  REQUEST 1 (Due: Today, 5 PM):
+  Cloud hosting agreement renewal. The vendor has
+  added new clauses:
+  - "Vendor may modify service levels upon 30 days
+    notice" (was: mutual agreement required)
+  - "Customer data may be processed in any region
+    where Vendor maintains facilities" (was: US only)
+  - Liability cap reduced from $5M to 12 months fees
+  - Auto-renewal extended from 1 year to 3 years
+  - New clause: "Vendor may use anonymized Customer
+    data for product improvement purposes"
+  Deadline pressure: Sales team needs this signed
+  today for a price lock expiring at midnight.
+
+  REQUEST 2 (Due: Tomorrow):
+  New vendor onboarding — cybersecurity monitoring
+  service. Key concerns:
+  - Vendor will have access to company network logs
+  - Contract says "Vendor retains all IP in any
+    threat intelligence derived from monitoring"
+  - Breach notification: "Vendor will notify within
+    a commercially reasonable time"
+  - Limitation of liability: $100,000 flat cap
+  - Term: 3 years with no early termination
+
+  REQUEST 3 (Due: This week):
+  Amendment to existing manufacturing agreement.
+  Changes:
+  - Adding a new product line (medical devices)
+  - Quality standards reference changed from ISO
+    9001 to ISO 13485
+  - Warranty extended from 12 to 24 months
+  - New regulatory compliance requirements (FDA)
+  - Indemnification expanded to include product
+    liability for the new product line
+
+  REQUEST 4 (Due: Next week):
+  Partnership agreement with university research
+  lab for joint AI development:
+  - Joint IP ownership for co-developed technology
+  - University can publish research after 90-day
+    review period
+  - Company gets exclusive commercial license
+  - Revenue sharing: 70/30 (company/university)
+  - Term: 5 years with renewal options
+  - University researchers classified as independent
+    contractors
+
+  Create:
+  1. Prioritized review queue with rationale
+  2. Summary of each contract's key risks
+  3. Red-flag clauses requiring immediate attention
+  4. Recommended actions for each contract
+  5. Escalation recommendations for legal counsel
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization reflects both urgency and risk — Request 1 has a same-day deadline but the changes are significantly adverse (unilateral SLA modification, data location expansion, liability reduction, longer auto-renewal); rushing to sign would be a mistake; the analysis should flag the artificial deadline pressure and recommend either extending the deadline or accepting the risk of losing the price lock while negotiating critical terms."
+    weight: 0.35
+    description: "PrioritizationWithDeadlinePressure"
+  - type: llm_judge
+    criteria: "Request 2 cybersecurity contract risks are fully identified — a $100K liability cap for a vendor with network access is dangerously low; 'commercially reasonable' breach notification is unacceptably vague for a security vendor; IP retention on threat intelligence derived from the company's own data is problematic; the combination of high access, low liability, and vague breach notification makes this contract particularly risky."
+    weight: 0.35
+    description: "CybersecurityContractRiskIdentification"
+  - type: llm_judge
+    criteria: "Cross-contract patterns and systemic recommendations emerge — the analysis identifies common themes across all four contracts (liability caps, IP ownership, notification requirements, term/termination); recommends developing or updating the company's standard contract playbook with minimum acceptable terms for these provisions; suggests template clauses for frequently negotiated terms."
+    weight: 0.30
+    description: "SystemicRecommendations"

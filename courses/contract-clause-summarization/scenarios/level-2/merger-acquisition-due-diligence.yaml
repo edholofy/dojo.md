@@ -1,0 +1,91 @@
+meta:
+  id: merger-acquisition-due-diligence
+  level: 2
+  course: contract-clause-summarization
+  type: output
+  description: "Analyze M&A agreement clauses — summarize representations and warranties, material adverse change provisions, indemnification baskets, and closing conditions for an acquisition"
+  tags: [merger-acquisition, due-diligence, representations-warranties, intermediate]
+
+state: {}
+
+trigger: |
+  Analyze the key clauses of a stock purchase
+  agreement where a mid-market SaaS company is
+  being acquired by a private equity firm.
+
+  DEAL OVERVIEW:
+  - Purchase price: $85M (enterprise value)
+  - Structure: 100% stock acquisition
+  - Closing: Expected 60 days post-signing
+
+  KEY CLAUSES:
+
+  REPRESENTATIONS AND WARRANTIES (by Seller):
+  - "The Company's financial statements fairly present
+    in all material respects the financial condition"
+  - "There are no pending or threatened Actions against
+    the Company that would reasonably be expected to
+    result in a Material Adverse Effect"
+  - "The Company owns or has valid licenses to all
+    Intellectual Property used in its business"
+  - "The Company is in compliance with all applicable
+    Laws in all material respects"
+  - "Since the Balance Sheet Date, the Company has
+    conducted its business in the ordinary course
+    consistent with past practice"
+  - Qualified by a disclosure schedule with 47 items
+
+  MATERIAL ADVERSE EFFECT DEFINITION:
+  "Any change, effect, event, or occurrence that has
+  had, or would reasonably be expected to have, a
+  material adverse effect on the business, assets,
+  financial condition, or results of operations of
+  the Company, taken as a whole; provided that none
+  of the following shall constitute or be taken into
+  account: (a) general economic conditions; (b)
+  changes affecting the industry generally; (c)
+  changes in law; (d) the announcement of this
+  Agreement; provided further that exceptions (a)
+  through (c) shall apply only to the extent such
+  changes do not disproportionately affect the
+  Company relative to other participants in the
+  Company's industry."
+
+  INDEMNIFICATION:
+  - Basket: $850,000 (1% of purchase price) deductible
+  - Cap: $8.5M (10% of purchase price) for general reps
+  - Fundamental reps (title, authority, taxes): capped
+    at full purchase price
+  - Survival: General reps survive 18 months; fundamental
+    reps survive until statute of limitations expires
+  - Escrow: $4.25M (5%) held for 18 months
+
+  CLOSING CONDITIONS:
+  - HSR Act clearance
+  - No Material Adverse Effect
+  - Customer contracts representing 80% of ARR must
+    remain in effect
+  - Key employees (CTO, VP Engineering, VP Sales) must
+    have signed retention agreements
+  - Seller must deliver audited financials for FY2025
+
+  Create:
+  1. Plain-language deal summary for board presentation
+  2. Risk allocation analysis (buyer vs. seller)
+  3. MAE definition strength assessment
+  4. Indemnification structure evaluation
+  5. Closing condition risk assessment
+
+assertions:
+  - type: llm_judge
+    criteria: "MAE definition is analyzed for buyer protection — the carve-outs for general economic conditions, industry changes, and law changes are standard, but the 'disproportionate effect' qualifier brings some protection back to buyer; the analysis should note that this is a seller-favorable MAE definition and the buyer should consider adding specific exclusions for customer churn, key employee departures, or technology failures."
+    weight: 0.35
+    description: "MAEDefinitionAnalysis"
+  - type: llm_judge
+    criteria: "Indemnification structure is evaluated against market norms — the 1% deductible basket and 10% cap are within market range for mid-market deals; the 5% escrow for 18 months provides meaningful buyer protection; the analysis should highlight the distinction between general and fundamental reps and explain why fundamental reps survive longer and have a higher cap."
+    weight: 0.35
+    description: "IndemnificationEvaluation"
+  - type: llm_judge
+    criteria: "Closing conditions are assessed for deal risk — the 80% ARR customer retention requirement could be difficult if key customers have short-term contracts; key employee retention agreements create a dependency on three specific individuals; the analysis evaluates the likelihood of satisfying all conditions and identifies which pose the greatest closing risk."
+    weight: 0.30
+    description: "ClosingConditionRisk"

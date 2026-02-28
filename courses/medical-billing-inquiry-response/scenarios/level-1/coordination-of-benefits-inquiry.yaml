@@ -1,0 +1,65 @@
+meta:
+  id: coordination-of-benefits-inquiry
+  level: 1
+  course: medical-billing-inquiry-response
+  type: output
+  description: "Explain coordination of benefits to a patient with dual insurance coverage — clarify primary vs. secondary payer roles and why they still owe a balance"
+  tags: [coordination-of-benefits, dual-coverage, secondary-billing, beginner]
+
+state: {}
+
+trigger: |
+  A patient calls confused about why they owe money
+  when they have two insurance plans.
+
+  Patient: Linda Foster, age 58
+  Primary insurance: Medicare Part B
+  Secondary insurance: AARP Medicare Supplement Plan G
+  (Medigap)
+
+  Service: Office visit with PCP + bloodwork
+  Date of service: 1 month ago
+
+  Patient's statement:
+  "I have Medicare AND a supplement plan. I shouldn't
+  owe anything. My supplement is supposed to cover
+  what Medicare doesn't. But I got a bill for $45.
+  Something must be wrong."
+
+  Billing details:
+  - Office visit (99214): $250
+    * Medicare allowed: $180
+    * Medicare paid (80%): $144
+    * Supplement paid (20% coinsurance): $36
+    * Patient owes: $0
+  - Comprehensive metabolic panel (80053): $120
+    * Medicare allowed: $85
+    * Medicare paid: $85
+    * Patient owes: $0
+  - Vitamin D level (82306): $95
+    * Medicare: Service not covered (denied)
+    * Supplement: Does not cover services Medicare denies
+    * Patient owes: $45 (practice self-pay rate)
+  - ABN (Advance Beneficiary Notice): Signed by patient
+    before blood draw
+
+  Create:
+  1. Explanation of coordination of benefits
+  2. Explanation of why Medigap doesn't cover the $45
+  3. Explanation of the ABN and what it means
+  4. Patient communication
+  5. Options for the patient
+
+assertions:
+  - type: llm_judge
+    criteria: "Explains Medigap limitations correctly — Medicare supplement plans cover Medicare cost-sharing (deductibles, coinsurance) but do NOT cover services that Medicare itself denies; the Vitamin D test was denied by Medicare, so the supplement won't cover it."
+    weight: 0.35
+    description: "MedigapLimitation"
+  - type: llm_judge
+    criteria: "Explains the ABN significance — the patient signed an Advance Beneficiary Notice before the blood draw, which means they were informed that Medicare might not cover the Vitamin D test and agreed to be financially responsible; this is why the $45 charge is valid."
+    weight: 0.35
+    description: "ABNExplanation"
+  - type: llm_judge
+    criteria: "Coordination of benefits flow is clearly explained — Medicare processes first (primary), then the claim goes to the supplement plan (secondary); the supplement covers Medicare's 20% coinsurance on covered services but cannot override Medicare's coverage decisions."
+    weight: 0.30
+    description: "COBFlowExplanation"

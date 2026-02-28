@@ -1,0 +1,103 @@
+meta:
+  id: ma-acquisition-agreement
+  level: 3
+  course: legal-contract-review-summaries
+  type: output
+  description: "Review a stock purchase agreement for a mid-market acquisition and summarize representations, indemnification, and closing conditions"
+  tags: [ma, acquisition, stock-purchase, advanced]
+
+state: {}
+
+trigger: |
+  You're the VP of Corporate Development at a publicly
+  traded industrial automation company ($1.2B revenue).
+  Your company is acquiring a privately held robotics
+  startup (80 employees, $18M revenue, $3M EBITDA) for
+  $52M. The target's counsel has sent a draft Stock
+  Purchase Agreement (SPA). Your CEO and Board need a
+  summary of the key commercial terms and risk allocation
+  before the next Board meeting in 5 days.
+
+  Key SPA terms:
+  - Purchase price: $52M — $42M cash at closing, $5M
+    held in escrow (18-month escrow period), $5M earnout
+    based on Year 1 and Year 2 revenue targets
+  - Earnout: Year 1 target: $22M revenue (pays $2.5M);
+    Year 2 target: $28M revenue (pays $2.5M); "Buyer
+    shall operate the business in the ordinary course
+    and shall not take actions intended to reduce
+    earnout payments, but Buyer retains sole discretion
+    over all business decisions"
+  - Representations and warranties (Seller):
+    * Organization and good standing
+    * Authority and enforceability
+    * Financial statements "fairly present" financial
+      position (not audited — "compiled by management")
+    * No undisclosed liabilities exceeding $50,000
+    * Tax compliance; no pending audits
+    * IP: Company owns or has valid licenses to all IP
+      used in the business; no infringement claims; all
+      employees have signed invention assignment agreements
+    * Material contracts: All contracts with value >$100K
+      disclosed; no defaults
+    * Employee matters: No pending labor disputes; benefit
+      plans comply with ERISA; key employees listed in
+      disclosure schedule
+    * Environmental: Compliance with environmental laws;
+      no contamination
+    * Litigation: Disclosed in schedule; no material
+      undisclosed proceedings
+    * Customer/supplier: No loss or threatened loss of
+      any customer representing >5% of revenue
+  - Representations survival: General reps survive 18
+    months; fundamental reps (organization, authority,
+    tax, IP) survive 36 months; tax indemnity survives
+    until statute of limitations expires
+  - Indemnification:
+    * Seller indemnifies Buyer for breaches of reps and
+      warranties
+    * Basket: $260,000 (0.5% of purchase price) —
+      deductible, not tipping
+    * Cap: General reps capped at $5.2M (10% of purchase
+      price); fundamental reps capped at $15.6M (30%);
+      fraud: uncapped
+    * Sole remedy: Indemnification is exclusive post-
+      closing remedy (except for fraud)
+  - Closing conditions: HSR clearance (if applicable);
+    key employee retention agreements executed (5 named
+    employees); landlord consent for facility lease
+    assignment; no material adverse effect between
+    signing and closing
+  - Material adverse effect definition: "Any event that
+    has had or would reasonably be expected to have a
+    material adverse effect on the business, operations,
+    assets, liabilities, condition, or results of
+    operations of the Company, excluding effects arising
+    from: (a) general economic conditions, (b) industry-
+    wide conditions, (c) changes in law, (d) natural
+    disasters, (e) the announcement of this transaction"
+  - Non-compete: Sellers (founding team) agree to 3-year
+    non-compete within the robotics/automation industry
+  - Employment: Buyer to offer employment to all current
+    employees on "substantially similar" terms for 12
+    months post-closing
+  - Governing law: State of Delaware
+
+  Task: Write a Board-ready summary of the SPA covering
+  the deal structure, risk allocation through the
+  indemnification framework, key areas of due diligence
+  concern, and recommended negotiation positions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides Board-ready deal summary — clearly explains the deal structure ($42M cash + $5M escrow + $5M earnout = $52M headline price but effectively $42M committed at closing); analyzes the earnout structure critically (buyer discretion clause creates tension with earnout obligations); evaluates the indemnification framework in market context (basket at 0.5%, general cap at 10%, fundamental at 30% — compared to current M&A market norms); explains what 'deductible vs tipping basket' means; presents information in a format suitable for Board deliberation."
+    weight: 0.35
+    description: "BoardReadyDealSummary"
+  - type: llm_judge
+    criteria: "Response identifies key risks and due diligence concerns — flags unaudited financial statements as a significant risk; evaluates the IP representations (are invention assignments really signed? open-source usage?); identifies key employee retention risk (5 named employees as closing condition but what about the other 75?); evaluates the $52M valuation against $18M revenue/$3M EBITDA (17x EBITDA — is the premium justified?); flags the MAE definition carve-outs; evaluates customer concentration risk (>5% threshold); identifies the earnout dispute risk; assesses the escrow adequacy ($5M to cover 18 months of potential claims)."
+    weight: 0.35
+    description: "RisksAndDueDiligence"
+  - type: llm_judge
+    criteria: "Response provides specific negotiation recommendations — suggests improvements to the indemnification framework (longer survival for IP reps, lower basket, specific indemnities for known issues); recommends financial statement quality improvements (quality of earnings report, audited statements pre-closing); suggests earnout protections (operating covenants, dispute resolution mechanism, accounting methodology); recommends key employee retention strategies beyond closing condition; the recommendations are sophisticated enough for a public company acquisition but practical."
+    weight: 0.30
+    description: "NegotiationRecommendations"

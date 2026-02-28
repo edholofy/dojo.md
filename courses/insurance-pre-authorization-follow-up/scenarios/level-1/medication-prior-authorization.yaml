@@ -1,0 +1,65 @@
+meta:
+  id: medication-prior-authorization
+  level: 1
+  course: insurance-pre-authorization-follow-up
+  type: output
+  description: "Complete a medication prior authorization form — navigate step therapy requirements and document clinical rationale for a non-formulary medication"
+  tags: [medication-pa, step-therapy, formulary-exception, beginner]
+
+state: {}
+
+trigger: |
+  Complete a medication prior authorization for a
+  patient whose prescribed medication requires PA due
+  to step therapy requirements.
+
+  Patient: David Park
+  DOB: 03/12/1980
+  Insurance: Anthem BCBS
+  Member ID: ANT-445566778
+  Pharmacy: CVS #4532
+
+  Medication requested:
+  - Drug: Humira (adalimumab) 40mg injection
+  - Frequency: Every 2 weeks
+  - Diagnosis: Rheumatoid arthritis (ICD-10: M05.79)
+  - Prescriber: Dr. Maria Santos, Rheumatology
+
+  Step therapy history (documented):
+  - Step 1: Methotrexate 15mg weekly — used 4 months,
+    inadequate response (DAS28 score remained >5.1)
+  - Step 2: Methotrexate + Hydroxychloroquine — used
+    3 months, partial response but significant GI side
+    effects requiring dose reduction
+  - Step 3: Leflunomide (tried as alternative) — 
+    discontinued after 6 weeks due to elevated liver
+    enzymes (ALT 3x normal)
+
+  Current clinical status:
+  - DAS28-ESR score: 4.8 (moderate-high disease activity)
+  - ESR: 38, CRP: 2.4
+  - Joint involvement: 8 swollen joints, 12 tender joints
+  - Functional limitation: Unable to perform ADLs without
+    assistance
+  - Failed 3 conventional DMARDs over 11 months
+
+  Create:
+  1. Prior authorization form completion guidance
+  2. Clinical rationale letter for biologic therapy
+  3. Step therapy failure documentation summary
+  4. Patient notification about PA process and timeline
+  5. Follow-up plan if PA is denied
+
+assertions:
+  - type: llm_judge
+    criteria: "Step therapy documentation is comprehensive and sequential — clearly shows each medication tried, duration, dosage, clinical response measured objectively (DAS28 scores), and specific reason for discontinuation; this is exactly what reviewers need to approve."
+    weight: 0.35
+    description: "StepTherapyDocumentation"
+  - type: llm_judge
+    criteria: "Clinical rationale connects failed conventional therapy to biologic necessity — explains why adalimumab is the next appropriate step per ACR guidelines, why the specific biologic was chosen, and what outcome is expected."
+    weight: 0.35
+    description: "ClinicalRationaleConnection"
+  - type: llm_judge
+    criteria: "Follow-up plan for denial anticipates common denial reasons — addresses potential issues (not enough time on step 2, liver enzyme issue may resolve, alternative biologics available) and has pre-planned responses for each."
+    weight: 0.30
+    description: "DenialAnticipation"
