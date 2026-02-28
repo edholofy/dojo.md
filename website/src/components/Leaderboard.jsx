@@ -1,5 +1,21 @@
 import { useState } from 'react';
 
+/* ── Scenario display names ── */
+const SCENARIO_NAMES = {
+  'ad-copy-formulas': 'Ad Copy Formulas',
+  'ad-extensions-copy': 'Ad Extensions',
+  'complete-search-ad': 'Complete Search Ad',
+  'cta-and-urgency': 'CTA & Urgency',
+  'dynamic-keyword-insertion': 'Dynamic Keywords',
+  'google-ads-copy-mistakes': 'Copy Mistakes',
+  'quality-score-fundamentals': 'Quality Score',
+  'rsa-description-writing': 'RSA Descriptions',
+  'rsa-headline-writing': 'RSA Headlines',
+  'search-intent-matching': 'Search Intent',
+};
+
+const SCENARIO_IDS = Object.keys(SCENARIO_NAMES);
+
 /* ── Arena results data (ad-copy-google-ads, Level 1) ── */
 const ARENA_DATA = {
   course: 'Ad Copy Writing for Google Ads',
@@ -9,18 +25,53 @@ const ARENA_DATA = {
   level: 1,
   scenarios: 10,
   models: [
-    { name: 'Claude Opus 4.6', model: 'anthropic/claude-opus-4-6', score: 84, passed: 6, total: 10, cost: '$5 / $25' },
-    { name: 'Claude Sonnet 4.6', model: 'anthropic/claude-sonnet-4-6', score: 84, passed: 4, total: 10, cost: '$3 / $15' },
-    { name: 'GLM 5', model: 'z-ai/glm-5', score: 79, passed: 4, total: 10, cost: '$0.95 / $2.55' },
-    { name: 'Gemini 3 Flash', model: 'google/gemini-3-flash-preview', score: 76, passed: 3, total: 10, cost: '$0.50 / $3' },
-    { name: 'MiniMax M2.5', model: 'minimax/minimax-m2.5', score: 73, passed: 3, total: 10, cost: '$0.30 / $1.20' },
-    { name: 'Grok 4.1 Fast', model: 'x-ai/grok-4.1-fast', score: 73, passed: 3, total: 10, cost: '$0.20 / $0.50' },
-    { name: 'DeepSeek V3.2', model: 'deepseek/deepseek-v3.2', score: 71, passed: 2, total: 10, cost: '$0.25 / $0.40' },
-    { name: 'Kimi K2.5', model: 'moonshotai/kimi-k2.5', score: 71, passed: 2, total: 10, cost: '$0.45 / $2.20' },
+    {
+      name: 'Claude Opus 4.6', model: 'anthropic/claude-opus-4-6', score: 84, passed: 6, total: 10, cost: '$5 / $25',
+      results: { 'ad-copy-formulas': [80, false], 'ad-extensions-copy': [86, true], 'complete-search-ad': [73, false], 'cta-and-urgency': [86, false], 'dynamic-keyword-insertion': [82, true], 'google-ads-copy-mistakes': [94, true], 'quality-score-fundamentals': [89, true], 'rsa-description-writing': [83, true], 'rsa-headline-writing': [78, false], 'search-intent-matching': [86, true] },
+    },
+    {
+      name: 'Claude Sonnet 4.6', model: 'anthropic/claude-sonnet-4-6', score: 84, passed: 4, total: 10, cost: '$3 / $15',
+      results: { 'ad-copy-formulas': [81, false], 'ad-extensions-copy': [68, false], 'complete-search-ad': [76, false], 'cta-and-urgency': [85, false], 'dynamic-keyword-insertion': [92, true], 'google-ads-copy-mistakes': [94, true], 'quality-score-fundamentals': [92, true], 'rsa-description-writing': [79, false], 'rsa-headline-writing': [82, false], 'search-intent-matching': [90, true] },
+    },
+    {
+      name: 'GLM 5', model: 'z-ai/glm-5', score: 79, passed: 4, total: 10, cost: '$0.95 / $2.55',
+      results: { 'ad-copy-formulas': [74, false], 'ad-extensions-copy': [72, false], 'complete-search-ad': [77, false], 'cta-and-urgency': [78, false], 'dynamic-keyword-insertion': [87, true], 'google-ads-copy-mistakes': [86, true], 'quality-score-fundamentals': [87, true], 'rsa-description-writing': [74, false], 'rsa-headline-writing': [69, false], 'search-intent-matching': [88, true] },
+    },
+    {
+      name: 'Gemini 3 Flash', model: 'google/gemini-3-flash-preview', score: 76, passed: 3, total: 10, cost: '$0.50 / $3',
+      results: { 'ad-copy-formulas': [69, false], 'ad-extensions-copy': [74, false], 'complete-search-ad': [75, false], 'cta-and-urgency': [75, false], 'dynamic-keyword-insertion': [72, false], 'google-ads-copy-mistakes': [83, true], 'quality-score-fundamentals': [78, false], 'rsa-description-writing': [84, true], 'rsa-headline-writing': [74, false], 'search-intent-matching': [80, true] },
+    },
+    {
+      name: 'MiniMax M2.5', model: 'minimax/minimax-m2.5', score: 73, passed: 3, total: 10, cost: '$0.30 / $1.20',
+      results: { 'ad-copy-formulas': [79, false], 'ad-extensions-copy': [70, false], 'complete-search-ad': [68, false], 'cta-and-urgency': [74, false], 'dynamic-keyword-insertion': [69, false], 'google-ads-copy-mistakes': [91, true], 'quality-score-fundamentals': [87, true], 'rsa-description-writing': [58, false], 'rsa-headline-writing': [56, false], 'search-intent-matching': [82, true] },
+    },
+    {
+      name: 'Grok 4.1 Fast', model: 'x-ai/grok-4.1-fast', score: 73, passed: 3, total: 10, cost: '$0.20 / $0.50',
+      results: { 'ad-copy-formulas': [73, false], 'ad-extensions-copy': [84, true], 'complete-search-ad': [66, false], 'cta-and-urgency': [75, false], 'dynamic-keyword-insertion': [65, false], 'google-ads-copy-mistakes': [83, true], 'quality-score-fundamentals': [88, true], 'rsa-description-writing': [60, false], 'rsa-headline-writing': [67, false], 'search-intent-matching': [70, false] },
+    },
+    {
+      name: 'DeepSeek V3.2', model: 'deepseek/deepseek-v3.2', score: 71, passed: 2, total: 10, cost: '$0.25 / $0.40',
+      results: { 'ad-copy-formulas': [70, false], 'ad-extensions-copy': [63, false], 'complete-search-ad': [67, false], 'cta-and-urgency': [74, false], 'dynamic-keyword-insertion': [65, false], 'google-ads-copy-mistakes': [79, true], 'quality-score-fundamentals': [80, false], 'rsa-description-writing': [64, false], 'rsa-headline-writing': [60, false], 'search-intent-matching': [83, true] },
+    },
+    {
+      name: 'Kimi K2.5', model: 'moonshotai/kimi-k2.5', score: 71, passed: 2, total: 10, cost: '$0.45 / $2.20',
+      results: { 'ad-copy-formulas': [82, true], 'ad-extensions-copy': [78, false], 'complete-search-ad': [82, false], 'cta-and-urgency': [84, false], 'dynamic-keyword-insertion': [75, false], 'google-ads-copy-mistakes': [85, true], 'quality-score-fundamentals': [0, false], 'rsa-description-writing': [74, false], 'rsa-headline-writing': [75, false], 'search-intent-matching': [78, false] },
+    },
   ],
 };
 
-function ScoreBar({ score, rank }) {
+/* ── Find best score per scenario for highlighting ── */
+const bestPerScenario = {};
+for (const sid of SCENARIO_IDS) {
+  let best = 0;
+  for (const m of ARENA_DATA.models) {
+    const [score] = m.results[sid];
+    if (score > best) best = score;
+  }
+  bestPerScenario[sid] = best;
+}
+
+function ScoreBar({ score }) {
   const width = `${score}%`;
   const color =
     score >= 80 ? '#4ade80' :
@@ -50,6 +101,50 @@ function ScoreBar({ score, rank }) {
           transition: 'width 0.8s cubic-bezier(0.19, 1, 0.22, 1)',
         }}
       />
+    </div>
+  );
+}
+
+function ScenarioCell({ score, passed, isBest }) {
+  const color =
+    score === 0 ? '#ddd' :
+    passed ? '#16a34a' :
+    score >= 70 ? '#ca8a04' :
+    '#dc2626';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2,
+        padding: '6px 4px',
+        borderRadius: 4,
+        background: isBest ? 'rgba(74, 222, 128, 0.08)' : 'transparent',
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.78rem',
+          fontWeight: isBest ? 600 : 400,
+          color,
+        }}
+      >
+        {score}
+      </span>
+      <span
+        style={{
+          fontSize: '0.5rem',
+          color: passed ? '#16a34a' : '#dc2626',
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {passed ? 'PASS' : 'FAIL'}
+      </span>
     </div>
   );
 }
@@ -157,7 +252,7 @@ export function Leaderboard({ isTouch }) {
                     fontWeight: rank <= 3 ? 600 : 400,
                   }}
                 >
-                  {rank === 1 ? '#1' : rank === 2 ? '#2' : rank === 3 ? '#3' : `#${rank}`}
+                  #{rank}
                 </div>
 
                 {/* Name + bar */}
@@ -185,7 +280,7 @@ export function Leaderboard({ isTouch }) {
                       {m.passed}/{m.total}
                     </span>
                   </div>
-                  <ScoreBar score={m.score} rank={rank} />
+                  <ScoreBar score={m.score} />
                 </div>
 
                 {/* Score */}
@@ -219,20 +314,71 @@ export function Leaderboard({ isTouch }) {
                 </div>
               </div>
 
-              {/* Expanded detail */}
+              {/* Expanded: scenario breakdown */}
               {isExpanded && (
-                <div
-                  style={{
-                    padding: '0 16px 16px 48px',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                    gap: 12,
-                  }}
-                >
-                  <DetailCard label="Model" value={m.model} mono />
-                  <DetailCard label="Score" value={`${m.score}/100`} />
-                  <DetailCard label="Passed" value={`${m.passed}/${m.total} scenarios`} />
-                  <DetailCard label="Pricing" value={`${m.cost} per 1M tokens`} />
+                <div style={{ padding: '4px 16px 20px 16px' }}>
+                  {/* Info row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 16,
+                      flexWrap: 'wrap',
+                      marginBottom: 16,
+                      paddingLeft: 32,
+                    }}
+                  >
+                    <InfoChip label="Model" value={m.model} />
+                    <InfoChip label="Pricing" value={`${m.cost} /1M tokens`} />
+                    <InfoChip label="Avg Score" value={`${m.score}/100`} />
+                  </div>
+
+                  {/* Scenario grid */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(5, 1fr)',
+                      gap: 4,
+                      paddingLeft: 32,
+                    }}
+                    className="scenario-grid"
+                  >
+                    {SCENARIO_IDS.map((sid) => {
+                      const [score, passed] = m.results[sid];
+                      const isBest = score === bestPerScenario[sid] && score > 0;
+                      return (
+                        <div
+                          key={sid}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '8px 4px',
+                            border: '1px solid var(--border)',
+                            borderRadius: 4,
+                            background: isBest ? 'rgba(74, 222, 128, 0.06)' : 'transparent',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '0.55rem',
+                              color: 'var(--muted)',
+                              textAlign: 'center',
+                              lineHeight: 1.3,
+                              maxWidth: '100%',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {SCENARIO_NAMES[sid]}
+                          </span>
+                          <ScenarioCell score={score} passed={passed} isBest={isBest} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -259,37 +405,19 @@ export function Leaderboard({ isTouch }) {
   );
 }
 
-function DetailCard({ label, value, mono }) {
+function InfoChip({ label, value }) {
   return (
-    <div
+    <span
       style={{
-        padding: '10px 12px',
-        border: '1px solid var(--border)',
-        borderRadius: 4,
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.6rem',
+        color: 'var(--secondary)',
       }}
     >
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.58rem',
-          color: 'var(--muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: mono ? '0.72rem' : '0.82rem',
-          fontFamily: mono ? 'var(--font-mono)' : 'inherit',
-          color: 'var(--text)',
-          wordBreak: 'break-all',
-        }}
-      >
-        {value}
-      </div>
-    </div>
+      <span style={{ color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        {label}:
+      </span>{' '}
+      {value}
+    </span>
   );
 }
