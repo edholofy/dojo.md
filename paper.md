@@ -1,7 +1,7 @@
 # dojo.md: Curriculum-Based Knowledge Distillation for LLM Agents Through Scenario-Driven Training and Automatic Skill Generation
 
-**Eduard Holofy**
-Holofy · eduard@holofy.io
+**Eduard Cristea**
+eduard@holofy.io
 
 **February 2026**
 
