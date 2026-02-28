@@ -34,7 +34,7 @@ function Terminal({ label, copyText, children }) {
 
 /* ── Animated training loop — typewriter on scroll ── */
 const TRAINING_LINES = [
-  { text: '$ dojo train ad-copy --model openai/gpt-4o --target 90', cls: 'white' },
+  { text: '$ dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90', cls: 'white' },
   { text: '' },
   { text: '  Iteration 1 (no SKILL.md)', cls: 'dim' },
   { text: '  Score: 42/100' },
@@ -53,10 +53,10 @@ const TRAINING_LINES = [
   { text: '  Iteration 5', cls: 'dim' },
   { text: '  Score: 90/100  ', suffix: '+2  \u2713 target reached', suffixCls: 'green' },
   { text: '' },
-  { text: '  SKILL.md \u2192 .claude/skills/ad-copy/openai--gpt-4o/SKILL.md', cls: 'dim' },
+  { text: '  SKILL.md \u2192 .claude/skills/ad-copy/deepseek--deepseek-v3.2/SKILL.md', cls: 'dim' },
 ];
 
-const TRAINING_COPY_TEXT = `$ dojo train ad-copy --model openai/gpt-4o --target 90`;
+const TRAINING_COPY_TEXT = `$ dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90`;
 
 function AnimatedTrainingLoop({ isTouch }) {
   const [visibleLines, setVisibleLines] = useState(0);
@@ -128,10 +128,10 @@ const QUICKSTART_LINES = [
   { cmd: 'dojo train stripe-refunds' },
   null,
   { comment: '# Train a specific model' },
-  { cmd: 'dojo train ad-copy --model openai/gpt-4o' },
+  { cmd: 'dojo train ad-copy --model deepseek/deepseek-v3.2' },
   null,
   { comment: '# Auto-train until target score' },
-  { cmd: 'dojo train ad-copy --model openai/gpt-4o --target 90' },
+  { cmd: 'dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90' },
   null,
   { comment: '# List available courses' },
   { cmd: 'dojo list' },
@@ -143,8 +143,8 @@ const QUICKSTART_LINES = [
 const QUICKSTART_COPY = `npm install -g dojo.md
 
 dojo train stripe-refunds
-dojo train ad-copy --model openai/gpt-4o
-dojo train ad-copy --model openai/gpt-4o --target 90
+dojo train ad-copy --model deepseek/deepseek-v3.2
+dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90
 dojo list
 dojo results stripe-refunds`;
 
@@ -424,8 +424,8 @@ export function HumanView({ isTouch }) {
           }}
         >
           Each model gets its own SKILL.md because different models fail
-          differently. GPT-4o struggles with refund edge cases where Claude
-          excels, and vice versa.
+          differently. DeepSeek struggles with edge cases where Claude excels,
+          Grok rushes through validation — every model has blind spots.
         </p>
       </section>
 
@@ -490,8 +490,8 @@ export function HumanView({ isTouch }) {
             lineHeight: 1.6,
           }}
         >
-          Works with Claude, GPT-4o, Llama, Gemini — any model on OpenRouter.
-          The loop stops when it hits the target score or improvement plateaus.
+          Works with Claude, DeepSeek, Grok, Gemini, MiniMax, Kimi — any model
+          on OpenRouter. The loop stops when it hits the target or plateaus.
         </p>
       </section>
 
@@ -668,7 +668,7 @@ export function HumanView({ isTouch }) {
               textAlign: 'right',
             }}
           >
-            v0.2.0 &middot; MIT License
+            v0.3.0 &middot; MIT License
             <br />
             &copy; 2026 Eduard Cristea
           </div>
@@ -695,7 +695,7 @@ export function HumanView({ isTouch }) {
             borderTop: '1px solid var(--border)',
           }}
         >
-          <span>dojo.md v0.2.0</span>
+          <span>dojo.md v0.3.0</span>
           <span>
             RENDER: {renderMs}ms &middot; X: {mouse.x} Y: {mouse.y}
           </span>

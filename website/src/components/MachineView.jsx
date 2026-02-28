@@ -1,29 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMousePosition } from '../hooks/useMousePosition';
-
-const SETUP_COPY = `npm install -g dojo.md
-
-# Browse available courses
-dojo list
-
-# Run a training session
-dojo train stripe-refunds
-
-# Train a specific model
-dojo train ad-copy --model openai/gpt-4o
-
-# Auto-train until target score
-dojo train ad-copy --model openai/gpt-4o --target 90
-
-# Add to Claude Code MCP config (~/.claude.json):
-{
-  "mcpServers": {
-    "dojo": {
-      "command": "npx",
-      "args": ["dojo.md", "mcp"]
-    }
-  }
-}`;
 
 const SKILL_MD = `---
 name: dojo-md
@@ -31,8 +7,11 @@ description: >-
   Training arena for AI agents. Scenario-based
   evaluation with mock services, LLM-judged
   assertions, and automatic skill generation.
-  Use when training, evaluating, or improving
-  agent tool-use reliability.
+  Generates knowledge graduation SKILL.md —
+  always, even at 100/100 — because the domain
+  knowledge itself is the product, not just
+  corrections. Use when training, evaluating,
+  or improving agent reliability.
 ---
 
 # dojo.md
@@ -40,48 +19,97 @@ description: >-
 ## Quick Start
 
 \`\`\`bash
-npx dojo.md train stripe-refunds
+npx dojo-md train stripe-refunds --model claude-sonnet-4-6
 \`\`\`
 
 ## What It Does
 
-run scenarios \u2192 evaluate failures \u2192 generate SKILL.md \u2192 inject \u2192 repeat
+run scenarios → evaluate → extract curriculum
+→ extract failures → generate SKILL.md → inject → repeat
+
+SKILL.md is a knowledge graduation document.
+Not just corrections. The domain expertise
+embedded in scenario assertions has standalone
+value — even agents scoring 100% graduate
+with a SKILL.md.
+
+## Two Data Streams
+
+1. Failure patterns  → what agent struggled with
+2. Curriculum extract → what course intended to teach
+
+extractCurriculum() reads every scenario's
+assertion criteria and expected outcomes.
+These encode practitioner knowledge:
+- specific thresholds and numbers
+- counter-intuitive strategies
+- platform-specific rules
+- decision frameworks
 
 ## Architecture
 
-Scenario YAML \u2192 Engine \u2192 Mock Layer \u2192 Evaluator \u2192 Skill Generator
-                             \u2195              \u2195
-                         SQLite         ModelClient
+Scenario YAML → Engine → Mock Layer → Evaluator
+                             ↕              ↕
+                         SQLite        ModelClient
+                                           ↓
+                              Curriculum + Patterns
+                                           ↓
+                                   Skill Generator
+                                           ↓
+                                      SKILL.md
 
 ## Core Loop
 
-if score < target:
-  extract_failure_patterns()
-  generate_skill_md(patterns)
-  inject_into_system_prompt(skill_md)
-  re_run()
+for each iteration:
+  read_existing_skill_md()
+  inject_into_agent_context(skill_md)
+  run_all_scenarios()
+  evaluate_results()
+  patterns = extract_failure_patterns()
+  curriculum = extract_curriculum(scenarios)
+  generate_skill_md(patterns, curriculum)
+  if converged: break
 
-## Supported Models
+## Always Generate
 
-- anthropic/claude-sonnet-4-6  \u2192 Anthropic direct
-- openai/gpt-4o               \u2192 OpenRouter
-- meta-llama/llama-3.1-70b    \u2192 OpenRouter
-- any model on OpenRouter      \u2192 auto-detected
+// even at 100/100 — curriculum knowledge
+// is valuable
+await skillGenerator.generate(
+  courseId, patterns, score, scenarios
+)
 
-## Assertion Types
+## Top Models (by usage)
 
-| Type           | Method        | Cost    |
-|----------------|---------------|---------|
-| api_called     | deterministic | free    |
-| api_not_called | deterministic | free    |
-| outcome        | llm-judged    | ~$0.002 |
-| state_changed  | llm-judged    | ~$0.002 |
-| llm_judge      | rubric-scored | ~$0.003 |
+- minimax/minimax-m2.5       1.78T tokens/wk
+- google/gemini-3-flash      1.06T tokens/wk
+- deepseek/deepseek-v3.2      840B tokens/wk
+- x-ai/grok-4.1-fast          706B tokens/wk
+- moonshotai/kimi-k2.5        661B tokens/wk
+- anthropic/claude-opus-4-6   657B tokens/wk
+- z-ai/glm-5                  649B tokens/wk
+- anthropic/claude-sonnet-4-6 631B tokens/wk
+
+Any OpenRouter model → auto-detected
+
+## SKILL.md Structure (v0.3.0)
+
+1. Domain Knowledge  ← NEW: non-obvious insights
+2. Quick Start       ← most common failure, fixed
+3. Core Rules        ← freedom-calibrated rules
+4. Decision Tree     ← branching logic
+5. Edge Cases        ← traps and correct handling
+6. Anti-Patterns     ← what NOT to do
+
+## Freedom Calibration
+
+impact ≥ 6 → low freedom  → "ALWAYS do X"
+impact ≥ 3 → medium       → step-by-step
+impact < 3 → high freedom → "prefer X over Y"
 
 ## Install
 
 \`\`\`
-npm install dojo.md
+npm install dojo-md
 \`\`\`
 
 ## Protocol
@@ -99,19 +127,13 @@ MIT`;
 
 const LINES = SKILL_MD.split('\n');
 
-export function MachineView({ isTouch }) {
+export function MachineView() {
   const mouse = useMousePosition();
   const [visibleLines, setVisibleLines] = useState(0);
   const [blinkCursor, setBlinkCursor] = useState(true);
+  const containerRef = useRef(null);
+  const renderMsRef = useRef('0.0');
   const [renderMs, setRenderMs] = useState('0.0');
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(SETUP_COPY).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
-  };
 
   // Typewriter effect
   useEffect(() => {
@@ -140,6 +162,7 @@ export function MachineView({ isTouch }) {
     let raf;
     const measure = () => {
       const start = performance.now();
+      // Force layout read
       void document.body.offsetHeight;
       const dur = performance.now() - start;
       setRenderMs(dur.toFixed(1));
@@ -149,7 +172,7 @@ export function MachineView({ isTouch }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const renderLine = useCallback((line) => {
+  const renderLine = useCallback((line, idx) => {
     if (line.startsWith('# ')) {
       return (
         <span style={{ color: '#111', fontWeight: 600, fontSize: '1.1em' }}>
@@ -158,7 +181,9 @@ export function MachineView({ isTouch }) {
       );
     }
     if (line.startsWith('## ')) {
-      return <span style={{ color: '#333', fontWeight: 500 }}>{line}</span>;
+      return (
+        <span style={{ color: '#333', fontWeight: 500 }}>{line}</span>
+      );
     }
     if (line.startsWith('```')) {
       return <span style={{ color: '#888' }}>{line}</span>;
@@ -190,68 +215,95 @@ export function MachineView({ isTouch }) {
   }, []);
 
   return (
-    <div className="machine-view" style={{ cursor: isTouch ? 'auto' : 'none' }}>
+    <div
+      ref={containerRef}
+      style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'none',
+        fontFamily: 'var(--font-mono)',
+        overflow: 'hidden',
+      }}
+    >
       {/* Corner indices */}
-      {['d', 'm', '0', '1'].map((ch, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'fixed',
-            ...([
-              { top: 'var(--pad)', left: 'var(--pad)' },
-              { top: 'var(--pad)', right: 'var(--pad)' },
-              { bottom: 'var(--pad)', left: 'var(--pad)' },
-              { bottom: 'var(--pad)', right: 'var(--pad)' },
-            ][i]),
-            fontFamily: 'var(--font-main)',
-            fontWeight: 500,
-            fontSize: isTouch ? '1.2rem' : '2.5rem',
-            lineHeight: 1,
-            zIndex: 1000,
-            color: 'var(--text)',
-          }}
-        >
-          {ch}
-        </div>
-      ))}
+      <div
+        style={{
+          position: 'fixed',
+          top: 'var(--pad)',
+          left: 'var(--pad)',
+          fontFamily: 'var(--font-main)',
+          fontWeight: 500,
+          fontSize: '2.5rem',
+          lineHeight: 1,
+          zIndex: 1000,
+          color: 'var(--text-color)',
+        }}
+      >
+        d
+      </div>
+      <div
+        style={{
+          position: 'fixed',
+          top: 'var(--pad)',
+          right: 'var(--pad)',
+          fontFamily: 'var(--font-main)',
+          fontWeight: 500,
+          fontSize: '2.5rem',
+          lineHeight: 1,
+          zIndex: 1000,
+          color: 'var(--text-color)',
+        }}
+      >
+        m
+      </div>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 'var(--pad)',
+          left: 'var(--pad)',
+          fontFamily: 'var(--font-main)',
+          fontWeight: 500,
+          fontSize: '2.5rem',
+          lineHeight: 1,
+          zIndex: 1000,
+          color: 'var(--text-color)',
+        }}
+      >
+        0
+      </div>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 'var(--pad)',
+          right: 'var(--pad)',
+          fontFamily: 'var(--font-main)',
+          fontWeight: 500,
+          fontSize: '2.5rem',
+          lineHeight: 1,
+          zIndex: 1000,
+          color: 'var(--text-color)',
+        }}
+      >
+        1
+      </div>
 
       {/* Main SKILL.md content */}
       <div
         style={{
           flex: 1,
-          padding: isTouch ? '60px var(--pad) var(--pad)' : '80px var(--pad) var(--pad)',
-          overflow: 'auto',
+          padding: '80px var(--pad) var(--pad)',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div
-          onClick={handleCopy}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '6px 14px',
-            border: `1px solid ${copied ? '#4ade80' : '#ddd'}`,
-            borderRadius: 4,
-            cursor: isTouch ? 'pointer' : 'none',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.68rem',
-            color: copied ? '#4ade80' : '#888',
-            transition: 'border-color 0.2s, color 0.2s',
-            userSelect: 'none',
-            alignSelf: 'flex-start',
-            marginBottom: 20,
-          }}
-        >
-          {copied ? '\u2713 copied' : 'copy'}
-        </div>
-
         <pre
           style={{
             flex: 1,
             fontFamily: 'var(--font-mono)',
-            fontSize: isTouch ? '0.72rem' : '0.78rem',
+            fontSize: '0.78rem',
             lineHeight: 1.65,
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
@@ -261,7 +313,7 @@ export function MachineView({ isTouch }) {
           }}
         >
           {LINES.slice(0, visibleLines).map((line, i) => (
-            <div key={i}>{renderLine(line)}</div>
+            <div key={i}>{renderLine(line, i)}</div>
           ))}
           {visibleLines < LINES.length && (
             <span
@@ -271,32 +323,29 @@ export function MachineView({ isTouch }) {
                 fontWeight: 700,
               }}
             >
-              \u258A
+              ▊
             </span>
           )}
         </pre>
-
       </div>
 
       {/* Bottom telemetry bar */}
       <div
         style={{
-          borderTop: '1px solid var(--border)',
+          borderTop: '1px solid var(--hairline)',
           padding: '8px var(--pad)',
           display: 'flex',
           justifyContent: 'space-between',
           fontFamily: 'var(--font-mono)',
-          fontSize: isTouch ? '0.6rem' : '0.65rem',
-          color: 'var(--secondary)',
+          fontSize: '0.65rem',
+          color: 'var(--secondary-color)',
           flexShrink: 0,
         }}
       >
-        <span>SKILL.md v1.0 &middot; MIT &middot; dojo.md</span>
-        {!isTouch && (
-          <span>
-            RENDER: {renderMs}ms &middot; X: {mouse.x} Y: {mouse.y}
-          </span>
-        )}
+        <span>SKILL.md v1.0 · MIT · dojo.md</span>
+        <span>
+          RENDER: {renderMs}ms · X: {mouse.x} Y: {mouse.y}
+        </span>
       </div>
     </div>
   );
