@@ -187,6 +187,7 @@ export function Leaderboard({ isTouch }) {
           Same course, same scenarios, same judge. Baseline scored without SKILL.md,
           then re-run after 1 training iteration with generated SKILL.md.
           Scored 0-100 by {ARENA_DATA.judge} on {ARENA_DATA.scenarios} scenarios.
+          Above 70, every point gets exponentially harder — like ELO, small gaps mean big differences.
         </p>
       </div>
 
