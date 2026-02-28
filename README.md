@@ -100,6 +100,24 @@ Iteration 3: 68/100 (+18)
 Iteration 4: 72/100 (+4) — plateau detected, stopping
 ```
 
+## Arena — Model Benchmarking
+
+Compare models head-to-head on the same course. Same judge, same scenarios, no SKILL.md — raw capability only.
+
+```bash
+dojo arena ad-copy-google-ads --level 1
+
+═══ Arena Leaderboard ════════════════════════
+  1st  Claude Opus 4.6    █████████████████░░░  84
+  2nd  Claude Sonnet 4.6  █████████████████░░░  84
+  3rd  GPT-5.2            ████████████████░░░░  82
+  4th  GLM 5              ████████████████░░░░  79
+  5th  Gemini 3 Flash     ███████████████░░░░░  76
+══════════════════════════════════════════════
+```
+
+Above 70, every point gets exponentially harder — like ELO, small gaps mean big differences. Per-model SKILL.md files show each model's specific blind spots. See the [live leaderboard](https://dojo.md).
+
 ## Any Model
 
 Train any model via [OpenRouter](https://openrouter.ai). 200+ models supported:
@@ -112,22 +130,30 @@ dojo train cold-email-b2b --model deepseek/deepseek-v3.2
 dojo train cold-email-b2b --model x-ai/grok-4.1-fast
 ```
 
-## 47 Pre-Built Courses
+## 121 Pre-Built Courses (5,800+ Scenarios)
 
 Agents graduate with domain expertise across:
 
-**Customer Support** — stripe-refunds, escalation handling, churn prevention, SLA breach communication, onboarding sequences
+**Customer Support** — stripe-refunds, escalation handling, churn prevention, SLA breach communication, onboarding sequences, ecommerce tickets
 
-**Sales** — cold email B2B, objection handling, proposal writing, competitive battlecards, follow-up sequences
+**Sales** — cold email B2B, objection handling, proposal writing, competitive battlecards, follow-up sequences, buyer inquiry response, offer negotiation
 
-**Marketing** — Google Ads copy, Meta/Facebook ads, SEO blog writing, social media content, email campaigns
+**Marketing** — Google Ads copy, Meta/Facebook ads, SEO blog writing, social media content, email campaigns, content calendar planning
 
-**DevOps** — incident response, deployment alerts, bug triage, GitHub issue management
+**DevOps** — incident response, deployment alerts, bug triage, GitHub issue management, Docker debugging, AWS Lambda, database migration
 
-**Content** — newsletter writing, Twitter/X threads, product launches, brand voice documentation
+**Content** — newsletter writing, Twitter/X threads, product launches, brand voice documentation, tutorial writing, course curriculum design
+
+**Education** — quiz & assessment creation, study guides, workshop facilitation, onboarding training materials
+
+**Legal & Compliance** — contract review summaries, compliance checklists, contract clause summarization
+
+**Real Estate** — property listing descriptions, open house promotions, showing feedback, buyer inquiry response
+
+**Healthcare** — patient appointment reminders, intake form review, medical billing inquiries, insurance pre-authorization
 
 ```bash
-dojo list                    # See all courses
+dojo list                    # See all 121 courses
 dojo generate "Handle Zendesk ticket routing and priority assignment"  # Create your own
 ```
 
@@ -212,6 +238,7 @@ The `description` triggers loading — ~100 tokens idle, ~5,000 tokens when acti
 | `dojo train <course> -m openai/gpt-4o -j claude-sonnet-4-6 -t 85` | Full multi-model auto-loop |
 | `dojo retrain <course>` | Auto-loop with defaults (target 90, max 5) |
 | `dojo arena <course>` | Benchmark multiple models head-to-head |
+| `dojo arena <course> --models m1,m2,m3` | Arena with specific models |
 | `dojo results [course]` | Show latest results |
 | `dojo list` | List installed courses |
 | `dojo generate <skill>` | Generate a course from description |
