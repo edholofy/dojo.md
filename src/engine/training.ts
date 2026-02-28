@@ -96,6 +96,7 @@ export class TrainingSession {
    * 4. Generate SKILL.md
    */
   async run(): Promise<TrainingRun> {
+    const startedAt = new Date().toISOString();
     const runId = createRun(this.db, this.course.id, {
       agentModel: this.modelInfo.agentModel,
       judgeModel: this.modelInfo.judgeModel,
@@ -124,7 +125,7 @@ export class TrainingSession {
       const trainingRun: TrainingRun = {
         id: runId,
         courseId: this.course.id,
-        startedAt: new Date().toISOString(),
+        startedAt,
         completedAt: new Date().toISOString(),
         levelResults,
         failurePatterns,

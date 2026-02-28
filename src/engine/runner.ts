@@ -21,11 +21,13 @@ export class ScenarioRunner {
    */
   async run(): Promise<ScenarioResult> {
     const mockSession = new MockSession(this.scenario);
+    const scenarioType = this.scenario.meta.type || 'tool';
 
     try {
       const { actionTrace, agentResponse } = await this.agentBridge.run(
         this.scenario.trigger,
         mockSession,
+        scenarioType,
       );
 
       return {
@@ -36,12 +38,14 @@ export class ScenarioRunner {
         agentResponse,
       };
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error(`  [${this.scenario.meta.id}] Agent error: ${errorMsg}`);
       return {
         scenarioId: this.scenario.meta.id,
         passed: false,
         assertions: [],
         actionTrace: mockSession.getActionLog(),
-        agentResponse: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        agentResponse: `Error: ${errorMsg}`,
       };
     }
   }

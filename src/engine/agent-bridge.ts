@@ -6,9 +6,18 @@ import { getNormalizedToolDefinitions } from '../mocks/registry.js';
 /**
  * Build a system prompt dynamically from course metadata.
  * Falls back to a generic agent prompt when no course is set.
+ * @param scenarioType - 'tool' for scenarios with mock tools, 'output' for pure text generation
  */
-function buildCoursePrompt(course: CourseMeta | null): string {
+function buildCoursePrompt(course: CourseMeta | null, scenarioType: 'tool' | 'output' = 'tool'): string {
   if (!course) {
+    if (scenarioType === 'output') {
+      return `You are an AI agent being evaluated on a training scenario. Respond directly and thoroughly to the request.
+
+Guidelines:
+- Provide comprehensive, well-structured responses
+- Address all parts of the request
+- Be specific and actionable`;
+    }
     return `You are an AI agent being evaluated on a training scenario. Your job is to handle the request by using the available tools and providing a clear response.
 
 Guidelines:
@@ -16,6 +25,18 @@ Guidelines:
 - Verify information before taking actions
 - Inform the user about the outcome of your actions
 - If something cannot be done, explain why`;
+  }
+
+  if (scenarioType === 'output') {
+    return `You are an AI agent being evaluated on: ${course.name}.
+
+${course.description.trim()}
+
+Guidelines:
+- Provide comprehensive, well-structured responses
+- Address all parts of the request
+- Be specific and actionable
+- Draw on deep domain knowledge`;
   }
 
   const services = course.services.length > 0
@@ -65,8 +86,8 @@ export class AgentBridge {
   /**
    * Build the full system prompt from course context + optional skill context.
    */
-  private buildSystemPrompt(): string {
-    const base = buildCoursePrompt(this.courseContext);
+  private buildSystemPrompt(scenarioType: 'tool' | 'output' = 'tool'): string {
+    const base = buildCoursePrompt(this.courseContext, scenarioType);
     if (!this.skillContext) return base;
 
     return `${base}
@@ -79,10 +100,14 @@ ${this.skillContext}`;
 
   /**
    * Run an agent through a scenario using the mock session.
+   * @param trigger - The user prompt to send to the agent
+   * @param mockSession - The mock session for tool call handling
+   * @param scenarioType - 'tool' for scenarios that use mock tools, 'output' for pure text generation
    * Returns the action trace and final agent response.
    */
-  async run(trigger: string, mockSession: MockSession): Promise<{ actionTrace: ActionRecord[]; agentResponse: string }> {
-    const tools = getNormalizedToolDefinitions();
+  async run(trigger: string, mockSession: MockSession, scenarioType: 'tool' | 'output' = 'tool'): Promise<{ actionTrace: ActionRecord[]; agentResponse: string }> {
+    // Only provide tools for tool-type scenarios — output scenarios are pure text generation
+    const tools = scenarioType === 'output' ? [] : getNormalizedToolDefinitions();
 
     const messages: NormalizedMessage[] = [
       { role: 'user', content: trigger },
@@ -96,7 +121,7 @@ ${this.skillContext}`;
       iterations++;
 
       const response = await this.client.chat({
-        system: this.buildSystemPrompt(),
+        system: this.buildSystemPrompt(scenarioType),
         messages,
         tools,
         maxTokens: 16384,
