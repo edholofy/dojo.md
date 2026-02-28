@@ -1,0 +1,53 @@
+meta:
+  id: complex-incident-analysis
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Analyze complex incidents — investigate multi-component failures where the root cause spans several systems and requires deep technical analysis"
+  tags: [postmortem, complex-incident, multi-component, investigation, analysis, intermediate]
+
+state: {}
+
+trigger: |
+  Your application experienced a cascading failure that took 3 hours
+  to resolve. The incident involved multiple systems and was much
+  harder to diagnose than a single-component failure.
+
+  Sequence of events:
+  1. A Kubernetes node ran out of memory due to a memory leak in a
+     logging sidecar container
+  2. Kubernetes evicted pods on that node, including 2 of 5 API
+     replicas
+  3. The remaining 3 replicas handled increased load, but their CPU
+     spiked to 95%
+  4. High CPU caused the health check endpoint to respond slowly
+  5. The load balancer marked the slow replicas as unhealthy and
+     removed them from rotation
+  6. With only 1 healthy replica, that replica was overwhelmed and
+     also became unhealthy
+  7. Load balancer had zero healthy backends → 502 for all requests
+  8. Auto-scaler tried to add replicas but the new pods also got
+     the logging sidecar, leaked memory, and were evicted
+
+  The on-call engineer initially investigated the load balancer
+  (symptom) and spent 45 minutes before tracing back to the
+  Kubernetes memory issue (cause).
+
+  Task: Write the root cause analysis for this complex incident.
+  Show the causal chain, identify all contributing factors, and
+  explain why diagnosis was difficult. Create a "failure chain
+  diagram" in text format.
+
+assertions:
+  - type: llm_judge
+    criteria: "Causal chain is mapped end-to-end with clear causation — chain documented: 'Memory leak in logging sidecar (root trigger) → Kubernetes node memory exhaustion → pod eviction (2 of 5 replicas) → increased load on remaining 3 replicas → CPU saturation → slow health check responses → load balancer health check failures → progressive removal of backends → complete service outage.' Each link in the chain is specific: 'Pod eviction happened because Kubernetes OOMKiller targeted pods without explicit resource limits. The logging sidecar had no memory limit set, allowing it to consume unbounded memory.' Feedback loop identified: 'The auto-scaler created a feedback loop: new pods → sidecar leaks memory → node exhaustion → eviction → auto-scaler creates more pods. This made the situation worse, not better.' Multiple root causes distinguished: (1) Memory leak in logging sidecar (the trigger). (2) Missing resource limits on sidecar containers (the enabling condition). (3) Health check timeout too aggressive (amplified the impact). (4) Auto-scaler unaware of the root cause (prolonged the incident)"
+    weight: 0.35
+    description: "Complete causal chain"
+  - type: llm_judge
+    criteria: "Contributing factors and amplifiers are identified — contributing factors: (1) 'No memory limits on sidecar containers: Kubernetes resource limits were set for the main container but not sidecars. This allowed the leak to consume unbounded memory.' (2) 'Health check timeout too short (2 seconds): under high CPU load, the health check responded in 3-4 seconds. A 5-second timeout would have kept replicas in rotation long enough for the CPU spike to resolve.' (3) 'Load balancer removes unhealthy backends too aggressively: 2 consecutive failed health checks triggers removal. Industry practice is 3-5 failures.' (4) 'Auto-scaler doesn't check node health: new pods were scheduled on the same unhealthy node, creating a futile scaling loop.' (5) 'Minimum healthy backend threshold not configured: load balancer should keep at least 1 backend even if health checks fail, rather than serving 502 to everyone.' Why diagnosis was hard: 'The on-call engineer saw 502 errors from the load balancer (the symptom at the end of the chain) and investigated the load balancer first. Each system in the chain looked like it was working correctly in isolation — Kubernetes was correctly evicting pods, the load balancer was correctly removing unhealthy backends. The problem was the interaction between correctly-functioning systems'"
+    weight: 0.35
+    description: "Contributing factors"
+  - type: llm_judge
+    criteria: "Action items target different points in the failure chain — break the chain at multiple points: (1) Root trigger: 'Fix memory leak in logging sidecar. Upgrade to patched version. Owner: Platform team. Due: 1 week.' (2) Enabling condition: 'Add resource limits to ALL sidecar containers. Audit existing deployments. Owner: Platform team. Due: 2 weeks.' (3) Amplification: 'Increase health check timeout from 2s to 5s. Increase failure threshold from 2 to 3 consecutive failures. Owner: SRE team. Due: 1 week.' (4) Mitigation: 'Configure load balancer minimum healthy backends (at least 1) to prevent complete backend removal. Owner: SRE team. Due: 1 week.' (5) Recovery: 'Add node-level memory alerting that triggers investigation before pods are evicted. Owner: SRE team. Due: 2 weeks.' (6) Diagnosis speed: 'Create runbook for 502 debugging that includes checking Kubernetes node health, not just load balancer. Owner: on-call team. Due: 1 week.' Defense in depth: 'No single fix resolves this. Multiple fixes at different chain points ensure that even if one layer fails, the next catches it'"
+    weight: 0.30
+    description: "Multi-point remediation"

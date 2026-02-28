@@ -1,0 +1,46 @@
+meta:
+  id: cdc-implementation
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Change Data Capture implementation — design and troubleshoot CDC pipelines using log-based and query-based approaches for real-time data synchronization"
+  tags: [CDC, change-data-capture, debezium, replication, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We need to move from nightly batch
+  loads to near-real-time data synchronization for our orders and
+  inventory tables. We're evaluating CDC approaches:
+
+  Option A: Query-based CDC — poll the source every 5 minutes with
+  WHERE updated_at > last_watermark. Simple but we're worried about
+  missed updates (what if updated_at isn't always set?) and deletes.
+
+  Option B: Log-based CDC with Debezium — read from the PostgreSQL
+  WAL (Write-Ahead Log). More complete but adds infrastructure
+  complexity (Kafka, Debezium connectors, schema registry).
+
+  We have 50 tables, some with 100M+ rows, and ~500 updates/second
+  at peak. We need to handle inserts, updates, and hard deletes.
+  The target is Snowflake.
+
+  Which approach should we use, and how do we implement it
+  without breaking our existing pipelines?"
+
+  Task: Compare CDC approaches, recommend the right one for this
+  scenario, and design the implementation with failure handling.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response compares query-based vs log-based CDC thoroughly — query-based: pros (simple, no infrastructure overhead, works with any database), cons (misses rows without updated_at, can't detect deletes, polling interval creates latency, puts load on source database with repeated queries). Log-based: pros (captures all changes including deletes, minimal source impact, near-zero latency, captures the exact sequence of changes), cons (requires infrastructure like Kafka + Debezium, more complex to operate, depends on database-specific log format, log retention limits). Recommends log-based for this scenario given the requirements (500 updates/sec, hard deletes, 50 tables)"
+    weight: 0.35
+    description: "ApproachComparison"
+  - type: llm_judge
+    criteria: "Response designs the implementation — Debezium connector configuration for PostgreSQL (WAL level, replication slot, publication), Kafka topics per table, a consumer/sink that applies changes to Snowflake (using Snowpipe or a micro-batch loader), schema evolution handling (Confluent Schema Registry with Avro), how to handle the initial snapshot (Debezium's snapshot mode for bootstrapping), and how to coexist with existing batch pipelines during the transition period"
+    weight: 0.35
+    description: "Implementation"
+  - type: llm_judge
+    criteria: "Response addresses CDC-specific failure modes — replication slot lag growing (consumer can't keep up, WAL files accumulate on source), missed events due to replication slot being dropped, schema changes in source tables breaking the connector, duplicate events during connector restart (need idempotent consumers), how to monitor CDC lag (difference between event time and processing time), and what to do when CDC breaks (fall back to full snapshot, repair replication slot, backfill from batch pipeline)"
+    weight: 0.30
+    description: "FailureHandling"

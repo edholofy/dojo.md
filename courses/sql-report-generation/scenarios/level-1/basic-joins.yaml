@@ -1,0 +1,34 @@
+meta:
+  id: basic-joins
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Join tables for reports — combine data from multiple tables using INNER JOIN and LEFT JOIN to create enriched business reports"
+  tags: [SQL, JOIN, INNER-JOIN, LEFT-JOIN, multi-table, beginner]
+
+state: {}
+
+trigger: |
+  The marketing team needs a report showing each customer's name,
+  email, and their total order amount. The customer info is in the
+  customers table and order data is in the orders table.
+
+  Tables:
+  - customers (customer_id, first_name, last_name, email, signup_date)
+  - orders (order_id, customer_id, amount, order_date, status)
+
+  Task: Write the JOIN query and explain INNER vs LEFT JOIN.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly joins tables and demonstrates INNER vs LEFT JOIN — query: 'Joining tables for reports: INNER JOIN — only customers WITH orders: SELECT c.first_name, c.last_name, c.email, COUNT(o.order_id) AS total_orders, COALESCE(SUM(o.amount), 0) AS total_spent FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.first_name, c.last_name, c.email ORDER BY total_spent DESC; LEFT JOIN — ALL customers, including those without orders: SELECT c.first_name, c.last_name, c.email, COUNT(o.order_id) AS total_orders, COALESCE(SUM(o.amount), 0) AS total_spent FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.first_name, c.last_name, c.email ORDER BY total_spent DESC; The difference: INNER JOIN returns only customers who have at least one order. Customers with zero orders are excluded. LEFT JOIN returns ALL customers from the left table (customers). If a customer has no orders, the order columns are NULL. COALESCE(SUM(o.amount), 0) converts NULL sums to 0 for customers with no orders. Which one to use: for a revenue report — INNER JOIN (only paying customers matter). For a customer engagement report — LEFT JOIN (you need to see who is NOT ordering)'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers JOIN mechanics, table aliases, and ON conditions — explanation: 'JOIN mechanics: Table aliases: FROM customers c means c is a short name for customers. c.first_name is equivalent to customers.first_name. Aliases are required when column names exist in both tables (like customer_id). ON condition: ON c.customer_id = o.customer_id specifies how rows match between tables. For each customer, find all orders where the customer_id matches. How INNER JOIN works: take each customer row. Find all matching order rows. If matches exist, create a combined row for each match. If no matches, exclude that customer entirely. How LEFT JOIN works: take each customer row. Find all matching order rows. If matches exist, create a combined row for each match. If no matches, still include the customer but fill order columns with NULL. JOIN with filtering: SELECT c.first_name, c.last_name, SUM(o.amount) AS revenue FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_date >= '2024-01-01' AND o.status = 'completed' GROUP BY c.customer_id, c.first_name, c.last_name. The WHERE clause filters AFTER the join. Only completed orders from 2024 are included'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers common JOIN pitfalls and multi-table joins — pitfalls: 'Common JOIN pitfalls: Duplicate rows from one-to-many joins: if a customer has 5 orders, the JOIN creates 5 rows for that customer. Without GROUP BY, the customer's name appears 5 times. With GROUP BY, the 5 rows are aggregated into one. Cartesian product (accidental cross join): if you forget the ON clause or use incorrect join keys, every row in table A matches every row in table B. 1,000 customers x 50,000 orders = 50,000,000 rows. This crashes queries and reports. Always verify: the number of rows after JOIN should be reasonable. Multiple table joins: SELECT c.first_name, c.last_name, p.product_name, o.amount, o.order_date FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id INNER JOIN products p ON o.product_id = p.product_id WHERE o.order_date >= '2024-10-01' ORDER BY o.order_date DESC. Each JOIN adds another table. Read it as: start with customers, match their orders, then match the products in those orders. NULL-safe joins: if customer_id can be NULL in the orders table, those rows will NOT match in an INNER JOIN and will have NULLs in a LEFT JOIN. Check your data: SELECT COUNT(*) FROM orders WHERE customer_id IS NULL'"
+    weight: 0.30
+    description: "Pitfalls"

@@ -1,0 +1,47 @@
+meta:
+  id: expert-analysis-shift
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Expert analysis shift — handle a day of complex analytical challenges requiring cross-domain expertise, stakeholder management, and production-grade solutions"
+  tags: [python, pandas, analysis, shift-simulation, expert, cross-domain]
+
+state: {}
+
+trigger: |
+  You are the senior data analyst on call. Today brings three
+  simultaneous challenges:
+
+  Challenge 1: The CFO finds that quarterly revenue reported by
+  the analytics team ($12.3M) does not match the finance system
+  ($11.8M). "Find the $500K discrepancy by noon." Data: analytics
+  team's orders table and finance team's invoices table, both with
+  customer_id, amount, and date fields.
+
+  Challenge 2: A data pipeline that feeds the executive dashboard
+  failed at 3 AM. The dashboard shows stale data. You need to
+  diagnose the failure, fix the pipeline, and backfill the missing
+  data — all while the CEO is presenting the dashboard to investors
+  at 2 PM.
+
+  Challenge 3: The ML team's churn model suddenly dropped from
+  0.85 AUC to 0.62 AUC on this week's predictions. They suspect
+  a data quality issue but cannot find it. "Something changed in
+  the input data."
+
+  Task: Triage and resolve all three issues, explaining your
+  approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response systematically investigates the revenue discrepancy using data reconciliation techniques — reconciliation: 'Revenue discrepancy investigation: Step 1 — Load both sources and align schemas: analytics = pd.read_csv(\"analytics_orders.csv\", parse_dates=[\"order_date\"]). finance = pd.read_csv(\"finance_invoices.csv\", parse_dates=[\"invoice_date\"]). q3_start, q3_end = \"2024-07-01\", \"2024-09-30\". analytics_q3 = analytics[analytics[\"order_date\"].between(q3_start, q3_end)]. finance_q3 = finance[finance[\"invoice_date\"].between(q3_start, q3_end)]. print(f\"Analytics total: ${analytics_q3['amount'].sum():,.0f}\"). print(f\"Finance total: ${finance_q3['amount'].sum():,.0f}\"). print(f\"Discrepancy: ${analytics_q3['amount'].sum() - finance_q3['amount'].sum():,.0f}\"). Step 2 — Common reconciliation issues to check: Check 1 — Date boundary differences: boundary_orders = analytics[(analytics[\"order_date\"] >= \"2024-09-28\") & (analytics[\"order_date\"] <= \"2024-10-02\")]. Some orders placed September 30 might be invoiced October 1. If finance uses invoice_date and analytics uses order_date, orders near quarter boundaries shift between periods. Check 2 — Refunds and cancellations: refunds_in_analytics = analytics_q3[analytics_q3[\"amount\"] < 0][\"amount\"].sum(). cancellations = analytics_q3[analytics_q3[\"status\"] == \"cancelled\"][\"amount\"].sum(). Finance might net refunds immediately while analytics still counts the original order. Check 3 — Currency conversion differences: if analytics converts at daily rates and finance converts at month-end rates, the totals will differ. Check 4 — Record-level reconciliation: merged = analytics_q3.merge(finance_q3, left_on=\"order_id\", right_on=\"invoice_id\", how=\"outer\", indicator=True, suffixes=(\"_analytics\", \"_finance\")). only_analytics = merged[merged[\"_merge\"] == \"left_only\"]. only_finance = merged[merged[\"_merge\"] == \"right_only\"]. amount_mismatches = merged[(merged[\"_merge\"] == \"both\") & (abs(merged[\"amount_analytics\"] - merged[\"amount_finance\"]) > 0.01)]. print(f\"Only in analytics: {len(only_analytics)} orders, ${only_analytics['amount_analytics'].sum():,.0f}\"). print(f\"Only in finance: {len(only_finance)} invoices, ${only_finance['amount_finance'].sum():,.0f}\"). print(f\"Amount mismatches: {len(amount_mismatches)} orders\"). This decomposes the $500K into explainable components'"
+    weight: 0.35
+    description: "Reconciliation"
+  - type: llm_judge
+    criteria: "Response diagnoses the pipeline failure and fixes it with backfill — pipeline: 'Pipeline failure diagnosis and fix: Step 1 — Check the logs: import subprocess. logs = subprocess.run([\"tail\", \"-100\", \"pipeline.log\"], capture_output=True, text=True).stdout. Common failure patterns: FileNotFoundError (source file not exported), ConnectionError (database unreachable), MemoryError (data grew beyond allocation), KeyError (schema changed — column renamed or removed), ValueError (unexpected data format — dates, nulls). Step 2 — Identify what data is missing: dashboard_data = pd.read_sql(\"SELECT MAX(date) as last_date FROM dashboard_metrics\", engine). print(f\"Dashboard data current through: {dashboard_data['last_date'].iloc[0]}\"). missing_dates = pd.date_range(dashboard_data[\"last_date\"].iloc[0] + pd.Timedelta(days=1), datetime.now()). print(f\"Missing {len(missing_dates)} days of data\"). Step 3 — Fix the root cause: If schema change: update the pipeline to handle the new column name. If memory: add chunked processing. If connection: verify credentials and network. Step 4 — Backfill missing data: def backfill_pipeline(start_date, end_date): dates = pd.date_range(start_date, end_date). for date in dates: try: run_pipeline_for_date(date). logger.info(f\"Backfilled {date:%Y-%m-%d}\"). except Exception as e: logger.error(f\"Backfill failed for {date}: {e}\"). Backfill processes each missing day sequentially. Verify the dashboard shows current data after backfill. Timeline: diagnose by 10 AM, fix by 11 AM, backfill by 1 PM, CEO presents at 2 PM with fresh data'"
+    weight: 0.35
+    description: "Pipeline fix"
+  - type: llm_judge
+    criteria: "Response investigates the model performance degradation as a data quality issue — model: 'Model AUC drop investigation: Step 1 — Compare this week's input data to last week's: this_week = pd.read_csv(\"features_current.csv\"). last_week = pd.read_csv(\"features_previous.csv\"). For each feature, compare distributions: for col in this_week.select_dtypes(include=\"number\").columns: current_mean = this_week[col].mean(). previous_mean = last_week[col].mean(). pct_change = abs(current_mean - previous_mean) / (abs(previous_mean) + 1e-10) * 100. current_nulls = this_week[col].isna().mean() * 100. previous_nulls = last_week[col].isna().mean() * 100. if pct_change > 20 or abs(current_nulls - previous_nulls) > 5: print(f\"ALERT {col}: mean changed {pct_change:.0f}%, nulls {previous_nulls:.1f}% -> {current_nulls:.1f}%\"). Step 2 — Check for schema changes: new_columns = set(this_week.columns) - set(last_week.columns). missing_columns = set(last_week.columns) - set(this_week.columns). A missing column that gets filled with zeros or NaN by the model pipeline would silently degrade predictions. Step 3 — Check categorical distributions: for col in this_week.select_dtypes(include=[\"object\", \"category\"]).columns: current_dist = this_week[col].value_counts(normalize=True). previous_dist = last_week[col].value_counts(normalize=True). new_values = set(current_dist.index) - set(previous_dist.index). if new_values: print(f\"{col} has new categories: {new_values}\"). Likely root causes: a feature column that was numeric is now returning strings (upstream schema change), a key join produced many NaN values (source table had missing data), or a date-based feature is computing incorrectly (timezone or daylight saving issue). Fix: identify the broken feature, correct the pipeline, re-generate features, and re-score. AUC should recover to 0.85'"
+    weight: 0.30
+    description: "Model investigation"

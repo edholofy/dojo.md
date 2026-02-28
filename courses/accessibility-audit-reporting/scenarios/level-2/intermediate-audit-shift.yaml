@@ -1,0 +1,54 @@
+meta:
+  id: intermediate-audit-shift
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Intermediate audit shift — conduct a thorough accessibility audit of a web application including screen reader testing, ARIA review, and actionable remediation"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a mid-level accessibility auditor. Your
+  client is a SaaS project management tool. You need
+  to audit the three most-used features:
+
+  FEATURE 1 — Task Board (Kanban)
+  - Drag-and-drop columns with task cards
+  - Task cards show title, assignee avatar, due date,
+    and priority tag
+  - Cards can be clicked to open a detail modal
+  - Columns can be collapsed/expanded
+
+  FEATURE 2 — Team Calendar
+  - Monthly calendar view with events
+  - Events can be clicked to view details
+  - Date cells can be clicked to create new events
+  - Week/month/day view toggle
+
+  FEATURE 3 — Notifications Panel
+  - Bell icon with count badge
+  - Dropdown panel with notification list
+  - "Mark all as read" and individual dismiss buttons
+  - Real-time updates when new notifications arrive
+
+  You've completed your testing. Write the audit
+  report section covering all three features.
+
+  Task: Write detailed audit findings for all three
+  features with screen reader test results, keyboard
+  audit results, and developer-ready remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits the Kanban board thoroughly — drag-and-drop accessibility (WCAG 2.1.1: drag-and-drop must have keyboard alternative — provide 'Move task' button or keyboard shortcut that opens a destination picker, WCAG 2.5.7 Dragging Movements Level AA in WCAG 2.2), card accessibility (each card must be a focusable element with accessible name: 'Fix login bug, assigned to Sarah, due March 15, high priority' — all card information conveyed to screen readers, not just the title), modal management (opening card detail modal: focus moves to modal, focus trapped within modal, Escape closes modal and returns focus to the card that opened it), column collapse/expand (aria-expanded on collapse trigger, content hidden with proper method when collapsed, state change announced), and screen reader test results (verbatim examples: 'Screen reader announces: Fix login bug — Missing: assignee, due date, priority information that are visually present on the card')"
+    weight: 0.35
+    description: "KanbanAudit"
+  - type: llm_judge
+    criteria: "Response audits the calendar and notifications — Calendar accessibility (WCAG 4.1.2: calendar must use grid role with proper column headers for days, each date cell must be navigable with arrow keys, events within dates must be focusable and announce event name and time, view toggle must update screen reader context: 'Calendar view: March 2026, Month view', creating events: keyboard users must be able to select a date and trigger event creation without mouse), Notifications panel (WCAG 4.1.3: new notifications must be announced via aria-live region, bell icon must announce count: 'Notifications, 3 unread', dropdown panel must manage focus: open moves focus to first notification, close returns focus to bell icon, mark all read must announce confirmation: '3 notifications marked as read', individual dismiss buttons must include notification context in label: 'Dismiss notification: Sarah mentioned you in Task-123'). Each finding includes the screen reader experience and specific code fix"
+    weight: 0.35
+    description: "CalendarNotificationsAudit"
+  - type: llm_judge
+    criteria: "Response demonstrates professional audit report quality — findings are organized by feature then by severity within each feature, each finding follows consistent template (ID, title, WCAG criterion, severity, location, current behavior, expected behavior, user impact, remediation with code example, effort estimate), executive summary at the top covering all three features (overall compliance status per feature, total issues by severity, top 3 priority fixes across all features), remediation roadmap (prioritized fix order considering: severity, user impact, shared components that fix multiple issues at once — e.g., fixing the modal focus management pattern fixes it for both task detail and notification panel), and methodology note (tested with: NVDA 2024.x + Chrome 120, keyboard-only navigation, automated scan with axe DevTools)"
+    weight: 0.30
+    description: "ReportQuality"

@@ -1,0 +1,44 @@
+meta:
+  id: mobile-native-app-audit
+  level: 4
+  course: accessibility-audit-reporting
+  type: output
+  description: "Mobile native app audit — conduct comprehensive accessibility audits of iOS and Android native applications"
+  tags: [mobile, native, iOS, Android, VoiceOver, TalkBack, expert]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "We've been auditing websites
+  for years but a client wants their iOS and Android
+  banking apps audited. Native apps are different from
+  web:
+
+  - Different accessibility APIs (UIAccessibility on
+    iOS, AccessibilityNodeInfo on Android)
+  - Different screen readers (VoiceOver vs TalkBack)
+  - Platform-specific gestures and patterns
+  - No HTML/ARIA — native accessibility attributes
+  - App store accessibility requirements
+
+  My team knows WCAG for web but isn't sure how to
+  apply it to native apps. EN 301 549 has specific
+  mobile requirements. How do we audit native apps?"
+
+  Task: Design a native mobile app accessibility
+  audit methodology for iOS and Android with
+  platform-specific testing procedures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers iOS-specific audit methodology — VoiceOver testing (swipe right to move through elements, double-tap to activate, rotor for headings/links/form controls — test that all interactive elements are reachable and announced with correct role/label/state), iOS accessibility API checks (accessibilityLabel: does every interactive element have a meaningful label? accessibilityTraits: are roles correctly set — button, link, header, adjustable? accessibilityValue: for sliders and steppers, is the current value announced? accessibilityHint: are complex interactions explained?), platform-specific patterns (UIAccessibility container: are grouped elements read as logical units? Dynamic Type: does app respect user's text size preferences? Large Content Viewer: do toolbar icons show enlarged versions on long press? Reduce Motion: does app respect this system setting?), and banking-specific checks (Face ID/Touch ID flows accessible, transaction confirmation read aloud correctly, sensitive data handling: account numbers not fully exposed to screen reader in public, VoiceOver announces currency amounts correctly)"
+    weight: 0.35
+    description: "iOSAudit"
+  - type: llm_judge
+    criteria: "Response covers Android-specific audit methodology — TalkBack testing (swipe right to navigate, double-tap to activate, explore by touch, navigation mode selector for headings/links/controls — test all interactive elements reachable and correctly announced), Android accessibility API checks (contentDescription: meaningful labels on all interactive elements, importantForAccessibility: decorative elements excluded, LiveRegion: dynamic content changes announced, AccessibilityNodeInfo: correct roles and states), platform-specific patterns (Material Design accessibility: components should follow Material accessibility guidelines, font scaling: app respects system font size up to 200%, Switch Access: app navigable with switch devices, BrailleBack: compatibility with refreshable braille displays), and cross-platform comparison (test same features on both platforms: features may be accessible on iOS but not Android or vice versa, document platform-specific findings clearly: 'iOS: Supports — VoiceOver announces all form labels correctly. Android: Partially Supports — TalkBack misses labels on 3 of 8 form fields in the transfer flow.')"
+    weight: 0.35
+    description: "AndroidAudit"
+  - type: llm_judge
+    criteria: "Response addresses standards and reporting for native apps — applicable standards (WCAG 2.2 applies to mobile apps via interpretation — W3C published 'Mobile Accessibility: How WCAG 2.0 and Other W3C/WAI Guidelines Apply to Mobile', EN 301 549 Chapter 11: specific requirements for native software beyond WCAG — non-text contrast for UI components, platform accessibility services support, preference settings respect, Apple Human Interface Guidelines accessibility section, Google Material Design accessibility section), report format for native apps (platform-specific sections: iOS findings and Android findings with cross-references for shared issues, device and OS versions tested documented, screen reader versions documented, test with both current and previous OS version — users don't always update), and audit scope for banking apps (critical paths to test: login/authentication, account overview, transfer money, pay bills, transaction history, settings/profile — each tested with screen reader, keyboard/switch access, large text, and reduced motion on both platforms)"
+    weight: 0.30
+    description: "StandardsReporting"

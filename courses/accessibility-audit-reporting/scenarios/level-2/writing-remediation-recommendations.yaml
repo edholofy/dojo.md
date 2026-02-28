@@ -1,0 +1,46 @@
+meta:
+  id: writing-remediation-recommendations
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Writing remediation recommendations — craft actionable, developer-friendly remediation guidance that leads to actual fixes"
+  tags: [remediation, recommendations, developer-friendly, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor says: "I've been doing audits
+  for 6 months but the development teams tell me my
+  recommendations are 'too vague to implement.' Here
+  are examples they complained about:
+
+  - My recommendation: 'Add proper ARIA attributes'
+  - My recommendation: 'Ensure keyboard accessibility'
+  - My recommendation: 'Fix the color contrast'
+  - My recommendation: 'Make the form accessible'
+  - My recommendation: 'Add alt text to images'
+
+  The lead developer said: 'These tell me WHAT to do
+  but not HOW. I need specific code changes, not
+  general principles. I'm not an accessibility expert.'
+
+  How do I write recommendations that developers can
+  actually implement?"
+
+  Task: Rewrite each vague recommendation as a
+  specific, developer-actionable remediation with
+  code examples and implementation guidance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response rewrites vague recommendations into specific guidance — 'Add proper ARIA attributes' becomes: 'Add aria-expanded=true/false to the accordion trigger button. When the section is open, set aria-expanded=true. When closed, set aria-expanded=false. Add aria-controls=panel-id pointing to the content panel. Code example: <button aria-expanded=false aria-controls=panel-1>Section Title</button> <div id=panel-1 hidden>Content</div>', 'Ensure keyboard accessibility' becomes: 'The dropdown menu cannot be opened with keyboard. Add keydown event listener for Enter and Space to open the menu (matching click behavior). Add Arrow Down/Up to navigate options, Enter to select, Escape to close and return focus to the trigger button. Code example provided.', 'Fix the color contrast' becomes: 'Change body text color from #999999 to #595959. This provides 7:1 contrast ratio (exceeds AA requirement of 4.5:1). Update the CSS variable --text-secondary from #999 to #595959 in your theme file.'"
+    weight: 0.35
+    description: "SpecificRecommendations"
+  - type: llm_judge
+    criteria: "Response rewrites form and image recommendations with code examples — 'Make the form accessible' becomes: 'Associate each label with its input using the for attribute: <label for=email>Email address</label> <input id=email type=email aria-required=true>. Add error messages below each field with aria-describedby: <input id=email aria-describedby=email-error> <span id=email-error class=error>Please enter a valid email address</span>. Add aria-invalid=true when field has error. Move focus to first invalid field on form submission error.', 'Add alt text to images' becomes: 'Product images need descriptive alt text. For product photos: describe the product for someone who can't see it — <img alt=Navy blue crew neck cotton t-shirt with white logo on chest>. For decorative images: use empty alt — <img alt= role=presentation>. For the team photo on the About page: <img alt=Sarah Chen, CEO — standing in the company lobby>'. Each rewrite includes the exact code change needed"
+    weight: 0.35
+    description: "FormImageRecommendations"
+  - type: llm_judge
+    criteria: "Response teaches the remediation writing framework — ABCD framework (Action: what to do, Before: what exists now with code snippet, Change: specific code change with before/after, Done: how to verify the fix works — test method), developer empathy tips (write for developers who may not know accessibility — explain why the fix matters in one sentence, include code examples in the language/framework they use, reference design system components where applicable, provide testing verification steps: 'Test: Tab to the button, press Enter — menu should open'), grouping recommendations (group related fixes together: 'All form fields on this page need the same label association pattern — apply this fix to all 8 form fields', provide quick wins first — fixes that are simple and high-impact build momentum), and anti-patterns to avoid (don't just say 'follow WCAG' — that's like saying 'follow the law', don't link to WCAG spec as the instruction — it's a standard not a tutorial, don't recommend 'test with a screen reader' without explaining what to test for)"
+    weight: 0.30
+    description: "WritingFramework"

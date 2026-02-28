@@ -1,0 +1,67 @@
+meta:
+  id: multi-region-serverless
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design multi-region serverless architecture — implement active-active deployments, data replication, and failover for globally distributed Lambda applications"
+  tags: [AWS, Lambda, multi-region, global, failover, disaster-recovery, expert]
+
+state: {}
+
+trigger: |
+  Your serverless application serves users globally. A US-East-1
+  outage took the entire service down for 4 hours. The board demands
+  multi-region resilience. Current architecture (single region):
+
+  Route53 → API Gateway (us-east-1) → Lambda → DynamoDB
+
+  Target: active-active across us-east-1 and eu-west-1 with
+  automatic failover. Users should be routed to the nearest region
+  with < 200ms latency.
+
+  Design challenges:
+
+  1. Data replication — DynamoDB Global Tables:
+     Automatically replicates data across regions with ~1 second
+     latency. Last-writer-wins conflict resolution. But: Global
+     Tables cost 2x (write replicated to all regions).
+
+  2. API deployment — same code, multiple regions:
+     Deploy same Lambda functions and API Gateway to both regions.
+     Use SAM StackSets or CDK Pipelines for multi-region deployment.
+     Route53 health checks route traffic to healthy region.
+
+  3. Event processing — how to handle events in both regions:
+     SQS queues are regional. S3 events trigger in the bucket's
+     region. EventBridge can be global (cross-region event bus).
+     Challenge: prevent duplicate processing when both regions
+     process the same event.
+
+  4. State management — avoid split-brain:
+     If both regions write to the same DynamoDB item simultaneously,
+     last-writer-wins may lose data. Design for conflict resolution
+     or use conditional writes.
+
+  5. Deployment coordination — how to deploy across regions safely:
+     Deploy to secondary first, test, then deploy to primary.
+     Canary deployment per region before full rollout.
+
+  Task: Design multi-region serverless architecture. Write: the
+  active-active vs active-passive trade-off, data replication
+  strategies (DynamoDB Global Tables, S3 Cross-Region Replication),
+  routing and failover (Route53, CloudFront), event processing in
+  multi-region, deployment strategy, and cost analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Active-active architecture is explained — active-active: both regions serve traffic simultaneously, Route53 latency-based routing sends users to nearest region. RPO: ~0 (replicated data), RTO: ~0 (automatic failover). Active-passive: secondary region on standby, Route53 failover routing switches on health check failure. RPO: replication lag, RTO: DNS propagation (60-300 seconds). Cost: active-active costs ~2x for compute and data replication. Decision: active-active for global users or strict availability requirements, active-passive for regional with DR needs"
+    weight: 0.35
+    description: "Active-active design"
+  - type: llm_judge
+    criteria: "Data and event replication are covered — DynamoDB Global Tables: automatic multi-master replication, ~1s lag, last-writer-wins. Design for eventual consistency. S3: Cross-Region Replication for object storage. SQS: regional only — deploy separate queues per region, route events to appropriate region. EventBridge: global event bus for cross-region events. Idempotency: critical in multi-region — same event may be processed in both regions. Use idempotency keys and conditional DynamoDB writes. Conflict resolution: design data model to avoid conflicts (partition by region, use timestamps)"
+    weight: 0.35
+    description: "Data and events"
+  - type: llm_judge
+    criteria: "Deployment and operations are practical — multi-region deployment: CDK Pipelines or SAM StackSets deploy to all regions. Deploy secondary first, run integration tests, then deploy primary (blue-green across regions). Route53 health checks: check API Gateway endpoint in each region, failover if unhealthy. CloudFront: distribute static assets globally, origin failover group for API. Monitoring: centralized dashboard showing both regions (CloudWatch cross-account/cross-region). Cost: estimate additional cost of multi-region (2x DynamoDB, 2x Lambda, Route53 health checks). Justify: compare cost of multi-region to cost of downtime"
+    weight: 0.30
+    description: "Deployment and operations"

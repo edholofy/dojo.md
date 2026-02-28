@@ -1,0 +1,49 @@
+meta:
+  id: accessibility-testing-cicd
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Accessibility testing in CI/CD — integrate automated accessibility testing into development pipelines and report on continuous compliance"
+  tags: [CI/CD, automated-testing, continuous, pipeline, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "After our last audit, the
+  client fixed all 45 findings. But when we re-audited
+  6 months later, 20 new accessibility issues had been
+  introduced by new features. The client is frustrated:
+  'We spent months fixing issues and now there are
+  new ones. How do we prevent regressions?'
+
+  They want to integrate accessibility testing into
+  their CI/CD pipeline. Questions:
+  1. What accessibility checks can run automatically
+     in CI/CD?
+  2. Should failing accessibility tests block
+     deployment?
+  3. How do we report on continuous accessibility
+     compliance?
+  4. What's the relationship between CI/CD testing
+     and manual audits?
+  5. How do we set thresholds and gradually improve?
+
+  Help me recommend a CI/CD accessibility testing
+  strategy."
+
+  Task: Design a CI/CD accessibility testing strategy
+  and recommend how to report on continuous compliance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs CI/CD integration strategy — what to test automatically (axe-core in unit/integration tests: test each component in isolation for ARIA violations, missing labels, contrast issues, Pa11y or Lighthouse CI in end-to-end pipeline: test full page renders for page-level issues, HTML validation for semantic structure, custom rules for organization-specific patterns), when to test (pre-commit hooks: linting for basic accessibility issues in IDE, pull request checks: automated accessibility scan of changed components, staging deployment: full-page accessibility scan of all templates, production monitoring: scheduled weekly scans for regression detection), and deployment gating strategy (recommended phased approach: Phase 1 — warning only: accessibility failures shown but don't block deployment — builds awareness, Phase 2 — block on Critical: Level A violations block deployment, Phase 3 — block on Critical and Major: Level A and AA violations block deployment — each phase allows team to adapt)"
+    weight: 0.35
+    description: "CICDStrategy"
+  - type: llm_judge
+    criteria: "Response addresses thresholds and continuous improvement — threshold setting (don't start with zero-tolerance: if current baseline has 20 issues, setting threshold to 0 means nothing ships, start with current baseline as threshold — no new issues allowed, reduce threshold quarterly: Q1 baseline, Q2 reduce by 25%, Q3 reduce by 50%, Q4 target zero), metrics dashboard for continuous compliance (automated report showing: total issues over time — trend chart, new issues introduced per sprint, issues fixed per sprint, accessibility score by page/component, regression rate: % of previously fixed issues that reappeared), relationship to manual audits (CI/CD catches ~30% of issues: automated testing is necessary but not sufficient, still need quarterly manual audits for: screen reader testing, keyboard flow testing, cognitive accessibility, content review — CI/CD prevents regressions between manual audits), and reporting format (monthly automated accessibility report: executive summary with trend, new issues with severity and responsible team, resolved issues with verification, score by product area — keeps accessibility visible without requiring manual effort)"
+    weight: 0.35
+    description: "ThresholdsContinuous"
+  - type: llm_judge
+    criteria: "Response provides specific tooling recommendations and implementation — tool stack (axe-core: JavaScript library integrating with Jest, Cypress, Playwright, Testing Library — test components in isolation, jest-axe: Jest matcher for React component accessibility testing, @axe-core/playwright or cypress-axe: end-to-end accessibility testing, Lighthouse CI: full-page audit in CI pipeline with scoring, Pa11y CI: command-line tool for testing multiple URLs), implementation example (in a React project: import axe-core in component tests, assert zero violations per component, in Playwright E2E tests: inject axe-core and scan page after key interactions, in GitHub Actions: run Lighthouse CI on PR preview deploys and comment results on PR), false positive management (automated tools produce false positives: maintain a suppression file with documented justification for each suppression, review suppressions quarterly, tag suppressions as 'verified false positive' or 'accepted risk with manual workaround'), and custom rules (create organization-specific rules: enforce company naming conventions for ARIA labels, require specific patterns for custom components, flag deprecated components that have known accessibility issues)"
+    weight: 0.30
+    description: "ToolingImplementation"

@@ -1,0 +1,85 @@
+meta:
+  id: remote-hybrid-meeting-notes
+  level: 2
+  course: meeting-notes-action-items
+  type: output
+  description: "Remote and hybrid meeting notes — handle the unique challenges of documenting meetings with both in-person and remote participants"
+  tags: [remote, hybrid, virtual, zoom, documentation]
+
+state: {}
+
+trigger: |
+  You're a team lead managing a hybrid team. You just ran a
+  45-minute product planning meeting with significant
+  challenges. You need to create comprehensive meeting notes.
+
+  Setup:
+  - In-person (conference room): You, Alex (PM), Jen (Design)
+  - Remote (Zoom): Carlos (Backend Dev, Mexico City), Yuki
+    (Frontend Dev, Tokyo — it's 11 PM her time), Sam
+    (QA, home office — had childcare interruptions)
+
+  Meeting: Sprint 14 Planning — Mobile App v2.0
+  Duration: 45 minutes
+
+  What happened:
+  1. You shared your screen showing the sprint backlog. Carlos
+     couldn't see it clearly and asked you to zoom in twice.
+     Yuki's video froze for about 3 minutes around minute 10.
+
+  2. Alex presented 3 feature priorities:
+     a) Push notification system (estimated 8 points)
+     b) Offline mode for saved content (estimated 13 points)
+     c) User profile redesign (estimated 5 points)
+     Team velocity is 20 points/sprint.
+
+  3. Discussion on push notifications — Jen showed mockups on
+     the whiteboard in the conference room. Carlos asked to see
+     them but the camera angle was poor. Jen took photos and
+     posted to Slack mid-meeting. Carlos then raised a concern
+     about notification delivery reliability on Android. He
+     suggested using Firebase Cloud Messaging instead of the
+     custom solution. Alex agreed this was a better approach
+     but said it would add 3 points to the estimate (now 11).
+
+  4. Yuki unmuted to discuss offline mode but her audio was
+     breaking up. She typed in chat instead: "Offline mode
+     needs local SQLite db. I've done this before. 13 points
+     is right but we need to decide on sync conflict
+     resolution strategy — last-write-wins or merge?" Alex
+     said last-write-wins for v2.0, revisit for v2.1.
+
+  5. Sam was on mute most of the meeting. When asked about QA
+     capacity, Sam apologized for being distracted (child was
+     sick) and said they could write test plans for push
+     notifications and profile redesign but not offline mode
+     in this sprint. Offline mode QA would need to be next
+     sprint.
+
+  6. Sprint commitment: Push notifications (11 pts) + Profile
+     redesign (5 pts) = 16 points. Offline mode deferred to
+     Sprint 15 with pre-work on sync strategy starting now.
+
+  7. Several things were shared only in Zoom chat during the
+     meeting and not discussed verbally:
+     - Yuki: link to an open source SQLite wrapper library
+     - Carlos: "FYI I'm on vacation Sprint 15 weeks 1-2"
+     - Sam: "Can someone share the updated mockup photos?"
+
+  Task: Create the meeting notes that work for both in-person
+  and remote participants, capturing everything including
+  what happened only in chat.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates meeting notes that bridge the hybrid gap — documents everything regardless of channel (verbal discussions, whiteboard content, Zoom chat messages, typed comments); explicitly includes items that were only in chat (Yuki's library link, Carlos's vacation notice for Sprint 15, Sam's request for mockups); notes that Jen posted mockup photos to Slack and includes a reference to where they can be found; captures Yuki's typed input about SQLite/sync strategy with the same weight as verbal discussion; the notes make remote participants' contributions equally visible to in-room participants' contributions."
+    weight: 0.35
+    description: "HybridDocumentation"
+  - type: llm_judge
+    criteria: "Response properly documents sprint decisions and action items — clearly states sprint commitment (Push notifications 11 pts + Profile redesign 5 pts = 16 points, under 20-point velocity); documents the offline mode deferral to Sprint 15 with pre-work starting now; captures technical decisions (Firebase Cloud Messaging for push, last-write-wins for sync, revisit merge strategy in v2.1); creates action items with owners: Carlos's FYI about Sprint 15 vacation is flagged as a planning consideration; Sam's QA capacity limitation is documented; Yuki's library suggestion is captured for evaluation; includes who will share mockup photos with Sam."
+    weight: 0.35
+    description: "SprintDecisionsAndActions"
+  - type: llm_judge
+    criteria: "Response addresses hybrid meeting challenges constructively — notes connectivity and participation issues without blame (Yuki's timezone, video freeze, audio issues; Sam's childcare situation; Carlos's screen visibility); treats these as process improvement opportunities not personal failures; suggests or implies improvements for future hybrid meetings (better camera for whiteboard, sharing screen content in advance, consolidating chat items); the notes are organized so someone who missed the meeting (or had connectivity issues) can fully understand what was decided."
+    weight: 0.30
+    description: "HybridBestPractices"

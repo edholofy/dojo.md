@@ -1,0 +1,42 @@
+meta:
+  id: alert-automation-orchestration
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Design alert automation and auto-remediation — build systems that automatically investigate and fix common alert conditions without human intervention"
+  tags: [monitoring, automation, auto-remediation, orchestration, self-healing, expert]
+
+state: {}
+
+trigger: |
+  Your on-call data reveals that 40% of pages result in the same
+  5 remediation actions:
+
+  1. Restart a service pod (15% of pages)
+  2. Clear a disk by rotating logs (10% of pages)
+  3. Scale up a service (8% of pages)
+  4. Restart a stuck Kafka consumer (4% of pages)
+  5. Clear a Redis cache (3% of pages)
+
+  Each of these is well-understood, has a runbook, and is executed
+  the same way every time. Your SRE lead says: "Why are we waking
+  people up for things a script could do?"
+
+  Task: Design an alert automation system that handles these 5
+  actions automatically. Include: automation architecture, safety
+  controls (how to prevent automation from making things worse),
+  escalation when automation fails, and the human oversight model.
+
+assertions:
+  - type: llm_judge
+    criteria: "Automation architecture handles the 5 actions with appropriate sophistication — architecture: 'Three-stage automation pipeline: Detection → Verification → Remediation → Validation. For each automated action: Stage 1 (Detection): existing alert fires. No change to detection logic. Stage 2 (Verification): before auto-remediating, verify the condition is what we think it is. This prevents automation from acting on false positives. Stage 3 (Remediation): execute the fix. Stage 4 (Validation): verify the fix worked. If not, escalate to human.' Action-specific design: '(1) Service pod restart: Detection: health check failures or error rate spike. Verification: confirm the pod is actually unhealthy (not a monitoring glitch). Check: is this one pod or all pods? Only auto-restart if it is a single pod with others healthy. Remediation: kubectl rollout restart for the specific pod. Validation: health check passes within 2 minutes. If not: escalate. Safety: maximum 2 auto-restarts per service per hour. If a third restart is needed, escalate — the service has a deeper problem. (2) Log rotation / disk cleanup: Detection: disk usage above 90%. Verification: confirm it is log files consuming space (not database files or application data). Remediation: execute log rotation script. Validation: disk usage drops below 80%. Safety: never delete non-log files. Only rotate files matching known log patterns. (3) Service scaling: Detection: CPU or request queue above threshold. Verification: confirm the load is real (not a monitoring spike). Check current replica count against maximum allowed. Remediation: scale up by 2 replicas (not to max immediately — gradual scaling). Validation: load per replica decreases within 5 minutes. Safety: maximum scale is 2x current replicas. Beyond that: escalate (may indicate a deeper issue). (4) Kafka consumer restart: Detection: consumer lag increasing for 10+ minutes. Verification: consumer pods are running but not processing (stuck, not crashed). Remediation: restart consumer pods. Validation: consumer lag begins decreasing within 5 minutes. Safety: only restart consumers for known-stable topics. New topics require human review. (5) Redis cache clear: Detection: cache hit rate below 50% or memory above 95%. Verification: confirm the cache is serving stale or corrupted data (not just a cold cache after a restart). Remediation: selective cache flush for affected key patterns. Validation: hit rate recovers within 10 minutes. Safety: never flush the entire cache — only targeted key patterns'"
+    weight: 0.35
+    description: "Automation architecture"
+  - type: llm_judge
+    criteria: "Safety controls prevent automation from causing harm — safety framework: '(1) Blast radius limits: every automated action has a maximum blast radius. Pod restarts: one pod at a time, never all pods. Scaling: maximum 2x current count. Cache clearing: targeted keys only, never full flush. Disk cleanup: logs only, never application data. These limits ensure that even if the automation makes a wrong decision, the impact is contained. (2) Rate limiting: each action type has a maximum execution frequency per service. If the limit is exceeded, automation stops and escalates. This prevents runaway automation loops (service crashes, automation restarts, service crashes again, automation restarts again). (3) Circuit breaker on automation: if an automated action fails validation 2 times in a row for the same service, the automation circuit breaker opens for that service. All future alerts for that service go directly to the on-call engineer until the circuit breaker is manually reset. (4) Dry-run mode: new automation rules run in dry-run mode for 2 weeks before going live. In dry-run mode, the automation logs what it would have done without executing. Engineers review the dry-run logs to verify the automation would have made correct decisions. (5) Audit trail: every automated action is logged: what was detected, what verification was performed, what action was taken, what the result was. This audit trail is available to the on-call engineer and is included in any postmortem involving an automated action'"
+    weight: 0.35
+    description: "Safety controls"
+  - type: llm_judge
+    criteria: "Human oversight model balances automation with human judgment — oversight model: 'Automation does not replace the on-call engineer — it handles the routine so the engineer can focus on the complex. Three tiers of alert response: Tier 1 (fully automated, 40% of pages): the 5 actions above. Automation handles detection, remediation, and validation. The on-call engineer receives a notification (not a page) after automation resolves the issue. Example notification: Auto-remediation: restarted stuck Kafka consumer on order-processing. Consumer lag recovering. No action needed. Tier 2 (automation-assisted, 30% of pages): automation performs initial investigation and presents findings to the on-call engineer. The engineer makes the decision and may execute the fix manually or approve the automation to proceed. Example: alert fires, automation checks 5 common causes and presents: checked recent deployments (none), checked dependencies (inventory-service latency elevated), checked resource usage (normal). Likely cause: inventory-service. The engineer then investigates inventory-service specifically rather than starting from scratch. Tier 3 (human-only, 30% of pages): novel situations, security alerts, and complex multi-service incidents. Automation has no playbook for these — they require human judgment, creativity, and cross-team coordination.' Escalation: 'Automation always escalates to humans when: (a) the automated fix does not resolve the issue, (b) the rate limit is exceeded, (c) the verification step cannot confirm the expected condition, (d) the alert does not match any known pattern. Escalation includes all data the automation collected during its investigation — the human starts with context, not from zero.' Expected impact: '40% of pages handled automatically. On-call engineers receive 60% fewer pages. Night pages reduced from 3 per night to approximately 1.8 (with the remaining 1.8 being genuinely complex issues that need human attention). Annual engineering time saved: approximately 500 hours (based on 15 minutes per routine remediation × 40% of 3,000 annual pages)'"
+    weight: 0.30
+    description: "Human oversight model"

@@ -1,0 +1,47 @@
+meta:
+  id: api-design-review
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review API design — evaluate endpoint design, request/response contracts, versioning strategy, and backward compatibility in code reviews"
+  tags: [code-review, API-design, endpoints, contracts, versioning, advanced]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR that adds 3 new API endpoints to your
+  public-facing REST API. These endpoints will be used by external
+  developers and can't easily be changed after release.
+
+  Proposed endpoints:
+  1. POST /api/v1/getOrders — retrieves orders with filters in the
+     request body
+  2. PUT /api/v1/orders/{id} — updates an order, but some fields
+     (status, total) are calculated and shouldn't be settable
+  3. DELETE /api/v1/orders/{id}/items/{itemId}/remove — removes an
+     item from an order
+
+  Response formats:
+  - Success: { "success": true, "data": {...} }
+  - Error: { "success": false, "error": "Something went wrong" }
+
+  The endpoints work correctly with comprehensive tests.
+
+  Task: Review the API design for RESTful conventions, future
+  compatibility, and developer experience. Write review comments
+  that explain API design principles and suggest corrections.
+  Remember: these become your public contract once released.
+
+assertions:
+  - type: llm_judge
+    criteria: "REST convention violations are identified — (1) POST /getOrders: GET is for retrieval, POST is for creation. Filters should be query parameters: GET /api/v1/orders?status=pending&after=2024-01-01. If filter complexity requires a body, use POST /api/v1/orders/search. 'getOrders' as a verb violates REST (nouns for resources). (2) PUT allows setting calculated fields: read-only fields should be rejected or ignored. Document which fields are writable. Consider: does PUT replace the entire order or just modified fields? If partial, use PATCH. (3) DELETE .../remove: redundant — DELETE already means remove. Simplify to DELETE /api/v1/orders/{id}/items/{itemId}. Each violation explained with the REST principle and the practical impact on developers"
+    weight: 0.35
+    description: "REST conventions"
+  - type: llm_judge
+    criteria: "Response format and contract issues are addressed — success/error envelope: 'The { success: true/false } pattern is redundant with HTTP status codes — 200 already means success, 400 means client error. Industry standard (Stripe, GitHub): use status codes for success/failure, and reserve the response body for data. Error responses should include: code (machine-readable), message (human-readable), details (field-level errors).' Current error: 'Something went wrong' gives developers nothing to debug. Suggest: `{ error: { code: 'ORDER_NOT_FOUND', message: 'Order with ID xyz does not exist', param: 'id' } }`. Consistency: 'Match the error format used by your other 20 endpoints — developers shouldn't learn a new error format per endpoint.'"
+    weight: 0.35
+    description: "Response format"
+  - type: llm_judge
+    criteria: "Future compatibility concerns are raised — 'These endpoints become a permanent public contract. Changes after release are breaking changes that affect external developers.' Specific concerns: (1) pagination — GET /orders must return paginated results (what happens when there are 100K orders?), (2) filtering — be intentional about which filters are supported (adding is non-breaking, removing is breaking), (3) field expansion — consider using ?fields=id,status,total for sparse responses, (4) versioning — v1 in the URL means we can make v2 later, but plan for what triggers a v2. API review checklist: naming consistency, HTTP method correctness, pagination, filtering, sorting, error format, rate limiting headers, authentication, idempotency (PUT/DELETE should be idempotent). 'Suggest: run this through our API design review checklist before launch.'"
+    weight: 0.30
+    description: "Future compatibility"

@@ -1,0 +1,37 @@
+meta:
+  id: merging-and-joining
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Merge and join DataFrames — combine multiple data sources using merge, join, and concat operations"
+  tags: [python, pandas, merge, join, concat, SQL-join, intermediate]
+
+state: {}
+
+trigger: |
+  You have three separate DataFrames:
+
+  1. orders_df: order_id, customer_id, product_id, quantity, order_date
+  2. customers_df: customer_id, name, email, region, signup_date
+  3. products_df: product_id, product_name, category, unit_price
+
+  Your manager asks: "Combine these into a single DataFrame with
+  all the details for each order — customer name, product name,
+  revenue, everything. Also, show me customers who have never
+  placed an order."
+
+  Task: Write the merge operations and explain join types.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly merges all three DataFrames and identifies customers without orders — code: 'Merging multiple DataFrames: Step 1 — Merge orders with customers: orders_with_customers = orders_df.merge(customers_df, on=\"customer_id\", how=\"left\"). This adds customer details (name, email, region, signup_date) to each order. how=\"left\" keeps all orders, even if a customer_id does not match (the customer columns will be NaN for unmatched orders). Step 2 — Merge with products: full_orders = orders_with_customers.merge(products_df, on=\"product_id\", how=\"left\"). Now each row has: order details + customer details + product details. Step 3 — Add revenue: full_orders[\"revenue\"] = full_orders[\"quantity\"] * full_orders[\"unit_price\"]. Step 4 — Find customers with no orders: Method 1 — Right merge with indicator: all_customers = orders_df.merge(customers_df, on=\"customer_id\", how=\"right\", indicator=True). no_orders = all_customers[all_customers[\"_merge\"] == \"right_only\"][[\"customer_id\", \"name\", \"email\"]]. The indicator=True parameter adds a _merge column showing: both (matched in both DataFrames), left_only (in orders but not customers), right_only (in customers but not orders). Method 2 — Using isin: ordered_customers = orders_df[\"customer_id\"].unique(). no_orders = customers_df[~customers_df[\"customer_id\"].isin(ordered_customers)]. The ~ operator negates the boolean (NOT in the ordered list). Chained merge (all in one): full_orders = (orders_df.merge(customers_df, on=\"customer_id\", how=\"left\").merge(products_df, on=\"product_id\", how=\"left\").assign(revenue=lambda df: df[\"quantity\"] * df[\"unit_price\"])). Method chaining makes the pipeline readable and avoids intermediate variables'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers all join types with clear examples and SQL parallels — explanation: 'Understanding join types (SQL parallels): inner join (how=\"inner\"): returns only rows where the key exists in BOTH DataFrames. SQL: SELECT * FROM orders INNER JOIN customers ON orders.customer_id = customers.customer_id. Use when: you only want complete records (orders with valid customer data). left join (how=\"left\"): returns all rows from the LEFT DataFrame, matched rows from the right. Unmatched rows get NaN for the right DataFrame's columns. SQL: SELECT * FROM orders LEFT JOIN customers ON orders.customer_id = customers.customer_id. Use when: you want all orders, even if the customer data is missing. right join (how=\"right\"): returns all rows from the RIGHT DataFrame, matched rows from the left. SQL: SELECT * FROM orders RIGHT JOIN customers ON orders.customer_id = customers.customer_id. Use when: you want all customers, including those with no orders. outer join (how=\"outer\"): returns ALL rows from BOTH DataFrames. Unmatched rows get NaN. SQL: SELECT * FROM orders FULL OUTER JOIN customers ON orders.customer_id = customers.customer_id. Use when: you want the complete picture (all orders and all customers, matched or not). Choosing the right join: most common: left join (keep all records from your primary table, add data from secondary tables). For analysis: inner join (work only with complete records). For data quality: outer join (find mismatches between tables). Merge vs join vs concat: merge: combines on column values (like SQL JOIN). Most flexible. df1.merge(df2, on=\"key\"). join: combines on index values. Shorthand for index-based merge. df1.join(df2). concat: stacks DataFrames vertically (rows) or horizontally (columns). pd.concat([df1, df2]) — adds rows. pd.concat([df1, df2], axis=1) — adds columns'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers merge validation and common issues — validation: 'Merge validation and troubleshooting: Validate merge results: full_orders.shape — did the row count change unexpectedly? If orders_df has 10,000 rows but full_orders has 12,000, there are duplicate keys in the join table (e.g., a customer_id appears twice in customers_df). If full_orders has 8,000 rows, you used an inner join and 2,000 orders had no matching customer. Always check: print(f\"Orders: {len(orders_df)}, After merge: {len(full_orders)}\"). If the counts differ, investigate. The validate parameter: full_orders = orders_df.merge(customers_df, on=\"customer_id\", how=\"left\", validate=\"many_to_one\"). validate options: one_to_one: each key appears at most once in both DataFrames. many_to_one: keys can repeat in the left DataFrame but must be unique in the right (most common for lookups). one_to_many: keys are unique in the left but can repeat in the right. many_to_many: no uniqueness constraints (use cautiously — can create unexpected row multiplication). If the validation fails, pandas raises a MergeError — this catches data quality issues before they corrupt your analysis. Common issues: (1) Column name conflicts: if both DataFrames have a column name like name, the merge adds suffixes: name_x (from left), name_y (from right). Specify suffixes: merge(df2, on=\"key\", suffixes=(\"_order\", \"_customer\")). (2) Different key column names: orders_df has cust_id, customers_df has customer_id. Use: merge(customers_df, left_on=\"cust_id\", right_on=\"customer_id\"). (3) Data type mismatch: if customer_id is int in one DataFrame and str in the other, the merge returns zero matches. Fix: ensure both columns have the same dtype before merging'"
+    weight: 0.30
+    description: "Validation"

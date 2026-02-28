@@ -1,0 +1,41 @@
+meta:
+  id: security-review-standards
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Create security review standards — design security-focused review checklists, training, and processes that make security review a standard part of every engineer's review practice"
+  tags: [code-review, security, standards, checklist, OWASP, organization, expert]
+
+state: {}
+
+trigger: |
+  Your company handles sensitive data (PII, payment information).
+  Security vulnerabilities have been found in production 3 times
+  this quarter — all were in code that passed code review.
+
+  Post-incident analysis revealed:
+  - Reviewers focused on functionality, not security
+  - No security review checklist exists
+  - Only 2 engineers (out of 40) have security training
+  - SQL injection in a new endpoint (reviewer didn't check queries)
+  - XSS in user-generated content rendering (reviewer checked logic only)
+  - IDOR vulnerability (reviewer didn't verify authorization checks)
+
+  Task: Design the security review program. Include: security review
+  checklist by code area, training program to upskill all reviewers
+  on security basics, escalation criteria for security-sensitive
+  changes, and integration with automated security scanning.
+
+assertions:
+  - type: llm_judge
+    criteria: "Security checklist is specific by code area — API endpoints: (1) input validation on ALL user inputs, (2) authorization check (not just authentication — can THIS user access THIS resource?), (3) rate limiting configured, (4) response doesn't expose sensitive data (PII, internal IDs). Database queries: (1) parameterized queries (no string concatenation), (2) ORM queries checked for injection via raw SQL, (3) sensitive data encrypted at rest. Frontend: (1) user content escaped/sanitized before rendering, (2) no unsafe HTML injection without proper sanitization via DOMPurify or equivalent, (3) CSP headers configured. Authentication: (1) passwords hashed with bcrypt (not MD5/SHA), (2) session tokens rotated on login, (3) failed login rate limiting. File handling: (1) file type validation (not just extension), (2) size limits, (3) stored outside webroot. Each item: what to look for, example vulnerable code, example fixed code"
+    weight: 0.35
+    description: "Security checklist"
+  - type: llm_judge
+    criteria: "Training program upskills all reviewers — tier 1 (all engineers, 2 hours): OWASP top 10 overview, how to spot injection/XSS/IDOR in code review, hands-on exercise (review a PR with planted vulnerabilities). Tier 2 (team leads, 4 hours): threat modeling basics, security review prioritization (which PRs need deep security review), how to escalate security findings. Tier 3 (security champions, 2 days): advanced vulnerability patterns, penetration testing basics, security architecture review. Security champions program: 1 champion per team, additional training, available for security review consultations. Refresher: quarterly 30-minute security review workshop with real examples from your codebase (anonymized). Assessment: after training, each engineer must successfully review a test PR and find 3 of 5 planted vulnerabilities"
+    weight: 0.35
+    description: "Training program"
+  - type: llm_judge
+    criteria: "Escalation and automation integration are practical — escalation criteria: changes to auth/session management, changes to data access patterns, new API endpoints accepting user input, changes to encryption/hashing, dependency updates with security advisories — all require security champion review. Automated scanning integration: (1) Semgrep rules for OWASP top 10 in CI (blocks PR if critical findings), (2) dependency scanning (Snyk/Dependabot) as advisory, (3) secret detection (GitLeaks/TruffleHog) blocks on detection. Human + automation collaboration: automated tools catch known patterns, human reviewers catch logic flaws (IDOR, business logic bypass). Security review SLA: security-flagged PRs reviewed within 4 hours (dedicated security champion on rotation). Metrics: security vulnerability escape rate (target: 0 from reviewed code), percentage of PRs with security checklist completed, time to security review"
+    weight: 0.30
+    description: "Escalation and automation"

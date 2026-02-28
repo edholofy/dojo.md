@@ -1,0 +1,53 @@
+meta:
+  id: advanced-microcopy-shift
+  level: 3
+  course: uiux-microcopy
+  type: output
+  description: "Advanced microcopy shift — handle a complex multi-stakeholder copy project involving accessibility, localization, and content system design"
+  tags: [shift, combined, assessment, multi-stakeholder, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior UX writer leading a major copy improvement
+  initiative. The company is a healthcare appointment scheduling
+  platform launching in 3 new countries (Mexico, Germany, France)
+  and must meet WCAG 2.2 AA accessibility requirements.
+
+  The project scope:
+
+  1. Patient booking flow (6 screens): Currently English-only with
+     medical jargon ('Schedule a consultation with a specialist in
+     otolaryngology'). Needs plain language + 3 new languages +
+     accessible copy.
+
+  2. Doctor availability UI: Shows 'No available slots' with no
+     guidance. Needs helpful empty states in all 4 languages.
+
+  3. Appointment confirmation: Currently shows 'Appointment
+     confirmed' with no details. Patients call the office to verify.
+
+  4. Error handling: Failed booking attempts show 'Error: slot no
+     longer available' with no recovery path.
+
+  Constraints: Medical accuracy cannot be sacrificed for simplicity.
+  All copy must work in 4 languages with RTL not needed (yet).
+  Accessibility audit is in 8 weeks.
+
+  Task: Design the complete copy strategy covering plain language
+  medical rewriting, localization preparation, and accessibility
+  compliance for all flows.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response rewrites the medical copy in plain language while maintaining accuracy — 'otolaryngology' becomes 'ear, nose, and throat (ENT)' or uses the plain term with the medical term in parentheses for those who need it. All 6 booking screens are rewritten with patient-friendly language. Empty states guide patients to alternative options ('No available appointments this week. Try another date, or join the waitlist and we'll notify you when a slot opens'). Confirmation includes all details (doctor name, date, time, location, what to bring, cancellation policy). Error recovery provides alternatives ('This time slot was just taken. Here are other available times today.')"
+    weight: 0.35
+    description: "MedicalCopyRewrite"
+  - type: llm_judge
+    criteria: "Response designs the localization and accessibility strategy — localization: identifies localization challenges in medical terminology (different countries use different terms for the same specialty), designs copy for text expansion (German medical terms are longer), avoids idioms and cultural assumptions. Accessibility: rewrites for screen reader compatibility (descriptive link text, proper ARIA labels for the calendar selector), ensures grade 6-8 reading level, adds alt text for any visual elements, and designs error announcements for screen readers"
+    weight: 0.35
+    description: "LocalizationAccessibility"
+  - type: llm_judge
+    criteria: "Response addresses the medical accuracy constraint — how to simplify medical language without losing accuracy (use plain language primary term with medical term as secondary reference), when to keep medical terminology (in contexts where patients need to communicate the term to other providers), how to validate medical copy accuracy (review with medical professionals), and how to handle the tension between accessibility goals (simple language) and medical precision (specific terminology). Designs a glossary of medical-to-plain-language translations for the localization team"
+    weight: 0.30
+    description: "MedicalAccuracy"

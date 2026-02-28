@@ -1,0 +1,36 @@
+meta:
+  id: dashboard-performance
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Optimize dashboard performance — ensure dashboards load in under 3 seconds using query optimization, caching, pre-aggregation, and lazy loading"
+  tags: [performance, loading-time, optimization, caching, pre-aggregation, intermediate]
+
+state: {}
+
+trigger: |
+  The executive dashboard takes 45 seconds to load. The CEO opens
+  it, waits 10 seconds, gives up, and asks an analyst to send the
+  numbers via email instead. Three months later, nobody uses the
+  dashboard because "it's too slow."
+
+  Investigation shows: each of the 8 charts runs its own query
+  against a 50-million-row table. No caching. No pre-aggregation.
+  The BI tool sends 8 simultaneous queries that overwhelm the
+  database.
+
+  Task: Optimize the dashboard to load in under 3 seconds.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies performance bottlenecks and provides a systematic fix — bottlenecks: 'Dashboard performance optimization: Diagnosing the bottleneck: 8 charts × 50M-row table scan = 8 full table scans running simultaneously. Each takes 5-6 seconds, but running 8 in parallel overwhelms the database CPU, so each takes 45 seconds total. Fix 1 — Pre-aggregate data: instead of 8 queries scanning 50M rows, create a summary table with thousands of rows. Create a materialized view or summary table: daily_metrics with columns date, region, category, orders, revenue, customers. This pre-computes the aggregations nightly. Dashboard queries hit the summary table (5,000 rows) instead of the raw table (50M rows). Each chart loads in under 100 milliseconds. Fix 2 — Reduce the number of queries: some charts query the same data with different groupings. Combine them into one query that returns all needed dimensions, and let the BI tool handle the grouping. 8 queries become 2-3 queries. Fix 3 — Add caching: the executive dashboard shows the same data to every executive. Cache the query results for 1 hour. The first executive waits 2 seconds. Every subsequent executive gets instant results from the cache. Fix 4 — Lazy load below-the-fold charts: the CEO sees the top 4 KPI cards immediately (these load first). The 4 charts below the fold load asynchronously as the user scrolls. Perceived load time: under 1 second for the most important content'"
+    weight: 0.35
+    description: "Bottlenecks"
+  - type: llm_judge
+    criteria: "Response covers specific optimization techniques — techniques: 'Optimization techniques in detail: Query optimization: add indexes on the columns used in WHERE and GROUP BY. If the dashboard filters by date and groups by region, create an index on (order_date, region). EXPLAIN ANALYZE the dashboard queries: if you see Seq Scan on a 50M-row table, the query needs an index. If you see Sort using disk, increase work_mem for the BI tool's database user. Pre-aggregation layers: Layer 1 — Hourly aggregates (for operational dashboards): one row per hour per dimension combination. Updated every hour. Suitable for near-real-time dashboards. Layer 2 — Daily aggregates (for most dashboards): one row per day per dimension combination. Updated nightly at 2 AM. Suitable for executive dashboards. Layer 3 — Monthly aggregates (for trend dashboards): one row per month per dimension combination. Updated on the first of each month. Suitable for board reports and trend analysis. The executive dashboard uses Layer 2 (daily aggregates). Each chart queries thousands of rows instead of millions. BI tool configuration: set query timeout to 30 seconds (if a query takes longer, it is not optimized). Enable result caching with a 1-hour TTL for executive dashboards. Limit the default date range: show last 12 months instead of all time. A 12-month window scans far fewer rows. Disable auto-refresh for dashboards that users view once per day — no need to re-query every 5 minutes'"
+    weight: 0.35
+    description: "Techniques"
+  - type: llm_judge
+    criteria: "Explanation includes performance monitoring and targets — monitoring: 'Performance monitoring and targets: Performance targets: Initial page load (time to first meaningful paint): under 2 seconds. Full dashboard load (all charts rendered): under 5 seconds. Filter or drill-down interaction: under 1 second. If any metric exceeds these targets, the dashboard needs optimization. Performance monitoring: track load times for every dashboard view. SELECT dashboard_name, AVG(load_time_ms) AS avg_load_ms, PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY load_time_ms) AS p95_load_ms, COUNT(*) AS views FROM dashboard_performance_log WHERE viewed_at >= CURRENT_DATE - INTERVAL '7 days' GROUP BY dashboard_name ORDER BY p95_load_ms DESC. The P95 load time is more important than the average — it shows the worst experience most users encounter. If the average is 2 seconds but P95 is 15 seconds, some users are having a terrible experience. Optimization priority: optimize the most-viewed dashboards first. If the executive dashboard has 50 views per day and loads in 45 seconds, that is 37 minutes of collective waiting per day. At an executive's hourly rate, slow dashboards are expensive. Performance budget: each new chart added to a dashboard must not increase load time by more than 500ms. If it does, add a pre-aggregation layer for that chart first. The dashboard owner is responsible for maintaining performance below the target'"
+    weight: 0.30
+    description: "Monitoring"

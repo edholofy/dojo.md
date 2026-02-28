@@ -1,0 +1,38 @@
+meta:
+  id: sql-based-etl-reporting
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Build SQL-based ETL for reporting — design staging, transformation, and loading patterns that feed clean, reliable data into report tables"
+  tags: [SQL, ETL, staging, transformation, loading, data-warehouse, advanced]
+
+state: {}
+
+trigger: |
+  The analytics team inherits a reporting system where reports query
+  raw production tables directly. Problems:
+  - Reports are slow because they compete with OLTP workload
+  - Business logic is scattered across 47 different report queries
+  - The same calculations (like "active customer" definition) differ
+    between reports
+  - When the source schema changes, multiple reports break
+
+  "We need a proper ETL layer: extract from production into staging,
+  transform with consistent business logic, and load into a reporting
+  schema that all dashboards query."
+
+  Task: Design the SQL-based ETL pipeline for reporting.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the three-layer ETL architecture — architecture: 'SQL-based ETL for reporting: Three-schema architecture: CREATE SCHEMA staging; CREATE SCHEMA business; CREATE SCHEMA reporting; Layer 1 — Staging (raw extract, no transformations): CREATE TABLE staging.stg_orders AS SELECT * FROM dblink('production_conn', 'SELECT order_id, customer_id, amount, status, order_date, updated_at FROM orders WHERE updated_at > ''2024-01-01''') AS t(order_id INT, customer_id INT, amount NUMERIC, status TEXT, order_date DATE, updated_at TIMESTAMP). Staging tables are full or incremental copies of production. No business logic here — just raw data with metadata: ALTER TABLE staging.stg_orders ADD COLUMN extracted_at TIMESTAMP DEFAULT NOW(). Truncate and reload daily or use incremental extraction based on updated_at watermark. Layer 2 — Business (consistent definitions): CREATE TABLE business.dim_customers AS SELECT c.customer_id, c.name, c.email, c.segment, c.signup_date, CASE WHEN EXISTS (SELECT 1 FROM staging.stg_orders o WHERE o.customer_id = c.customer_id AND o.order_date >= CURRENT_DATE - INTERVAL '90 days' AND o.status = 'completed') THEN true ELSE false END AS is_active, COALESCE(SUM(o.amount), 0) AS lifetime_value, COUNT(DISTINCT o.order_id) AS total_orders FROM staging.stg_customers c LEFT JOIN staging.stg_orders o ON c.customer_id = o.customer_id AND o.status = 'completed' GROUP BY c.customer_id, c.name, c.email, c.segment, c.signup_date. The is_active definition lives in ONE place. Every report uses the same definition. When the business changes the definition (90 days to 60 days), update it once here. Layer 3 — Reporting (pre-aggregated for dashboards): CREATE TABLE reporting.monthly_revenue AS SELECT DATE_TRUNC('month', o.order_date) AS month, c.segment, p.category, COUNT(DISTINCT o.order_id) AS orders, SUM(o.amount) AS revenue, COUNT(DISTINCT o.customer_id) AS customers FROM staging.stg_orders o JOIN business.dim_customers c ON o.customer_id = c.customer_id JOIN business.dim_products p ON o.product_id = p.product_id WHERE o.status = 'completed' GROUP BY 1, 2, 3'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response covers incremental loading and SCD patterns — incremental: 'Incremental loading patterns: Append-only fact loading: INSERT INTO reporting.fact_orders SELECT o.order_id, o.customer_id, o.amount, o.order_date, c.segment, p.category FROM staging.stg_orders o JOIN business.dim_customers c ON o.customer_id = c.customer_id JOIN business.dim_products p ON o.product_id = p.product_id WHERE o.updated_at > (SELECT MAX(loaded_at) FROM etl_watermarks WHERE table_name = 'fact_orders') AND NOT EXISTS (SELECT 1 FROM reporting.fact_orders f WHERE f.order_id = o.order_id). UPDATE etl_watermarks SET loaded_at = NOW() WHERE table_name = 'fact_orders'. Only processes new and changed rows since the last load. Slowly Changing Dimension Type 2 for customer attributes: CREATE TABLE business.dim_customers_scd2 (surrogate_key SERIAL PRIMARY KEY, customer_id INTEGER, name TEXT, segment TEXT, effective_from DATE, effective_to DATE DEFAULT '9999-12-31', is_current BOOLEAN DEFAULT true). When a customer changes segment: UPDATE business.dim_customers_scd2 SET effective_to = CURRENT_DATE - 1, is_current = false WHERE customer_id = 42 AND is_current = true. INSERT INTO business.dim_customers_scd2 (customer_id, name, segment, effective_from) VALUES (42, 'Acme Corp', 'Enterprise', CURRENT_DATE). Historical reports can now accurately show which segment a customer was in at any point in time — a customer who was SMB in January but upgraded to Enterprise in March shows as SMB for January orders and Enterprise for March orders. Merge/upsert pattern for dimension loading: INSERT INTO business.dim_products (product_id, name, category, price) SELECT product_id, name, category, price FROM staging.stg_products ON CONFLICT (product_id) DO UPDATE SET name = EXCLUDED.name, category = EXCLUDED.category, price = EXCLUDED.price'"
+    weight: 0.35
+    description: "Incremental"
+  - type: llm_judge
+    criteria: "Explanation includes ETL orchestration and data lineage tracking — orchestration: 'ETL orchestration and lineage: Execution order with dependency tracking: CREATE TABLE etl_pipeline (step_id SERIAL, step_name TEXT, depends_on INTEGER[], sql_command TEXT, execution_order INTEGER). INSERT INTO etl_pipeline VALUES (1, 'extract_orders', NULL, 'CALL extract_orders()', 1), (2, 'extract_customers', NULL, 'CALL extract_customers()', 1), (3, 'build_dim_customers', ARRAY[2], 'CALL build_dim_customers()', 2), (4, 'build_fact_orders', ARRAY[1,3], 'CALL build_fact_orders()', 3), (5, 'build_monthly_revenue', ARRAY[4], 'CALL build_monthly_revenue()', 4). Steps at the same execution_order run in parallel. Step 4 waits for steps 1 and 3. Data lineage tracking: CREATE TABLE etl_lineage (lineage_id SERIAL, target_table TEXT, source_tables TEXT[], transformation TEXT, row_count INTEGER, executed_at TIMESTAMP). After each ETL step: INSERT INTO etl_lineage VALUES (DEFAULT, 'reporting.monthly_revenue', ARRAY['staging.stg_orders', 'business.dim_customers', 'business.dim_products'], 'Aggregate orders by month, segment, category', (SELECT COUNT(*) FROM reporting.monthly_revenue), NOW()). Data quality gates between layers: after staging extraction, run quality checks before proceeding. SELECT CASE WHEN COUNT(*) > 0 THEN 'BLOCKED' ELSE 'PROCEED' END FROM (SELECT order_id FROM staging.stg_orders GROUP BY order_id HAVING COUNT(*) > 1) duplicates. If staging has duplicates, do not proceed to the business layer. Fix the extract first. Benefits: production database is only read during the extract window (off-peak). Report queries never touch production. Business logic is centralized and version-controlled. Schema changes in production only affect the staging extract — downstream layers are insulated'"
+    weight: 0.30
+    description: "Orchestration"

@@ -1,0 +1,55 @@
+meta:
+  id: terraform-import
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Import existing resources into Terraform — bring console-created infrastructure under IaC management without recreation"
+  tags: [Terraform, import, existing-resources, migration, IaC-adoption, intermediate]
+
+state: {}
+
+trigger: |
+  Your company has 50 AWS resources created via console that need to
+  come under Terraform management. You start importing:
+
+  ```
+  $ terraform import aws_instance.legacy i-0abc123def456
+
+  aws_instance.legacy: Importing from ID "i-0abc123def456"...
+  aws_instance.legacy: Import prepared!
+    Imported aws_instance.legacy
+
+  $ terraform plan
+
+  # aws_instance.legacy will be updated in-place
+  ~ resource "aws_instance" "legacy" {
+      ~ ami           = "ami-current123" -> "ami-wrong456"
+      ~ instance_type = "t3.large" -> "t3.micro"
+      ~ tags          = {
+          - "ManagedBy" = "console" -> null
+          + "Environment" = "prod"
+        }
+      # ... 20 more attribute changes
+    }
+  ```
+
+  The plan shows changes because your .tf file doesn't match the
+  actual resource configuration!
+
+  Task: Explain terraform import workflow, how to write matching
+  configuration after import, the new import block syntax (Terraform 1.5+),
+  bulk import strategies, and common import pitfalls.
+
+assertions:
+  - type: llm_judge
+    criteria: "Import workflow is explained — (1) write a resource block in .tf file, (2) run terraform import <address> <id>, (3) run terraform plan to see differences, (4) update .tf file to match actual configuration until plan shows no changes. The plan shows changes because the .tf config was written with incorrect values — must match reality exactly. Use terraform state show aws_instance.legacy to see imported attributes and copy them to .tf file. Iterate: import → plan → fix config → plan again until clean"
+    weight: 0.35
+    description: "Import workflow"
+  - type: llm_judge
+    criteria: "Import block syntax (1.5+) is covered — import { to = aws_instance.legacy, id = 'i-0abc123def456' }. Benefits over CLI import: (1) can be code-reviewed in PRs, (2) terraform plan -generate-config-out=generated.tf generates matching configuration automatically, (3) supports for_each for bulk imports. The generated config is a starting point — review and clean up. Import blocks are removed after successful apply. This is the recommended approach for Terraform 1.5+"
+    weight: 0.35
+    description: "Import blocks"
+  - type: llm_judge
+    criteria: "Bulk import and pitfalls are practical — bulk strategy: (1) inventory all resources (AWS Config, resource explorer), (2) write import blocks for all, (3) generate config, (4) review and customize, (5) apply. Pitfalls: (1) some resources don't support import (check provider docs), (2) imported resources may reference other non-imported resources, (3) secrets in imported state (passwords, keys) — rotate after import, (4) complex resources (EKS, RDS) may need manual config adjustment. Tools: terraformer for auto-generating both config and import commands from existing cloud infrastructure"
+    weight: 0.30
+    description: "Bulk import"

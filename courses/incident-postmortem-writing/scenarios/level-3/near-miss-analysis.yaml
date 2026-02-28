@@ -1,0 +1,49 @@
+meta:
+  id: near-miss-analysis
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Document near-miss incidents — write postmortems for incidents that almost happened, extracting lessons from close calls before they become real outages"
+  tags: [postmortem, near-miss, prevention, proactive, safety-culture, advanced]
+
+state: {}
+
+trigger: |
+  Your team narrowly avoided a major incident. Here's what happened:
+
+  A developer pushed a configuration change that would have disabled
+  authentication on your payment API. The change passed code review
+  (the reviewer didn't notice the auth middleware was removed from the
+  route). It passed CI (no test specifically checked that auth was
+  required on this endpoint). It was deployed to staging.
+
+  The near-miss: A QA engineer doing unrelated testing in staging
+  noticed they could access the payment endpoint without logging in.
+  They flagged it. The change was reverted before reaching production.
+
+  Time in staging with auth disabled: 6 hours.
+  Time it would have been in production before detection: unknown
+  (no monitoring for unauthenticated access to protected endpoints).
+
+  Your VP of Engineering wants a near-miss postmortem — treated with
+  the same rigor as a real incident. "We got lucky. I want to know
+  why we got lucky and what happens when we're not lucky."
+
+  Task: Write a near-miss postmortem. Document what happened, what
+  would have happened, the gap between detection and the safety net
+  that actually caught it, and action items that ensure this class
+  of near-miss becomes impossible rather than depending on luck.
+
+assertions:
+  - type: llm_judge
+    criteria: "Near-miss is documented with both what happened and what would have happened — what happened: 'A configuration change removed authentication middleware from the /api/payments endpoint. The change was reviewed, approved, and deployed to staging. After 6 hours in staging, a QA engineer manually discovered the issue during unrelated testing. The change was reverted before production deployment.' What would have happened: 'If the QA engineer had not been testing in staging at that time, the change would have proceeded to production on the next deployment cycle (estimated: next morning). In production, the payment API would have been accessible without authentication. Impact would have included: (1) any user or external actor could access payment data, initiate refunds, or modify payment records without authentication. (2) PCI-DSS compliance violation — unauthenticated access to cardholder data environment. (3) potential financial loss from unauthorized transactions. (4) mandatory breach notification to payment processor, card brands, and affected customers. (5) estimated exposure: from deployment to detection, which we cannot estimate because we had no monitoring for this condition.' The gap: 'Our safety net was luck — a human happened to be testing at the right time. Every automated check (code review, CI, staging deployment) failed to catch this. We had no systematic detection for authentication bypass on protected endpoints'"
+    weight: 0.35
+    description: "Near-miss documentation"
+  - type: llm_judge
+    criteria: "Analysis identifies every layer that should have caught this — layer 1, code review: 'The reviewer approved the change without noticing that auth middleware was removed. Contributing factors: the PR was large (400+ lines), the auth middleware removal was 2 lines in a 400-line diff, and there is no checklist item for verifying security middleware on route changes. Not a blame on the reviewer — humans reliably miss 2 lines in 400.' Layer 2, CI/CD: 'No automated test verifies that protected endpoints require authentication. Our test suite tests that authenticated requests succeed but does not test that unauthenticated requests are rejected. This is a common gap — we test the happy path (auth works) but not the security path (auth is required).' Layer 3, staging verification: 'No automated security scan runs in staging. The staging environment does not verify that endpoints match expected security policies.' Layer 4, production monitoring: 'No monitoring detects unauthenticated access to endpoints that should require authentication. If this had reached production, detection would have depended on a user reporting the issue or a security audit finding it.' Layer 5, what actually caught it: 'A QA engineer manually testing an unrelated feature. This is not a reliable safety net — it depends on the right person doing the right thing at the right time. Near-misses caught by luck indicate systemic gaps in automated detection'"
+    weight: 0.35
+    description: "Layer analysis"
+  - type: llm_judge
+    criteria: "Action items convert luck-based detection into systematic prevention — action items structured as defense in depth: 'Layer 1 (prevent): CI pipeline includes endpoint security verification. For every route defined in the application, an automated test verifies: (a) unauthenticated requests return 401, (b) authentication middleware is present in the route definition. Any new endpoint without explicit auth configuration fails the build. Owner: security team. Due: 2 weeks.' 'Layer 2 (detect in staging): automated security scan runs after every staging deployment. Scan attempts unauthenticated access to all known protected endpoints. Failures block production deployment. Owner: platform team. Due: 3 weeks.' 'Layer 3 (detect in production): runtime monitoring for unauthenticated access to protected endpoints. Alert triggers if any request to a protected endpoint succeeds without a valid auth token. Owner: SRE team. Due: 2 weeks.' 'Layer 4 (limit blast radius): payment API endpoints require both authentication AND a specific permission scope. Even if auth middleware is removed, the payment processing layer independently verifies authorization. Defense in depth — security does not depend on a single layer. Owner: payments team. Due: 4 weeks.' Near-miss culture recommendation: 'Treat near-misses with the same process rigor as real incidents. Engineers who report near-misses should be recognized — the QA engineer who caught this prevented a major security incident. Near-miss reports are leading indicators; incidents are lagging indicators. A healthy organization has more near-miss reports than incident reports'"
+    weight: 0.30
+    description: "Systematic prevention"

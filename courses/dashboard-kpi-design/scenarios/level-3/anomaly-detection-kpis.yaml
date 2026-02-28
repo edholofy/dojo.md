@@ -1,0 +1,34 @@
+meta:
+  id: anomaly-detection-kpis
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Detect anomalies in KPI data — design dashboards that automatically identify unusual metric behavior using statistical methods and contextual alerts"
+  tags: [anomaly-detection, statistical, alerts, outliers, contextual, advanced]
+
+state: {}
+
+trigger: |
+  The data team receives this complaint from the VP of Marketing:
+  "Last Tuesday, our conversion rate dropped from 3.2% to 1.8% for
+  6 hours before anyone noticed. We lost an estimated $45K in revenue.
+  The dashboard showed the number but nobody was watching at 2 AM.
+  I need the dashboard to TELL me when something is wrong, not wait
+  for me to notice."
+
+  Task: Design anomaly detection for KPI dashboards that automatically
+  identifies and alerts on unusual metric behavior.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers statistical anomaly detection methods — methods: 'Anomaly detection methods for KPIs: Method 1 — Standard deviation bands: Calculate the rolling mean and standard deviation for each metric over a baseline period (e.g., same hour of day, same day of week, last 8 weeks). Normal range = mean ± 2 standard deviations. If a data point falls outside 2σ, flag it as an anomaly. For the conversion rate: historical mean at 2 AM on Tuesdays: 3.1%. Standard deviation: 0.3%. Normal range: 2.5% to 3.7%. Actual value: 1.8%. This is 4.3σ below the mean — a clear anomaly. Dashboard visualization: trend line with shaded confidence bands. The normal range appears as a light blue band around the metric. When the line exits the band, it turns red and triggers an alert. Method 2 — Percentage change threshold: Compare current value to the same period in the prior week. If the change exceeds a threshold (e.g., ±20%), flag it. Conversion rate: 1.8% vs 3.2% last Tuesday = -44%. Exceeds the 20% threshold → anomaly. This method is simpler but misses gradual degradation. Method 3 — Seasonal decomposition: Decompose the metric into trend, seasonal, and residual components. The residual component captures unexpected variation. If the residual exceeds 2σ, it is anomalous. This handles metrics with strong weekly or monthly seasonality — like e-commerce traffic that always dips on Mondays. The dashboard uses the residual, not the raw value, to determine anomalies. Method 4 — Rate-of-change detection: Monitor how fast a metric is changing. If the conversion rate drops by more than 0.5 percentage points in 30 minutes, alert immediately — even if the absolute value is still within the normal range. This catches sudden drops before they become severe'"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response designs the anomaly alert system and dashboard elements — alerts: 'Anomaly alert system design: Alert severity levels: INFO: metric is near the edge of the normal range (1.5-2σ). No notification. Highlighted on the dashboard with a yellow dot. WARNING: metric has exited the normal range (2-3σ). Notification sent to the dashboard owner via Slack. Orange banner on the dashboard. CRITICAL: metric is far outside the normal range (>3σ) or multiple metrics are anomalous simultaneously. Page the on-call person via PagerDuty. Red banner with details. For the conversion rate incident: at 2:15 AM, conversion drops to 2.4% (WARNING — 2.3σ below mean). Slack message: Conversion rate anomaly detected: 2.4% at 2:15 AM. Normal range: 2.5-3.7%. At 2:30 AM, conversion drops to 1.8% (CRITICAL — 4.3σ below mean). PagerDuty alert: CRITICAL — Conversion rate 1.8%. Normal: 3.1% ± 0.3%. Investigate immediately. Dashboard anomaly panel: a dedicated section showing all active anomalies: Table with columns: Metric, Current Value, Expected Range, Deviation, Severity, Duration, Possible Cause. Row: Conversion Rate, 1.8%, 2.5-3.7%, -4.3σ, CRITICAL, 15 min, TBD. Anomaly timeline: a horizontal timeline showing when each anomaly started and its severity. This lets the team correlate anomalies — if conversion rate and checkout error rate both spike at 2 AM, they are likely related. Context enrichment: when an anomaly fires, automatically show: recent deployments (was code pushed?), infrastructure alerts (is a service down?), marketing changes (did a campaign end?), external events (is a payment provider having issues?). This context helps the responder diagnose the cause faster'"
+    weight: 0.35
+    description: "Alerts"
+  - type: llm_judge
+    criteria: "Explanation addresses false positives and tuning the detection system — tuning: 'Managing false positives and tuning: The biggest risk with anomaly detection is alert fatigue — too many false positives cause the team to ignore real alerts. Tuning strategies: 1. Adjust sensitivity by metric importance: Tier 1 metrics (revenue, conversion rate, error rate): 2σ threshold. These are critical — better to over-alert than to miss. Tier 2 metrics (page views, session duration): 3σ threshold. Less critical — only alert on extreme outliers. Tier 3 metrics (internal metrics): 4σ or no automated alerts. Use manual review. 2. Use confirmation windows: do not alert on a single anomalous data point. Require the anomaly to persist for a minimum duration. Conversion rate must be below 2σ for at least 15 minutes before a WARNING fires. This filters out momentary blips and data collection artifacts. 3. Day-of-week and time-of-day baselines: do not compare Tuesday 2 AM to Monday 2 PM. Use same-day, same-hour historical baselines. Traffic at 3 AM Sunday is naturally 70% lower than Monday 9 AM — that is not an anomaly. 4. Exclude known events: if a planned maintenance window is scheduled, suppress alerts for affected metrics during that window. If a marketing campaign launches, adjust the expected range upward for traffic metrics. 5. Feedback loop: when an alert fires, the responder marks it as true positive (real issue) or false positive (not a real issue). Track the precision rate: true positives / (true positives + false positives). Target: above 80% precision. If precision drops below 60%, the thresholds need tightening. 6. Monthly review: review all alerts from the past month. Identify patterns in false positives and adjust baselines, thresholds, or confirmation windows accordingly'"
+    weight: 0.30
+    description: "Tuning"

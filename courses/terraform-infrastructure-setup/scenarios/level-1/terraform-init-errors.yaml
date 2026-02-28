@@ -1,0 +1,72 @@
+meta:
+  id: terraform-init-errors
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Debug terraform init failures — diagnose provider installation errors, backend configuration issues, and registry connectivity problems"
+  tags: [Terraform, init, providers, backend, registry, beginner]
+
+state: {}
+
+trigger: |
+  You run `terraform init` and get this error:
+
+  ```
+  Initializing the backend...
+
+  Initializing provider plugins...
+  - Finding hashicorp/aws versions matching "~> 5.0"...
+
+  Error: Failed to query available provider packages
+
+  Could not retrieve the list of available versions for provider
+  hashicorp/aws: could not connect to registry.terraform.io:
+  connection timed out
+  ```
+
+  Your terraform configuration:
+
+  ```hcl
+  terraform {
+    required_providers {
+      aws = {
+        source  = "hashicorp/aws"
+        version = "~> 5.0"
+      }
+    }
+    backend "s3" {
+      bucket = "my-terraform-state"
+      key    = "prod/terraform.tfstate"
+      region = "us-east-1"
+    }
+  }
+
+  provider "aws" {
+    region = "us-east-1"
+  }
+  ```
+
+  Additional context:
+  - You're behind a corporate proxy
+  - The .terraform directory doesn't exist yet
+  - Running Terraform v1.7.0
+
+  Task: Explain terraform init, what it does step by step (backend
+  initialization, provider installation, module download), common
+  init failures and their fixes, provider version constraints
+  (= vs ~> vs >= syntax), and how to work with Terraform behind
+  proxies or air-gapped environments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Init process is explained step by step — terraform init: (1) initializes backend (configures state storage, creates .terraform/terraform.tfstate for backend config), (2) downloads provider plugins from registry.terraform.io to .terraform/providers/, (3) downloads modules to .terraform/modules/. The specific error is a network connectivity issue — behind a corporate proxy, set HTTP_PROXY and HTTPS_PROXY environment variables. Alternative: use terraform provider mirror to create a local filesystem mirror for air-gapped environments. The .terraform.lock.hcl file records provider versions and hashes for reproducibility"
+    weight: 0.35
+    description: "Init process"
+  - type: llm_judge
+    criteria: "Provider version constraints are covered — version = '= 5.0.0' (exact), '~> 5.0' (allows 5.x but not 6.0, pessimistic constraint), '>= 5.0, < 6.0' (range). Best practice: use ~> for minor version flexibility. Lock file (.terraform.lock.hcl): commit to version control, records exact versions and checksums. To update: terraform init -upgrade. Provider source format: namespace/type (hashicorp/aws). Third-party providers: specify full source in required_providers block"
+    weight: 0.35
+    description: "Version constraints"
+  - type: llm_judge
+    criteria: "Common init failures are listed with fixes — (1) registry connectivity: proxy settings, TF_CLI_CONFIG_FILE for custom registry, provider mirror for air-gapped. (2) Backend errors: S3 bucket doesn't exist, DynamoDB table missing for locking, insufficient IAM permissions. (3) Provider not found: typo in source, missing required_providers block. (4) Version conflicts: lock file doesn't match config, run terraform init -upgrade. (5) Module source errors: git credentials, registry authentication"
+    weight: 0.30
+    description: "Common failures"

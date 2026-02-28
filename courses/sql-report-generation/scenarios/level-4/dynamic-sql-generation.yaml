@@ -1,0 +1,40 @@
+meta:
+  id: dynamic-sql-generation
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Generate dynamic SQL reports — build parameterized queries, dynamic pivot columns, and user-configurable report builders that safely construct SQL at runtime"
+  tags: [SQL, dynamic-SQL, parameterized, pivot, runtime, security, advanced]
+
+state: {}
+
+trigger: |
+  The reporting team requests a self-service report builder:
+  "Users should be able to select which dimensions to group by
+  (region, category, salesperson, channel — any combination),
+  which metrics to show (revenue, orders, avg order value, customer
+  count), and which date range to filter. The system should generate
+  the correct SQL dynamically."
+
+  Additional requirement: "We also need dynamic pivot reports where
+  the column headers come from data (e.g., one column per region,
+  but the regions change as we expand to new markets)."
+
+  Constraint: The system must be safe from SQL injection — users
+  should not be able to execute arbitrary SQL.
+
+  Task: Design the dynamic SQL generation system with security.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds a safe dynamic SQL generator with whitelisting — generator: 'Dynamic SQL report generator with SQL injection protection: PostgreSQL function with parameter whitelisting: CREATE OR REPLACE FUNCTION generate_report(p_dimensions TEXT[], p_metrics TEXT[], p_start_date DATE, p_end_date DATE) RETURNS TABLE(result JSONB) AS $$ DECLARE v_sql TEXT; v_select TEXT := ''; v_group TEXT := ''; allowed_dimensions TEXT[] := ARRAY['region', 'product_category', 'salesperson', 'channel']; allowed_metrics TEXT[] := ARRAY['revenue', 'orders', 'avg_order_value', 'customer_count']; dim TEXT; met TEXT; BEGIN -- Validate dimensions (whitelist check) FOREACH dim IN ARRAY p_dimensions LOOP IF NOT dim = ANY(allowed_dimensions) THEN RAISE EXCEPTION 'Invalid dimension: %', dim; END IF; v_select := v_select || quote_ident(dim) || ', '; v_group := v_group || quote_ident(dim) || ', '; END LOOP; -- Build metric expressions FOREACH met IN ARRAY p_metrics LOOP CASE met WHEN 'revenue' THEN v_select := v_select || 'SUM(amount) AS revenue, '; WHEN 'orders' THEN v_select := v_select || 'COUNT(*) AS orders, '; WHEN 'avg_order_value' THEN v_select := v_select || 'ROUND(AVG(amount), 2) AS avg_order_value, '; WHEN 'customer_count' THEN v_select := v_select || 'COUNT(DISTINCT customer_id) AS customer_count, '; END CASE; END LOOP; v_select := RTRIM(v_select, ', '); v_group := RTRIM(v_group, ', '); v_sql := format('SELECT %s FROM orders WHERE order_date BETWEEN %L AND %L AND status = ''completed'' GROUP BY %s ORDER BY %s', v_select, p_start_date, p_end_date, v_group, v_group); RETURN QUERY SELECT to_jsonb(row) FROM (SELECT * FROM query_to_json(v_sql)) row; END; $$ LANGUAGE plpgsql. Security: dimensions are checked against a whitelist. Metric names map to hardcoded expressions. Dates use format(%L) which properly quotes literals. User input never appears directly in the SQL string. Call: SELECT * FROM generate_report(ARRAY['region', 'channel'], ARRAY['revenue', 'orders'], '2024-01-01', '2024-12-31')'"
+    weight: 0.35
+    description: "Generator"
+  - type: llm_judge
+    criteria: "Response includes dynamic pivot column generation — pivot: 'Dynamic pivot with data-driven columns: The challenge: regions change over time — hardcoding column names breaks when a new region launches. Step 1 — Query the distinct values to become columns: SELECT DISTINCT region FROM orders WHERE order_date >= '2024-01-01' ORDER BY region. Returns: East, West, North, South, International. Step 2 — Build the pivot dynamically (PostgreSQL): CREATE OR REPLACE FUNCTION dynamic_pivot_revenue(p_start DATE, p_end DATE) RETURNS TEXT AS $$ DECLARE v_columns TEXT; v_sql TEXT; BEGIN SELECT string_agg(DISTINCT format('SUM(CASE WHEN region = %L THEN amount END) AS %I', region, region), ', ' ORDER BY format('SUM(CASE WHEN region = %L THEN amount END) AS %I', region, region)) INTO v_columns FROM orders WHERE order_date BETWEEN p_start AND p_end; v_sql := format('SELECT DATE_TRUNC(''month'', order_date) AS month, %s, SUM(amount) AS total FROM orders WHERE order_date BETWEEN %L AND %L AND status = ''completed'' GROUP BY 1 ORDER BY 1', v_columns, p_start, p_end); RETURN v_sql; END; $$ LANGUAGE plpgsql. SQL Server dynamic pivot: DECLARE @columns NVARCHAR(MAX), @sql NVARCHAR(MAX); SELECT @columns = STRING_AGG(QUOTENAME(region), ', ') FROM (SELECT DISTINCT region FROM orders) r; SET @sql = N'SELECT month, ' + @columns + ' FROM (SELECT DATETRUNC(month, order_date) AS month, region, amount FROM orders WHERE status = ''completed'') src PIVOT (SUM(amount) FOR region IN (' + @columns + ')) pvt ORDER BY month'; EXEC sp_executesql @sql. Both approaches query the data first to discover column names, then build the pivot query dynamically'"
+    weight: 0.35
+    description: "Pivot"
+  - type: llm_judge
+    criteria: "Explanation covers SQL injection prevention and testing strategies — security: 'SQL injection prevention in dynamic SQL: Never do this: v_sql := 'SELECT * FROM orders WHERE region = ''' || user_input || ''''. If user_input is: '' OR 1=1; DROP TABLE orders; -- the query becomes destructive. Safe patterns: 1. Whitelist validation — only allow predefined values (as shown in the generator). 2. Parameterized queries — use $1, $2 placeholders: EXECUTE format('SELECT * FROM orders WHERE region = $1') USING p_region. 3. quote_ident() for identifiers — safely quotes column and table names. 4. quote_literal() or format(%L) for values — properly escapes string literals. 5. sp_executesql with parameters (SQL Server) — EXEC sp_executesql @sql, N'@region NVARCHAR(50)', @region = @user_region. Testing dynamic SQL: log every generated query to an audit table: INSERT INTO query_audit_log (user_id, generated_sql, parameters, executed_at) VALUES (current_user, v_sql, p_dimensions::text, NOW()). Review the audit log for unexpected patterns. Run EXPLAIN on generated queries to verify they use indexes. Test edge cases: empty dimension arrays, all metrics selected, single-day date ranges, special characters in parameters'"
+    weight: 0.30
+    description: "Security"

@@ -1,0 +1,44 @@
+meta:
+  id: normalization-for-analytics
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Normalization for analytics — apply appropriate normalization strategies for different analytical use cases including reporting, dashboards, and statistical analysis"
+  tags: [normalization, analytics, reporting, comparison, advanced]
+
+state: {}
+
+trigger: |
+  A senior analyst says: "We need normalization for analytics, not ML.
+  Our challenges:
+
+  - Comparing performance across teams of different sizes (sales per
+    rep, support tickets per agent, revenue per employee)
+  - Comparing metrics across time periods with different baselines
+    (this year vs last year when the company was half the size)
+  - Creating composite scores from metrics with different scales
+    (NPS -100 to +100, CSAT 1-5, engagement 0-1000)
+  - Handling currency differences across regional reports
+  - Presenting metrics on dashboards where scale differences make
+    small-range metrics invisible next to large-range metrics
+
+  These aren't ML preprocessing problems — they're analytics
+  normalization challenges. How do I handle each one?"
+
+  Task: Apply normalization techniques specifically for analytics and
+  reporting use cases, addressing cross-metric comparison, time-period
+  adjustment, composite scoring, and visualization challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses per-unit normalization for fair comparison — revenue per rep (not total revenue) for team comparison, tickets per agent for support comparison, revenue per employee for company-size-adjusted performance. Explains rate-based vs absolute metrics, when to normalize by headcount vs by time period vs by customer count. Addresses Simpson's paradox: normalized rates can be misleading if underlying populations are very different"
+    weight: 0.35
+    description: "PerUnitNormalization"
+  - type: llm_judge
+    criteria: "Response addresses composite scoring and cross-metric normalization — rescaling disparate metrics to a common scale for comparison or combination (NPS, CSAT, engagement → all scaled 0-100), choosing the right scaling method for composites (min-max for bounded output, z-score for relative positioning, percentile rank for non-parametric normalization), weighting decisions in composite scores (are all metrics equally important?), and avoiding false precision (a composite score of 73.4 implies precision that may not exist)"
+    weight: 0.35
+    description: "CompositeScoring"
+  - type: llm_judge
+    criteria: "Response addresses time-period and currency normalization — indexing for time-period comparison (set base period = 100, express subsequent periods as percentages of base), year-over-year growth rates vs absolute comparison, currency conversion (spot rate vs average rate vs PPP for meaningful cross-regional comparison), and visualization techniques for multi-scale dashboards (dual-axis charts, small multiples, indexed charts that show relative change rather than absolute values)"
+    weight: 0.30
+    description: "TemporalCurrency"

@@ -1,0 +1,39 @@
+meta:
+  id: enterprise-data-strategy
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Design an enterprise data strategy — define the analytics roadmap, technology stack, team structure, and governance framework for a growing organization"
+  tags: [python, pandas, strategy, enterprise, roadmap, data-team, master]
+
+state: {}
+
+trigger: |
+  You have been hired as the first Head of Data at a Series C
+  startup ($50M ARR, 400 employees, 200M rows of data). Currently:
+
+  - 3 analysts use pandas in Jupyter notebooks on their laptops
+  - Data lives in a production PostgreSQL database that analysts
+    query directly (sometimes causing production slowdowns)
+  - No data warehouse, no ETL pipelines, no documentation
+  - Each team (sales, marketing, product) has different definitions
+    of key metrics like "active user" and "revenue"
+  - The CEO says: "We're growing 100% YoY. Our data infrastructure
+    won't survive the next 12 months. Build me a data org."
+
+  Task: Present a 12-month data strategy covering technology,
+  team, governance, and migration plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Strategy covers technology stack selection and migration plan — technology: 'Technology stack and migration: Current state assessment: production PostgreSQL is being used as an analytical database. Risks: analyst queries compete with application queries, no query isolation, no historical snapshots, schema changes break analyst notebooks. Phase 1 (months 1-3) — Foundation: deploy a data warehouse (Snowflake, BigQuery, or Redshift). Set up ELT pipelines using a managed tool (Fivetran or Airbyte) to replicate production tables to the warehouse. Analysts query the warehouse, not production. Immediate impact: production database is protected. Why ELT over ETL: with modern columnar warehouses, it is cheaper to load raw data and transform in the warehouse (using dbt) than to transform before loading. dbt for transformation layer: raw data is loaded by Fivetran into a raw schema. dbt models transform raw into staging (cleaned, typed), marts (business logic), and metrics (KPIs). All transformations are version-controlled SQL with tests. Phase 2 (months 4-6) — Analytics layer: deploy a BI tool (Looker, Metabase, or Preset) connected to the warehouse. Define core metrics in the BI tool's semantic layer. Build self-service dashboards for each team. Reduce ad-hoc pandas analysis by 60% — most recurring questions answered by dashboards. Phase 3 (months 7-9) — Advanced analytics: set up a feature store for ML models. Deploy Airflow or Dagster for pipeline orchestration. Build reverse ETL to push analytics data back to operational tools (Salesforce, HubSpot). Enable pandas and Python analysis directly on warehouse data using warehouse-native Python (Snowpark). Phase 4 (months 10-12) — Scale: implement data observability (Monte Carlo, Great Expectations). Add real-time streaming layer (Kafka) for event data. Data catalog and discovery tool for self-service. Technology selection criteria: managed over self-hosted (small team cannot afford operational overhead), SQL-first (most analysts know SQL, Python is secondary), cost-predictable (avoid usage-based pricing surprises at 100% growth rate)'"
+    weight: 0.35
+    description: "Technology"
+  - type: llm_judge
+    criteria: "Strategy covers team structure and hiring plan — team: 'Data team structure and hiring: Current: 3 analysts, no engineers, no leadership. Month 1-3 hiring (4 hires): 1 Senior Analytics Engineer — builds the dbt transformation layer, defines metric definitions, bridges the gap between raw data and business logic. This is the most critical first hire. 1 Data Engineer — deploys and manages the warehouse, ELT pipelines, and infrastructure. Handles the technical foundation. 2 more Analysts — one embedded in sales/marketing, one in product. Reduce the backlog of ad-hoc requests while the infrastructure is being built. Month 4-6 hiring (3 hires): 1 Data Platform Engineer — focuses on CI/CD for data, monitoring, and developer experience for the data team. 1 ML Engineer — builds the first production ML models (churn prediction, lead scoring). 1 Data Analyst Manager — manages the growing analyst team, standardizes processes, mentors junior analysts. Month 7-12 hiring (3 hires): 1 Data Governance Lead — owns data quality, access controls, PII handling, compliance. 1 Product Analyst — dedicated to product analytics, experimentation platform, feature adoption analysis. 1 Data Scientist — advanced statistical analysis, causal inference, experimentation design. Final team: 13 people (Head of Data + 12). Ratio: 3 engineers, 1 platform, 5 analysts, 2 ML/DS, 1 governance, 1 manager. Organizational structure: Head of Data reports to CEO (not CTO or CFO). Centralized team with embedded analysts in business units. This hybrid model balances standardization (central governance) with responsiveness (embedded analysts understand business context). Pandas in the new world: analysts still use pandas for exploratory analysis, ad-hoc investigations, and prototyping. But pandas connects to the warehouse, not production. Notebooks are version-controlled in git. Results that prove valuable become dbt models or dashboard metrics'"
+    weight: 0.35
+    description: "Team"
+  - type: llm_judge
+    criteria: "Strategy addresses governance, metric definitions, and success measurement — governance: 'Data governance and success metrics: Metric standardization — the single source of truth problem: today: sales defines active user as anyone who logged in the last 30 days. Product defines it as anyone who performed a key action in the last 7 days. Marketing defines it as anyone with an active subscription. Tomorrow: one definition of active user, documented in the semantic layer, computed in dbt, and served to all dashboards. Core metric definitions to standardize: active_user: performed at least 1 key action (login, feature use, or data export) in the last 30 days. monthly_recurring_revenue: sum of all active subscription amounts, excluding one-time charges and overages. customer_acquisition_cost: total sales and marketing spend divided by new customers acquired, with a 60-day attribution window. net_revenue_retention: (starting MRR + expansion - contraction - churn) / starting MRR for a cohort. Each definition includes: the SQL logic, edge cases (what about trial users? what about paused accounts?), the owner (who approves changes), and the changelog. Data access policy: tier 1 (public) — aggregated metrics, dashboards. All employees. tier 2 (internal) — row-level data without PII. Analysts and managers. tier 3 (restricted) — PII, financial details. Approved individuals with business justification. tier 4 (confidential) — raw production data, credentials. Data engineers only. Success metrics for the data strategy: quarter 1 — zero analyst queries hitting production (100% migrated to warehouse). quarter 2 — metric discrepancy rate below 5% (teams agree on numbers). quarter 3 — self-service dashboard usage above 70% of recurring questions. quarter 4 — time from question to answer under 4 hours for 80% of requests. Measuring ROI: the data team costs approximately $2M per year (13 people plus tools). Value delivered: analyst time saved ($500K), better decisions from accurate metrics (unmeasurable but real), ML models impact (churn reduction worth $1M+), reduced production incidents from query isolation. Present this as: the data team costs $2M and the measurable impact is $1.5M+ in the first year, with compounding returns as the data infrastructure enables faster decision-making'"
+    weight: 0.30
+    description: "Governance"

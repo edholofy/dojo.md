@@ -1,0 +1,41 @@
+meta:
+  id: database-branching-strategy
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Design a database branching strategy — enable teams to develop and test database changes independently using database branching techniques"
+  tags: [database, migration, branching, development-workflow, testing, expert]
+
+state: {}
+
+trigger: |
+  Your organization has 30 teams working on features simultaneously.
+  Each feature may include database schema changes. Current pain:
+
+  - Shared staging database: when team A's migration breaks staging,
+    all 29 other teams are blocked
+  - Migration testing: developers cannot test their migrations
+    without affecting other developers
+  - Review environments: each PR should have its own environment
+    with database, but provisioning a full database copy takes 2
+    hours and costs $50/instance/day
+  - Data freshness: test databases have 6-month-old data that does
+    not reflect current production patterns
+
+  Task: Design a database branching strategy that gives each team
+  (and each PR) an independent database environment for development
+  and testing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Database branching approaches are evaluated — approaches: 'Approach 1: Full database copies (traditional). How: create a full copy of production for each branch/PR. Pros: complete data, identical to production. Cons: for a 500GB database, each copy takes 2 hours and costs $50/day. With 30 teams and 100+ open PRs: $5,000+/day in database costs. Not scalable. Approach 2: Schema-only databases with seed data. How: create an empty database, apply all migrations, then seed with test data. Pros: fast (minutes to create), cheap (small databases). Cons: seed data does not reflect production patterns. Bugs caused by production data (edge cases, data volume) are not caught. Approach 3: Database branching platforms (Neon, PlanetScale, AWS Aurora clones). How: use copy-on-write technology to create instant, space-efficient copies. Neon: creates a branch from any point in time. The branch is a full copy but only stores the differences (copy-on-write). Creation time: seconds. Storage cost: only the delta from the parent branch. AWS Aurora clones: creates a clone of an Aurora database using the same underlying storage. Creation time: minutes. Storage cost: only modified pages. PlanetScale: MySQL-specific branching with deploy requests (like PRs for database schemas). Pros: fast, cost-effective, production-like data. Cons: requires specific database platforms. Approach 4: Docker-based ephemeral databases (for smaller databases). How: containerized database with migrations applied and data loaded. Pros: completely isolated, reproducible, fast startup. Cons: limited to databases that fit in a container (typically under 50GB). Good for development, not for production-scale testing. Recommendation: (1) For development and PR environments: use database branching (Neon or Aurora clones). Instant creation, production data, minimal cost. (2) For integration testing: use schema-only + seed data in Docker (fast, reproducible, parallelizable). (3) For staging: use a full production clone (refreshed weekly) shared across teams. Protect with access controls to prevent accidental breakage'"
+    weight: 0.35
+    description: "Branching approaches"
+  - type: llm_judge
+    criteria: "PR-based database workflow is designed — PR workflow: 'Automated database-per-PR workflow: (1) PR created with migration files. CI detects migration files in the PR. CI creates a database branch (using Neon or Aurora clone) from the current production state. CI applies the PR's migrations to the database branch. CI runs the application test suite against the branch database. PR status check: green if migrations and tests pass, red if either fails. (2) PR review. Reviewer can connect to the branch database to verify: the migration applied correctly, queries return expected results, no performance regression (compare EXPLAIN ANALYZE with production). The branch database URL is posted as a PR comment for easy access. (3) PR updated. When the PR is updated (new commits): CI applies the new migrations to the existing branch database. If the branch database state is unclear: destroy and recreate the branch. (4) PR merged. After merge: the branch database is destroyed (automated cleanup). The migration is promoted to the staging environment. (5) PR closed without merge. Branch database is destroyed (automated cleanup). Cost model: with copy-on-write branching: creation cost: effectively zero (seconds of compute). Storage cost: only the delta. For a typical PR with a few schema changes: $0.01-0.10/day. For 100 active PRs: $1-10/day vs $5,000+/day for full copies. Lifecycle management: databases older than 7 days without PR activity: automatically destroyed (stale PR cleanup). Maximum active branches per team: 10 (prevents runaway costs). Dashboard showing active branch databases and their costs'"
+    weight: 0.35
+    description: "PR workflow"
+  - type: llm_judge
+    criteria: "Data freshness and privacy in branch databases addressed — data and privacy: 'Data freshness: branch databases should use recent production data so testing is realistic. But: production data contains PII. Approach: maintain a sanitized production snapshot. Weekly: take a production snapshot. Apply data sanitization: replace real emails with fake@example.com. Replace names with synthetic names. Replace addresses with synthetic addresses. Preserve data patterns (distributions, relationships, volumes). Store the sanitized snapshot as the branch base. All new branches are created from this sanitized base. Benefits: realistic data volumes and patterns for testing. No PII in development databases (GDPR and HIPAA compliance). Developers can freely share database access without privacy concerns. Data sanitization rules: (1) Deterministic: the same input always produces the same output. This preserves referential integrity (user A in the users table gets the same fake name everywhere). (2) Realistic: fake data should look realistic (valid email formats, plausible names). This catches bugs that would be missed with obviously fake data (e.g., test@test.test would not trigger email validation). (3) Documented: the sanitization rules are in version control. Auditors can verify that PII is properly removed. Performance testing caveat: branch databases may have different performance characteristics than production (different instance size, different storage, no replicas). For performance-sensitive testing: use a dedicated performance environment with production-class infrastructure. Branch databases are for functional testing, not performance benchmarking'"
+    weight: 0.30
+    description: "Data and privacy"

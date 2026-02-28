@@ -1,0 +1,43 @@
+meta:
+  id: feedback-for-non-designers
+  level: 2
+  course: design-feedback-critique-writing
+  type: output
+  description: "Feedback for non-designers — help PMs, engineers, and stakeholders give better design feedback"
+  tags: [non-designers, stakeholders, pm, engineering, intermediate]
+
+state: {}
+
+trigger: |
+  A PM says: "Our designers keep saying my feedback is
+  'unhelpful.' But I'm trying! Here are my recent
+  review comments:
+
+  1. 'Can we make the logo bigger?'
+  2. 'I saw a competitor do this differently.'
+  3. 'This doesn't feel right.'
+  4. 'Can we try a few more options?'
+  5. 'My wife didn't like this when I showed her.'
+  6. 'Is this the final design? It looks unfinished.'
+
+  I genuinely want to help improve the designs. What
+  am I doing wrong and how can I give feedback that
+  designers actually find useful?"
+
+  Task: Coach this PM on giving effective design feedback
+  by transforming each of their comments into useful
+  feedback and teaching the underlying principles.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response transforms each comment — 'Make the logo bigger' (problem: prescriptive solution not a problem statement, better: 'I'm concerned the logo isn't prominent enough for brand recognition. Is the current size intentional? What's the rationale?' — describes the concern and asks for reasoning), 'Competitor does it differently' (problem: not actionable without specifics, better: 'I noticed [competitor] uses a sidebar navigation for their settings. Did we consider that pattern? Their approach might reduce the number of clicks for power users.' — specific observation with rationale), 'Doesn't feel right' (problem: vague emotional reaction, better: 'Something about this page feels cluttered to me. I think it might be the number of elements visible at once. Could we prioritize the 3 most important items and progressively disclose the rest?' — attempts to articulate the underlying issue), 'Try more options' (problem: delays without direction, better: 'I'm not fully convinced by this approach for [specific reason]. Could we see one alternative that [specific direction]?' — one targeted exploration not open-ended), 'My wife didn't like it' (problem: anecdotal sample of one, better: 'I shared this with someone outside the company and they were confused by [specific element]. Should we validate this with user testing?' — reframes as potential usability signal), 'Looks unfinished' (problem: critiquing fidelity not design, better: 'Is this the intended visual level? Some elements look less polished than others — specifically [examples].' — asks about intent rather than judging)."
+    weight: 0.35
+    description: "CommentTransformations"
+  - type: llm_judge
+    criteria: "Response teaches underlying feedback principles for non-designers — describe the problem, not the solution ('make the logo bigger' is a solution — describe what concern you're trying to solve and let the designer propose solutions, they may find a better way to address brand visibility than enlarging the logo), be specific (point to exact elements — screen names, components, interactions — not vague gestures at the whole design), explain your reasoning ('this doesn't feel right' is a reaction — push yourself to articulate WHY: is it too complex? wrong tone? missing information? confusing flow?), ask questions before prescribing ('did you consider X?' is more productive than 'do X' — the designer may have already considered and rejected it for good reasons you'd learn from), represent users not yourself ('I don't like this' matters less than 'our users might struggle with this because...' — your job is to advocate for business goals and user needs, not personal aesthetics)."
+    weight: 0.35
+    description: "FeedbackPrinciples"
+  - type: llm_judge
+    criteria: "Response is empathetic to the PM's position — acknowledges the difficulty (giving design feedback IS hard for non-designers — you don't have the vocabulary, you're not sure what's intentional vs accidental, you don't want to overstep — these are legitimate challenges), validates their intent (wanting to help improve the design is the right instinct — the issue isn't that they're giving feedback, it's HOW the feedback is framed), provides a simple framework they can remember (before giving feedback, ask yourself: 1. Am I describing a problem or prescribing a solution? 2. Can I point to the specific element I'm concerned about? 3. Am I thinking about users or about my personal preference? — if you do these three things, your feedback will be dramatically better), and avoids making the PM feel stupid (tone: collaborative and encouraging, not 'you're doing it all wrong' — frame as 'here's how to level up your feedback')."
+    weight: 0.30
+    description: "EmpatheticCoaching"

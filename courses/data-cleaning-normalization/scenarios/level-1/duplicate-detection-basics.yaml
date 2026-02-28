@@ -1,0 +1,40 @@
+meta:
+  id: duplicate-detection-basics
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Duplicate detection basics — find and handle duplicate records in datasets"
+  tags: [duplicates, deduplication, matching, basics]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I'm working with a customer database of 50,000
+  records. I suspect there are duplicates because:
+  - Some customers appear twice with slightly different names
+    (e.g., 'John Smith' and 'Jon Smith')
+  - Some have the same email but different phone numbers
+  - Some have the same address but different names (family members?
+    or duplicates?)
+
+  How do I find duplicates when they're not exact matches? What makes
+  two records 'the same customer' vs 'different customers who happen
+  to share some information?'"
+
+  Task: Explain how to detect duplicate records, distinguish between
+  exact and fuzzy duplicates, and decide how to handle duplicate
+  records once found.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains exact vs fuzzy duplicate detection — exact duplicates (identical values in key fields — easy to find with GROUP BY or pandas duplicated()), near-duplicates/fuzzy duplicates (similar but not identical values — require fuzzy matching). Introduces string similarity concepts: edit distance/Levenshtein distance (how many character changes to transform one string into another), soundex/phonetic matching (names that sound similar), and token-based matching (comparing word sets regardless of order). Provides practical examples"
+    weight: 0.35
+    description: "DetectionMethods"
+  - type: llm_judge
+    criteria: "Response explains how to define what constitutes a duplicate — choosing match keys (which fields to compare: email is often the strongest unique identifier, name + address is weaker but useful), setting match thresholds (how similar must records be to count as duplicates?), handling ambiguous cases (same address different names could be family members or duplicates), and creating matching rules (if email matches exactly OR name similarity > 90% AND same zip code, flag as potential duplicate)"
+    weight: 0.35
+    description: "MatchDefinition"
+  - type: llm_judge
+    criteria: "Response explains how to handle duplicates once found — merge/consolidate (combine two records into one, keeping the most complete/recent data from each), keep one delete others (pick the master record based on rules — most recent, most complete, or from the most trusted source), flag for manual review (when automated rules can't confidently determine if records are truly duplicates), and the importance of documenting deduplication rules so they can be consistently applied"
+    weight: 0.30
+    description: "HandlingDuplicates"

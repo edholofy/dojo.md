@@ -1,0 +1,46 @@
+meta:
+  id: regulatory-compliance-reporting
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Build regulatory compliance reports — implement SOX financial controls, GDPR data subject reports, Basel III risk reports, and audit-ready evidence packages using SQL"
+  tags: [SQL, regulatory, compliance, SOX, GDPR, audit, controls, master]
+
+state: {}
+
+trigger: |
+  The company is going public (IPO). The CFO and General Counsel
+  need three compliance reporting capabilities:
+
+  1. SOX compliance — automated internal controls testing for
+     financial reporting. Every financial number must have an audit
+     trail, access controls must be documented, and reconciliation
+     between sub-ledgers and the general ledger must be automated.
+
+  2. GDPR data subject access requests (DSARs) — when a customer
+     requests "show me all data you have on me," the system must
+     generate a complete export within 30 days. When they request
+     deletion, the system must remove personal data while preserving
+     anonymized transaction records for financial reporting.
+
+  3. Revenue recognition audit — SOX Section 404 requires that
+     revenue recognition is tested. Build automated tests that verify
+     revenue is recognized in the correct period, deferred revenue
+     balances are accurate, and no manual journal entries override
+     the system calculations.
+
+  Task: Design the regulatory compliance reporting infrastructure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response implements SOX financial controls testing — sox: 'SOX compliance reporting: Automated control testing: Control 1 — Completeness: every order generates a GL entry. SELECT 'Order-to-GL completeness' AS control, COUNT(o.order_id) AS orders, COUNT(gl.entry_id) AS gl_entries, COUNT(o.order_id) - COUNT(gl.entry_id) AS gap, CASE WHEN COUNT(o.order_id) = COUNT(gl.entry_id) THEN 'PASS' ELSE 'FAIL' END AS status FROM orders o LEFT JOIN gl_entries gl ON o.order_id::text = gl.reference_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE). Control 2 — Accuracy: order amounts match GL amounts. SELECT 'Amount accuracy' AS control, SUM(ABS(o.amount - gl.amount)) AS total_discrepancy, CASE WHEN SUM(ABS(o.amount - gl.amount)) < 0.01 THEN 'PASS' ELSE 'FAIL' END AS status FROM orders o JOIN gl_entries gl ON o.order_id::text = gl.reference_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE). Control 3 — Authorization: no manual journal entries without dual approval. SELECT 'Manual JE authorization' AS control, COUNT(*) AS unnapproved_manual_entries, CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS status FROM gl_entries WHERE entry_type = 'manual' AND (approved_by IS NULL OR approved_by = created_by) AND posting_date >= DATE_TRUNC('quarter', CURRENT_DATE). Sub-ledger to GL reconciliation: WITH sub_ledger AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS sub_total FROM orders WHERE status = 'completed' GROUP BY 1), general_ledger AS (SELECT DATE_TRUNC('month', posting_date) AS month, SUM(amount) AS gl_total FROM gl_entries WHERE account_code LIKE '4%' GROUP BY 1) SELECT s.month, s.sub_total, g.gl_total, s.sub_total - g.gl_total AS variance, CASE WHEN ABS(s.sub_total - g.gl_total) < 1.00 THEN 'RECONCILED' ELSE 'VARIANCE' END AS status FROM sub_ledger s JOIN general_ledger g ON s.month = g.month ORDER BY s.month. Any variance over $1 triggers an investigation. Store results: INSERT INTO sox_control_results (control_name, test_date, status, details) SELECT control, CURRENT_DATE, status, ... for each control'"
+    weight: 0.35
+    description: "SOX"
+  - type: llm_judge
+    criteria: "Response handles GDPR DSAR and right-to-erasure with data anonymization — gdpr: 'GDPR data subject access request (DSAR): Complete data export for a customer: CREATE OR REPLACE FUNCTION generate_dsar_export(p_customer_id INTEGER) RETURNS JSONB AS $$ DECLARE v_result JSONB; BEGIN SELECT jsonb_build_object('personal_data', (SELECT to_jsonb(c) FROM customers c WHERE customer_id = p_customer_id), 'orders', (SELECT jsonb_agg(to_jsonb(o)) FROM orders o WHERE customer_id = p_customer_id), 'support_tickets', (SELECT jsonb_agg(to_jsonb(t)) FROM support_tickets t WHERE customer_id = p_customer_id), 'login_history', (SELECT jsonb_agg(to_jsonb(l)) FROM login_history l WHERE user_id = p_customer_id), 'marketing_preferences', (SELECT to_jsonb(m) FROM marketing_preferences m WHERE customer_id = p_customer_id), 'exported_at', NOW(), 'export_reason', 'GDPR Article 15 — DSAR') INTO v_result; INSERT INTO dsar_log (customer_id, request_type, export_data, completed_at) VALUES (p_customer_id, 'access', v_result, NOW()); RETURN v_result; END; $$ LANGUAGE plpgsql. Right to erasure (Article 17) — delete personal data but preserve financial records: CREATE OR REPLACE FUNCTION gdpr_erase_customer(p_customer_id INTEGER) RETURNS void AS $$ BEGIN UPDATE customers SET name = 'REDACTED', email = 'redacted_' || customer_id || '@deleted.com', phone = NULL, address = NULL, anonymized_at = NOW() WHERE customer_id = p_customer_id; UPDATE orders SET shipping_address = 'REDACTED', billing_address = 'REDACTED', customer_name = 'REDACTED' WHERE customer_id = p_customer_id; DELETE FROM login_history WHERE user_id = p_customer_id; DELETE FROM marketing_preferences WHERE customer_id = p_customer_id; INSERT INTO dsar_log (customer_id, request_type, completed_at) VALUES (p_customer_id, 'erasure', NOW()); END; $$ LANGUAGE plpgsql. Critical: orders are not deleted — financial records must be preserved for tax and SOX compliance. Only personal identifiers are anonymized. The order_id, amount, date, and product remain for financial reporting. DSAR compliance tracking: SELECT request_type, COUNT(*) AS requests, AVG(EXTRACT(DAY FROM completed_at - requested_at)) AS avg_days_to_complete, COUNT(CASE WHEN completed_at - requested_at > INTERVAL '30 days' THEN 1 END) AS breached_deadline FROM dsar_log GROUP BY request_type. GDPR requires completion within 30 days — any breach is a compliance violation'"
+    weight: 0.35
+    description: "GDPR"
+  - type: llm_judge
+    criteria: "Explanation covers revenue recognition audit and the overall compliance dashboard — revrec: 'Revenue recognition audit (ASC 606 / SOX 404): Automated test: is revenue recognized in the correct period? WITH expected_recognition AS (SELECT order_id, order_date, CASE WHEN delivery_type = 'one_time' THEN order_date WHEN delivery_type = 'subscription' THEN generate_series(DATE_TRUNC('month', order_date), DATE_TRUNC('month', order_date) + (contract_months - 1) * INTERVAL '1 month', '1 month') END AS expected_recognition_month, CASE WHEN delivery_type = 'one_time' THEN amount ELSE ROUND(amount / contract_months, 2) END AS expected_amount FROM orders WHERE status = 'completed'), actual_recognition AS (SELECT reference_order_id, DATE_TRUNC('month', posting_date) AS actual_month, SUM(amount) AS actual_amount FROM gl_entries WHERE account_code = '4010' GROUP BY 1, 2) SELECT e.order_id, e.expected_recognition_month, e.expected_amount, a.actual_amount, CASE WHEN ABS(e.expected_amount - COALESCE(a.actual_amount, 0)) < 0.01 THEN 'PASS' ELSE 'FAIL — recognized ' || COALESCE(a.actual_amount, 0) || ' expected ' || e.expected_amount END AS test_result FROM expected_recognition e LEFT JOIN actual_recognition a ON e.order_id = a.reference_order_id AND e.expected_recognition_month = a.actual_month WHERE test_result LIKE 'FAIL%'. Any row returned is a revenue recognition error — revenue recognized in the wrong period or wrong amount. Unified compliance dashboard: SELECT 'SOX Controls' AS domain, COUNT(CASE WHEN status = 'PASS' THEN 1 END) AS passed, COUNT(CASE WHEN status = 'FAIL' THEN 1 END) AS failed FROM sox_control_results WHERE test_date = CURRENT_DATE UNION ALL SELECT 'GDPR DSARs', COUNT(CASE WHEN completed_at - requested_at <= INTERVAL '30 days' THEN 1 END), COUNT(CASE WHEN completed_at - requested_at > INTERVAL '30 days' OR completed_at IS NULL THEN 1 END) FROM dsar_log WHERE requested_at >= DATE_TRUNC('quarter', CURRENT_DATE) UNION ALL SELECT 'Rev Rec Tests', COUNT(CASE WHEN test_result = 'PASS' THEN 1 END), COUNT(CASE WHEN test_result LIKE 'FAIL%' THEN 1 END) FROM rev_rec_audit WHERE test_date = CURRENT_DATE. This single dashboard gives the CFO and General Counsel real-time visibility into compliance posture across all regulatory domains'"
+    weight: 0.30
+    description: "RevRec"

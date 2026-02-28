@@ -1,0 +1,36 @@
+meta:
+  id: sample-size-calculation
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Calculate sample sizes for A/B tests — determine how many visitors you need and how long to run the test to detect a meaningful difference"
+  tags: [sample-size, power, duration, MDE, beginner]
+
+state: {}
+
+trigger: |
+  A product manager wants to A/B test a new checkout flow. They ask:
+  "How long should we run the test? Can we just run it for a week and
+  check the results?"
+
+  The current checkout conversion rate is 8.5%. The PM hopes the new
+  flow will increase it to at least 9.5% (a 1 percentage point
+  improvement).
+
+  The site gets about 5,000 checkout visitors per day.
+
+  Task: Calculate the required sample size and test duration.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response calculates sample size correctly — calculation: 'Sample size calculation: Inputs: baseline conversion rate: 8.5%. Minimum detectable effect (MDE): 1 percentage point (8.5% → 9.5%). This is a 11.8% relative lift. Significance level (α): 0.05 (two-tailed). Statistical power: 80%. Formula approach: for a two-proportion z-test, the sample size per group is approximately: n = (Z_α/2 + Z_β)² × (p1(1-p1) + p2(1-p2)) / (p2 - p1)². Where Z_α/2 = 1.96 (for α = 0.05 two-tailed) and Z_β = 0.84 (for 80% power). n = (1.96 + 0.84)² × (0.085 × 0.915 + 0.095 × 0.905) / (0.01)². n = 7.84 × (0.0778 + 0.0860) / 0.0001. n = 7.84 × 0.1638 / 0.0001. n ≈ 12,842 per group. Total sample needed: 12,842 × 2 = 25,684 visitors. With 5,000 checkout visitors per day and a 50/50 split (2,500 per group per day): days needed = 12,842 / 2,500 ≈ 5.1 days. Recommendation: run the test for at least 7 days (one full week) to account for day-of-week effects. Even though the raw calculation says 5 days, weekly patterns matter — weekday shoppers behave differently from weekend shoppers. Running for a full week ensures both groups experience the same mix of days'"
+    weight: 0.35
+    description: "Calculation"
+  - type: llm_judge
+    criteria: "Response explains the relationship between MDE, sample size, and test duration — relationships: 'The MDE-sample size-duration relationship: The minimum detectable effect (MDE) is the smallest improvement you want to detect. If you set a smaller MDE, you need more data: MDE 1.0pp (8.5% → 9.5%): ~25,700 visitors total, ~5 days. MDE 0.5pp (8.5% → 9.0%): ~102,000 visitors total, ~20 days. MDE 0.25pp (8.5% → 8.75%): ~410,000 visitors total, ~82 days. The relationship: halving the MDE quadruples the sample size. This means detecting small effects requires much more data. The PM must decide: what is the smallest improvement worth detecting? If a 0.5pp improvement is not worth the engineering effort to build the new checkout flow, do not waste 20 days trying to detect it. Set the MDE at 1.0pp and run for a week. Conversely, if the traffic is lower: with 500 visitors per day instead of 5,000: MDE 1.0pp: ~25,700 visitors / 500 per day = 51 days. MDE 0.5pp: ~102,000 visitors / 200 per day = 204 days. Low-traffic sites cannot detect small effects in a reasonable timeframe. They must either test bigger changes (larger MDE) or accept longer test durations. Practical guidance: most product teams should set MDE at the minimum business-meaningful improvement. If a 1pp lift in checkout conversion means $50K additional annual revenue, and the engineering cost is $20K, the MDE of 1pp is worth detecting. If the MDE is 0.1pp ($5K annual revenue), it is probably not worth the 2-month test duration'"
+    weight: 0.35
+    description: "Relationships"
+  - type: llm_judge
+    criteria: "Response covers common mistakes in test duration — mistakes: 'Common test duration mistakes: Mistake 1 — Running for too short: the PM runs the test for 2 days, sees a 2pp improvement in the treatment, and declares victory. With only 2 days of data (5,000 visitors per group), the result is underpowered. The observed effect may be noise. If the true effect is 1pp, you need 12,842 per group to detect it. With 5,000, you have only 39% power — meaning you will miss the real effect 61% of the time. Mistake 2 — Stopping when significant: the PM checks the dashboard every day. On day 3, the p-value dips below 0.05. They stop the test. This is called peeking and it inflates the false positive rate dramatically. If you check once per day for 7 days, the effective false positive rate is approximately 22%, not 5%. Solution: pre-calculate the required sample size and commit to running the test until you reach it. Do not peek. Mistake 3 — Running for too long: the PM runs the test for 60 days to be really sure. Problems: user behavior changes over 60 days (seasonality, marketing campaigns, product changes). Users who saw Version A early may see Version B later if cookies expire. The opportunity cost of not shipping a winning treatment for 60 days is real. Solution: run for the minimum duration needed (calculated from sample size) plus a buffer for weekly cycles. Typically 1-4 weeks. Mistake 4 — Ignoring weekly cycles: a test that runs Monday to Friday misses weekend traffic. If weekend users convert at different rates, the results are biased. Solution: always run tests for complete weeks (7, 14, 21 days)'"
+    weight: 0.30
+    description: "Mistakes"

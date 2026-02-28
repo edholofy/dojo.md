@@ -1,0 +1,41 @@
+meta:
+  id: interaction-specifications
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Interaction specifications — write detailed interaction specs for complex UI patterns including drag-and-drop, gestures, and multi-step interactions"
+  tags: [interactions, drag-drop, gestures, multi-step, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I'm specifying a Kanban
+  board with these interactions:
+
+  - Drag cards between columns (To Do → In Progress → Done)
+  - Reorder cards within a column
+  - Click a card to open detail view
+  - Inline edit card title
+  - Add new card to any column
+  - Collapse/expand columns
+
+  I can annotate simple clicks and navigation, but I don't
+  know how to specify drag-and-drop behavior. What does the
+  developer need to know about these complex interactions?"
+
+  Task: Write interaction specifications for all Kanban board
+  interactions with enough detail for implementation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies drag-and-drop comprehensively — drag initiation (click and hold for 150ms, or grab handle click), visual feedback during drag (card lifts with shadow, 10% opacity ghost stays in original position, column highlights as valid drop zone), drop zone indicators (placeholder gap opens where card would land, column header highlights when dragging over it), drop behavior (card animates to new position, order persists to server, optimistic update with rollback on failure), invalid drop handling (card animates back to original position if dropped outside valid zone), and keyboard alternative (select card → arrow keys to move → Enter to confirm position). Each phase of the drag interaction is specified"
+    weight: 0.35
+    description: "DragDropSpecs"
+  - type: llm_judge
+    criteria: "Response specifies inline editing and card interactions — inline edit: double-click card title activates edit mode (title becomes editable input, auto-selects text), Enter saves, Escape cancels, blur saves, max 100 characters. Card click: single click opens detail panel (slide from right or modal), click vs drag distinction (click-and-release within 150ms = click, beyond 150ms = drag initiation). Add new card: 'Add card' button at column bottom, inline card creation (new card appears with editable title, auto-focused), Enter creates card, Escape cancels. Collapse/expand: click column header toggles, shows card count when collapsed, persists collapse state per user"
+    weight: 0.35
+    description: "CardInteractions"
+  - type: llm_judge
+    criteria: "Response covers edge cases and performance — concurrent editing (what if two users drag the same card simultaneously?), column limits (can a column have a WIP limit? what happens when limit is reached?), undo support (Cmd+Z to undo last move), mobile/touch behavior (long-press to initiate drag on touch devices, swipe between columns), performance with many cards (virtual rendering for columns with 100+ cards), and real-time updates (if another user moves a card, the board updates without full refresh). Includes a state table showing all card states and transitions"
+    weight: 0.30
+    description: "EdgeCasesPerformance"

@@ -1,0 +1,53 @@
+meta:
+  id: pdf-document-accessibility
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "PDF and document accessibility — audit PDFs, Word documents, and other non-web content for accessibility compliance"
+  tags: [PDF, documents, non-web, tagged-PDF, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "Our client has a university
+  website. Besides the web pages, they have hundreds
+  of PDFs: course catalogs, syllabi, research papers,
+  financial aid forms, and campus maps.
+
+  A student filed a complaint that they can't access
+  the financial aid PDF with their screen reader.
+  Now the university wants all public-facing PDFs
+  audited.
+
+  Issues I'm finding:
+  1. Most PDFs are scanned images of paper documents
+     — no text layer at all
+  2. PDFs created from Word have headings that look
+     right but aren't tagged as headings in the PDF
+     structure
+  3. PDF forms have no accessible labels
+  4. Tables in PDFs are read as a jumble of text by
+     screen readers
+  5. The campus map PDF is a flat image with no text
+     alternative
+
+  How do I audit PDF accessibility and what standards
+  apply?"
+
+  Task: Audit PDF accessibility issues and create
+  a remediation strategy for making document
+  collections accessible.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits each PDF issue with correct standards — Scanned image PDFs (WCAG 1.1.1 + Section 508: scanned PDFs without OCR text layer are completely inaccessible to screen readers — content is literally invisible to assistive technology, Severity: Critical, Fix: apply OCR to create text layer, then review and correct OCR errors, add proper tag structure — for high volumes, batch OCR processing with manual review of critical documents), Untagged headings (PDF/UA standard + WCAG 1.3.1: PDF structure tags are equivalent to HTML semantic elements — visual headings without H1/H2 tags in the PDF tag tree mean screen readers read as flat paragraphs, Severity: Major, Fix: add proper tags using Adobe Acrobat Pro's tag editor or remediate from the source Word document), PDF form fields without labels (WCAG 4.1.2 + 1.3.1: form fields in PDFs need tooltip labels that screen readers can announce — without labels, screen reader users hear 'edit text' with no context, Severity: Critical for financial aid forms, Fix: add tooltip labels matching visual labels using Acrobat form editor)"
+    weight: 0.35
+    description: "PDFFindings"
+  - type: llm_judge
+    criteria: "Response covers PDF table and image issues plus standards — PDF tables (WCAG 1.3.1 + PDF/UA: tables in PDFs need proper Table, TR, TH, TD tags in the tag structure — without tags, screen readers read cell content linearly without any structure, making data incomprehensible, Severity: Major, Fix: add table tags using Acrobat Pro's tag editor, mark header cells as TH, ensure reading order matches logical table order), Campus map PDF (WCAG 1.1.1: image-only content needs text alternative — campus map as flat image is inaccessible, Severity: Major, Fix: provide accessible text version describing key locations, buildings, and routes, or create an interactive accessible web-based map as alternative), applicable standards (WCAG 2.2 AA applies to all web-delivered documents, PDF/UA ISO 14289 is the specific standard for PDF accessibility, Section 508 for US government and education, EN 301 549 for European requirements — PDF/UA goes beyond WCAG with PDF-specific requirements like proper tag tree, reading order, and document properties)"
+    weight: 0.35
+    description: "TableMapStandards"
+  - type: llm_judge
+    criteria: "Response provides remediation strategy for document collections — triage approach (don't try to remediate all documents at once: Priority 1 — documents required for core services like financial aid, enrollment, ADA compliance — remediate within 30 days, Priority 2 — high-traffic documents like course catalogs and syllabi — remediate within 90 days, Priority 3 — archival and low-traffic documents — provide accessible alternative on request), prevention strategy (train content creators to produce accessible documents from source: use heading styles in Word, add alt text before exporting to PDF, use Word's Accessibility Checker before publishing, create accessible document templates with proper styles), testing tools (Adobe Acrobat Pro's built-in accessibility checker, PAC 2024 PDF Accessibility Checker for free detailed analysis, screen reader testing with JAWS or NVDA reading the PDF), and alternative formats (for documents that can't be remediated: offer HTML version, provide accessible Word version, or offer to provide accessible format on request — this is a legal requirement under ADA)"
+    weight: 0.30
+    description: "RemediationStrategy"

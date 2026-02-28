@@ -1,0 +1,38 @@
+meta:
+  id: statistical-outlier-detection
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Statistical outlier detection — apply z-score, IQR, and modified z-score methods with proper threshold selection and multivariate considerations"
+  tags: [outliers, z-score, IQR, modified-z-score, statistical, intermediate]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I'm cleaning e-commerce transaction data with
+  200,000 orders. I need to identify outliers in:
+  - Order total (right-skewed: mean $85, median $52, max $25,000)
+  - Items per order (mostly 1-5, but some orders have 200+ items)
+  - Time to complete checkout (most are 2-15 minutes, some are 48 hours)
+  - Customer age (18-85 is normal, but some are listed as 0 or 200)
+
+  The data is clearly non-normal and skewed. Which statistical outlier
+  detection method works best for each variable? How do I set thresholds?"
+
+  Task: Apply statistical outlier detection methods to skewed,
+  non-normal e-commerce data, comparing z-score, IQR, and modified
+  z-score approaches with appropriate threshold selection.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response compares methods for non-normal data — z-score limitations (assumes normality, sensitive to outliers in the mean and std calculation — for right-skewed data like order totals, z-score will undercount outliers because extreme values inflate the std), IQR method (uses median-based quartiles, more robust to skew, recommended for right-skewed data), modified z-score using MAD (Median Absolute Deviation — replaces mean with median and std with MAD, robust to outliers and skew). Recommends IQR or modified z-score for the skewed e-commerce data"
+    weight: 0.35
+    description: "MethodComparison"
+  - type: llm_judge
+    criteria: "Response provides specific threshold guidance per variable — order total: use IQR with a larger multiplier (3× IQR instead of 1.5× because high-value orders can be legitimate), or apply log transformation first then z-score. Items per order: IQR with standard 1.5× threshold (200 items is almost certainly an error or bulk order requiring different treatment). Checkout time: domain-based threshold (>60 minutes is likely an abandoned cart reopened), combined with IQR. Customer age: domain-based validation (age <13 or >100 is invalid regardless of statistical distribution). Shows that threshold selection requires both statistical and domain knowledge"
+    weight: 0.35
+    description: "ThresholdGuidance"
+  - type: llm_judge
+    criteria: "Response addresses practical considerations — applying different methods to different variables (no one method fits all), handling outliers that are legitimate (a $25,000 order might be a real corporate purchase — flag for review rather than auto-remove), the importance of checking outliers in context (a $500 order is normal for electronics but an outlier for a $5 average product), and documenting outlier detection thresholds and decisions for reproducibility"
+    weight: 0.30
+    description: "PracticalConsiderations"

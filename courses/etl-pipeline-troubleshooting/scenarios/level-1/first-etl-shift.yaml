@@ -1,0 +1,47 @@
+meta:
+  id: first-etl-shift
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "First ETL troubleshooting shift — handle a realistic on-call scenario with multiple pipeline failures requiring systematic diagnosis and resolution"
+  tags: [shift, combined, on-call, assessment, basics]
+
+state: {}
+
+trigger: |
+  You are a junior data engineer on your first on-call shift. It's
+  Monday morning and three overnight pipelines have failed. Your
+  team lead is on vacation and you need to triage and fix them:
+
+  Pipeline 1 — customer_sync (Priority: High)
+  Error: "FATAL: password authentication failed for user 'etl_svc'"
+  Last successful run: Friday
+  Impact: Customer dashboard is showing stale data
+
+  Pipeline 2 — product_catalog_load (Priority: Medium)
+  Error: "duplicate key value violates unique constraint 'products_pkey'"
+  Last successful run: Saturday
+  Impact: 15 new products not appearing on the website
+
+  Pipeline 3 — daily_revenue_report (Priority: High)
+  Error: "ValueError: could not convert string to float: 'N/A'"
+  Last successful run: Sunday
+  Impact: CFO's daily revenue email didn't go out
+
+  Task: Triage all three failures by priority, diagnose each root
+  cause, provide immediate fixes, and explain your troubleshooting
+  process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response demonstrates proper triage — prioritizes by business impact (customer_sync and daily_revenue_report are both high priority, product_catalog is medium), explains the reasoning for prioritization (CFO email and customer dashboard are stakeholder-facing), and creates a systematic plan to address them in order rather than jumping between issues randomly"
+    weight: 0.35
+    description: "Triage"
+  - type: llm_judge
+    criteria: "Response diagnoses and fixes each pipeline — customer_sync: credentials likely changed over the weekend (check with security team, update password in secret manager, verify with a test connection, re-run). Product catalog: duplicate records being inserted (use UPSERT/INSERT ON CONFLICT, or clear the failed batch and re-run with deduplication). Revenue report: a data value contains 'N/A' string instead of a number (add NULLIF or CASE handling for 'N/A' values in the transform step, replace with NULL or 0 as appropriate, re-run)"
+    weight: 0.35
+    description: "DiagnosisAndFix"
+  - type: llm_judge
+    criteria: "Response shows good on-call practices — communicates status to stakeholders (notify the CFO that the revenue report will be delayed, update the team Slack channel), documents the issues and fixes (create tickets or update a runbook), identifies follow-up actions to prevent recurrence (credential rotation alerts, idempotent loads, input validation), and knows when to escalate (if fixes don't work or if the blast radius is larger than expected)"
+    weight: 0.30
+    description: "OnCallPractices"

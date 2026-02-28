@@ -1,0 +1,47 @@
+meta:
+  id: first-documentation-shift
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Combined beginner shift — document a complete API endpoint set for a simple CRUD resource from scratch"
+  tags: [API, documentation, combined, shift-simulation, CRUD, beginner]
+
+state: {}
+
+trigger: |
+  You're the new technical writer. Day one task: document the /users
+  CRUD API endpoints. The developer hands you this list:
+
+  GET    /api/v1/users          — list all users (paginated)
+  POST   /api/v1/users          — create a user
+  GET    /api/v1/users/{id}     — get one user
+  PUT    /api/v1/users/{id}     — update a user
+  DELETE /api/v1/users/{id}     — delete a user
+
+  User object: id (UUID), name (string), email (string, unique),
+  role (admin/member), is_active (boolean), created_at, updated_at
+
+  Auth: Bearer token required for all endpoints.
+  Admin-only: POST, PUT, DELETE.
+
+  Constraints: name 1-100 chars, email must be valid, role enum.
+
+  You have no existing documentation to work from.
+
+  Task: Write complete API documentation for all 5 CRUD endpoints.
+  Include: endpoint descriptions, parameters, request/response
+  examples, status codes, authentication, and permissions.
+
+assertions:
+  - type: llm_judge
+    criteria: "All 5 endpoints are fully documented — each endpoint has: method + path, description, authentication (Bearer token), permissions (who can call it), parameters (path, query, body as applicable), request example (for POST/PUT), response example with realistic data, status codes (success + relevant errors). GET /users includes pagination parameters. POST includes request body schema. GET /{id} shows single resource response. PUT shows partial update behavior. DELETE shows 204 No Content response"
+    weight: 0.35
+    description: "Complete coverage"
+  - type: llm_judge
+    criteria: "Documentation is consistent across endpoints — same user object shape in all responses. Same error format for all endpoints. Same authentication pattern documented once and referenced. Consistent naming (id vs user_id — pick one). Examples use the same user across endpoints (create Jane Cooper → get Jane Cooper → update Jane Cooper → delete). Status codes consistent: 200 for GET/PUT, 201 for POST, 204 for DELETE, 404 for non-existent resources"
+    weight: 0.35
+    description: "Consistency"
+  - type: llm_judge
+    criteria: "Documentation is usable by a new developer — a developer who has never used the API can: (1) authenticate (auth docs included), (2) create a user (POST with example body), (3) list users with pagination, (4) get a specific user by ID, (5) update user fields, (6) delete a user. All from the documentation alone. Includes curl examples for each endpoint. Notes: DELETE returns 204 (no body), PUT with unchanged fields is idempotent, listing returns paginated results"
+    weight: 0.30
+    description: "Usability"

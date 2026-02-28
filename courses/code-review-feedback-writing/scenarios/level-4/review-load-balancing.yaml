@@ -1,0 +1,39 @@
+meta:
+  id: review-load-balancing
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Balance review workload — design assignment systems that distribute review load fairly, develop reviewer expertise, and prevent bottlenecks"
+  tags: [code-review, load-balancing, assignment, bottleneck, fairness, expert]
+
+state: {}
+
+trigger: |
+  Your 40-person engineering organization has a review load imbalance:
+
+  - 5 senior engineers review 70% of all PRs (burned out, blocking others)
+  - 15 mid-level engineers review 25% (could do more)
+  - 20 junior engineers review 5% (missing learning opportunity)
+  - Some code areas have only 1 qualified reviewer (bus factor = 1)
+  - Security-sensitive code (auth, payments) requires senior review
+  - Cross-team PRs sit in queues because no one "owns" the review
+  - Some reviewers are faster but lower quality; others are thorough but slow
+
+  Task: Design a review assignment and load balancing system. Include:
+  assignment algorithm, reviewer tiers, escalation paths, cross-
+  training plan to reduce bus factors, and how to handle different
+  review quality levels. Balance fairness, speed, and quality.
+
+assertions:
+  - type: llm_judge
+    criteria: "Assignment system balances load with expertise — tiered system: (1) Primary reviewer (auto-assigned via round-robin within capable pool) — must be able to review the code area. (2) Secondary reviewer for critical paths (auth, payments, data migrations) — always a senior engineer. Use CODEOWNERS to define code area → reviewer pool mappings. Round-robin within each pool to distribute evenly. Capacity tracking: each reviewer has a weekly capacity (juniors: 2-3 reviews, mids: 4-5, seniors: 3-4 — seniors review fewer but harder PRs). Assignment considers current load: don't assign to someone with 3 pending reviews. Opt-out periods: reviewers can mark 'focus time' blocks where they're not assigned reviews"
+    weight: 0.35
+    description: "Assignment system"
+  - type: llm_judge
+    criteria: "Cross-training plan reduces bus factor — identify single points of failure: code areas with only 1 qualified reviewer. Training approach: (1) pair reviewing — shadow the expert for 2-3 reviews, then co-review, then solo with expert available for questions. (2) Rotate secondary reviewer assignments — mid-level engineers get assigned to unfamiliar areas with a senior co-reviewer. (3) Documentation of domain knowledge — expert creates a 'reviewer guide' for their specialty area (what to look for in payment code, common pitfalls). Target: every code area has at least 3 qualified reviewers within 6 months. Tracking: matrix of code areas × qualified reviewers, updated monthly. Incentive: reviewing unfamiliar code (with appropriate support) counts toward growth goals"
+    weight: 0.35
+    description: "Cross-training"
+  - type: llm_judge
+    criteria: "Quality differences are managed fairly — acknowledge: reviewers have different quality levels. Fast-but-shallow reviewers: good for low-risk code (documentation, minor refactors, dependency updates). Thorough-but-slow reviewers: good for complex logic, security-sensitive code. Match reviewer style to PR risk. Quality improvement: (1) monthly 'review quality' feedback — manager samples 3 reviews per engineer, provides feedback. (2) Example repository of excellent reviews — annotated examples of good comments at each severity level. (3) Pair reviewing for quality improvement — pair a fast reviewer with a thorough one. Avoid: publicly ranking review quality (shame doesn't improve quality). Do: celebrate specific excellent review comments in team channel. Escalation: when a reviewer is consistently rubber-stamping, private conversation about review expectations"
+    weight: 0.30
+    description: "Quality management"

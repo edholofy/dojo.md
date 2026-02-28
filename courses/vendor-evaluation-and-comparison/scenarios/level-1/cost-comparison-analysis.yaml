@@ -1,0 +1,96 @@
+meta:
+  id: cost-comparison-analysis
+  level: 1
+  course: vendor-evaluation-and-comparison
+  type: output
+  description: "Cost comparison analysis — perform a total cost comparison for 3 vendors including hidden costs"
+  tags: [cost-analysis, total-cost, hidden-costs, comparison, beginner]
+
+state: {}
+
+trigger: |
+  You're the IT Manager at a 120-person e-commerce company.
+  You need to select a cloud hosting provider for your new
+  online store. The CTO wants a detailed cost comparison
+  that goes beyond the headline pricing.
+
+  Expected usage:
+  - Average monthly traffic: 500,000 visitors
+  - Peak traffic: 2M visitors (Black Friday/holiday season,
+    ~6 weeks/year)
+  - Storage: 500GB growing ~20% annually
+  - Data transfer: 2TB/month average, 8TB/month peak
+  - Uptime requirement: 99.95%
+  - 2 environments needed: production + staging
+  - Need managed database (PostgreSQL)
+  - Need CDN for global customers
+  - SSL certificates required
+
+  Vendor A — CloudBase:
+  - Compute: $0.05/hour per instance (need 3 instances
+    normally, 8 during peak)
+  - Storage: $0.023/GB/month
+  - Data transfer: First 1TB free, then $0.09/GB
+  - Database: $150/month for managed PostgreSQL
+  - CDN: $0.08/GB
+  - SSL: Free
+  - Support: Basic (forum) included, Premium ($500/month)
+  - SLA: 99.95% uptime guarantee
+  - Scaling: Manual (you manage instance count)
+  - Hidden: $50/month monitoring add-on, $0.01 per 10K API
+    requests
+  - Contract: Pay-as-you-go, no commitment required
+  - Migration support: None
+
+  Vendor B — HostPlus:
+  - Compute: $800/month flat for "Growth Plan" (includes
+    auto-scaling up to 10 instances)
+  - Storage: Included up to 1TB
+  - Data transfer: 5TB/month included, then $0.12/GB
+  - Database: Included in plan
+  - CDN: Included
+  - SSL: Included
+  - Support: 24/7 phone + chat included
+  - SLA: 99.99% uptime guarantee
+  - Scaling: Automatic
+  - Hidden: $200/month for staging environment (separate
+    plan), overage charges above 10 instances ($100/
+    instance/day)
+  - Contract: Annual commitment required (20% penalty for
+    early termination)
+  - Migration support: Free migration assistance
+
+  Vendor C — ServerCloud:
+  - Compute: $0.04/hour per instance (need 3 normally,
+    8 during peak)
+  - Storage: $0.020/GB/month
+  - Data transfer: $0.07/GB (all traffic billed)
+  - Database: $120/month managed PostgreSQL
+  - CDN: $0.06/GB
+  - SSL: $10/month per certificate
+  - Support: Email (8-hour response) included, Premium
+    ($300/month)
+  - SLA: 99.9% uptime guarantee
+  - Scaling: Semi-automatic (set rules, auto-applies)
+  - Hidden: Backup storage billed separately ($0.05/GB),
+    load balancer $20/month
+  - Contract: Month-to-month
+  - Migration support: $2,000 one-time fee
+
+  Task: Calculate the total annual cost for each vendor
+  including all hidden and variable costs. Present a clear
+  comparison and make a recommendation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response calculates total costs accurately — includes compute (normal + peak periods), storage (with growth), data transfer (normal + peak months), database, CDN, SSL, support, and hidden costs for each vendor; calculations account for the 6-week peak period separately; annual totals are realistic and math is reasonable; the cost breakdown is transparent and verifiable."
+    weight: 0.35
+    description: "AccurateCostCalculation"
+  - type: llm_judge
+    criteria: "Response identifies and quantifies hidden costs — calls out CloudBase's monitoring and API request fees; HostPlus's staging environment cost and overage risk; ServerCloud's backup storage, load balancer, and SSL fees; the hidden costs are incorporated into total cost comparisons; the analysis reveals the true cost gap between vendors."
+    weight: 0.35
+    description: "HiddenCostIdentification"
+  - type: llm_judge
+    criteria: "Response makes a recommendation considering value, not just price — factors in SLA differences (99.9% vs 99.95% vs 99.99%), support quality, scaling capability, migration effort, and contract flexibility; acknowledges the Black Friday peak risk; the recommendation balances cost with operational needs for an e-commerce company where downtime = lost revenue."
+    weight: 0.30
+    description: "ValueBasedRecommendation"

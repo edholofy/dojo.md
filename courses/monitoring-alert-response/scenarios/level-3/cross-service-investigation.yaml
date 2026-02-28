@@ -1,0 +1,46 @@
+meta:
+  id: cross-service-investigation
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Investigate cross-service alert patterns — use distributed tracing and logs to diagnose issues that span multiple services"
+  tags: [monitoring, distributed-tracing, cross-service, investigation, microservices, advanced]
+
+state: {}
+
+trigger: |
+  Users report intermittent "request timeout" errors on the
+  checkout page. Your monitoring shows:
+
+  - checkout-service: error rate 3%, p99 latency 8 seconds
+    (normal: 0.1%, 500ms)
+  - payment-service: error rate 0.5%, p99 latency normal (200ms)
+  - inventory-service: error rate 0.2%, p99 latency 6 seconds
+    (normal: 100ms)
+  - user-service: healthy, no alerts
+  - pricing-service: healthy, no alerts
+
+  The checkout flow calls: user-service → inventory-service →
+  pricing-service → payment-service (in sequence).
+
+  The puzzle: checkout is slow and erroring, inventory is slow but
+  low error rate, and payment-service has slightly elevated errors
+  but normal latency. How are these related?
+
+  Task: Investigate using distributed tracing and log analysis.
+  Walk through the diagnostic process to find the root cause of
+  the intermittent checkout timeouts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Investigation uses distributed tracing methodically — tracing strategy: 'Start by pulling distributed traces for failed checkout requests (the ones timing out at 8 seconds). In each trace, look at the span durations for each downstream call: user-service call: likely fast (user-service is healthy). inventory-service call: likely showing 6+ second spans (matches the p99 latency). pricing-service call: likely fast (healthy). payment-service call: likely fast (200ms latency is normal) or timing out (if checkout's total timeout is 8 seconds and inventory consumed 6 of them, payment only gets 2 seconds remaining).' Trace analysis reveals: 'The timeline for a failing checkout request: 0-50ms: call user-service (succeeds, fast). 50ms-6050ms: call inventory-service (responds but takes 6 seconds). 6050ms-6150ms: call pricing-service (succeeds, fast). 6150ms-8000ms: call payment-service (only 1850ms remaining before checkout's 8-second timeout). Result: payment call is terminated by checkout timeout. This explains the mystery: payment-service latency is normal (200ms) but checkout's error rate includes payment timeouts — not because payment is slow, but because checkout ran out of time budget after waiting for inventory.' Root cause: 'inventory-service is the bottleneck. Its 6-second latency is consuming most of checkout's time budget, causing downstream calls to be cut short by the timeout. Payment-service errors are collateral damage — they are not failing on their own; they are being terminated by checkout'"
+    weight: 0.35
+    description: "Tracing methodology"
+  - type: llm_judge
+    criteria: "Inventory-service investigation identifies the actual root cause — inventory-service deep dive: 'Why is inventory-service slow? Check: (1) Inventory-service logs: look for slow query warnings, timeout errors, or resource exhaustion messages. (2) Inventory-service database metrics: is the database slow? Check query execution times, lock waits, and connection pool usage. (3) Recent changes: was there a deployment to inventory-service recently? A new feature? A data migration? (4) Specific slow operations: are all inventory requests slow or just some? Use traces to identify which inventory operations are slow.' Example finding: 'Distributed traces show that inventory-service calls to the database are taking 5.5 seconds. The specific query is a stock level check that joins the inventory table with the warehouse_locations table. Checking the database: a new index was dropped during a migration last night, causing the join to fall back to a sequential scan on warehouse_locations (500K rows). The fix: recreate the index.' This is a common pattern: 'A database change (migration, index drop, statistics update) silently degrades query performance. The first service to show symptoms is the one with the most complex queries (inventory). But the user-visible symptom appears in a different service (checkout) because that is where the timeout manifests'"
+    weight: 0.35
+    description: "Root cause identification"
+  - type: llm_judge
+    criteria: "Response demonstrates cross-service diagnostic principles — diagnostic principles: '(1) Start with the user experience and trace backward: the user sees checkout timeouts. The trace shows which service is consuming time. Follow the slowest span in the trace. (2) The alerting service is not always the problem: checkout-service has the highest error rate, but it is not the root cause. inventory-service is the root cause. Alerts measure symptoms at the point of failure, not at the point of cause. (3) Sequential call chains amplify single-service issues: because checkout calls services in sequence (user → inventory → pricing → payment), a slowdown in any one service consumes time budget for all subsequent calls. This is why payment-service shows elevated errors — not because payment is broken, but because inventory consumed the time budget. (4) The fix must target the actual root cause: restarting checkout-service would not help. Increasing checkout timeout might help temporarily but masks the real issue. Adding a timeout to the inventory call would make checkout more resilient but still leave inventory broken. The fix is: recreate the missing database index on inventory-service's database.' Post-incident improvement: 'Consider adding per-service timeout budgets in checkout: inventory gets 2 seconds max, pricing gets 1 second, payment gets 3 seconds. This way, a slow inventory call fails fast rather than consuming the entire checkout time budget and cascading to payment'"
+    weight: 0.30
+    description: "Cross-service diagnostic principles"

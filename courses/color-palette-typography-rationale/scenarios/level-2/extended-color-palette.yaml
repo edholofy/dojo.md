@@ -1,0 +1,43 @@
+meta:
+  id: extended-color-palette
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Extended color palette — expand a basic palette with tints, shades, and semantic color scales"
+  tags: [extended-palette, tints, shades, scales, intermediate]
+
+state: {}
+
+trigger: |
+  A product designer says: "Our design system has just
+  5 colors — primary blue, success green, error red,
+  warning yellow, and a gray. But I need more nuance:
+
+  - The blue button needs a darker hover state and a
+    lighter selected-row background
+  - Toast notifications need lighter background versions
+    of success/error/warning colors
+  - I need at least 10 shades of gray for text, borders,
+    backgrounds, and disabled states
+
+  How do I systematically expand 5 colors into a full
+  palette without it becoming random? Every shade needs
+  a reason."
+
+  Task: Create an extended color palette with tints,
+  shades, and scales for each base color with documented
+  rationale for each step.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates systematic color scales — for each base color: 9-11 step scale from lightest to darkest (e.g., blue-50 through blue-900 or blue-100 through blue-1000), scale generation method explained (adjust lightness in HSL — keep hue and saturation relatively stable while varying lightness, or use a tool like Leonardo or Color-hex to generate perceptually even steps), each step has a hex value and purpose (50/100: backgrounds and subtle fills, 200/300: borders and dividers, 400/500: icons and secondary elements, 500/600: primary interactive elements — the 'base' color, 700/800: hover and active states, 900: text on light backgrounds), gray scale specifically (at least 10 steps: background white, subtle gray for cards, border gray, disabled text, placeholder text, secondary text, primary text, heading text — each step serves a specific UI purpose)."
+    weight: 0.35
+    description: "SystematicScales"
+  - type: llm_judge
+    criteria: "Response addresses the specific use cases — button states (default: blue-600, hover: blue-700, active/pressed: blue-800, focus ring: blue-600 with offset, disabled: gray-300 background with gray-500 text), selected row background (blue-50 or blue-100 — very light tint that signals selection without overwhelming content), toast/notification backgrounds (success toast: green-50 background with green-700 text and green-600 left border, error toast: red-50 background with red-700 text and red-600 border, warning toast: yellow-50 background with yellow-800 text — note yellow needs dark text not dark yellow), every color application references the specific scale step — no arbitrary colors, all traceable to the system."
+    weight: 0.35
+    description: "UseCaseMapping"
+  - type: llm_judge
+    criteria: "Response provides documentation and naming rationale — naming convention (number-based like Tailwind: color-50 through color-900 — consistent, predictable, scalable), documentation format (table per color showing: step number, hex value, HSL value, usage description, contrast ratio against white and black backgrounds — essential for accessibility decisions), design token format (suggest organizing as design tokens: --color-blue-50: #EFF6FF, --color-blue-100: #DBEAFE, etc. — ready for implementation), and rationale for scale structure (why 9-11 steps: fewer than 7 doesn't provide enough nuance for complex UI, more than 12 creates decision paralysis, 9-11 covers all common use cases without waste — each step has at least one documented use case)."
+    weight: 0.30
+    description: "DocumentationFormat"

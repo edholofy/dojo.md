@@ -1,0 +1,45 @@
+meta:
+  id: action-item-extraction
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Action item extraction — identify and properly format action items from a meeting transcript with clear ownership, deadlines, and deliverables"
+  tags: [action-items, extraction, ownership, beginner]
+
+state: {}
+
+trigger: |
+  Here's a transcript excerpt from a 45-minute product
+  planning meeting. Extract and format all action items:
+
+  "So we agreed that the onboarding flow needs to be
+  simplified. Rachel, can you do some user research on
+  where people drop off? Maybe talk to 5-10 users this
+  week or next. And then Carlos, once Rachel has that
+  data, can you mock up 2-3 alternative flows? We should
+  probably also update the help docs — Maria, you had
+  mentioned the current docs are outdated. Can you audit
+  them and flag what needs rewriting? Oh, and someone
+  should tell the support team about the changes coming
+  so they're prepared. I guess Devon, since you work
+  closely with them? Also we need to decide on the
+  analytics tool for tracking onboarding metrics — let's
+  add that to next week's agenda. Actually, can everyone
+  come to next week's meeting with their top pick for an
+  analytics tool so we can make a decision?"
+
+  Task: Extract all action items with proper formatting.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response extracts all action items correctly — complete extraction (identifies every action item from the transcript: Rachel — conduct user research on onboarding drop-off points, talk to 5-10 users; Carlos — create 2-3 mockups of alternative onboarding flows (dependent on Rachel's research); Maria — audit current help documentation and flag what needs rewriting; Devon — notify support team about upcoming onboarding changes; Everyone — research and come to next week's meeting with a top pick for analytics tool; the agenda item about analytics tool decision should also be captured; no action items are missed; action items that were vaguely stated are still captured with as much specificity as possible)."
+    weight: 0.35
+    description: "CompleteExtraction"
+  - type: llm_judge
+    criteria: "Response formats action items with SMART elements — proper formatting (each action item includes: owner — who is responsible (specific person, not 'someone'); task — what they need to do (specific, measurable action); deadline — when it's due (explicit deadline or flagged as 'deadline TBD'); dependencies — notes when one action depends on another: Carlos's mockups depend on Rachel's research being complete; the format should be consistent — every action item follows the same structure; vague assignments like 'someone should tell the support team' are resolved to the person assigned in the discussion: Devon; the action items use active, clear language: 'Conduct user research' not 'Do some research maybe')."
+    weight: 0.35
+    description: "SMARTFormatting"
+  - type: llm_judge
+    criteria: "Response handles ambiguity and dependencies — ambiguity resolution (addresses unclear elements in the transcript: the 'this week or next' deadline for Rachel — notes the flexibility but suggests a specific date for tracking; the dependency between Rachel's research and Carlos's mockups is explicitly stated; the 'someone should tell support' is resolved to Devon as discussed; the analytics tool discussion is captured both as individual homework and as an agenda item for next meeting; identifies any missing information: some action items lack explicit deadlines — the notes should flag this as needing clarification)."
+    weight: 0.30
+    description: "AmbiguityHandling"

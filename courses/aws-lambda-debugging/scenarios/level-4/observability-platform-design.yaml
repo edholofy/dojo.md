@@ -1,0 +1,71 @@
+meta:
+  id: observability-platform-design
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless observability platform — implement comprehensive monitoring, alerting, and debugging infrastructure for Lambda applications at enterprise scale"
+  tags: [AWS, Lambda, observability, monitoring, alerting, platform, expert]
+
+state: {}
+
+trigger: |
+  Your organization runs 200+ Lambda functions across 5 AWS accounts.
+  Current monitoring is fragmented:
+
+  - Each team uses different tools (some CloudWatch, some Datadog,
+    some New Relic, some nothing)
+  - No standard for structured logging or metrics
+  - Debugging cross-function issues requires checking logs in
+    multiple accounts and regions manually
+  - Last month's incident took 2 hours to diagnose because nobody
+    could trace the request across 6 Lambda functions
+
+  Management asks: "Build a unified observability platform that
+  lets any engineer debug any issue in under 15 minutes."
+
+  Architecture proposal:
+
+  Logging Layer:
+  All functions → Powertools Logger (structured JSON) →
+  CloudWatch Logs → Subscription Filter → Kinesis Firehose →
+  OpenSearch (centralized) + S3 (archive)
+
+  Metrics Layer:
+  Lambda system metrics + Custom EMF metrics →
+  CloudWatch Metrics (cross-account aggregation) →
+  Grafana dashboards (unified view)
+
+  Tracing Layer:
+  All functions → X-Ray Active Tracing →
+  X-Ray Groups (per-service views) →
+  Cross-account trace access
+
+  Alerting Layer:
+  CloudWatch Alarms → SNS → PagerDuty/Slack
+  Business metric alarms alongside technical alarms
+
+  Cost considerations:
+  - CloudWatch Logs: $0.50/GB ingested (at 200+ functions, this adds up)
+  - OpenSearch cluster: $500-2000/month
+  - Datadog alternative: $5 per host/month but Lambda is per-invocation
+  - X-Ray: $5/million traces
+
+  Task: Design the observability platform. Write: standardized
+  logging (format, correlation), centralized log aggregation,
+  custom metrics and dashboards, distributed tracing across accounts,
+  alert strategy (technical + business), and cost management for
+  observability at scale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Standardized logging is explained — mandatory standard: all functions use Powertools Logger with JSON format. Required fields: service name, function name, request ID, trace ID, log level, timestamp. Business context: order ID, customer ID, etc. Log levels: ERROR and WARN in all environments, INFO in staging/production, DEBUG only in development. Structured logging enables: CloudWatch Logs Insights queries across all functions, automated parsing in OpenSearch, correlation via trace ID and business IDs"
+    weight: 0.35
+    description: "Standardized logging"
+  - type: llm_judge
+    criteria: "Centralized aggregation and tracing are covered — log aggregation: CloudWatch Subscription Filters → Kinesis Firehose → OpenSearch for searchable logs. Cross-account: CloudWatch Logs destination in a central observability account. X-Ray cross-account: centralized trace viewing via X-Ray groups and sampling rules. Alternative: Grafana Loki for logs (cheaper than OpenSearch), Grafana Tempo for traces. Service map: X-Ray service map shows all service dependencies and latency. Correlation: trace ID links logs and traces for any request across all services"
+    weight: 0.35
+    description: "Aggregation and tracing"
+  - type: llm_judge
+    criteria: "Alerting and cost management are practical — alert tiers: P1 (customer-impacting, page immediately), P2 (degraded performance, page during business hours), P3 (warning, ticket). Technical alerts: error rate, duration p99, throttles, OOM, cold start rate. Business alerts: order completion rate, payment success rate, user signup rate. Cost management: log sampling for high-volume functions, log retention policy (7 days hot, 30 days warm, 1 year cold S3), X-Ray sampling rules (reduce trace volume), eliminate unused metrics. Budget: observability should be 5-10% of total infrastructure cost. Track: MTTD (time to detect) and MTTR as key observability success metrics"
+    weight: 0.30
+    description: "Alerting and cost"

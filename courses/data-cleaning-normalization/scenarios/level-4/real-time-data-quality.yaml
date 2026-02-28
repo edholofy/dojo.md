@@ -1,0 +1,40 @@
+meta:
+  id: real-time-data-quality
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Real-time data quality — build systems that detect and remediate data quality issues in streaming data pipelines"
+  tags: [real-time, streaming, monitoring, remediation, expert]
+
+state: {}
+
+trigger: |
+  A VP of data engineering says: "We're moving from batch to real-time
+  data processing. Our e-commerce platform processes 10,000 events per
+  second (orders, page views, clicks, inventory updates). Our batch
+  data quality checks run overnight — by morning, millions of bad
+  records have already been processed and acted upon.
+
+  We need real-time data quality: validate, clean, and route data as
+  it flows through our streaming pipeline. Bad records should be
+  quarantined immediately, not discovered hours later.
+
+  How do we build data quality into a streaming architecture?"
+
+  Task: Design a real-time data quality system that validates, cleans,
+  and routes streaming data, including quality monitoring, quarantine
+  mechanisms, and self-healing capabilities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the streaming quality architecture — inline validation in the stream processing layer (validate each event against schema and business rules as it flows through), quality routing (valid events proceed, invalid events go to a dead-letter queue/quarantine topic), windowed quality monitoring (track error rates, null rates, and volume anomalies over sliding time windows), and real-time alerting when quality metrics breach thresholds. Addresses the 10K events/second throughput requirement — validation must be fast enough to not create backpressure"
+    weight: 0.35
+    description: "StreamingArchitecture"
+  - type: llm_judge
+    criteria: "Response covers real-time cleaning capabilities — lightweight transformations in-stream (format normalization, type coercion, default value injection), quarantine and replay (bad events are stored separately, cleaned offline, and replayed back into the stream when fixed), dead-letter queue management (monitoring quarantine growth, automated retry policies, escalation for persistent failures), and the tradeoff between cleaning in-stream (latency impact) vs post-ingestion (data inconsistency window)"
+    weight: 0.35
+    description: "RealtimeCleaning"
+  - type: llm_judge
+    criteria: "Response addresses operational challenges — handling schema evolution in real-time (when the event schema changes, quality rules must adapt without downtime), managing quality rules as configuration (add/update rules without redeploying), monitoring quality of the quality system itself (is our validation working correctly?), handling volume anomalies (sudden traffic spike vs data quality issue), and designing for graceful degradation (if quality checks can't keep up, what happens? drop events? buffer? bypass checks?)"
+    weight: 0.30
+    description: "OperationalChallenges"

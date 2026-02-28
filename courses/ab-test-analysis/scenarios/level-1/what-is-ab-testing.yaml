@@ -1,0 +1,33 @@
+meta:
+  id: what-is-ab-testing
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Understand A/B testing fundamentals — explain what an A/B test is, when to use one, and the basic structure of control vs treatment groups"
+  tags: [fundamentals, control-treatment, randomization, beginner]
+
+state: {}
+
+trigger: |
+  A product manager asks: "The CEO wants us to change the homepage
+  hero banner. The design team has a new version they think will
+  increase signups. The CEO wants to just ship it. I've heard we
+  should 'A/B test it' first but I don't really understand what that
+  means or why we can't just launch the new design."
+
+  Task: Explain what an A/B test is, why it matters, and how the
+  basic structure works.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the concept of A/B testing clearly — concept: 'What is an A/B test: an A/B test is an experiment where you show two versions of something to different groups of users at the same time and measure which version performs better. Version A (Control): the current homepage hero banner. This is what users see today. Version B (Treatment): the new design the team created. Why not just launch the new design? Without a test, you cannot know if the new design actually improves signups. It might look better but perform worse. Common scenarios: the old design had a clear Call to Action button. The new design is prettier but the CTA button is less visible. Result: signups drop 12%. Or: the new design uses messaging that resonates with some segments but alienates others. Result: overall signups are flat, but enterprise signups drop 20%. An A/B test answers the question with data, not opinions. How it works: Step 1 — Split traffic randomly: 50% of visitors see Version A (control). 50% see Version B (treatment). The split must be random — not by time of day, geography, or device. Each visitor is assigned to one group and stays in that group for the duration of the test. Step 2 — Measure the same metric for both groups: primary metric: signup rate (signups / visitors). Control: 1,200 signups / 25,000 visitors = 4.8%. Treatment: 1,380 signups / 25,000 visitors = 5.5%. Step 3 — Determine if the difference is real: the treatment's 5.5% is higher than the control's 4.8%. But is this a real difference, or just random variation? Statistical analysis tells us whether the difference is likely real (statistically significant) or could have happened by chance'"
+    weight: 0.35
+    description: "Concept"
+  - type: llm_judge
+    criteria: "Response covers when to use A/B testing and when not to — whenanswer: 'When to use A/B testing: Use an A/B test when: you have a measurable goal (signup rate, click rate, revenue per visitor). You have enough traffic to detect a meaningful difference (typically 1,000+ visitors per variant). The change could go either way — you genuinely do not know if V-B will be better. The risk of a bad change is meaningful (lost signups, lost revenue). Do NOT use an A/B test when: the change is a bug fix — just fix the bug. The change is legally required (compliance, accessibility) — just ship it. You have very low traffic (fewer than 100 visitors per week) — the test will take months and the result will be unreliable. The change is obviously correct and the cost of delay exceeds the risk. Example: fixing a broken checkout button should not be A/B tested. The key insight: A/B testing is for decisions where you have uncertainty. If you are confident the change is positive and the risk is low, ship it. If there is genuine uncertainty and the stakes are meaningful, test it'"
+    weight: 0.35
+    description: "When"
+  - type: llm_judge
+    criteria: "Response explains randomization and avoiding bias — randomization: 'Randomization and avoiding bias: Why random assignment matters: if you show Version A to morning visitors and Version B to afternoon visitors, any difference could be caused by the time of day, not the design. Morning visitors might be more likely to sign up regardless of the design. This is called a confounding variable. Proper randomization: assign each visitor to A or B using a random hash of their user ID or cookie. The assignment is deterministic — the same visitor always sees the same version (they do not flip between A and B during the test). Check that the groups are balanced: similar number of visitors, similar distribution of device types, geographies, and new vs returning users. If the groups are not balanced, the randomization has a bug. Common mistakes that introduce bias: 1. Testing by time period: show A on Monday, B on Tuesday. Monday and Tuesday have different traffic patterns — the result is confounded by day-of-week effects. 2. Letting users opt in: users who choose to try the new version are inherently different from those who do not. The result measures self-selection, not the design. 3. Changing the test mid-flight: if you adjust the design of Version B halfway through, you are mixing data from two different treatments. Restart the test. 4. Peeking at results too early: checking the results every hour and stopping when you see a positive result inflates the false positive rate. Wait for the pre-determined sample size'"
+    weight: 0.30
+    description: "Randomization"

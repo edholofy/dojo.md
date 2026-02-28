@@ -1,0 +1,44 @@
+meta:
+  id: intermediate-migration-shift
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Intermediate migration shift — handle a realistic migration sprint with multiple changes, dependencies, and zero-downtime requirements"
+  tags: [database, migration, shift-simulation, intermediate, comprehensive]
+
+state: {}
+
+trigger: |
+  Your team is releasing a new feature that requires these database
+  changes. The application serves 5,000 requests/minute and cannot
+  tolerate downtime.
+
+  Changes needed:
+  1. Add "subscription_plan" enum column to users (2M rows)
+     Values: 'free', 'basic', 'pro', 'enterprise'
+     Default: 'free'
+  2. Backfill subscription_plan from the legacy "plan_code" column
+     (plan_code contains: 'F', 'B', 'P', 'E' for the 4 plans)
+  3. Add a composite index on users(subscription_plan, created_at)
+  4. Add a unique constraint on orders(external_id) — external_id
+     was added last month but has 12 duplicate values
+  5. Create a new "invoices" table with FK to users
+
+  Deadline: end of this sprint (1 week)
+
+  Task: Plan and sequence all migrations. Identify risks, estimate
+  timing, and create the deployment plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration sequence is correct with risk assessment — sequence and risks: 'Day 1-2: Safe additive changes. Migration 1: Add subscription_plan column. ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(20) DEFAULT free; Risk: LOW. Adding a nullable column with default is instant in PostgreSQL 11+. Even if we want NOT NULL later, add it nullable first, backfill, then constrain. Migration 2: Create invoices table. CREATE TABLE invoices (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, amount DECIMAL(10,2) NOT NULL, status VARCHAR(20) NOT NULL DEFAULT pending, issued_at TIMESTAMP NOT NULL DEFAULT NOW(), paid_at TIMESTAMP); CREATE INDEX idx_invoices_user_id ON invoices(user_id); Risk: LOW. New table, no existing data affected. Day 3: Backfill and data cleanup. Script 1: Backfill subscription_plan from plan_code. Run as a batch script (not in a migration transaction): UPDATE users SET subscription_plan = CASE plan_code WHEN F THEN free WHEN B THEN basic WHEN P THEN pro WHEN E THEN enterprise ELSE free END WHERE subscription_plan IS NULL OR subscription_plan = free; Batch in groups of 50,000 rows. For 2M rows: approximately 40 batches, 5-10 minutes total. Risk: MEDIUM. Verify the mapping is correct. Check for plan_code values not in the expected set. Script 2: Fix duplicate external_ids in orders. First, identify the 12 duplicates: SELECT external_id, COUNT(*) FROM orders GROUP BY external_id HAVING COUNT(*) > 1; Investigate: which order in each duplicate set is the correct one? Resolve with the business team. Options: keep the most recent, archive the duplicate, or merge. Risk: MEDIUM. Business decision required — do not delete data without confirmation. Day 4: Index and constraint. Migration 3: Add composite index CONCURRENTLY. CREATE INDEX CONCURRENTLY idx_users_plan_created ON users(subscription_plan, created_at); Risk: LOW-MEDIUM. CONCURRENTLY is safe but takes 5-15 minutes on 2M rows. Schedule during off-peak. Migration 4: Add unique constraint on orders.external_id. After duplicates are resolved: ALTER TABLE orders ADD CONSTRAINT uq_orders_external_id UNIQUE (external_id); Risk: MEDIUM. If any duplicates remain, this fails. Verify: SELECT external_id, COUNT(*) FROM orders GROUP BY external_id HAVING COUNT(*) > 1; Must return 0 rows. Day 5: Finalize and constrain. Migration 5: Set subscription_plan as NOT NULL. ALTER TABLE users ALTER COLUMN subscription_plan SET NOT NULL; Risk: LOW (after backfill verification). Verify zero NULLs first: SELECT COUNT(*) FROM users WHERE subscription_plan IS NULL;'"
+    weight: 0.35
+    description: "Sequence and risks"
+  - type: llm_judge
+    criteria: "Deployment plan with rollback is complete — deployment plan: 'Deployment sequence: (1) Monday: deploy migrations 1 and 2 (add column, create table). These are safe and can be deployed during business hours. Verify: column exists, table exists. (2) Tuesday: run backfill script during off-peak hours. Monitor database CPU and query latency. Verify: zero NULL subscription_plan values after backfill. Clean up duplicate external_ids (requires business team input). (3) Wednesday: deploy migration 3 (index CONCURRENTLY) during off-peak. Verify: index exists and is valid (not marked invalid). (4) Thursday morning: deploy migration 4 (unique constraint) after confirming zero duplicate external_ids. Verify: constraint exists. (5) Thursday afternoon: deploy migration 5 (NOT NULL constraint) after confirming zero NULL subscription_plan. Deploy application code that uses subscription_plan and invoices table. (6) Friday: monitor production. Verify all features work correctly. Keep the legacy plan_code column for 2 weeks (safety net), then remove in a future migration. Rollback plan: migration 1 rollback: DROP COLUMN subscription_plan (instant, but loses backfilled data). Migration 2 rollback: DROP TABLE invoices (instant, no data yet). Migration 3 rollback: DROP INDEX CONCURRENTLY idx_users_plan_created. Migration 4 rollback: ALTER TABLE orders DROP CONSTRAINT uq_orders_external_id. Migration 5 rollback: ALTER TABLE users ALTER COLUMN subscription_plan DROP NOT NULL. If the entire feature needs rollback: roll back migrations in reverse order (5, 4, 3, 2, 1). The backfill data is lost but can be re-run from plan_code'"
+    weight: 0.35
+    description: "Deployment plan"
+  - type: llm_judge
+    criteria: "Timeline and communication plan included — timeline and communication: 'Sprint timeline: Monday: migrations 1-2 deployed (low risk). Tuesday: backfill and data cleanup. Wednesday: index creation. Thursday: constraint addition, NOT NULL, and app deployment. Friday: monitoring and verification. Communication: notify the on-call team daily about which migrations are running. Notify customer support on Thursday (the day the feature goes live) in case customer-visible issues arise. Send a summary to the team after all migrations complete: changes made, verification results, any issues encountered. Risk mitigation for the deadline: the critical path is the duplicate external_id cleanup (requires business decision). If the business team cannot resolve the 12 duplicates by Wednesday, deploy everything except the unique constraint. Add the constraint in a follow-up sprint. Do not rush the constraint addition — deploying with duplicate data is better than deploying a wrong fix. Lessons for future sprints: this sprint has 5 migrations plus a backfill. Each migration should be a separate PR for independent review and deployment. Do not batch all 5 into one PR — if one fails, you want to roll back only that one'"
+    weight: 0.30
+    description: "Timeline and communication"

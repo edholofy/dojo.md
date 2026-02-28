@@ -1,0 +1,44 @@
+meta:
+  id: api-changelog-management
+  level: 4
+  course: api-documentation-writing
+  type: output
+  description: "Manage API changelog — design a changelog system that communicates API changes effectively to different stakeholders with appropriate urgency and detail"
+  tags: [API, documentation, changelog, release-notes, communication, versioning, expert]
+
+state: {}
+
+trigger: |
+  Your API ships weekly updates. The changelog is a mess:
+
+  - Buried in a docs page nobody reads
+  - Mix of breaking changes and minor fixes with no differentiation
+  - No way for developers to know if a change affects their integration
+  - Enterprise customers surprised by breaking changes
+  - "When was this field added?" — nobody knows without git blame
+
+  Developers want:
+  - Advance notice of breaking changes
+  - Easy way to see what changed since their last integration update
+  - Ability to subscribe to changes relevant to their usage
+  - Clear migration guidance for breaking changes
+  - Historical record of all changes
+
+  Task: Design a comprehensive API changelog system. Include: change
+  categorization, notification system, migration guidance integration,
+  developer-facing changelog format, and tooling for automated changelog
+  generation from code changes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Change categorization enables targeted communication — categories: (1) Breaking: requires integration changes (field removal, type change, endpoint removal), (2) Deprecation: still works but will break in future, (3) Feature: new endpoints, fields, or capabilities, (4) Fix: bug fixes (behavior change that matches documentation), (5) Security: security patches (may require action). Each entry: date, category, affected endpoints, description, migration guide link (for breaking). Severity levels for breaking changes: critical (integration will fail), moderate (degraded behavior), minor (cosmetic). Structured format: each entry has tags (resources affected, API version) enabling filtering"
+    weight: 0.35
+    description: "Change categorization"
+  - type: llm_judge
+    criteria: "Notification system reaches developers proactively — subscription options: email digest (weekly), RSS feed, webhook (for CI/CD integration), Slack/Discord bot, in-dashboard banner. Developers can filter: by resource (only payment changes), by severity (only breaking), by API version (only v2 changes). Breaking changes: 30-day advance notice via email + dashboard banner + API response header (X-API-Deprecation-Notice). Timeline: announced → preview (available in sandbox) → released → old behavior sunset. Personalized notifications: analyze developer's API usage to highlight changes that affect their specific integration patterns. Emergency changes: immediate notification via all channels with migration urgency"
+    weight: 0.35
+    description: "Notification system"
+  - type: llm_judge
+    criteria: "Automation and format are developer-friendly — automated generation: conventional commits or PR labels generate changelog entries. OpenAPI diff tool detects spec changes and auto-generates entries for new/modified/removed endpoints. Human review: auto-generated entries reviewed by tech writer for clarity before publishing. Format: reverse chronological, filterable by category, searchable. Each entry is linkable (deep link to specific change). Diff view: compare OpenAPI specs between any two dates. 'Changes since' query: developers enter their last integration date, see all changes since then. API endpoint: GET /changelog with query params (since, category, resource) — developers can programmatically check for changes in CI/CD. Integration: changelog entries link to relevant documentation sections and migration guides"
+    weight: 0.30
+    description: "Automation and format"

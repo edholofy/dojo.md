@@ -1,0 +1,48 @@
+meta:
+  id: webhook-documentation
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Document webhooks — write comprehensive webhook documentation covering event types, payload schemas, security verification, and retry behavior"
+  tags: [API, documentation, webhooks, events, signatures, retry, advanced]
+
+state: {}
+
+trigger: |
+  Your platform sends webhooks for key events but the documentation
+  is sparse. Developers keep asking:
+
+  - "What events can I subscribe to?"
+  - "What does the payload look like for each event?"
+  - "How do I verify the webhook is really from you?"
+  - "My endpoint was down — will you retry? How many times?"
+  - "I'm getting duplicate events — is that expected?"
+  - "The timestamps don't match — what timezone are these in?"
+
+  Webhook events:
+  - payment.succeeded, payment.failed, payment.refunded
+  - customer.created, customer.updated, customer.deleted
+  - subscription.created, subscription.renewed, subscription.cancelled
+  - invoice.created, invoice.paid, invoice.overdue
+
+  Security: HMAC-SHA256 signature in X-Webhook-Signature header
+  Retry policy: 3 retries with exponential backoff (1min, 10min, 1hr)
+  Delivery: at-least-once (duplicates possible)
+
+  Task: Write complete webhook documentation including event catalog,
+  payload schemas, signature verification guide, retry behavior, and
+  best practices for building reliable webhook consumers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Event catalog and payloads are complete — every event type listed with: event name, trigger condition (when it fires), payload schema with all fields typed and described. Common envelope: { id (unique event ID), type (event string), created_at (ISO 8601 UTC), data (event-specific payload), api_version }. For payment.succeeded: data includes payment object (id, amount, currency, customer_id, payment_method). For customer.updated: data includes previous_attributes showing what changed. Each event has a realistic full JSON example. Events grouped by resource (payment, customer, subscription, invoice)"
+    weight: 0.35
+    description: "Event catalog"
+  - type: llm_judge
+    criteria: "Security verification is step-by-step — HMAC-SHA256 verification: (1) extract X-Webhook-Signature header, (2) get raw request body (important: use raw bytes, not parsed JSON), (3) compute HMAC-SHA256 using your webhook secret, (4) compare signatures using constant-time comparison (prevent timing attacks). Code examples in at least 2 languages (Node.js, Python). Explain WHY each step matters (raw body because JSON parsing changes field order, constant-time comparison to prevent timing attacks). How to get/rotate webhook secret. What to do if verification fails (return 401, log, alert). Timestamp tolerance: reject events older than 5 minutes to prevent replay attacks"
+    weight: 0.35
+    description: "Security verification"
+  - type: llm_judge
+    criteria: "Reliability patterns are documented — retry behavior: 3 attempts at 1min, 10min, 1hr intervals, then event marked as failed (visible in dashboard). Your endpoint must return 2xx within 30 seconds or it's considered failed. At-least-once delivery: you MAY receive the same event twice — use event ID for idempotency. Best practices: (1) respond with 200 immediately, process async, (2) store event ID to deduplicate, (3) use a queue for processing, (4) handle out-of-order events (check timestamps), (5) set up webhook endpoint monitoring. Testing: provide a 'Send test event' button in dashboard. Webhook logs: show recent deliveries with response codes for debugging"
+    weight: 0.30
+    description: "Reliability patterns"

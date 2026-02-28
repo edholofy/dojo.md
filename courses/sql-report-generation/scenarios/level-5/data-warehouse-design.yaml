@@ -1,0 +1,44 @@
+meta:
+  id: data-warehouse-design
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Design a data warehouse for reporting — choose between star schema, snowflake schema, and data vault, implement dimensional modeling, and optimize for analytic query patterns"
+  tags: [SQL, data-warehouse, dimensional-modeling, star-schema, data-vault, master]
+
+state: {}
+
+trigger: |
+  The company is migrating from querying production databases directly
+  to a proper data warehouse. You need to design the warehouse
+  schema that supports all current and anticipated reporting needs.
+
+  Current reports include: revenue by region/category/time, customer
+  retention cohorts, product performance, sales pipeline, financial
+  P&L, and marketing attribution.
+
+  Data sources: PostgreSQL (orders, customers), Salesforce (pipeline),
+  Stripe (payments), Google Analytics (web traffic), and Marketo
+  (marketing campaigns).
+
+  Volume: 50M orders, 2M customers, 100M web events, growing 20%
+  annually.
+
+  The warehouse must support: sub-second dashboard queries, ad-hoc
+  analyst exploration, and scheduled report generation.
+
+  Task: Design the data warehouse architecture and schema.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a star schema with proper fact and dimension tables — starschema: 'Data warehouse schema design: Star schema for reporting: Fact tables (events and measurements): CREATE TABLE fact_orders (order_key BIGSERIAL PRIMARY KEY, order_id INTEGER NOT NULL, order_date_key INTEGER REFERENCES dim_date(date_key), customer_key INTEGER REFERENCES dim_customer(customer_key), product_key INTEGER REFERENCES dim_product(product_key), region_key INTEGER REFERENCES dim_region(region_key), channel_key INTEGER REFERENCES dim_channel(channel_key), order_amount NUMERIC(15,2) NOT NULL, discount_amount NUMERIC(15,2) DEFAULT 0, tax_amount NUMERIC(15,2) DEFAULT 0, net_amount NUMERIC(15,2) NOT NULL, quantity INTEGER, is_first_order BOOLEAN, order_status TEXT, loaded_at TIMESTAMP DEFAULT NOW()). Dimension tables (descriptive context): CREATE TABLE dim_date (date_key INTEGER PRIMARY KEY, full_date DATE UNIQUE NOT NULL, year INTEGER, quarter INTEGER, month INTEGER, month_name TEXT, week_of_year INTEGER, day_of_week INTEGER, day_name TEXT, is_weekend BOOLEAN, is_holiday BOOLEAN, fiscal_year INTEGER, fiscal_quarter INTEGER). Pre-populate dim_date with 10 years of dates — this eliminates DATE_TRUNC calls in reports. CREATE TABLE dim_customer (customer_key SERIAL PRIMARY KEY, customer_id INTEGER, customer_name TEXT, email TEXT, segment TEXT, industry TEXT, signup_date DATE, lifetime_value NUMERIC(15,2), is_active BOOLEAN, acquisition_channel TEXT, effective_from DATE, effective_to DATE DEFAULT '9999-12-31', is_current BOOLEAN DEFAULT true). SCD Type 2 on dim_customer — when a customer changes segment, a new row is inserted. Historical reports accurately reflect the segment at the time of each order. Why star schema: denormalized dimensions mean fewer joins. A revenue-by-region-by-month report joins fact_orders with dim_date and dim_region — two joins instead of traversing a normalized hierarchy. Analysts understand star schemas intuitively — fact in the center, dimensions around it'"
+    weight: 0.35
+    description: "StarSchema"
+  - type: llm_judge
+    criteria: "Response covers the ELT pipeline from source to warehouse — elt: 'ELT pipeline from sources to warehouse: Extract and Load (raw layer): CREATE SCHEMA raw; CREATE TABLE raw.orders AS SELECT * FROM dblink('postgres_prod', 'SELECT * FROM orders') AS t(...). CREATE TABLE raw.stripe_payments AS SELECT * FROM stripe_api_sync. CREATE TABLE raw.salesforce_pipeline AS SELECT * FROM salesforce_api_sync. Each raw table is a full or incremental copy. Tag with metadata: ALTER TABLE raw.orders ADD COLUMN _extracted_at TIMESTAMP DEFAULT NOW(), ADD COLUMN _source TEXT DEFAULT 'postgres_prod'. Transform (staging layer — clean and conform): CREATE SCHEMA staging; CREATE TABLE staging.stg_orders AS SELECT o.order_id, o.customer_id, d.date_key AS order_date_key, o.amount AS order_amount, o.amount - COALESCE(o.discount, 0) AS net_amount, COALESCE(o.tax, 0) AS tax_amount, o.status AS order_status, ROW_NUMBER() OVER (PARTITION BY o.customer_id ORDER BY o.order_date) = 1 AS is_first_order FROM raw.orders o JOIN dim_date d ON o.order_date::date = d.full_date. Staging handles: data type casting, NULL handling, deduplication, surrogate key lookups, and business logic flags like is_first_order. Load (warehouse layer — dimensional model): INSERT INTO fact_orders (order_id, order_date_key, customer_key, product_key, region_key, order_amount, net_amount, tax_amount, order_status, is_first_order) SELECT s.order_id, s.order_date_key, c.customer_key, p.product_key, r.region_key, s.order_amount, s.net_amount, s.tax_amount, s.order_status, s.is_first_order FROM staging.stg_orders s JOIN dim_customer c ON s.customer_id = c.customer_id AND c.is_current = true JOIN dim_product p ON s.product_id = p.product_id AND p.is_current = true JOIN dim_region r ON s.region = r.region_name ON CONFLICT (order_id) DO NOTHING. Orchestrate with dbt or a custom DAG: raw → staging → dimensions → facts. Run nightly. Dashboard queries never touch raw or staging — only the dimensional model'"
+    weight: 0.35
+    description: "ELT"
+  - type: llm_judge
+    criteria: "Explanation covers query performance optimization and schema evolution strategy — performance: 'Query performance optimization for the warehouse: Indexing strategy for star schema: CREATE INDEX idx_fact_orders_date ON fact_orders(order_date_key). CREATE INDEX idx_fact_orders_customer ON fact_orders(customer_key). CREATE INDEX idx_fact_orders_product ON fact_orders(product_key). Composite index for common report patterns: CREATE INDEX idx_fact_orders_date_region ON fact_orders(order_date_key, region_key). Revenue by region and month — the most common report — uses this index for a fast range scan. Partitioning the fact table: CREATE TABLE fact_orders_partitioned (LIKE fact_orders INCLUDING ALL) PARTITION BY RANGE (order_date_key). Partition by year (or by month for very high volume). Queries that filter by date automatically scan only relevant partitions. Aggregate tables for dashboard speed: CREATE MATERIALIZED VIEW agg_monthly_revenue AS SELECT d.year, d.month, r.region_name, p.category, SUM(f.net_amount) AS revenue, COUNT(*) AS orders, COUNT(DISTINCT f.customer_key) AS customers FROM fact_orders f JOIN dim_date d ON f.order_date_key = d.date_key JOIN dim_region r ON f.region_key = r.region_key JOIN dim_product p ON f.product_key = p.product_key GROUP BY 1, 2, 3, 4. Dashboard queries hit this materialized view (thousands of rows) instead of the 50M-row fact table. Schema evolution: when a new data source is added (for example, a mobile app), add a new fact table (fact_app_events) and a new dimension (dim_device). Existing reports are unaffected. The star schema is modular — each business process gets its own fact table sharing conformed dimensions. Conformed dimensions (dim_customer, dim_date, dim_product) are shared across fact tables, enabling cross-process analysis: join fact_orders with fact_support_tickets on customer_key and date_key to correlate order volume with support load'"
+    weight: 0.30
+    description: "Performance"

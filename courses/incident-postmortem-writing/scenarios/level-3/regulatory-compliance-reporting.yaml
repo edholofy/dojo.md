@@ -1,0 +1,49 @@
+meta:
+  id: regulatory-compliance-reporting
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Write compliance-focused incident reports — document incidents for regulatory requirements (SOC 2, PCI-DSS, HIPAA, GDPR) with appropriate detail and timelines"
+  tags: [postmortem, compliance, regulatory, SOC2, PCI-DSS, HIPAA, GDPR, advanced]
+
+state: {}
+
+trigger: |
+  Your healthcare SaaS platform experienced an incident where a
+  misconfigured API endpoint exposed patient appointment data
+  (names, dates, provider names) for approximately 4 hours before
+  detection. The data was accessible but your logs show only 3
+  external IP addresses accessed the endpoint, making 47 total
+  requests.
+
+  Your compliance obligations:
+  - HIPAA: breach notification required within 60 days for breaches
+    affecting 500+ individuals. Must assess if this qualifies.
+  - SOC 2: must document the incident, root cause, and remediation
+    in your continuous monitoring evidence.
+  - Your BAA (Business Associate Agreement) with hospital clients
+    requires notification within 72 hours of discovering a breach.
+  - State breach notification laws vary by state.
+
+  The data exposed: 2,300 patient records (names, appointment dates,
+  provider names). No SSNs, no diagnoses, no financial data.
+
+  Task: Write the incident report sections needed for compliance.
+  Include: breach assessment (does this trigger HIPAA notification?),
+  timeline documentation for regulators, remediation evidence, and
+  the notification plan. Show how to document an incident when
+  regulatory requirements shape what must be included.
+
+assertions:
+  - type: llm_judge
+    criteria: "Breach assessment is thorough and correctly analyzes notification triggers — HIPAA analysis: 'Under HIPAA, a breach is the acquisition, access, use, or disclosure of PHI in a manner not permitted. Assessment: (1) Was PHI involved? Yes — patient names and appointment information constitute PHI under HIPAA. (2) Was it an impermissible disclosure? Yes — the API endpoint was publicly accessible without authentication. (3) Does an exception apply? The three exceptions (unintentional acquisition by workforce member, inadvertent disclosure within organization, good faith belief that unauthorized person couldn't retain data) do not clearly apply here. (4) Risk assessment under the four-factor test: nature and extent of PHI (names and appointments, no clinical data — moderate sensitivity), unauthorized person who accessed it (3 external IPs, identity unknown), whether PHI was actually acquired or viewed (47 requests suggest data was accessed), extent of risk mitigation (endpoint secured within 4 hours of discovery, access logs preserved). Conclusion: this likely constitutes a reportable breach. 2,300 individuals exceeds the 500-person threshold, requiring notification to HHS within 60 days and individual notification to affected patients.' BAA obligations: 'Our BAA requires notification within 72 hours. Clock started at discovery time. Notifications to covered entity clients must go out by [specific date/time].' Documentation includes: exact discovery timestamp, exact containment timestamp, evidence preservation steps"
+    weight: 0.35
+    description: "Breach assessment accuracy"
+  - type: llm_judge
+    criteria: "Timeline documentation meets regulatory evidence standards — timeline formatted for regulatory submission: '[Date] 02:15 AM — API deployment included misconfigured endpoint (authentication middleware not applied to new route). [Date] 02:15 AM to 06:20 AM — endpoint accessible without authentication (4 hours 5 minutes exposure window). [Date] 06:20 AM — security monitoring alert triggered by unusual access pattern on the endpoint. [Date] 06:25 AM — on-call engineer confirmed unauthorized access, initiated incident response. [Date] 06:32 AM — endpoint disabled (containment). [Date] 06:45 AM — access logs pulled and preserved for forensic review. [Date] 07:30 AM — scope assessment complete: 2,300 patient records potentially exposed, 47 requests from 3 external IPs. [Date] 08:00 AM — CISO and Privacy Officer notified. [Date] 09:00 AM — legal counsel engaged for breach determination. [Date] 10:00 AM — BAA notification clock assessment initiated.' Each timeline entry includes: what happened, who was involved (by role, not name), evidence reference (log file, ticket number). Evidence chain documented: 'All access logs preserved in immutable storage. Forensic copy of API configuration at time of incident preserved. All actions taken during incident response documented in incident ticket [number]'"
+    weight: 0.35
+    description: "Regulatory timeline documentation"
+  - type: llm_judge
+    criteria: "Remediation documentation and notification plan are compliance-ready — remediation evidence for SOC 2: 'Root cause: new API route added without authentication middleware. The deployment pipeline did not enforce authentication checks on new endpoints. Immediate remediation: (1) endpoint disabled within 12 minutes of detection. (2) All API routes audited for authentication within 24 hours. (3) No additional unauthenticated endpoints found. Preventive controls implemented: (1) automated test added to CI/CD pipeline that verifies all API endpoints require authentication — any unauthenticated endpoint fails the build. (2) API gateway default policy changed to deny-by-default — new routes require explicit authentication configuration rather than inheriting it. (3) Weekly automated scan of all endpoints for authentication compliance.' Notification plan: 'Tier 1 (within 72 hours): BAA-covered clients notified per contractual obligation. Tier 2 (within 30 days): individual patient notifications prepared with: what happened, what data was involved, what we are doing, what they can do, contact information for questions. Tier 3 (within 60 days): HHS breach notification submitted via HHS breach portal. If breach affects residents of states with shorter notification windows, accelerate individual notifications accordingly.' Content note: 'Notifications reviewed by legal counsel before sending. Language should be factual, not minimizing, and include all elements required by HIPAA Breach Notification Rule (§164.404)'"
+    weight: 0.30
+    description: "Remediation and notification plan"

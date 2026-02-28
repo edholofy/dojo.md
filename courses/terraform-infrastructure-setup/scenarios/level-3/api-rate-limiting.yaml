@@ -1,0 +1,50 @@
+meta:
+  id: api-rate-limiting
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Handle API rate limiting — diagnose throttling errors, reduce parallelism, implement retry strategies, and optimize API usage for large deployments"
+  tags: [Terraform, rate-limiting, throttling, parallelism, API, advanced]
+
+state: {}
+
+trigger: |
+  Your Terraform configuration manages 500+ AWS resources. During
+  apply, you see intermittent failures:
+
+  ```
+  Error: error reading IAM Role (my-role): Throttling: Rate exceeded
+    status code: 400
+
+  Error: error creating Security Group: RequestLimitExceeded:
+  Request limit exceeded.
+
+  Error: error describing VPC Attribute: RequestLimitExceeded
+  ```
+
+  These errors are inconsistent — sometimes resources succeed, sometimes
+  they fail. Retrying `terraform apply` fixes some but creates new
+  failures elsewhere.
+
+  CloudWatch shows your API call rate spiking to 100+ calls/second
+  during plan and apply (AWS default API rate limits are often 10-20
+  requests/second per API action).
+
+  Task: Explain API rate limiting in Terraform context, how to
+  reduce API call volume (parallelism, targeted applies, state
+  splitting), retry behavior in providers, and monitoring strategies
+  for large-scale Terraform deployments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rate limiting mechanics are explained — Terraform makes API calls during: refresh (read every resource), plan (compare state to reality), apply (create/modify/delete). With 500+ resources, refresh alone makes 500+ API calls. AWS rate limits vary by API (EC2 describe: ~100/s, IAM: ~15/s). Default parallelism = 10 concurrent operations. Each operation may make multiple API calls. The errors: AWS returns 429/RequestLimitExceeded when rate exceeded. AWS provider has built-in exponential backoff retry, but heavy load can still overwhelm"
+    weight: 0.35
+    description: "Rate limiting"
+  - type: llm_judge
+    criteria: "Reduction strategies are covered — (1) reduce parallelism: terraform apply -parallelism=5 (or even 2). Slower but fewer concurrent API calls. (2) targeted applies: terraform apply -target=module.compute to only modify specific resources. (3) split state: separate 500 resources into 5 state files of 100 each — each state operates independently with its own API call budget. (4) terraform plan -refresh=false: skip refresh if you trust state is current (risky, use sparingly). (5) AWS provider retry configuration: max_retries in provider block"
+    weight: 0.35
+    description: "Reduction strategies"
+  - type: llm_judge
+    criteria: "Monitoring and long-term solutions are practical — monitoring: AWS CloudTrail for API call volume, CloudWatch for throttling metrics, terraform plan/apply timing. Long-term solutions: (1) request AWS API limit increases for frequently-hit services, (2) state splitting by service domain (separate IAM, EC2, RDS states), (3) Terraform Cloud/Enterprise: manages execution and can queue applies, (4) avoid unnecessary data sources (each is an API call on every plan), (5) cache data source results in locals. Anti-pattern: large flat configurations — design for separate state files from the start"
+    weight: 0.30
+    description: "Monitoring"

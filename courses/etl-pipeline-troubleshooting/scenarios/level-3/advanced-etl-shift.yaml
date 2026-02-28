@@ -1,0 +1,52 @@
+meta:
+  id: advanced-etl-shift
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Advanced ETL troubleshooting shift — handle a complex multi-day incident with cascading failures, data corruption, and stakeholder management"
+  tags: [shift, combined, incident, assessment, advanced]
+
+state: {}
+
+trigger: |
+  You're the senior data engineer leading incident response for a
+  complex multi-day data issue:
+
+  Day 1 (Tuesday): A Debezium CDC connector for the orders table
+  silently fell behind by 6 hours due to a replication slot filling
+  up after a large batch update on the source PostgreSQL database.
+  The connector caught up overnight but processed events out of order.
+
+  Day 2 (Wednesday): The analytics team reports that Tuesday's
+  revenue dashboard shows $1.8M instead of the expected $2.5M.
+  Investigation reveals that ~700K of out-of-order CDC events were
+  processed with incorrect merge logic — some updates were applied
+  before their corresponding inserts, creating orphaned update records
+  that were silently dropped.
+
+  Day 3 (Thursday): While investigating, you discover that the CDC
+  lag also affected the ML team's feature pipeline. Their real-time
+  fraud detection model was scoring transactions against 6-hour-old
+  customer profiles, potentially missing 200+ fraudulent transactions
+  worth $150K.
+
+  The CPO, CFO, and Head of Risk are all in a war room wanting
+  answers.
+
+  Task: Design the complete incident response — immediate containment,
+  root cause analysis, data recovery, stakeholder communication, and
+  prevention measures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs immediate containment and recovery — stop the bleeding (verify CDC connector is now current and processing correctly), assess blast radius (what other systems consumed the corrupted data?), data recovery plan (re-extract Tuesday's orders from the source database as a full snapshot for that day, reconcile against what the CDC pipeline loaded, UPSERT to fix the gaps), rebuild downstream artifacts (re-run the revenue dashboard aggregation, re-generate any reports that used Tuesday's data), and address the fraud model issue (re-score Tuesday's transactions against correct customer profiles, flag any potentially missed fraud)"
+    weight: 0.35
+    description: "ContainmentAndRecovery"
+  - type: llm_judge
+    criteria: "Response provides thorough root cause analysis — primary cause: replication slot filled up due to a large batch update exceeding WAL retention, causing CDC lag. Contributing factors: no monitoring on CDC lag (should have alerted when lag exceeded threshold), merge logic didn't handle out-of-order events (updates before inserts were silently dropped instead of queued), no data quality check between CDC-loaded data and expected daily volumes, and no circuit breaker to stop downstream processing when source data quality is compromised"
+    weight: 0.35
+    description: "RootCauseAnalysis"
+  - type: llm_judge
+    criteria: "Response addresses stakeholder communication and prevention — war room communication: provide each stakeholder with relevant information (CFO: revenue data is being corrected, expected fix by X time; Head of Risk: potential fraud exposure is $150K, re-scoring in progress, manual review of flagged transactions; CPO: dashboard accuracy will be restored). Prevention plan: CDC lag monitoring with alerts at 15-minute threshold, idempotent and order-aware merge logic, daily reconciliation between CDC-loaded data and source system totals, circuit breaker that pauses downstream consumers when upstream data quality is suspect, and incident postmortem with action items"
+    weight: 0.30
+    description: "StakeholderAndPrevention"

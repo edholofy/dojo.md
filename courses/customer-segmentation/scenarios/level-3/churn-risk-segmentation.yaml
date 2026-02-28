@@ -1,0 +1,42 @@
+meta:
+  id: churn-risk-segmentation
+  level: 3
+  course: customer-segmentation
+  type: output
+  description: "Churn risk segmentation — build predictive churn risk segments using behavioral signals, survival analysis, and propensity modeling"
+  tags: [churn, risk, prediction, survival-analysis, propensity, advanced]
+
+state: {}
+
+trigger: |
+  A VP of customer success says: "Our churn rate is 18% annually and we're
+  reacting too late. By the time a customer tells us they're leaving,
+  it's usually too late to save them. I need a segmentation that predicts
+  who's going to churn BEFORE they decide to leave.
+
+  We're a B2B SaaS company with 12,000 accounts. We have: product usage
+  data (daily), support tickets, NPS surveys (quarterly), contract data
+  (renewal dates, term lengths), billing data (payment delays, disputes),
+  stakeholder data (champion changes, executive sponsor activity), and
+  competitive intelligence (are they evaluating alternatives?).
+
+  Build me a churn risk segmentation that identifies at-risk accounts
+  early enough to intervene."
+
+  Task: Design a predictive churn risk segmentation that uses leading
+  indicators to identify at-risk customers before they churn, with
+  specific intervention strategies for each risk level.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies leading indicators of churn from the available data — declining login frequency (strongest single predictor for most SaaS), reduced feature breadth (using fewer features over time), support ticket escalation patterns (increasing severity), NPS score decline, champion departure (stakeholder changes), payment delays, reduced user count, contract shortening at renewal, competitive evaluation signals. Explains which indicators are earliest (weeks/months before churn decision) vs latest (days before cancellation) and how to weight them"
+    weight: 0.35
+    description: "LeadingIndicators"
+  - type: llm_judge
+    criteria: "Response builds a churn risk scoring model — using the indicators to create a composite churn risk score (0-100), with methodology options (logistic regression for interpretability, random forest for accuracy, survival analysis for time-to-churn prediction). Creates churn risk segments: Critical (>80 score, likely to churn within 30 days), High (60-80, warning signs present, 60-90 day window), Moderate (40-60, some concerning signals, 3-6 month window), Low (<40, healthy and engaged). Explains how to calibrate the model using historical churn data"
+    weight: 0.35
+    description: "RiskScoring"
+  - type: llm_judge
+    criteria: "Response designs differentiated intervention strategies by risk level — Critical: executive escalation, emergency business review, concessions if warranted, save team engagement. High: proactive CSM outreach, health check meetings, usage workshops, success plan reset. Moderate: automated health check emails, feature adoption nudges, quarterly business review scheduling. Low: continued value delivery, expansion opportunity identification. Includes expected save rates per tier and how to measure intervention effectiveness through A/B testing (intervene on half the at-risk group, compare churn rates)"
+    weight: 0.30
+    description: "Interventions"

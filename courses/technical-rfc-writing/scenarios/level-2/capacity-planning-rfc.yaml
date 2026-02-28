@@ -1,0 +1,40 @@
+meta:
+  id: capacity-planning-rfc
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Write capacity planning sections — include load estimates, scaling projections, and resource requirements in technical proposals"
+  tags: [RFC, capacity-planning, scaling, load-estimates, resources, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to build a real-time analytics dashboard that
+  will show live metrics to internal users. The system needs to:
+  - Ingest events from 5 microservices (currently ~10,000 events/sec)
+  - Store 90 days of event data for historical queries
+  - Support 50 concurrent dashboard users with sub-second refresh
+  - Handle 3x traffic spikes during product launches
+
+  Your first draft says "we'll use a time-series database and it
+  should scale fine." Reviewers immediately ask: "How much storage?
+  What's the cost? What happens at 10x scale? When do we hit limits?"
+
+  Task: Write the capacity planning section of this RFC with specific
+  numbers: current load, projected growth, resource requirements,
+  cost estimates, and scaling limits. Show how to think about capacity
+  in technical proposals without over-engineering or under-planning.
+
+assertions:
+  - type: llm_judge
+    criteria: "Current and projected load is quantified — current load: '10,000 events/sec average, 30,000 events/sec peak (3x during launches). Average event size: 500 bytes. Daily ingest: ~432GB uncompressed (~86GB with 5:1 compression). 90-day storage: ~7.7TB compressed.' Growth projections: '2 new microservices planned for Q3, estimated 40% increase in event volume. 12-month projection: 14,000 events/sec average, 42,000 events/sec peak. 24-month projection: 20,000 events/sec average.' Query load: '50 concurrent users × average 3 queries/sec = 150 queries/sec. Dashboard refresh every 5 seconds. 90th percentile query touches ~1 hour of data (~1.5GB). Historical queries touch up to 90 days.' Each number has its derivation shown so reviewers can validate assumptions"
+    weight: 0.35
+    description: "Quantified load"
+  - type: llm_judge
+    criteria: "Resource requirements and costs are specific — infrastructure: 'Time-series database cluster: 3 nodes × 16 CPU, 64GB RAM, 4TB SSD each = $X/month (estimated from provider pricing). Ingest pipeline: 2 workers handling 15,000 events/sec each (headroom for spikes) = $Y/month. Query cache: Redis cluster with 32GB for hot data = $Z/month.' Total estimated cost: '$A/month at current load, scaling to $B/month at 12-month projection.' Cost comparison: 'vs current approach (no analytics): $0/month. vs alternative (third-party analytics SaaS): $C/month for similar capability but limited customization.' Scaling strategy: 'Horizontal scaling by adding nodes. Each additional node adds ~5,000 events/sec ingest capacity. Cost scales linearly: ~$D per 5,000 events/sec increment.' Limits: 'Architecture supports up to 100,000 events/sec with current design. Beyond that requires architectural changes (sharding, tiered storage). We don't expect to hit this within 3 years'"
+    weight: 0.35
+    description: "Resource and cost specifics"
+  - type: llm_judge
+    criteria: "Capacity planning approach is methodical and honest — methodology shown: (1) measure current state (not estimate), (2) project growth using historical data and planned features, (3) add headroom (typically 2-3x for spikes), (4) identify breaking points. Assumptions stated explicitly: 'Assumes average event size stays at 500 bytes — if we add rich payloads, storage projections change significantly.' 'Assumes compression ratio holds — should be validated with representative data.' Uncertainty acknowledged: 'Growth projections beyond 12 months are speculative. We recommend capacity review every 6 months.' Right-sizing: 'We recommend starting with infrastructure that handles 2x current load (not 10x). Over-provisioning wastes money. The scaling plan shows how to add capacity when needed — we don't need to buy it upfront.' Monitoring triggers: 'Alert when any resource exceeds 70% utilization. Scale when sustained utilization exceeds 60% for 1 week.' The capacity plan should feel rigorous but practical — not an academic exercise"
+    weight: 0.30
+    description: "Methodical approach"

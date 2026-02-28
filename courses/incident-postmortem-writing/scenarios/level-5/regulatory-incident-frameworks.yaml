@@ -1,0 +1,52 @@
+meta:
+  id: regulatory-incident-frameworks
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Navigate regulatory incident frameworks — design incident management that satisfies SOC 2, PCI-DSS, HIPAA, and GDPR requirements simultaneously across a multi-regulated organization"
+  tags: [postmortem, regulatory, SOC2, PCI-DSS, HIPAA, GDPR, compliance, master]
+
+state: {}
+
+trigger: |
+  Your organization is subject to multiple regulatory frameworks
+  simultaneously:
+  - SOC 2 Type II (all services): requires continuous monitoring,
+    incident documentation, and remediation evidence
+  - PCI-DSS (payment processing): requires specific incident
+    response procedures for cardholder data
+  - HIPAA (healthcare data): requires breach notification within
+    defined timelines
+  - GDPR (EU customer data): requires 72-hour breach notification
+    to supervisory authority
+
+  Each regulation has different definitions of what constitutes a
+  reportable incident, different notification timelines, and
+  different documentation requirements. Your current incident
+  process doesn't differentiate — the same postmortem template is
+  used regardless of regulatory implications.
+
+  A recent incident exposed customer payment data AND health records
+  for EU-based users, triggering all four frameworks simultaneously.
+  The response was chaotic because no one knew which notifications
+  were required, in what order, or to whom.
+
+  Task: Design a unified incident management framework that
+  satisfies all four regulatory requirements. Include: classification
+  matrix, notification workflows, documentation requirements per
+  regulation, and the postmortem template that produces compliance-
+  ready evidence for all frameworks from a single process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Classification matrix correctly maps incident types to regulatory triggers — classification matrix: 'Every incident is assessed against all applicable regulations at the start of incident response. IC checklist includes regulatory triage: (1) Does this incident involve cardholder data? (PCI-DSS trigger) Cardholder data includes: primary account number, cardholder name, expiration date, service code. If yes: PCI-DSS incident response activated. Notify acquiring bank and payment brands per PCI-DSS Requirement 12.10. (2) Does this incident involve protected health information? (HIPAA trigger) PHI includes: any individually identifiable health information. If yes: HIPAA breach assessment activated. 4-factor risk assessment required. (3) Does this incident involve personal data of EU residents? (GDPR trigger) Personal data: any information relating to an identified or identifiable person. If yes: GDPR breach assessment activated. 72-hour clock starts at discovery. (4) Does this incident affect the availability, integrity, or confidentiality of any system in SOC 2 scope? (SOC 2 trigger) Virtually all incidents trigger SOC 2 documentation requirements.' Multi-trigger scenarios: 'When an incident triggers multiple regulations (like the recent incident involving EU customer payment AND health data), notification requirements are layered, not merged. Each regulation's timeline is tracked independently. Example: GDPR requires notification within 72 hours. HIPAA allows 60 days. PCI-DSS depends on the acquiring bank's requirements. The earliest deadline drives the pace, but each notification is crafted to satisfy its specific regulation.' Decision tree: 'The classification matrix produces a regulatory impact profile for each incident: PCI-DSS (yes/no), HIPAA (yes/no), GDPR (yes/no), SOC 2 (yes/no). The profile determines which notification workflows activate and which postmortem sections are required'"
+    weight: 0.35
+    description: "Classification matrix"
+  - type: llm_judge
+    criteria: "Notification workflows handle parallel regulatory requirements — notification workflow for multi-trigger incidents: 'GDPR (72-hour deadline from discovery): Hour 0-4: incident contained and scope assessed. Hour 4-24: determine if personal data of EU residents was involved, identify categories and approximate number of data subjects, assess risk to data subjects. Hour 24-48: draft supervisory authority notification. Required content: nature of the breach, categories and approximate number of data subjects, contact details of DPO, likely consequences, measures taken or proposed. Hour 48-72: notification submitted to lead supervisory authority. Simultaneously: if high risk to data subjects, notify affected individuals without undue delay. PCI-DSS (timeline per acquirer agreement, typically 24-72 hours): Upon confirmation of cardholder data involvement: notify acquiring bank. Preserve all evidence (logs, access records, forensic images). Engage PCI Forensic Investigator if required by acquirer. Document all compromised or potentially compromised card numbers for notification to card brands. HIPAA (60-day deadline for individual notification): Breach determination using 4-factor risk assessment. If breach confirmed and affecting 500+ individuals: notify HHS within 60 days, notify affected individuals within 60 days, notify prominent media outlets in affected states. If under 500: notify HHS annually, notify individuals within 60 days. SOC 2 (ongoing documentation): Document incident in continuous monitoring evidence. Include: detection, response, root cause, remediation, and evidence of control effectiveness restoration. Available for auditor review.' Parallel execution: 'Compliance team maintains a regulatory tracker dashboard updated in real-time during multi-trigger incidents. Each regulation has its own row with: trigger status, notification deadline, responsible person, notification status, evidence requirements. IC reviews regulatory tracker at every status update to ensure no deadline is missed'"
+    weight: 0.35
+    description: "Parallel notification workflows"
+  - type: llm_judge
+    criteria: "Unified postmortem template produces compliance-ready evidence for all frameworks — postmortem template with regulatory sections: 'The unified template includes standard postmortem sections plus regulation-specific evidence sections activated based on the incident's regulatory profile. Standard sections (all incidents): summary, timeline, root cause, contributing factors, remediation, action items. Regulatory section: SOC 2 Evidence (activated for all incidents): (a) Control affected: which SOC 2 trust service criteria were impacted. (b) Control effectiveness: was the control operating effectively? If not, what was the gap? (c) Remediation timeline: when was the control restored to effective operation? (d) Evidence references: log files, tickets, monitoring data that demonstrate detection and response. Regulatory section: PCI-DSS (activated when cardholder data involved): (a) Scope of cardholder data exposure: which data elements, how many records. (b) Evidence preservation: forensic image reference, log preservation confirmation. (c) Containment actions: how was further exposure prevented. (d) Card brand notification status. Regulatory section: HIPAA (activated when PHI involved): (a) Breach risk assessment: 4-factor analysis documented. (b) PHI categories involved. (c) Number of individuals affected. (d) Notification status: HHS, individuals, media (if applicable). Regulatory section: GDPR (activated when EU personal data involved): (a) Categories of data subjects and personal data. (b) Approximate number of data subjects. (c) Risk assessment for data subjects. (d) Supervisory authority notification status. (e) Individual notification status.' Template benefit: 'A single postmortem process produces all regulatory evidence. Compliance team reviews the regulatory sections for completeness before finalizing. External auditors (SOC 2) and regulators receive the relevant sections without seeing the full internal postmortem. This separation ensures technical candor in the full document while providing appropriate disclosure in regulatory sections'"
+    weight: 0.30
+    description: "Unified compliance template"

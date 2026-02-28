@@ -1,0 +1,47 @@
+meta:
+  id: advanced-cohort-shift
+  level: 3
+  course: cohort-analysis
+  type: output
+  description: "Advanced cohort shift — handle cross-functional cohort analysis challenges requiring statistical modeling, multi-dimensional analysis, and strategic recommendations"
+  tags: [shift-simulation, advanced, multi-request, cross-functional]
+
+state: {}
+
+trigger: |
+  Five cohort analysis challenges arrive in a single day:
+
+  Request 1 (CFO): "Our revenue forecast was wrong by 25% last
+  quarter. Build a cohort-based forecast for next quarter that
+  accounts for cohort aging and mix shifts."
+
+  Request 2 (VP Product): "We shipped a major redesign 2 months ago.
+  The A/B test showed +4pp lift at day 7. But I'm hearing from users
+  that they're confused. Is the lift holding up or was it novelty?"
+
+  Request 3 (Head of Data Science): "The board wants to know our
+  projected 12-month LTV for the most recent cohort. They're only
+  3 months old. How confident can we be?"
+
+  Request 4 (Growth Lead): "I need to know which features drive
+  retention. We have 12 features — rank them by impact."
+
+  Request 5 (VP Marketing): "We spent $50K on win-back last month.
+  Did we actually get incremental returns or would those users have
+  come back anyway?"
+
+  Task: Handle all five requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 (cohort forecast) and Request 2 (A/B test novelty check) — forecast_and_ab: 'Request 1 — Cohort-based revenue forecast: the top-down forecast failed because it assumed flat ARPU and retention. Build bottom-up: existing cohorts: for each of the last 12 monthly cohorts, project forward using fitted retention curves. January cohort (now M9): 28% retained, projected M12: 24%. $18 ARPU. Revenue: 24% × 1,000 × $18 = $4,320/month. Repeat for all cohorts. New cohorts (next 3 months): projected signups: 1,400, 1,500, 1,600 per month. Apply most recent cohort retention curve. Apply ARPU ramp from similar cohorts. Account for the key mix shift: paid acquisition is growing from 30% to 45% of signups. Paid users have lower retention (22% M3 vs 35% organic M3). The model should weight retention rates by the projected channel mix. Forecast output: Q1 projected revenue: $285K (vs the CFO's flat model of $350K). The $65K gap comes from: older cohorts continuing to churn ($30K less than the flat model assumes). New cohorts having lower per-user revenue due to more paid acquisition ($35K less). Sensitivity: if paid acquisition stays at 30% (not 45%), Q1 revenue is $310K. Request 2 — Redesign novelty check: track the +4pp lift over time by enrollment cohort: week 1 enrollees: day 7 +4pp, day 30 +2.5pp, day 60 +1pp. Week 2 enrollees: day 7 +3.8pp, day 30 +2.2pp. Week 3 enrollees: day 7 +3.5pp, day 30 +2pp. Pattern: the lift is decaying within each cohort (novelty effect). But it has not reached zero — approximately +1-2pp sustained effect at day 30-60. The day-7 result overstated the long-term impact by 2x. The redesign has a real but moderate effect: approximately +2pp at day 30 (not +4pp). Additionally, check for negative signals: task completion rate post-redesign: dropped 8% (users ARE confused). Time to complete key workflows: increased 15%. Recommendation: the redesign improved conversion (+2pp real lift) but worsened usability. Iterate on the confusion points while keeping the conversion improvements'"
+    weight: 0.35
+    description: "ForecastAndAB"
+  - type: llm_judge
+    criteria: "Response handles Request 3 (LTV prediction) and Request 4 (feature ranking) — ltv_and_features: 'Request 3 — LTV prediction from 3-month data: the most recent cohort has 3 months of data. Observed: M0 $8, M1 $20, M2 $34, M3 $49 cumulative per user. Method: use analogous cohort ratios from mature cohorts. M12/M3 ratio from the last 4 mature cohorts: 2.65, 2.70, 2.55, 2.80. Average: 2.68. Projected M12 LTV: $49 × 2.68 = $131. 95% confidence interval (based on ratio variation): $49 × 2.55 to $49 × 2.80 = $125 to $137. Cross-validate with BG/NBD model fit on M0-M3 data: projected M12 LTV: $128 (within the analogous cohort range). For the board: projected 12-month LTV is $128-$137 per user (best estimate: $131). Confidence level: moderate — M3 predictions historically have 15-20% MAPE. By M6, the prediction will narrow to ±8%. This cohort is tracking 5% above the previous cohort at the same point ($49 vs $46.50 at M3), suggesting improving user quality. Request 4 — Feature impact ranking: for each of 12 features, calculated adopter vs non-adopter month-6 retention gap: 1. Team collaboration: +28pp gap, 30% adoption. Impact score: 8.4. 2. Calendar integration: +22pp gap, 25% adoption. Impact score: 5.5. 3. Reporting dashboard: +20pp gap, 20% adoption. Impact score: 4.0. 4. Mobile app: +18pp gap, 40% adoption. Impact score: 7.2. 5. Templates: +8pp gap, 45% adoption. Impact score: 3.6. 6-12. (remaining features all under +8pp gap and score under 3.0). Top priorities: invest in increasing adoption of team collaboration (highest gap, moderate adoption — biggest opportunity). Mobile app has high adoption already — focus on depth (push users from occasional to daily mobile use). Calendar integration has room for growth (75% not using it). For the Growth Lead: team collaboration and mobile app drive the most retention. Focus onboarding on these two features'"
+    weight: 0.35
+    description: "LTVAndFeatures"
+  - type: llm_judge
+    criteria: "Response handles Request 5 (win-back incremental analysis) — winback: 'Request 5 — Win-back incremental analysis: the $50K win-back campaign needs holdout-based evaluation. Analysis using the 10% holdout from last month's campaign: treatment group (4,500 churned users): 500 returned (11.1% reactivation rate). Holdout group (500 users): 30 returned (6.0% organic return rate). Incremental reactivation rate: 11.1% - 6.0% = 5.1%. Incremental users: 4,500 × 5.1% = 230 incremental returns. Of the 500 total returns, 230 (46%) were caused by the campaign. The other 270 would have come back anyway. Post-return retention of campaign-driven returns: R+1: 20% (46 users still active). R+3: 8% (18 users still active). Revenue from 230 incremental returns over 3 months: 230 × (100% × $12 + 20% × $12 + 8% × $12) = 230 × $15.36 = $3,533. Campaign cost: $50K. ROI: -$46.5K — the campaign is deeply unprofitable. Diagnosis: the campaign reactivates users who mostly churn again within a month. Only 8% of incremental returns are still active at month 3. The $50K spend generates only $3.5K in incremental revenue. Recommendation: cut win-back spend by 80% (from $50K to $10K). Focus the remaining budget on 30-45 day churners who were highly engaged (this segment has 3x higher post-return retention). Shift from discount-based to feature-announcement messaging. Redirect $40K to improving retention for existing active users (higher ROI). Run a holdout test on the optimized campaign to verify improvement before scaling'"
+    weight: 0.30
+    description: "Winback"

@@ -1,0 +1,45 @@
+meta:
+  id: conditional-logic-specs
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Conditional logic specifications — document show/hide conditions, permission-based UI, and dynamic content rules"
+  tags: [conditional-logic, show-hide, permissions, dynamic-UI, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I'm designing a project
+  settings page where different elements appear based on
+  the user's role and project state. Conditions:
+
+  - 'Delete Project' button: only visible to project owners
+  - 'Billing' section: only for paid plan users
+  - 'Archive' button: disabled if project has active tasks
+  - 'Transfer Ownership': visible to owners, opens different
+    flow for team vs enterprise plans
+  - 'Invite Members': visible to owners and admins, disabled
+    if at team member limit
+  - Status badge: shows 'Trial' with countdown for trial
+    users, nothing for paid users
+
+  I can't just show one wireframe — there are potentially
+  dozens of variations. How do I specify conditional logic
+  without creating a wireframe for every combination?"
+
+  Task: Write conditional logic specifications for the
+  project settings page.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear conditional logic format — uses structured IF/THEN/ELSE notation or a decision table format: Element → Condition → Behavior. Example: 'Delete Project' button: IF user.role === 'owner' THEN show button ELSE hide element entirely (not disabled — invisible). 'Billing' section: IF plan.type === 'paid' THEN show full billing management ELSE IF plan.type === 'trial' THEN show 'Upgrade' CTA with trial days remaining ELSE hide section. Each condition is specific with exact variable names and values, not vague ('if the user is allowed')"
+    weight: 0.35
+    description: "ConditionalLogicFormat"
+  - type: llm_judge
+    criteria: "Response handles compound conditions and edge cases — 'Invite Members': IF (user.role === 'owner' OR user.role === 'admin') AND team.memberCount < plan.memberLimit THEN show enabled button ELSE IF role matches but at limit THEN show disabled button with tooltip 'Member limit reached. Upgrade to add more.' ELSE hide. 'Archive' button: IF project.activeTasks > 0 THEN show disabled with tooltip 'Complete or move active tasks before archiving' ELSE show enabled. 'Transfer Ownership': IF user.role === 'owner' AND plan.type === 'enterprise' THEN show with enterprise transfer flow ELSE IF user.role === 'owner' THEN show with standard transfer flow. Handles the combinations without requiring separate wireframes"
+    weight: 0.35
+    description: "CompoundConditions"
+  - type: llm_judge
+    criteria: "Response provides a complete specification approach — a condition matrix showing all elements × all conditions (user roles × plan types = the full grid), identifies which combinations to wireframe separately (the 2-3 most different states deserve their own wireframe: owner/enterprise, member/free, trial user) vs which to specify in the condition table, and explains how to document conditions in Figma (annotation layer showing conditions, or separate 'Logic' page with the decision table). Addresses: how developers should handle unsupported combinations (defensive: hide by default, show only when condition is explicitly met)"
+    weight: 0.30
+    description: "SpecificationApproach"

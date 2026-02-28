@@ -1,0 +1,40 @@
+meta:
+  id: cross-database-reporting
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Build reports across multiple databases — use foreign data wrappers, federated queries, ETL consolidation, and data virtualization to combine data from different sources"
+  tags: [SQL, cross-database, federation, FDW, ETL, data-virtualization, advanced]
+
+state: {}
+
+trigger: |
+  The company uses 4 different databases:
+  - PostgreSQL (orders, customers — transactional)
+  - MySQL (product catalog — legacy e-commerce platform)
+  - SQL Server (finance — ERP system with GL entries)
+  - MongoDB (user behavior events — product analytics)
+
+  The CFO needs a unified report: "For each product category, show
+  orders from PostgreSQL, product details from MySQL, revenue
+  recognized from SQL Server GL entries, and user engagement metrics
+  from MongoDB. I need one report, not four."
+
+  The data team has tried manual CSV exports and joins in Excel but
+  it takes 3 days each month and has frequent errors.
+
+  Task: Design a cross-database reporting architecture.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response implements foreign data wrappers for real-time federation — fdw: 'Cross-database reporting with Foreign Data Wrappers: PostgreSQL as the federation hub using FDW: Step 1 — Connect to MySQL: CREATE EXTENSION mysql_fdw; CREATE SERVER mysql_catalog FOREIGN DATA WRAPPER mysql_fdw OPTIONS (host 'mysql-prod.internal', port '3306'); CREATE USER MAPPING FOR reporting_user SERVER mysql_catalog OPTIONS (username 'readonly', password 'vault_ref_123'); CREATE FOREIGN TABLE ft_products (product_id INTEGER, name TEXT, category TEXT, sku TEXT, list_price NUMERIC, created_at TIMESTAMP) SERVER mysql_catalog OPTIONS (dbname 'ecommerce', table_name 'products'). Step 2 — Connect to SQL Server: CREATE EXTENSION tds_fdw; CREATE SERVER sqlserver_finance FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername 'erp.internal', port '1433'); CREATE FOREIGN TABLE ft_gl_entries (entry_id INTEGER, account_code TEXT, amount NUMERIC, posting_date DATE, category TEXT, description TEXT) SERVER sqlserver_finance OPTIONS (database 'finance', schema_name 'dbo', table_name 'gl_entries'). Step 3 — Connect to MongoDB: CREATE EXTENSION mongo_fdw; CREATE SERVER mongo_events FOREIGN DATA WRAPPER mongo_fdw OPTIONS (address 'mongo.internal', port '27017'); CREATE FOREIGN TABLE ft_user_events (user_id TEXT, event_type TEXT, product_id INTEGER, timestamp TIMESTAMP, session_duration INTEGER) SERVER mongo_events OPTIONS (database 'analytics', collection 'events'). Step 4 — Unified query: SELECT p.category, COUNT(DISTINCT o.order_id) AS orders, SUM(o.amount) AS order_revenue, SUM(gl.amount) AS recognized_revenue, COUNT(DISTINCT ue.user_id) AS engaged_users, AVG(ue.session_duration) AS avg_session_seconds FROM orders o JOIN ft_products p ON o.product_id = p.product_id LEFT JOIN ft_gl_entries gl ON p.category = gl.category AND DATE_TRUNC('month', o.order_date) = DATE_TRUNC('month', gl.posting_date) LEFT JOIN ft_user_events ue ON o.product_id = ue.product_id AND ue.event_type = 'product_view' GROUP BY p.category ORDER BY order_revenue DESC. One SQL query spans 4 databases transparently'"
+    weight: 0.35
+    description: "FDW"
+  - type: llm_judge
+    criteria: "Response covers ETL consolidation as the production-grade alternative — etl: 'ETL consolidation approach for production: Foreign data wrappers work for ad-hoc queries but have limitations: network latency on every query, no indexing on foreign tables, and the remote database bears the query load. For production reports, consolidate into a reporting data warehouse: ETL pipeline design: Extract from each source on a schedule. CREATE TABLE staging.stg_products AS SELECT product_id, name, category, sku, list_price, created_at, NOW() AS extracted_at FROM ft_products. CREATE TABLE staging.stg_gl_entries AS SELECT entry_id, account_code, amount, posting_date, category, NOW() AS extracted_at FROM ft_gl_entries WHERE posting_date >= CURRENT_DATE - INTERVAL '7 days'. Transform and load into a unified schema: INSERT INTO reporting.dim_products SELECT product_id, name, category, sku, list_price FROM staging.stg_products ON CONFLICT (product_id) DO UPDATE SET name = EXCLUDED.name, list_price = EXCLUDED.list_price. INSERT INTO reporting.fact_revenue SELECT o.order_id, o.order_date, p.product_id, p.category, o.amount AS order_amount, gl.amount AS recognized_amount, ue.engagement_score FROM staging.stg_orders o JOIN reporting.dim_products p ON o.product_id = p.product_id LEFT JOIN staging.stg_gl_entries gl ON p.category = gl.category LEFT JOIN staging.stg_engagement ue ON o.product_id = ue.product_id. The unified fact table lives in PostgreSQL with proper indexes. Reports query local tables with sub-second response times. Schedule: run ETL nightly at 2 AM. Dashboard shows: Data as of Feb 27, 2026 2:00 AM'"
+    weight: 0.35
+    description: "ETL"
+  - type: llm_judge
+    criteria: "Explanation addresses data quality challenges and reconciliation across sources — reconciliation: 'Cross-database data quality and reconciliation: Challenge 1 — ID mapping: different systems use different IDs for the same entity. Create a master mapping table: CREATE TABLE entity_mappings (canonical_id UUID PRIMARY KEY, pg_customer_id INTEGER, mysql_product_id INTEGER, sqlserver_account_code TEXT, mongo_user_id TEXT). Use this for joins instead of assuming IDs match across systems. Challenge 2 — Currency and timezone differences: the ERP stores amounts in USD, the e-commerce platform stores in local currency. Normalize during ETL: INSERT INTO fact_revenue (amount_usd) SELECT amount * exchange_rate FROM staging.stg_orders o JOIN dim_exchange_rates fx ON o.currency = fx.currency AND o.order_date = fx.rate_date. Challenge 3 — Reconciliation report: SELECT source, metric, value, ROUND(value * 100.0 / SUM(value) OVER (PARTITION BY metric), 1) AS pct_of_total FROM (SELECT 'PostgreSQL orders' AS source, 'revenue' AS metric, SUM(amount) AS value FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) UNION ALL SELECT 'SQL Server GL', 'revenue', SUM(amount) FROM ft_gl_entries WHERE posting_date >= DATE_TRUNC('month', CURRENT_DATE) AND account_code LIKE '4%') sources. If PostgreSQL shows $1.2M revenue but the GL shows $1.15M, the $50K difference needs investigation — timing differences, returns, or missing entries. Decision framework: use FDW for ad-hoc exploration and prototyping. Use ETL for production dashboards and recurring reports. Use a data virtualization layer (Trino, Presto, Dremio) when you have 10 or more sources and need interactive query performance'"
+    weight: 0.30
+    description: "Reconciliation"

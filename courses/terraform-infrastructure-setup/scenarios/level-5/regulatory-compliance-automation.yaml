@@ -1,0 +1,47 @@
+meta:
+  id: regulatory-compliance-automation
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Automate regulatory compliance with Terraform — design compliance frameworks for SOC2, HIPAA, PCI-DSS, and GDPR using policy-as-code"
+  tags: [Terraform, compliance, regulatory, SOC2, HIPAA, PCI-DSS, GDPR, master]
+
+state: {}
+
+trigger: |
+  Your consulting client is a fintech company that processes healthcare
+  payments — subject to SOC2, HIPAA, PCI-DSS, and GDPR simultaneously.
+  They have 200 Terraform-managed AWS resources and need to:
+
+  1. Prove to auditors that compliance controls are enforced automatically
+  2. Detect and remediate non-compliant infrastructure within 24 hours
+  3. Generate compliance evidence without manual effort
+  4. Handle multiple overlapping regulatory frameworks efficiently
+  5. Maintain compliance during infrastructure changes (no regression)
+
+  Current compliance gaps:
+  - 15 S3 buckets without encryption (HIPAA §164.312)
+  - RDS instances without audit logging (PCI-DSS Req 10)
+  - CloudWatch logs without retention policy (SOC2 CC7.2)
+  - IAM users without MFA (all frameworks)
+  - No data classification tagging (GDPR Art 30)
+  - Cross-region data transfer without documentation (GDPR Art 44-49)
+
+  Task: Design the compliance automation strategy using Terraform
+  and supporting tools, covering: compliance framework mapping,
+  policy-as-code implementation, automated remediation, evidence
+  generation, and audit preparation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Compliance framework mapping is systematic — create a unified control matrix: map each Terraform resource to applicable controls across all frameworks. Example: S3 encryption → HIPAA §164.312(a)(2)(iv) + PCI-DSS 3.4 + SOC2 CC6.1 + GDPR Art 32. One Terraform policy (require S3 encryption) satisfies multiple frameworks. Control categories: encryption at rest, encryption in transit, access logging, data retention, access control, network segmentation, monitoring. For each control: identify the Terraform resource/attribute, the policy enforcement mechanism, and the evidence artifact"
+    weight: 0.35
+    description: "Framework mapping"
+  - type: llm_judge
+    criteria: "Policy enforcement and remediation are implemented — prevention: Sentinel policies block non-compliant deployments (hard-mandatory). Pre-commit: checkov with framework-specific rulesets (--framework hipaa, --framework pci_dss). Module library: compliant-by-default modules (encryption enabled, logging configured, retention set). Remediation: for existing gaps, (1) update Terraform modules to include compliance requirements, (2) apply across all environments, (3) AWS Config rules for continuous detection, (4) AWS Config remediation actions for auto-fix. GDPR-specific: data classification tags on all resources storing PII, data flow documentation generated from Terraform configuration"
+    weight: 0.35
+    description: "Enforcement and remediation"
+  - type: llm_judge
+    criteria: "Evidence generation and audit prep are practical — automated evidence: (1) Git log showing code reviews for all infrastructure changes (SOC2 CC8.1), (2) Terraform Cloud audit log showing who approved/applied changes, (3) checkov scan reports archived per deployment (compliance posture over time), (4) AWS Config compliance dashboard (continuous monitoring evidence), (5) Sentinel policy evaluation results (preventive control evidence). Audit preparation: pre-audit checklist mapped to each framework. Evidence repository: S3 bucket with lifecycle policy, organized by framework and control. Audit cadence: SOC2 annually, PCI-DSS quarterly scans, HIPAA risk assessment annually, GDPR data mapping quarterly"
+    weight: 0.30
+    description: "Evidence and audit"

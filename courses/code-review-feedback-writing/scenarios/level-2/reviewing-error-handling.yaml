@@ -1,0 +1,50 @@
+meta:
+  id: reviewing-error-handling
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Review error handling — evaluate how code handles failures, edge cases, and unexpected states with feedback on robustness patterns"
+  tags: [code-review, error-handling, robustness, edge-cases, resilience, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR for an e-commerce checkout flow. The happy
+  path works great, but you're concerned about error handling:
+
+  1. `try { await chargeCard(amount) } catch(e) { console.log(e) }`
+     — errors are logged but not propagated or handled
+
+  2. No timeout on the external payment API call — if the payment
+     gateway hangs, the request hangs forever
+
+  3. If inventory check fails after payment succeeds, the payment
+     isn't reversed (inconsistent state)
+
+  4. The function returns null on error instead of throwing — callers
+     don't check for null
+
+  5. Generic catch block: catches everything including programming
+     errors (TypeError, ReferenceError) along with business errors
+
+  6. Error messages shown to users include internal details:
+     "Failed to insert into orders table: constraint violation"
+
+  Task: Write review comments for each error handling issue. For
+  each, explain the failure scenario, the user/system impact, and
+  the correct error handling pattern. These are the bugs that cause
+  3am pages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Failure scenarios are vivid and specific — (1) Swallowed error: 'Card is charged but the order isn't created because the error is only logged, not handled. The customer pays but gets no order confirmation. Support ticket incoming.' (2) Missing timeout: 'If Stripe hangs for 5 minutes, this HTTP request hangs for 5 minutes. If 100 users hit checkout, you have 100 hanging connections and the server becomes unresponsive.' (3) Inconsistent state: 'Customer is charged $50 but has no inventory allocated. They see Charged on their credit card but Your cart is empty on your site. This is the worst kind of bug — money is involved.' (4) Null return: 'Callers assume this function returns an order object. When it returns null, the next line does order.id and crashes with Cannot read property id of null — a confusing error for a payment problem.' Each scenario tells a story a developer can visualize"
+    weight: 0.35
+    description: "Failure scenarios"
+  - type: llm_judge
+    criteria: "Correct patterns are demonstrated — (1) Don't swallow: either re-throw, return an error result, or handle meaningfully (show user an error page, queue a retry). (2) Timeout: `await Promise.race([chargeCard(amount), timeout(30000)])` or use AbortController. (3) Compensation: implement saga pattern or at minimum: try charge → try allocate → if allocate fails, refund charge. Show the code structure. (4) Error types: throw typed errors instead of returning null: `throw new PaymentError('Card declined', { code: 'CARD_DECLINED' })`. Callers use try/catch. (5) Specific catches: catch business errors separately from programming errors: `catch(e) { if (e instanceof PaymentError) { handlePaymentError(e) } else { throw e } }`. (6) User-safe errors: map internal errors to user-friendly messages, log details server-side"
+    weight: 0.35
+    description: "Correct patterns"
+  - type: llm_judge
+    criteria: "Comments connect to real production impact — 'These are the bugs that cause 3am pages' framing throughout. Reference real-world scenarios: 'We had an incident last month where a similar swallowed error caused 200 orders to be charged but not fulfilled.' Testing suggestion: 'Each of these error paths should have a test — simulate payment gateway timeout, simulate inventory service failure, simulate partial failure.' Monitoring: 'Even with proper error handling, add alerting for these failure paths — if chargeCard fails for 5% of requests, we need to know immediately.' Order of importance: 'The payment-without-order issue (#3) is the most critical — it involves customer money. I'd fix that first and create follow-up tickets for the rest.'"
+    weight: 0.30
+    description: "Production impact"

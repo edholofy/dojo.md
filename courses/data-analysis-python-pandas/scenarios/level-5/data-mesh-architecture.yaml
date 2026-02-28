@@ -1,0 +1,40 @@
+meta:
+  id: data-mesh-architecture
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Evaluate and implement data mesh — assess when centralized vs decentralized data ownership is appropriate, design domain-oriented data products"
+  tags: [python, pandas, data-mesh, architecture, domain-driven, data-products, master]
+
+state: {}
+
+trigger: |
+  Your company has grown to 2,000 employees with a 20-person central
+  data team. The backlog of analytics requests is 6 months long. Teams
+  complain that the central team does not understand their domain.
+  The central team complains that they cannot scale to serve everyone.
+
+  The CTO has read about data mesh and wants to evaluate it:
+  "Should we decentralize data ownership to domain teams? Marketing
+  owns marketing data, product owns product data, etc.?"
+
+  Current state: central data warehouse (Snowflake), central dbt
+  project (2,000 models), central analytics team serving 8 business
+  units, 50+ data sources.
+
+  Task: Evaluate data mesh for this organization and design an
+  implementation plan if appropriate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis evaluates when data mesh is and is not appropriate — evaluation: 'Data mesh evaluation: Data mesh core principles (Zhamak Dehghani): 1. Domain-oriented ownership: each business domain owns, produces, and serves its data as a product. 2. Data as a product: domain teams treat their data outputs with the same rigor as customer-facing products (SLAs, documentation, quality guarantees). 3. Self-serve data platform: a central platform team provides infrastructure that domain teams use to build data products without needing deep data engineering skills. 4. Federated computational governance: governance policies are defined centrally but executed locally by domain teams. When data mesh fits: organization has 5+ distinct business domains with domain-specific expertise. Central team is a bottleneck (6-month backlog is a red flag). Domain teams have or can hire technical people. Data coupling between domains is low (most analysis is within a domain). When data mesh does NOT fit: organization is small (under 200 people — central team can serve everyone). Domains are heavily interconnected (cross-domain analysis is the primary use case). Domain teams have no technical capacity and cannot hire analysts. The problem is tooling, not organizational (better tools fix the bottleneck without reorganizing). Assessment for this company: 2,000 employees and 8 business units — large enough for data mesh. 6-month backlog — clear bottleneck signal. Key question: do domain teams have budget and ability to hire 2-3 data people each? If yes — data mesh is viable. If no — a hybrid model (central platform, embedded analysts) may be more practical. Pandas role in data mesh: domain analysts use pandas for exploration and prototyping within their domain. Domain data products are formalized into the platform (dbt, warehouse views). Cross-domain analysis requires discovering and joining data products — the self-serve platform must make this easy'"
+    weight: 0.35
+    description: "Evaluation"
+  - type: llm_judge
+    criteria: "Response designs domain data products and the self-serve platform — implementation: 'Data mesh implementation: Domain data product design — example for Marketing domain: Product name: marketing_campaign_performance. Owner: Marketing Analytics team. SLA: refreshed daily by 6 AM, 99.5% availability. Schema: campaign_id, channel, date, spend, impressions, clicks, conversions, attributed_revenue, cpa, roas. Quality guarantees: no null campaign_ids, spend > 0, date within last 2 years, attributed_revenue matches finance within 5%. Documentation: definition of each metric, data sources, known limitations, update schedule. Discovery: registered in the data catalog with tags, descriptions, and sample queries. Implementation in the warehouse: each domain gets its own schema: marketing.campaign_performance, sales.pipeline_metrics, product.user_engagement. Each domain has its own dbt project that produces these outputs. The central platform validates that outputs meet interoperability standards (naming conventions, primary keys, freshness). Interoperability contract — how domains share data: all data products must include: a unique entity key (customer_id, user_id) that maps to the central identity graph. A timestamp column for temporal joins. Standard column naming (snake_case, ISO date format). Versioning: breaking changes require a new version (v2) while v1 remains available for 90 days. Cross-domain analysis example: analyst needs marketing attribution linked to product engagement. marketing_campaigns = pd.read_sql(\"SELECT * FROM marketing.campaign_performance\", engine). product_engagement = pd.read_sql(\"SELECT * FROM product.user_engagement\", engine). combined = marketing_campaigns.merge(product_engagement, on=\"customer_id\", how=\"inner\"). The data products are designed to be joinable because they share the customer_id entity key. Self-serve platform components: data warehouse (Snowflake) with domain-specific schemas. dbt Cloud for each domain to build transformations. Data catalog (DataHub or Atlan) for discovery. Quality monitoring (Great Expectations) with domain-specific test suites. BI tool (Looker) with domain-specific explores. Python/pandas environment (JupyterHub or Hex) connected to the warehouse'"
+    weight: 0.35
+    description: "Implementation"
+  - type: llm_judge
+    criteria: "Plan addresses organizational change management and governance federation — change: 'Organizational change management: Migration plan — do NOT reorganize overnight: Phase 1 (months 1-3) — Pilot with one domain: choose the most mature domain (often Marketing or Sales). Transfer 2-3 analysts from the central team to the domain. Migrate their dbt models to a domain-specific project. Define their first 3 data products with SLAs. Measure: did the backlog for that domain decrease? Did data quality improve? Phase 2 (months 4-6) — Expand to 2 more domains: apply lessons from the pilot. Build the self-serve platform features that the pilot exposed as missing. Train domain teams on dbt, data quality testing, and documentation. Phase 3 (months 7-12) — Full rollout: remaining domains take ownership. Central team transitions to platform team (infrastructure, governance, tooling). Federated governance council meets monthly. Central platform team role (what remains centralized): infrastructure management (warehouse, compute, networking). Identity resolution (the customer_id mapping across domains). Data governance framework (policies, compliance, access controls). Platform tooling (CI/CD, monitoring, catalog, quality framework). Cross-domain data products (company-wide metrics like total ARR). Federated governance in practice: each domain has a data steward. Stewards form a governance council. Council agrees on: naming standards, PII handling, retention policies, quality thresholds. Enforcement is automated: CI checks validate naming conventions, PII scanners run on all new models, quality tests must pass before data products are published. Common failure modes: domain teams treat data as a side project (need dedicated data roles, not part-time). Domains create silos worse than the original (governance council and interoperability contracts prevent this). Platform team is underfunded (the platform is the enabler — underinvesting makes everyone slower). Success metrics: backlog reduction from 6 months to under 2 weeks per domain. Time to create a new data product under 1 week. Cross-domain query success rate above 90% (joins work correctly). Domain team satisfaction score above 4 out of 5'"
+    weight: 0.30
+    description: "Change management"

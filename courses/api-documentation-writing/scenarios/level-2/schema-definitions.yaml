@@ -1,0 +1,41 @@
+meta:
+  id: schema-definitions
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Define API schemas — use allOf, oneOf, anyOf for complex object models, polymorphic responses, and schema composition"
+  tags: [API, documentation, schemas, allOf, oneOf, composition, intermediate]
+
+state: {}
+
+trigger: |
+  Your API has complex data models that are hard to document:
+
+  1. A "notification" can be either an email, SMS, or push notification
+     — each has different required fields
+  2. An "event" object has a base structure plus type-specific data
+  3. A "user" response includes address (shared with "organization")
+
+  Developers ask:
+  - "Which fields are required for an SMS notification vs email?"
+  - "The event payload changes based on event type — how do I know
+    which fields to expect?"
+  - "Address appears in both user and organization — are they the same?"
+
+  Task: Write OpenAPI schemas using allOf (composition/inheritance),
+  oneOf (exclusive types), and anyOf (flexible types). Show how to
+  document polymorphic APIs, shared components, and discriminators.
+
+assertions:
+  - type: llm_judge
+    criteria: "allOf is used for composition — allOf combines multiple schemas: User = allOf[BaseEntity, UserFields, Address]. BaseEntity has id, created_at (shared across all entities). Address is a reusable component shared between User and Organization. The result is a combined object with all properties from all schemas. Use for: common base fields, mixins (adding address to multiple types), extending a base schema without modifying it"
+    weight: 0.35
+    description: "allOf composition"
+  - type: llm_judge
+    criteria: "oneOf with discriminator handles polymorphism — Notification: oneOf[EmailNotification, SMSNotification, PushNotification] with discriminator on 'type' field. Each variant has type-specific required fields (EmailNotification requires 'to_email', 'subject'; SMSNotification requires 'phone_number', 'message'). discriminator: { propertyName: 'type', mapping: { email: '#/components/schemas/EmailNotification' } }. This tells documentation tools and code generators which schema applies based on the type field value"
+    weight: 0.35
+    description: "oneOf polymorphism"
+  - type: llm_judge
+    criteria: "Documentation clarity for complex schemas is addressed — for polymorphic types: show one example per variant (email notification example, SMS example, push example). Include a table: type value → required fields → example. For composition: show the resulting combined object (developers care about the final shape, not the composition mechanics). Mark which properties come from which component for maintainability. anyOf: used when payload can match multiple schemas simultaneously (less common, use sparingly). Keep schema nesting shallow — deeply nested $ref chains are hard to follow"
+    weight: 0.30
+    description: "Documentation clarity"

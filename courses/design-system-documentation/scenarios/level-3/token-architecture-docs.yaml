@@ -1,0 +1,51 @@
+meta:
+  id: token-architecture-docs
+  level: 3
+  course: design-system-documentation
+  type: output
+  description: "Token architecture documentation — document a multi-layer design token system including reference, semantic, and component tokens with theming support"
+  tags: [tokens, architecture, theming, multi-layer, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "We're rebuilding our token system
+  to support dark mode and multi-brand theming. The current
+  system is flat — just 200 named values. The new system has
+  3 layers:
+
+  Layer 1 — Reference tokens (primitives):
+  blue-50, blue-100... blue-900, gray-50... gray-900, etc.
+
+  Layer 2 — Semantic tokens (purpose):
+  color-background-primary, color-text-primary,
+  color-border-default, color-interactive-primary, etc.
+
+  Layer 3 — Component tokens:
+  button-background-primary, button-text-primary,
+  input-border-default, input-border-focus, etc.
+
+  In light theme: color-background-primary → white
+  In dark theme: color-background-primary → gray-900
+  In Brand B: color-interactive-primary → green-600
+    (instead of Brand A's blue-600)
+
+  How do I document this architecture so designers and
+  developers understand how to use tokens correctly?"
+
+  Task: Write documentation for the multi-layer token system
+  that explains the architecture, usage rules, and theming.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response documents the three-layer architecture clearly — explains each layer with purpose and usage rules: Reference tokens (the palette — never use directly in components, these are the raw material), Semantic tokens (the decisions — these express design intent: 'this is a primary background' not 'this is white', use these in most design work), Component tokens (the specifics — override semantic tokens for component-level precision, use sparingly). Visualizes the token chain: blue-600 → color-interactive-primary → button-background-primary, showing how changing one reference value cascades through semantic to component tokens. Makes the mental model accessible to non-technical readers"
+    weight: 0.35
+    description: "TokenArchitecture"
+  - type: llm_judge
+    criteria: "Response documents theming with concrete examples — shows how the same semantic token resolves differently per theme: light mode (color-background-primary = white, color-text-primary = gray-900), dark mode (color-background-primary = gray-900, color-text-primary = white), Brand B (color-interactive-primary = green-600 instead of blue-600). Includes a theme token table showing all theme-variant values. Explains the 'design once, theme automatically' benefit: designers work with semantic tokens, theming happens at the token layer without touching component code. Covers edge cases: what if dark mode needs a completely different component structure, not just color swaps"
+    weight: 0.35
+    description: "ThemingDocumentation"
+  - type: llm_judge
+    criteria: "Response provides practical usage guidance — decision tree for which token layer to use ('Am I building a component? Use semantic tokens. Am I theming a specific component state? Use component tokens. Am I defining the palette? Use reference tokens.'), naming convention documentation for all three layers, migration guide from the flat system to the new three-layer system, and common mistakes (don't reference reference tokens directly in components, don't create component tokens unnecessarily if semantic tokens suffice, don't hardcode hex values). Includes developer implementation guidance (CSS custom properties, Figma variables, or token transformation pipeline)"
+    weight: 0.30
+    description: "PracticalUsage"

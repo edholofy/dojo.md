@@ -1,0 +1,79 @@
+meta:
+  id: powertools-observability
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Implement Lambda observability with Powertools — use structured logging, custom metrics, and tracing for production-grade monitoring"
+  tags: [AWS, Lambda, Powertools, observability, structured-logging, metrics, advanced]
+
+state: {}
+
+trigger: |
+  Your team has 50+ Lambda functions in production. Debugging is
+  painful: logs are unstructured text, no custom metrics, X-Ray
+  tracing is inconsistent. When an incident occurs, you spend
+  30+ minutes correlating logs across functions.
+
+  Current logging:
+  console.log("Processing order " + orderId);
+  console.log("Error: " + err.message);
+
+  Searching CloudWatch Logs:
+  fields @timestamp, @message
+  | filter @message like /Error/
+  | sort @timestamp desc
+  (returns hundreds of unrelated errors, no context)
+
+  Implementing AWS Lambda Powertools (TypeScript):
+
+  import { Logger, Metrics, Tracer } from '@aws-lambda-powertools/...'
+
+  const logger = new Logger({ serviceName: 'order-api' });
+  const metrics = new Metrics({ namespace: 'OrderService' });
+  const tracer = new Tracer({ serviceName: 'order-api' });
+
+  export const handler = async (event) => {
+    logger.addContext(event);  // Adds requestId, coldStart, etc.
+    logger.info('Processing order', { orderId, customerId });
+
+    metrics.addMetric('OrderProcessed', MetricUnit.Count, 1);
+    metrics.addMetric('OrderAmount', MetricUnit.None, amount);
+
+    const segment = tracer.getSegment();
+    const subsegment = segment.addNewSubsegment('processPayment');
+    // ... business logic
+    subsegment.close();
+  };
+
+  Now logs are structured JSON with correlation IDs:
+  {
+    "level": "INFO",
+    "message": "Processing order",
+    "service": "order-api",
+    "timestamp": "2024-12-01T10:00:00.000Z",
+    "xray_trace_id": "1-abc-def",
+    "cold_start": false,
+    "function_name": "order-api",
+    "orderId": "ORD-123",
+    "customerId": "CUST-456"
+  }
+
+  Task: Explain Lambda Powertools observability. Write: structured
+  logging (Logger), custom metrics (Metrics with EMF), distributed
+  tracing (Tracer), how to correlate across functions, CloudWatch
+  Logs Insights queries for structured logs, custom dashboards, and
+  alerting on business metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Powertools components are explained — Logger: structured JSON logging with automatic Lambda context (requestId, functionName, coldStart, xrayTraceId). Supports log levels, child loggers, sensitive data masking. Metrics: publishes CloudWatch metrics via EMF (Embedded Metric Format) — no API calls, written as structured log lines. Supports dimensions for filtering. Tracer: wraps X-Ray SDK, automatic capture of AWS SDK calls, support for custom subsegments. Available for Python, TypeScript, Java, .NET"
+    weight: 0.35
+    description: "Powertools components"
+  - type: llm_judge
+    criteria: "Correlation and querying are covered — correlation: trace ID connects logs across functions (X-Ray trace propagated through Lambda invocations). Include business context (orderId, customerId) in all log entries for business-level tracing. CloudWatch Logs Insights: query structured JSON fields directly. Example: fields orderId, @timestamp, level | filter level = 'ERROR' | filter service = 'order-api'. Custom dashboards: visualize custom metrics (order count, error rate, processing time) alongside Lambda system metrics"
+    weight: 0.35
+    description: "Correlation and querying"
+  - type: llm_judge
+    criteria: "Business metrics and alerting are practical — EMF metrics: define custom metrics like OrderProcessed, PaymentFailed, OrderAmount. Add dimensions: customer tier, product category. Alert on business metrics: OrderErrors > 5 in 5 minutes, PaymentFailureRate > 2%. Create CloudWatch dashboards per service showing: invocations, errors, duration, custom business metrics. Combine with X-Ray service map for full observability. Cost: Powertools itself is free. CloudWatch metrics: $0.30/metric/month. Logs: $0.50/GB ingested. Budget: set log retention to limit costs"
+    weight: 0.30
+    description: "Business metrics"

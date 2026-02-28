@@ -1,0 +1,49 @@
+meta:
+  id: dbt-troubleshooting
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "dbt troubleshooting — debug dbt model failures, incremental model issues, test failures, and performance problems in ELT pipelines"
+  tags: [dbt, ELT, models, incremental, testing, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We use dbt for our ELT transforms
+  in Snowflake and we're hitting several issues:
+
+  1. An incremental model is producing duplicates. The model uses
+     'unique_key' but some records share the same unique_key with
+     different values in other columns. The dbt run succeeds but
+     our unique test on the model fails.
+
+  2. A model that was fast (30 seconds) now takes 45 minutes after
+     we added a new JOIN. The warehouse is an XS and the query
+     plan shows a massive hash join with spilling to disk.
+
+  3. We changed a staging model's column name and 12 downstream
+     models broke in cascade. We didn't realize how many models
+     depended on that column.
+
+  4. A snapshot (SCD Type 2) is creating new records on every run
+     even though the source data hasn't changed. The valid_from/
+     valid_to timestamps keep updating.
+
+  How do I troubleshoot and fix each of these dbt issues?"
+
+  Task: Diagnose each dbt issue, explain the dbt-specific concepts
+  involved, and provide fixes and prevention strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each issue — incremental duplicates: the unique_key might not actually be unique in the source data (compound key needed?), or the incremental strategy isn't matching correctly (check is_incremental() logic and the merge behavior). Slow model: the new JOIN is creating a large intermediate result that exceeds XS warehouse memory, causing disk spilling (optimize the join, filter earlier, or use a larger warehouse for this model). Cascade break: column rename wasn't coordinated with downstream models (need lineage analysis before making changes). Snapshot churning: a non-deterministic column (like updated_at that changes on every source query) is being compared, causing dbt to think the record changed"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides dbt-specific fixes — for incremental duplicates: use a compound unique_key, or use the 'delete+insert' incremental strategy instead of 'merge', add a dbt test (unique, not_null) to catch this early. For performance: add a WHERE clause inside {% if is_incremental() %} to limit data scanned, use Snowflake query profiling to find the bottleneck, consider clustering keys. For cascade: use 'dbt ls --select +model_name' to see all downstream dependencies before making changes, use dbt column-level lineage. For snapshot churn: exclude volatile columns from the check_cols strategy, or use check_cols with only the columns that represent real changes"
+    weight: 0.35
+    description: "DBTFixes"
+  - type: llm_judge
+    criteria: "Response provides dbt best practices for prevention — use dbt tests extensively (unique, not_null, relationships, accepted_values), run dbt docs generate to maintain up-to-date lineage documentation, use dbt selectors and tags to run only affected models during development, implement CI/CD for dbt (run dbt build on PR changes, catch breaks before merging), use dbt exposures to document downstream consumers, and monitor model run times to catch performance regressions early"
+    weight: 0.30
+    description: "Prevention"

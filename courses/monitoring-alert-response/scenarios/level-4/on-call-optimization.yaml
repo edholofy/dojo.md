@@ -1,0 +1,42 @@
+meta:
+  id: on-call-optimization
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Optimize on-call operations — design sustainable on-call rotations, prevent burnout, and measure on-call health across the organization"
+  tags: [monitoring, on-call, optimization, burnout-prevention, rotation-design, expert]
+
+state: {}
+
+trigger: |
+  Your engineering organization has 15 teams, each running their
+  own on-call rotation. An internal survey reveals:
+
+  - 40% of engineers say on-call negatively impacts their quality
+    of life
+  - 3 engineers quit in the past quarter citing on-call burden
+  - Teams with 4 or fewer members cannot maintain 24/7 coverage
+    without weekly shifts
+  - Night pages average 3 per night (most are false positives)
+  - Some teams get 0 pages per month; others get 80+
+  - On-call compensation varies: some teams get nothing, others
+    get comp time, one team negotiated extra pay
+  - Junior engineers are put on-call after 2 weeks with no training
+
+  Task: Design an optimized on-call program. Cover: rotation
+  structure, burnout prevention, training requirements, compensation
+  fairness, alert load balancing, and on-call health metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rotation structure and burnout prevention are evidence-based — rotation design: 'Minimum team size for 24/7 on-call: 6 engineers. This enables a rotation where each engineer is on-call 1 week every 6 weeks, with 5 weeks of recovery. Teams with fewer than 6 members should share an on-call rotation with a related team or be supported by a cross-functional on-call pool. Rotation structure: weekly primary and secondary. Primary: actively monitoring and responding. Secondary: available for escalation but not actively monitoring. Shift structure: for 24/7 coverage with a single timezone team, 1-week shifts are acceptable if the night page rate is under 2 per week. If the night page rate exceeds 2 per week, split into day/night shifts or implement follow-the-sun with a team in another timezone. Maximum consecutive shifts: no engineer should be primary more than 1 week in a row. Minimum recovery: 4 weeks between primary rotations for the same engineer.' Burnout prevention: '(1) Alert quality is the #1 burnout factor: 3 night pages that are mostly false positives is the primary quality-of-life issue. Reducing night pages to 0-1 genuine alerts per week transforms the on-call experience. (2) Enforce recovery time: after a week of on-call, the engineer gets the following Monday as a recovery day (no meetings, no deadlines). After a night with 2+ pages, the next morning is off. (3) Right to disconnect: off-rotation engineers are truly off. No expectation of availability. On-call duties are contained to the rotation. (4) Sustainable workload: if an engineer spends more than 25% of their on-call shift actively responding to alerts (as opposed to monitoring), the alert load is too high. Invest in noise reduction or add headcount'"
+    weight: 0.35
+    description: "Rotation and burnout prevention"
+  - type: llm_judge
+    criteria: "Training, compensation, and load balancing address fairness — training requirements: 'No engineer should be on-call before completing: (1) On-call orientation (2 hours): incident response process, alerting tools, escalation procedures, communication expectations. (2) Service familiarity: the engineer must be familiar with the services they are on-call for. Minimum: 4 weeks on the team AND completing the service-specific onboarding checklist. (3) Shadow rotation: shadow an experienced on-call engineer for 1 full rotation before going solo. During shadowing: the shadow responds to alerts with the primary observing and coaching. (4) Incident simulation: participate in 1 tabletop exercise or 1 real incident (as a participant, not IC) before solo on-call.' Compensation fairness: 'Standardize across all teams: (1) Base on-call compensation: every on-call engineer receives comp time (1 day per week of on-call). This is non-negotiable — all teams get the same. (2) Night page compensation: for each page between 10 PM and 7 AM, the engineer gets an additional half-day of comp time. This incentivizes teams to reduce night pages. (3) Weekend on-call: additional 0.5 days comp time for weekend primary shifts. (4) Fairness metric: track comp time earned per engineer per quarter. If any engineer consistently earns significantly more than peers, the alert load distribution needs investigation.' Alert load balancing: 'Teams with 80+ pages per month are not sustainably on-call — they are in permanent crisis mode. Actions: (1) Impose an alert budget: any team exceeding 40 pages per month triggers a mandatory alert tuning sprint. (2) Redistribute shared infrastructure alerts to platform/SRE team rather than product teams. (3) For teams with 0 pages: evaluate whether they have blind spots (no alerts = no detection) or genuinely stable services'"
+    weight: 0.35
+    description: "Training, compensation, fairness"
+  - type: llm_judge
+    criteria: "On-call health metrics provide organizational visibility — on-call health dashboard: 'Organization-wide metrics tracked and reported monthly: (1) Pages per on-call shift by team: identifies overloaded teams. Target: under 10 per week for any team. (2) Night pages per team per month: the most impactful quality-of-life metric. Target: under 4 per month (less than 1 per week). (3) Actionable rate by team: percentage of pages that required human action. Target: above 60% for every team. (4) Mean time to acknowledge (MTTA): how quickly engineers respond. Target: under 5 minutes for CRITICAL. (5) On-call satisfaction score: quarterly anonymous survey. 5-point scale on: I feel supported during on-call, the alert volume is manageable, I have the tools and knowledge to respond effectively, on-call does not negatively impact my personal life. Target: 3.5+ average. (6) On-call attrition correlation: track whether engineers who leave cite on-call as a factor. Any correlation triggers investigation. (7) Alert load inequality index: Gini coefficient or simpler ratio of highest-paged team to lowest-paged team. Target: less than 5:1 ratio.' Reporting: 'Monthly report to engineering leadership. Any team exceeding alert budget or falling below satisfaction targets is flagged for support. Quarterly town hall: share on-call health metrics with all engineers. Transparency builds trust that the organization takes on-call burden seriously'"
+    weight: 0.30
+    description: "Health metrics"

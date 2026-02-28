@@ -1,0 +1,35 @@
+meta:
+  id: cohort-retention-analysis
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build cohort and retention analysis — create cohort tables, calculate retention rates, and visualize customer lifecycle patterns"
+  tags: [python, pandas, cohort, retention, customer-lifecycle, advanced]
+
+state: {}
+
+trigger: |
+  The VP of Growth says: "Our monthly active users are growing,
+  but I suspect we are a leaky bucket — acquiring new users who
+  churn quickly. Build me a cohort retention analysis that shows
+  how each monthly cohort retains over time."
+
+  You have a transactions table with 2 years of data: user_id,
+  transaction_date, amount. 100,000 unique users, 1.2 million
+  transactions.
+
+  Task: Build the cohort retention analysis with visualization.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly builds a cohort retention table — code: 'Cohort retention analysis: Step 1 — Define cohorts (first transaction month): df[\"transaction_date\"] = pd.to_datetime(df[\"transaction_date\"]). df[\"transaction_month\"] = df[\"transaction_date\"].dt.to_period(\"M\"). df[\"cohort_month\"] = df.groupby(\"user_id\")[\"transaction_date\"].transform(\"min\").dt.to_period(\"M\"). df[\"months_since_first\"] = (df[\"transaction_month\"] - df[\"cohort_month\"]).apply(lambda x: x.n). Step 2 — Build the cohort table: cohort_data = df.groupby([\"cohort_month\", \"months_since_first\"]).agg(users=(\"user_id\", \"nunique\"), revenue=(\"amount\", \"sum\")).reset_index(). cohort_sizes = cohort_data[cohort_data[\"months_since_first\"] == 0].set_index(\"cohort_month\")[\"users\"]. Step 3 — Create the retention matrix: user_retention = cohort_data.pivot_table(index=\"cohort_month\", columns=\"months_since_first\", values=\"users\"). retention_pct = user_retention.divide(cohort_sizes, axis=0) * 100. Step 4 — Visualize: fig, ax = plt.subplots(figsize=(16, 10)). sns.heatmap(retention_pct, annot=True, fmt=\".0f\", cmap=\"YlOrRd_r\", ax=ax, vmin=0, vmax=100, linewidths=0.5). ax.set_title(\"Monthly Cohort Retention (%)\", fontsize=14). ax.set_xlabel(\"Months Since First Purchase\"). ax.set_ylabel(\"Cohort Month\"). plt.tight_layout(). Reading the heatmap: row = cohort (users who first purchased in that month). Column = months later. Value = percentage of the cohort still active. Example: January 2023 cohort, month 3 = 35% means 35% of users who first purchased in January 2023 also purchased 3 months later. Step 5 — Average retention curve: avg_retention = retention_pct.mean(). fig, ax = plt.subplots(figsize=(10, 5)). avg_retention.plot(kind=\"line\", marker=\"o\", ax=ax, color=\"steelblue\"). ax.set_title(\"Average Retention Curve\"). ax.set_xlabel(\"Months Since First Purchase\"). ax.set_ylabel(\"Retention %\"). ax.axhline(y=avg_retention.iloc[-1], color=\"red\", linestyle=\"--\", label=f\"Steady state: {avg_retention.iloc[-1]:.0f}%\"). ax.legend(). The retention curve typically drops steeply in the first 1-3 months (early churn) then flattens (core retained users). The steady-state retention rate is the long-term value'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Analysis interprets cohort patterns and identifies actionable insights — interpretation: 'Interpreting cohort retention patterns: Pattern 1 — Early drop-off: if retention drops from 100% to 30% in month 1, 70% of new users never return. This is the biggest lever — improving month 0 to month 1 retention by even 5 percentage points has a massive compounding effect on lifetime value. Action: investigate what happens in the first 30 days. Do new users complete onboarding? Do they make a second purchase? What is different about users who return vs. those who do not? Pattern 2 — Cohort quality variation: if the January cohort retains at 40% but the July cohort retains at 25%, the July acquisition channel may be attracting lower-quality users. Action: cross-reference cohort quality with marketing spend and acquisition channel. Cheap traffic (paid social, discount promotions) often yields lower-retention cohorts. Pattern 3 — Improving or declining retention: if recent cohorts retain better than older ones, the product is improving. If recent cohorts retain worse, something is degrading (product quality, competition, user expectations). Action: compare retention curves for recent cohorts vs. 6-month-ago cohorts. If declining, investigate what changed. Revenue retention (not just user retention): revenue_retention = cohort_data.pivot_table(index=\"cohort_month\", columns=\"months_since_first\", values=\"revenue\"). revenue_retention_pct = revenue_retention.divide(revenue_retention[0], axis=0) * 100. Revenue retention can exceed 100% if retained users spend more over time (expansion revenue). This is the best-case scenario — a healthy business has revenue retention above 100% (users who stay become more valuable). Lifetime value by cohort: ltv_by_cohort = df.groupby(\"cohort_month\")[\"amount\"].sum() / cohort_sizes. This shows the total revenue per user for each cohort over their entire observed lifetime. Compare LTV across cohorts to identify the highest-value acquisition periods'"
+    weight: 0.35
+    description: "Interpretation"
+  - type: llm_judge
+    criteria: "Response covers advanced cohort variations and segmentation — variations: 'Advanced cohort analysis: Segmented cohorts — retention by acquisition channel: df[\"channel\"] = df[\"acquisition_channel\"]. for channel in df[\"channel\"].unique(): channel_data = df[df[\"channel\"] == channel]. build_cohort_table(channel_data). This shows whether organic users retain better than paid users, or whether users from referrals retain better than users from ads. This directly informs marketing budget allocation. Behavioral cohorts — retention by first purchase category: df[\"first_category\"] = df.sort_values(\"transaction_date\").groupby(\"user_id\")[\"category\"].transform(\"first\"). for cat in df[\"first_category\"].unique(): cat_data = df[df[\"first_category\"] == cat]. build_cohort_table(cat_data). Users who start with a high-margin product might retain differently than those who start with a discounted item. This informs onboarding strategies (what should the first purchase experience be?). Rolling retention vs strict retention: strict retention: user was active in exactly month N. rolling retention: user was active at any point after month N. Rolling retention is typically higher and shows whether users eventually come back (even if they skip months). For subscription businesses: strict retention matters. For e-commerce: rolling retention is more relevant (irregular purchase patterns are normal). Churn risk scoring: from the cohort analysis, identify high-risk segments. Create a simple churn risk score: days_since_last = (pd.Timestamp.now() - df.groupby(\"user_id\")[\"transaction_date\"].max()). avg_gap = df.groupby(\"user_id\")[\"transaction_date\"].apply(lambda x: x.diff().mean()). risk = days_since_last / avg_gap. Users with risk > 2 (twice their average gap since last purchase) are at high churn risk'"
+    weight: 0.30
+    description: "Variations"

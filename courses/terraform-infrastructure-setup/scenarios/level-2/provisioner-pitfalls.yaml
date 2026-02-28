@@ -1,0 +1,64 @@
+meta:
+  id: provisioner-pitfalls
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Avoid provisioner pitfalls — understand why provisioners are a last resort, debug connection failures, and use better alternatives"
+  tags: [Terraform, provisioners, remote-exec, local-exec, user-data, intermediate]
+
+state: {}
+
+trigger: |
+  A developer uses remote-exec to install software on EC2 instances:
+
+  ```hcl
+  resource "aws_instance" "web" {
+    ami           = "ami-0c55b159cbfafe1f0"
+    instance_type = "t3.micro"
+    key_name      = "deploy-key"
+
+    provisioner "remote-exec" {
+      inline = [
+        "sudo apt-get update",
+        "sudo apt-get install -y nginx",
+        "sudo systemctl enable nginx"
+      ]
+      connection {
+        type        = "ssh"
+        user        = "ubuntu"
+        private_key = file("~/.ssh/deploy-key.pem")
+        host        = self.public_ip
+      }
+    }
+  }
+  ```
+
+  Problems encountered:
+  ```
+  Error: timeout - last error: dial tcp 54.1.2.3:22:
+  connect: connection refused
+
+  Error: remote-exec provisioner error
+  Status: 100 (apt-get returned non-zero)
+  ```
+
+  The instance was created but the provisioner failed. Now the resource
+  is tainted and will be destroyed and recreated on next apply.
+
+  Task: Explain provisioners (local-exec, remote-exec, file), why
+  they're problematic, connection debugging, taint behavior on failure,
+  and better alternatives (user_data, Packer, Ansible).
+
+assertions:
+  - type: llm_judge
+    criteria: "Provisioner types and problems are explained — local-exec: runs command on the machine running Terraform. remote-exec: runs command on the created resource via SSH/WinRM. file: copies files to the resource. Problems: (1) not declarative — can't detect drift, (2) failure taints the resource (forces recreation), (3) non-idempotent (running twice may break), (4) SSH connection is fragile (timing, security groups, key issues), (5) Terraform can't model what provisioners do in state. The connection refused error: instance not ready yet when SSH attempted, or security group doesn't allow port 22"
+    weight: 0.35
+    description: "Provisioner problems"
+  - type: llm_judge
+    criteria: "Debugging and taint behavior are covered — connection debugging: (1) check security group allows SSH from Terraform runner, (2) instance may not be ready (cloud-init still running), (3) wrong SSH user for AMI (ubuntu vs ec2-user vs admin), (4) private key permissions or format issues. Taint on failure: when provisioner fails, Terraform marks the resource as tainted. Next apply: destroy and recreate the entire instance. This is wasteful and disruptive. on_failure = continue skips the error (resource not tainted but may be misconfigured). on_failure = fail (default) taints the resource"
+    weight: 0.35
+    description: "Debugging and taint"
+  - type: llm_judge
+    criteria: "Better alternatives are recommended — (1) user_data: cloud-init script runs on first boot, no SSH needed, retries handled by OS, idempotent with proper scripting. (2) Packer: build pre-configured AMIs with all software installed, Terraform just launches them. (3) Ansible/Chef/Puppet: proper configuration management tools run after Terraform creates infrastructure. (4) AWS Systems Manager Run Command: no SSH needed, agents already on Amazon AMIs. Best practice: Terraform creates infrastructure, other tools configure it. Use provisioners only as absolute last resort"
+    weight: 0.30
+    description: "Alternatives"

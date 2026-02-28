@@ -1,0 +1,41 @@
+meta:
+  id: conversion-rate-comparison
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Compare conversion rates between groups — analyze binary outcome A/B test results using proportion tests and interpret the practical meaning of the results"
+  tags: [conversion-rate, proportion-test, binary-outcome, interpretation, beginner]
+
+state: {}
+
+trigger: |
+  An A/B test on the signup page has completed. Here are the results:
+
+  Control (current page):
+  - Visitors: 18,500
+  - Signups: 925
+  - Conversion rate: 5.00%
+
+  Treatment (new page with social proof testimonials):
+  - Visitors: 18,200
+  - Signups: 1,001
+  - Conversion rate: 5.50%
+
+  The product manager asks: "Did the social proof testimonials work?
+  How do I analyze this and present the results?"
+
+  Task: Analyze the A/B test results and explain the findings.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response performs the statistical analysis correctly — analysis: 'A/B test analysis: Step 1 — Calculate the observed difference: Control conversion rate: 925 / 18,500 = 5.00%. Treatment conversion rate: 1,001 / 18,200 = 5.50%. Absolute difference: 0.50 percentage points. Relative lift: (5.50% - 5.00%) / 5.00% = 10.0% relative improvement. Step 2 — Test for statistical significance: using a two-proportion z-test: pooled proportion: (925 + 1,001) / (18,500 + 18,200) = 1,926 / 36,700 = 5.249%. Standard error: sqrt(0.05249 × 0.94751 × (1/18500 + 1/18200)) = sqrt(0.04972 × 0.0001087) = sqrt(0.000005404) = 0.002325. Z-statistic: (0.0550 - 0.0500) / 0.002325 = 0.005 / 0.002325 = 2.15. P-value (two-tailed): 0.032. Since p = 0.032 < 0.05, the result is statistically significant. Step 3 — Calculate the confidence interval: 95% confidence interval for the difference: 0.50pp ± 1.96 × 0.2325pp = 0.50pp ± 0.46pp. CI: [0.04pp, 0.96pp]. The true improvement is likely between 0.04 and 0.96 percentage points. The entire interval is above zero, confirming the positive effect. Step 4 — Conclusion: the social proof testimonials statistically significantly increased the signup rate by 0.50 percentage points (from 5.00% to 5.50%), a 10% relative lift. P-value: 0.032. 95% CI: [0.04pp, 0.96pp]'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Response covers practical significance and business impact — practical: 'Practical significance and business impact: The result is statistically significant, but is it meaningful for the business? Calculate the business impact: current monthly signups: if the site gets 18,500 visitors per week to the signup page, that is about 74,000 per month. At 5.00%: 3,700 signups per month. At 5.50%: 4,070 signups per month. Additional signups per month: 370. If 10% of signups become paying customers at $50/month average: additional MRR: 370 × 10% × $50 = $1,850/month. Additional ARR: $22,200. If the cost to implement the testimonial section was a few hours of engineering work, the ROI is excellent. But consider the confidence interval: the true lift could be as low as 0.04pp (barely anything) or as high as 0.96pp (nearly double the observed effect). Best case: 0.96pp lift → 710 additional signups/month → $42,600 ARR. Worst case: 0.04pp lift → 30 additional signups/month → $1,800 ARR. Even the worst case is positive, so the decision is clear: ship the treatment. How to present the results: present both statistical and business impact. Headline: Social proof testimonials increased signup rate by 10% (p = 0.032). Detail: signup rate improved from 5.00% to 5.50% (+0.50pp). Expected impact: approximately 370 additional signups per month. Estimated revenue impact: $22K ARR. Confidence range: $1.8K to $42.6K ARR. Recommendation: ship to 100% of traffic'"
+    weight: 0.35
+    description: "Practical"
+  - type: llm_judge
+    criteria: "Response explains how to read and communicate A/B test results — communication: 'Communicating A/B test results: For the product team (detailed): Test: Signup page social proof testimonials. Duration: 2 weeks. Sample: 36,700 visitors (18,500 control, 18,200 treatment). Primary metric: signup conversion rate. Result: treatment 5.50% vs control 5.00%. Lift: +0.50pp (+10% relative). Statistical significance: p = 0.032 (significant at α = 0.05). 95% CI: [0.04pp, 0.96pp]. Guardrail metrics: page load time unchanged, bounce rate unchanged. Recommendation: ship to 100%. For the executive team (concise): The new signup page with customer testimonials increased signups by 10%. This adds approximately 370 signups per month, worth an estimated $22K in annual revenue. The result is statistically significant. We are shipping it this week. For future reference (test documentation): Document the test for institutional knowledge: test ID, hypothesis, start and end dates, sample sizes, results, decision made, and any observations (e.g., the improvement was larger on mobile than desktop — potential for further optimization). This documentation builds the team's experimentation knowledge base'"
+    weight: 0.30
+    description: "Communication"

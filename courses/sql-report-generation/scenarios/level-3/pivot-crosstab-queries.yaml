@@ -1,0 +1,36 @@
+meta:
+  id: pivot-crosstab-queries
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Create pivot and crosstab reports — transform rows into columns for matrix-style reports showing metrics across two dimensions"
+  tags: [SQL, pivot, crosstab, rows-to-columns, matrix-report, advanced]
+
+state: {}
+
+trigger: |
+  The executive team wants a revenue matrix report: regions as rows,
+  months as columns, with revenue in each cell. They also want:
+  1. A monthly revenue pivot by product category
+  2. A customer activity matrix (customers as rows, features as columns,
+     showing whether each feature was used)
+  3. Row and column totals in the pivot
+
+  Table: orders (order_id, customer_id, amount, order_date, region,
+  product_category), product_usage (customer_id, feature_name)
+
+  Task: Build pivot/crosstab reports across SQL dialects.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates pivot techniques across SQL dialects — pivots: 'Pivot reports across dialects: CASE WHEN pivot (works in all databases): SELECT region, SUM(CASE WHEN DATE_TRUNC('month', order_date) = '2024-01-01' THEN amount ELSE 0 END) AS jan, SUM(CASE WHEN DATE_TRUNC('month', order_date) = '2024-02-01' THEN amount ELSE 0 END) AS feb, SUM(CASE WHEN DATE_TRUNC('month', order_date) = '2024-03-01' THEN amount ELSE 0 END) AS mar, SUM(CASE WHEN DATE_TRUNC('month', order_date) = '2024-04-01' THEN amount ELSE 0 END) AS apr, SUM(amount) AS total FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2024-05-01' GROUP BY region ORDER BY total DESC. Each CASE WHEN creates a column for one month. This is manual but works everywhere and is easy to understand. SQL Server PIVOT syntax: SELECT region, [Jan], [Feb], [Mar], [Apr] FROM (SELECT region, FORMAT(order_date, 'MMM') AS month, amount FROM orders WHERE order_date >= '2024-01-01' AND order_date < '2024-05-01') src PIVOT (SUM(amount) FOR month IN ([Jan], [Feb], [Mar], [Apr])) pvt. The PIVOT clause specifies: aggregate function (SUM), the column to pivot (month), and the expected values ([Jan], [Feb]...). PostgreSQL crosstab (tablefunc extension): SELECT * FROM crosstab('SELECT region, DATE_TRUNC(''month'', order_date)::text, SUM(amount) FROM orders GROUP BY 1, 2 ORDER BY 1, 2', 'SELECT DISTINCT DATE_TRUNC(''month'', order_date)::text FROM orders ORDER BY 1') AS ct(region text, jan numeric, feb numeric, mar numeric, apr numeric). Feature usage matrix: SELECT c.name, MAX(CASE WHEN pu.feature_name = 'Dashboard' THEN 1 ELSE 0 END) AS dashboard, MAX(CASE WHEN pu.feature_name = 'Reports' THEN 1 ELSE 0 END) AS reports, MAX(CASE WHEN pu.feature_name = 'API' THEN 1 ELSE 0 END) AS api, MAX(CASE WHEN pu.feature_name = 'Exports' THEN 1 ELSE 0 END) AS exports FROM customers c LEFT JOIN product_usage pu ON c.customer_id = pu.customer_id GROUP BY c.customer_id, c.name. MAX with CASE returns 1 if the feature was used at least once, 0 otherwise'"
+    weight: 0.35
+    description: "Pivots"
+  - type: llm_judge
+    criteria: "Response includes row and column totals and dynamic pivot discussion — totals: 'Adding totals to pivot reports: WITH pivot_data AS (SELECT region, SUM(CASE WHEN EXTRACT(MONTH FROM order_date) = 1 THEN amount ELSE 0 END) AS jan, SUM(CASE WHEN EXTRACT(MONTH FROM order_date) = 2 THEN amount ELSE 0 END) AS feb, SUM(CASE WHEN EXTRACT(MONTH FROM order_date) = 3 THEN amount ELSE 0 END) AS mar, SUM(amount) AS row_total FROM orders WHERE EXTRACT(YEAR FROM order_date) = 2024 GROUP BY region) SELECT * FROM pivot_data UNION ALL SELECT 'TOTAL', SUM(jan), SUM(feb), SUM(mar), SUM(row_total) FROM pivot_data ORDER BY CASE WHEN region = 'TOTAL' THEN 1 ELSE 0 END, row_total DESC. The UNION ALL adds a summary row with column totals. ORDER BY puts the TOTAL row last. Dynamic pivot — when column values are unknown: the CASE WHEN approach requires knowing all month names in advance. For truly dynamic pivots, you need dynamic SQL. PostgreSQL dynamic pivot: DO $$ DECLARE cols TEXT; query TEXT; BEGIN SELECT string_agg(DISTINCT 'SUM(CASE WHEN month = ''' || month || ''' THEN amount ELSE 0 END) AS \"' || month || '\"', ', ') INTO cols FROM (SELECT TO_CHAR(order_date, 'YYYY-MM') AS month FROM orders) t; query := 'SELECT region, ' || cols || ' FROM orders GROUP BY region'; EXECUTE query; END $$. This builds the pivot SQL dynamically based on actual months in the data. In practice, most teams use BI tools for dynamic pivots rather than dynamic SQL'"
+    weight: 0.35
+    description: "Totals"
+  - type: llm_judge
+    criteria: "Explanation covers unpivot and when to use pivots vs BI tools — unpivot: 'Unpivot — converting columns back to rows: Sometimes data arrives in pivot format and needs to be normalized. PostgreSQL (LATERAL VALUES): SELECT region, month, revenue FROM revenue_pivot CROSS JOIN LATERAL (VALUES ('jan', jan), ('feb', feb), ('mar', mar)) AS t(month, revenue). SQL Server UNPIVOT: SELECT region, month, revenue FROM revenue_pivot UNPIVOT (revenue FOR month IN (jan, feb, mar)) AS unpvt. MySQL (UNION ALL): SELECT region, 'jan' AS month, jan AS revenue FROM revenue_pivot UNION ALL SELECT region, 'feb', feb FROM revenue_pivot UNION ALL SELECT region, 'mar', mar FROM revenue_pivot. When to pivot in SQL vs BI tools: Pivot in SQL when: the output feeds a non-interactive system (email report, API), the pivot has few columns (under 12), the column values are stable (months of the year, known categories). Use BI tools when: column values are dynamic (new products appear monthly), users need to change dimensions interactively, the display needs conditional formatting, charts, or drill-down. The general principle: SQL should prepare clean, normalized data. Let the presentation layer (Excel, Looker, Tableau) handle the pivoting'"
+    weight: 0.30
+    description: "Unpivot"

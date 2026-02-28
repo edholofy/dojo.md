@@ -1,0 +1,40 @@
+meta:
+  id: alert-strategy-design
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Design an organizational alert strategy — establish alerting philosophy, principles, and standards for a growing engineering organization"
+  tags: [monitoring, strategy, philosophy, principles, organizational, expert]
+
+state: {}
+
+trigger: |
+  Your 200-person engineering organization has grown organically.
+  Each of the 15 teams has created their own alerts independently.
+  The result: 1,200 active alert rules, no consistent severity
+  definitions, 6 different monitoring tools, and an on-call
+  experience that varies wildly between teams.
+
+  The CTO has asked you to create a unified alert strategy. Your
+  mandate: define the organizational alerting philosophy, standardize
+  practices across teams, and reduce alert noise by 80% while
+  maintaining or improving incident detection.
+
+  Task: Write the alert strategy document. Include: alerting
+  philosophy and principles, alert classification standards, alert
+  lifecycle management, and the governance process that ensures
+  long-term quality.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alerting philosophy establishes clear principles — philosophy: 'Our alerting philosophy is built on five principles adapted from Google SRE and Rob Ewaschuk's alerting philosophy: (1) Every page should be urgent, important, actionable, and represent a real problem. If an alert does not meet all four criteria, it should not page a human. (2) Alert on symptoms, not causes. Users experience error rates and latency, not CPU usage and memory consumption. Cause-based metrics belong on dashboards for diagnosis, not in paging alerts. (3) Prefer recall over precision for critical services. For revenue-critical services (payments, checkout), we would rather have occasional false positives than miss a real incident. For non-critical services, we prefer precision (minimize false positives). (4) Alerts should be tuned, not tolerated. When an alert fires and no action is needed, the alert is wrong — not the on-call engineer. Fix the alert. (5) Fewer, better alerts. The goal is not comprehensive monitoring of every metric. The goal is reliable detection of conditions that require human intervention.' Severity standards: 'SEV-1 (CRITICAL, page immediately): active customer impact affecting revenue or data integrity. Expected response: 5 minutes. SEV-2 (HIGH, page during working hours): significant degradation likely to worsen without intervention. Expected response: 30 minutes. SEV-3 (WARNING, ticket): condition requiring attention within 24 hours. No page. SEV-4 (INFO, dashboard): informational signal. No notification. Reviewed during regular monitoring reviews.' Cross-org alignment: 'These severity definitions are mandatory for all teams. A SEV-1 on Team A means the same thing as a SEV-1 on Team B. This enables consistent escalation, meaningful metrics, and fair on-call expectations across the organization'"
+    weight: 0.35
+    description: "Alerting philosophy"
+  - type: llm_judge
+    criteria: "Alert classification and lifecycle management are practical — alert classification: 'Every alert must be classified on two axes: (1) Detection type: symptom-based (detects customer-visible impact), SLO-based (detects error budget consumption), resource-based (detects infrastructure limits), or security-based (detects potential threats). (2) Response type: page (requires immediate human action), ticket (requires action within SLA), notification (informational, no action required), or log (for analysis only, no notification). Classification rules: symptom-based and SLO-based alerts may page. Resource-based alerts page only for hard limits (disk full, connection pool exhausted). Security-based alerts follow the security escalation path.' Alert lifecycle: 'Stage 1: Proposal. Engineer proposes a new alert with: what it detects, why it is important, the expected actionable rate, a linked runbook, and the proposed severity. Stage 2: Review. The SRE team reviews the proposal against the alerting principles. Does it alert on a symptom? Is the threshold appropriate? Is the severity justified? Stage 3: Active. Alert is deployed. Actionable rate is tracked from day 1. Stage 4: Tuning. If the actionable rate drops below 50% over any 30-day period, the alert is flagged for tuning. The owning team has 2 weeks to tune or justify. Stage 5: Retirement. Alerts are retired when: the service they monitor is decommissioned, the alert has not fired in 12 months (reviewed and either tested or removed), or the alert is superseded by a better detection method'"
+    weight: 0.35
+    description: "Classification and lifecycle"
+  - type: llm_judge
+    criteria: "Governance ensures long-term quality and 80% noise reduction — governance process: '(1) Alert review board: a lightweight monthly meeting (30 minutes) where the SRE team reviews: new alert proposals, alerts flagged for tuning, cross-team alert patterns. Not bureaucratic — the goal is quality, not gatekeeping. (2) Alert quality dashboard: real-time visibility into: total alerts per team, actionable rate per team, noisiest alerts (top 10 by volume), alerts without runbooks, orphaned alerts (no owner). Every team can see their own metrics and the organization-wide metrics. (3) Team alert budgets: each team has a maximum of 20 paging alerts. To add a new paging alert, one must be retired or downgraded. This forces prioritization. (4) Quarterly audit: every quarter, the top 20 noisiest alerts organization-wide are reviewed. Each owning team must either tune the alert, provide a justification for the noise level, or retire it. (5) Annual strategy review: annually, review the alerting philosophy against the organization's needs. Update principles as the organization evolves.' 80% noise reduction plan: 'Current: 1,200 alerts generating approximately 3,000 pages/month. Target: 250-300 quality alerts generating approximately 600 pages/month. How: (a) Remove stale and orphaned alerts (estimated 30% reduction). (b) Convert cause-based alerts from pages to dashboard metrics (estimated 25% reduction). (c) Tune thresholds on remaining alerts (estimated 15% reduction). (d) Consolidate duplicate alerts across monitoring tools (estimated 10% reduction). Timeline: 3 months for initial cleanup. Ongoing governance maintains the improvement'"
+    weight: 0.30
+    description: "Governance and noise reduction"

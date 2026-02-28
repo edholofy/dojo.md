@@ -1,0 +1,51 @@
+meta:
+  id: cascading-failure-documentation
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Document cascading failures — trace and document how a single failure propagated through dependent systems causing widespread impact"
+  tags: [postmortem, cascading-failure, propagation, dependencies, blast-radius, advanced]
+
+state: {}
+
+trigger: |
+  Your platform experienced a cascading failure that started with a
+  single Redis instance and eventually took down 7 of your 12
+  microservices. Here's the cascade:
+
+  1. Redis primary failed (hardware issue)
+  2. Application services that used Redis for session storage lost
+     all active sessions (users logged out)
+  3. 50,000 users simultaneously attempted to re-authenticate
+  4. Authentication service overwhelmed by 100x normal login rate
+  5. Auth service timeout caused API gateway to queue requests
+  6. API gateway queue filled, started rejecting all requests (not
+     just auth-related)
+  7. Health check endpoints behind the API gateway became unreachable
+  8. Load balancer marked all backends as unhealthy
+  9. CDN/edge started serving stale cached content where available
+  10. Services without cached content returned 503
+
+  Total impact: 45-minute complete outage affecting all users.
+  The initial Redis failure should have caused only a session loss
+  (inconvenient but recoverable). Instead, it caused a total
+  platform outage.
+
+  Task: Document this cascading failure for the postmortem. Create
+  a failure propagation diagram, identify where circuit breakers
+  should have stopped the cascade, and propose architectural changes
+  that contain blast radius.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cascade is documented as a propagation chain with amplification points — each step in the cascade documented with: what happened, why it happened, and the amplification factor. Step 1→2: 'Redis failure → session loss. Amplification: 1x (expected impact). Sessions stored only in Redis with no fallback — single point of failure for session state.' Step 2→3: 'Session loss → mass re-authentication. Amplification: 100x. All 50,000 active users simultaneously retry login. This is a thundering herd problem — an expected failure mode of session store loss.' Step 3→4: 'Mass login → auth service overwhelm. Amplification: the auth service is provisioned for 500 logins/minute. 50,000 simultaneous logins is 100x capacity.' Step 4→5→6: 'Auth timeout → gateway queue → gateway rejection. Amplification: auth service timeout (30 seconds) meant each request held a gateway connection for 30 seconds. Gateway connection pool exhausted in 2 minutes.' Step 6→7→8: 'Gateway rejection → health check failure → load balancer removal. Amplification: health checks share the same gateway path as user traffic. When the gateway rejects requests, health checks are rejected too.' Key insight: 'A session store failure should affect only session-dependent features. The cascade occurred because there were no isolation boundaries between session recovery (auth), request routing (gateway), and health monitoring'"
+    weight: 0.35
+    description: "Cascade documentation"
+  - type: llm_judge
+    criteria: "Circuit breaker points are identified where the cascade should have stopped — circuit breaker 1 (should have existed between steps 2-3): 'Thundering herd protection: when Redis session store fails, application should return a graceful degradation response (show login page with retry-after header) instead of all users simultaneously hitting the auth service. This rate-limits re-authentication and prevents the 100x amplification.' Circuit breaker 2 (should have existed at step 4): 'Auth service should have rate limiting and load shedding. When requests exceed 10x normal, reject excess requests immediately (429) rather than queuing them for 30 seconds each. This prevents auth overload from cascading to the gateway.' Circuit breaker 3 (should have existed at step 5-6): 'API gateway should have a bulkhead pattern: separate connection pools for different service categories. Auth traffic filling its pool should not prevent other services from being routed. Critical: health check endpoint should have its own reserved connection pool.' Circuit breaker 4 (should have existed at step 7-8): 'Health check path should be independent of the data path. The load balancer health check should not go through the API gateway — it should directly check each backend service. This prevents gateway congestion from falsely marking healthy services as unhealthy.' Each circuit breaker, if present, would have contained the blast radius to a smaller impact"
+    weight: 0.35
+    description: "Circuit breaker analysis"
+  - type: llm_judge
+    criteria: "Architectural improvements target blast radius containment — improvements ordered by cascade prevention impact: (1) 'Independent health check path: health checks bypass the API gateway and directly check service health. This prevents step 7→8 entirely. Estimated implementation: 1 week.' (2) 'API gateway bulkhead pattern: separate connection pools per service category. Auth traffic saturation affects only auth, not all services. Prevents step 5→6 cascade. Estimated: 2 weeks.' (3) 'Auth service rate limiting with graceful load shedding: return 429 with retry-after when overwhelmed instead of queuing indefinitely. Prevents step 4→5 cascade. Estimated: 1 week.' (4) 'Session store redundancy: Redis Sentinel or Cluster with automatic failover. Prevents step 1→2 entirely. Estimated: 2 weeks.' (5) 'Thundering herd mitigation: staggered session recovery with exponential backoff. When sessions are lost, users re-authenticate at random intervals over 5 minutes instead of simultaneously. Prevents step 2→3 amplification. Estimated: 1 week.' Defense in depth: 'Even if Redis fails again, improvements 2-5 prevent cascade to full outage. The blast radius of a Redis failure becomes: users lose sessions and re-authenticate over 5 minutes (minor inconvenience) instead of: total platform outage for 45 minutes'"
+    weight: 0.30
+    description: "Blast radius containment"

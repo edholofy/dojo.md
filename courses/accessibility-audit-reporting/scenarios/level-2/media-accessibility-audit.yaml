@@ -1,0 +1,47 @@
+meta:
+  id: media-accessibility-audit
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Media accessibility audit — evaluate and report on video captions, audio descriptions, transcripts, and media player accessibility"
+  tags: [media, captions, audio-description, transcripts, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor is reviewing a corporate website
+  with extensive video and audio content:
+
+  1. Product demo videos have auto-generated captions
+     with many errors (brand names wrong, technical
+     terms garbled)
+  2. A training video series has no audio descriptions
+     (visual demonstrations are not narrated)
+  3. Podcast episodes have no transcripts
+  4. Background music auto-plays on the homepage with
+     no visible pause button
+  5. A video player's controls are custom-built and
+     have no accessible labels
+
+  The auditor asks: "I know captions are important
+  but I'm not sure about all the rules. When are
+  audio descriptions required? Are transcripts
+  mandatory? How do I evaluate caption quality?"
+
+  Task: Write audit findings for each media
+  accessibility issue with WCAG criteria, severity,
+  and quality evaluation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for caption and audio description issues — Poor auto-captions (WCAG 1.2.2 Captions Prerecorded Level A: captions must accurately represent the audio content — auto-generated captions with significant errors don't meet this criterion because they misrepresent the content, Severity: Major, Fix: human-review and correct auto-captions, ensure brand names, technical terms, and speaker identification are accurate, synchronize timing to match spoken words), Missing audio descriptions (WCAG 1.2.5 Audio Description Prerecorded Level AA: videos where visual information is important and not conveyed in the existing audio track need audio descriptions — training videos with visual demonstrations are a clear case where viewers who can't see the screen miss critical information, Severity: Major, Fix: add audio description track or create extended audio description version), caption quality criteria (99% accuracy standard, proper speaker identification, sound effects noted in brackets, synchronized within 1 second of speech, punctuation and grammar maintained for readability)"
+    weight: 0.35
+    description: "CaptionDescriptionFindings"
+  - type: llm_judge
+    criteria: "Response covers transcript, autoplay, and player control issues — Missing transcripts (WCAG 1.2.1 Audio-only Level A for podcasts: prerecorded audio-only content requires a text transcript providing equivalent information, Severity: Major — podcast content is completely inaccessible to deaf users, Fix: provide text transcripts for all podcast episodes including speaker identification, descriptions of relevant sounds, and timestamps for navigation), Auto-playing audio (WCAG 1.4.2 Audio Control Level A: any audio that plays automatically for more than 3 seconds must have a mechanism to pause/stop or control volume independently of system volume, Severity: Critical — auto-playing audio interferes with screen readers making the site unusable, Fix: don't auto-play audio, or provide immediately visible pause button at the start of the page), Unlabeled player controls (WCAG 4.1.2 Name Role Value Level A: custom media player buttons must have accessible names — play, pause, volume, mute, fullscreen, closed captions buttons need aria-label attributes, Severity: Major, Fix: add aria-label to each custom control button)"
+    weight: 0.35
+    description: "TranscriptAutoplayFindings"
+  - type: llm_judge
+    criteria: "Response provides media accessibility testing checklist — video testing checklist (captions present? captions accurate? captions synchronized? speaker identified? sound effects described? audio description available for visual-only content? transcript available? player controls keyboard accessible? player controls labeled?), caption quality evaluation (spot-check method: review 3 random 2-minute segments — check accuracy of speech transcription, technical terms, names, and timing, rate accuracy as percentage, anything below 99% needs correction), audio description assessment (review video for visual-only information: on-screen text, demonstrations, graphs, facial expressions, scene changes — if visual information not conveyed in dialogue, audio description is needed), and when each requirement applies (1.2.1: audio-only needs transcript, 1.2.2: video with audio needs captions, 1.2.3: video needs audio description OR text alternative at Level A, 1.2.5: video needs audio description at Level AA — create a clear table mapping content type to requirements)"
+    weight: 0.30
+    description: "MediaChecklist"

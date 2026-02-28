@@ -1,0 +1,57 @@
+meta:
+  id: status-update-meeting
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Status update meeting notes — document a project status meeting with progress tracking, blockers, and risk flags"
+  tags: [status, update, progress, tracking, beginner]
+
+state: {}
+
+trigger: |
+  You're taking notes for a weekly project status meeting
+  for the "Customer Portal Redesign" project. Here's what
+  each team member reported:
+
+  Project Manager (Anna):
+  - We're in week 6 of 12. Overall: slightly behind schedule.
+  - Budget is on track — $120K of $200K spent.
+  - Stakeholder demo pushed from this Friday to next Wednesday.
+
+  Frontend (Chris):
+  - Dashboard page is done. Profile page is 70% done.
+  - Blocked on the API for the notifications feature —
+    backend hasn't delivered the endpoint yet.
+  - Estimates 1 week behind if the API isn't ready by Thursday.
+
+  Backend (Priya):
+  - Notifications API will be ready Wednesday (2 days late).
+  - User settings API is complete and deployed to staging.
+  - Database migration for the new schema is done.
+
+  Design (Marcus):
+  - Mobile responsive designs are complete.
+  - Accessibility audit found 12 issues — 8 fixed, 4 remaining.
+  - Needs frontend to implement the new color tokens.
+
+  QA (Lin):
+  - Test cases written for dashboard and profile pages.
+  - Found 5 bugs in the dashboard — 3 high, 2 medium priority.
+  - Can't begin testing notifications until API and frontend
+    are both done.
+
+  Task: Create the project status meeting notes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates clear status tracking notes — project status summary (opens with a high-level project health summary: project name: Customer Portal Redesign; week: 6 of 12 (50% through timeline); overall status: slightly behind schedule; budget: $120K of $200K spent (60%, on track); key risk: notifications feature dependency chain may cause further delay; the summary lets a stakeholder quickly understand project health without reading the full notes), team-by-team status (documents each team's update clearly: for each team: completed work, in-progress work, and blockers/risks; the updates are specific — '70% done' not 'making progress'; the dependency chain is visible: Priya's API → Chris's frontend → Lin's testing; timeline impacts are quantified: 1 week behind if API not ready by Thursday; the stakeholder demo reschedule is noted with new date)."
+    weight: 0.35
+    description: "StatusTracking"
+  - type: llm_judge
+    criteria: "Response identifies dependencies and risks — dependency mapping (highlights the critical dependency chain: Priya's notifications API (ready Wednesday) → Chris's frontend implementation → Lin's testing; this chain is the project's critical path and the primary risk; the notes make this chain visible and traceable), risk identification (flags risks clearly: risk 1: notifications feature 1 week behind if API delivery slips past Thursday; risk 2: 4 remaining accessibility issues need resolution; risk 3: 3 high-priority dashboard bugs need fixing; risk 4: stakeholder demo delayed — may affect stakeholder confidence; risks are separated from status updates and prioritized)."
+    weight: 0.35
+    description: "DependenciesAndRisks"
+  - type: llm_judge
+    criteria: "Response includes actionable items and metrics — action items (extracts all action items: Priya — deliver notifications API by Wednesday; Chris — implement notifications frontend after API delivery; Marcus — coordinate with Chris on color token implementation; Chris/team — fix 3 high-priority dashboard bugs; Marcus — resolve 4 remaining accessibility issues; Anna — reschedule stakeholder demo to next Wednesday; each action has an owner and deadline), project metrics (includes quantifiable metrics: timeline: week 6/12; budget: $120K/$200K; bugs: 5 found (3 high, 2 medium); accessibility: 8/12 issues resolved; the metrics provide objective measurement of project health)."
+    weight: 0.30
+    description: "ActionsAndMetrics"

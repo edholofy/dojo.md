@@ -1,0 +1,40 @@
+meta:
+  id: funnel-segmentation
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Funnel segmentation — break down funnels by channel, device, geography, and user type to uncover hidden patterns and segment-specific problems"
+  tags: [segmentation, channel, device, geography, intermediate]
+
+state: {}
+
+trigger: |
+  The data analyst reports: "Our overall checkout conversion is 55%,
+  which seems fine. But the PM is getting complaints about mobile
+  checkout. When I break down the funnel by device, the numbers tell
+  a completely different story."
+
+  Desktop funnel (40% of traffic):
+  Product page: 20,000 → Add to cart: 5,000 (25%) → Checkout: 3,500
+  (70%) → Purchase: 2,800 (80%). Overall: 14%.
+
+  Mobile funnel (60% of traffic):
+  Product page: 30,000 → Add to cart: 4,500 (15%) → Checkout: 2,250
+  (50%) → Purchase: 1,125 (50%). Overall: 3.75%.
+
+  Task: Analyze the segment-level funnels, explain why overall metrics
+  are misleading, and recommend segment-specific optimizations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why aggregated metrics mask segment problems — masking: 'Why overall metrics are misleading — Simpson's paradox in funnels: the blended checkout conversion of 55% hides a massive gap. Desktop checkout: 80% conversion — excellent. Mobile checkout: 50% conversion — problematic. The blended 55% is a weighted average that makes mobile look acceptable when it is not. The real danger: mobile is 60% of traffic but generates only 29% of purchases (1,125 out of 3,925 total). Desktop is 40% of traffic but generates 71% of purchases (2,800 out of 3,925). Revenue impact of the mobile gap: if mobile converted at desktop rates (14% overall instead of 3.75%), mobile would generate: 30,000 × 14% = 4,200 purchases instead of 1,125. That is 3,075 additional purchases being lost to mobile friction. At $85 AOV, that is $261,375/month in unrealized revenue. Even closing half the gap would add $130,000/month. Step-by-step mobile vs desktop comparison: step | desktop | mobile | gap. Product → cart: 25% | 15% | 10pp (mobile is 40% worse). Cart → checkout: 70% | 50% | 20pp (mobile is 29% worse). Checkout → purchase: 80% | 50% | 30pp (mobile is 38% worse). The gap widens at every step — mobile checkout-to-purchase (50% vs 80%) is the biggest problem'"
+    weight: 0.35
+    description: "Masking"
+  - type: llm_judge
+    criteria: "Response provides segment-specific root cause analysis — root-cause: 'Root cause analysis by device: Mobile product page → add to cart (15% vs 25% desktop): images are harder to evaluate on small screens (no zoom, fewer angles visible). Product details require excessive scrolling on mobile. Size/variant selectors may be too small to tap accurately. Page load time is likely 2-3x slower on mobile (larger images, slower connections). Mobile cart → checkout (50% vs 70% desktop): account creation or login friction (typing email/password on mobile). Guest checkout may not be available or hard to find. Form fields are difficult on mobile keyboards. Users may be comparison shopping on mobile and planning to buy on desktop later. Mobile checkout → purchase (50% vs 80% desktop): payment form is complex on mobile (card number, expiration, CVV). Address entry is tedious on mobile. Trust signals may not be visible on the mobile checkout page. Users may be interrupted (mobile sessions are shorter and more fragmented). Additional segmentation to investigate: segment the mobile funnel further by: operating system (iOS vs Android — often 10-15pp difference). Browser (in-app browsers from social media convert 40-60% worse). Screen size (phones vs tablets). Connection speed (3G vs 4G vs WiFi). Traffic source (social media mobile traffic converts very differently from search)'"
+    weight: 0.35
+    description: "Root cause"
+  - type: llm_judge
+    criteria: "Response provides segment-specific optimization recommendations — optimizations: 'Segment-specific optimizations: Mobile product page fixes (target: 15% → 20% add-to-cart): implement swipeable image gallery optimized for touch. Add sticky add-to-cart button that stays visible while scrolling. Reduce product page load time to under 3 seconds (compress images, lazy load). Show key info (price, rating, availability) without scrolling. Mobile checkout fixes (target: 50% → 65% checkout-to-purchase): implement Apple Pay, Google Pay, and Shop Pay (one-tap payment). Auto-fill shipping address from device (Address Autocomplete API). Reduce form fields to absolute minimum (name, address, payment). Add progress indicator showing how many steps remain. Save cart state so users can switch to desktop to complete purchase. Cross-device strategy: implement cart persistence across devices (logged-in users). Send abandoned cart emails with direct checkout link. Track cross-device journeys: what percentage of mobile browsers complete on desktop? If significant cross-device behavior exists, the mobile funnel may not be as broken as it appears — users may be using mobile for research and desktop for purchase. Measurement approach: do not combine device segments in reports — always show desktop and mobile separately. Set separate targets: desktop overall: maintain 14%, optimize toward 16%. Mobile overall: improve from 3.75% to 6-7% (closing half the gap). Track mobile-specific metrics: page load time, tap accuracy, form completion time. Revenue target: improving mobile from 3.75% to 6% adds approximately 675 purchases/month = $57,000/month'"
+    weight: 0.30
+    description: "Optimizations"

@@ -1,0 +1,34 @@
+meta:
+  id: alert-threshold-design
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Design alert thresholds — set meaningful warning and critical levels for KPIs that trigger action without causing alert fatigue"
+  tags: [alerts, thresholds, alert-fatigue, monitoring, notification, intermediate]
+
+state: {}
+
+trigger: |
+  The data team set up alerts on 40 KPIs. Result: the Slack channel
+  gets 200+ alerts per day. The team started muting the channel.
+  When a genuine revenue drop happened, nobody noticed because the
+  alert was buried among 199 false alarms.
+
+  "Alert fatigue is real. We need to fix our alerting strategy so
+  that when an alert fires, people actually pay attention."
+
+  Task: Redesign the alerting strategy with proper thresholds.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses the alert fatigue problem and establishes threshold tiers — tiers: 'Alert threshold redesign: Diagnosing the problem: 200 alerts per day means each alert has a 0.5% chance of being actionable. The team rationally ignores them. The fix is not better alerts — it is fewer, more meaningful alerts. Step 1 — Reduce the number of monitored KPIs from 40 to 10. Only alert on metrics where: someone will take immediate action (not just be aware). The metric change represents a real business problem (not normal fluctuation). The threshold is set correctly (not triggering on noise). Step 2 — Three-tier alert levels: Info (blue): metric is noteworthy but no action needed. Delivery: daily summary email. Does not interrupt. Example: website traffic is 8% below average today. Warning (yellow): metric is approaching a problem. Delivery: Slack message to the relevant team channel. Example: conversion rate dropped below 2.5% for the second consecutive day. Target is 3.0%. Critical (red): metric requires immediate action. Delivery: Slack direct message to the team lead + PagerDuty for on-call. Example: revenue is 40% below yesterday with no known cause. Step 3 — Set thresholds based on historical volatility, not arbitrary numbers. If daily revenue normally fluctuates ±15%, setting a threshold at -10% will fire constantly. Set it at -25% (outside the normal range). Use standard deviations: alert when the metric is more than 2 standard deviations from its rolling average'"
+    weight: 0.35
+    description: "Tiers"
+  - type: llm_judge
+    criteria: "Response provides specific threshold examples and tuning methodology — tuning: 'Threshold tuning methodology: Step 1 — Analyze historical data: for each KPI, calculate the mean, standard deviation, and percentiles (P5, P25, P50, P75, P95) over the past 90 days. Example: Daily revenue — mean: $50K, std dev: $7K, P5: $38K, P95: $62K. Step 2 — Set thresholds at meaningful deviations: Warning: below P10 or above P90. For revenue: below $40K or above $60K. Fires about 10% of the time — this is a notable day, worth flagging. Critical: below P2 or above P98. For revenue: below $35K or above $68K. Fires about 2% of the time — this is unusual, requires investigation. Step 3 — Account for seasonality: Monday revenue is typically 20% lower than Friday. Use day-of-week adjusted thresholds. Monday warning: below $32K (not $40K). Friday warning: below $48K. Without day-of-week adjustment, every Monday triggers a false alarm. Step 4 — Implement cooldown periods: after an alert fires, suppress the same alert for 4 hours. This prevents 10 alerts about the same ongoing problem. The team acts on the first alert, not the tenth. Step 5 — Review monthly: track alert-to-action ratio. Target: 80% of critical alerts should result in someone taking an action. If the ratio drops below 50%, thresholds are too loose — tighten them. If no critical alerts fire for 30 days, thresholds may be too tight — or the business is running perfectly'"
+    weight: 0.35
+    description: "Tuning"
+  - type: llm_judge
+    criteria: "Explanation covers alert routing and the human workflow — routing: 'Alert routing and human workflow: Not every team needs every alert. Route alerts to the team that can act: Revenue alerts → Finance and Sales leadership. Conversion rate alerts → Marketing and Product. Error rate alerts → Engineering. Churn risk alerts → Customer Success. Each team has their own Slack channel for alerts. Critical alerts also go to the direct responsible individual (DRI). Alert response workflow: 1. Alert fires in Slack with context: what happened, what the threshold is, and a link to the dashboard. Example: CRITICAL — Daily revenue $32K (threshold: $35K). This is 36% below the 30-day average of $50K. View dashboard: [link]. 2. The DRI acknowledges the alert within 15 minutes (click a button in Slack). 3. The DRI investigates using the dashboard drill-down. 4. The DRI posts a brief update: Investigating — revenue drop caused by payment processor outage. ETA for resolution: 2 hours. 5. When resolved, the DRI closes the alert with a summary. This workflow ensures alerts lead to action, not just awareness. The acknowledgment step prevents alerts from being ignored. If no one acknowledges within 15 minutes, the alert escalates to the manager'"
+    weight: 0.30
+    description: "Routing"

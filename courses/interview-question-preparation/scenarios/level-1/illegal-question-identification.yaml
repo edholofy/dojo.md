@@ -1,0 +1,55 @@
+meta:
+  id: illegal-question-identification
+  level: 1
+  course: interview-question-preparation
+  type: output
+  description: "Illegal question identification — identify and fix interview questions that violate employment law"
+  tags: [legal, compliance, illegal-questions, eeoc, beginner]
+
+state: {}
+
+trigger: |
+  You're an HR Coordinator at a 150-person company. A hiring
+  manager has shared their interview question list with you for
+  review before they interview candidates for a Project Manager
+  role. Several questions are legally problematic.
+
+  The hiring manager's question list:
+
+  1. "Where are you originally from? Your accent is interesting."
+  2. "Are you married? Do you have kids?"
+  3. "Tell me about a time you managed a complex project."
+  4. "How old are you? You seem young for this level."
+  5. "What year did you graduate from college?"
+  6. "Do you have any disabilities or health conditions we
+     should know about?"
+  7. "What's your biggest professional achievement?"
+  8. "Are you planning to have children in the next few years?"
+  9. "What church do you attend?" (context: the company is in
+     the Bible Belt and the manager is making conversation)
+  10. "How do you handle tight deadlines and competing priorities?"
+  11. "Have you ever been arrested?"
+  12. "What's your current salary?"
+  13. "Can you describe your management style?"
+  14. "Do you have reliable transportation to get to work?"
+  15. "Are you a US citizen?"
+
+  Task: Review all 15 questions. For each one, identify
+  whether it's legal, illegal, or risky. For problematic
+  questions, explain why it's a problem (which law it
+  violates), and provide a legal alternative that gets at the
+  same information the manager actually needs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response correctly categorizes all 15 questions — identifies legal questions (3, 7, 10, 13); flags clearly illegal questions (1-national origin, 2-marital/family status, 4-age, 6-disability, 8-family planning, 9-religion, 15-citizenship vs work authorization); flags risky questions (5-age proxy, 11-arrest vs conviction, 12-salary history bans, 14-could imply disability); provides the specific law or protected category each problematic question violates."
+    weight: 0.35
+    description: "AccurateClassification"
+  - type: llm_judge
+    criteria: "Response provides legal alternatives — for each problematic question, suggests a rephrased version that gets at the manager's legitimate need; alternatives are specific and usable (not just 'don't ask this'); explains why the alternative is legal while the original isn't; alternatives cover work authorization (instead of citizenship), ability to perform essential functions (instead of disability), and schedule availability (instead of family status); the alternatives would actually help the manager assess candidates."
+    weight: 0.35
+    description: "LegalAlternatives"
+  - type: llm_judge
+    criteria: "Response educates the hiring manager — explains the underlying principles (protected categories, disparate impact, state-specific laws like salary history bans); tone is helpful and non-judgmental (the manager may not know these questions are problematic); provides a general framework the manager can use to self-check future questions; mentions that even well-intentioned questions can create legal liability; the response would prevent future compliance issues."
+    weight: 0.30
+    description: "EducationalValue"

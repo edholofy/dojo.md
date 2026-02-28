@@ -1,0 +1,41 @@
+meta:
+  id: docs-as-code
+  level: 4
+  course: api-documentation-writing
+  type: output
+  description: "Implement docs-as-code workflow — design a documentation pipeline with version control, CI/CD, automated testing, and review processes for API documentation"
+  tags: [API, documentation, docs-as-code, CI/CD, automation, workflow, expert]
+
+state: {}
+
+trigger: |
+  Your documentation lives in a CMS, edited by technical writers.
+  Problems:
+  - Docs drift from actual API behavior (no one updates after code changes)
+  - No review process — writers publish directly
+  - No versioning — can't see what changed or roll back
+  - Developers don't contribute because they don't have CMS access
+  - Documentation builds break silently
+
+  You want to move to docs-as-code: documentation in the same repo
+  as code, using the same tools (Git, PRs, CI/CD).
+
+  Task: Design the complete docs-as-code workflow. Include: repository
+  structure, documentation format (MDX, OpenAPI, or both), build
+  pipeline, automated quality checks, review process, and how to keep
+  docs in sync with code changes. Explain how this reduces documentation
+  drift and enables developer contributions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Repository structure and format choices are justified — documentation lives alongside code in /docs directory (or monorepo with docs package). OpenAPI spec is source of truth for API reference (auto-generates endpoint pages). Guides and tutorials in MDX (Markdown + React components for interactive elements). Directory structure: /docs/api (auto-generated from OpenAPI), /docs/guides (hand-written), /docs/tutorials, /docs/changelog. Build tool: Docusaurus, Nextra, or similar static site generator that supports OpenAPI rendering. Version docs alongside API versions (docs/v1, docs/v2). PR template includes 'Documentation updated?' checkbox"
+    weight: 0.35
+    description: "Repo structure"
+  - type: llm_judge
+    criteria: "CI/CD pipeline ensures quality — automated checks on every PR: (1) OpenAPI spec validation (no broken $ref, valid schemas), (2) link checking (no dead links), (3) spell checking, (4) code example testing (extract and run code snippets), (5) build check (docs site builds successfully), (6) screenshot comparison (visual regression for rendered docs). Deployment: staging preview for every PR (Vercel preview deployments or similar), production deploy on merge to main. OpenAPI diff: show breaking changes in PR comments when spec changes. Automated changelog generation from conventional commits. Build badge in README"
+    weight: 0.35
+    description: "CI/CD pipeline"
+  - type: llm_judge
+    criteria: "Review process and sync strategy prevent drift — review workflow: code PRs that change API behavior must include docs PR (enforced by CI check — 'API changed but no docs updated'). Documentation review: technical writer reviews developer-written docs, developer reviews writer-written technical accuracy. Sync mechanisms: (1) OpenAPI spec generates reference docs automatically, (2) contract tests verify examples match actual API behavior, (3) scheduled job runs all code examples against sandbox. Contribution guide: how developers write docs (templates, style guide link, local preview instructions). Metrics: track docs-to-code commit ratio, average time from API change to docs update, documentation coverage (% of endpoints with examples)"
+    weight: 0.30
+    description: "Review and sync"

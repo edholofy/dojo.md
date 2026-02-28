@@ -1,0 +1,49 @@
+meta:
+  id: postmortem-metrics-effectiveness
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Measure postmortem effectiveness — design metrics and processes that track whether postmortems actually prevent recurrence and improve reliability"
+  tags: [postmortem, metrics, effectiveness, measurement, continuous-improvement, expert]
+
+state: {}
+
+trigger: |
+  Your VP of Engineering asks: "We write 4 postmortems a month. Are
+  they actually making us more reliable, or are we just going through
+  the motions?"
+
+  You pull the data and discover:
+  - 48 postmortems written in the past 12 months
+  - 192 action items generated
+  - 67% of action items completed (33% still open or abandoned)
+  - Of completed action items, you can't tell which ones actually
+    prevented future incidents
+  - Incident count is roughly flat year-over-year (44 last year,
+    48 this year)
+  - Some root cause categories repeat: "configuration change" appears
+    in 14 of 48 postmortems
+  - 3 incidents this year are near-duplicates of incidents from last
+    year
+
+  The VP's concern is valid: the postmortem process costs engineering
+  time but isn't demonstrably improving reliability.
+
+  Task: Design a postmortem effectiveness measurement framework.
+  Define metrics that answer whether postmortems are working, identify
+  what's broken in the current process, and propose changes that
+  increase the reliability impact of postmortems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Effectiveness metrics are clearly defined and measurable — metric framework: 'Outcome metrics (are we getting more reliable?): (1) Incident recurrence rate: percentage of incidents that share a root cause category with a previous incident. Current: 14/48 (29%) are configuration-related — this category is not being solved. Target: no root cause category should appear in more than 3 incidents per year after action items are implemented. (2) Near-duplicate rate: incidents that are substantially similar to a previous incident. Current: 3 near-duplicates this year. Target: zero. A near-duplicate is direct evidence that a postmortem failed to prevent recurrence. (3) MTTR trend: are we resolving incidents faster? This measures whether we are learning to respond better even if prevention is imperfect.' Process metrics (are we following through?): '(4) Action item completion rate: 67% is insufficient. Target: 90% within stated due dates. (5) Action item staleness: percentage of action items open longer than 30 days past due date. (6) Time to postmortem: days between incident and completed postmortem. Target: within 5 business days. Postmortems written weeks later lose detail and urgency. (7) Action item specificity score: percentage of action items that have a measurable completion criteria vs. vague improvements.' Quality metrics (are postmortems thorough?): '(8) Root cause depth: does the postmortem identify contributing factors beyond the proximate cause? (9) Systemic vs. point-fix ratio: percentage of action items that address systemic issues vs. single-instance fixes. Target: at least 50% systemic'"
+    weight: 0.35
+    description: "Effectiveness metrics"
+  - type: llm_judge
+    criteria: "Diagnosis of current process failures is data-driven — diagnosis: 'The data tells a clear story: we are writing postmortems but not learning from them. Evidence: (1) 33% of action items are incomplete or abandoned. When one-third of remediation never happens, recurrence is expected. The 14 configuration-related incidents likely include cases where action items from earlier postmortems were never completed. (2) Action items are too shallow. Review of the 48 postmortems reveals: 60% of action items are point fixes (fix this specific query, add this specific timeout). Only 40% address systemic issues (implement canary deployments for all config changes). Point fixes prevent the exact same incident but not the same class of incident. (3) No tracking of action item effectiveness. Of the 128 completed action items, we cannot determine which ones actually prevented future incidents. Without this feedback loop, we cannot distinguish valuable action items from checkbox exercises. (4) Postmortems are siloed. Each team writes postmortems for their own incidents. No one reviews across teams for shared patterns. The configuration change pattern was visible only when all 48 postmortems were analyzed together — individual teams saw 2-3 config incidents, not 14. (5) No accountability for postmortem quality. Postmortems range from thorough multi-page analyses to one-paragraph summaries. Without quality standards, the value of the process varies dramatically by team'"
+    weight: 0.35
+    description: "Process diagnosis"
+  - type: llm_judge
+    criteria: "Proposed changes increase reliability impact of postmortems — change 1, action item accountability: 'Every action item must be tracked in the engineering project management system (not just in the postmortem document). Monthly review meeting: SRE lead reviews all open action items with engineering managers. Items overdue by more than 2 weeks require an explanation and a revised date or explicit decision to drop (with documented reasoning). Target: 90% completion rate within 6 months.' Change 2, cross-team pattern review: 'Quarterly review of all postmortems by the SRE team to identify cross-team patterns. When a root cause category appears in 3+ postmortems, it triggers a dedicated initiative (not just individual action items). The configuration change pattern would have triggered this in Q1, potentially preventing incidents in Q2-Q4.' Change 3, action item quality standards: 'Every postmortem must include at least one systemic action item that addresses a class of failures, not just the specific instance. The postmortem reviewer (peer review process) explicitly checks for this. Example of insufficient action item: add a timeout to the payments query. Example of systemic action item: implement query timeout policy across all database queries with automated enforcement.' Change 4, effectiveness feedback loop: 'When an incident occurs, check whether any previous postmortem action items should have prevented it. If yes: was the action item completed? If completed, why did it fail? If not completed, escalate. This closes the loop between postmortem action items and actual prevention.' Change 5, postmortem quality review: 'Peer review process: every postmortem is reviewed by an engineer from a different team before it is finalized. Reviewer checks: root cause depth, action item specificity, systemic coverage, and blameless language. Estimated time investment: 30 minutes per review'"
+    weight: 0.30
+    description: "Improvement proposals"

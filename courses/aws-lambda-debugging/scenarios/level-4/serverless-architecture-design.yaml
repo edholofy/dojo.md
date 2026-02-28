@@ -1,0 +1,64 @@
+meta:
+  id: serverless-architecture-design
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless architecture — evaluate event-driven patterns, service boundaries, and Lambda-based system design for enterprise applications"
+  tags: [AWS, Lambda, architecture, serverless, event-driven, design, expert]
+
+state: {}
+
+trigger: |
+  Your company is building a new order management system. The CTO
+  wants "serverless-first" but the team has concerns about Lambda
+  for complex business logic. You need to design the architecture.
+
+  Requirements:
+  - Process 1,000 orders/minute at peak
+  - Sub-second API response time
+  - Complex order workflow: validate → inventory check → payment →
+    fulfillment → notification (5-15 minute total processing)
+  - ACID transactions for payment processing
+  - Real-time dashboard showing order status
+  - 99.95% availability SLA
+
+  Architecture options debated:
+
+  Option A — Pure Lambda:
+  API Gateway → Lambda for every operation. Each step is a Lambda
+  function. State managed in DynamoDB.
+  Concern: complex state management, cold start latency, debugging
+  distributed transactions.
+
+  Option B — Lambda + Step Functions:
+  API Gateway → Lambda (sync response) → Step Functions (async workflow).
+  Step Functions orchestrates the multi-step process with built-in
+  error handling, retries, and state tracking.
+  Concern: Step Functions cost at volume ($25/million state transitions),
+  15-minute standard execution history limit for Express workflows.
+
+  Option C — Hybrid (Lambda + ECS):
+  Lambda for API endpoints and event processing.
+  ECS Fargate for the payment processing service (needs persistent
+  database connections, complex business logic).
+  Concern: operational complexity of managing two compute platforms.
+
+  Task: Design the serverless architecture. Write: when Lambda is
+  the right choice vs containers/EC2, event-driven design patterns
+  (choreography vs orchestration), state management strategies
+  (DynamoDB, Step Functions), handling distributed transactions
+  (saga pattern), and the architecture decision record with trade-offs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture decision is justified — Lambda best for: event-driven processing, API endpoints, data transformation, scheduled tasks, glue logic. Not ideal for: long-running processes (> 15 min), persistent connections, heavy computation, real-time bidirectional communication. Recommended: hybrid — Lambda for APIs + event handlers, Step Functions for workflow orchestration, DynamoDB for state. Payment service: Lambda with idempotency (not ECS) unless complex persistent connection requirements. Step Functions Express for high-volume (cheaper, synchronous), Standard for long-running workflows"
+    weight: 0.35
+    description: "Architecture decision"
+  - type: llm_judge
+    criteria: "Event-driven patterns are covered — choreography: services emit events, other services react independently (EventBridge). Pros: loosely coupled, scalable. Cons: hard to trace, no central workflow view. Orchestration: central coordinator (Step Functions) manages the workflow. Pros: visible state, built-in retry/error handling. Cons: central point of control. Recommendation: orchestration for critical business workflows (orders), choreography for cross-domain events (analytics, notifications). Saga pattern for distributed transactions: each step has a compensating action for rollback"
+    weight: 0.35
+    description: "Event-driven patterns"
+  - type: llm_judge
+    criteria: "Scalability and reliability are practical — 1,000 orders/minute: Lambda handles easily (configure concurrency appropriately). Sub-second API: provisioned concurrency for user-facing endpoints. DynamoDB: on-demand capacity for variable load, or provisioned with auto-scaling. 99.95% SLA: multi-region active-passive with Route53 failover. Real-time dashboard: DynamoDB Streams → Lambda → WebSocket API (API Gateway). Cost estimate at 1,000 orders/min: Lambda (~$50/month), Step Functions (~$75/month), DynamoDB (~$200/month). Total significantly less than ECS/EC2 equivalent"
+    weight: 0.30
+    description: "Scalability and reliability"

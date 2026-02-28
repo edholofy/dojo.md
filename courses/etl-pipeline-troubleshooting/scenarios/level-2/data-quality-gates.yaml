@@ -1,0 +1,43 @@
+meta:
+  id: data-quality-gates
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data quality gates — implement validation checkpoints that catch data issues before they reach downstream consumers"
+  tags: [quality-gates, validation, quarantine, testing, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Last week, a bug in the source system
+  sent us order amounts as cents instead of dollars (so $25.00
+  appeared as $2500.00). Our pipeline processed it without any
+  warnings and loaded it into the warehouse. The daily revenue
+  dashboard showed 100x normal revenue. The CFO forwarded the
+  dashboard to the board before we caught the error.
+
+  Another time, the source API returned an empty response (0
+  records) due to a temporary outage. Our pipeline loaded the
+  empty result, effectively deleting a day's worth of data from
+  the warehouse.
+
+  How do I add quality gates to catch these issues before they
+  reach the warehouse?"
+
+  Task: Design a data quality gate system that validates data at
+  each pipeline stage and prevents bad data from reaching
+  downstream consumers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs quality gates at each pipeline stage — extraction gate: verify record count is non-zero and within expected range (if yesterday had 10K orders, today's 0 or 1M are both suspicious), verify schema hasn't changed. Transform gate: check value ranges (order amounts should be between $0.01 and $10,000), check statistical properties (mean and stddev shouldn't deviate more than 3x from recent history), check referential integrity. Load gate: verify loaded count matches transformed count, run post-load aggregation checks against known control totals"
+    weight: 0.35
+    description: "GateDesign"
+  - type: llm_judge
+    criteria: "Response addresses the two specific scenarios — for the 100x values: implement range checks on financial fields (flag any value more than 5-10x the historical average), detect sudden distribution shifts (yesterday's mean order value was $50, today it's $5,000 — fail the pipeline). For the empty result: never allow a pipeline to overwrite existing data with zero records, implement a minimum record count threshold, treat significant drops (>50% fewer records than expected) as a failure requiring manual review"
+    weight: 0.35
+    description: "ScenarioHandling"
+  - type: llm_judge
+    criteria: "Response includes practical implementation — how to implement gates using tools like dbt tests, Great Expectations, or custom SQL assertions, the quarantine pattern (bad records go to an error table for review rather than being loaded or silently dropped), circuit breaker pattern (if quality gates fail, stop the pipeline and alert rather than continuing), and how to set appropriate thresholds (too tight causes false positives and alert fatigue, too loose misses real issues — start conservative and tune based on experience)"
+    weight: 0.30
+    description: "Implementation"

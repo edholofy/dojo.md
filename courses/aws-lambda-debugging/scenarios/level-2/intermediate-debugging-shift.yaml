@@ -1,0 +1,71 @@
+meta:
+  id: intermediate-debugging-shift
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Combined intermediate debugging shift — diagnose a serverless application with event source, VPC, layer, and concurrency issues simultaneously"
+  tags: [AWS, Lambda, troubleshooting, combined, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  You're troubleshooting a serverless order processing system with
+  5 Lambda functions. The system "partially works":
+
+  Architecture:
+  API Gateway → order-api (Lambda)
+  order-api → SQS queue → process-order (Lambda)
+  process-order → DynamoDB + payment-service (Lambda)
+  payment-service → Stripe API (external)
+  DynamoDB Stream → sync-to-search (Lambda) → OpenSearch
+
+  Current issues:
+
+  1. order-api: intermittent 504 errors from API Gateway.
+     REPORT shows Init Duration: 4200ms for cold starts.
+     The function is in a VPC (for RDS access) and uses a heavy
+     Python layer with pandas (unnecessary for this API).
+     Fix: remove pandas layer, add VPC endpoint for DynamoDB,
+     consider provisioned concurrency.
+
+  2. process-order: messages accumulate in SQS, not being processed.
+     Event source mapping shows LastProcessingResult: "OK" but
+     BatchSize is 1 and function processes one message per second.
+     With 500 messages/minute incoming, it can't keep up.
+     Fix: increase batch size to 10, enable batch window of 5s.
+
+  3. payment-service: throws errors but retries succeed.
+     The function calls Stripe API with no timeout configured.
+     Occasionally Stripe takes 15+ seconds, exceeding the Lambda's
+     10-second timeout. On retry (async), it succeeds → duplicate
+     payment! No idempotency key used.
+     Fix: set HTTP timeout < Lambda timeout, use idempotency key.
+
+  4. sync-to-search: completely stuck, IteratorAge growing.
+     One malformed DynamoDB record causes the function to crash,
+     blocking the entire shard. No error handling configured.
+     Fix: configure MaximumRetryAttempts, BisectBatchOnFunctionError,
+     OnFailure destination.
+
+  5. Account-wide: ConcurrentExecutions at 850/1000. No reserved
+     concurrency configured. A batch job running at the same time
+     could push the account to the limit.
+     Fix: set reserved concurrency for critical functions.
+
+  Task: Walk through diagnosing all issues. Write: the triage
+  approach for serverless architectures, the fix for each issue,
+  idempotency patterns, and operational best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "All five issues are diagnosed and fixed — (1) cold start: remove unnecessary layer, add VPC endpoints, use provisioned concurrency for API-facing function. (2) SQS throughput: increase batch size and batch window for higher processing rate. (3) duplicate payments: set HTTP client timeout < Lambda timeout, use idempotency keys in Stripe API calls. (4) stream blocking: configure retry limits, bisect on error, failure destination for DynamoDB Streams event source. (5) concurrency: set reserved concurrency for critical functions to prevent resource starvation"
+    weight: 0.35
+    description: "All issues fixed"
+  - type: llm_judge
+    criteria: "Idempotency and error handling are covered — idempotency: use unique transaction IDs for payment operations (Stripe supports Idempotency-Key header). Store processing status in DynamoDB before and after processing. Design all Lambda functions to be safely re-invokable. Error handling: different for each invocation pattern — sync (return error to caller), async (retry + DLQ), stream (retry + bisect + destination). Always configure error handling for event sources — defaults are not production-ready"
+    weight: 0.35
+    description: "Idempotency and errors"
+  - type: llm_judge
+    criteria: "Serverless triage approach is systematic — check CloudWatch metrics first: Errors, Throttles, Duration, ConcurrentExecutions. For event sources: check event source mapping state and LastProcessingResult. For streams: check IteratorAge (growing = falling behind). For SQS: check ApproximateAgeOfOldestMessage (lag indicator). Work through the data flow: API → queue → processing → database → stream → search. Fix upstream issues first (they cascade). Test each fix independently. Monitor for 30+ minutes after fixes to confirm stability"
+    weight: 0.30
+    description: "Triage approach"

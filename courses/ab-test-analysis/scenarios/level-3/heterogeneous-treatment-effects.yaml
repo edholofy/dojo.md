@@ -1,0 +1,34 @@
+meta:
+  id: heterogeneous-treatment-effects
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Analyze heterogeneous treatment effects — use causal forests, conditional average treatment effects, and uplift modeling to identify which users benefit most from a treatment"
+  tags: [HTE, CATE, uplift-modeling, causal-forest, personalization, advanced]
+
+state: {}
+
+trigger: |
+  A subscription product ran an A/B test of a new onboarding flow.
+  Overall result: +1.5% lift in 30-day retention (p = 0.02). The CPO
+  asks: "The overall result is positive, but I suspect the new onboarding
+  helps some users a lot and may actually hurt others. Can we identify
+  WHO benefits most so we can personalize the experience?"
+
+  Task: Explain heterogeneous treatment effects (HTE) analysis, how
+  to estimate conditional average treatment effects, and how to use
+  them for personalization decisions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains heterogeneous treatment effects and CATE — hte: 'Heterogeneous treatment effects (HTE): The average treatment effect (ATE) of +1.5% retention masks individual-level variation. Some users may experience +10% retention improvement. Others may experience 0% or even -5% (the new onboarding confuses them). The CPO's intuition is correct — treatment effects almost always vary across users. Conditional Average Treatment Effect (CATE): the expected treatment effect for users with specific characteristics. CATE(X) = E[Y(1) - Y(0) | X], where X is a vector of user features (age, experience level, device, acquisition channel, etc.). Instead of one number (ATE = +1.5%), we get a function that maps user features to expected treatment effects. Example CATEs: power users (daily active, 6+ months): CATE = -2% (the new onboarding disrupts their established workflow). New users, mobile, organic: CATE = +8% (the guided onboarding helps them discover features). New users, desktop, paid acquisition: CATE = +3% (moderate benefit). Casual users (weekly active, 1-3 months): CATE = +1% (small benefit). Why this matters: shipping to everyone gives ATE = +1.5%. But personalized rollout (new onboarding for new/casual users, old onboarding for power users) might achieve: +5% average retention improvement by showing each user the version that works best for them, while avoiding the -2% hit to power users'"
+    weight: 0.35
+    description: "HTE"
+  - type: llm_judge
+    criteria: "Response covers methods for estimating HTE — methods: 'Methods for estimating heterogeneous treatment effects: Method 1 — Subgroup analysis (simple but limited): pre-specify a few key dimensions (user type, device, acquisition channel). Estimate ATE within each subgroup. Limitations: only captures interactions with the chosen dimensions. Misses complex, multi-dimensional patterns. Requires multiple testing correction. Method 2 — Causal forests (state of the art): an extension of random forests designed specifically for estimating CATE. The algorithm: split the experimental data into a training set and an estimation set. Use the training set to learn which user features predict treatment effect heterogeneity. Use the estimation set to estimate CATE for each leaf node (unbiased because the tree structure was learned on different data). This is called honest estimation — the tree structure and the effect estimates come from different data splits, preventing overfitting. Output: a CATE estimate for each individual user based on their features. Can rank users by expected treatment effect: top 20% of users by CATE → average effect of +8%. Middle 60% → average effect of +1.5%. Bottom 20% → average effect of -3%. Method 3 — Uplift modeling (T-learner, S-learner, X-learner): T-learner: build two separate predictive models — one for treatment, one for control. CATE = prediction_treatment(X) - prediction_control(X). Simple but can be noisy when treatment effects are small relative to the outcome. S-learner: build one model with treatment assignment as a feature. CATE = model(X, T=1) - model(X, T=0). Can underestimate heterogeneity (the model may ignore the treatment indicator). X-learner: a two-stage approach that uses the control model to impute treatment effects for control users and vice versa. Best for imbalanced designs or when one group has more data. Method 4 — Doubly robust estimation: combines outcome modeling and propensity score weighting. Consistent if either the outcome model OR the propensity model is correct. More robust than single-model approaches. Recommended for production HTE estimation'"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response covers practical application for personalization — personalization: 'Practical application for personalization: Step 1 — Estimate CATEs using causal forests: features to include: user tenure, activity frequency, device type, acquisition channel, feature usage patterns, engagement score. Train the causal forest on the A/B test data. Generate CATE estimates for all users. Step 2 — Validate the CATE estimates: split the test data into discovery (70%) and validation (30%). Train the causal forest on the discovery set. On the validation set: sort users by predicted CATE into quintiles. Check that the observed treatment effect increases monotonically across quintiles. Quintile 1 (lowest predicted CATE): observed ATE = -2.5% ✓ (predicted negative, observed negative). Quintile 2: observed ATE = +0.5%. Quintile 3: observed ATE = +1.5%. Quintile 4: observed ATE = +3.0%. Quintile 5 (highest predicted CATE): observed ATE = +7.5% ✓. Monotonic increase confirms the model has real predictive power. Step 3 — Define the personalization policy: option A — threshold-based: show new onboarding if predicted CATE > 0. Show old onboarding if predicted CATE <= 0. Simple. Maximizes retention. Option B — top-K targeting: show new onboarding to the top 50% of users by predicted CATE. Keep old onboarding for the bottom 50%. More conservative — only treats users most likely to benefit. Step 4 — Validate the policy with a new experiment: control: current random assignment (everyone gets old onboarding). Treatment: personalized assignment (each user gets their predicted best onboarding). This meta-experiment measures whether personalization improves outcomes beyond a uniform rollout. Expected result: personalized group shows +3-4% retention vs control (better than the uniform +1.5% from showing new onboarding to everyone). Caution: HTE analysis is exploratory. Always validate with a confirmatory experiment before building production personalization systems. The causal forest may overfit to noise in the original test data'"
+    weight: 0.30
+    description: "Personalization"

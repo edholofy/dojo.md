@@ -1,0 +1,47 @@
+meta:
+  id: organizational-learning-systems
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Design organizational learning systems — build processes that extract and distribute lessons from postmortems across the entire engineering organization"
+  tags: [postmortem, organizational-learning, knowledge-management, distribution, expert]
+
+state: {}
+
+trigger: |
+  Your 200-person engineering org writes excellent postmortems. The
+  problem: no one reads them except the team that wrote them. Lessons
+  learned in one team are not reaching other teams that could benefit.
+
+  Evidence of the learning gap:
+  - Team A had a cache invalidation incident and wrote a great
+    postmortem with lessons about cache TTL management. 3 months
+    later, Team B had the same type of cache incident.
+  - Team C figured out a resilient retry strategy after an outage.
+    Team D independently built a different (worse) retry strategy
+    6 months later.
+  - A new hire caused an incident that was nearly identical to one
+    from 2 years ago — the postmortem existed but was never part of
+    onboarding.
+  - Postmortems live in Google Docs in each team's folder. There's
+    no central index, no tagging, and no search.
+
+  Task: Design an organizational learning system that ensures
+  postmortem lessons reach the people who need them. Include:
+  knowledge distribution mechanisms, onboarding integration, and
+  how to make postmortem insights discoverable and actionable across
+  teams.
+
+assertions:
+  - type: llm_judge
+    criteria: "Knowledge distribution mechanisms are multi-channel and targeted — distribution system: '(1) Centralized postmortem registry: all postmortems stored in a single, searchable location with consistent metadata: date, severity, affected services, root cause category, key lessons, tags. Every postmortem is tagged with at least: root cause category (configuration, capacity, dependency, code bug, infrastructure), affected technology (database, cache, API gateway, authentication), pattern type (thundering herd, cascading failure, split-brain, race condition). Search and discovery: any engineer can search postmortems by tag, service, or keyword.' (2) Weekly incident digest: 'Every Monday, an automated digest summarizes the previous week's incidents. Format: 2-3 sentences per incident covering what happened and the key lesson. Distributed to all engineering via email and Slack. Purpose: awareness, not deep reading. Engineers scan and click through to full postmortems relevant to their work.' (3) Targeted notifications: 'When a postmortem is tagged with a technology or pattern, teams that own systems using that technology receive a direct notification. Example: a postmortem about Redis cache invalidation automatically notifies all teams that use Redis. This ensures the teams most likely to benefit see the relevant postmortems.' (4) Monthly learning session: '1-hour meeting open to all engineers. One or two postmortems presented in depth by the teams involved. Focus on transferable lessons, not incident replay. Recorded for async viewing. Rotating presenting teams to distribute the learning load and recognition'"
+    weight: 0.35
+    description: "Distribution mechanisms"
+  - type: llm_judge
+    criteria: "Onboarding integration and pattern libraries extract lasting value — onboarding integration: 'Incident onboarding module: every new engineer completes a 2-hour module during their first month. Content: (1) Top 10 most impactful incidents from the past 2 years. Each summarized as: what happened, what we learned, what we changed. (2) Common failure patterns observed in our systems: the 5 most frequent root cause categories with real examples. (3) Incident response process: how to report, how to respond, what to expect as a participant. (4) Postmortem process: how to write one, how to facilitate, what blameless means in practice. Updated quarterly to reflect recent incidents and evolving patterns.' Pattern library: 'Curated collection of failure patterns extracted from postmortem history. Each pattern includes: pattern name (for example, thundering herd, cascading timeout, stale cache), description of the pattern, real examples from our incidents (sanitized if needed), prevention strategies that worked, detection strategies. Purpose: when an engineer encounters a new situation, they can check the pattern library to see if it matches a known failure mode. This is institutional memory made searchable.' Service reliability profiles: 'For each critical service: list of past incidents, known failure modes, resilience measures in place, and gaps identified by postmortems. New team members on a service can read its reliability profile to understand its history and known risks in 30 minutes'"
+    weight: 0.35
+    description: "Onboarding and pattern libraries"
+  - type: llm_judge
+    criteria: "Discoverability and actionability ensure learning actually happens — discoverability improvements: 'Problem: postmortems are written once and forgotten. Solution: integrate postmortem insights into the tools engineers use daily. (1) Deployment integration: when deploying a service, the deployment tool surfaces relevant postmortem lessons. Example: deploying the payment service shows: last incident was 3 weeks ago (cache TTL), key lesson: verify cache invalidation after config changes. This puts lessons in context at the moment they matter. (2) PR review integration: when a PR touches a service area that has had incidents, the review tool links to relevant postmortems. Example: PR modifying database connection pool settings shows: 2 postmortems related to connection pool exhaustion. (3) Runbook cross-references: runbooks link to postmortems for the scenarios they address. When an engineer follows a runbook, they can read the postmortem that created it for additional context.' Measuring learning distribution: 'Metrics: (1) Cross-team pattern replication: track when the same failure pattern occurs in multiple teams. Decreasing rate indicates lessons are spreading. (2) Time from lesson to application: when a postmortem lesson is relevant to another team, how quickly is it applied? (3) Postmortem engagement: views, comments, and citations of postmortems by engineers outside the authoring team. (4) Onboarding assessment: new hires tested on key incident patterns after completing the module. (5) Pattern library usage: how often is the pattern library accessed, and by whom?' Sustainability: 'The system must not depend on heroic maintenance efforts. Automate wherever possible: digest generation, targeted notifications, deployment integration. Human effort should be focused on curation (pattern library updates, onboarding content) and presentation (monthly learning sessions). Budget: approximately 4 hours per month of SRE team time for curation'"
+    weight: 0.30
+    description: "Discoverability and actionability"

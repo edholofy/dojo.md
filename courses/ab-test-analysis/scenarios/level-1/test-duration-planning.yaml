@@ -1,0 +1,33 @@
+meta:
+  id: test-duration-planning
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Plan A/B test duration — determine when to start, how long to run, and when to stop an experiment while accounting for weekly patterns and seasonal effects"
+  tags: [duration, timing, weekly-cycles, seasonal, beginner]
+
+state: {}
+
+trigger: |
+  The marketing team wants to test a new email subject line. They
+  plan to send version A to half their list and version B to the other
+  half on Monday morning and check results Monday afternoon.
+
+  The data analyst sees several problems with this plan.
+
+  Task: Explain how to properly plan the timing and duration of
+  this email A/B test.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies timing issues and provides proper duration planning — timing: 'Email A/B test duration planning: Problems with the current plan: Problem 1 — Checking too early: email open rates continue to climb for 48-72 hours after sending. Checking Monday afternoon captures only the first 4-6 hours. Many recipients open emails the next day, or even 2-3 days later. Monday afternoon results: open rate appears to be 15%. Final results after 72 hours: open rate is 22%. The Monday afternoon snapshot underrepresents the true performance. Problem 2 — Send day matters: Monday emails compete with weekend backlog in the inbox. Tuesday-Thursday typically have higher open rates. If this test informs future campaigns, the results on Monday may not generalize to other days. Problem 3 — No pre-calculated sample size: the team has not determined how many opens they need to detect a meaningful difference. Proper planning: Step 1 — Define the metric and MDE: Primary metric: email open rate. Current baseline: 22% open rate. MDE: 3 percentage points (22% → 25%). This is a meaningful improvement worth detecting. Step 2 — Calculate sample size: using a two-proportion z-test with α = 0.05 and power = 80%: approximately 2,800 per group (5,600 total recipients). If the list has 10,000 subscribers, a 50/50 split gives 5,000 per group — sufficient. Step 3 — Allow adequate measurement time: send the email on Tuesday morning (higher engagement day). Wait 72 hours before measuring (captures 95%+ of opens). Final measurement: Friday morning. Step 4 — Account for the full engagement window: hour 0-6: 45% of total opens. Hour 6-24: 75% of total opens. Hour 24-48: 90% of total opens. Hour 48-72: 95%+ of total opens. Measuring at 4 hours captures less than half the response'"
+    weight: 0.35
+    description: "Timing"
+  - type: llm_judge
+    criteria: "Response covers website A/B test duration planning with weekly cycles — weeklycycles: 'Website A/B test duration planning: For website experiments (as opposed to email), the key consideration is weekly traffic cycles. Weekly patterns matter: Monday traffic is often 20-30% higher than Saturday traffic for B2B sites. E-commerce sites see peaks on evenings and weekends. A test running Monday-Friday misses weekend behavior entirely. Rule: always run website A/B tests for complete weeks. If the sample size calculation says you need 5 days, run for 7. If it says 8 days, run for 14. Starting a test: start on a Monday (beginning of a typical business cycle). Alternatively, start any day but commit to running full weeks. Avoid starting during holidays, product launches, or major marketing campaigns — these create abnormal traffic patterns that do not generalize. Ending a test: end after the pre-determined duration (calculated from sample size). Check results only after the test reaches the required sample size. If the test reaches the required sample size mid-week, run until the end of that week. Example timeline: Monday Feb 2: test starts. 50% of visitors see control, 50% see treatment. Sunday Feb 8: week 1 ends. DO NOT check results yet (sample size not reached). Sunday Feb 15: week 2 ends. Required sample size reached. Monday Feb 16: analyze results and make a decision. Seasonal considerations: do not test during Black Friday, holiday weeks, or major sales events. Traffic volume and user behavior are abnormal. Results will not generalize to normal periods. Exception: if you specifically want to optimize for holiday behavior, test during the holiday — but apply the results only to future holiday campaigns'"
+    weight: 0.35
+    description: "WeeklyCycles"
+  - type: llm_judge
+    criteria: "Response explains the peeking problem and pre-commitment — peeking: 'The peeking problem: Peeking means checking A/B test results before the predetermined sample size is reached and stopping the test early if the result looks significant. Why peeking is dangerous: at any point during a test, random fluctuations can make the treatment appear to win. Early in the test (small sample), these fluctuations are large. If you check every day and stop when p < 0.05, you are effectively running multiple tests, which inflates the false positive rate. Example: you run a 14-day test and check results daily. Day 3: treatment appears 15% better. p = 0.04. You stop and declare a winner. But this p-value is misleading because you checked 3 times. The actual false positive rate with 3 checks is approximately 14%, not 5%. If you check all 14 days: effective false positive rate is approximately 25-30%. You have a 1-in-4 chance of a false positive. Pre-commitment: the solution is to commit to the test parameters before starting. Pre-commit to: the sample size (calculated from MDE, alpha, power). The test duration (in complete weeks). The primary metric. The decision criteria. Write these down in a test plan BEFORE launching. Do not change them once the test starts. The only exceptions for early stopping: the treatment causes a critical bug or user experience failure (stop immediately). A guardrail metric degrades severely (stop and investigate). The business context changes fundamentally (e.g., a competitor launches a similar feature). In these cases, stop the test entirely — do not declare a winner'"
+    weight: 0.30
+    description: "Peeking"

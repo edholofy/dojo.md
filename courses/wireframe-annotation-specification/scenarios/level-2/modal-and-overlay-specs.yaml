@@ -1,0 +1,43 @@
+meta:
+  id: modal-and-overlay-specs
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Modal and overlay specifications — write specs for modals, drawers, popovers, and tooltips including layering, focus management, and dismissal behavior"
+  tags: [modals, drawers, overlays, focus-management, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "Our app has multiple types
+  of overlays and I'm not sure how to spec each one:
+
+  1. Confirmation modal: 'Delete this item?'
+  2. Form modal: 'Create new project' (full form inside)
+  3. Side drawer: 'Notification panel' (slides from right)
+  4. Popover: 'Share options' (small menu near a button)
+  5. Tooltip: 'This feature requires Pro plan'
+  6. Bottom sheet: 'Select option' (mobile only)
+  7. Full-screen modal: 'Image gallery' (takes over the page)
+
+  Developers ask about: stacking (what if a modal opens on
+  top of a drawer?), focus trapping, scroll locking, dismiss
+  behavior, animation, and keyboard shortcuts. How do I
+  specify all of this?"
+
+  Task: Write specifications for each overlay type including
+  behavior, focus management, and stacking rules.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies each overlay type with distinct behavior — Confirmation modal: centered, fixed size, overlay dims background, not dismissible by clicking outside (prevents accidental dismiss of destructive action), Escape closes (returns to cancel behavior), focus trapped inside, Tab cycles between Cancel and Confirm. Form modal: centered, larger size, scrollable content, overlay dismissible by clicking outside ONLY if no unsaved changes (else show 'Discard changes?' prompt), auto-focus first input. Side drawer: slides from right, partial overlay (background visible and dimmed), click outside or Escape to close, scrollable independently. Popover: positioned near trigger, no overlay, click outside or Escape to dismiss, auto-positioned to avoid viewport edges. Each type has distinct behavior specifications"
+    weight: 0.35
+    description: "OverlayTypeSpecs"
+  - type: llm_judge
+    criteria: "Response specifies focus management and keyboard behavior — focus trap: modals and drawers trap focus (Tab cycles within), popovers and tooltips don't trap focus. Focus on open: modals focus first interactive element (or close button for informational modals), drawers focus the drawer header or first interactive element, popovers focus first menu item. Focus on close: return focus to the trigger element that opened the overlay. Keyboard: Escape closes the topmost overlay only, Enter on trigger opens the overlay, arrow keys navigate within popovers and menus. Scroll lock: modals and full-screen modals lock background scroll, drawers lock background on mobile but not desktop, popovers don't lock scroll. Animation: modal fades in + scales up (200ms ease-out), drawer slides from right (300ms ease-out), popover fades in (150ms)"
+    weight: 0.35
+    description: "FocusKeyboardAnimation"
+  - type: llm_judge
+    criteria: "Response covers stacking and mobile behavior — stacking rules: maximum 2 overlays stacked (modal on top of drawer is allowed, but avoid modal on modal), each new overlay gets its own overlay layer with higher z-index, closing the top overlay reveals the one below. Mobile adaptations: popover becomes bottom sheet on mobile, form modal becomes full-screen on mobile (with close button, not overlay dismiss), tooltip shows on long-press instead of hover. Bottom sheet specification: slides up from bottom, drag handle for swipe-to-dismiss, snap points (half screen, full screen), velocity-based dismiss (fast swipe down dismisses, slow swipe snaps to nearest point)"
+    weight: 0.30
+    description: "StackingMobileBehavior"

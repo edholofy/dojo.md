@@ -1,0 +1,43 @@
+meta:
+  id: semantic-layer-design
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Design a semantic layer — implement dbt metrics, Looker LookML, or Cube.js to create a business-friendly abstraction over raw SQL that ensures consistent metric definitions"
+  tags: [SQL, semantic-layer, dbt, LookML, metrics, abstraction, master]
+
+state: {}
+
+trigger: |
+  The data team has built a solid data warehouse but analysts still
+  write inconsistent SQL. The same "customer churn" metric is
+  calculated 7 different ways across the company:
+
+  - Marketing: no purchase in 60 days
+  - Sales: no login in 30 days
+  - Finance: subscription cancelled
+  - Product: not active for 90 days
+  - Support: marked as churned in CRM
+  - Executive dashboard: combined all of the above (wrong)
+  - Board report: uses finance definition only
+
+  The CDO says: "I need one definition of churn that everyone uses.
+  Build a semantic layer so business users can query metrics without
+  writing SQL, and analysts who write SQL all reference the same
+  certified definitions."
+
+  Task: Design and implement the semantic layer.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response implements a semantic layer with certified metric definitions — semanticlayer: 'Semantic layer implementation: Step 1 — Define the canonical metric in dbt: In models/metrics/customer_churn.yml: metrics: - name: customer_churn_rate - label: Customer Churn Rate - description: Percentage of customers who had an active subscription at the start of the period and cancelled or did not renew by the end of the period. This is the board-approved definition. - type: ratio - type_params: - numerator: churned_customers - denominator: active_customers_at_start. In models/staging/stg_churned_customers.sql: WITH active_start AS (SELECT customer_id FROM subscriptions WHERE status = 'active' AND period_start = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')), active_end AS (SELECT customer_id FROM subscriptions WHERE status = 'active' AND period_start = DATE_TRUNC('month', CURRENT_DATE)), churned AS (SELECT a.customer_id FROM active_start a LEFT JOIN active_end e ON a.customer_id = e.customer_id WHERE e.customer_id IS NULL) SELECT COUNT(*) AS churned_customers, (SELECT COUNT(*) FROM active_start) AS active_at_start, ROUND(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM active_start), 0), 2) AS churn_rate FROM churned. Why this definition wins: subscription cancellation is the most objective measure. Login activity can vary seasonally. Purchase frequency depends on the product. Only subscription status is unambiguous and ties to revenue. Step 2 — Expose via SQL views for analysts: CREATE VIEW metrics.v_customer_churn AS SELECT DATE_TRUNC('month', period_start) AS month, segment, COUNT(CASE WHEN churned = true THEN 1 END) AS churned_customers, COUNT(*) AS starting_customers, ROUND(COUNT(CASE WHEN churned = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) AS churn_rate FROM analytics.fct_customer_retention GROUP BY 1, 2. Analysts write: SELECT * FROM metrics.v_customer_churn WHERE month >= '2025-01-01'. They cannot redefine churn — the view enforces the certified definition. Step 3 — Expose via BI tool for business users: in Looker LookML: measure: churn_rate { type: number, sql: ${churned_customers} / NULLIF(${starting_customers}, 0) * 100, description: Board-approved churn rate based on subscription cancellation }. Business users click the churn_rate measure — they do not need to know the SQL'"
+    weight: 0.35
+    description: "SemanticLayer"
+  - type: llm_judge
+    criteria: "Response covers metric versioning and conflict resolution — versioning: 'Metric versioning and conflict resolution: When definitions change: CREATE TABLE metric_versions (version_id SERIAL, metric_name TEXT, version_number INTEGER, definition_sql TEXT, rationale TEXT, approved_by TEXT, effective_date DATE, supersedes_version INTEGER, created_at TIMESTAMP DEFAULT NOW()). INSERT INTO metric_versions VALUES (DEFAULT, 'customer_churn_rate', 1, 'subscription cancelled', 'Original board-approved definition', 'CFO', '2024-01-01', NULL, NOW()), (DEFAULT, 'customer_churn_rate', 2, 'subscription cancelled OR no activity for 90 days on active subscription', 'Updated to catch involuntary churn from payment failures', 'CFO + CRO', '2025-06-01', 1, NOW()). Version 2 supersedes version 1. Historical reports before June 2025 use the old definition. Reports after June 2025 use the new definition. Both definitions are documented. Conflict resolution process: when marketing says churn should include 60-day inactivity: 1. Document the alternative definition and its use case. 2. Analyze the difference: SELECT v1.churn_rate AS subscription_churn, v2.churn_rate AS activity_churn, v2.churn_rate - v1.churn_rate AS difference FROM metrics.v_churn_subscription v1 JOIN metrics.v_churn_activity v2 ON v1.month = v2.month. 3. Present to the steering committee: subscription churn is 5%, activity-based churn is 12%. The 7% difference represents customers who are still paying but not using the product — these are at-risk, not churned. 4. Decision: maintain one certified churn metric (subscription-based) and create a separate health metric for at-risk customers. Both live in the semantic layer with clear labels. Derived metrics: allow teams to create derived metrics that reference certified base metrics. Marketing can create: marketing_qualified_churn = certified_churn WHERE acquisition_channel IN ('paid', 'organic'). The base metric is certified — the filter is the team's customization'"
+    weight: 0.35
+    description: "Versioning"
+  - type: llm_judge
+    criteria: "Explanation addresses adoption strategy and measuring semantic layer success — adoption: 'Semantic layer adoption strategy: Migration plan for 7 churn definitions: Week 1 — Audit: catalog all 7 definitions, their users, and the reports that use each. Week 2 — Alignment: stakeholder meeting to agree on the canonical definition. Bring data showing the business impact of inconsistency (for example, the board sees 5% churn but marketing reports 12% — the CEO loses confidence in all numbers). Week 3 — Implementation: build the semantic layer metric, create the SQL views, configure the BI tool. Week 4 — Migration: update all dashboards to reference the certified metric. Add a deprecation notice to old reports. Month 2 — Enforcement: disable direct SQL access to raw tables for non-analysts. All dashboard queries must go through the semantic layer. Measuring success: SELECT metric_name, COUNT(CASE WHEN source = 'semantic_layer' THEN 1 END) AS queries_via_semantic, COUNT(CASE WHEN source = 'direct_sql' THEN 1 END) AS queries_bypassing, ROUND(COUNT(CASE WHEN source = 'semantic_layer' THEN 1 END) * 100.0 / COUNT(*), 1) AS adoption_rate FROM query_audit_log WHERE metric_name = 'churn_rate' AND executed_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY metric_name. Target: 95% adoption within 3 months. Zero conflicting definitions in board materials. Time for finance to validate churn numbers drops from 3 days to 0 (it is always correct by definition). Leading indicator: number of data quality tickets related to inconsistent metrics. Should drop to zero. Lagging indicator: stakeholder confidence survey — do executives trust the numbers? Before: 40% trust. Target: 90% trust within 6 months'"
+    weight: 0.30
+    description: "Adoption"

@@ -1,0 +1,44 @@
+meta:
+  id: alert-governance-compliance
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Establish alert governance and compliance — design governance processes for alert management that satisfy SOC 2 and regulatory requirements"
+  tags: [monitoring, governance, compliance, SOC2, audit, expert]
+
+state: {}
+
+trigger: |
+  Your company is preparing for a SOC 2 Type II audit. The auditors
+  will examine your monitoring and incident response practices. They
+  want evidence of:
+
+  1. Continuous monitoring of production systems
+  2. Defined alert thresholds and escalation procedures
+  3. Timely detection and response to incidents
+  4. Evidence that monitoring is reviewed and updated regularly
+  5. Documentation of all alerts, responses, and resolutions
+
+  Your current state: monitoring exists but the governance around it
+  is informal. Alerts are created ad-hoc, escalation is verbal,
+  response times are not tracked, and there is no audit trail of
+  alert changes.
+
+  Task: Design a monitoring governance framework that satisfies SOC 2
+  requirements. Include: documentation standards, audit trail
+  requirements, evidence collection, and the review processes that
+  demonstrate continuous improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Governance framework maps SOC 2 requirements to monitoring practices — SOC 2 mapping: 'SOC 2 Trust Service Criteria relevant to monitoring: CC7.2 (monitoring of system components): the entity monitors system components and the operation of those components for anomalies. Evidence needed: documentation of what is monitored, alert configurations, and detection coverage. Our governance: every production service has a defined monitoring profile listing: metrics collected, alert rules configured, SLOs defined, and coverage assessment (what failure modes are monitored and what gaps exist). CC7.3 (evaluation of detected events): the entity evaluates detected events to determine whether they constitute incidents. Evidence needed: process for triaging and classifying alerts, escalation procedures. Our governance: severity classification matrix, escalation procedures documented and accessible, all alert responses logged with triage decisions. CC7.4 (response to identified incidents): the entity responds to identified incidents. Evidence needed: incident response procedures, evidence of timely response. Our governance: MTTA and MTTR tracked for all paging alerts. Monthly reports demonstrate compliance with response time targets.' Documentation standards: 'Every alert rule must have: a unique identifier (for audit reference), a description of what it detects, the threshold and conditions, the severity level, the escalation path, a linked runbook, the owning team, and the creation/last-modified date. This documentation is versioned — changes to alert rules are tracked in version control with change reasons'"
+    weight: 0.35
+    description: "SOC 2 governance mapping"
+  - type: llm_judge
+    criteria: "Audit trail and evidence collection are comprehensive — audit trail requirements: '(1) Alert configuration changes: every change to an alert rule (threshold adjustment, creation, deletion, severity change) is logged with: who made the change, when, what changed, and why (change reason is mandatory). Implementation: store alert configurations in version control (Git). Every change requires a PR with a description. This provides an immutable audit trail that auditors can review. (2) Alert firing and response: every alert that fires is logged with: timestamp, alert details, acknowledgment timestamp, responding engineer, actions taken, resolution timestamp, and outcome. Implementation: PagerDuty provides this automatically for paged alerts. For non-paged alerts, the monitoring system logs firing events. (3) Escalation evidence: every escalation is logged with: who escalated, to whom, when, and why. Implementation: PagerDuty escalation logs provide this. Manual escalations are documented in incident channels. (4) Monitoring review evidence: quarterly alert audits are documented with: which alerts were reviewed, what changes were made, what the actionable rates were, and what improvements were identified.' Evidence collection process: 'SOC 2 evidence is collected automatically where possible: PagerDuty reports for response times and escalation (automated). Git history for alert configuration changes (automated). Monitoring system reports for alert volumes and patterns (automated). Quarterly audit reports for review process evidence (manual but templated). Evidence is stored in a compliance evidence repository with controlled access. Retention: 12 months minimum (matching SOC 2 Type II audit window)'"
+    weight: 0.35
+    description: "Audit trail and evidence"
+  - type: llm_judge
+    criteria: "Review processes demonstrate continuous improvement — review processes: '(1) Monthly operational review (documented): SRE team reviews: alert volumes by team, actionable rates, MTTA and MTTR trends, top false positive alerts. Output: documented meeting notes with action items. Demonstrates to auditors: the organization regularly evaluates monitoring effectiveness. (2) Quarterly alert audit (documented): comprehensive review of all alert rules: are they still relevant? Are thresholds appropriate? Are runbooks current? Output: audit report listing alerts reviewed, changes made, and alerts retired. Demonstrates to auditors: alert configurations are actively maintained, not set-and-forget. (3) Annual monitoring strategy review (documented): review of the overall monitoring architecture, tool effectiveness, and alignment with business objectives. Output: strategy document with recommendations and investment plan. Demonstrates to auditors: monitoring is treated as a strategic capability with ongoing investment. (4) Post-incident monitoring review: every postmortem includes a monitoring assessment. Was the alert timely? Were the dashboards useful? Were there gaps? Output: documented in the postmortem. Demonstrates to auditors: every incident is an opportunity to improve monitoring.' Continuous improvement evidence: 'Track and report: MTTA trend over time (should be improving or stable). Actionable rate trend (should be improving). Mean time to detect (MTTD) trend. Number of incidents detected by monitoring vs. by customers (target: 95%+ detected by monitoring). Alert coverage: percentage of services with monitoring profiles meeting the standard. These metrics, reported quarterly, provide auditors with clear evidence that the monitoring program is continuously improving, not just maintaining'"
+    weight: 0.30
+    description: "Continuous improvement evidence"

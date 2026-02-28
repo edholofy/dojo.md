@@ -1,0 +1,37 @@
+meta:
+  id: metric-definitions
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Document metric definitions — create unambiguous, versioned definitions for every KPI so all stakeholders agree on what each number means"
+  tags: [metric-definitions, documentation, consistency, data-dictionary, intermediate]
+
+state: {}
+
+trigger: |
+  The board meeting goes sideways when the CFO presents $4.8M MRR
+  and the VP of Sales presents $5.2M MRR. Both claim their number
+  is correct. Investigation reveals:
+
+  - The CFO's MRR includes only invoiced subscriptions
+  - Sales includes committed contracts not yet invoiced
+  - Marketing has a third definition that includes free trials
+
+  The CEO: "I can't trust any number if the same metric means three
+  different things. Fix this."
+
+  Task: Design a metric definition framework that prevents this.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a comprehensive metric definition template — template: 'Metric definition framework: Every KPI must have a documented definition that answers 7 questions: 1. What does it measure? (plain English description). 2. How is it calculated? (exact formula with SQL or pseudocode). 3. What is included? (explicit list of what counts). 4. What is excluded? (explicit list of what does not count). 5. Who owns it? (one person responsible for its accuracy). 6. When is it updated? (refresh frequency). 7. Where does the data come from? (source system). MRR definition example: Name: Monthly Recurring Revenue (MRR). Description: The total predictable recurring revenue normalized to a monthly amount from all active paid subscriptions. Calculation: SUM(subscription_amount / billing_period_months) WHERE status = active AND type = paid AND effective_date <= report_date. Includes: annual subscriptions prorated to monthly, quarterly subscriptions prorated, monthly subscriptions at face value, plan upgrades effective immediately. Excludes: free trials (not paid), committed contracts not yet invoiced (not yet active), one-time setup fees (not recurring), usage-based charges (not predictable). Owner: Director of Finance. Updated: daily at 2 AM UTC. Source: billing system (Stripe subscription table). Certified by: CFO, certified on Jan 15, 2026. The CFO's number ($4.8M) matches this definition. The VP of Sales' number ($5.2M) includes committed contracts — those belong in a separate metric called Contracted MRR or Pipeline MRR'"
+    weight: 0.35
+    description: "Template"
+  - type: llm_judge
+    criteria: "Response covers the certification process and conflict resolution — certification: 'Metric certification process: Step 1 — Propose: the metric owner drafts the definition using the 7-question template. Step 2 — Review: the data team verifies the calculation is technically correct and reproducible. They run the SQL and confirm it returns the expected number. Step 3 — Align: stakeholders review the definition. If Sales and Finance disagree on what MRR includes, this is where the debate happens — not in the board meeting. Step 4 — Certify: the executive sponsor (CFO for financial metrics, CPO for product metrics) signs off. The metric is now the official definition. Step 5 — Publish: the certified definition is added to the data dictionary, visible to everyone. All dashboards must use this definition. No exceptions. Conflict resolution: when two teams want different definitions, do not choose one and reject the other. Instead, create separate metrics with clear names: MRR (Invoiced) — the CFO's definition. Used for financial reporting and the board. Contracted MRR — includes committed but not yet invoiced deals. Used by Sales for pipeline tracking. Trial Conversion Pipeline — includes free trial users. Used by Marketing for conversion analysis. Each metric has a different name, different owner, and different use case. They are not conflicting — they are complementary. The board deck uses MRR (Invoiced). The sales forecast uses Contracted MRR. No confusion'"
+    weight: 0.35
+    description: "Certification"
+  - type: llm_judge
+    criteria: "Explanation includes how to display metric definitions on dashboards — display: 'Displaying metric definitions on dashboards: Every metric on a dashboard should have an accessible definition. Methods: 1. Tooltip on hover: hover over the MRR number and a tooltip appears with the definition, calculation, last updated time, and data source. This is the least intrusive method — the definition is available but does not clutter the dashboard. 2. Info icon: a small i icon next to each metric. Click to see the full definition in a modal or side panel. 3. Dashboard footer: a section at the bottom listing definitions for all metrics shown. Example: MRR = sum of active paid subscription amounts, prorated to monthly. Excludes trials and one-time charges. Source: Stripe. Updated daily at 2 AM. 4. Linked data dictionary: a link from each metric to the centralized data dictionary page where the full 7-question definition lives. Best practice: always show the data source and last updated time near the metric. This answers the two most common questions: where does this number come from? and how fresh is it? Versioning: when a definition changes, maintain history. MRR v1 (Jan 2024 - Dec 2025): included all subscriptions. MRR v2 (Jan 2026 - present): excludes trial conversions in the first billing cycle. Historical comparisons must note the definition change. If MRR v2 is 5% lower than v1 for the same data, the board needs to know this is a definition change, not a revenue decline'"
+    weight: 0.30
+    description: "Display"

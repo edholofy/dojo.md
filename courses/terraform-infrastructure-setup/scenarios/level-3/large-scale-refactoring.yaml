@@ -1,0 +1,59 @@
+meta:
+  id: large-scale-refactoring
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Refactor large Terraform codebases — split monoliths into modules, migrate between state files, and use moved blocks for safe resource reorganization"
+  tags: [Terraform, refactoring, modules, moved-blocks, migration, advanced]
+
+state: {}
+
+trigger: |
+  Your organization's Terraform codebase has grown organically over
+  3 years into a monolith:
+
+  ```
+  infrastructure/
+  ├── main.tf           (3500 lines, 180 resources)
+  ├── variables.tf      (800 lines, 95 variables)
+  ├── outputs.tf        (200 lines)
+  └── terraform.tfstate (25MB, all resources in one state)
+  ```
+
+  Problems:
+  - terraform plan takes 8 minutes (refreshes all 180 resources)
+  - Any change risks all resources (blast radius = everything)
+  - 5 teams touch the same files, causing merge conflicts
+  - Lock contention: only one person can run terraform at a time
+
+  Target architecture:
+  ```
+  infrastructure/
+  ├── foundation/          (VPC, DNS, IAM — Platform team)
+  │   └── terraform.tfstate
+  ├── database/            (RDS, ElastiCache — Database team)
+  │   └── terraform.tfstate
+  ├── compute/             (ECS, ALB — App team)
+  │   └── terraform.tfstate
+  ├── monitoring/          (CloudWatch, Alarms — SRE team)
+  │   └── terraform.tfstate
+  └── modules/             (Shared modules)
+  ```
+
+  Task: Design the migration strategy from monolith to modular
+  Terraform, covering state splitting, moved blocks, cross-state
+  references, testing the migration, and rollback planning.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration strategy is phased — Phase 1: catalog all resources by team/domain. Phase 2: create module structure and write configurations for each domain. Phase 3: use moved blocks within the monolith to reorganize into modules (no state split yet). Phase 4: split state files using state mv or state rm + import. Phase 5: establish cross-state references using terraform_remote_state data sources. Each phase is independently verifiable: plan should show no changes after each phase. Never do everything at once — incremental migration with verification"
+    weight: 0.35
+    description: "Migration strategy"
+  - type: llm_judge
+    criteria: "State splitting mechanics are covered — approach 1 (state mv): (1) backup state, (2) create new backend configs, (3) terraform state mv resources to new state files. Approach 2 (state rm + import): (1) remove resources from monolith state, (2) import into new domain state files. Approach 3 (manual): (1) state pull, (2) edit JSON to split resources, (3) state push to new backends. Cross-state references: foundation outputs VPC ID, compute reads it via terraform_remote_state. IAM and dependency order: foundation first (VPC, IAM), then database (needs VPC), then compute (needs both)"
+    weight: 0.35
+    description: "State splitting"
+  - type: llm_judge
+    criteria: "Testing and rollback are practical — testing: after each migration step, terraform plan must show zero changes in all state files. If plan shows changes, something was migrated incorrectly — fix before proceeding. Rollback: keep the original monolith state backup throughout migration. If anything goes wrong, restore from backup and restart the phase. Timeline: for 180 resources, plan 2-4 weeks. Risk mitigation: migrate non-production first, then production during maintenance window. Communication: notify all teams of the plan, freeze non-essential changes during migration"
+    weight: 0.30
+    description: "Testing and rollback"

@@ -1,0 +1,43 @@
+meta:
+  id: typography-for-data
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography for data — select and configure typefaces for data-heavy interfaces including tables, dashboards, and numbers"
+  tags: [data-typography, tables, numbers, monospace, intermediate]
+
+state: {}
+
+trigger: |
+  A data platform designer says: "Our analytics dashboard
+  displays lots of numbers, tables, and metrics. Current
+  problems:
+
+  1. Numbers in tables don't align vertically — the
+     columns look ragged (1,234 vs 987 vs 12,345,678)
+  2. Small metric labels under big numbers are hard to
+     read (10px light gray)
+  3. Long table rows blur together — hard to track across
+     columns
+  4. Our proportional font (Inter) makes numbers jump
+     around when values update in real-time
+
+  What typography choices work best for data-heavy
+  interfaces and why?"
+
+  Task: Design a typography system optimized for data
+  display with rationale for each decision.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses number display typography — tabular/monospace figures vs proportional figures (tabular figures have uniform width so columns align perfectly — enable with CSS font-variant-numeric: tabular-nums, Inter supports this as OpenType feature, or use a monospace font for numbers), font recommendations for data (Inter with tabular figures enabled, IBM Plex Mono for pure number displays, Roboto Mono for dashboards — monospace fonts ensure consistent column alignment and smooth real-time updates without layout shift), number formatting (thousands separators, consistent decimal places, right-alignment for numeric columns — typography alone isn't enough, formatting conventions matter), and real-time update handling (tabular figures prevent numbers from shifting position when values change — '999' and '111' occupy the same width, eliminating visual jumping)."
+    weight: 0.35
+    description: "NumberTypography"
+  - type: llm_judge
+    criteria: "Response designs complete data typography system — metric displays (large number: 32-48px semibold with tabular figures, label underneath: 12-14px regular in secondary color with sufficient contrast — not 10px light gray which fails readability, unit indicators: same size as label or slightly smaller, trend indicators: colored text or arrow icons), table typography (column headers: 12-13px uppercase or semibold — clearly differentiated from data rows, data cells: 14px regular with tabular figures for numbers, row height: at least 48px for comfortable reading and click targets, zebra striping or subtle borders to track across columns — addresses blur problem), dashboard cards (primary metric: large, bold, tabular figures, secondary context: smaller but readable, sparklines or trends: appropriate spacing from numbers), and hierarchy within data (most important numbers larger and bolder, supporting data smaller but never below 12px)."
+    weight: 0.35
+    description: "DataTypographySystem"
+  - type: llm_judge
+    criteria: "Response provides rationale and documentation — rationale for each choice (why tabular figures solve alignment, why minimum 12px for metric labels, why zebra striping helps eye tracking across wide tables), design tokens for data typography (define as named tokens: --font-data-primary for main metrics, --font-data-table for table cells, --font-data-label for captions — enables consistent application), CSS implementation notes (font-variant-numeric: tabular-nums for number alignment, font-feature-settings for OpenType features, letter-spacing adjustments for all-caps labels), and testing checklist (verify alignment with real data of varying lengths, test with large numbers and small numbers in same column, test real-time updates for layout stability, verify all text meets minimum contrast ratios, test at different zoom levels)."
+    weight: 0.30
+    description: "RationaleAndDocs"

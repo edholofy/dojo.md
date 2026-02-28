@@ -1,0 +1,59 @@
+meta:
+  id: ma-monitoring-integration
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Navigate M&A monitoring integration — plan the monitoring consolidation when acquiring or merging with another company's technology stack"
+  tags: [monitoring, M&A, integration, consolidation, due-diligence, master]
+
+state: {}
+
+trigger: |
+  Your company (Company A, $300M ARR) is acquiring a smaller company
+  (Company B, $50M ARR). As the VP of Platform Engineering, you must
+  plan the monitoring integration. Due diligence revealed:
+
+  Company A (acquirer) monitoring:
+  - Mature Grafana/Prometheus/Loki stack
+  - 200 microservices with SLOs defined
+  - PagerDuty for on-call with follow-the-sun rotation
+  - Monitoring spend: $2M/year
+  - MTTD: 2 minutes, MTTR: 20 minutes
+  - 20 SREs maintaining the platform
+
+  Company B (acquired) monitoring:
+  - Datadog for everything (metrics, logs, APM)
+  - 40 microservices, no SLOs defined
+  - OpsGenie for on-call (single US timezone team)
+  - Monitoring spend: $600K/year (high per-service cost)
+  - MTTD: 12 minutes, MTTR: 90 minutes
+  - 3 engineers doing DevOps part-time (no dedicated SRE)
+
+  Integration challenges:
+  - Company B's product will be offered alongside Company A's product
+    (not merged into one codebase)
+  - Company B's customers expect the same reliability they had before
+  - Company B's engineers are anxious about changes to their tools
+  - The CFO wants to reduce combined monitoring costs
+  - Company B has no documentation of their monitoring setup
+
+  Timeline: 12 months to complete integration
+  Budget: $400K for integration (one-time)
+
+  Task: Design the 12-month monitoring integration plan. Address:
+  the phased approach, cost optimization, cultural integration, and
+  risk mitigation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Integration approach is phased with clear priorities — phased plan: 'Integration principles: (1) Do no harm. Company B's customers must not experience degraded reliability during integration. This means: maintain Company B's existing monitoring until the replacement is proven. Run old and new monitoring in parallel during migration. Never cut over without validation from Company B's engineers. (2) People first, tools second. Company B's 3 DevOps engineers are the institutional knowledge. If they leave, integration becomes much harder. Invest in their onboarding and integration before changing tools. (3) Standardize, do not compromise. The target is Company A's standards applied to Company B's services. Do not create a third hybrid standard. Phase 1 (months 1-3): Discovery and stabilization. Month 1: Document Company B's monitoring. Company B has no documentation. Before changing anything, document: what is monitored, what alerts exist, what the on-call rotation looks like, what dashboards exist, and what the incident response process is. Assign 2 Company A SREs to work with Company B's 3 DevOps engineers. This is a knowledge transfer — Company A learns Company B's system, Company B learns Company A's standards. Month 2-3: Quick wins without migration. Define SLOs for Company B's top 5 customer-facing services (this does not require changing tools — SLOs can be defined and measured in Datadog). Integrate Company B's OpsGenie alerts into Company A's PagerDuty (route Company B alerts to PagerDuty via OpsGenie-to-PagerDuty integration, maintaining both tools temporarily). Add Company B's high-level health metrics to Company A's global dashboard (Datadog API → Grafana data source). Milestone: unified incident visibility, SLOs for top 5 Company B services, documented Company B monitoring. Phase 2 (months 4-6): Platform migration. Month 4: Deploy OpenTelemetry to Company B services. Instrument Company B's 40 microservices with OpenTelemetry. Send data to both Datadog (existing) and Company A's Grafana stack (new). This dual-shipping approach means both systems receive the same data — comparison is possible. Month 5-6: Migrate monitoring in batches. Batch 1 (month 5): 10 non-critical services. Build Grafana dashboards and alerts equivalent to Datadog for these services. Validate: are the same issues detected? Is investigation capability equivalent? Company B engineers confirm the new monitoring is acceptable. Batch 2 (month 6): 15 more services, including some customer-facing. Same validation process. Milestone: 25 of 40 Company B services migrated, running on Company A stack with Datadog still active as safety net. Phase 3 (months 7-9): Complete migration and optimization. Month 7: Migrate remaining 15 services. Month 8: Decommission Datadog (after 4-week parallel period with zero Company B alerts only firing in Datadog). Decommission OpsGenie (all routing through PagerDuty). Month 9: Extend Company B on-call to follow-the-sun (if Company B's team is in a single timezone, pair them with Company A's existing follow-the-sun rotation for after-hours coverage). Milestone: all Company B services on Company A's monitoring platform. Datadog and OpsGenie decommissioned. Phase 4 (months 10-12): Optimization and maturity. Month 10-11: Complete SLO coverage for all Company B services. Implement Company A's alerting standards (runbook coverage, actionable rate requirements) for Company B services. Month 12: Cost optimization — now that everything is on one platform, optimize log volumes, metric cardinality, and trace sampling for Company B services. Final audit: Company B services meet Company A's monitoring maturity standards. Milestone: fully integrated monitoring with Company A standards'"
+    weight: 0.35
+    description: "Phased integration plan"
+  - type: llm_judge
+    criteria: "Cost optimization achieves CFO goals — cost analysis: 'Current combined cost: Company A: $2M/year. Company B: $600K/year. Total: $2.6M/year + $400K one-time integration budget. Year 1 cost (during integration): Company A monitoring: $2M (unchanged). Company B Datadog: $600K (maintained during months 1-8). Company B on Company A platform: $150K incremental (additional resources for 40 more services). Integration work: $400K one-time. Year 1 total: $3.15M (higher during transition due to dual-running). Year 2 cost (post-integration, steady state): Company A platform (now serving 240 services): $2.3M (15% increase for 20% more services — efficiency of shared platform). Datadog: $0 (decommissioned). OpsGenie: $0 (decommissioned). Year 2 total: $2.3M. Savings: $2.6M (pre-acquisition combined) - $2.3M (post-integration) = $300K/year ongoing savings (12% reduction). Where the savings come from: (1) Datadog elimination: $600K/year saved. Datadog pricing is per-host and per-feature — it is expensive at Company B's scale relative to Company A's platform costs. (2) OpsGenie elimination: $30K/year saved (migrated to PagerDuty at marginal cost). (3) Platform efficiency: adding 40 services to an existing 200-service platform costs incrementally less than running a separate platform. (4) Partially offset by: increased Company A platform infrastructure to handle additional load (+$300K), slight PagerDuty cost increase (+$30K). CFO summary: one-time investment of $400K. Ongoing annual savings of $300K/year. Payback period: 16 months. Additional non-financial value: Company B services now benefit from Company A's mature monitoring (SLOs, better MTTD/MTTR, follow-the-sun coverage). Company B's MTTR improvement from 90 minutes to under 30 minutes reduces customer impact and potential churn for Company B's $50M ARR customer base'"
+    weight: 0.35
+    description: "Cost optimization"
+  - type: llm_judge
+    criteria: "Cultural integration and risk mitigation addressed — culture and risk: 'Cultural integration: (1) Company B engineer onboarding. Company B's 3 DevOps engineers are transitioning from Datadog (which they know well) to Grafana/Prometheus (which they do not know). Training plan: Week 1: Prometheus and PromQL fundamentals (4-hour workshop + hands-on exercises). Week 2: Grafana dashboarding and alerting (4-hour workshop). Week 3: Loki and LogQL for log investigation (4-hour workshop). Week 4: OpenTelemetry instrumentation and tracing (4-hour workshop). Ongoing: each Company B engineer is paired with a Company A SRE mentor for 3 months. The mentors help with real-world problems, not just training materials. (2) Preserving Company B's knowledge. Company B's engineers know their services better than anyone. Their knowledge must be captured before any tools change. Requirement: Company B engineers lead the dashboard and alert creation for their services on the new platform. Company A SREs assist with the tooling, but Company B engineers define what to monitor and what to alert on. This preserves domain knowledge and gives Company B engineers ownership of their monitoring on the new platform. (3) Managing anxiety. Company B engineers are anxious about changes. Address this directly: no one is losing their job because of monitoring consolidation. The goal is to give Company B services better monitoring, not to replace Company B engineers. Company B engineers who learn Company A's platform become the experts on their services within the larger organization. (4) Title and role alignment. Company B's DevOps part-time monitoring will become dedicated SRE practice. Consider offering Company B engineers SRE titles and formal SRE career paths within Company A. This is a career upgrade, not a lateral move. Risk mitigation: (1) Knowledge loss risk. If Company B engineers leave before knowledge transfer: all monitoring documentation from Phase 1 mitigates this, but it is not a complete replacement for institutional knowledge. Retention bonuses for Company B's DevOps engineers through the 12-month integration period. (2) Customer impact risk. If Company B's monitoring degrades during migration: parallel running of Datadog and Company A's platform for every batch of migrated services. Rollback plan: if the new monitoring misses issues, revert to Datadog for affected services immediately. Customer-facing SLO monitoring is the last thing to migrate, not the first. (3) Timeline risk. 12 months is ambitious for full integration. Build in buffers: each phase has 1 month of contingency. If Phase 2 migration takes longer, Phase 3 absorbs the delay. The hard deadline is Datadog contract renewal (negotiate a short-term renewal if needed rather than rushing migration). (4) Integration fatigue. Company B's team is also integrating their codebase, processes, and culture with Company A. Monitoring migration is one of many changes. Be sensitive to change fatigue: do not force all changes simultaneously. If Company B is in the middle of a major product integration, delay non-critical monitoring migration work'"
+    weight: 0.30
+    description: "Culture and risk"

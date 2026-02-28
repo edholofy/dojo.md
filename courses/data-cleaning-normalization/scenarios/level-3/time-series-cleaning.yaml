@@ -1,0 +1,41 @@
+meta:
+  id: time-series-cleaning
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Time series data cleaning — handle gaps, irregular intervals, anomalous spikes, and seasonality-aware cleaning for temporal data"
+  tags: [time-series, temporal, gaps, interpolation, seasonality, advanced]
+
+state: {}
+
+trigger: |
+  A data engineer says: "I'm cleaning IoT sensor data for a manufacturing
+  analytics project. The data has:
+  - 50 sensors reporting every 5 seconds — that's 864,000 readings/day
+  - Missing readings when sensors go offline (gaps of minutes to hours)
+  - Duplicate timestamps (sensor sends data twice during reconnection)
+  - Anomalous spikes (sensor reads 10x normal value for 1 reading)
+  - Gradual sensor drift (readings slowly shift over weeks)
+  - Clock skew between sensors (timestamps off by seconds)
+
+  Regular data cleaning techniques don't work well here because the
+  data has temporal dependencies — adjacent readings should be similar,
+  and there are daily and weekly patterns I need to preserve."
+
+  Task: Design a time series-specific data cleaning pipeline that handles
+  temporal gaps, anomalies, duplicates, and sensor drift while preserving
+  meaningful temporal patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses temporal gap handling — detecting gaps (identifying periods where expected readings are missing), categorizing gaps by duration (short gaps vs long outages), interpolation methods for short gaps (linear interpolation, spline interpolation, forward-fill, time-weighted interpolation), handling long gaps (flag as missing periods rather than interpolating, avoid creating fake data across large gaps), and resampling to regular intervals when readings arrive at irregular times. Explains why time-series interpolation is different from tabular data imputation"
+    weight: 0.35
+    description: "GapHandling"
+  - type: llm_judge
+    criteria: "Response addresses temporal anomaly detection — distinguishing between sudden spikes (likely sensor glitches — one reading dramatically different from neighbors) and genuine events (a real temperature spike from a process change), using rolling statistics for anomaly detection (a reading that's >3 standard deviations from a rolling mean is suspicious), handling duplicate timestamps (keep the first reading, or average if values differ slightly), and detecting gradual drift (monitoring the rolling mean trend and comparing to calibration baselines). Preserves seasonality while detecting anomalies"
+    weight: 0.35
+    description: "TemporalAnomalies"
+  - type: llm_judge
+    criteria: "Response covers time-series-specific considerations — clock synchronization (aligning timestamps across 50 sensors with clock skew), maintaining temporal order (cleaning operations should not reorder data), preserving seasonal patterns (don't smooth away real daily/weekly cycles), handling different sampling rates (some sensors may report at different frequencies), and the concept of time-aware imputation (fill missing values based on what values looked like at the same time of day or day of week)"
+    weight: 0.30
+    description: "TemporalConsiderations"

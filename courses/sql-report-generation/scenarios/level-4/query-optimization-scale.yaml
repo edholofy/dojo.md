@@ -1,0 +1,44 @@
+meta:
+  id: query-optimization-scale
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Optimize reports at scale — rewrite slow queries against billion-row tables using partitioning, indexing strategies, execution plan analysis, and materialized aggregations"
+  tags: [SQL, optimization, partitioning, indexes, EXPLAIN, billion-row, advanced]
+
+state: {}
+
+trigger: |
+  The monthly revenue report against the 2-billion-row orders table
+  takes 47 minutes. The BI tool times out after 10 minutes, so
+  finance manually runs the query in a SQL client and copies results
+  into a spreadsheet.
+
+  Current query: SELECT DATE_TRUNC('month', order_date) AS month,
+  region, product_category, COUNT(*) AS orders, SUM(amount) AS revenue,
+  AVG(amount) AS avg_order FROM orders WHERE order_date >= '2024-01-01'
+  AND status = 'completed' GROUP BY 1, 2, 3 ORDER BY 1, 2, 3.
+
+  EXPLAIN ANALYZE shows: Seq Scan on orders, cost=0..85000000,
+  actual time=1200000ms, rows returned=2.1 billion, filter removed
+  800 million rows. Sort uses 12GB memory, spills to disk.
+
+  The table has no indexes except the primary key on order_id.
+  Partitioning is not currently set up.
+
+  Task: Redesign this query and its supporting infrastructure to
+  run in under 30 seconds.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides comprehensive indexing and partitioning strategy — indexing: 'Query optimization for billion-row tables: Step 1 — Add targeted indexes: CREATE INDEX idx_orders_date_status ON orders(order_date, status) WHERE status = 'completed'. This partial index covers only completed orders (about 60% of the table). The WHERE clause on the index matches the WHERE clause in the query, so PostgreSQL uses the index efficiently. CREATE INDEX idx_orders_reporting ON orders(order_date, region, product_category, amount) WHERE status = 'completed'. This covering index includes all columns the query needs — PostgreSQL can answer the query entirely from the index without touching the table (index-only scan). Step 2 — Partition the table by date: CREATE TABLE orders_partitioned (LIKE orders INCLUDING ALL) PARTITION BY RANGE (order_date). CREATE TABLE orders_2024_q1 PARTITION OF orders_partitioned FOR VALUES FROM ('2024-01-01') TO ('2024-04-01'). CREATE TABLE orders_2024_q2 PARTITION OF orders_partitioned FOR VALUES FROM ('2024-04-01') TO ('2024-07-01'). (Create partitions for each quarter or month). With range partitioning on order_date, the query WHERE order_date >= '2024-01-01' only scans the relevant partitions — partition pruning eliminates 80% of the data before the scan begins. Step 3 — Verify with EXPLAIN: EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) SELECT ... The plan should now show: Index Only Scan on idx_orders_reporting, partitions scanned: orders_2024_q1..orders_2024_q4, actual time reduced from 1200 seconds to under 10 seconds'"
+    weight: 0.35
+    description: "Indexing"
+  - type: llm_judge
+    criteria: "Response includes pre-aggregation and materialized view strategy — preagg: 'Pre-aggregation layer: For reports that are run repeatedly, pre-compute the aggregations: CREATE MATERIALIZED VIEW mv_monthly_revenue AS SELECT DATE_TRUNC('month', order_date) AS month, region, product_category, COUNT(*) AS orders, SUM(amount) AS revenue, ROUND(AVG(amount), 2) AS avg_order FROM orders WHERE status = 'completed' GROUP BY 1, 2, 3 WITH DATA. CREATE UNIQUE INDEX idx_mv_monthly ON mv_monthly_revenue(month, region, product_category). The materialized view contains thousands of rows (one per month-region-category combination) instead of 2 billion. Dashboard queries against the materialized view return in milliseconds. Refresh strategy: REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_revenue. Schedule nightly using pg_cron: SELECT cron.schedule('0 4 * * *', 'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_revenue'). For SQL Server: create an indexed view or maintain a summary table updated via triggers. Incremental aggregation: instead of full refresh, maintain a running summary table. INSERT INTO monthly_revenue_summary SELECT ... FROM orders WHERE order_date >= (SELECT MAX(last_processed_date) FROM refresh_log). Only processes new rows since last refresh. For the 2B-row table, this means processing thousands of new rows per hour instead of billions'"
+    weight: 0.35
+    description: "Preagg"
+  - type: llm_judge
+    criteria: "Explanation covers query rewriting techniques and hardware considerations — rewriting: 'Query rewriting optimizations: Replace expensive aggregations with approximate functions for exploratory reports: SELECT region, APPROX_COUNT_DISTINCT(customer_id) AS approx_customers FROM orders GROUP BY region. Approximate functions trade accuracy (within 2-3%) for 10-100x speed improvement. Use parallel query execution: SET max_parallel_workers_per_gather = 8. PostgreSQL can split a sequential scan across 8 workers — an 8x speedup on multi-core servers. Rewrite to avoid sorting when possible: if the query uses ORDER BY on the GROUP BY columns, the aggregation already produces grouped output — avoid redundant sorts. Hardware tuning: SET work_mem = '2GB' for this session (allows in-memory sorts instead of disk spills). SET effective_cache_size = '32GB' (tells the planner how much OS cache is available). For production: use columnar storage extensions (cstore_fdw, Citus columnar) for analytic workloads — columnar storage reads only the columns needed, reducing I/O by 80% for wide tables. Decision framework: under 1M rows — indexes are sufficient. 1M-100M rows — partitioning plus indexes. 100M-1B rows — materialized views plus partitioning. Over 1B rows — consider a dedicated analytics database (ClickHouse, DuckDB, BigQuery) with CDC replication from the OLTP source'"
+    weight: 0.30
+    description: "Rewriting"

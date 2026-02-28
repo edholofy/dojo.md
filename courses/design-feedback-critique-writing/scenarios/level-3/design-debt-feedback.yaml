@@ -1,0 +1,50 @@
+meta:
+  id: design-debt-feedback
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Design debt feedback — identify and communicate design debt that has accumulated over time in a product"
+  tags: [design-debt, technical-debt, consistency, degradation, advanced]
+
+state: {}
+
+trigger: |
+  A product director asks: "Our app has grown over 4
+  years and the design feels 'off' but nobody can
+  articulate why. Can you do an audit and tell us
+  what's wrong?"
+
+  After reviewing the product, you identify design debt:
+
+  1. 3 different button styles (old round, new square,
+     hybrid) used inconsistently across pages
+  2. Settings pages use a different layout pattern than
+     the rest of the app — legacy design never updated
+  3. 12 colors used for 'primary actions' — originally
+     blue, evolved to include teal, indigo, and purple
+     across different features
+  4. Some modals are centered overlays, others are slide-
+     in panels, others are full-page takeovers — no
+     pattern for when to use which
+  5. Error handling varies: some pages show inline errors,
+     some show toast notifications, some show alert
+     modals — for the same types of errors
+  6. Typography has drifted from the original spec — 8
+     font sizes where the spec defined 5
+
+  Task: Write a design debt assessment with prioritized
+  remediation recommendations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response frames design debt effectively — what design debt is (accumulated design inconsistencies from: features built by different designers over time, quick fixes that were never standardized, design system not enforced or updated, natural evolution without periodic consolidation — similar to technical debt), how it impacts users (cognitive load increases: users must learn different patterns for the same actions across pages, trust erosion: inconsistency makes the product feel unreliable or unprofessional — even if subconsciously, increased error rates: when error handling is inconsistent, users don't develop reliable mental models for recovery), how it impacts the business (slower development: every new feature requires deciding which pattern to follow, higher support costs: more user confusion = more support tickets, harder onboarding: new designers and developers must learn all the variations instead of one system)."
+    weight: 0.35
+    description: "DesignDebtFraming"
+  - type: llm_judge
+    criteria: "Response provides a prioritized remediation plan — priority matrix (impact on users × frequency of encounter × effort to fix: P1: error handling inconsistency — affects every error state, confuses users, moderate effort to standardize — define 3 error patterns: inline for form errors, toast for background operations, modal for destructive confirmations; P2: button style consolidation — visible on every page, affects trust, moderate effort — pick the newest style, create migration plan; P3: primary action color — 12 colors for one purpose is chaos, fix with design token — define one primary action color, low effort but wide impact; P4: modal patterns — define when to use each type, document in design system, moderate effort; P5: typography drift — update spec, audit all pages, low user impact but important for consistency; P6: settings layout — legacy but used less frequently, low priority, update when settings is next touched), each priority includes: what, why, estimated effort, and recommended approach."
+    weight: 0.35
+    description: "PrioritizedRemediation"
+  - type: llm_judge
+    criteria: "Response addresses the remediation approach — not a big redesign (design debt should be paid down incrementally, not in one massive redesign project — incremental approach: fix one category at a time, integrate fixes into existing sprint work, 'boy scout rule' — leave every screen better than you found it), prevention (design system as debt prevention: enforce component usage through lint rules or design review, regular consistency audits — quarterly review of drift, component governance: all new patterns go through design system review before implementation, prevent new debt while paying down old — don't add a 4th button style while consolidating the first 3), communication to stakeholders (the product director asked 'what's wrong' — deliver: executive summary: the product has accumulated visual inconsistencies that impact user trust and development speed, visual evidence: side-by-side screenshots showing the same interaction handled differently across pages — makes the abstract tangible, business impact: estimated developer time wasted, estimated user confusion metrics, remediation plan with timeline and resource needs)."
+    weight: 0.30
+    description: "RemediationApproach"

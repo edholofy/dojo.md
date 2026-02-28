@@ -1,0 +1,49 @@
+meta:
+  id: complex-product-specs
+  level: 4
+  course: wireframe-annotation-specification
+  type: output
+  description: "Complex product specifications — write specs for multi-user, real-time, and permission-based products with complex business logic"
+  tags: [complex, multi-user, permissions, real-time, expert]
+
+state: {}
+
+trigger: |
+  A senior designer says: "I'm specifying a project
+  management tool with complex requirements:
+
+  - 5 user roles with different permissions (Owner,
+    Admin, Editor, Commenter, Viewer)
+  - Real-time collaboration (multiple users editing
+    simultaneously)
+  - Audit trail (every action logged with who/when)
+  - Approval workflows (content goes through review
+    stages)
+  - Conditional UI (different users see different
+    buttons, menus, and data)
+
+  My specs for simple CRUD apps work fine, but this
+  product has so many conditions and states that my
+  normal annotation approach doesn't scale. The
+  wireframes become unreadable with all the annotations.
+
+  How do I spec complex products without the
+  annotations overwhelming the wireframes?"
+
+  Task: Write specification strategies for complex
+  products with role-based UI, real-time features,
+  and multi-stage workflows.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses permission-based UI specification — permission matrix (table mapping each role to each action: Owner can delete project, Admin can manage members, Editor can edit content, Commenter can add comments, Viewer can only read — for every UI element), conditional UI annotations (instead of annotating 5 versions of every screen, annotate the 'full permission' view and a separate 'permission delta' document showing what's hidden/disabled per role: 'Delete button: visible to Owner and Admin only, hidden for all others', 'Settings tab: visible to Owner and Admin, disabled with tooltip for Editor: You need admin access'), graceful degradation (what users see when they lack permission: hidden element vs disabled with explanation vs visible but redirects to upgrade prompt). Avoids cluttering wireframes with 5 role-specific annotations per element"
+    weight: 0.35
+    description: "PermissionSpecs"
+  - type: llm_judge
+    criteria: "Response specifies real-time collaboration and conflict handling — presence indicators (avatar stack showing who's viewing this screen, cursor position for who's editing which field), concurrent editing (field-level locking: when User A is editing a field, User B sees it as locked with 'Sarah is editing...' indicator, auto-unlock after 30 seconds of inactivity, last-write-wins for non-locked fields with conflict notification), real-time updates (changes by other users appear immediately with brief highlight animation, new comments slide in, status changes update badges), connection states (connected: green dot, reconnecting: yellow dot with 'Reconnecting...' banner, disconnected: red banner 'You're offline — changes will sync when reconnected', conflict resolution on reconnect: show diff dialog if conflicting changes occurred). Specs handle race conditions and network failure gracefully"
+    weight: 0.35
+    description: "RealTimeSpecs"
+  - type: llm_judge
+    criteria: "Response covers workflow and audit specifications — approval workflow spec (workflow stages: Draft → In Review → Approved → Published, per-stage UI changes: Draft shows 'Submit for Review' button, In Review shows reviewer assignment and status, Approved shows 'Publish' button, Published shows 'Unpublish' option, rejection sends back to Draft with reviewer comments), audit trail annotation (every action logged: timestamp, user, action, previous value, new value — shown in activity feed panel, filterable by action type and user), specification organization strategy (layered specs: Layer 1 — base wireframe with layout and primary interactions, Layer 2 — permission overlay document, Layer 3 — workflow state diagram, Layer 4 — real-time behavior spec, Layer 5 — edge cases and error handling — each layer is a separate document that references the base wireframe). Demonstrates how to manage spec complexity without overwhelming any single document"
+    weight: 0.30
+    description: "WorkflowAuditSpecs"

@@ -1,0 +1,39 @@
+meta:
+  id: competitive-intelligence-analytics
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build competitive intelligence through analytics — use public data, market research, and internal benchmarks to create actionable competitive insights"
+  tags: [python, pandas, competitive-intelligence, market-analysis, benchmarking, master]
+
+state: {}
+
+trigger: |
+  Your CEO is preparing for a board strategy session and needs a
+  competitive intelligence briefing. The company is a mid-market
+  SaaS platform ($80M ARR) competing against 4 major players.
+
+  Available data:
+  - Internal: full customer, revenue, product usage, and churn data
+  - Public: competitor pricing pages, job postings, press releases,
+    G2/Capterra reviews, SEC filings (for public competitors)
+  - Market: analyst reports with market size estimates and growth rates
+
+  The CEO wants: "Where are we winning, where are we losing, and
+  what should we do differently?"
+
+  Task: Build the competitive intelligence analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis synthesizes multiple data sources into competitive positioning — positioning: 'Competitive intelligence analysis: Internal win/loss analysis: deals = pd.read_csv(\"deals.csv\"). competitive_deals = deals[deals[\"competitor_mentioned\"].notna()]. win_loss = competitive_deals.groupby(\"competitor_mentioned\").agg(total_deals=(\"deal_id\", \"count\"), wins=(\"deal_id\", lambda x: (deals.loc[x.index, \"stage\"] == \"closed_won\").sum()), avg_deal_size=(\"amount\", \"mean\"), avg_sales_cycle=(\"sales_cycle_days\", \"mean\")). win_loss[\"win_rate\"] = (win_loss[\"wins\"] / win_loss[\"total_deals\"] * 100).round(1). print(\"Win rates by competitor:\"). print(win_loss.sort_values(\"win_rate\", ascending=False)). Why we win analysis: won_deals = competitive_deals[competitive_deals[\"stage\"] == \"closed_won\"]. win_reasons = won_deals[\"win_reason\"].value_counts(normalize=True).mul(100).round(1). Why we lose analysis: lost_deals = competitive_deals[competitive_deals[\"stage\"] == \"closed_lost\"]. loss_reasons = lost_deals[\"loss_reason\"].value_counts(normalize=True).mul(100).round(1). Common pattern: we win on ease of use (45% of wins) and customer support (30%). We lose on enterprise features (40% of losses) and pricing (25%). This tells the CEO exactly where to invest: enterprise feature gaps and pricing strategy. Customer switching analysis: churned = pd.read_csv(\"churned_customers.csv\"). switched_to = churned[churned[\"switched_to\"].notna()]. competitor_churn = switched_to.groupby(\"switched_to\").agg(customers_lost=(\"customer_id\", \"count\"), revenue_lost=(\"mrr\", \"sum\"), avg_tenure_months=(\"tenure_months\", \"mean\")). print(\"Where churned customers go:\"). print(competitor_churn.sort_values(\"revenue_lost\", ascending=False)). If most revenue is lost to Competitor A, that is the primary competitive threat'"
+    weight: 0.35
+    description: "Positioning"
+  - type: llm_judge
+    criteria: "Analysis uses public data for competitor benchmarking — benchmarking: 'Public data competitive benchmarking: Review sentiment analysis: reviews = pd.read_csv(\"g2_reviews.csv\"). sentiment_by_product = reviews.groupby(\"product\").agg(avg_rating=(\"rating\", \"mean\"), review_count=(\"rating\", \"count\"), recent_trend=(\"rating\", lambda x: x.tail(20).mean() - x.head(20).mean())). Categories where competitors score higher indicate feature gaps. Categories where we score higher are competitive advantages to emphasize. Pricing intelligence: competitor_pricing = pd.DataFrame({\"competitor\": [\"Us\", \"Comp A\", \"Comp B\", \"Comp C\", \"Comp D\"], \"starter_price\": [49, 59, 39, 79, 29], \"pro_price\": [149, 199, 99, 249, 99], \"enterprise_price\": [499, 599, 349, 799, 299], \"free_tier\": [True, False, True, False, True]}). competitor_pricing[\"price_position\"] = competitor_pricing[\"pro_price\"].rank(). We are positioned mid-market on price. If we lose on pricing, it is to Comp B and Comp D (budget players). If we lose on features, it is to Comp A and Comp C (enterprise players). Job posting analysis (signals of strategic direction): Competitor A posting heavily for ML engineers — likely building AI features. Competitor B posting for enterprise sales reps — moving upmarket. Competitor C opened an office in London — European expansion. Competitor D hiring product managers for mobile — mobile app coming. Market share estimation: total_market = 2_000_000_000. market_data = pd.DataFrame({\"company\": [\"Us\", \"Comp A\", \"Comp B\", \"Comp C\", \"Comp D\", \"Others\"], \"estimated_arr\": [80, 250, 60, 180, 45, 385]}). market_data[\"market_share\"] = (market_data[\"estimated_arr\"] / market_data[\"estimated_arr\"].sum() * 100).round(1). market_data[\"growth_rate\"] = [100, 30, 150, 20, 200, 40]. We have 8% market share but 100% growth rate. Our growth rate is second only to Comp D (200%). Comp A has the largest share but is growing slowest'"
+    weight: 0.35
+    description: "Benchmarking"
+  - type: llm_judge
+    criteria: "Response provides strategic recommendations based on the competitive analysis — recommendations: 'Strategic recommendations for the CEO: Recommendation 1 — Double down on our strengths: We win 45% of competitive deals on ease of use. Comp A and C cannot easily replicate this — their products have years of enterprise complexity. Invest in making the product even simpler while adding targeted enterprise features. Do not try to match Comp A feature-for-feature — that erodes our advantage. Recommendation 2 — Close the enterprise feature gap selectively: We lose 40% of competitive deals on enterprise features. But not all enterprise features matter equally. Analyze which specific features were cited: if SSO and audit logs account for 60% of enterprise losses, build those 2 features instead of building the full enterprise suite. Cost-effective: 2 features cost $500K vs full enterprise suite at $5M. Recommendation 3 — Counter the pricing threat: Comp B and D are winning budget-conscious customers with lower prices. Do not engage in a price war. Instead: introduce a free tier to compete at the low end (top of funnel). Raise enterprise prices by 15% (our enterprise customers have low price sensitivity). The free tier acquires users. The ease of use converts them to paid. The enterprise tier captures the most value. Recommendation 4 — Geographic expansion before Comp C locks up Europe: Comp C just opened a London office. European market is $400M and growing 40% YoY. First-mover advantage in local compliance (GDPR-native) and local support. Recommend opening a small European team in Q2. Recommendation 5 — Monitor Comp D closely: 200% growth rate with aggressive pricing is a classic land-and-expand strategy. They may be venture-funded and burning cash to acquire market share. If they are acquired by a larger player or raise a significant round, they become a serious threat. Prepare a defensive playbook: lock in key customers with annual contracts, build switching costs (integrations, data portability), and win on customer success. Present to the board as a strategy framework, not just data. The CEO needs to walk into the board meeting with a clear narrative: here is where we are, here is the threat landscape, and here is what we are doing about it'"
+    weight: 0.30
+    description: "Recommendations"

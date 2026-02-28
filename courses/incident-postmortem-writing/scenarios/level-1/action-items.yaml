@@ -1,0 +1,48 @@
+meta:
+  id: action-items
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Write effective action items — create specific, assigned, and trackable follow-up actions that prevent incident recurrence"
+  tags: [postmortem, action-items, remediation, prevention, follow-up, beginner]
+
+state: {}
+
+trigger: |
+  Your team just completed a postmortem for a production outage
+  caused by a misconfigured load balancer update. The incident
+  revealed several issues:
+
+  1. The load balancer config change wasn't tested in staging
+  2. No one reviewed the config change before it was applied
+  3. The monitoring didn't detect the misconfiguration for 20 minutes
+  4. The rollback took 15 minutes because the previous config
+     wasn't version-controlled
+  5. The status page wasn't updated for 30 minutes
+
+  The team brainstorms action items and comes up with:
+  - "Be more careful with config changes"
+  - "Improve monitoring"
+  - "Fix the rollback process"
+  - "Update status page faster"
+
+  These are too vague to be actionable. Nobody knows who owns them,
+  when they're due, or what "done" looks like.
+
+  Task: Rewrite these action items to be specific, assigned, and
+  trackable. Then write a guide on creating effective postmortem
+  action items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Action items are specific with owners and deadlines — each vague item transformed: 'Be more careful' → 'Implement mandatory staging environment validation for all load balancer configuration changes. Changes must pass automated health check in staging before production apply. Owner: Platform team (Alex). Due: 2 weeks. Verification: PR with staging validation step in deployment pipeline.' 'Improve monitoring' → 'Add load balancer health check alert that fires within 2 minutes of error rate exceeding 1% on any backend target. Owner: SRE team (Jordan). Due: 1 week. Verification: alert tested by simulating unhealthy backend in staging.' 'Fix rollback' → 'Version-control all load balancer configurations in Git. Each change creates a commit with the previous config, enabling 1-command rollback to any previous version. Owner: Platform team (Alex). Due: 3 weeks. Verification: rollback drill performed successfully.' 'Update status page' → 'Create automated status page integration: when a SEV-1 or SEV-2 incident is declared, status page automatically shows degraded status within 5 minutes. Owner: SRE team (Jordan). Due: 2 weeks. Verification: automated test confirms status page updates on incident declaration.' Each action item has: what, who, when, and how to verify it's done"
+    weight: 0.35
+    description: "Specific action items"
+  - type: llm_judge
+    criteria: "Action items are prioritized and categorized — categories: Prevention (stops this incident from recurring): 'Staging validation for config changes — prevents misconfigured changes from reaching production.' Detection (catches incidents faster): 'Load balancer health check alert — reduces detection time from 20 minutes to under 2 minutes.' Mitigation (reduces impact when incidents happen): 'Version-controlled configs with 1-command rollback — reduces rollback time from 15 minutes to under 2 minutes.' Communication (keeps stakeholders informed): 'Automated status page update — ensures customers are informed within 5 minutes.' Priority order: (1) Detection alert (1 week — quickest to implement, highest immediate value), (2) Status page automation (2 weeks — customer trust), (3) Staging validation (2 weeks — prevention), (4) Config version control (3 weeks — mitigation). Prioritization reasoning: 'We prioritize detection and communication first because they reduce impact of ANY future incident. Prevention comes next because it addresses this specific failure mode. Mitigation addresses the rollback gap.'"
+    weight: 0.35
+    description: "Prioritized actions"
+  - type: llm_judge
+    criteria: "Action item guide provides reusable principles — principles: (1) Every action item must pass the 'new team member test': could someone who wasn't at the postmortem read this action item and know exactly what to do? If not, it's too vague. (2) Action items should prevent classes of incidents, not just this specific incident. 'Alert on load balancer errors' prevents only this failure mode. 'Alert on any backend error rate above threshold' prevents a class of failures. (3) Assign a single owner (not a team) — 'the platform team' owns nothing, 'Alex on the platform team' owns it. (4) Set realistic deadlines — action items that slip undermine the postmortem process. Better to set a 3-week deadline and hit it than a 1-week deadline that slips for months. (5) Limit to 3-5 action items — too many means none get done. If you have 15 action items, the scope is too broad or they aren't prioritized. (6) Track completion — unfinished action items are the most common postmortem failure. Review in the next team meeting. Anti-patterns: action items that are 'reminders to be careful' (process should enforce, not rely on human memory), action items with no deadline, and action items that are really feature requests disguised as incident remediation"
+    weight: 0.30
+    description: "Action items guide"

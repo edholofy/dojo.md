@@ -1,0 +1,48 @@
+meta:
+  id: global-incident-coordination
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Coordinate global incident response — design processes for managing incidents across time zones, languages, and cultural contexts with distributed teams"
+  tags: [postmortem, global, multi-timezone, distributed, coordination, master]
+
+state: {}
+
+trigger: |
+  Your company operates in 15 countries with engineering teams in
+  San Francisco, London, Bangalore, and Tokyo. A major incident
+  has just occurred at 11 PM Pacific (2 AM Eastern, 7 AM London,
+  12:30 PM Bangalore, 4 PM Tokyo).
+
+  Challenges revealed by recent incidents:
+  - The incident started during the SF team's off-hours but affected
+    APAC customers in business hours
+  - The Tokyo team detected the incident but couldn't escalate
+    effectively because the on-call engineer was in SF (asleep)
+  - When the London team came online, they had no context and spent
+    45 minutes reconstructing what Tokyo already knew
+  - Customer communications were delayed because the communications
+    lead was in SF and didn't see the incident until 7 AM Pacific
+  - The postmortem was scheduled at 10 AM Pacific — a reasonable
+    time for SF but midnight for Tokyo, excluding the team that
+    actually resolved the incident
+
+  Task: Design a global incident response and postmortem framework.
+  Address: follow-the-sun on-call, cross-timezone handoffs, language
+  and cultural considerations, distributed postmortem practices, and
+  how to ensure no team is systematically excluded from the incident
+  learning process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Follow-the-sun model eliminates single-timezone dependency — on-call model: 'Follow-the-sun rotation with three zones: Zone 1 (Americas, 6 AM - 2 PM Pacific): SF team primary, with London team overlap for first 2 hours. Zone 2 (EMEA, 7 AM - 3 PM London): London team primary, with Bangalore team overlap for last 4 hours. Zone 3 (APAC, 9:30 AM - 5:30 PM Bangalore): Bangalore and Tokyo teams, with SF overlap emerging in the last hours. Each zone has: a primary IC, a communications lead (in that timezone), and subject matter experts on-call. Critical requirement: no one should be the primary on-call between midnight and 6 AM local time. Night pages go to the next timezone in the rotation.' Cross-timezone handoff protocol: 'Handoffs occur at zone overlaps (2-hour windows). Required handoff artifacts: (1) Incident state document: updated continuously during the incident. Contains: current status, what has been tried, what is working, what is not, next steps planned. This is the single source of truth that eliminates the 45 minutes of context reconstruction that London experienced. (2) Verbal handoff: 15-minute video call between outgoing and incoming IC. Outgoing IC summarizes: situation, what we have done, what we think the issue is, what the incoming team should focus on. (3) Handoff acknowledgment: incoming IC confirms they have context and are taking command. Recorded in the incident channel.' Incident communication by timezone: 'Each zone has its own communications lead who handles customer and internal communications during their zone's hours. Communications templates are pre-translated into relevant languages (English, Japanese, Hindi, and local languages as needed). No customer should have to wait for a different timezone to wake up to get an update'"
+    weight: 0.35
+    description: "Follow-the-sun model"
+  - type: llm_judge
+    criteria: "Cultural and language considerations are addressed practically — cultural considerations: 'Different engineering cultures approach incidents differently. Practical adaptations: (1) Escalation directness: in some cultures, directly escalating past a senior person feels disrespectful. The framework explicitly authorizes any engineer to escalate any incident regardless of hierarchy. This authorization comes from leadership and is communicated as company policy, not individual expectation. Include in training: escalating an incident is expected and valued, not a sign of failure or disrespect. (2) Blameless culture across cultures: the concept of blameless postmortem may be interpreted differently across cultures. In cultures with strong hierarchy, junior engineers may be reluctant to identify contributing factors involving senior decisions. Facilitation training includes cultural context: facilitators are trained to create safety for engineers from all cultural backgrounds. Anonymous contribution option: for postmortem input, engineers can submit timeline corrections and observations anonymously. (3) Communication style: some cultures are direct (this is broken), others are indirect (we have noticed some issues). Incident communication templates use standardized language that is clear and direct — this is a context where ambiguity is harmful regardless of cultural preference. Training explains why incident communication requires directness.' Language: 'Primary incident language is English (the shared language across all offices). However: customer communications are in the customer's language. Internal summaries are available in English and Japanese (our two largest engineering populations). Postmortem documents are in English with executive summaries translated for regional leadership teams. Real-time translation support: during incidents involving teams with different primary languages, a designated bilingual engineer can serve as interpreter if needed'"
+    weight: 0.35
+    description: "Cultural and language considerations"
+  - type: llm_judge
+    criteria: "Distributed postmortem practices ensure all teams participate in learning — distributed postmortem framework: 'Problem: a single postmortem meeting time systematically excludes at least one timezone. Solution: asynchronous-first postmortem process with optional synchronous sessions. Process: (1) Postmortem document: written collaboratively over 3 business days. All participating teams contribute their section asynchronously. Each team documents their perspective: what they saw, what they did, what they observed. Document is shared in a collaborative tool with commenting. (2) Regional review sessions: each timezone holds a 30-minute session to discuss the postmortem from their perspective. These are recorded for other timezones to watch asynchronously. (3) Cross-timezone synthesis: the IC synthesizes input from all regional sessions into the final postmortem. If disagreements exist between regions, the IC facilitates resolution via async discussion or a targeted cross-timezone call. (4) Final postmortem published with contributions credited to all participating teams.' Preventing timezone bias: 'Metric: track which timezones contribute to postmortems. If one timezone consistently contributes less, investigate whether process barriers exist. Action item ownership: distributed across timezones proportional to involvement. Do not assign all action items to one timezone because the postmortem coordinator is in that timezone. Postmortem recognition: when a postmortem leads to a significant improvement, credit the contributing teams across all timezones.' Incident learning distribution: 'Weekly incident digest distributed globally (same content, translated as needed). Quarterly incident learning sessions rotate across timezones: Q1 session at SF-friendly time, Q2 at London-friendly time, Q3 at Bangalore-friendly time, Q4 at Tokyo-friendly time. All sessions recorded. Annual reliability summit: in-person or virtual event bringing together reliability leads from all regions to review the year's incidents, share practices, and align on the next year's reliability investments'"
+    weight: 0.30
+    description: "Distributed postmortem practices"

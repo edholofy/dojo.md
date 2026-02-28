@@ -1,0 +1,51 @@
+meta:
+  id: regulatory-data-pipelines
+  level: 5
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Regulatory data pipelines — design and govern ETL pipelines for regulatory reporting, compliance, and audit requirements in regulated industries"
+  tags: [regulatory, compliance, audit, governance, financial-services, master]
+
+state: {}
+
+trigger: |
+  A Chief Data Officer at a global bank says: "We have regulatory
+  reporting pipelines that generate submissions for 6 regulators
+  across 4 jurisdictions:
+
+  - Federal Reserve (FR Y-14, CCAR stress testing)
+  - ECB (COREP, FINREP, AnaCredit)
+  - Bank of England (regulatory returns)
+  - Local banking authorities in 3 APAC countries
+
+  These pipelines are our highest-risk data infrastructure:
+  - An error in CCAR data led to a $25M fine last year
+  - Regulators now require us to demonstrate end-to-end data
+    lineage for every number in every submission
+  - Each jurisdiction has different reporting formats, frequencies,
+    and data definitions
+  - The same underlying data (loans, trades, customers) feeds
+    multiple regulatory reports differently
+  - Regulatory requirements change quarterly, requiring pipeline
+    updates under tight deadlines
+
+  How do we build a regulatory data pipeline architecture that
+  meets compliance requirements while remaining maintainable?"
+
+  Task: Design a regulatory reporting pipeline architecture that
+  ensures accuracy, auditability, and compliance across multiple
+  jurisdictions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a regulatory pipeline architecture — golden source layer (single authoritative copy of each data element used across all regulatory reports), regulatory transformation layer (jurisdiction-specific rules that transform golden source data into each regulator's required format), reconciliation layer (automated comparison between regulatory submissions, internal books, and source systems to detect discrepancies before submission), and lineage/audit layer (complete traceability from every number in every submission back to its source system and every transformation applied). Addresses how the same loan data is represented differently for Fed, ECB, and BOE"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response addresses auditability and compliance requirements — end-to-end data lineage (column-level lineage showing exactly how each reported value was derived), point-in-time reproducibility (ability to regenerate any historical submission exactly as it was filed), change management (every pipeline change is documented, tested, and approved with audit trail), validation framework (pre-submission validation rules that catch the types of errors that led to the $25M fine), and regulatory change management (process for incorporating quarterly regulatory requirement changes without destabilizing existing reports)"
+    weight: 0.35
+    description: "AuditAndCompliance"
+  - type: llm_judge
+    criteria: "Response addresses operational excellence — testing strategy for regulatory pipelines (no tolerance for errors — comprehensive testing including edge cases, regression testing against prior submissions, parallel running for changes), incident management for regulatory pipeline failures (escalation to compliance and legal, communication to regulators if submissions will be delayed), multi-jurisdiction coordination (managing different reporting calendars, formats, and deadlines), and the organizational model (dedicated regulatory data team vs embedded in business units, regulatory SMEs working alongside data engineers)"
+    weight: 0.30
+    description: "OperationalExcellence"

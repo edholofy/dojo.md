@@ -1,0 +1,66 @@
+meta:
+  id: data-backup-sop
+  level: 1
+  course: process-documentation-sops
+  type: output
+  description: "Write a data backup and recovery SOP for a small accounting firm covering daily backups, offsite storage, and disaster recovery testing"
+  tags: [data-backup, it, disaster-recovery, beginner]
+
+state: {}
+
+trigger: |
+  You're the IT Administrator at a 20-person accounting
+  firm. Last month, a ransomware scare (fortunately a
+  false alarm) exposed that nobody knew how backups
+  worked, whether they were current, or how to restore
+  data. The managing partner has asked you to document
+  the backup procedures so that someone else could
+  restore systems if you were unavailable.
+
+  Current IT environment:
+  - File server: Windows Server with 2.4TB of client
+    financial data, tax returns, and working papers
+  - Accounting software: QuickBooks Enterprise (server-
+    based, 8 concurrent users)
+  - Tax software: UltraTax CS (Thomson Reuters)
+  - Email: Microsoft 365 (cloud)
+  - Document management: local SharePoint server
+  - CRM: HubSpot (cloud-based)
+
+  Current backup approach (informal, in your head):
+  - Veeam Backup runs nightly at 11 PM to NAS
+  - Weekly full backup to external USB drive (you swap
+    drives and take one home on Fridays — usually)
+  - QuickBooks has its own backup that runs "sometime"
+  - UltraTax backs up to a local folder
+  - No testing of backup restores has ever been done
+  - No documentation of restore procedures
+  - You're the only person who knows any of this
+
+  Compliance considerations:
+  - IRS requires retention of tax records for 7 years
+  - Client engagement letters require data protection
+  - Firm's professional liability insurance requires
+    "reasonable data protection measures"
+
+  Task: Write a data backup and recovery SOP that
+  documents daily/weekly backup procedures, offsite
+  storage rotation, restore procedures for each system,
+  backup verification testing schedule, and emergency
+  contacts. The SOP must be clear enough that the
+  managing partner or an outside IT consultant could
+  restore systems without your help.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response produces a complete backup SOP — documents backup procedures for each system (file server, QuickBooks, UltraTax, SharePoint); specifies schedules (daily, weekly); includes offsite rotation procedures; documents restore procedures step-by-step for each system; defines backup verification testing schedule; includes emergency contacts and vendor support information; the SOP eliminates single-point-of-failure knowledge risk."
+    weight: 0.35
+    description: "CompleteBackupSOP"
+  - type: llm_judge
+    criteria: "Response addresses restore procedures clearly — provides step-by-step restore instructions for each system that a non-expert could follow; includes decision criteria (full restore vs file-level restore vs point-in-time); addresses ransomware recovery scenario specifically; defines RTO and RPO targets appropriate for an accounting firm; includes verification steps to confirm successful restore."
+    weight: 0.35
+    description: "ClearRestoreProcedures"
+  - type: llm_judge
+    criteria: "Response addresses compliance and practical concerns — addresses IRS 7-year retention requirement; addresses professional liability insurance requirements; improves on current informal practices (formalizes the USB rotation, addresses QuickBooks/UltraTax backup gaps); includes monitoring to verify backups actually ran; the SOP is practical for a 20-person firm without dedicated IT staff beyond one administrator."
+    weight: 0.30
+    description: "ComplianceAndPractical"

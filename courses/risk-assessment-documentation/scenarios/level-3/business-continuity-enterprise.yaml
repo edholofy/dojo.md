@@ -1,0 +1,81 @@
+meta:
+  id: business-continuity-enterprise
+  level: 3
+  course: risk-assessment-documentation
+  type: output
+  description: "Enterprise business continuity risk assessment — design a comprehensive BIA and BCDR program for a multi-site enterprise"
+  tags: [business-continuity, bia, bcdr, enterprise, advanced]
+
+state: {}
+
+trigger: |
+  You're the VP of Business Resilience at a 2,500-person
+  financial services firm ($1.2B revenue) with operations
+  in 8 cities across 3 countries. A competitor's 5-day
+  outage (caused by a ransomware attack combined with
+  failed backups) resulted in $80M in client losses, $15M
+  in regulatory fines, and the CEO's resignation. Your CEO
+  wants to ensure "that could never happen here."
+
+  Company operations:
+  | Location | Function | Employees | Criticality |
+  |----------|----------|-----------|-------------|
+  | New York | Trading, risk mgmt, exec | 600 | Critical |
+  | Chicago | Operations, clearing | 450 | Critical |
+  | London | European trading, compliance | 350 | Critical |
+  | Dallas | Technology, development | 400 | High |
+  | Mumbai | Operations support | 300 | Medium |
+  | Jersey City | Disaster recovery site | 50 | Support |
+  | Charlotte | Back office, accounting | 250 | Medium |
+  | Denver | Customer service | 100 | Medium |
+
+  Critical business processes:
+  1. Trade execution (must resume within 2 hours)
+  2. Position management and risk calculation (4 hours)
+  3. Client reporting (same day)
+  4. Regulatory reporting (SEC, FCA — same day)
+  5. Clearing and settlement (T+1)
+  6. Cash management and treasury (same day)
+  7. Customer service (4 hours)
+  8. IT infrastructure (underpins everything)
+
+  Current BCDR state:
+  - DR site in Jersey City (mirrors NY and Chicago)
+  - Last full DR test: 14 months ago (partial success — 
+    trading systems failed over, but clearing didn't)
+  - RPO: 1 hour for trading data, 4 hours for back office
+  - RTO: 4 hours for critical systems, 24 hours for others
+  - No tested pandemic/WFH plan despite COVID experience
+  - No cyber-specific incident response integrated with BCP
+  - London and Mumbai have no tested DR capability
+  - Cloud migration 40% complete — hybrid environment
+    complicates DR
+
+  Regulatory requirements:
+  - SEC Rule 17a-4: Record retention and disaster recovery
+  - SEC Regulation SCI: Systems compliance and integrity
+  - FCA operational resilience: Impact tolerance testing
+  - FINRA BCP rule 4370: Business continuity plans
+  - OCC guidance on operational resilience
+
+  Task: Conduct the enterprise business impact analysis and
+  design the comprehensive BCDR program. Include BIA for
+  all critical processes, risk assessment of disruption
+  scenarios, DR architecture for the hybrid environment,
+  testing program, and regulatory compliance mapping.
+  Address the integration of cyber incident response with
+  business continuity.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response conducts a thorough enterprise BIA — analyzes all critical business processes with RTO/RPO requirements; identifies dependencies (people, technology, facilities, data, third parties); quantifies financial impact of disruption by process (revenue loss per hour, regulatory penalties, client attrition); maps interdependencies between locations (NY trading depends on Chicago clearing depends on Dallas technology); the BIA reveals which single points of failure could cause enterprise-wide disruption."
+    weight: 0.35
+    description: "ThoroughEnterpriseBIA"
+  - type: llm_judge
+    criteria: "Response designs a comprehensive BCDR program — addresses the hybrid cloud/on-premise DR architecture; proposes DR capability for London and Mumbai (currently untested); designs a testing program that validates recovery capability (not just annual checkbox exercises); integrates cyber incident response with BCP (ransomware scenario requires different response than natural disaster); addresses FCA operational resilience requirements (impact tolerance testing); the program would withstand regulatory examination."
+    weight: 0.35
+    description: "ComprehensiveBCDRProgram"
+  - type: llm_judge
+    criteria: "Response addresses the specific vulnerabilities and lessons learned — proposes how to avoid the competitor's failure scenario (ransomware + failed backups); addresses the clearing system failure from the last DR test; designs immutable backup strategy for ransomware resilience; proposes crisis communication plan for clients and regulators; the program design reflects understanding of financial services operational resilience (not generic BC planning); regulatory mapping covers SEC, FCA, FINRA, and OCC requirements."
+    weight: 0.30
+    description: "VulnerabilitiesAndLessonsLearned"

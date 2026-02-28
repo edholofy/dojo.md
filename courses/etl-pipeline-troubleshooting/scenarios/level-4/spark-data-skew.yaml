@@ -1,0 +1,46 @@
+meta:
+  id: spark-data-skew
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Spark data skew — diagnose and resolve data skew causing straggler tasks, OOM errors, and poor parallelization in distributed ETL processing"
+  tags: [spark, data-skew, distributed, partitioning, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "Our Spark ETL job processes 2TB
+  of clickstream data daily. It used to complete in 2 hours but now
+  takes 8+ hours. The Spark UI shows:
+
+  - 199 out of 200 tasks complete in 5 minutes each
+  - 1 task has been running for 7 hours and is consuming 90% of
+    executor memory
+  - The straggler task is processing partition key 'US' which
+    contains 60% of all clickstream events (1.2TB of the 2TB)
+  - Other partitions range from 1MB to 50MB each
+
+  We also have a second job that joins this clickstream data with
+  a user dimension table (500M users). The join fails with OOM on
+  the executors because the broadcast threshold is set to 10MB but
+  the user table is 80GB.
+
+  How do I fix the data skew and optimize these distributed jobs?"
+
+  Task: Diagnose the data skew problem, design solutions for both
+  the skewed partition and the large table join, and provide a
+  framework for handling skew in distributed ETL.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses the skew correctly — the partition key ('US') has a skewed distribution where one value contains 60% of data, causing one task to process 1.2TB while others process megabytes. This is a classic data skew problem in distributed processing. For the join: the user table is too large to broadcast and too large for a single executor's memory during shuffle-hash join. Explains why data skew defeats parallelism (the job is only as fast as the slowest task)"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides skew resolution techniques — salting: add a random suffix to the skewed key (partition 'US' becomes 'US_1', 'US_2', ... 'US_10') to distribute the data across 10 tasks, then aggregate the salt groups at the end. Adaptive Query Execution (AQE): enable Spark 3.x AQE which can automatically detect and split skewed partitions. Custom partitioning: use a hash of multiple columns instead of country alone. For the join: use a skewed join hint (SKEW JOIN), split the join into broadcast join for small dimension values and sort-merge for large ones, or pre-filter/pre-aggregate before joining"
+    weight: 0.35
+    description: "SkewResolution"
+  - type: llm_judge
+    criteria: "Response provides a framework for distributed ETL optimization — how to detect skew proactively (check partition size distribution before processing, monitor task duration variance in Spark UI), cluster sizing guidelines (executor memory, cores, and count based on data volume and complexity), shuffle optimization (minimize shuffles by pre-partitioning or bucketing, configure spark.sql.shuffle.partitions appropriately), and when to use broadcast joins vs sort-merge joins vs shuffle-hash joins (based on table sizes and memory constraints)"
+    weight: 0.30
+    description: "OptimizationFramework"

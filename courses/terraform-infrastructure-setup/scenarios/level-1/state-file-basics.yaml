@@ -1,0 +1,73 @@
+meta:
+  id: state-file-basics
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Understand Terraform state — diagnose state file corruption, lock conflicts, state drift, and local vs remote state tradeoffs"
+  tags: [Terraform, state, tfstate, locking, drift, beginner]
+
+state: {}
+
+trigger: |
+  Your colleague runs `terraform plan` and gets unexpected results:
+
+  ```
+  $ terraform plan
+
+  Note: Objects have changed outside of Terraform
+
+  Terraform detected the following changes made outside of Terraform
+  since the last "terraform apply":
+
+    # aws_instance.web has been changed
+    ~ resource "aws_instance" "web" {
+        ~ instance_type = "t3.micro" -> "t3.large"
+          # (10 unchanged attributes hidden)
+      }
+
+  Terraform will perform the following actions:
+
+    # aws_instance.web will be updated in-place
+    ~ resource "aws_instance" "web" {
+        ~ instance_type = "t3.large" -> "t3.micro"
+      }
+
+  Plan: 0 to add, 1 to change, 0 to destroy.
+  ```
+
+  Someone changed the instance type in the AWS console from t3.micro
+  to t3.large. Terraform wants to revert it back to match the code.
+
+  Also, when two people run terraform at the same time:
+  ```
+  Error: Error acquiring the state lock
+
+  Error message: ConditionalCheckFailedException: The conditional
+  request failed
+  Lock Info:
+    ID:        12345-abcde
+    Path:      my-bucket/prod/terraform.tfstate
+    Operation: OperationTypeApply
+    Who:       colleague@laptop
+    Version:   1.7.0
+    Created:   2024-01-15 10:30:00 UTC
+  ```
+
+  Task: Explain Terraform state fundamentals, what the state file
+  contains and why it exists, state drift detection and resolution,
+  state locking (why it matters, how it works with DynamoDB), and
+  local vs remote state.
+
+assertions:
+  - type: llm_judge
+    criteria: "State fundamentals are explained — terraform.tfstate is a JSON file mapping configuration to real infrastructure IDs. It tracks: resource IDs, attribute values, dependencies, metadata. Why state exists: (1) map config to real resources (Terraform needs to know which aws_instance.web is vpc-abc123), (2) track metadata (dependencies), (3) performance (cache attribute values instead of querying APIs every time). State is the source of truth for what Terraform manages. Drift: when real infrastructure differs from state, detected during plan/apply refresh"
+    weight: 0.35
+    description: "State fundamentals"
+  - type: llm_judge
+    criteria: "Drift detection and resolution are covered — Terraform refreshes state before plan (compares real infrastructure to state). Drift detected: plan shows changes to revert. Options: (1) apply to revert to code (desired state wins), (2) update code to match reality (if the manual change was intentional), (3) terraform apply -refresh-only to update state without changing infrastructure. Best practice: all changes through Terraform, never manual. If manual changes are needed: update the .tf files to match, then plan to confirm no changes"
+    weight: 0.35
+    description: "Drift resolution"
+  - type: llm_judge
+    criteria: "Locking and remote state are practical — local state: terraform.tfstate in working directory. Problem: not shared, no locking, easy to lose. Remote state: store in S3, GCS, Azure Blob, Terraform Cloud. S3 backend with DynamoDB: S3 stores state file, DynamoDB provides locking (prevents concurrent modifications). Lock error: someone else is running terraform. Fix: wait for them to finish, or terraform force-unlock <ID> (dangerous, only if lock is stale). Never commit terraform.tfstate to git (contains secrets). Add to .gitignore"
+    weight: 0.30
+    description: "Locking and remote"

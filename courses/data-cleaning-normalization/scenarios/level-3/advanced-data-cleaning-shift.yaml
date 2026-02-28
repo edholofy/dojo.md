@@ -1,0 +1,49 @@
+meta:
+  id: advanced-data-cleaning-shift
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Advanced data cleaning shift — solve a complex multi-faceted data quality challenge combining entity resolution, anomaly detection, and pipeline validation"
+  tags: [shift, combined, assessment, advanced]
+
+state: {}
+
+trigger: |
+  You are the lead data engineer for a healthcare analytics company.
+  You've been given a dataset combining patient records from 3 hospital
+  systems for a clinical outcomes study. The dataset must be:
+  - Accurate enough for medical research publication
+  - HIPAA compliant (properly de-identified)
+  - Free of duplicates (patients who visited multiple hospitals)
+  - Validated against known clinical ranges
+
+  Dataset: 500,000 patient records, 80 clinical variables, from 3
+  hospital systems with different EHR platforms.
+
+  Known issues:
+  1. Patient matching: Same patient in multiple hospitals (~15% overlap)
+     with different patient IDs and slightly different demographics
+  2. Clinical outliers: Lab values with impossible ranges (e.g., blood
+     pressure 0/0 or 999/999 — sentinel values for missing data)
+  3. Temporal inconsistencies: Some records show discharge dates before
+     admission dates
+  4. De-identification gaps: Some free-text notes may contain PHI
+  5. Unit mismatches: One hospital records temperature in Celsius,
+     others in Fahrenheit; glucose in mg/dL vs mmol/L
+
+  Task: Design a comprehensive data cleaning pipeline that addresses
+  all five issues with healthcare-appropriate rigor and documentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs patient matching for cross-hospital deduplication — probabilistic matching using name, date of birth, gender, and other demographics (addresses and phone numbers may be outdated), handling different ID schemes, blocking strategies to reduce comparison space, and validation rules specific to healthcare (a patient cannot be in two hospitals simultaneously, shared procedures should be verified). Addresses the sensitivity of false matches in healthcare (merging two different patients' records is dangerous)"
+    weight: 0.35
+    description: "PatientMatching"
+  - type: llm_judge
+    criteria: "Response addresses clinical data quality — replacing sentinel values with proper nulls (0/0 blood pressure, 999 codes), validating against clinical reference ranges (systolic BP 60-250, diastolic 30-150, temperature 95-105°F), unit conversion (Celsius to Fahrenheit, mmol/L to mg/dL using standard conversion factors), fixing temporal inconsistencies (discharge before admission — investigate for date entry errors, swap if clearly reversed, flag for review otherwise), and validating clinical plausibility (a patient can't have a heart rate of 300 and be alive)"
+    weight: 0.35
+    description: "ClinicalQuality"
+  - type: llm_judge
+    criteria: "Response addresses HIPAA compliance and documentation — scanning free-text notes for PHI (patient names, SSN, dates of birth, addresses using NER or regex), de-identification methods (safe harbor vs expert determination), documenting every cleaning step for research reproducibility (required for journal publication), creating a data dictionary with all transformations documented, and building a validation report that demonstrates data quality meets research standards. Includes the ethical considerations of cleaning medical data (cleaning decisions could affect research conclusions)"
+    weight: 0.30
+    description: "ComplianceDocumentation"

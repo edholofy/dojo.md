@@ -1,0 +1,88 @@
+meta:
+  id: multi-workstream-report
+  level: 2
+  course: project-status-report-writing
+  type: output
+  description: "Multi-workstream status report — create a consolidated status report covering multiple parallel workstreams with dependencies and cross-cutting issues"
+  tags: [multi-workstream, parallel, dependencies, consolidated, intermediate]
+
+state: {}
+
+trigger: |
+  You're the program coordinator for an ERP implementation.
+  The program has 4 parallel workstreams and you need to
+  create the weekly consolidated status report showing how
+  they all fit together.
+
+  Program: SAP S/4HANA Implementation
+  Timeline: 14 months (currently Month 6)
+  Budget: $8M total
+  Overall Status: AMBER
+
+  Workstream 1 — Finance Module (Lead: Patricia)
+  Status: GREEN
+  - Chart of accounts mapping: 95% complete
+  - Configuration: 70% complete
+  - Data migration scripts: Testing phase
+  - On track for September go-live
+  - Budget: $2.2M allocated, $1.1M spent (on track)
+
+  Workstream 2 — Supply Chain Module (Lead: David)
+  Status: RED
+  - Warehouse management configuration stalled — the business
+    requirements changed mid-stream when the VP of Operations
+    demanded real-time inventory tracking (wasn't in original
+    scope)
+  - Material master data has 12,000 errors that need manual
+    cleanup
+  - The workstream is 4 weeks behind schedule
+  - Budget: $2.5M allocated, $1.8M spent (72% spent at 43%
+    timeline = significant overspend)
+  - David has requested 3 additional consultants ($180K)
+
+  Workstream 3 — HR Module (Lead: Amanda)
+  Status: GREEN
+  - Payroll configuration: Complete
+  - Benefits administration: 80% complete
+  - Employee self-service portal: In design
+  - On track, slight risk around benefits integration with
+    the insurance carrier's API
+  - Budget: $1.8M allocated, $750K spent (on track)
+
+  Workstream 4 — Reporting & Analytics (Lead: Chen)
+  Status: AMBER
+  - Depends on data from all 3 other workstreams
+  - Finance reports: Ready for testing (depends on WS1 data)
+  - Supply chain reports: Blocked (waiting on WS2 data model
+    to stabilize)
+  - HR reports: In development
+  - Chen's team has capacity but can't progress on 40% of
+    their work due to upstream dependencies
+  - Budget: $1.5M allocated, $500K spent (under-spending due
+    to blocked work)
+
+  Cross-cutting issues:
+  1. The Supply Chain RED status threatens the overall go-live
+     date. If WS2 slips more than 6 weeks, the entire
+     program go-live must be reconsidered.
+  2. Change management training hasn't started because the
+     training team needs stable configurations first.
+  3. The steering committee meets next Tuesday and wants to
+     see the consolidated view.
+
+  Task: Create the consolidated multi-workstream status
+  report for the steering committee.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear consolidated view across all 4 workstreams — presents each workstream with its own RAG status, key metrics, and current state; shows the overall program status (AMBER) with the primary driver (Supply Chain RED); includes a summary view that allows the steering committee to see all 4 workstreams at a glance before diving into details; presents budget information both per-workstream and program-level; makes the timeline position clear (Month 6 of 14)."
+    weight: 0.35
+    description: "ConsolidatedView"
+  - type: llm_judge
+    criteria: "Response highlights dependencies and cross-cutting impacts — clearly shows how WS2's RED status affects WS4 (Reporting blocked) and the overall program (6-week threshold for go-live reconsideration); identifies the change management training dependency on stable configurations; shows the budget impact (WS2 overspending while WS4 underspending due to blocks); connects the individual workstream statuses to the program-level risk; the steering committee should understand how the pieces fit together, not just see 4 independent status reports."
+    weight: 0.35
+    description: "DependencyAnalysis"
+  - type: llm_judge
+    criteria: "Response provides clear recommendations for the steering committee — presents the key decisions needed: approve additional consultants for WS2 ($180K), decide on scope management for the real-time inventory requirement, assess whether the September go-live is still viable; quantifies the program-level budget position (total allocated vs spent vs forecast); includes specific next steps and a recommendation for how to address the RED workstream; the report is formatted for a steering committee meeting (professional, structured, action-oriented)."
+    weight: 0.30
+    description: "SteeringCommitteeReady"

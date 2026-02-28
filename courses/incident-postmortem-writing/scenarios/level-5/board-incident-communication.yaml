@@ -1,0 +1,47 @@
+meta:
+  id: board-incident-communication
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Write board-level incident communications — translate major incidents into strategic narratives for board of directors with business impact, risk assessment, and governance implications"
+  tags: [postmortem, board, directors, strategic-communication, governance, master]
+
+state: {}
+
+trigger: |
+  Your company (a fintech processing $50B annually) had a major
+  incident: a 4-hour outage during peak trading hours caused by a
+  failed database migration. The incident:
+
+  - 4 hours of complete payment processing outage
+  - Estimated $12M in failed transactions
+  - 3 enterprise clients threatening contract review
+  - Regulatory inquiry from the financial services regulator
+  - Media coverage in financial press
+  - Stock price dropped 3% on the news
+
+  The board of directors emergency meeting is in 48 hours. The CEO
+  has asked you (CTO) to prepare the board briefing document and
+  presentation. Board members include: former bank CEO, private
+  equity partner, independent technology director, founder/CEO,
+  and audit committee chair.
+
+  Task: Write the board briefing document. Include: incident summary
+  in business terms, financial impact analysis, regulatory exposure
+  assessment, remediation plan with investment requirements, risk
+  assessment update, and strategic implications. This must speak
+  to board-level concerns, not engineering concerns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Board briefing translates incident to business and strategic terms — executive summary (one page): 'On [date], our payment processing platform was unavailable for 4 hours during peak trading hours (10 AM - 2 PM ET). During this window, no payment transactions could be processed. Cause: a database migration procedure failed, causing data corruption that required full restoration from backup. Impact: approximately $12M in transactions could not be processed during the outage window. Based on historical data, we estimate 60-70% of these transactions will be recovered through retry (customers re-submitting), resulting in an estimated permanent revenue loss of $3.6-4.8M. Three enterprise clients have requested formal incident reviews. Financial press coverage has been negative. Stock price declined 3%.' No technical jargon: the board hears database migration failed not schema migration corrupted index causing query plan regression. Frame as business risk: 'This incident exposed a vulnerability in our operational resilience. Our payment processing infrastructure has a single point of failure in its database tier. When that single point failed, we had no fallback and no way to process payments until full recovery was complete. This is an unacceptable risk for a platform processing $50B annually.' Accountability statement: 'As CTO, I take responsibility for the operational resilience gap that allowed this to happen. The remediation plan I am presenting today addresses both the immediate vulnerability and the broader operational resilience program'"
+    weight: 0.35
+    description: "Board-level translation"
+  - type: llm_judge
+    criteria: "Financial impact, regulatory exposure, and client risk are quantified for board decision-making — financial impact analysis: 'Direct impact: $12M in failed transactions during the outage. Revenue recovery estimate: $7.2-8.4M recovered through customer retry (based on historical retry rates for our platform). Net permanent revenue loss: $3.6-4.8M. SLA credit obligations: 3 enterprise clients with uptime SLAs will require credits totaling approximately $850K. Regulatory potential: financial services regulator has opened an inquiry. Based on precedent, potential outcomes range from no action (if remediation is satisfactory) to formal censure with remediation order. Fines for operational failures of this type typically range from $500K to $5M depending on findings. Stock impact: 3% decline represents approximately $X in market cap. Historical analysis suggests recovery within 2-4 weeks if remediation is credible.' Client risk assessment: '[Client A]: $15M annual contract, renewal in 6 months. Account manager reports relationship is strained but not terminal. Recommended: CTO-level meeting within 1 week with remediation plan. [Client B]: $8M annual contract. Contractual right to terminate for repeated SLA breaches (this is the second in 12 months). Recommended: CEO-level engagement with retention offer. [Client C]: $22M annual contract. Most understanding response but requesting formal audit rights to our infrastructure. Recommended: agree to audit, demonstrate transparency.' Total financial exposure: 'Revenue loss: $3.6-4.8M. SLA credits: $850K. Potential regulatory fine: $500K-5M. Client retention risk: up to $45M in annual revenue if all three at-risk clients depart (worst case, unlikely). Remediation investment required: $2.5M (detailed below)'"
+    weight: 0.35
+    description: "Financial and risk analysis"
+  - type: llm_judge
+    criteria: "Remediation plan and strategic implications justify investment to the board — remediation plan with investment: 'The remediation addresses three layers: (1) Immediate fix (completed): database migration process updated to include pre-migration backup verification and automated rollback capability. Cost: $0 (engineering time already spent). (2) Infrastructure resilience ($1.5M over 6 months): implement active-active database architecture eliminating the single point of failure. This ensures payment processing can continue even during a database failure. Includes: multi-region database replication, automated failover with zero-downtime capability, and continuous data integrity verification. (3) Operational resilience program ($1M annually): dedicated SRE team expansion (4 additional engineers), comprehensive monitoring and alerting upgrade, quarterly disaster recovery testing (game days), and formal incident management framework with trained incident commanders.' Return on investment: 'Annual cost of incidents (trailing 12 months): $8.2M in direct revenue impact plus $2.1M in SLA credits and operational costs. Remediation investment: $2.5M one-time plus $1M annually. If remediation reduces incident impact by 80% (conservative estimate based on industry benchmarks): annual savings of $8.2M, ROI of 230% in year one.' Strategic implications: 'Our competitive position depends on operational reliability. Enterprise clients choose us for our processing speed and uptime. This incident challenges that narrative. The remediation plan is not just a fix — it is a strategic investment in our competitive differentiation. Additionally, proactive investment in resilience is increasingly viewed by regulators and auditors as a mark of mature governance. The board should consider reliability investment as part of our risk management posture, not just an engineering expense.' Board action requested: 'Approve $2.5M one-time remediation investment and $1M annual operational resilience budget. Receive quarterly reliability reports as a standing board agenda item. Authorize CTO to engage directly with at-risk enterprise clients with remediation commitment'"
+    weight: 0.30
+    description: "Remediation and strategic investment"

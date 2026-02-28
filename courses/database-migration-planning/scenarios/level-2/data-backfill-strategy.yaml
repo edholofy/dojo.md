@@ -1,0 +1,39 @@
+meta:
+  id: data-backfill-strategy
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Design a data backfill strategy — populate a new column with computed data for millions of existing rows without impacting production performance"
+  tags: [database, migration, backfill, batch-processing, performance, intermediate]
+
+state: {}
+
+trigger: |
+  Your migration added a new "full_name" column to the users table
+  (5 million rows). The column should be populated by concatenating
+  first_name and last_name from existing data. The application needs
+  this column populated for a feature launching next week.
+
+  A developer proposes:
+  UPDATE users SET full_name = first_name || ' ' || last_name;
+
+  Your DBA raises concerns: "Running a single UPDATE on 5 million
+  rows will lock the table for minutes and spike CPU. We need a
+  backfill strategy."
+
+  Task: Design a backfill strategy that populates the full_name
+  column without impacting production performance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Batch processing approach is designed — batch approach: 'Instead of one massive UPDATE, process the data in small batches. Batch backfill script: DO $$ DECLARE batch_size INT := 10000; max_id INT; current_id INT := 0; BEGIN SELECT MAX(id) INTO max_id FROM users; WHILE current_id < max_id LOOP UPDATE users SET full_name = first_name || chr(32) || last_name WHERE id > current_id AND id <= current_id + batch_size AND full_name IS NULL; current_id := current_id + batch_size; PERFORM pg_sleep(0.1); -- 100ms pause between batches RAISE NOTICE ''Processed up to id %'', current_id; COMMIT; END LOOP; END $$; Key design decisions: (1) Batch size: 10,000 rows per batch. Small enough to avoid long lock durations. Large enough to make progress efficiently. Tune based on table width and server capacity. (2) Pause between batches: 100ms. Gives the database time to handle other queries between batches. Prevents CPU and I/O from saturating. Increase the pause if production queries slow down during backfill. (3) WHERE full_name IS NULL: only updates rows that have not been backfilled yet. Makes the script idempotent — safe to restart if interrupted. (4) Progress logging: RAISE NOTICE reports progress. For 5 million rows at 10,000 per batch: 500 batches. With 100ms pauses: approximately 50 seconds of pausing plus query execution time. Total: usually 2-5 minutes for this size'"
+    weight: 0.35
+    description: "Batch approach"
+  - type: llm_judge
+    criteria: "Performance monitoring during backfill is addressed — monitoring: '(1) Monitor during backfill. Watch these metrics while the backfill runs: database CPU utilization (should stay below 70%), query latency for application queries (p99 should not increase more than 20%), replication lag (if using replicas, lag should stay under 5 seconds), lock wait time (application queries should not be blocked by backfill updates). If any metric exceeds thresholds: increase the pause between batches (from 100ms to 500ms or 1 second), decrease the batch size (from 10,000 to 5,000 or 1,000), or pause the backfill entirely and resume during off-peak hours. (2) Run during low-traffic periods. Even with batching, the backfill adds load. Schedule it during off-peak hours if possible. Monitor traffic patterns — if your lowest traffic is 2-5 AM, run the backfill then. (3) Handle concurrent writes. While the backfill runs, new users are being created without full_name. After the backfill, some rows might be NULL because they were inserted after the backfill processed their ID range. Solution: run the backfill twice. First pass: process all existing rows. Second pass: catch any rows missed due to concurrent inserts (WHERE full_name IS NULL). Alternative: add a trigger that populates full_name on INSERT during the backfill period'"
+    weight: 0.35
+    description: "Performance monitoring"
+  - type: llm_judge
+    criteria: "Verification and edge cases covered — verification: 'After the backfill completes: (1) Verify completeness: SELECT COUNT(*) FROM users WHERE full_name IS NULL; This should be 0 (or close to 0 — a few concurrent inserts may need a second pass). (2) Verify correctness: spot-check 100 random rows: SELECT first_name, last_name, full_name FROM users ORDER BY RANDOM() LIMIT 100; Verify full_name matches the expected concatenation. (3) Handle edge cases: NULL first_name or last_name: the concatenation produces NULL (NULL || anything = NULL in SQL). Fix: COALESCE(first_name, emptystring) || space || COALESCE(last_name, emptystring). Extra spaces: if first_name is NULL, full_name becomes space + last_name. Fix: TRIM the result. Unicode characters: ensure the concatenation handles multi-byte characters correctly. VARCHAR length: if full_name is VARCHAR(100) but first_name (50) + space + last_name (50) = 101 characters, the UPDATE fails. Ensure the column is large enough. (4) After verification, if full_name should be NOT NULL: ALTER TABLE users ALTER COLUMN full_name SET NOT NULL; Only set NOT NULL after confirming zero NULL values. (5) Update the application to populate full_name on new user creation (or add a database trigger). Remove the backfill trigger if one was added'"
+    weight: 0.30
+    description: "Verification"

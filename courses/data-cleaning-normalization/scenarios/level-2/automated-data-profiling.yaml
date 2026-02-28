@@ -1,0 +1,37 @@
+meta:
+  id: automated-data-profiling
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Automated data profiling — use profiling tools and libraries to systematically assess data quality across large datasets"
+  tags: [profiling, automation, pandas-profiling, great-expectations, intermediate]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I manually profiled a 10-column dataset last
+  week and it took a full day. Now I've been given a dataset with 200
+  columns and 5 million rows. I can't manually check every column.
+
+  I've heard about automated profiling tools like ydata-profiling
+  (formerly pandas-profiling) and Great Expectations. How do I use
+  automation to profile large datasets quickly? What should the
+  automated profile tell me, and what still needs manual review?"
+
+  Task: Design an automated data profiling approach using available
+  tools, explaining what can be automated vs what requires human
+  judgment, and how to interpret profiling results for a large dataset.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers automated profiling capabilities — what automated tools generate: per-column statistics (type, missing %, unique count, min/max/mean/median/mode), distribution visualizations (histograms for numeric, bar charts for categorical), correlation matrices (identifying highly correlated features), duplicate detection, and quality alerts (columns that are mostly null, constant columns, high-cardinality categoricals). Mentions specific tools: ydata-profiling for comprehensive HTML reports, Great Expectations for defining and testing data quality rules, and pandas built-in methods for quick checks"
+    weight: 0.35
+    description: "AutomationCapabilities"
+  - type: llm_judge
+    criteria: "Response explains how to interpret automated profiling results for 200 columns — triaging by severity: first look at columns with >50% missing (consider dropping), then high missing (10-50%, investigate why), then check for constant or near-constant columns (provide no predictive value), check for high-cardinality categoricals (may need encoding decisions), check for highly correlated pairs (redundant features), and check for unexpected types (a numeric column stored as text). Shows how to prioritize the 200 columns into groups needing attention vs those that are clean"
+    weight: 0.35
+    description: "Interpretation"
+  - type: llm_judge
+    criteria: "Response explains what still requires human judgment — domain validation (is a column with values 0-100 a percentage, a score, or an age?), business rule validation (does it make sense for order_date to be before customer_signup_date?), determining if missing data is actually missing vs not applicable, deciding whether outliers are errors or legitimate, and interpreting correlation (correlation doesn't mean one column is redundant — it depends on the business context). Emphasizes that automation handles the mechanical work while humans handle the judgment calls"
+    weight: 0.30
+    description: "HumanJudgment"

@@ -1,0 +1,40 @@
+meta:
+  id: data-governance-compliance
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Implement data governance and compliance — handle PII masking, GDPR data subject requests, audit trails, and access controls in pandas workflows"
+  tags: [python, pandas, governance, compliance, GDPR, PII, privacy, expert]
+
+state: {}
+
+trigger: |
+  Your company is preparing for SOC 2 compliance and a GDPR audit.
+  The auditor flags that the analytics team has unrestricted access
+  to customer PII (names, emails, phone numbers, addresses) in their
+  pandas workflows. They also need evidence of:
+
+  1. PII detection and masking in datasets
+  2. Data subject access request (DSAR) fulfillment — "show me all
+     data you have on customer X" and "delete all my data"
+  3. Audit trail of who accessed what data and when
+  4. Data retention policies — automatic deletion after retention period
+
+  Customer tables: customers, orders, support_tickets, activity_logs,
+  payment_history — all containing customer_id and various PII fields.
+
+  Task: Build governance controls for the analytics workflow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code implements PII detection and masking — pii: 'PII detection and masking: PII detection — scan DataFrames for sensitive columns: import re. PII_PATTERNS = {\"email\": r\"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\", \"phone\": r\"\\+?1?\\d{9,15}\", \"ssn\": r\"\\d{3}-\\d{2}-\\d{4}\", \"credit_card\": r\"\\d{4}[- ]?\\d{4}[- ]?\\d{4}[- ]?\\d{4}\", \"ip_address\": r\"\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\"}. PII_COLUMN_NAMES = {\"email\", \"phone\", \"ssn\", \"address\", \"first_name\", \"last_name\", \"full_name\", \"date_of_birth\", \"dob\", \"credit_card\", \"ip_address\"}. def detect_pii(df): findings = []. for col in df.columns: if col.lower() in PII_COLUMN_NAMES: findings.append({\"column\": col, \"type\": \"column_name_match\", \"severity\": \"high\"}). if df[col].dtype == \"object\": sample = df[col].dropna().head(100).astype(str). for pii_type, pattern in PII_PATTERNS.items(): matches = sample.str.contains(pattern, regex=True).sum(). if matches > 10: findings.append({\"column\": col, \"type\": pii_type, \"severity\": \"high\", \"sample_matches\": matches}). return pd.DataFrame(findings). Masking functions: def mask_email(email): if pd.isna(email): return email. parts = email.split(\"@\"). return parts[0][:2] + \"***@\" + parts[1]. def mask_phone(phone): if pd.isna(phone): return phone. return str(phone)[:3] + \"****\" + str(phone)[-2:]. def mask_name(name): if pd.isna(name): return name. return name[0] + \"***\". def hash_identifier(value, salt=\"company_salt\"): import hashlib. return hashlib.sha256(f\"{salt}{value}\".encode()).hexdigest()[:16]. Apply masking to a DataFrame: def mask_pii(df, columns_config): masked = df.copy(). for col, method in columns_config.items(): if col in masked.columns: if method == \"email\": masked[col] = masked[col].apply(mask_email). elif method == \"phone\": masked[col] = masked[col].apply(mask_phone). elif method == \"name\": masked[col] = masked[col].apply(mask_name). elif method == \"hash\": masked[col] = masked[col].apply(hash_identifier). elif method == \"drop\": masked = masked.drop(columns=[col]). return masked. The analytics team gets the masked version. Only authorized personnel with a justified need access raw PII'"
+    weight: 0.35
+    description: "PII masking"
+  - type: llm_judge
+    criteria: "Code handles data subject access requests and right to deletion — dsar: 'Data Subject Access Requests (DSAR): Right of access — show all data for a customer: def fulfill_access_request(customer_id, data_sources): all_data = {}. for name, loader in data_sources.items(): df = loader(). customer_data = df[df[\"customer_id\"] == customer_id]. if len(customer_data) > 0: all_data[name] = customer_data. output = f\"dsar/access_{customer_id}_{datetime.now():%Y%m%d}.xlsx\". with pd.ExcelWriter(output) as writer: for name, data in all_data.items(): data.to_excel(writer, sheet_name=name, index=False). log_dsar_action(customer_id, \"access\", output). return output. data_sources = {\"customers\": lambda: pd.read_csv(\"customers.csv\"), \"orders\": lambda: pd.read_csv(\"orders.csv\"), \"support_tickets\": lambda: pd.read_csv(\"support_tickets.csv\"), \"activity_logs\": lambda: pd.read_csv(\"activity_logs.csv\"), \"payment_history\": lambda: pd.read_csv(\"payment_history.csv\")}. Right to erasure — delete all data for a customer: def fulfill_deletion_request(customer_id, data_sources): deletion_log = []. for name, config in data_sources.items(): df = pd.read_csv(config[\"path\"]). before_count = len(df). df = df[df[\"customer_id\"] != customer_id]. after_count = len(df). deleted = before_count - after_count. df.to_csv(config[\"path\"], index=False). deletion_log.append({\"source\": name, \"rows_deleted\": deleted, \"timestamp\": datetime.now()}). log_dsar_action(customer_id, \"deletion\", deletion_log). return pd.DataFrame(deletion_log). Important: some data must be retained for legal reasons (financial records for 7 years, tax documents). The deletion function should have an exclude list for legally required retention. Right to rectification — update incorrect data: def fulfill_rectification_request(customer_id, updates): df = pd.read_csv(\"customers.csv\"). mask = df[\"customer_id\"] == customer_id. old_values = df.loc[mask, list(updates.keys())].to_dict(\"records\"). for col, new_value in updates.items(): df.loc[mask, col] = new_value. df.to_csv(\"customers.csv\", index=False). log_dsar_action(customer_id, \"rectification\", {\"old\": old_values, \"new\": updates}). GDPR requires response within 30 days. Track all DSARs with timestamps to ensure compliance'"
+    weight: 0.35
+    description: "DSAR"
+  - type: llm_judge
+    criteria: "Response covers audit trails and retention policies — audit: 'Audit trails and data retention: Audit logging for data access: import json. from datetime import datetime. def log_data_access(user, dataset, columns_accessed, row_count, purpose): log_entry = {\"timestamp\": datetime.now().isoformat(), \"user\": user, \"dataset\": dataset, \"columns\": columns_accessed, \"rows_accessed\": row_count, \"purpose\": purpose, \"ip_address\": get_user_ip()}. with open(\"audit_log.jsonl\", \"a\") as f: f.write(json.dumps(log_entry) + \"\\n\"). Wrapper for pandas read functions: def audited_read_csv(filepath, user, purpose, **kwargs): df = pd.read_csv(filepath, **kwargs). log_data_access(user, filepath, list(df.columns), len(df), purpose). return df. Every data access goes through the audited reader. The audit log shows: who accessed what data, when, why, and how many rows. Audit log analysis: audit = pd.read_json(\"audit_log.jsonl\", lines=True). suspicious = audit[audit[\"rows_accessed\"] > 100000]. pii_access = audit[audit[\"columns\"].apply(lambda x: any(c in PII_COLUMN_NAMES for c in x))]. after_hours = audit[pd.to_datetime(audit[\"timestamp\"]).dt.hour.isin(range(22, 6))]. Flag: bulk data exports, PII column access, and after-hours access for security review. Data retention automation: RETENTION_POLICIES = {\"activity_logs\": 365, \"support_tickets\": 730, \"payment_history\": 2555, \"orders\": 2555, \"marketing_events\": 180}. def enforce_retention(policies): for dataset, retention_days in policies.items(): df = pd.read_csv(f\"{dataset}.csv\", parse_dates=[\"created_date\"]). cutoff = pd.Timestamp.now() - pd.Timedelta(days=retention_days). expired = df[df[\"created_date\"] < cutoff]. if len(expired) > 0: df = df[df[\"created_date\"] >= cutoff]. df.to_csv(f\"{dataset}.csv\", index=False). log_retention_action(dataset, len(expired), cutoff). Run retention enforcement monthly. Log everything deleted for compliance evidence. The SOC 2 auditor will review these logs to verify that retention policies are enforced automatically and consistently'"
+    weight: 0.30
+    description: "Audit"

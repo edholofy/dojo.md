@@ -1,0 +1,46 @@
+meta:
+  id: data-platform-strategy
+  level: 5
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data platform strategy — design the enterprise data platform architecture, evaluate build-vs-buy decisions, and create a multi-year technology roadmap"
+  tags: [strategy, platform, architecture, roadmap, master]
+
+state: {}
+
+trigger: |
+  A CTO says: "Our data infrastructure has grown organically over
+  8 years and is now a mess. We have:
+
+  - 3 different orchestrators (Airflow, Luigi, cron jobs)
+  - 2 data warehouses (Redshift and BigQuery, acquired via M&A)
+  - 500+ pipelines with no consistent standards
+  - A mix of Informatica, custom Python, dbt, and stored procedures
+  - 4 teams building data pipelines independently
+  - Monthly data platform costs of $400K and growing 30% YoY
+
+  The board is asking for a 3-year data platform strategy. They
+  want to understand: what's the target architecture, how do we
+  get there, what does it cost, and what's the expected ROI?
+
+  We're a $1B revenue financial services company with 200 data
+  engineers and analysts."
+
+  Task: Design a 3-year data platform strategy that consolidates
+  the current fragmented infrastructure, defines the target
+  architecture, and provides a realistic migration roadmap with
+  costs and ROI.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a target architecture — consolidation plan (single orchestrator, single warehouse, unified transformation framework), technology selection rationale (why Snowflake or Databricks or BigQuery, why Airflow or Dagster, why dbt), data mesh vs centralized platform decision (with rationale based on the 4-team structure), and how the target architecture addresses current pain points (inconsistent standards → shared platform with guardrails, multiple tools → unified stack, no visibility → observability built in). Addresses the M&A warehouse consolidation specifically"
+    weight: 0.35
+    description: "TargetArchitecture"
+  - type: llm_judge
+    criteria: "Response provides a realistic 3-year roadmap — Year 1: foundation (select target platform, migrate highest-value pipelines, establish standards and governance, build observability). Year 2: scale (migrate remaining pipelines, decommission legacy tools, implement self-service capabilities, optimize costs). Year 3: innovate (advanced capabilities like real-time, ML infrastructure, data marketplace, self-healing). Includes migration sequencing (which pipelines first? dependency-aware ordering), team transition plan (training, hiring, org changes), and risk mitigation for each phase"
+    weight: 0.35
+    description: "MigrationRoadmap"
+  - type: llm_judge
+    criteria: "Response provides financial analysis — current state cost breakdown ($400K/month = $4.8M/year), target state cost projection (may initially increase during parallel running, then decrease), ROI sources (reduced platform costs, increased developer productivity from standardization, reduced incident costs, faster time-to-insight), total investment required (platform costs, migration effort, training, hiring), payback period estimate, and how to present this to the board (focus on business outcomes, not technology choices, provide optimistic/expected/pessimistic scenarios)"
+    weight: 0.30
+    description: "FinancialAnalysis"

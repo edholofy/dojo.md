@@ -1,0 +1,50 @@
+meta:
+  id: design-system-accessibility-audit
+  level: 4
+  course: accessibility-audit-reporting
+  type: output
+  description: "Design system accessibility audit — evaluate and report on design system component accessibility ensuring accessible-by-default components"
+  tags: [design-system, components, audit, scalable, expert]
+
+state: {}
+
+trigger: |
+  A Design System Lead says: "Our design system has
+  120 components used across 15 products. If the
+  design system components are accessible, every
+  product inherits that accessibility. If they're
+  not, every product inherits the problems.
+
+  Current state:
+  - 40% of components have some ARIA attributes
+  - No component has been tested with a screen reader
+  - Keyboard navigation works for basic components
+    (buttons, links) but not complex ones (date picker,
+    combobox, data table, tabs)
+  - No accessibility documentation per component
+  - Teams add their own ARIA, often incorrectly,
+    overriding the DS defaults
+
+  The VP wants a full accessibility audit of the
+  design system — not individual products, but the
+  shared components that everything is built from.
+
+  How do I audit a design system for accessibility?"
+
+  Task: Conduct a design system accessibility audit
+  and create an accessibility-per-component report
+  with remediation roadmap.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a component-level audit methodology — audit scope (all 120 components but prioritized: Tier 1 — used on >80% of products: buttons, inputs, modals, navigation, tables — audit first, Tier 2 — used on 40-80% of products: cards, tabs, accordions, tooltips — audit second, Tier 3 — used on <40% of products: specialized widgets — audit third), per-component audit checklist (keyboard operability: can the component be fully operated without mouse? ARIA correctness: does the component use correct roles, states, and properties per ARIA Authoring Practices? screen reader compatibility: does the component announce correctly in NVDA, VoiceOver, and JAWS? color contrast: do all visual states meet 4.5:1 for text, 3:1 for non-text? focus management: is focus visible, logical, and managed correctly for overlays and dynamic content? responsive behavior: does the component remain accessible at all breakpoints and zoom levels?), component accessibility scorecard (each component rated: Accessible — passes all checks, Partially Accessible — passes some checks, specific failures documented, Not Accessible — fundamental accessibility barriers)"
+    weight: 0.35
+    description: "ComponentAudit"
+  - type: llm_judge
+    criteria: "Response creates component accessibility documentation format — per-component accessibility spec (accessibility status badge: green/yellow/red, keyboard behavior documented: which keys do what — Tab focuses, Enter activates, Escape closes, Arrow keys navigate, ARIA attributes: which attributes are built-in and set automatically, which can be configured by consumers — e.g., aria-label must be provided by consuming team, screen reader announcement: verbatim what each screen reader says for each component state — 'Submit, button' / 'Submit, button, disabled', known limitations: any accessibility gaps with timeline for remediation, usage guidance: how to use the component accessibly — do's and don'ts), anti-pattern documentation (common misuse: teams adding redundant ARIA on top of DS component ARIA, teams wrapping accessible components in inaccessible containers, teams overriding component keyboard handlers — document these anti-patterns and provide correct usage examples)"
+    weight: 0.35
+    description: "AccessibilityDocs"
+  - type: llm_judge
+    criteria: "Response provides remediation roadmap and governance — remediation priority (fix components used most widely first — a fix to the Button component improves 15 products simultaneously, estimated effort per component: simple components like Button/Link: 2-4 hours, medium components like Accordion/Tabs: 8-16 hours, complex components like DataTable/DatePicker/Combobox: 24-40 hours, total estimated effort: ~400 hours for 120 components — 3 months with 1 dedicated developer), governance going forward (accessibility as component acceptance criterion: no new component ships without passing accessibility audit, accessibility regression testing: automated axe tests for every component in CI, component version changelog includes accessibility changes, accessibility review required for component API changes — ensures changes don't break ARIA contracts), and impact measurement (before: X accessibility issues across 15 products traced to DS components, after: track reduction in product-level accessibility issues — if DS components are accessible, product teams focus only on product-specific accessibility like content and business logic)"
+    weight: 0.30
+    description: "RemediationGovernance"

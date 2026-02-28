@@ -1,0 +1,47 @@
+meta:
+  id: dark-mode-palette
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Dark mode palette — create a dark mode color palette that maintains brand identity and accessibility"
+  tags: [dark-mode, palette, adaptation, accessibility, intermediate]
+
+state: {}
+
+trigger: |
+  A design lead says: "We're adding dark mode to our
+  app. Our current light mode palette:
+
+  - Primary: #3B82F6 (blue)
+  - Background: #FFFFFF
+  - Surface: #F3F4F6
+  - Text Primary: #111827
+  - Text Secondary: #6B7280
+  - Border: #E5E7EB
+  - Success: #10B981
+  - Error: #EF4444
+
+  My developer just inverted all the colors — white
+  backgrounds became black, dark text became white.
+  It looks terrible. The blue is too bright on dark
+  backgrounds, the success green is eye-burning, and
+  the contrast feels wrong.
+
+  How do I properly create a dark mode palette?"
+
+  Task: Design a dark mode palette adaptation with
+  rationale for each color transformation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains dark mode color theory — not simple inversion (inverting colors creates harsh, uncomfortable results — pure black backgrounds cause halation where white text appears to bleed, saturated colors that work on white are too vibrant on dark backgrounds), dark mode principles (use dark gray not pure black — #121212 to #1E1E1E range is easier on eyes, reduce color saturation — desaturate primary and semantic colors by 10-20% for dark backgrounds, reduce contrast slightly — instead of pure white text use #E5E5E5 or similar to reduce eye strain while maintaining readability, surfaces are elevated with lighter grays — not darker shadows which are invisible on dark backgrounds), elevation model (in dark mode, elevation is shown by lighter surface colors not shadows — background < surface < elevated surface in increasing lightness)."
+    weight: 0.35
+    description: "DarkModeTheory"
+  - type: llm_judge
+    criteria: "Response provides specific dark mode palette — Background: #121212 or #0F172A (not pure black, rationale provided), Surface/Card: #1E293B or #1F2937 (slightly elevated from background), Elevated Surface: #334155 or #374151 (for modals, dropdowns — visually lifted), Text Primary: #F1F5F9 or #E5E7EB (not pure white — reduces eye strain), Text Secondary: #94A3B8 or #9CA3AF (sufficient contrast for secondary info), Border: #334155 or #374151 (subtle but visible separation), Primary: desaturated blue — #60A5FA or similar (less intense than #3B82F6 on dark background), Success: desaturated green — #34D399 or adjusted (readable without eye-burning), Error: adjusted red — #F87171 or lighter/desaturated (maintains urgency without harshness), each color includes hex value and contrast ratio against its intended background."
+    weight: 0.35
+    description: "SpecificDarkPalette"
+  - type: llm_judge
+    criteria: "Response includes implementation guidance and documentation — mapping document (side-by-side light and dark values for every color token, showing the transformation and rationale), semantic token architecture (use semantic tokens not raw colors: --color-bg-primary maps to white in light mode and #121212 in dark mode — theme switching swaps values not individual colors), accessibility verification (every text/background combination in dark mode verified against WCAG AA — 4.5:1 for body text, 3:1 for large text and UI components), testing recommendations (test on actual screens — dark mode looks different on OLED vs LCD, test in ambient lighting conditions — dark mode in bright room vs dark room, test with system dark mode preferences — respect prefers-color-scheme), and common pitfalls (don't use colored backgrounds with dark text in dark mode — they look like highlighted errors, images may need adjusted backgrounds, shadows are invisible on dark backgrounds — use borders or elevation instead)."
+    weight: 0.30
+    description: "ImplementationGuidance"

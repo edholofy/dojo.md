@@ -1,0 +1,45 @@
+meta:
+  id: first-revenue-shift
+  level: 1
+  course: revenue-forecasting
+  type: output
+  description: "First revenue forecasting shift — a combined scenario testing foundational forecasting concepts across multiple business types and methods"
+  tags: [shift, combined, assessment, multi-method, beginner]
+
+state: {}
+
+trigger: |
+  A newly hired financial analyst receives their first forecasting
+  assignment: "We have three business units and need Q2 forecasts for
+  each:
+
+  Unit A (SaaS): 800 customers, $75 ARPU, 3% monthly churn, 4%
+  monthly expansion, acquiring 40 new customers/month.
+
+  Unit B (E-commerce): 300K monthly visitors, 2.2% conversion rate,
+  $55 AOV. Last Q2 was $1.1M. Year-over-year growth has been 15%.
+
+  Unit C (Consulting): Pipeline shows 5 projects at various stages:
+  Project 1: $200K (90% probability), Project 2: $150K (60%),
+  Project 3: $300K (40%), Project 4: $100K (80%), Project 5: $250K (30%).
+
+  Build a Q2 forecast for each unit and the combined company. Show
+  your methodology and state your assumptions clearly."
+
+  Task: Build forecasts for all three business units using appropriate
+  methods for each revenue type, combine them, and present with
+  confidence ranges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response correctly forecasts Unit A (SaaS) using MRR model — unitA: 'Unit A — SaaS forecast using MRR model: starting position: customers: 800. ARPU: $75/month. Starting MRR: 800 × $75 = $60,000. Monthly dynamics: new customers: 40/month × $75 = $3,000 new MRR. Churn: 3% of customers leave = lose 3% of MRR. Expansion: 4% of existing MRR from upsells. Net Revenue Retention (NRR): (1 - 3% churn + 4% expansion) = 101% monthly. Month 1 (April): starting MRR: $60,000. Expansion: $60,000 × 4% = $2,400. Churn: $60,000 × 3% = -$1,800. Net existing: $60,600. New MRR: $3,000. Ending MRR: $63,600. Month 2 (May): starting MRR: $63,600. Expansion: $63,600 × 4% = $2,544. Churn: $63,600 × 3% = -$1,908. Net existing: $64,236. New MRR: $3,000. Ending MRR: $67,236. Month 3 (June): starting MRR: $67,236. Expansion: $67,236 × 4% = $2,689. Churn: $67,236 × 3% = -$2,017. Net existing: $67,908. New MRR: $3,000. Ending MRR: $70,908. Q2 revenue: $63,600 + $67,236 + $70,908 = $201,744. Key insight: NRR is 101% — existing customers generate slightly more revenue each month even without new acquisitions. The new customer acquisition ($3,000/month) provides additional growth. Confidence: high (±5-8%) because subscription revenue is predictable. Range: $190K - $215K'"
+    weight: 0.35
+    description: "UnitA"
+  - type: llm_judge
+    criteria: "Response correctly forecasts Unit B (E-commerce) and Unit C (Consulting) — unitBC: 'Unit B — E-commerce forecast: method 1 — current run rate: monthly revenue: 300,000 × 2.2% × $55 = $363,000. Q2 run rate: $363K × 3 = $1,089K. Method 2 — Year-over-year with growth: last Q2: $1.1M. YoY growth: 15%. This Q2 forecast: $1.1M × 1.15 = $1,265,000. Method 3 — Reconciliation: the run rate ($1,089K) is below last Q2 ($1.1M), which suggests current traffic or conversion may be in a seasonal trough. YoY method ($1,265K) accounts for seasonality (comparing same quarter) and growth. Recommended forecast: use the YoY method as base case since it naturally accounts for Q2 seasonality. Base case: $1,265K. Conservative: $1,140K (assumes growth slows to 8% as the business matures). Optimistic: $1,380K (assumes 20% growth from planned marketing campaigns). Confidence: moderate (±10-15%) — e-commerce has higher variability. Range: $1,100K - $1,380K. Unit C — Consulting forecast: method — weighted pipeline: multiply each project by its probability. Project 1: $200K × 90% = $180K. Project 2: $150K × 60% = $90K. Project 3: $300K × 40% = $120K. Project 4: $100K × 80% = $80K. Project 5: $250K × 30% = $75K. Weighted pipeline total: $545K. Important caveats: pipeline probability requires honest assessment. Self-reported probabilities are often inflated (optimism bias). Not all revenue may be recognized in Q2 (projects may span quarters). Revenue recognition timing: if Project 1 ($200K) starts in May and runs for 4 months, only $100K is recognized in Q2. Adjusted for timing (assume 70% of weighted value recognized in Q2): Q2 consulting forecast: $545K × 70% = $382K. Confidence: low (±20-30%) — consulting revenue is lumpy and pipeline-dependent. Range: $270K - $490K'"
+    weight: 0.35
+    description: "UnitBC"
+  - type: llm_judge
+    criteria: "Response combines all three units with appropriate confidence ranges — combined: 'Combined company forecast: unit summary: Unit A (SaaS): $202K (high confidence, ±8%). Unit B (E-commerce): $1,265K (moderate confidence, ±12%). Unit C (Consulting): $382K (low confidence, ±25%). Combined base case: $202K + $1,265K + $382K = $1,849K. Building the combined confidence range: do not simply add the individual ranges because errors across units may partially offset each other (diversification benefit). Conservative case (all units at conservative end): $190K + $1,140K + $270K = $1,600K. Optimistic case (all units at optimistic end): $215K + $1,380K + $490K = $2,085K. However, the probability that ALL units underperform simultaneously is low. A more realistic range uses a moderate offset: realistic conservative: $1,700K (some units underperform, others hit plan). Realistic optimistic: $1,950K. Presenting the combined forecast: Q2 company revenue forecast: base case: $1.85M. Range: $1.70M - $1.95M. Revenue composition: SaaS: $202K (11%) — most predictable, growing steadily. E-commerce: $1,265K (68%) — moderately predictable, seasonal. Consulting: $382K (21%) — least predictable, pipeline-dependent. Revenue quality assessment: 11% highly predictable (SaaS). 68% moderately predictable (e-commerce). 21% low predictability (consulting). Key assumptions documented: SaaS: 40 new customers/month, 3% churn, 4% expansion continue. E-commerce: 15% YoY growth continues, no major competitor disruption. Consulting: pipeline probabilities are accurate, 70% of weighted revenue recognized in Q2. Risk factors: if the two largest consulting projects (3 and 5) both fail to close, Q2 drops by $195K (to $1.65M). If e-commerce YoY growth slows to 5%, Q2 drops by $110K (to $1.74M). SaaS is the most stable — unlikely to deviate more than ±$15K. Methodology note for the analyst: this exercise demonstrates why different revenue types require different forecasting methods. Never apply a single method to all revenue streams. The SaaS unit uses the MRR buildup model. The e-commerce unit uses YoY seasonal comparison. The consulting unit uses weighted pipeline. Each method matches the revenue characteristics of its business unit'"
+    weight: 0.30
+    description: "Combined"

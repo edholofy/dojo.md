@@ -1,0 +1,46 @@
+meta:
+  id: first-review-shift
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Combined beginner shift — write a complete code review for a medium-sized PR covering clarity, tone, severity categorization, and approval decisions"
+  tags: [code-review, combined, shift-simulation, complete-review, beginner]
+
+state: {}
+
+trigger: |
+  You have a PR to review: "Add user profile settings page"
+  Author: A mid-level developer, 6 months on the team.
+  PR: 150 lines across 4 files.
+
+  Issues you've found (in order of discovery):
+  1. Profile photo upload accepts any file type (no validation)
+  2. The component is named "Settings" — too generic
+  3. Email validation uses a simple regex that rejects valid emails
+  4. Missing semicolons on 3 lines
+  5. The save button doesn't disable while submitting (double-submit risk)
+  6. Good: error states are handled with clear user-facing messages
+  7. A console.log left in from debugging
+  8. The API call doesn't handle network errors (just catches and ignores)
+  9. Good: the form resets to saved values on cancel (nice UX touch)
+  10. Test file only covers the happy path — no error case tests
+
+  Task: Write the complete review including: a summary comment,
+  inline comments for each issue (properly categorized and toned),
+  praise for the good things, and your approve/request-changes
+  decision. This should demonstrate everything a good code review
+  includes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Summary comment sets the right tone and overview — opens with acknowledgment: 'Good work on the profile settings page — the error handling UX is really nice and the cancel/reset behavior is a great touch.' Then overview: 'I found a few issues to address before merge — the main ones are file type validation on photo upload and network error handling. I also left some smaller suggestions.' Severity summary: 'X blocking items, Y suggestions, Z nits.' The author immediately knows: the review is constructive, there are specific things to fix, and the reviewer recognized good work"
+    weight: 0.35
+    description: "Summary comment"
+  - type: llm_judge
+    criteria: "Inline comments are properly categorized and toned — blocking: file type validation (#1, security), email regex (#3, correctness), error swallowing (#8, reliability), missing error tests (#10, quality). Suggestion: generic component name (#2), double-submit (#5), console.log (#7). Nit: semicolons (#4, should be automated). Praise: error states (#6), cancel behavior (#9). Each blocking comment explains the risk clearly. Each suggestion uses 'consider' or 'would you mind' language. Nits are explicitly marked non-blocking. Praise is specific ('the toast messages on save failure give users actionable guidance — nice touch'). Comments flow from most to least important"
+    weight: 0.35
+    description: "Categorized inline comments"
+  - type: llm_judge
+    criteria: "Decision is appropriate with clear next steps — request changes: 4 blocking items need to be addressed (file type validation, email regex, error handling, error tests). Next steps are clear: 'Please address the blocking items. The suggestions and nits are up to you — happy to re-review quickly once the blocking items are fixed.' The review is actionable: the author knows exactly what must change, what's optional, and when to request re-review. Tone throughout: collaborative, respectful, specific. The author should feel supported, not attacked. Re-review expectation: 'This is close — once the validation and error handling are addressed, I think it's ready to ship.'"
+    weight: 0.30
+    description: "Decision and next steps"

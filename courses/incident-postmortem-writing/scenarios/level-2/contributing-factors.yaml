@@ -1,0 +1,49 @@
+meta:
+  id: contributing-factors
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Identify contributing factor chains — map how multiple individually-acceptable conditions combined to create a failure"
+  tags: [postmortem, contributing-factors, factor-chain, swiss-cheese, conditions, intermediate]
+
+state: {}
+
+trigger: |
+  Your payment processing system had an incident where customers
+  were double-charged. Investigation reveals it wasn't one mistake
+  but a chain of individually reasonable conditions that combined
+  into a failure:
+
+  1. The payment gateway introduced a new retry behavior (HTTP 202
+     instead of 200 for successful-but-slow transactions)
+  2. Your code treated any non-200 response as a failure and retried
+  3. The retry created a second charge (the gateway processed both)
+  4. The idempotency key implementation had a bug — it used the
+     session ID instead of the order ID, so retries from the same
+     order had different idempotency keys
+  5. The payment gateway's duplicate detection window was 5 minutes,
+     but the retry happened within 2 seconds (too fast for their
+     duplicate detection)
+  6. No automated reconciliation existed to catch double charges
+
+  Each of these conditions was individually known and accepted.
+  Together, they caused 47 customers to be double-charged.
+
+  Task: Write the contributing factors section showing how these
+  conditions interacted. Use the Swiss Cheese Model to explain why
+  the failure got through multiple safety layers. Then propose
+  action items that address the most critical gaps.
+
+assertions:
+  - type: llm_judge
+    criteria: "Swiss Cheese Model is applied showing how holes aligned — model explanation: 'Each safety layer had a gap (hole in the cheese slice) that individually wouldn't cause a failure. The incident occurred because all gaps aligned simultaneously.' Layer 1 (API contract): 'Payment gateway changed response codes without advance notice. Gap: no contract testing between our system and the gateway. The new 202 response was valid per HTTP spec but broke our assumption that only 200 means success.' Layer 2 (Retry logic): 'Our retry logic treated non-200 as failure. Gap: retry logic was written when 200 was the only success code. Not updated when the gateway evolved. This was a reasonable assumption when written, but became a latent bug.' Layer 3 (Idempotency): 'Idempotency keys used session ID instead of order ID. Gap: worked correctly for single-session flows but broke for retry scenarios where the session and order diverge. Never tested with retries.' Layer 4 (Gateway duplicate detection): '5-minute window designed for human double-clicks, not 2-second automated retries. Gap: works for its intended scenario but not for machine-speed retries.' Layer 5 (Reconciliation): 'No automated reconciliation to catch double charges. Gap: manual spot-checking doesn't scale and missed the pattern.' All 5 holes had to align for double-charges to occur"
+    weight: 0.35
+    description: "Swiss Cheese analysis"
+  - type: llm_judge
+    criteria: "Each factor is analyzed for why it existed and why it was individually acceptable — factor 1 (202 response): 'The gateway's change was technically correct — 202 Accepted is a valid HTTP status for async processing. They published it in release notes our team didn't monitor.' Factor 2 (retry on non-200): 'Written 3 years ago when the gateway only returned 200 or 5xx. At the time, treating non-200 as failure was correct. The code was never updated because the gateway hadn't changed its success codes until now.' Factor 3 (session-based idempotency): 'Session ID was chosen because it was readily available. It worked correctly in testing because tests don't simulate retry scenarios with different sessions. The bug was latent for 2 years.' Factor 4 (5-minute window): 'The gateway designed duplicate detection for human behavior patterns. Machine-to-machine retries in 2 seconds were outside their design parameters. Neither system was wrong — they just had incompatible assumptions.' Factor 5 (no reconciliation): 'Reconciliation was on the roadmap but was deprioritized three times in favor of features. The risk was accepted each time because double-charges were considered unlikely.' Key insight: 'No single team made a mistake. Five reasonable decisions created a system that could fail in a way none of them anticipated'"
+    weight: 0.35
+    description: "Individual factor analysis"
+  - type: llm_judge
+    criteria: "Action items prioritize closing the most critical gaps — priority by impact: (1) 'Fix idempotency key to use order ID (Layer 3 fix). This is the most critical fix because correct idempotency would have prevented double-charges regardless of retry behavior. Owner: Payments team. Due: 1 week. This is a code change — highest priority.' (2) 'Update retry logic to accept 2xx status codes as success (Layer 2 fix). Prevents unnecessary retries. Owner: Backend team. Due: 1 week.' (3) 'Implement automated daily reconciliation comparing our charge records with gateway records (Layer 5 fix). Catches any future discrepancies regardless of cause. Owner: Finance engineering. Due: 3 weeks.' (4) 'Subscribe to payment gateway release notes and add contract tests that validate expected response codes (Layer 1 fix). Prevents future API contract surprises. Owner: Backend team. Due: 2 weeks.' (5) 'Request the gateway extend duplicate detection to sub-second window or provide explicit idempotency support (Layer 4 fix). Owner: Payments team. Due: vendor engagement, timeline TBD.' Immediate customer action: 'All 47 double-charged customers refunded within 24 hours with apology. Proactive — don't wait for customers to report'"
+    weight: 0.30
+    description: "Prioritized fixes"

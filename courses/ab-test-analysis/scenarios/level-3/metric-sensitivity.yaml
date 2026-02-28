@@ -1,0 +1,34 @@
+meta:
+  id: metric-sensitivity
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Optimize metric sensitivity — choose and transform metrics to maximize the ability to detect real treatment effects, including ratio metrics, capping, and winsorization"
+  tags: [metric-sensitivity, winsorization, ratio-metrics, metric-design, advanced]
+
+state: {}
+
+trigger: |
+  The data science team reviews the experimentation program and finds:
+  "60% of our tests are inconclusive — not enough power to detect the
+  expected effects. But we can't just add more traffic. The Head of
+  Engineering says we need to be smarter about our metrics, not just
+  throw more users at the problem."
+
+  Task: Explain metric sensitivity optimization — how to choose,
+  transform, and design metrics that are more sensitive to real
+  treatment effects without increasing sample size.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers metric sensitivity concepts and diagnosis — sensitivity: 'Metric sensitivity: A metric is sensitive if it can detect real treatment effects with a reasonable sample size. Sensitivity depends on: signal-to-noise ratio = effect size / standard error. To improve sensitivity, either increase the signal (bigger effect captured by the metric) or reduce the noise (lower variance). Diagnosing sensitivity problems: metric 1 — revenue per user: mean = $50, std = $150, CV = 3.0. MDE at 80% power with 10K per group = $5.90 (11.8% relative). Very insensitive — cannot detect effects below 12%. Problem: heavy-tailed distribution. A few whale users ($5,000+) create massive variance. metric 2 — purchase rate (binary): mean = 8%, std = 0.27. MDE at 80% power with 10K per group = 1.1pp (13.8% relative). Moderate sensitivity — similar to revenue. Binary metrics have variance bounded by p(1-p), which limits how much you can improve. metric 3 — clicks per session: mean = 5.2, std = 12.4, CV = 2.4. MDE at 80% power with 10K per group = 0.49 (9.4% relative). Problem: zero-inflated (many sessions have 0 clicks) and long-tailed. The team should focus on transforming metric 1 (revenue) since it has the most room for improvement, and consider alternative metrics that better capture the treatment effect'"
+    weight: 0.35
+    description: "Sensitivity"
+  - type: llm_judge
+    criteria: "Response covers metric transformation techniques — transformations: 'Metric transformation techniques: Technique 1 — Winsorization (capping extreme values): cap values at a percentile (e.g., 99th percentile). Revenue per user: raw std = $150. Cap revenue at $500 (99th percentile): std drops to $80. Variance reduction: (150² - 80²) / 150² = 72%. MDE improves from $5.90 to $3.15 (almost 2x more sensitive). Why it works: a few users spending $5,000+ contribute disproportionate variance. Capping at $500 removes this noise without losing the signal (treatment effects are unlikely to come from changing whale behavior). Choice of cap: 95th percentile — aggressive, may lose some signal. 99th percentile — standard, good balance. 99.5th percentile — conservative, preserves more data. Validate: check that the treatment effect is similar before and after winsorization. If the treatment specifically targets high-spenders, winsorization would remove the signal. Technique 2 — Log transformation: for right-skewed metrics (revenue, session duration). log(revenue + 1) reduces the impact of extreme values. Works well when effects are multiplicative (the treatment increases revenue by a percentage, not a fixed amount). Caution: the treatment effect is now on the log scale — back-transform for interpretation. Technique 3 — Ratio metrics: instead of total revenue per user (noisy), use: revenue per purchase (conditional on purchasing — less noisy). Purchase rate × average order value (decomposition). The decomposition lets you analyze each component separately. Purchase rate has bounded variance (binary). Average order value has lower variance than total revenue (conditioning on purchase removes the zero-inflation). Technique 4 — Linearization for ratio metrics: for metrics like revenue per session or clicks per page view: these are ratios where both numerator and denominator vary. The delta method linearizes the ratio: linearized metric = Y_i - R × X_i, where R is the overall ratio. This converts the ratio to a per-user metric with a proper standard error'"
+    weight: 0.35
+    description: "Transformations"
+  - type: llm_judge
+    criteria: "Response covers metric design and selection strategies — design: 'Metric design and selection strategies: Strategy 1 — Choose the metric closest to the intervention: a homepage redesign affects: page engagement (closest — most sensitive). Signup rate (one step removed — less sensitive). Revenue (many steps removed — least sensitive). The closer the metric is to the point of intervention, the larger the signal and the more sensitive the measurement. Use page engagement as the primary metric and revenue as a long-term guardrail. Strategy 2 — Increase the denominator (more observations per user): instead of one data point per user, use one data point per session. If each user has 5 sessions during the test, you effectively have 5x the data. Cluster-robust standard errors account for within-user correlation. Even with correlation, per-session analysis is typically 2-3x more powerful than per-user analysis. Strategy 3 — Use composite metrics (OEC): combine multiple metrics into a single Overall Evaluation Criterion: OEC = w1 × normalized(clicks) + w2 × normalized(conversions) + w3 × normalized(revenue). The composite metric captures the treatment effect across multiple dimensions. If the treatment improves clicks by 5% and conversions by 2%, neither alone may be significant, but the combined OEC may be. Strategy 4 — Pre-filter to the affected population: if the treatment only affects the checkout page, restrict the analysis to users who reached checkout. Users who never reached checkout add noise but no signal. This is called triggered analysis or conditional analysis. Caution: do not condition on post-treatment behavior (e.g., only analyze users who made a purchase). This introduces selection bias. Only condition on pre-treatment characteristics or the trigger event (reaching the page where the treatment is shown). Impact summary: applying these techniques to the revenue metric: raw revenue per user: MDE = $5.90 (11.8%). After winsorization (99th %ile): MDE = $3.15 (6.3%). After CUPED (ρ = 0.7): MDE = $2.25 (4.5%). After triggered analysis (checkout visitors only): MDE = $1.80 (3.6%). Combined: 3x improvement in sensitivity without adding a single user'"
+    weight: 0.30
+    description: "Design"

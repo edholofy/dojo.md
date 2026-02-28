@@ -1,0 +1,57 @@
+meta:
+  id: advanced-postmortem-shift
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Advanced postmortem shift — handle a complex incident requiring cross-team coordination, organizational analysis, public communication, and architectural recommendations"
+  tags: [postmortem, shift-simulation, advanced, cross-functional, comprehensive]
+
+state: {}
+
+trigger: |
+  You're the incident commander for a complex incident that just
+  resolved. You need to write the full postmortem covering multiple
+  dimensions. Here's the incident:
+
+  A routine database maintenance window (scheduled, communicated)
+  went wrong. The maintenance was supposed to take 30 minutes with
+  no customer impact. Instead:
+
+  1. The maintenance script had a bug that dropped a production
+     index instead of rebuilding it (a typo: DROP INDEX instead of
+     REINDEX).
+  2. Without the index, queries slowed from milliseconds to minutes.
+     The application didn't crash but became unusably slow.
+  3. The on-call DBA was the same person who wrote the maintenance
+     script. They spent 45 minutes trying to figure out what went
+     wrong before realizing their own script caused it.
+  4. Rebuilding the index took 2 hours because the table had 500
+     million rows.
+  5. During the rebuild, a product manager sent a "we're investigating"
+     tweet from the company account that said "our database is down"
+     — which wasn't accurate (it was slow, not down) and alarmed
+     enterprise customers.
+  6. Two enterprise customers called demanding to know if their data
+     was lost (it wasn't).
+  7. The index rebuild completed successfully. Total customer impact:
+     2 hours 45 minutes of severe degradation.
+
+  Task: Write a comprehensive postmortem covering: technical root
+  cause, process failures (maintenance script review, on-call
+  conflict of interest), communication failures (inaccurate public
+  message), customer impact and follow-up, and architectural
+  recommendations (how to make maintenance operations safer).
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical and process root causes are both thoroughly analyzed — technical root cause: 'The maintenance script contained a typo: DROP INDEX instead of REINDEX. This caused the production index to be deleted rather than rebuilt. Without the index, queries that normally complete in milliseconds required full table scans on a 500-million-row table, causing severe performance degradation.' Process root causes: '(1) Script review gap: the maintenance script was not peer-reviewed before execution. Maintenance operations that modify production database objects should require the same review rigor as code deployments. (2) No dry-run or validation: the script was executed directly against production without a dry-run step that would have shown the DROP operation. (3) Conflict of interest in debugging: the on-call DBA who investigated the slowdown was the same person who wrote and executed the maintenance script. This created a blind spot — they spent 45 minutes investigating other potential causes before considering their own script. This is not a personal failure but a process design issue: the person who made a change should not be the sole investigator when that change causes problems. (4) No rollback plan: the maintenance window plan did not include a rollback procedure for index operations. When the index was dropped, there was no pre-built recovery step — the team had to improvise the rebuild.' Timeline showing the delay: '45 minutes lost to debugging blind spot + 120 minutes for index rebuild = 165 minutes of impact that could have been reduced to approximately 120 minutes with immediate identification'"
+    weight: 0.35
+    description: "Technical and process analysis"
+  - type: llm_judge
+    criteria: "Communication failure is analyzed with corrective actions — communication failure analysis: 'At T+60 minutes, a product manager posted on the company Twitter account: our database is down. This message was: (1) technically inaccurate — the database was not down, it was experiencing severe performance degradation due to a missing index. (2) unnecessarily alarming — enterprise customers interpreted database is down as potential data loss, triggering escalation calls from two enterprise accounts. (3) unauthorized — the product manager was trying to be helpful but was not designated as the incident communicator and did not clear the message with the incident commander.' Impact of the bad communication: 'Two enterprise customers called demanding data loss confirmation. Account managers had to spend time reassuring customers their data was safe. The inaccurate message created more customer anxiety than the actual incident.' Communication action items: '(1) Incident communication is handled only by the designated incident communicator (typically the incident commander or their delegate). No one else posts public updates during an active incident. (2) Pre-approved message templates for common scenarios: performance degradation, partial outage, full outage, data concerns. Templates are accurate and reviewed by legal. (3) Communication checklist: before posting any external message, verify with the technical lead that the message accurately describes the situation. (4) Enterprise customer communication is handled through account managers with technical talking points, not through public social media.' Customer follow-up plan: 'Direct outreach to the two enterprise customers within 24 hours. Include: accurate description of what happened, confirmation that no data was affected, prevention steps. Offer a call with the engineering team if desired'"
+    weight: 0.35
+    description: "Communication failure analysis"
+  - type: llm_judge
+    criteria: "Architectural recommendations make maintenance operations safer — maintenance safety improvements: '(1) Maintenance script peer review: all scripts that modify production database objects require peer review by a second DBA. The reviewer must verify: correct operations (REINDEX not DROP), correct target (production table name), and rollback procedure exists. Owner: DBA team lead. Due: immediately for all future maintenance.' (2) Dry-run requirement: maintenance scripts must support a dry-run mode that shows what operations will be performed without executing them. The dry-run output is reviewed before production execution. For database operations: EXPLAIN or equivalent before execution. Owner: DBA team. Due: 2 weeks.' (3) Automated pre-checks: before any maintenance window, automated checks verify: backup is current (within last 4 hours), index rebuild estimated time is within maintenance window, rollback procedure is documented and tested. Owner: SRE team. Due: 3 weeks.' (4) Separation of executor and investigator: if an incident occurs during or shortly after a maintenance window, someone other than the maintenance executor leads the investigation. The executor participates but does not lead — fresh eyes reduce blind spots. Owner: incident response process. Due: update runbook this week.' (5) Online index operations: evaluate whether REINDEX CONCURRENTLY or equivalent can be used for future index maintenance, eliminating the need for a maintenance window entirely. If index operations can be done online without locking or risk, the entire class of maintenance-window incidents is eliminated. Owner: DBA team. Due: evaluate within 2 weeks.'"
+    weight: 0.30
+    description: "Maintenance safety architecture"

@@ -1,0 +1,40 @@
+meta:
+  id: alert-correlation
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Correlate related alerts — identify connections between multiple alerts to find the root cause rather than chasing individual symptoms"
+  tags: [monitoring, correlation, root-cause, pattern-recognition, intermediate]
+
+state: {}
+
+trigger: |
+  Within a 10-minute window, you receive these 6 alerts:
+
+  1. 10:02 - WARNING: order-service response time p99 > 2s
+  2. 10:03 - WARNING: inventory-service response time p99 > 3s
+  3. 10:05 - CRITICAL: order-service error rate > 5%
+  4. 10:06 - WARNING: payment-service timeout rate > 2%
+  5. 10:08 - CRITICAL: PostgreSQL primary CPU > 95%
+  6. 10:09 - WARNING: PostgreSQL replication lag > 30 seconds
+
+  Your architecture: order-service → calls inventory-service and
+  payment-service → both query PostgreSQL.
+
+  Task: Correlate these alerts to identify the likely root cause.
+  Explain your correlation reasoning, identify which alerts are
+  symptoms vs. causes, and describe what you would investigate first.
+
+assertions:
+  - type: llm_judge
+    criteria: "Correlation correctly identifies the database as the root cause — correlation analysis: 'These 6 alerts are not 6 separate problems — they are symptoms of one underlying issue: PostgreSQL is under extreme load. Evidence chain: (1) PostgreSQL primary CPU at 95% (alert 5) — the database server is overwhelmed. (2) PostgreSQL replication lag > 30s (alert 6) — the primary is too busy to replicate, confirming it is maxed out. (3) inventory-service latency > 3s (alert 2) — inventory queries the database. Slow database = slow inventory responses. (4) order-service latency > 2s (alert 1) — order-service calls inventory-service. Slow inventory = slow orders (cascading latency). (5) payment-service timeouts (alert 4) — payment-service also queries the database. Timeouts mean queries are taking too long. (6) order-service errors > 5% (alert 3) — order-service is erroring because its downstream calls (inventory, payment) are timing out.' Root cause: 'The database is the origin. Everything else is a downstream symptom. The correlation evidence: (a) the database alerts appeared first or within the same window, (b) all affected services share the database dependency, (c) the symptom pattern matches a database bottleneck perfectly'"
+    weight: 0.35
+    description: "Root cause correlation"
+  - type: llm_judge
+    criteria: "Symptoms vs causes are correctly categorized with investigation priority — categorization: 'ROOT CAUSE (investigate first): PostgreSQL CPU at 95% and replication lag. This is where the problem originates. DIRECT SYMPTOMS (result of root cause): inventory-service latency, payment-service timeouts. These services are slow because their database queries are slow. CASCADING SYMPTOMS (result of symptoms): order-service latency and errors. These are second-order effects — order-service is failing because its downstream dependencies are failing.' Investigation priority: '(1) First: investigate the database. What is consuming CPU? Check pg_stat_activity for long-running or expensive queries. Check for lock contention. Check if a problematic query appeared recently (new deployment, new report, analytics query running against production). (2) Second: verify the hypothesis. If the database issue is identified and resolved, do the service-level alerts recover automatically? If yes, confirmed correlation. If service alerts persist after database recovery, there may be a secondary issue. (3) Third: check for recent changes. Was there a deployment that introduced a new query? A new feature that hits the database harder? A scheduled job that started at 10:00 AM? Time correlation is key — what changed around 10:00?'"
+    weight: 0.35
+    description: "Categorization and investigation"
+  - type: llm_judge
+    criteria: "Response demonstrates systematic correlation thinking — correlation methodology: '(1) Time clustering: all 6 alerts fired within 8 minutes. When multiple alerts cluster in time, they are almost certainly related. Random independent failures do not cluster. (2) Dependency mapping: knowing the architecture (order → inventory → payment → PostgreSQL) lets you trace symptoms back to shared dependencies. The shared dependency (PostgreSQL) is the most likely root cause when all dependent services are affected simultaneously. (3) Severity progression: latency warnings appeared first, then errors. This is a classic degradation pattern — performance degrades before services start failing completely. (4) Amplification pattern: one database issue produced 6 alerts. If you investigate each alert independently, you waste time. If you identify the root cause, fixing one thing resolves all 6 alerts.' What NOT to do: 'Do not restart order-service — it is not the problem. Do not investigate why payment-service is timing out independently — the database is why. Do not try to fix all 6 alerts separately. Fix the database, and the others should recover. If they do not recover after the database is healthy, then investigate the services individually'"
+    weight: 0.30
+    description: "Systematic correlation thinking"

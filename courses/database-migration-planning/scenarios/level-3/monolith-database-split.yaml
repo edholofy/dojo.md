@@ -1,0 +1,44 @@
+meta:
+  id: monolith-database-split
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Split a monolith database — decompose a single database into service-specific databases as part of a microservices migration"
+  tags: [database, migration, monolith, microservices, decomposition, advanced]
+
+state: {}
+
+trigger: |
+  Your company is migrating from a monolith to microservices. The
+  monolith has a single PostgreSQL database with 85 tables. You are
+  splitting into 4 services:
+
+  1. User Service: users, user_preferences, user_sessions (3 tables)
+  2. Order Service: orders, order_items, shipping (3 tables)
+  3. Product Service: products, categories, inventory (3 tables)
+  4. Notification Service: notifications, email_templates (2 tables)
+
+  The remaining 74 tables stay in the monolith (for now).
+
+  Problems:
+  - orders.user_id references users.id (cross-service foreign key)
+  - orders JOIN products for order details (cross-service join)
+  - A single transaction creates a user AND their first order
+    (cross-service transaction)
+
+  Task: Plan the database decomposition. Address: cross-service
+  references, data synchronization, and the migration sequence.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cross-service references are addressed — cross-service strategy: 'The biggest challenge in database decomposition is breaking foreign keys and joins across service boundaries. Cross-service foreign keys (orders.user_id → users.id): In the monolith: the database enforces this with a FK constraint. After split: the orders database cannot have a FK to the users database (different database servers). Solution: (1) Drop the FK constraint in the orders database. (2) The Order Service stores user_id as a plain integer (no FK). (3) The Order Service validates user existence by calling the User Service API before creating an order. (4) Accept the trade-off: data integrity is now enforced by application logic, not the database. This is less safe but necessary for independent services. Mitigation: add periodic consistency checks (a job that verifies all user_ids in orders exist in the User Service). Cross-service joins (orders JOIN products): In the monolith: a single SQL query joins orders and products. After split: joins across databases are impossible. Solution: (1) Denormalize: store product_name and product_price in the order_items table at the time of order creation. The Order Service no longer needs to join with products — it has a snapshot of the product data at order time. (2) API composition: for queries that need current product data with orders, the API layer calls both the Order Service and Product Service, then combines the results in memory. Cross-service transactions (create user + first order): In the monolith: a single database transaction ensures both succeed or both fail. After split: distributed transactions across databases are complex and fragile. Solution: use the Saga pattern. Step 1: User Service creates the user. Step 2: if user creation succeeds, Order Service creates the order. Step 3: if order creation fails, User Service rolls back the user (compensating transaction). Or use eventual consistency: create the user, publish an event, and the Order Service creates the order asynchronously'"
+    weight: 0.35
+    description: "Cross-service references"
+  - type: llm_judge
+    criteria: "Migration sequence is phased and low-risk — migration sequence: 'Phase 1: Duplicate and sync (weeks 1-4). Create the 4 new databases. Copy the relevant tables to each new database. Set up Change Data Capture (CDC) from the monolith to each new database. CDC keeps the new databases in sync with the monolith while both exist. The monolith is still the source of truth. The new services read from their own databases (for testing) but write to the monolith. Phase 2: Switch reads (weeks 5-8). One service at a time, switch reads from the monolith to the service-specific database. Start with the lowest-risk service (Notification Service — lowest traffic, least cross-service dependencies). Monitor: are reads from the new database consistent with the monolith? Any missing data? Any stale data from CDC lag? After each service is reading successfully from its own database: move to the next service. Order: Notification → Product → User → Order (increasing risk). Phase 3: Switch writes (weeks 9-12). One service at a time, switch writes to the service-specific database. Set up reverse CDC from the service database back to the monolith (so the monolith still has the data for any remaining monolith code that needs it). The service-specific database is now the source of truth for its tables. The monolith receives eventual-consistency updates via reverse CDC. Phase 4: Cut the cord (weeks 13-16). Stop CDC from monolith to service databases (no longer needed). Stop reverse CDC for services where no monolith code reads the data. Drop the extracted tables from the monolith database. Remove FK constraints that crossed service boundaries. Decommission the monolith-to-service sync infrastructure'"
+    weight: 0.35
+    description: "Migration sequence"
+  - type: llm_judge
+    criteria: "Data synchronization and consistency challenges addressed — synchronization: 'CDC implementation: use a CDC tool (Debezium, AWS DMS, or PostgreSQL logical replication) to stream changes from the monolith to service databases. Key considerations: (1) CDC lag: changes in the monolith take milliseconds to seconds to appear in service databases. During this lag, the service database is slightly behind. For most use cases (displaying notifications, showing product catalogs): sub-second lag is acceptable. For critical consistency (order totals, inventory counts): the lag may cause issues. Mitigation: for critical operations, the service reads from the monolith (or its own database with a forced sync check) during the transition period. (2) Schema evolution during migration: the monolith continues to evolve while the migration is in progress. If a developer adds a column to the users table in the monolith, the CDC must propagate this to the User Service database. Keep the schemas in sync during the migration period. (3) Data ownership transition: during the migration, each piece of data transitions from monolith ownership to service ownership. Clearly communicate: which service owns which data at each phase. A data ownership map (table → service → phase when ownership transfers) prevents confusion. Testing the split: (1) Shadow traffic: route a copy of production traffic to the new service databases and compare responses with the monolith. Any differences indicate a data synchronization or application logic issue. (2) Consistency audits: daily compare row counts and checksums between the monolith tables and service database tables. Any drift indicates a CDC or sync issue. (3) Canary rollout: switch a small percentage of users to the new service (reading from the service database) before switching everyone. Monitor error rates and latency'"
+    weight: 0.30
+    description: "Data synchronization"

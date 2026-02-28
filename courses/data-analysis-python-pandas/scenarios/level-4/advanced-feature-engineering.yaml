@@ -1,0 +1,39 @@
+meta:
+  id: advanced-feature-engineering
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Engineer advanced features for ML models — create temporal, aggregate, interaction, and domain-specific features using pandas for production ML pipelines"
+  tags: [python, pandas, feature-engineering, machine-learning, temporal, aggregation, expert]
+
+state: {}
+
+trigger: |
+  The ML team is building a customer churn prediction model. The raw
+  data has good coverage but the model's AUC is stuck at 0.72. The
+  lead data scientist says: "The raw features aren't enough. We need
+  engineered features that capture customer behavior patterns."
+
+  Available tables:
+  - customers: customer_id, signup_date, plan, industry, company_size
+  - events: customer_id, timestamp, event_type, feature_name, duration_sec
+  - support: customer_id, ticket_date, category, resolution_hours, csat_score
+  - billing: customer_id, invoice_date, amount, status (paid/failed/late)
+  - churned: customer_id, churn_date (the label — who churned in the next 30 days)
+
+  Task: Engineer features that improve model performance. Target date
+  for prediction: 2024-10-01.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code creates temporal and behavioral features from event data — temporal: 'Temporal and behavioral features: Recency features — how recently was the customer active: cutoff = pd.Timestamp(\"2024-10-01\"). events[\"timestamp\"] = pd.to_datetime(events[\"timestamp\"]). last_activity = events[events[\"timestamp\"] < cutoff].groupby(\"customer_id\")[\"timestamp\"].max(). features = pd.DataFrame({\"customer_id\": last_activity.index}). features[\"days_since_last_activity\"] = (cutoff - last_activity).dt.days. features[\"days_since_last_login\"] = (cutoff - events[events[\"event_type\"] == \"login\"].groupby(\"customer_id\")[\"timestamp\"].max()).dt.days. Frequency features — how often does the customer engage: for window in [7, 14, 30, 90]: window_start = cutoff - pd.Timedelta(days=window). window_events = events[events[\"timestamp\"].between(window_start, cutoff)]. freq = window_events.groupby(\"customer_id\").agg(**{f\"events_{window}d\": (\"event_type\", \"count\"), f\"sessions_{window}d\": (\"timestamp\", lambda x: x.dt.date.nunique()), f\"avg_duration_{window}d\": (\"duration_sec\", \"mean\")}). features = features.merge(freq, on=\"customer_id\", how=\"left\"). Trend features — is engagement increasing or decreasing: for window in [30, 90]: mid = cutoff - pd.Timedelta(days=window // 2). first_half = events[events[\"timestamp\"].between(cutoff - pd.Timedelta(days=window), mid)]. second_half = events[events[\"timestamp\"].between(mid, cutoff)]. first_count = first_half.groupby(\"customer_id\").size(). second_count = second_half.groupby(\"customer_id\").size(). trend = ((second_count - first_count) / first_count.replace(0, 1)). features[f\"activity_trend_{window}d\"] = features[\"customer_id\"].map(trend).fillna(0). A negative trend (decreasing activity) is a strong churn signal. Feature breadth — how many different features does the customer use: feature_usage = (events[events[\"timestamp\"] > cutoff - pd.Timedelta(days=30)].groupby(\"customer_id\")[\"feature_name\"].nunique().rename(\"features_used_30d\")). features = features.merge(feature_usage, on=\"customer_id\", how=\"left\"). Users who use only 1-2 features are at high risk — they have not found broad value in the product'"
+    weight: 0.35
+    description: "Temporal features"
+  - type: llm_judge
+    criteria: "Response creates aggregate and interaction features from support and billing data — aggregate: 'Aggregate and interaction features: Support ticket features: support[\"ticket_date\"] = pd.to_datetime(support[\"ticket_date\"]). recent_support = support[support[\"ticket_date\"].between(cutoff - pd.Timedelta(days=90), cutoff)]. support_features = recent_support.groupby(\"customer_id\").agg(ticket_count_90d=(\"ticket_date\", \"count\"), avg_resolution_hours=(\"resolution_hours\", \"mean\"), min_csat=(\"csat_score\", \"min\"), avg_csat=(\"csat_score\", \"mean\"), has_billing_ticket=(\"category\", lambda x: (x == \"billing\").any().astype(int)), has_bug_ticket=(\"category\", lambda x: (x == \"bug\").any().astype(int)), unresolved_tickets=(\"resolution_hours\", lambda x: x.isna().sum())). features = features.merge(support_features, on=\"customer_id\", how=\"left\"). Billing health features: billing[\"invoice_date\"] = pd.to_datetime(billing[\"invoice_date\"]). billing_features = billing.groupby(\"customer_id\").agg(total_paid=(\"amount\", lambda x: x[billing.loc[x.index, \"status\"] == \"paid\"].sum()), failed_payments=(\"status\", lambda x: (x == \"failed\").sum()), late_payments=(\"status\", lambda x: (x == \"late\").sum()), payment_failure_rate=(\"status\", lambda x: (x == \"failed\").mean()), months_as_customer=(\"invoice_date\", lambda x: x.nunique())). features = features.merge(billing_features, on=\"customer_id\", how=\"left\"). Interaction features — combinations that capture complex patterns: features[\"support_per_month\"] = features[\"ticket_count_90d\"] / (features[\"months_as_customer\"] + 1). features[\"revenue_per_feature\"] = features[\"total_paid\"] / (features[\"features_used_30d\"] + 1). features[\"engagement_support_ratio\"] = features[\"events_30d\"] / (features[\"ticket_count_90d\"] + 1). features[\"is_declining_and_unhappy\"] = ((features[\"activity_trend_30d\"] < -0.3) & (features[\"avg_csat\"] < 3)).astype(int). High ticket count with declining engagement and low CSAT is a very strong churn signal — these interaction features capture multi-dimensional risk that individual features miss'"
+    weight: 0.35
+    description: "Aggregate features"
+  - type: llm_judge
+    criteria: "Explanation covers feature engineering best practices and data leakage prevention — practices: 'Feature engineering best practices: Data leakage prevention — the most critical concern: NEVER use data from after the prediction date. All features must be calculated using data strictly before cutoff_date. Common leakage mistakes: using the churn_date column as a feature (directly leaking the label), calculating lifetime value including future payments, using \"was this customer's ticket resolved\" when resolution happens after cutoff. Validation: split data temporally — train on features computed as of July 1, validate on features computed as of August 1, test on features computed as of September 1. If model performance is dramatically better on train than test, suspect leakage. Missing value strategy for features: features = features.fillna({\"days_since_last_activity\": 999, \"events_30d\": 0, \"ticket_count_90d\": 0, \"avg_csat\": features[\"avg_csat\"].median()}). Customers with no activity get a high recency value (999 days) — they are the highest risk. Customers with no support tickets get 0 — no tickets might mean satisfied or disengaged. Feature selection after engineering: from sklearn.feature_selection import mutual_info_classif. mi_scores = mutual_info_classif(features.drop(columns=[\"customer_id\"]).fillna(0), labels). feature_importance = pd.Series(mi_scores, index=features.drop(columns=[\"customer_id\"]).columns).sort_values(ascending=False). The top 10 features typically deliver 90% of the model lift. Adding 50 more features adds complexity but rarely improves AUC significantly. Production feature pipeline: feature computation must be reproducible and parameterized by date. def compute_features(cutoff_date): this exact function runs daily in production. features must be deterministic given the same cutoff_date. Store feature values alongside their computation timestamp for debugging'"
+    weight: 0.30
+    description: "Best practices"

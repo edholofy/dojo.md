@@ -1,0 +1,37 @@
+meta:
+  id: column-aliases-formatting
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Format report output — use column aliases, string concatenation, CASE expressions, and number formatting for presentable SQL reports"
+  tags: [SQL, aliases, CASE, formatting, string-functions, beginner]
+
+state: {}
+
+trigger: |
+  You are generating a customer summary report that will be exported
+  to CSV and shared with the executive team. The raw column names
+  (customer_id, first_name, plan_type) are not presentable. The
+  report needs:
+  - Full name in one column
+  - Plan type displayed as "Free Tier", "Basic Plan", "Premium Plan"
+  - Revenue formatted with dollar signs and commas
+  - Status shown as a colored indicator: "Active" or "Churned"
+
+  Tables: customers, orders
+
+  Task: Format the query output for executive presentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query uses CASE, concatenation, and aliases for formatted output — query: 'Formatted report query: SELECT c.customer_id AS \"Customer ID\", c.first_name || ' ' || c.last_name AS \"Full Name\", c.email AS \"Email\", CASE c.plan_type WHEN 'free' THEN 'Free Tier' WHEN 'basic' THEN 'Basic Plan' WHEN 'premium' THEN 'Premium Plan' ELSE 'Unknown' END AS \"Plan\", CASE WHEN c.is_active THEN 'Active' ELSE 'Churned' END AS \"Status\", COUNT(o.order_id) AS \"Total Orders\", COALESCE(SUM(o.amount), 0) AS \"Lifetime Revenue\", COALESCE(ROUND(AVG(o.amount), 2), 0) AS \"Avg Order Value\" FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.first_name, c.last_name, c.email, c.plan_type, c.is_active ORDER BY \"Lifetime Revenue\" DESC; CASE expression: CASE WHEN condition THEN result WHEN condition THEN result ELSE default END. Two forms: CASE column WHEN value THEN result (simple comparison) and CASE WHEN expression THEN result (flexible conditions). CASE WHEN can handle ranges: CASE WHEN revenue > 10000 THEN 'Enterprise' WHEN revenue > 1000 THEN 'Mid-Market' ELSE 'SMB' END AS customer_tier'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers string functions and number formatting — formatting: 'String and number formatting: String concatenation by dialect: PostgreSQL: first_name || ' ' || last_name. MySQL: CONCAT(first_name, ' ', last_name). SQL Server: first_name + ' ' + last_name. Handling NULLs in concatenation: PostgreSQL: first_name || NULL returns NULL. Use COALESCE: COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''). MySQL: CONCAT handles NULLs gracefully (returns NULL only if all args are NULL). Number formatting: PostgreSQL: TO_CHAR(amount, '$999,999.99'). MySQL: FORMAT(amount, 2) gives '1,234.56', CONCAT('$', FORMAT(amount, 2)). SQL Server: FORMAT(amount, 'C', 'en-US') gives '$1,234.56'. Percentage formatting: ROUND(completed_count * 100.0 / total_count, 1) || '%' AS completion_rate. The 100.0 (float) prevents integer division. Text case functions: UPPER(state) — converts to uppercase. LOWER(email) — converts to lowercase. INITCAP(city) — capitalizes first letter of each word (PostgreSQL). TRIM(name) — removes leading and trailing whitespace. These clean up inconsistent data for reports'"
+    weight: 0.35
+    description: "Formatting"
+  - type: llm_judge
+    criteria: "Response covers COALESCE and NULL display strategies — nulls: 'Handling NULLs for clean reports: COALESCE — replace NULL with a default: COALESCE(phone, 'Not provided') AS phone. COALESCE(SUM(amount), 0) AS revenue. COALESCE takes the first non-NULL value from a list: COALESCE(preferred_name, first_name, 'Unknown') — tries preferred_name first, then first_name, then falls back to 'Unknown'. NULLIF — convert a value to NULL: NULLIF(value, 0) returns NULL if value is 0. Useful for avoiding division by zero: revenue / NULLIF(order_count, 0) AS avg_order. If order_count is 0, this returns NULL instead of an error. Display-friendly NULL handling: SELECT customer_name, COALESCE(TO_CHAR(last_order_date, 'Mon DD, YYYY'), 'Never ordered') AS last_order, CASE WHEN last_order_date IS NULL THEN 'New Customer' WHEN last_order_date < CURRENT_DATE - INTERVAL '90 days' THEN 'At Risk' ELSE 'Active' END AS engagement_status. This transforms raw NULL values into meaningful business labels'"
+    weight: 0.30
+    description: "NULLs"

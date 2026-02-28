@@ -1,0 +1,50 @@
+meta:
+  id: dynamic-content-audit
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Dynamic content audit — test and report on AJAX updates, single-page applications, live regions, and dynamically rendered content"
+  tags: [dynamic, SPA, live-regions, AJAX, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor is testing a single-page
+  application (SPA) and encounters issues that
+  don't exist on static websites:
+
+  1. When navigating between "pages," nothing is
+     announced — screen reader users don't know
+     the page changed
+  2. A live chat widget shows new messages but
+     screen readers don't announce them
+  3. A shopping cart count updates when items are
+     added but the change isn't announced
+  4. Search results load dynamically below the
+     search bar but focus stays in the search input
+  5. A notification toast appears for 3 seconds and
+     disappears — screen reader users miss it entirely
+
+  The auditor asks: "Static sites are straightforward
+  to test, but this SPA feels different. Content
+  keeps changing and I'm not sure what should be
+  announced automatically vs what users should
+  discover themselves."
+
+  Task: Audit dynamic content accessibility and
+  write findings with proper ARIA live region
+  guidance and SPA-specific recommendations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for SPA navigation and live content — SPA page navigation not announced (WCAG 4.1.3 Status Messages Level AA: when content changes significantly like a page navigation, screen reader users must be informed — in SPAs, traditional page load announcement doesn't occur, Severity: Critical, Fix: manage focus on route change — move focus to the new page's H1 heading or main content area, or use aria-live=assertive region to announce 'Page loaded: Product Details'), Chat messages not announced (WCAG 4.1.3 Level AA: new messages are status updates that should be announced without receiving focus, Severity: Major, Fix: use aria-live=polite on the message container so new messages are announced when the screen reader finishes its current announcement, or use role=log on the chat container), Cart count update not announced (WCAG 4.1.3 Level AA: the cart count is a status message, Severity: Major, Fix: add aria-live=polite to the cart count element, or announce via a visually hidden live region: 'Item added to cart. Cart total: 3 items')"
+    weight: 0.35
+    description: "DynamicFindings"
+  - type: llm_judge
+    criteria: "Response covers search results and toast notification issues — Search results loading without announcement (WCAG 4.1.3 Level AA: search results are status information — users should know results appeared and how many, Severity: Major, Fix: announce result count via aria-live=polite region: '24 results found for running shoes' — don't move focus to results automatically as user may still be typing, but provide keyboard shortcut or instruction to navigate to results), Toast notification missed (WCAG 4.1.3 Level AA: time-limited notifications must be announced to screen readers — 3 seconds is too fast even for sighted users, Severity: Major, Fix: use role=alert or aria-live=assertive on toast container so screen reader announces it immediately, extend display time to minimum 5 seconds or make it dismissible — don't auto-remove without user action for important notifications). Each finding explains the screen reader user's experience: what they hear (nothing) vs what they should hear"
+    weight: 0.35
+    description: "SearchToastFindings"
+  - type: llm_judge
+    criteria: "Response provides ARIA live region guidance and SPA testing methodology — live region reference (aria-live=polite: announces when screen reader is idle — use for non-urgent updates like cart count, search results, status messages, aria-live=assertive: interrupts current announcement — use for urgent messages like errors, alerts, time-sensitive notifications, role=alert: equivalent to aria-live=assertive with role=alert — use for error messages, role=status: equivalent to aria-live=polite with role=status — use for status updates, role=log: content updates in sequential order — use for chat, activity feeds), SPA testing methodology (test every route change: does the screen reader announce the new page? test every user action that updates content: is the update announced? test timed content: can screen reader users perceive content before it disappears? test loading states: is 'loading' and 'loaded' communicated?), and common SPA pitfalls (focus management on route change is the #1 SPA accessibility failure, dynamic content rendered off-screen and then animated in may not be in accessibility tree, infinite scroll must announce when new content loads)"
+    weight: 0.30
+    description: "LiveRegionGuidance"

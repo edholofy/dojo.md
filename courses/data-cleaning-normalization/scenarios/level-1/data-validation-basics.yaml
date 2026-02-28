@@ -1,0 +1,41 @@
+meta:
+  id: data-validation-basics
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Data validation basics — learn how to validate data against expected rules, ranges, and constraints"
+  tags: [validation, constraints, rules, checks, basics]
+
+state: {}
+
+trigger: |
+  A junior developer says: "I'm building a data import feature that loads
+  CSV files from clients into our database. The data should follow
+  specific rules:
+  - Email must be a valid email format
+  - Age must be between 0 and 120
+  - Country must be from a list of valid ISO country codes
+  - Phone number must match a valid phone format
+  - Revenue must be a positive number
+  - Date must be within the last 5 years
+
+  How do I validate incoming data against these rules? What should I do
+  with rows that fail validation — reject them, fix them, or flag them?"
+
+  Task: Explain data validation principles, how to define and apply
+  validation rules, and strategies for handling records that fail
+  validation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains types of validation rules — format validation (regex for email, phone patterns), range validation (numeric values within expected bounds), referential validation (values must exist in a reference list like country codes), consistency validation (cross-field checks: if country is US, phone should be US format), and uniqueness validation (no duplicate primary keys). Provides practical examples of how to implement each type of rule"
+    weight: 0.35
+    description: "ValidationRules"
+  - type: llm_judge
+    criteria: "Response explains strategies for handling validation failures — reject and report (return the entire file with error descriptions per row — strictest approach), accept with warnings (import valid rows, flag invalid ones for manual review), auto-correct where possible (standardize phone formats, trim whitespace, fix case) while flagging uncorrectable errors, and the importance of error reporting (clear error messages that help the client fix their data). Recommends an approach based on context"
+    weight: 0.35
+    description: "FailureHandling"
+  - type: llm_judge
+    criteria: "Response covers practical implementation — validate early (at the point of data entry or import, not downstream), validate in layers (format first, then business logic, then cross-field consistency), log validation results (which rows failed, which rules, what the invalid values were), and the importance of communicating validation requirements to data providers (data dictionaries, schemas, example files)"
+    weight: 0.30
+    description: "Implementation"

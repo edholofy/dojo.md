@@ -1,0 +1,43 @@
+meta:
+  id: reviewing-small-prs
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Review small PRs — practice writing thorough review feedback for small, focused pull requests covering bug fixes, refactors, and features"
+  tags: [code-review, small-pr, focused, thorough, practice, beginner]
+
+state: {}
+
+trigger: |
+  You have three small PRs to review today. Each is under 100 lines.
+  Your task is to write a complete review for each.
+
+  PR #1 — Bug fix (23 lines): Fixes "users can't log in with email
+  containing a plus sign (user+tag@gmail.com)". Changes the email
+  validation regex in auth.ts.
+
+  PR #2 — Refactor (67 lines): Extracts duplicate API error handling
+  into a shared utility function. Touches 4 files.
+
+  PR #3 — Feature (89 lines): Adds a "copy to clipboard" button to
+  the API key display page. New component with a 3-second "Copied!"
+  tooltip.
+
+  Task: Write a complete review for each PR. For each, include:
+  a summary comment (overall assessment), inline comments on specific
+  code, and your approve/request-changes decision with reasoning.
+  Show what a thorough review of a small PR looks like.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each review has a structured summary comment — PR #1 summary: acknowledge the bug fix, confirm the regex change is correct for plus signs, ask about edge cases (other special characters? RFC 5322 compliance?), note whether tests were added. PR #2 summary: praise the deduplication effort, verify the shared utility handles all 4 usage patterns, check for behavior changes. PR #3 summary: confirm the UX (tooltip duration, accessibility), check clipboard API usage (permissions, fallback for older browsers). Each summary: starts with what the PR does well, identifies concerns, states the decision (approve/request changes). Summaries are 3-5 sentences, not essays"
+    weight: 0.35
+    description: "Structured summaries"
+  - type: llm_judge
+    criteria: "Inline comments address PR-specific concerns — PR #1 (regex): does the new regex still reject invalid emails? Is '+' the only character that was broken? Are there tests for edge cases (multiple plus signs, plus at start/end)? Was the old regex documented — why was '+' excluded originally? PR #2 (refactor): does the shared utility preserve all error handling behaviors? Are the 4 call sites truly identical or are there subtle differences? Is the function well-named and well-placed? PR #3 (feature): does the clipboard API require HTTPS? What happens when clipboard access is denied? Is the tooltip accessible (aria-label)? Does the 3-second timeout clean up properly (memory leak on rapid clicks)? Comments are specific to the actual changes, not generic"
+    weight: 0.35
+    description: "PR-specific feedback"
+  - type: llm_judge
+    criteria: "Approve/request-changes decisions are justified — each decision has clear reasoning. PR #1: if regex is correct and tested, approve with suggestion to add more edge case tests. If regex could reject valid emails, request changes. PR #2: approve if behavior is preserved, request changes if any call site's behavior changed subtly. PR #3: approve if clipboard fallback and accessibility are handled, request changes if no fallback for non-HTTPS or no accessibility support. The threshold is clear: approve means 'ready to merge, comments are optional.' Request changes means 'must address these before merge.' Don't request changes for nits. Acknowledge when you're not sure — 'I'm not confident about the regex edge cases — could you verify?' is better than either blindly approving or blocking"
+    weight: 0.30
+    description: "Decision reasoning"

@@ -1,0 +1,44 @@
+meta:
+  id: advanced-experiment-shift
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Advanced experiment shift — handle complex experimentation challenges requiring variance reduction, network effects analysis, interaction detection, and long-term measurement in a single day"
+  tags: [shift-simulation, advanced, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Three escalations land on the senior data scientist's desk:
+
+  Request 1 (Experimentation Platform Lead): "Our revenue-per-user
+  metric is so noisy that tests need 8 weeks to reach significance.
+  Product teams are losing patience. We need to cut test duration in
+  half without sacrificing rigor. What techniques should we implement
+  in the platform?"
+
+  Request 2 (Marketplace Data Scientist): "We tested a new search
+  ranking algorithm. User-level randomization showed +5% conversion.
+  But when we launched to 100% of users, the improvement was only +1%.
+  What happened?"
+
+  Request 3 (VP of Engineering): "We run 40 concurrent experiments.
+  Last month, two teams shipped results that contradicted each other
+  when deployed together. How do we prevent experiment collisions?"
+
+  Task: Address all three escalations with advanced experimentation
+  methods.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with variance reduction strategy — variance: 'Request 1 — Cutting test duration from 8 to 4 weeks: The problem: revenue per user has a coefficient of variation (std/mean) of approximately 3x, requiring massive samples. Strategy — implement a multi-layered variance reduction pipeline: Layer 1 — Winsorization: cap revenue at the 99th percentile. Reduces variance by approximately 40-50% for typical revenue distributions. Implementation: apply during metric computation, not at the raw data level. Layer 2 — CUPED (Controlled-experiment Using Pre-Experiment Data): use pre-experiment revenue (30 days before the test) as a covariate. Expected correlation ρ ≈ 0.6-0.7 with test-period revenue. Variance reduction: 1 - ρ² = 36-51%. Combined with winsorization: total variance reduction 60-70%. Layer 3 — Stratified randomization: stratify users into 5-10 buckets based on historical revenue (from the CUPED covariate). Randomly assign within each stratum. Removes between-stratum variance: additional 5-10% variance reduction. Combined impact: raw revenue std: $150, MDE at 10K per group: $5.90. After winsorization: std ≈ $95, MDE: $3.74. After CUPED (ρ = 0.65): std ≈ $72, MDE: $2.83. After stratification: std ≈ $66, MDE: $2.60. Total MDE improvement: from $5.90 to $2.60 (56% reduction). Duration equivalent: from 8 weeks to approximately 3.5 weeks at the same traffic. Implementation priority: CUPED first (biggest single impact, straightforward). Winsorization second (easy to add). Stratification third (requires changes to the randomization system). Platform recommendation: make CUPED and winsorization default for all revenue metrics. Allow teams to opt out but not opt in (variance reduction should be the default)'"
+    weight: 0.35
+    description: "Variance"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with network effects diagnosis — network: 'Request 2 — 5% A/B test lift but only 1% at full launch: Diagnosis: this is a classic network effect / interference problem. In a marketplace, user-level randomization violates SUTVA (Stable Unit Treatment Value Assumption). What happened: during the A/B test (50/50 split): treatment users got better search results → found items faster → purchased more (+5%). Control users experienced degraded search because the treatment changed what items were shown. If treatment users bought popular items, those items had fewer seller responses available for control users. The measured +5% was inflated because it included both: the true improvement for treatment users (approximately +3%). The degradation of control users (approximately -2%). The measured difference: +5% = (+3%) - (-2%). At full launch (100% treatment): all users get the better search. The true improvement is approximately +1-3% (no control group to degrade). The experiment overestimated the effect by 2-4x. How to confirm: check if control group metrics declined during the test compared to pre-test baseline. If control conversion dropped from 5.0% to 4.8% during the test, interference is confirmed. Correct approach for future marketplace tests: use cluster randomization (geo-randomized across cities). Or use switchback experiments (time-based randomization). For this specific case: the +1% full-launch result is the real treatment effect. The +5% A/B test result was biased by interference. Document this for the team: marketplace search ranking experiments must use geo-randomization going forward'"
+    weight: 0.35
+    description: "Network"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with experiment collision prevention — collisions: 'Request 3 — Preventing experiment collisions with 40 concurrent tests: The problem: two experiments individually showed positive results, but their combined deployment caused a negative interaction. This is an interaction effect that was not detected because the experiments were analyzed independently. Solution — implement a multi-layer collision prevention system: Layer 1 — Experiment isolation by product area: create exclusive experiment layers (traffic slices): checkout layer, search layer, homepage layer, pricing layer. Within each layer: mutual exclusion — a user can be in at most one experiment. Across layers: full overlap — a user can be in one experiment per layer. With 40 experiments across 8 layers: approximately 5 experiments per layer. Each user is in at most 8 experiments. Interference is limited to cross-layer interactions (different product areas), which are less likely. Layer 2 — Automated interaction detection: for every pair of concurrent experiments that overlap in traffic, compute the interaction term. Flag pairs where the interaction is significant (p < 0.10). With 40 experiments: up to 780 pairwise comparisons. Automate this in the platform — run interaction checks nightly. Alert experiment owners when a significant interaction is detected. Layer 3 — Staged rollout with guardrails: after an experiment is declared a winner, do not launch to 100% immediately. Stage 1: 10% rollout for 3 days. Monitor guardrail metrics. Stage 2: 50% rollout for 1 week. Check for interactions with other recently shipped experiments. Stage 3: 100% rollout. Any guardrail breach at any stage triggers an automatic rollback. Layer 4 — Launch coordination: maintain a shared experiment calendar. Before launching a new experiment, check for active experiments in the same product area. If two experiments modify the same feature (e.g., both change checkout), require a factorial design or sequential testing. The two contradictory experiments should have been detected by the interaction check (Layer 2) or isolated by product layers (Layer 1). For the VP: implement layers and automated interaction detection as the first priorities. This eliminates the most common collision scenarios while keeping the experimentation velocity high'"
+    weight: 0.30
+    description: "Collisions"

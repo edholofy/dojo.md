@@ -1,0 +1,32 @@
+meta:
+  id: reactivation-cohorts
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Analyze reactivation cohorts — measure win-back campaign effectiveness by tracking users who returned after churning and their subsequent retention"
+  tags: [reactivation, win-back, churned-users, resurrection, intermediate]
+
+state: {}
+
+trigger: |
+  The Lifecycle Marketing Manager says: "We run win-back campaigns
+  every month targeting users who have been inactive for 30+ days.
+  Some come back, but I don't know if they actually stick or just
+  bounce again. Can you build a cohort analysis for reactivated users?"
+
+  Task: Explain how to build and analyze reactivation cohorts to
+  measure whether win-back efforts produce lasting re-engagement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains reactivation cohort construction — construction: 'Reactivation cohort construction: a reactivation cohort groups users by when they returned after a period of inactivity, not by when they originally signed up. Step 1 — Define churn and reactivation: churned = no activity for 30+ consecutive days. Reactivated = performed a qualifying activity after being classified as churned. Reactivation date = the first activity after the 30-day inactivity period. Step 2 — Build the reactivation cohort table: group reactivated users by the month they came back. January reactivation cohort (200 users returned): R+0 (month of return): 100%. R+1: 28%. R+2: 18%. R+3: 12%. R+4: 9%. February reactivation cohort (350 users returned — win-back campaign): R+0: 100%. R+1: 22%. R+2: 12%. R+3: 8%. March reactivation cohort (180 users returned): R+0: 100%. R+1: 30%. R+2: 20%. R+3: 15%. Key observations: February had the most reactivations (350) because of the win-back campaign. But February's post-return retention is the WORST (22% at R+1 vs 28-30% for other months). The campaign brought back more users but lower-quality returns — many came for a promotion and left again. Compare reactivation retention to new user retention: new user month-1 retention: 40%. Reactivated user R+1 retention: 22-30%. Reactivated users retain at roughly 55-75% the rate of new users. This is expected — they already churned once, so they are inherently higher-risk'"
+    weight: 0.35
+    description: "Construction"
+  - type: llm_judge
+    criteria: "Response covers analyzing win-back campaign effectiveness — effectiveness: 'Evaluating win-back campaign effectiveness: Campaign analysis framework: for each win-back campaign, measure: 1. Reach: how many churned users received the campaign? 2. Reactivation rate: what percentage returned? 3. Post-return retention: of those who returned, how many stayed? 4. Net revenue impact: revenue from reactivated users minus campaign cost. February email campaign: 5,000 churned users contacted. 350 reactivated (7% reactivation rate). Of 350, 77 were still active at R+1 (22% post-return retention). Of 350, 28 were still active at R+3 (8% post-return retention). Campaign cost: $2,000. Revenue from 350 reactivated users over 3 months: $4,200. Net impact: $2,200 profit. Compare to March organic reactivation (no campaign): 180 returned organically. 54 still active at R+1 (30%). 27 still active at R+3 (15%). Revenue: $3,600 over 3 months (fewer users but they stayed longer). Cost: $0. Insight: the campaign doubled the number of returning users but the campaign-driven users retained poorly. Organic returners are 2x more likely to stick around. Segmenting reactivated users by reason: promotional return (came back for a discount/offer): R+1 retention 15%. Feature-driven return (came back because of a new feature): R+1 retention 35%. Organic return (came back on their own): R+1 retention 30%. Promotional returns have the worst retention — they were incentivized, not motivated. Recommendation: shift win-back messaging from discounts to feature announcements and value reminders'"
+    weight: 0.35
+    description: "Effectiveness"
+  - type: llm_judge
+    criteria: "Response covers reactivation patterns and strategic implications — strategy: 'Reactivation patterns and strategic implications: Pattern 1 — Optimal reactivation window: analyze reactivation rates by inactivity duration: 30-60 days inactive: 12% reactivation rate, 25% R+1 retention. 60-90 days inactive: 7% reactivation rate, 18% R+1 retention. 90-180 days inactive: 3% reactivation rate, 10% R+1 retention. 180+ days inactive: 1% reactivation rate, 5% R+1 retention. The longer a user has been inactive, the less likely they are to return AND the less likely they are to stay if they do return. Implication: prioritize win-back efforts at 30-60 days of inactivity. After 90 days, the ROI of win-back campaigns drops dramatically. After 180 days, the user is effectively gone. Pattern 2 — Repeat churners: some users churn and reactivate multiple times: first churn and return: 25% R+1 retention. Second churn and return: 15% R+1 retention. Third churn and return: 8% R+1 retention. Each subsequent reactivation has diminishing retention. After 2-3 churn cycles, the user is a chronic churner — stop investing in win-back. Pattern 3 — Reactivation by original cohort quality: users who originally had high engagement before churning: 35% R+1 retention. Users who had low engagement before churning: 12% R+1 retention. High-engagement churners are worth winning back. Low-engagement churners are not. Strategic recommendations: 1. Trigger win-back campaigns at 30-45 days of inactivity (highest ROI window). 2. Cap win-back attempts at 2-3 per user — chronic churners are not worth pursuing. 3. Prioritize formerly-engaged users over low-engagement churners. 4. Use feature and value messaging instead of discounts. 5. Track reactivation cohort retention separately from new user retention — do not mix them in your main retention tables. 6. Include reactivation cost in LTV calculations for accurate unit economics'"
+    weight: 0.30
+    description: "Strategy"

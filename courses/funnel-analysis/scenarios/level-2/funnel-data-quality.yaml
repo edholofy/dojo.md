@@ -1,0 +1,34 @@
+meta:
+  id: funnel-data-quality
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Funnel data quality — identify and fix data quality issues that distort funnel metrics including tracking gaps, duplicate events, and attribution errors"
+  tags: [data-quality, tracking, validation, debugging, intermediate]
+
+state: {}
+
+trigger: |
+  The analytics engineer reports: "Something is wrong with our funnel
+  data. The add-to-cart count is HIGHER than the product page view
+  count for last week. Our checkout conversion seems to fluctuate
+  wildly between 40% and 80% day-to-day. And when I compare our
+  analytics tool to our database, the numbers don't match."
+
+  Task: Explain common funnel data quality issues, how to diagnose
+  them, and how to build a data quality validation framework for
+  funnel metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses the specific data quality issues described — diagnosis: 'Diagnosing the reported data quality issues: Issue 1 — Add-to-cart count exceeds product page view count: this should be impossible in a sequential funnel. Common causes: product page tracking is failing on certain browsers or devices (especially Safari with ITP, or ad blockers). The add-to-cart event fires from a quick-view modal or search results page (not just the product page). Duplicate add-to-cart events firing (user clicks the button, the event fires twice). Product page events are being sampled (analytics tool is only recording a percentage) while add-to-cart events are server-side and fully counted. Diagnosis steps: compare client-side product page views to server-side page request logs. Check if add-to-cart fires from pages other than the product page. Check for duplicate event IDs in the add-to-cart data. Check analytics sampling rate. Issue 2 — Checkout conversion fluctuating 40-80% daily: natural day-to-day variation is typically 3-5 percentage points, not 40pp. Common causes: low daily volume (with 50 checkouts/day, a few extra conversions create large percentage swings). Bot traffic on certain days (bots add to cart but never purchase, spiking the denominator on some days). Time-zone misalignment (events from 11pm count in different days for analytics vs database). A/B tests or feature flags creating different experiences on different days. Caching or session issues causing events to be attributed to wrong days. Diagnosis steps: check daily checkout volumes (if under 100, fluctuation is expected). Filter bot traffic and recalculate. Verify timezone settings across all tools. Issue 3 — Analytics tool vs database mismatch: this is the most common and most important data quality issue. Common causes: analytics counts client-side events (subject to ad blockers, JavaScript errors, page abandonment). Database counts server-side events (captures every transaction). Analytics uses sessions or cookies, database uses user IDs (different counting units). Analytics may deduplicate while database does not (or vice versa). Different time-zone settings between systems'"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response covers building a data quality validation framework — framework: 'Data quality validation framework for funnels: Layer 1 — Sequential consistency checks (run daily): for a sequential funnel A → B → C → D: rule 1: count(A) ≥ count(B) ≥ count(C) ≥ count(D). If any step has MORE events than the previous step, flag immediately. Rule 2: conversion rate at each step should be between 0% and 100%. A rate over 100% indicates a counting error. Rule 3: no step conversion rate should change by more than 10pp day-over-day without an explanation (deployment, campaign, incident). Layer 2 — Cross-system reconciliation (run daily): compare analytics funnel counts to database transaction counts. Acceptable discrepancy: 5-15% (analytics will always undercount due to ad blockers and JavaScript failures). Concerning discrepancy: over 20% — investigate tracking implementation. Track the discrepancy percentage over time — a suddenly widening gap indicates a new tracking issue. Layer 3 — Event-level validation (run weekly): check for duplicate events (same user, same action, within 1 second). Check for orphaned events (checkout events from users with no add-to-cart event). Check for impossible sequences (purchase event with no checkout event). Check event timestamps for future dates or dates far in the past. Layer 4 — Volume anomaly detection (automated): set thresholds for each funnel event: expected daily volume ± 2 standard deviations. If product page views drop 50% on a Tuesday with no known cause, the tracking may be broken. Alert the team immediately — a tracking outage means you are flying blind. Common resolution: the drop is a deployment that broke the tracking script'"
+    weight: 0.35
+    description: "Framework"
+  - type: llm_judge
+    criteria: "Response covers practical data quality fixes and prevention — fixes: 'Practical data quality fixes: Fix 1 — Implement server-side tracking for critical funnel events: client-side tracking is unreliable (15-30% of events may be lost to ad blockers). For critical conversion events (add-to-cart, checkout, purchase), use server-side event recording. Keep client-side for engagement metrics (scroll depth, clicks, page views). Fix 2 — Add event deduplication: every event should have a unique event ID (UUID). If the same event ID appears twice, deduplicate in the pipeline. This prevents double-counting from retry logic, slow networks, or button double-clicks. Fix 3 — Standardize time zones: all event timestamps should be recorded in UTC. Convert to local time zones only at the reporting layer. Document which time zone each tool uses. Fix 4 — Build a funnel data quality dashboard: daily metrics: event count by step (with 7-day moving average for comparison). Sequential consistency violations (any step where count exceeds previous step). Cross-system discrepancy percentage. Conversion rate by step with day-over-day change. Weekly metrics: duplicate event rate by event type. Orphaned event count. Event latency (time between event occurrence and availability in analytics). Monthly metrics: overall data quality score (percentage of days with no violations). Trend in cross-system discrepancy. Impact of data quality issues on reported conversion rates. Prevention practices: 1. Tag every tracking change in a changelog. 2. Run automated data quality checks after every deployment. 3. Include funnel tracking verification in QA test suites. 4. Review tracking implementation quarterly. 5. Use a tracking plan document that maps every user action to its event name, properties, and expected values. 6. Set up PagerDuty or Slack alerts for data quality violations — a broken funnel metric is as urgent as a broken feature'"
+    weight: 0.30
+    description: "Fixes"

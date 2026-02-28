@@ -1,0 +1,44 @@
+meta:
+  id: logging-and-error-messages
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Logging and error messages — read and interpret ETL error logs, implement useful logging, and build a systematic debugging approach"
+  tags: [logging, debugging, error-messages, troubleshooting, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "When our ETL pipeline fails, I get
+  an email alert that just says 'Pipeline customer_sync failed.'
+  I then have to dig through thousands of log lines to find what
+  went wrong. Sometimes the logs are too verbose (debug level
+  logging every single row), sometimes too sparse (just 'Error
+  occurred').
+
+  Here's an example of a useless error message from our pipeline:
+  '2024-03-15 02:34:17 ERROR: Task failed. Check logs for details.'
+
+  And here's an overwhelming log with 50,000 lines of:
+  'DEBUG: Processing row 12847 of 50000... value={"id": 12847, ...}'
+
+  How do I set up logging that actually helps me troubleshoot
+  quickly when things break?"
+
+  Task: Design an ETL logging strategy that enables fast
+  troubleshooting, explain log levels, and provide templates for
+  useful error messages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains log levels and their appropriate use — DEBUG: detailed row-level processing (only enable when actively debugging), INFO: pipeline progress milestones (started, extracted N rows, transform complete, loaded N rows), WARNING: non-fatal issues (skipped 5 malformed records, retry attempt 2 of 3), ERROR: failures that stop processing (connection failed, constraint violation, out of memory). Explains that production should run at INFO level, with DEBUG available on-demand"
+    weight: 0.35
+    description: "LogLevels"
+  - type: llm_judge
+    criteria: "Response provides templates for useful log messages — good error messages include: what failed (which task, which step), what was being processed (which table, which batch, what date range), why it failed (the actual error message and stack trace), what to do next (retry? check source? contact team X?). Example: 'ERROR [customer_sync.extract] Failed to extract from orders API for date_range=2024-03-14. HTTP 503 Service Unavailable. Retry 3/3 exhausted. Action: Check API status page at status.example.com'. Contrasts with the useless 'Task failed. Check logs.' message"
+    weight: 0.35
+    description: "LogTemplates"
+  - type: llm_judge
+    criteria: "Response provides a systematic debugging approach — when a pipeline fails: 1) check the alert for which pipeline and task failed, 2) look at the ERROR-level logs first to find the failure point, 3) check the context (what time, what data range, what was the last successful run), 4) reproduce the issue if possible, 5) check if it's a known/recurring issue. Also covers: structured logging (JSON format for machine parsing), log aggregation tools (ELK, CloudWatch, Datadog), and correlating logs across pipeline stages using run IDs"
+    weight: 0.30
+    description: "DebuggingApproach"

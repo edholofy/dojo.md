@@ -1,0 +1,41 @@
+meta:
+  id: database-version-control
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Implement database version control — design a system for tracking, branching, and managing database schema versions across environments and teams"
+  tags: [database, migration, version-control, schema-management, branching, expert]
+
+state: {}
+
+trigger: |
+  Your engineering organization has 200 engineers working on a
+  shared database with 300 tables. Problems:
+
+  - Migration conflicts: 3-4 merge conflicts per week when multiple
+    teams create migrations simultaneously
+  - Schema drift: staging and production schemas differ because
+    someone ran a manual ALTER TABLE in production
+  - Branch divergence: feature branches with migrations cannot be
+    easily tested because they require a specific database state
+  - No single source of truth for "what should the production schema
+    look like right now?"
+  - Rollbacks are manual and error-prone
+
+  Task: Design a database version control strategy. Address: schema
+  as code, drift detection, branch-based development, and conflict
+  resolution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Schema-as-code approach is defined with source of truth — schema as code: 'Principle: the database schema is defined in code, stored in version control, and applied through automation. Manual changes are prohibited. Two approaches: (1) Migration-based (incremental): the schema is defined by the ordered sequence of migrations. The current schema = running all migrations from the beginning. Tools: Flyway, Knex, Prisma Migrate. Advantage: captures the evolution history. Each change has a context (PR, author, date). Disadvantage: for 300 tables with years of migrations, the migration history becomes very long. Conflicts accumulate over time. (2) Declarative (desired-state): a single file defines the desired schema. The tool computes the difference between the desired state and the actual database, then generates the migration automatically. Tools: Atlas (HCL-based), Prisma (schema.prisma), pgroll, Sqitch. Advantage: one file is the source of truth. No migration ordering conflicts. Disadvantage: less control over how changes are applied (the tool decides the migration). Recommendation for a large organization: hybrid approach. Use declarative schema files as the source of truth (this is what the schema should look like). Use the tool to auto-generate migrations from schema diffs (this is how to get there). Developers edit the schema file, the tool generates the migration, and both are committed. The schema file resolves the what should production look like question. The migrations resolve the how do we get there question. Schema file structure: one schema file per service or domain area. For example: schemas/users.sql defines all user-related tables. schemas/orders.sql defines all order-related tables. Each file is owned by a team (from the schema ownership registry)'"
+    weight: 0.35
+    description: "Schema as code"
+  - type: llm_judge
+    criteria: "Drift detection and prevention are implemented — drift detection: 'Schema drift occurs when the actual database schema differs from the schema defined in code. Causes: manual ALTER TABLE in production, migrations applied in one environment but not another, or migration failures leaving partial states. Detection: (1) Automated drift check. Run a schema diff between the declared schema (in code) and the actual database schema (queried via information_schema). Implementation: a CI/CD job that runs daily (or on every deployment): pg_dump --schema-only production_db > actual_schema.sql. diff actual_schema.sql declared_schema.sql. If they differ: alert the engineering team with the specific differences. (2) Real-time drift prevention. Block manual schema changes: revoke CREATE, ALTER, DROP permissions from all user accounts in production. Only the CI/CD migration service account has schema modification permissions. This is the most effective prevention — if no human can modify the schema directly, drift cannot occur. (3) Migration state verification. Before applying a migration: verify the current schema matches the expected pre-migration state. If it does not: the database has drifted. Halt the migration and investigate. After applying a migration: verify the schema matches the expected post-migration state. If it does not: the migration applied differently than expected. Handling detected drift: (1) If drift is a missing column or table: was it accidentally dropped? Restore from the migration. (2) If drift is an extra column or table: was it added manually? Either add it to the schema code (making it official) or drop it (if it was unauthorized). (3) If drift is a configuration difference: reconcile by applying the correct configuration through the migration system'"
+    weight: 0.35
+    description: "Drift detection"
+  - type: llm_judge
+    criteria: "Branch-based development and conflict resolution addressed — branching and conflicts: 'Branch-based database development: each feature branch may contain schema changes. Problem: two branches both create migrations, and when merged, they may conflict. Solutions: (1) Schema file conflict resolution. With declarative schema files: conflicts appear as merge conflicts in the schema file (the same way code conflicts appear). Standard Git merge conflict resolution applies. The tool generates the migration after the merge, not before. This eliminates migration ordering conflicts — there is no migration file to conflict on. (2) Per-branch test databases. Each feature branch gets its own test database (created automatically by CI). The CI pipeline: creates a fresh database, applies all migrations from main, then applies the branch migrations. If the branch migrations fail: the developer knows immediately (before merging). Implementation: use Docker containers or cloud database instances for per-branch databases. For cost efficiency: create the database, run tests, then destroy it. (3) Conflict prevention for migration-based systems. If using migration files (not declarative): use a migration manifest file that lists all planned migrations. When a developer creates a migration: add it to the manifest. When another developer sees a conflict in the manifest: coordinate before merging. CI check: if two open PRs both modify the same table, flag for coordination. (4) Post-merge migration squashing. After merging multiple branches: review the combined migration sequence. If migrations can be combined without losing information (for example, two ADD COLUMN migrations on the same table can be one): squash them into a single migration. This keeps the migration history clean. Only squash migrations that have not been applied to production yet (applied migrations must not be modified)'"
+    weight: 0.30
+    description: "Branching and conflicts"

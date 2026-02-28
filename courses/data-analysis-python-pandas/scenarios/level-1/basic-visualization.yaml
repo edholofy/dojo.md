@@ -1,0 +1,36 @@
+meta:
+  id: basic-visualization
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Create basic visualizations — use pandas built-in plotting and matplotlib to visualize data analysis results"
+  tags: [python, pandas, matplotlib, visualization, plotting, charts, beginner]
+
+state: {}
+
+trigger: |
+  Your manager asks you to create charts for the weekly team meeting:
+
+  1. "A bar chart showing total revenue by region."
+  2. "A line chart showing daily revenue over time."
+  3. "A histogram showing the distribution of order values."
+
+  Using the sales DataFrame with a datetime date column and a
+  revenue column (quantity * unit_price).
+
+  Task: Write the code to create each chart and explain when to
+  use each chart type.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code creates all three chart types correctly — code: 'Creating visualizations with pandas: import matplotlib.pyplot as plt. Chart 1 — Bar chart (revenue by region): revenue_by_region = df.groupby(\"region\")[\"revenue\"].sum().sort_values(ascending=False). ax = revenue_by_region.plot(kind=\"bar\", figsize=(8, 5), color=\"steelblue\"). ax.set_title(\"Total Revenue by Region\", fontsize=14). ax.set_xlabel(\"Region\"). ax.set_ylabel(\"Revenue ($)\"). ax.bar_label(ax.containers[0], fmt=\"${:,.0f}\", fontsize=9). plt.xticks(rotation=0). plt.tight_layout(). plt.savefig(\"revenue_by_region.png\", dpi=150). plt.show(). Key details: bar_label adds the value on top of each bar (so the audience can read exact numbers). tight_layout prevents labels from being cut off. savefig saves the chart before show() (show clears the figure). Chart 2 — Line chart (daily revenue over time): daily_revenue = df.groupby(\"date\")[\"revenue\"].sum(). ax = daily_revenue.plot(kind=\"line\", figsize=(12, 5), color=\"steelblue\", linewidth=1). ax.set_title(\"Daily Revenue Trend\", fontsize=14). ax.set_xlabel(\"Date\"). ax.set_ylabel(\"Revenue ($)\"). rolling_avg = daily_revenue.rolling(window=7).mean(). rolling_avg.plot(ax=ax, color=\"red\", linewidth=2, label=\"7-day moving average\"). ax.legend(). plt.tight_layout(). plt.show(). Key detail: the 7-day moving average smooths out daily noise and shows the underlying trend. This is the most useful addition to a time series chart. Chart 3 — Histogram (distribution of order values): ax = df[\"revenue\"].plot(kind=\"hist\", bins=50, figsize=(8, 5), color=\"steelblue\", edgecolor=\"white\"). ax.set_title(\"Distribution of Order Values\", fontsize=14). ax.set_xlabel(\"Order Value ($)\"). ax.set_ylabel(\"Number of Orders\"). ax.axvline(df[\"revenue\"].median(), color=\"red\", linestyle=\"--\", label=f\"Median: ${df[\"revenue\"].median():,.0f}\"). ax.legend(). plt.tight_layout(). plt.show(). Key detail: the median line shows where the typical order falls. If the distribution is right-skewed (long tail to the right), the mean is higher than the median — the median is the more honest measure of a typical order'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers which chart type to use for different data relationships — explanation: 'Choosing the right chart type: Bar chart — use for comparing categories. Revenue by region, sales by product, count by category. Rule: if you are comparing discrete groups, use a bar chart. Horizontal bars (barh) are better when category names are long. Line chart — use for showing trends over time. Daily revenue, monthly user growth, weekly incident count. Rule: if your x-axis is time and you want to show how a value changes, use a line chart. Always consider adding a moving average for noisy data. Histogram — use for showing distributions. How are order values spread out? What is the most common price range? Rule: if you want to understand the shape of a single variable (is it normal, skewed, bimodal?), use a histogram. The bins parameter controls granularity — too few bins hide patterns, too many create noise. Start with 30-50 bins and adjust. Other chart types to know: Scatter plot — use for showing relationships between two numeric variables. df.plot.scatter(x=\"quantity\", y=\"unit_price\"). Does higher quantity mean lower price (bulk discounts)? Box plot — use for comparing distributions across groups. df.boxplot(column=\"revenue\", by=\"region\"). Shows median, quartiles, and outliers for each region. Pie chart — avoid in most cases. Bar charts are almost always clearer. Pie charts are hard to read when there are more than 4-5 segments'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers chart formatting and presentation best practices — formatting: 'Chart formatting best practices: (1) Always add titles and axis labels. A chart without labels forces the audience to guess what they are looking at. (2) Use consistent colors. Pick one color for general charts (steelblue is a good default). Use red or orange only to highlight something specific (a target line, an outlier, a warning). (3) Remove chart clutter. plt.style.use(\"seaborn-v0_8-whitegrid\") — clean, professional style. ax.spines[\"top\"].set_visible(False) — remove the top border. ax.spines[\"right\"].set_visible(False) — remove the right border. These two lines make charts look much cleaner. (4) Size matters. figsize=(8, 5) is good for presentations. figsize=(12, 5) for time series (wider shows more data points). Always use plt.tight_layout() to prevent label cutoff. (5) Save at high resolution. plt.savefig(\"chart.png\", dpi=150, bbox_inches=\"tight\") — 150 dpi is good for screens, 300 dpi for print'"
+    weight: 0.30
+    description: "Formatting"

@@ -1,0 +1,43 @@
+meta:
+  id: cross-functional-analytics-project
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Lead a cross-functional analytics project — integrate data from marketing, sales, product, and finance to build a unified business intelligence view"
+  tags: [python, pandas, cross-functional, business-intelligence, stakeholder, expert]
+
+state: {}
+
+trigger: |
+  The VP of Operations wants a unified weekly business report that
+  currently takes 4 analysts from different teams an entire day to
+  compile manually. Each team has their own data sources and metrics:
+
+  - Marketing: campaigns.csv (campaign_id, channel, spend, impressions,
+    clicks, conversions, week)
+  - Sales: deals.csv (deal_id, customer_id, amount, stage, close_date,
+    sales_rep, source_campaign_id)
+  - Product: events.csv (user_id, event_type, feature, timestamp,
+    session_id)
+  - Finance: revenue.csv (invoice_id, customer_id, amount, payment_date,
+    category, cost_of_goods)
+
+  The report needs: marketing ROI by channel, sales pipeline velocity,
+  product engagement funnel, and a P&L summary — all linked by
+  customer_id and campaign attribution.
+
+  Task: Build the unified analytics pipeline and report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly integrates data from all four sources with proper joining logic — integration: 'Cross-functional data integration: Step 1 — Load and standardize dates: marketing = pd.read_csv(\"campaigns.csv\"). sales = pd.read_csv(\"deals.csv\", parse_dates=[\"close_date\"]). product = pd.read_csv(\"events.csv\", parse_dates=[\"timestamp\"]). finance = pd.read_csv(\"revenue.csv\", parse_dates=[\"payment_date\"]). Step 2 — Marketing ROI by channel: marketing_roi = (marketing.groupby(\"channel\").agg(total_spend=(\"spend\", \"sum\"), total_conversions=(\"conversions\", \"sum\"), total_clicks=(\"clicks\", \"sum\")).assign(cpc=lambda x: x[\"total_spend\"] / x[\"total_clicks\"], cpa=lambda x: x[\"total_spend\"] / x[\"total_conversions\"])). Link marketing to sales — attribute revenue to campaigns: campaign_revenue = (sales.merge(marketing[[\"campaign_id\", \"channel\"]], left_on=\"source_campaign_id\", right_on=\"campaign_id\", how=\"left\").groupby(\"channel\")[\"amount\"].sum().rename(\"attributed_revenue\")). marketing_roi = marketing_roi.join(campaign_revenue). marketing_roi[\"roas\"] = marketing_roi[\"attributed_revenue\"] / marketing_roi[\"total_spend\"]. ROAS (Return on Ad Spend) above 3x is generally healthy. Step 3 — Sales pipeline velocity: pipeline = (sales.assign(week=sales[\"close_date\"].dt.isocalendar().week).groupby(\"week\").agg(deals_closed=(\"deal_id\", lambda x: x[x.index.isin(sales[sales[\"stage\"]==\"closed_won\"].index)].count()), pipeline_value=(\"amount\", \"sum\"), avg_deal_size=(\"amount\", \"mean\"), win_rate=(\"stage\", lambda x: (x == \"closed_won\").mean()))). Step 4 — Product engagement funnel: funnel_steps = [\"page_view\", \"signup\", \"activation\", \"feature_use\", \"upgrade\"]. funnel = (product.groupby(\"event_type\")[\"user_id\"].nunique().reindex(funnel_steps).rename(\"users\")). funnel[\"conversion_rate\"] = funnel[\"users\"] / funnel[\"users\"].iloc[0] * 100. funnel[\"step_rate\"] = funnel[\"users\"] / funnel[\"users\"].shift(1) * 100. Step 5 — P and L summary: pnl = (finance.assign(week=finance[\"payment_date\"].dt.isocalendar().week).groupby(\"week\").agg(gross_revenue=(\"amount\", \"sum\"), cogs=(\"cost_of_goods\", \"sum\")).assign(gross_margin=lambda x: x[\"gross_revenue\"] - x[\"cogs\"], margin_pct=lambda x: (x[\"gross_revenue\"] - x[\"cogs\"]) / x[\"gross_revenue\"] * 100)). weekly_spend = marketing.groupby(\"week\")[\"spend\"].sum(). pnl = pnl.join(weekly_spend.rename(\"marketing_spend\")). pnl[\"net_margin\"] = pnl[\"gross_margin\"] - pnl[\"marketing_spend\"]'"
+    weight: 0.35
+    description: "Integration"
+  - type: llm_judge
+    criteria: "Analysis produces a unified executive report with insights — report: 'Unified executive report: Executive dashboard DataFrame: executive = pd.DataFrame({\"Week\": pnl.index, \"Revenue\": pnl[\"gross_revenue\"], \"Gross Margin %\": pnl[\"margin_pct\"].round(1), \"Marketing Spend\": pnl[\"marketing_spend\"], \"Net Margin\": pnl[\"net_margin\"], \"Deals Closed\": pipeline[\"deals_closed\"], \"Win Rate %\": (pipeline[\"win_rate\"] * 100).round(1)}). Week-over-week trends: executive[\"revenue_wow\"] = executive[\"Revenue\"].pct_change().mul(100).round(1). executive[\"margin_trend\"] = executive[\"Gross Margin %\"].diff().round(1). Cross-functional insights: insight_1: if marketing ROAS for paid_social dropped below 2x while organic ROAS is 8x, recommend shifting budget from paid social to content marketing. insight_2: if the product funnel shows 60% drop between signup and activation, the onboarding experience is the biggest lever — more impactful than increasing top-of-funnel marketing spend. insight_3: if sales win rate declined while pipeline value increased, the team may be pursuing lower-quality leads — cross-reference with marketing channel quality. insight_4: if gross margin percentage is declining while revenue grows, the product mix is shifting toward lower-margin categories — finance should investigate pricing strategy. Export to Excel with formatted tabs: with pd.ExcelWriter(\"weekly_report.xlsx\", engine=\"openpyxl\") as writer: executive.to_excel(writer, sheet_name=\"Executive Summary\", index=False). marketing_roi.to_excel(writer, sheet_name=\"Marketing ROI\"). pipeline.to_excel(writer, sheet_name=\"Sales Pipeline\"). funnel.to_excel(writer, sheet_name=\"Product Funnel\"). pnl.to_excel(writer, sheet_name=\"P&L\")'"
+    weight: 0.35
+    description: "Report"
+  - type: llm_judge
+    criteria: "Response addresses data governance and stakeholder communication challenges — governance: 'Cross-functional data challenges: Data reconciliation: different teams often disagree on numbers because they define metrics differently. Revenue: finance counts when payment is received, sales counts when the deal closes — these can differ by weeks. Customers: marketing counts leads, sales counts accounts, product counts active users — all different numbers for the same concept. Solution: document metric definitions explicitly. Create a data dictionary that all teams agree on. Use the finance definition of revenue as the source of truth. Attribution conflicts: marketing claims credit for a conversion. Sales claims they closed the deal through relationship building. The truth is multi-touch attribution: the customer saw an ad, attended a webinar, and then the sales rep closed the deal. Simple attribution models: last-touch (sales gets credit), first-touch (marketing gets credit). Better: weighted multi-touch attribution using the sales.source_campaign_id and product.events timeline. Data freshness mismatches: marketing data updates hourly, sales data updates daily, finance data updates weekly. The report must handle different update frequencies. Solution: timestamp each data source and show data freshness in the report header. Stakeholder communication: the VP does not want 50 metrics — they want 5 that answer: are we growing? (revenue WoW), are we profitable? (net margin trend), is marketing working? (blended ROAS), is the product sticky? (activation rate), is sales executing? (win rate). Lead with the 5 key metrics. Provide drill-down tabs for analysts who want detail'"
+    weight: 0.30
+    description: "Governance"

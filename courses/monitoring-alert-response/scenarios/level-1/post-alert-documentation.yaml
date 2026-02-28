@@ -1,0 +1,45 @@
+meta:
+  id: post-alert-documentation
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Document alert response — write clear notes about what happened, what you did, and what follow-up is needed after responding to an alert"
+  tags: [monitoring, documentation, post-incident, notes, beginner]
+
+state: {}
+
+trigger: |
+  You just resolved a CRITICAL alert. Here's what happened:
+
+  - 10:42 PM: Alert fired — "HTTP 5xx error rate > 5% on
+    inventory-service"
+  - 10:44 PM: You acknowledged and checked the dashboard
+  - 10:47 PM: You identified that a deployment at 10:35 PM
+    introduced a bug in the inventory lookup endpoint
+  - 10:52 PM: You rolled back the deployment
+  - 10:55 PM: Error rate recovered to normal (< 0.1%)
+  - Total customer impact: ~13 minutes of elevated errors on
+    inventory lookups
+
+  This was a clean resolution. No postmortem is required (under
+  your team's SEV-3 threshold for mandatory postmortems). But you
+  still need to document what happened.
+
+  Task: Write the post-alert documentation. Include everything
+  someone would need to understand what happened, what was done,
+  and what follow-up is needed. Show how even minor alerts deserve
+  proper documentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Documentation captures the complete incident clearly — documentation format: 'Alert: HTTP 5xx error rate > 5% on inventory-service. Date: [date]. Duration: 13 minutes (10:42 PM to 10:55 PM). Severity: CRITICAL (auto-assigned by error rate threshold). Actual impact: SEV-3 (short duration, single endpoint, no data loss). Timeline: 10:35 PM — deployment of inventory-service v2.4.1. 10:42 PM — alert fired: 5xx error rate exceeded 5%. 10:44 PM — acknowledged, began investigation. 10:47 PM — identified: deployment v2.4.1 introduced bug in /api/inventory/lookup endpoint. 10:52 PM — rolled back to v2.4.0. 10:55 PM — error rate recovered to normal. Alert resolved. Root cause: code change in v2.4.1 introduced a null pointer exception in the inventory lookup handler when the optional dimensions field was missing. Customer impact: for approximately 13 minutes, some inventory lookup requests returned 500 errors. Affected features: product page inventory display, cart inventory checks. Resolution: rolled back to v2.4.0. Bug exists in v2.4.1 and needs to be fixed before re-deploying'"
+    weight: 0.35
+    description: "Complete documentation"
+  - type: llm_judge
+    criteria: "Follow-up actions are identified and assigned — follow-up items: '(1) Bug fix: the null pointer exception in the inventory lookup endpoint needs to be fixed in v2.4.1 before it can be re-deployed. Owner: the developer who authored the change (notify them in the morning — not at 11 PM). Ticket: [create ticket number]. (2) Test gap: the deployment passed CI but the test suite did not cover the case where the dimensions field is missing. A test should be added for this case. Owner: same developer. (3) Deployment timing question: this deployment happened at 10:35 PM. Consider whether non-urgent deployments should be restricted to business hours when more engineers are available to respond. This is a team discussion topic, not a mandate. (4) Alert worked correctly: the alert detected the issue within 7 minutes of deployment. No changes needed to the alert configuration.' Why follow-up matters: 'Without follow-up items, the same bug will be reintroduced when v2.4.1 is re-deployed with the fix. The documentation connects tonight's alert to tomorrow's development work'"
+    weight: 0.35
+    description: "Follow-up actions"
+  - type: llm_judge
+    criteria: "Documentation is useful for future reference and team learning — why document even minor incidents: 'This alert was resolved quickly and cleanly. It is tempting to just close it and move on. But documentation serves three purposes: (1) Team awareness: when the team comes in tomorrow morning, they see a clear record of what happened. No one has to ask what was that alert at 10:42? (2) Pattern detection: if inventory-service has 5 deployment-related alerts in the next quarter, this documentation helps identify the pattern. Without records, patterns are invisible. (3) Personal record: when you hand off on-call or write your shift summary, you have accurate details instead of relying on memory.' Where to post: 'Post the documentation in the team's #incidents channel or incident tracking system. Tag it with the service name and date. If your team uses an incident tracking tool (PagerDuty, incident.io, etc.), update the incident record with this summary.' Good documentation habits: 'Write the documentation immediately after resolution while details are fresh. It takes 5-10 minutes now vs. 30 minutes tomorrow trying to reconstruct what happened. Include the exact commands or actions you took — this helps the next person who encounters a similar issue. Be factual, not narrative — other engineers need information, not a story'"
+    weight: 0.30
+    description: "Documentation value"

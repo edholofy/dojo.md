@@ -1,0 +1,44 @@
+meta:
+  id: spec-review-qa
+  level: 4
+  course: wireframe-annotation-specification
+  type: output
+  description: "Specification review and QA — establish quality assurance processes for wireframe specifications including peer review, automated checks, and test case generation"
+  tags: [review, QA, quality, testing, expert]
+
+state: {}
+
+trigger: |
+  A design lead says: "We shipped a feature last quarter
+  where the spec missed 12 edge cases. QA caught 8 of
+  them, but 4 made it to production. One caused a
+  data loss bug.
+
+  My VP wants a 'spec QA process.' But I'm worried
+  about adding overhead. Currently:
+  - No one reviews specs before handoff
+  - QA writes test cases from scratch, often
+    misinterpreting the spec
+  - Edge cases are discovered during development
+  - No one checks if implementation matches spec
+
+  How do I build a lightweight spec review process that
+  catches gaps before they become production bugs?"
+
+  Task: Design a specification QA process including
+  peer review framework, edge case checklists, and
+  spec-to-test-case pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a peer review framework for specs — review checklist categories: Completeness (all states annotated? error handling defined? empty states specified? loading behavior documented?), Clarity (would a new engineer understand this without asking questions? are interactions unambiguous? are content specs specific enough?), Consistency (follows team annotation standards? references design system correctly? terminology matches glossary?), Testability (can QA write a test case from each annotation? are acceptance criteria measurable? are boundary conditions specified?). Review process: designer self-reviews using checklist, then peer designer reviews focusing on completeness and clarity (30-minute time-box), critical features get engineering review (tech lead checks feasibility). Review feedback format: 'Missing: [what's missing]' or 'Ambiguous: [what needs clarification]' — not subjective design opinions"
+    weight: 0.35
+    description: "PeerReviewFramework"
+  - type: llm_judge
+    criteria: "Response provides edge case detection methodology — systematic edge case checklist by component type: Forms (empty submission, max length input, special characters, paste overflow, browser autofill, password managers), Lists (0 items, 1 item, 100+ items, items with very long text, items with missing data), Media (upload failure mid-progress, unsupported format, corrupt file, extremely large file, slow connection), Navigation (deep linking, browser back button, session timeout during flow, multiple tabs with same flow), Data (null values, negative numbers, future dates, timezone differences, concurrent edits). Pattern-based detection: for every 'if' condition in the spec, ask 'what's the else?', for every success state ask 'what's the failure state?', for every user action ask 'what if they do it twice quickly?' Includes a 'spec stress test' exercise: team members try to break the spec by finding unspecified scenarios"
+    weight: 0.35
+    description: "EdgeCaseDetection"
+  - type: llm_judge
+    criteria: "Response connects specs to QA test cases — spec-to-test pipeline: each annotation maps to one or more test cases (interaction spec → interaction test, state spec → state verification test, content spec → content validation test, error spec → error handling test), test case template derived from spec (Given [state from spec], When [action from spec], Then [expected result from spec]), automated checks (link spec annotations to test management tool, flag specs without corresponding test cases, flag test cases without spec traceability). Implementation verification: QA compares shipped feature against spec screen-by-screen, deviation report captures intentional changes vs bugs vs missed specs. Metrics: spec coverage (% of annotations with test cases), spec accuracy (% of shipped features matching spec), defect origin (% of bugs traceable to spec gaps vs implementation errors)"
+    weight: 0.30
+    description: "SpecToTestPipeline"

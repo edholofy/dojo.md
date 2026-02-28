@@ -1,0 +1,46 @@
+meta:
+  id: intermediate-review-shift
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Combined intermediate shift — review a complex PR covering architecture, security, performance, tests, and breaking changes across multiple concerns"
+  tags: [code-review, combined, shift-simulation, multi-concern, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a 300-line PR: "Add subscription billing to the
+  payments service." The PR touches:
+
+  - New SubscriptionService class (120 lines)
+  - Modified PaymentController (40 lines — new endpoints)
+  - Database migration (25 lines — new subscriptions table)
+  - Modified existing PaymentService (30 lines — shared logic extracted)
+  - Tests (85 lines)
+
+  Issues across multiple dimensions:
+  Architecture: billing logic mixed with subscription lifecycle management
+  Security: subscription plan change doesn't verify user owns the subscription
+  Performance: recurring charge loop processes subscriptions sequentially
+  Tests: only happy path tested, no cancellation or failed payment scenarios
+  Breaking change: PaymentService.charge() signature changed (used by 3 other services)
+  Documentation: no API docs for the 2 new endpoints
+  Good: clean error types, proper use of database transactions
+
+  Task: Write the complete review covering all dimensions. Organize
+  feedback thematically. Prioritize what must be fixed vs what can
+  be follow-up work. Make an approval decision.
+
+assertions:
+  - type: llm_judge
+    criteria: "Review is organized thematically with clear priorities — structure: (1) Summary (overall assessment + good things), (2) Blocking issues (security, breaking change, critical test gaps), (3) Architecture suggestions (billing/lifecycle separation), (4) Performance concerns (sequential processing), (5) Follow-up items (documentation, additional tests). Blocking items are clearly marked: 'These must be addressed before merge.' Suggestions are marked: 'These would improve the code but can be separate PRs.' The reviewer has clearly prioritized — security auth check is #1 (someone could modify another user's subscription), breaking change is #2 (other services will break), missing cancellation tests is #3"
+    weight: 0.35
+    description: "Organized priorities"
+  - type: llm_judge
+    criteria: "Each dimension gets substantive feedback — security: 'Line 45: this endpoint modifies a subscription by ID but doesn't check if the authenticated user owns that subscription. An attacker could change any user's subscription plan. Add: verify subscription.userId === authenticatedUser.id.' Breaking change: 'PaymentService.charge() now takes a SubscriptionContext parameter — the 3 services calling this will break. Can we make the parameter optional with a default?' Performance: 'Processing 10,000 subscriptions sequentially at 200ms each = 33 minutes. Consider: batch processing, or better: a job queue that processes subscriptions concurrently.' Tests: suggest specific test cases for cancellation mid-cycle, failed payment retry, plan upgrade/downgrade. Architecture: suggest separating SubscriptionLifecycleService from BillingService"
+    weight: 0.35
+    description: "Multi-dimension feedback"
+  - type: llm_judge
+    criteria: "Decision balances thoroughness with pragmatism — request changes: security issue (#1 priority) and breaking change (#2) must be fixed. But acknowledge: 'This is solid work overall — the transaction handling and error types are clean. The core subscription logic is correct.' Don't demand everything at once: 'I'd suggest addressing the security and breaking change issues now, and creating follow-up tickets for: (1) separating billing from lifecycle management, (2) parallel subscription processing, (3) API documentation, (4) additional test coverage for edge cases.' Timeline suggestion: 'The follow-up PRs don't block launch but should be done within the sprint.' Offer to re-review quickly: 'Once the auth check and backward-compatible charge() signature are in, I can re-review same day.'"
+    weight: 0.30
+    description: "Balanced decision"

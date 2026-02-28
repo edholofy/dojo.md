@@ -1,0 +1,38 @@
+meta:
+  id: data-quality-framework
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build a data quality framework — implement systematic data validation, profiling, anomaly detection, and quality scoring for production datasets"
+  tags: [python, pandas, data-quality, validation, profiling, anomaly-detection, expert]
+
+state: {}
+
+trigger: |
+  The data engineering team is tired of downstream dashboards breaking
+  because of silent data quality issues. Last month, a pricing column
+  had negative values for 3 days before anyone noticed, causing $200K
+  in incorrect invoices.
+
+  Your datasets: orders (2M rows daily), customers (500K), products
+  (10K), and inventory (50K updates daily).
+
+  The head of data engineering asks you to build a data quality
+  framework that: profiles incoming data, validates against rules,
+  scores data quality, and alerts on anomalies — all in pandas.
+
+  Task: Design and implement the data quality framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code implements systematic data profiling and validation rules — validation: 'Data quality framework: Data profiling — automated dataset summary: def profile_dataframe(df, name=\"dataset\"): profile = {}. profile[\"name\"] = name. profile[\"rows\"] = len(df). profile[\"columns\"] = len(df.columns). profile[\"memory_mb\"] = df.memory_usage(deep=True).sum() / 1e6. column_profiles = []. for col in df.columns: cp = {\"column\": col, \"dtype\": str(df[col].dtype), \"null_count\": df[col].isna().sum(), \"null_pct\": df[col].isna().mean() * 100, \"unique_count\": df[col].nunique(), \"unique_pct\": df[col].nunique() / len(df) * 100}. if pd.api.types.is_numeric_dtype(df[col]): cp.update({\"mean\": df[col].mean(), \"std\": df[col].std(), \"min\": df[col].min(), \"max\": df[col].max(), \"zeros\": (df[col] == 0).sum(), \"negatives\": (df[col] < 0).sum()}). column_profiles.append(cp). profile[\"columns_detail\"] = pd.DataFrame(column_profiles). return profile. Validation rules engine: class DataValidator: def __init__(self): self.rules = []. self.results = []. def add_rule(self, name, check_fn, severity=\"error\"): self.rules.append({\"name\": name, \"check\": check_fn, \"severity\": severity}). def validate(self, df): self.results = []. for rule in self.rules: try: passed, details = rule[\"check\"](df). self.results.append({\"rule\": rule[\"name\"], \"passed\": passed, \"severity\": rule[\"severity\"], \"details\": details}). except Exception as e: self.results.append({\"rule\": rule[\"name\"], \"passed\": False, \"severity\": \"error\", \"details\": str(e)}). return pd.DataFrame(self.results). Defining rules for orders: validator = DataValidator(). validator.add_rule(\"no_null_order_id\", lambda df: (df[\"order_id\"].isna().sum() == 0, f\"{df['order_id'].isna().sum()} null order IDs\")). validator.add_rule(\"positive_amounts\", lambda df: ((df[\"amount\"] > 0).all(), f\"{(df['amount'] <= 0).sum()} non-positive amounts\"), severity=\"critical\"). validator.add_rule(\"valid_dates\", lambda df: (df[\"order_date\"].between(\"2020-01-01\", \"2026-12-31\").all(), f\"{(~df['order_date'].between('2020-01-01', '2026-12-31')).sum()} out-of-range dates\")). validator.add_rule(\"no_duplicate_orders\", lambda df: (not df[\"order_id\"].duplicated().any(), f\"{df['order_id'].duplicated().sum()} duplicates\")). validator.add_rule(\"amount_range\", lambda df: ((df[\"amount\"] < 50000).all(), f\"{(df['amount'] >= 50000).sum()} orders over $50K threshold\"), severity=\"warning\"). results = validator.validate(orders_df)'"
+    weight: 0.35
+    description: "Validation"
+  - type: llm_judge
+    criteria: "Framework includes anomaly detection and quality scoring — anomaly: 'Anomaly detection for data quality: Statistical anomaly detection: def detect_anomalies(df, column, method=\"zscore\", threshold=3): if method == \"zscore\": z = (df[column] - df[column].mean()) / df[column].std(). anomalies = df[z.abs() > threshold]. elif method == \"iqr\": Q1 = df[column].quantile(0.25). Q3 = df[column].quantile(0.75). IQR = Q3 - Q1. anomalies = df[(df[column] < Q1 - 1.5 * IQR) | (df[column] > Q3 + 1.5 * IQR)]. elif method == \"rolling\": rolling_mean = df[column].rolling(30).mean(). rolling_std = df[column].rolling(30).std(). anomalies = df[(df[column] - rolling_mean).abs() > threshold * rolling_std]. return anomalies. Volume anomaly detection — did we receive the expected number of rows: def check_volume(current_count, historical_counts, threshold=2): mean = np.mean(historical_counts). std = np.std(historical_counts). z_score = (current_count - mean) / std if std > 0 else 0. is_anomaly = abs(z_score) > threshold. return {\"current\": current_count, \"expected_mean\": mean, \"z_score\": z_score, \"is_anomaly\": is_anomaly}. Data quality score: def calculate_quality_score(df, validation_results): completeness = 1 - df.isna().mean().mean(). uniqueness = 1 - df.duplicated().mean(). critical_rules_passed = validation_results[validation_results[\"severity\"] == \"critical\"][\"passed\"].mean(). all_rules_passed = validation_results[\"passed\"].mean(). score = (completeness * 0.3 + uniqueness * 0.2 + critical_rules_passed * 0.3 + all_rules_passed * 0.2) * 100. return {\"overall_score\": round(score, 1), \"completeness\": round(completeness * 100, 1), \"uniqueness\": round(uniqueness * 100, 1), \"validity\": round(all_rules_passed * 100, 1)}. A score below 95 triggers a warning. Below 90 blocks the pipeline'"
+    weight: 0.35
+    description: "Anomaly detection"
+  - type: llm_judge
+    criteria: "Response addresses operational data quality monitoring and alerting — operations: 'Operational data quality: Daily quality monitoring pipeline: def daily_quality_check(data_dir, date): report = {\"date\": date, \"datasets\": {}}. for dataset_name in [\"orders\", \"customers\", \"products\", \"inventory\"]: df = pd.read_csv(f\"{data_dir}/{dataset_name}_{date}.csv\"). profile = profile_dataframe(df, dataset_name). validation = validator.validate(df). quality = calculate_quality_score(df, validation). anomalies = detect_anomalies(df, \"amount\") if \"amount\" in df.columns else pd.DataFrame(). report[\"datasets\"][dataset_name] = {\"profile\": profile, \"validation\": validation, \"quality_score\": quality, \"anomaly_count\": len(anomalies)}. if quality[\"overall_score\"] < 90: send_alert(f\"CRITICAL: {dataset_name} quality score {quality['overall_score']}\"&). return report. Quality trend tracking: quality_history = pd.read_csv(\"quality_scores.csv\"). quality_history = pd.concat([quality_history, pd.DataFrame([today_scores])]). quality_history.to_csv(\"quality_scores.csv\", index=False). Plotting quality trends: fig, ax = plt.subplots(). quality_history.plot(x=\"date\", y=\"overall_score\", ax=ax). ax.axhline(y=95, color=\"orange\", linestyle=\"--\", label=\"Warning\"). ax.axhline(y=90, color=\"red\", linestyle=\"--\", label=\"Critical\"). Gradual quality degradation is harder to catch than sudden drops. The trend chart reveals slow drift: if completeness drops 0.1% per day, it takes 50 days to cross the threshold — by then thousands of records have missing data. Data contracts between teams: define expectations as code. orders_contract = {\"row_count_min\": 1_800_000, \"row_count_max\": 2_200_000, \"required_columns\": [\"order_id\", \"customer_id\", \"amount\", \"order_date\"], \"amount_min\": 0.01, \"amount_max\": 50_000, \"null_tolerance\": {\"order_id\": 0, \"amount\": 0, \"customer_id\": 0.001}}. When the upstream team changes their schema, the contract test catches it before it breaks dashboards'"
+    weight: 0.30
+    description: "Operations"

@@ -1,0 +1,45 @@
+meta:
+  id: data-type-conversion-errors
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data type conversion errors — troubleshoot type casting failures, implicit conversions, and format mismatches during the transform phase"
+  tags: [data-type, casting, conversion, transform, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "Our pipeline keeps failing with
+  different type errors. Here are this week's failures:
+
+  1. 'ValueError: could not convert string to float: "$1,234.56"'
+     — trying to load price data that includes currency symbols
+
+  2. 'InvalidDatetimeFormat: Cannot parse "02/30/2024" as date'
+     — a date field has impossible dates
+
+  3. 'DataError: integer out of range' when loading product_quantity
+     — the source has values like '1e6' in scientific notation
+
+  4. 'UnicodeDecodeError: utf-8 codec can't decode byte 0xe9'
+     — loading customer names with accented characters from a
+       Latin-1 encoded CSV
+
+  How do I fix each of these and build better type handling?"
+
+  Task: Diagnose each type conversion error, explain the root cause,
+  provide a fix, and suggest best practices for type handling in ETL.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses and fixes each error — price string: strip currency symbols and commas before converting to float (regex or string replace: remove '$' and ',' then cast), store as decimal not float for financial data; impossible date: validate dates before parsing, handle invalid dates by rejecting or defaulting (Feb 30 doesn't exist), use strict date parsing; scientific notation integer: parse as float first then convert to int, or handle scientific notation explicitly; Unicode error: specify the correct source encoding (latin-1/iso-8859-1 instead of utf-8), or use error handling like 'errors=replace' to handle unexpected encodings"
+    weight: 0.35
+    description: "ErrorFixes"
+  - type: llm_judge
+    criteria: "Response explains why type errors happen in ETL — source systems don't enforce types the same way (CSV files are all strings, APIs may send numbers as strings, databases have different type systems), data evolves over time (a field that was always numeric suddenly gets a non-numeric value), encoding standards vary between systems and regions, and implicit type conversions can silently corrupt data (truncating decimals, losing precision). Explains the importance of explicit type casting over implicit conversion"
+    weight: 0.35
+    description: "RootCauses"
+  - type: llm_judge
+    criteria: "Response provides type handling best practices — define an explicit schema with expected types for every field, validate types early in the pipeline before transformation, use try/except or safe casting functions that log failures instead of crashing, create a quarantine table for records that fail type validation, standardize on UTF-8 encoding throughout the pipeline, use decimal types for financial data (not float), and validate ranges (not just types) for numeric fields"
+    weight: 0.30
+    description: "BestPractices"

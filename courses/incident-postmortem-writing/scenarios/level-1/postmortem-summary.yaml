@@ -1,0 +1,49 @@
+meta:
+  id: postmortem-summary
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Write a postmortem summary — create a concise executive summary that captures the incident, impact, root cause, and key actions for busy stakeholders"
+  tags: [postmortem, summary, executive, concise, stakeholders, beginner]
+
+state: {}
+
+trigger: |
+  You've completed a full postmortem document for a significant
+  incident. The postmortem is 5 pages of detailed timeline, root
+  cause analysis, and action items. Now you need to write the
+  summary that goes at the top.
+
+  The incident: A deployment of a new feature introduced a memory
+  leak in the API gateway. Over 3 hours, memory usage climbed from
+  40% to 100%, at which point the gateway started dropping requests.
+  The issue affected all API endpoints for 25 minutes before the
+  gateway was restarted. The memory leak was caused by an event
+  listener that was never cleaned up in the new feature code.
+
+  Impact: 100% of API traffic affected for 25 minutes. Estimated
+  15,000 failed API calls. 3 downstream services experienced errors.
+  200 customer support tickets.
+
+  Your VP reads only the summary. Your CEO reads only the first
+  sentence. Engineers read the full document. The summary needs to
+  serve all three.
+
+  Task: Write a postmortem summary that captures everything a
+  stakeholder needs to know in 3-5 sentences, followed by a
+  structured summary section. Then write a guide on writing
+  effective postmortem summaries.
+
+assertions:
+  - type: llm_judge
+    criteria: "Summary captures all essential information concisely — opening sentence (CEO-readable): 'On [date], a memory leak in the API gateway caused 25 minutes of complete API unavailability, affecting all customers and approximately 15,000 failed requests.' Expanded summary (VP-readable, 3-5 sentences): 'A deployment at [time] introduced an event listener that was not cleaned up, causing memory usage to grow from 40% to 100% over 3 hours. When memory was exhausted, the API gateway began dropping all requests. The issue was resolved by restarting the gateway. Root cause: missing cleanup in new feature code, undetected by existing memory monitoring. Key actions: add memory growth rate alerting (1 week), add integration test for memory leaks in deployment pipeline (2 weeks).' Structured summary section follows: Severity, Duration, Impact (users, requests, revenue), Root Cause (1 sentence), Resolution, Key Action Items (top 3). The structured section is scannable — a reader should understand the incident in 30 seconds"
+    weight: 0.35
+    description: "Concise summary"
+  - type: llm_judge
+    criteria: "Summary is accurate, not minimizing or dramatizing — accurate language: 'complete API unavailability for 25 minutes' not 'brief interruption' (minimizing) or 'catastrophic system failure' (dramatizing). Numbers are specific: '25 minutes' not 'about half an hour.' '15,000 failed requests' not 'thousands of failures.' Impact is honest: '100% of API traffic affected' not 'some users experienced issues.' Root cause is precise: 'event listener not cleaned up in new feature code' not 'a bug' (too vague) or 'developer forgot to clean up resources' (blaming). Timeline accuracy: 'memory grew over 3 hours before becoming critical' — this detail matters because it means the incident was detectable for 3 hours before it became customer-facing. The summary should match the detailed postmortem — no new information or different framing. If someone reads only the summary, they should have the same understanding as someone who read the full document"
+    weight: 0.35
+    description: "Accurate framing"
+  - type: llm_judge
+    criteria: "Summary guide provides reusable principles — principles: (1) Lead with impact, not technical details. 'API was unavailable for 25 minutes' matters more to stakeholders than 'memory leak in event listener.' (2) The first sentence should stand alone. If someone reads nothing else, that sentence tells them what happened, how bad it was, and that it's resolved. (3) Include the root cause in plain language. Executives want to know: was this a freak accident or a systemic issue? 'Missing resource cleanup in new code' signals it's fixable. 'Cosmic ray bit flip' signals it's not. (4) Include top 1-3 action items. Stakeholders want to know: what are we doing so this doesn't happen again? (5) State whether this is resolved and whether there's ongoing risk. 'Resolved. No ongoing risk. Data integrity verified.' (6) Keep it short — if the summary is longer than half a page, it's not a summary. Anti-patterns: summaries that minimize impact to avoid attention (builds distrust), summaries that are so technical only engineers can read them (excludes stakeholders), summaries written days later with fading memory (inaccurate)"
+    weight: 0.30
+    description: "Summary guide"

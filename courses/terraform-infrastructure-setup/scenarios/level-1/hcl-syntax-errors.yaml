@@ -1,0 +1,65 @@
+meta:
+  id: hcl-syntax-errors
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Fix HCL syntax errors — diagnose missing braces, incorrect attribute assignments, string interpolation issues, and block structure problems"
+  tags: [Terraform, HCL, syntax, validation, formatting, beginner]
+
+state: {}
+
+trigger: |
+  You run `terraform validate` and get multiple errors:
+
+  ```
+  Error: Missing closing brace
+
+    on main.tf line 12:
+    12:   tags = {
+    13:     Name = "web-server"
+    14:
+
+  Error: Unsupported argument
+
+    on main.tf line 8, in resource "aws_instance" "web":
+     8:   ami := "ami-0c55b159cbfafe1f0"
+
+  Error: Invalid reference
+
+    on main.tf line 15, in resource "aws_instance" "web":
+    15:   subnet_id = "${var.subnet_id}"
+  ```
+
+  Your main.tf:
+
+  ```hcl
+  resource "aws_instance" "web" {
+    ami := "ami-0c55b159cbfafe1f0"
+    instance_type = var.instance_type
+
+    tags = {
+      Name = "web-server"
+
+    vpc_security_group_ids = [aws_security_group.web.id]
+  }
+  ```
+
+  Task: Explain HCL syntax fundamentals, common syntax errors and
+  how to fix them, the difference between = and := (Terraform only
+  uses =), string interpolation rules, terraform fmt for auto-formatting,
+  terraform validate for catching errors before plan, and block structure
+  (resource, data, variable, output, locals).
+
+assertions:
+  - type: llm_judge
+    criteria: "HCL syntax fundamentals are explained — blocks: resource, data, variable, output, locals, terraform, provider. Attribute assignment uses = (not :=, that's Go syntax). String interpolation: use ${} inside quoted strings, but for simple references just use var.name directly (no interpolation needed since Terraform 0.12). Heredoc syntax: <<-EOT for multi-line strings. Comments: # for single line, /* */ for multi-line. Lists: [], maps: {}. The specific errors: (1) := should be =, (2) missing closing brace for tags block, (3) bare ${var.subnet_id} should be just var.subnet_id (interpolation-only expressions are deprecated)"
+    weight: 0.35
+    description: "HCL fundamentals"
+  - type: llm_judge
+    criteria: "terraform fmt and validate workflow is covered — terraform fmt: auto-formats HCL files to canonical style (consistent indentation, alignment). Run before committing. terraform fmt -check in CI to enforce formatting. terraform validate: checks configuration for internal consistency (syntax, attribute names, required arguments). Does NOT check against cloud APIs. Workflow order: fmt → validate → plan → apply. validate catches: missing required arguments, unknown attributes, type mismatches, invalid references"
+    weight: 0.35
+    description: "Formatting and validation"
+  - type: llm_judge
+    criteria: "Block structure is explained — resource 'type' 'name' {}: creates infrastructure. data 'type' 'name' {}: reads existing infrastructure. variable 'name' {}: input parameters (type, default, description, validation). output 'name' {}: export values. locals {}: computed local values (like constants). terraform {}: settings (required_version, required_providers, backend). provider 'name' {}: provider configuration. Each block type has specific allowed arguments. Meta-arguments available on resources: depends_on, count, for_each, provider, lifecycle"
+    weight: 0.30
+    description: "Block structure"

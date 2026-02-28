@@ -1,0 +1,45 @@
+meta:
+  id: scaling-review-process
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Scale review process for team growth — design review process changes needed as an engineering team grows from 20 to 50 to 100 engineers"
+  tags: [code-review, scaling, growth, process-change, milestones, expert]
+
+state: {}
+
+trigger: |
+  Your engineering team is growing rapidly: 20 engineers today,
+  50 in 6 months, 100 in 18 months. Your current review process
+  works well at 20 but you know it won't scale:
+
+  At 20: everyone knows everyone, informal reviewer selection, the
+  tech lead reviews most PRs, one Slack channel, everyone in one
+  timezone.
+
+  At 50 (6 months): 4 teams, some people don't know each other,
+  need formal assignment, tech lead is bottleneck, cross-team reviews
+  needed, 2 timezones.
+
+  At 100 (18 months): 8 teams, most people are strangers, complex
+  assignment needed, multiple tech leads, heavy cross-team
+  dependencies, 4 timezones, new offices.
+
+  Task: Design the review process evolution for each milestone.
+  For each stage: what changes, what stays the same, what to
+  introduce, what to retire. Include the transitions between stages
+  and how to introduce changes without disrupting current flow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each milestone has specific process changes — at 20 (current): informal assignment works, tech lead as backstop, single channel, trust-based. Works because everyone knows the code and each other. At 50 (6 months): introduce CODEOWNERS for auto-assignment, replace single channel with per-team channels + cross-team bot, 12-hour SLA (timezone-aware), written review guidelines (can't be tribal knowledge at 50), reviewer rotation to prevent silos, security review requirement for sensitive code. At 100 (18 months): automated tiered review (risk-based assignment), cross-timezone review routing, reviewer capacity management, review quality monitoring, formal reviewer training program, escalation paths for conflicts. Each change: what problem it solves, when to introduce it, how to validate it's working"
+    weight: 0.35
+    description: "Milestone changes"
+  - type: llm_judge
+    criteria: "What stays constant provides continuity — constants across all sizes: (1) every production code change is reviewed by someone, (2) reviews are respectful and constructive, (3) security-sensitive code gets extra scrutiny, (4) authors respond to feedback within 24 hours. These are culture, not process — culture should be constant even as process evolves. What retires: (1) tech lead reviewing everything (at 50 — they become a bottleneck), (2) informal assignment (at 50 — replaced by CODEOWNERS), (3) single Slack channel (at 50 — too noisy). Transition principle: never remove something without replacing it. Don't just stop tech lead reviews — introduce the replacement system first, run both in parallel for 2 weeks, then transition"
+    weight: 0.35
+    description: "Constants and transitions"
+  - type: llm_judge
+    criteria: "Transition plans minimize disruption — each transition: (1) announce the change and reasoning 2 weeks before, (2) pilot with one team for 2 weeks, (3) gather feedback and adjust, (4) roll out to all teams, (5) measure impact for 4 weeks, (6) iterate. Specific transitions: 20→50: 'We're introducing CODEOWNERS to replace manual assignment. For the next 2 weeks, Team A will pilot while other teams continue as-is. We'll share findings in the all-hands.' 50→100: 'We're adding tiered review requirements. Low-risk changes get faster review (1 approval, 4-hour SLA), high-risk changes get more thorough review (2 approvals, security review).' Change fatigue: don't introduce all changes at once. One process change per month maximum. Measure before and after each change. Rollback plan for every change: 'If tiered reviews increase defect rate by more than 2%, we revert and reassess.'"
+    weight: 0.30
+    description: "Transition plans"

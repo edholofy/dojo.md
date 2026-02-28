@@ -1,0 +1,66 @@
+meta:
+  id: moments-of-truth
+  level: 2
+  course: user-journey-mapping
+  type: output
+  description: "Moments of truth mapping — identify the critical moments that disproportionately shape user perception"
+  tags: [moments-of-truth, critical-moments, impact, intermediate]
+
+state: {}
+
+trigger: |
+  You're a UX researcher at a ride-sharing company. Your
+  NPS is 32 (industry average 45). Leadership has budget
+  to improve 3 touchpoints and wants to know which 3 will
+  have the biggest NPS impact.
+
+  Your journey map has 18 touchpoints across 5 stages:
+
+  Request stage: open app, enter destination, see price
+  estimate, choose ride type, confirm request
+
+  Matching stage: see driver assigned, view driver info
+  and rating, track driver on map, receive "driver arrived"
+  notification
+
+  Ride stage: find the car (matching make/model/plate),
+  greet driver, ride begins, navigation route shown,
+  conversation (or silence), ride quality (driving style)
+
+  Completion stage: arrive at destination, automatic
+  payment, rate the driver
+
+  Post-ride stage: receive receipt, handle any issues
+  (lost item, wrong charge)
+
+  From 500 post-ride surveys with open-ended responses:
+  - 42% of negative reviews mention "driver took a long
+    route" or "felt overcharged"
+  - 38% mention "couldn't find the car" at pickup
+  - 28% mention "driver was rude or unsafe driving"
+  - 18% mention "surge pricing wasn't clear"
+  - 15% mention "wait time was longer than estimated"
+  - Only 3% mention the app interface itself
+
+  From NPS correlation analysis:
+  - Riders who rate "finding the car" as difficult: NPS -12
+  - Riders who feel the route was inefficient: NPS 8
+  - Riders who report a positive driver interaction: NPS 65
+  - Average riders with no notable issues: NPS 38
+
+  Task: Identify the moments of truth and recommend which
+  3 touchpoints to prioritize for NPS improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies moments of truth from the data — moment of truth definition (moments of truth are touchpoints that have disproportionate impact on overall perception — they're the experiences that define whether a customer becomes a promoter or detractor), key moments of truth identified (from the data, three moments stand out: finding the car at pickup — 38% of negative reviews mention it, riders who struggle with it have NPS of -12 vs average of 38; route efficiency/perceived fairness — 42% of negative reviews mention it, riders who feel the route was inefficient have NPS of only 8; driver interaction quality — 28% mention negative driver behavior but riders with positive interactions have NPS of 65 — the highest correlation), not all touchpoints are equal (the app interface itself gets only 3% of mentions despite being used at every stage — it's not a moment of truth; the receipt and rating steps are functional but don't shape perception; the matching animation is engaging but doesn't determine NPS)."
+    weight: 0.35
+    description: "MomentsOfTruthIdentification"
+  - type: llm_judge
+    criteria: "Response recommends 3 specific touchpoints with evidence-based justification — recommendation 1: improve car finding at pickup (NPS impact: riders who struggle go to -12, 38% of negative reviews mention this; solutions could include: better real-time car location accuracy, driver descriptions beyond make/model, visual AR guidance, driver flashing lights feature; this addresses the highest-severity negative moment), recommendation 2: address route perception and pricing transparency (NPS impact: inefficient routes correlate with NPS of 8, 42% of negative reviews — the highest-volume complaint; solutions: show the planned route before ride starts, explain route choices, surface fare breakdown; note that perception of fairness matters as much as actual route efficiency), recommendation 3: invest in driver interaction quality (NPS impact: positive interactions correlate with NPS of 65 — this is the biggest positive swing; 28% mention negative driver behavior; solutions: driver training and incentives, better matching of driver quality to rider value, driver quality monitoring and feedback systems), justification framework (explains why these 3 over the other 15 touchpoints: the data shows these three moments have the largest NPS swing — from -12 to 65 is a 77-point range, compared to the 18 touchpoints where most have minimal NPS correlation)."
+    weight: 0.35
+    description: "PrioritizedRecommendations"
+  - type: llm_judge
+    criteria: "Response demonstrates moments-of-truth analysis principles — asymmetric impact (negative moments of truth have more impact than positive ones: a bad pickup experience destroys NPS more than a smooth one improves it; but a positive driver interaction has outsized positive impact — understanding this asymmetry guides investment: prevent the negative moments, amplify the positive ones), measurement approach (recommends tracking moment-of-truth performance separately from overall satisfaction: track car-finding success rate, route satisfaction score, and driver interaction quality as leading indicators that predict NPS movement), the 3% insight (the fact that only 3% of complaints mention the app interface despite the company likely spending significant engineering effort on it is a key finding — it suggests the company may be over-investing in the wrong touchpoints; the app is good enough, the moments of truth are in the physical/human experience)."
+    weight: 0.30
+    description: "MoTAnalysisPrinciples"

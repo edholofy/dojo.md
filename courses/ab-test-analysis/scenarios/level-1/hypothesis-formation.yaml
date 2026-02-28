@@ -1,0 +1,34 @@
+meta:
+  id: hypothesis-formation
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Form proper A/B test hypotheses — write clear, testable hypotheses with expected outcomes and success criteria before running any experiment"
+  tags: [hypothesis, test-design, success-criteria, beginner]
+
+state: {}
+
+trigger: |
+  A product manager says: "I want to A/B test our pricing page." When
+  asked "what's your hypothesis?", they respond: "I don't know, I just
+  want to see if a new design works better."
+
+  The data analyst knows this vague approach leads to inconclusive
+  results and wasted time.
+
+  Task: Teach the product manager how to form a proper A/B test
+  hypothesis and set up the experiment correctly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains how to write a testable hypothesis — hypothesis: 'Writing a testable hypothesis: A good hypothesis has three parts: 1. The change: what specifically are you modifying? 2. The expected effect: what metric will improve, and by how much? 3. The reasoning: why do you believe this change will have this effect? Template: If we [make this specific change], then [this metric] will [increase/decrease] by [estimated amount] because [reasoning based on user behavior or data]. Bad hypothesis: the new pricing page will work better. Why it is bad: what does work better mean? Better for whom? How much better? There is no way to evaluate success. Good hypothesis: If we simplify the pricing page from 4 tiers to 3 tiers and highlight the most popular plan, then the plan selection rate will increase from 35% to 42% (a 20% relative lift) because user research shows visitors are overwhelmed by too many choices and cannot identify the best plan for them. This hypothesis is testable because: the change is specific (4 tiers to 3, highlight popular plan). The metric is measurable (plan selection rate). The expected effect is quantified (35% to 42%). The reasoning connects to evidence (user research). Multiple hypotheses for the same test: primary hypothesis: plan selection rate increases from 35% to 42%. Secondary hypothesis: time on pricing page decreases (users decide faster). Counter-hypothesis to monitor: average plan value does not decrease (removing a tier does not push users to cheaper plans)'"
+    weight: 0.35
+    description: "Hypothesis"
+  - type: llm_judge
+    criteria: "Response covers choosing the right metrics and success criteria — metrics: 'Choosing the right metrics: Every A/B test needs: 1. Primary metric (one metric that determines success): this is the single metric the test is designed to improve. For the pricing page test: plan selection rate (percentage of pricing page visitors who select a plan). Only one primary metric — if you optimize for multiple metrics, you increase false positive risk. 2. Secondary metrics (2-3 supporting metrics): these provide additional context but do not determine success. Revenue per visitor: does the change affect how much people spend? Time to decision: do users decide faster or slower? Upgrade rate: do more users choose a paid plan vs the free tier? 3. Guardrail metrics (metrics that must NOT get worse): page load time: the new design must not be slower. Cart abandonment: simplifying pricing should not increase abandonment later in the funnel. Support tickets about pricing: the new page should not confuse users. If a guardrail metric degrades significantly, the test should be stopped even if the primary metric improves. Setting success criteria before the test: decide in advance: What is the minimum detectable effect (MDE)? The smallest improvement worth detecting. For plan selection rate: a 5 percentage point improvement (35% to 40%) is the minimum business impact that justifies the design change. What happens if the result is flat? If the test shows no significant difference, we keep the current design (the control) because the new design has no proven benefit. What happens if the treatment is worse? We reject the new design and investigate why. These decisions are made BEFORE seeing the results to prevent post-hoc rationalization'"
+    weight: 0.35
+    description: "Metrics"
+  - type: llm_judge
+    criteria: "Response covers common hypothesis mistakes — mistakes: 'Common hypothesis mistakes: Mistake 1 — No hypothesis at all: just testing for the sake of testing. The PM says: let us see what happens. Without a hypothesis, you cannot determine sample size, you do not know what success looks like, and you are more likely to cherry-pick a positive result from noisy data. Mistake 2 — Hypothesis too vague: the new design will improve conversions. Which conversions? By how much? For which users? Vague hypotheses lead to vague conclusions. Mistake 3 — Hypothesis not falsifiable: users will like the new design. How do you measure like? This is not testable. Reframe: users will engage more with the new design, measured by click-through rate increasing from 12% to 15%. Mistake 4 — Multiple changes in one test: if we change the headline, the button color, and the pricing tiers, conversions will increase. If conversions increase, which change caused it? Test one change at a time, or use a multivariate test design if you have enough traffic. Mistake 5 — Unrealistic expectations: signups will double from 5% to 10%. A 100% improvement from a single design change is extremely rare. Most A/B tests produce 2-10% relative lifts. Set realistic expectations based on the magnitude of the change. A small copy change might produce a 2-5% lift. A complete page redesign might produce a 10-20% lift. A fundamental product change (new pricing model) might produce a 20-50% lift. The hypothesis should match the scale of the change'"
+    weight: 0.30
+    description: "Mistakes"

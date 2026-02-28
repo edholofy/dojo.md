@@ -1,0 +1,47 @@
+meta:
+  id: intermediate-rfc-shift
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Intermediate RFC shift simulation — write an RFC for a complex technical migration requiring detailed design, risk analysis, and cross-team coordination"
+  tags: [RFC, shift-simulation, migration, complex-design, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC for a significant infrastructure change:
+  migrating from a synchronous, request-response architecture to an
+  event-driven architecture for your order processing system.
+
+  Current system:
+  - Order placed → API validates → charges payment → updates inventory
+    → sends confirmation email → returns response (all synchronous)
+  - Average order processing: 3.5 seconds
+  - 15% of orders fail due to timeout (payment gateway slow)
+  - Inventory updates sometimes lost if email service is down
+  - Black Friday last year: 40% order failure rate due to cascading
+    timeouts across services
+
+  This RFC needs everything: detailed technical design (event schemas,
+  service boundaries, message broker selection), migration strategy
+  (can't stop processing orders), risk analysis (distributed systems
+  are harder to debug), cross-team impact (payments, inventory, email
+  teams all affected), and clear success criteria.
+
+  Task: Write the complete RFC. This is your intermediate synthesis —
+  demonstrate all RFC writing skills including technical depth, risk
+  assessment, dependency management, and clear communication.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical design is thorough with event-driven specifics — event-driven architecture clearly designed: order events (OrderPlaced, PaymentProcessed, PaymentFailed, InventoryReserved, InventoryInsufficient, OrderConfirmed, OrderFailed), with event schemas shown (event type, aggregate ID, timestamp, payload, metadata). Service boundaries redrawn: Order Service (accepts order, publishes OrderPlaced), Payment Service (subscribes to OrderPlaced, publishes PaymentProcessed/Failed), Inventory Service (subscribes to PaymentProcessed, publishes InventoryReserved/Insufficient), Notification Service (subscribes to OrderConfirmed, sends email/SMS). Saga pattern for order orchestration with compensation events (PaymentFailed triggers inventory release). Message broker selection with justification (Kafka for durability and replay vs RabbitMQ for simplicity). Dead letter queues for failed event processing. Idempotency strategy for at-least-once delivery. The design should be specific enough to identify architectural flaws"
+    weight: 0.35
+    description: "Technical design depth"
+  - type: llm_judge
+    criteria: "Migration strategy enables zero-downtime transition — phased migration: Phase 1: introduce message broker alongside existing synchronous flow (strangler fig pattern). Phase 2: payment processing becomes event-driven while other services remain synchronous (dual-write to both systems, compare results). Phase 3: inventory service migrated to event-driven. Phase 4: notification service migrated, synchronous flow decommissioned. Each phase has rollback capability. Dual-running validation: 'During Phase 2, every order is processed by both paths. Results compared — any discrepancy triggers alert and investigation before proceeding to Phase 3.' Data consistency: 'Eventually consistent model accepted for inventory display (up to 5-second delay). Payment and order status remain strongly consistent via saga pattern.' Observability: 'Distributed tracing (correlation ID through all events) must be implemented BEFORE migration begins — debugging event-driven systems without tracing is unacceptable.' Cross-team impact detailed: each team's required changes, timeline, and review process"
+    weight: 0.35
+    description: "Migration and coordination"
+  - type: llm_judge
+    criteria: "Risk analysis and success criteria are mature — risks specific to event-driven migration: (1) Increased debugging complexity — events are harder to trace than synchronous calls. Mitigation: mandatory distributed tracing, event replay capability. (2) Eventual consistency confusion — inventory shows items available when they're reserved. Mitigation: UI shows 'reserving' state, timeout-based reservation release. (3) Message broker becomes single point of failure. Mitigation: multi-node cluster, producer retry with circuit breaker, fallback to synchronous for critical path if broker is down. Success criteria with baselines: 'Order processing time: 3.5s → under 500ms for user response (payment and inventory async). Order failure rate: 15% → under 2%. Black Friday readiness: handle 5x normal load without degradation (vs 40% failure last year). Mean time to recovery: 30 min → under 5 min (failed service doesn't cascade).' Open questions are genuine and well-framed: saga vs choreography preference, event schema versioning strategy, team ownership of shared event definitions"
+    weight: 0.30
+    description: "Risk and success criteria"

@@ -1,0 +1,41 @@
+meta:
+  id: data-ethics-bias
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Navigate data ethics and bias — identify, measure, and mitigate bias in datasets and analyses, handle ethical dilemmas in data-driven decision-making"
+  tags: [python, pandas, ethics, bias, fairness, responsible-analytics, master]
+
+state: {}
+
+trigger: |
+  Your company built a hiring algorithm using pandas to score
+  applicants. After 6 months in production, an audit reveals:
+
+  1. The algorithm approves 68% of male applicants but only 42%
+     of female applicants
+  2. Applicants from certain zip codes (correlating with racial
+     demographics) are scored 30% lower
+  3. The model uses "years of experience" which disadvantages
+     younger workers and those who took career breaks
+
+  The CHRO says: "Fix this immediately. We may have legal exposure
+  under disparate impact laws. And make sure our other models
+  don't have similar issues."
+
+  Task: Investigate the bias, implement fairness corrections, and
+  build a bias auditing framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis identifies and quantifies bias in the scoring model — bias: 'Bias investigation: Step 1 — Quantify disparate impact: applicants = pd.read_csv(\"applicant_scores.csv\"). Disparate impact ratio (four-fifths rule): gender_rates = applicants.groupby(\"gender\")[\"approved\"].mean(). disparate_impact = gender_rates.min() / gender_rates.max(). print(f\"Gender approval rates: {gender_rates.to_dict()}\"). print(f\"Disparate impact ratio: {disparate_impact:.2f}\"). A ratio below 0.80 (the four-fifths rule) indicates adverse impact. Female 42% / Male 68% = 0.62 — significantly below the threshold. This creates legal liability under Title VII (US) and similar laws globally. Step 2 — Identify which features drive the bias: from sklearn.inspection import permutation_importance. importance = permutation_importance(model, X_test, y_test). feature_impact = pd.DataFrame({\"feature\": X_test.columns, \"importance\": importance.importances_mean}).sort_values(\"importance\", ascending=False). Proxy variable analysis — features that correlate with protected attributes: for feature in X_test.columns: correlation = applicants[[feature, \"gender_encoded\"]].corr().iloc[0, 1]. if abs(correlation) > 0.3: print(f\"WARNING: {feature} correlates with gender (r={correlation:.2f})\"). Common proxies: zip_code correlates with race (redlining legacy). years_of_experience correlates with age and gender (career breaks). university_name correlates with socioeconomic status. hobbies/interests can correlate with gender. Step 3 — Analyze zip code bias: zip_analysis = applicants.groupby(\"zip_code\").agg(avg_score=(\"score\", \"mean\"), approval_rate=(\"approved\", \"mean\"), count=(\"applicant_id\", \"count\")). census = pd.read_csv(\"census_demographics.csv\"). zip_analysis = zip_analysis.merge(census, on=\"zip_code\"). correlation = zip_analysis[[\"avg_score\", \"pct_minority\"]].corr().iloc[0, 1]. print(f\"Correlation between score and minority percentage: {correlation:.2f}\"). If negative correlation is strong, the model is effectively using race as a feature through the zip code proxy'"
+    weight: 0.35
+    description: "Bias identification"
+  - type: llm_judge
+    criteria: "Response implements fairness corrections and mitigation strategies — fairness: 'Bias mitigation strategies: Pre-processing — fix the training data: Remove proxy variables: drop zip_code, university_name. Replace years_of_experience with skills-based assessment. Rebalance training data: if historical hiring was biased, the training data encodes that bias. from sklearn.utils import resample. minority_class = applicants[applicants[\"gender\"] == \"female\"]. majority_class = applicants[applicants[\"gender\"] == \"male\"]. minority_upsampled = resample(minority_class, replace=True, n_samples=len(majority_class)). balanced = pd.concat([majority_class, minority_upsampled]). In-processing — constrain the model: add fairness constraints during training. from fairlearn.reductions import ExponentiatedGradient, DemographicParity. constraint = DemographicParity(). mitigated_model = ExponentiatedGradient(base_estimator, constraints=constraint). mitigated_model.fit(X_train, y_train, sensitive_features=A_train). DemographicParity ensures approval rates are similar across groups. EqualizedOdds ensures both true positive AND false positive rates are similar. Post-processing — adjust scores after prediction: def calibrate_scores(scores, groups, target_rate=None): calibrated = scores.copy(). for group in groups.unique(): group_mask = groups == group. group_scores = scores[group_mask]. if target_rate is None: target_rate = scores.mean(). current_rate = (group_scores > 0.5).mean(). adjustment = target_rate - current_rate. calibrated[group_mask] = group_scores + adjustment. return calibrated. Fairness metrics to track: demographic_parity_difference: max approval rate minus min approval rate across groups. equalized_odds_difference: max TPR difference across groups. predictive_parity: positive predictive value should be similar across groups. fairness_report = pd.DataFrame({\"group\": groups.unique(), \"approval_rate\": [group_rates[g] for g in groups.unique()], \"precision\": [group_precision[g] for g in groups.unique()], \"recall\": [group_recall[g] for g in groups.unique()]}). There is inherent tension: maximizing accuracy may increase bias. Maximizing fairness may reduce accuracy. The right trade-off is a business and ethical decision, not a purely technical one'"
+    weight: 0.35
+    description: "Fairness"
+  - type: llm_judge
+    criteria: "Response builds a reusable bias auditing framework — auditing: 'Bias auditing framework for all models: class BiasAuditor: def __init__(self, protected_attributes): self.protected_attributes = protected_attributes. self.audit_results = []. def audit_model(self, df, score_col, outcome_col, model_name): results = {\"model\": model_name, \"audit_date\": datetime.now()}. for attr in self.protected_attributes: if attr not in df.columns: continue. group_outcomes = df.groupby(attr)[outcome_col].mean(). max_rate = group_outcomes.max(). min_rate = group_outcomes.min(). disparate_impact = min_rate / max_rate if max_rate > 0 else 0. results[f\"{attr}_max_rate\"] = max_rate. results[f\"{attr}_min_rate\"] = min_rate. results[f\"{attr}_disparate_impact\"] = disparate_impact. results[f\"{attr}_passes_4_5_rule\"] = disparate_impact >= 0.80. group_scores = df.groupby(attr)[score_col].describe(). results[f\"{attr}_score_distribution\"] = group_scores.to_dict(). self.audit_results.append(results). return results. def generate_report(self): return pd.DataFrame(self.audit_results). Deployment: auditor = BiasAuditor(protected_attributes=[\"gender\", \"race\", \"age_group\"]). for model_name in [\"hiring\", \"lending\", \"pricing\", \"recommendations\"]: result = auditor.audit_model(model_data, \"score\", \"outcome\", model_name). if not all(v for k, v in result.items() if k.endswith(\"passes_4_5_rule\")): send_alert(f\"BIAS ALERT: {model_name} fails four-fifths rule\"). Organizational policy: every model that affects people (hiring, lending, pricing, insurance) must pass a bias audit before deployment and quarterly thereafter. The auditor runs automatically in the CI/CD pipeline. Models that fail the four-fifths rule are blocked from production. Ethical considerations beyond legal compliance: legal compliance is the floor, not the ceiling. A model might pass the four-fifths rule but still perpetuate systemic disadvantages through subtle proxies. The data team should include diverse perspectives in model design. Impact assessments should consider: who benefits and who is harmed by this model? If the model were wrong, who bears the cost of the error? Would we be comfortable if this model's logic were published in a newspaper?'"
+    weight: 0.30
+    description: "Auditing"

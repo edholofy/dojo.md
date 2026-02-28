@@ -1,0 +1,43 @@
+meta:
+  id: expert-dashboard-shift
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Expert dashboard shift — handle enterprise-level dashboard challenges requiring platform strategy, metric governance, migration planning, and organizational alignment in a single day"
+  tags: [shift-simulation, expert, enterprise, platform, governance]
+
+state: {}
+
+trigger: |
+  Three strategic requests arrive on the same day:
+
+  Request 1 (CTO): "We're evaluating BI platforms. We've outgrown
+  Metabase and need something that can serve 500 users with proper
+  governance. Give me a comparison of Looker vs Tableau vs Power BI
+  for our stack (Snowflake, dbt, Fivetran) with a clear recommendation
+  and migration timeline."
+
+  Request 2 (CFO): "Revenue is defined differently in 8 dashboards.
+  I want a single certified definition of every financial metric.
+  Design a metric governance system that prevents this from ever
+  happening again."
+
+  Request 3 (CEO): "I want a company scorecard — one page that shows
+  if we're executing on our 4 strategic objectives. It needs to work
+  for both the board meeting and my daily check-in."
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses the CTO's BI platform evaluation — platform: 'Request 1 — BI platform evaluation: Given the stack (Snowflake, dbt, Fivetran) and scale (500 users): Evaluation matrix: Criterion | Looker | Tableau | Power BI. Snowflake integration | Excellent (native push-down) | Good (connector) | Good (connector). dbt compatibility | Excellent (LookML extends dbt) | Moderate (separate layer) | Moderate (separate DAX layer). Governance | Excellent (LookML enforces consistency) | Moderate (requires discipline) | Moderate (DAX can be ungoverned). Self-service | Good (after LookML setup) | Excellent (drag-and-drop) | Excellent (Excel-like). Cost (500 users) | $5-8K/month | $8-15K/month | $5K/month ($10/user). Implementation time | 3-4 months (LookML modeling) | 2-3 months (dashboard building) | 2-3 months (DAX modeling). Recommendation: Looker. It fits the modern data stack best — LookML extends the dbt methodology, Snowflake push-down queries leverage existing investment, and governance is built in. The 3-person data team cannot police 500 Tableau users creating their own metrics. Looker's LookML ensures every dashboard uses certified definitions. Migration timeline: Month 1: LookML foundation (core models for revenue, customers, product). Month 2: Top 20 dashboards built and validated in parallel with Metabase. Month 3: Full rollout to 500 users with training. Month 4: Metabase decommissioned. Cost justification: Looker at $6K/month replaces Metabase + 15 hours/week of manual metric reconciliation. The reconciliation alone costs $30K/year in analyst time'"
+    weight: 0.35
+    description: "Platform"
+  - type: llm_judge
+    criteria: "Response addresses the CFO's metric governance request — governance: 'Request 2 — Metric governance system: Current state: 8 different revenue definitions across dashboards. Fix: build a metric governance framework. Step 1 — Audit all 8 revenue definitions: Dashboard 1 (CFO): SUM(invoices) WHERE status = paid. Includes only invoiced revenue. Dashboard 2 (Sales): SUM(opportunities) WHERE stage = closed-won. Includes committed deals not yet invoiced. Dashboard 3 (Marketing): COUNT(conversions) × average_deal_size. An estimate, not actual revenue. Dashboards 4-8: various combinations of the above with different date logic, refund handling, and trial inclusion. Step 2 — Establish the official definition: Revenue (Certified): SUM(invoice_amount) WHERE status = paid AND type IN (subscription, one-time) AND account_type != internal_test. Excludes: free trials, refunds (shown as separate metric), committed but not invoiced (separate metric: Contracted Revenue). Owner: CFO. Certified date: March 2026. Step 3 — Create related metrics with distinct names: Revenue (Invoiced): the certified definition above. Board reporting. Contracted Revenue: includes closed-won not yet invoiced. Sales pipeline tracking. Estimated Revenue: marketing's projection. Campaign attribution only. Each has a unique name, unique owner, and unique purpose. They are not conflicting — they are complementary metrics answering different questions. Step 4 — Implement in the metric layer (LookML or dbt): define all three in code, version-controlled, peer-reviewed. Every dashboard must reference the metric layer — no custom SQL allowed. If an analyst needs revenue in a new dashboard, they reference the certified metric. They cannot invent their own calculation. Step 5 — Ongoing governance: quarterly metric review with the CFO. Any definition change requires CFO signoff and a changelog published to all users'"
+    weight: 0.35
+    description: "Governance"
+  - type: llm_judge
+    criteria: "Response addresses the CEO's company scorecard request — scorecard: 'Request 3 — Company scorecard: One-page scorecard aligned to 4 strategic objectives: Strategic objective 1 — Grow to $50M ARR: KPIs: ARR $35M (target $50M, 70% progress). New business $1.2M/month (target $1.5M, yellow). NRR 112% (target 120%, yellow). Status: ON TRACK but needs acceleration in new business. Strategic objective 2 — Achieve profitability: KPIs: Operating margin -8% (target 0%, red). Burn rate $2.8M/month (target $2.2M, red). CAC payback 18 months (target 12 months, red). Status: BEHIND — cost reduction and efficiency initiatives needed. Strategic objective 3 — Build best-in-class product: KPIs: NPS 48 (target 55, yellow). Feature adoption 28% (target 40%, yellow). Uptime 99.95% (target 99.9%, green). Status: MIXED — reliability is strong, but user satisfaction and adoption lag. Strategic objective 4 — Scale the team: KPIs: Employee NPS 62 (target 70, yellow). Key vacancies 8 (target <5, red). Revenue per employee $175K (target $250K, red). Status: BEHIND — hiring and efficiency need attention. Summary: 2 of 12 KPIs green. 5 yellow. 5 red. Overall: strategy execution needs acceleration. Dual-use design: Board version: the one-page scorecard with the narrative below (wins, concerns, actions). Prints cleanly on one page. CEO daily version: same scorecard as an interactive dashboard with sparklines showing 7-day trends. The CEO checks it in 60 seconds on their phone each morning. If all indicators are the same color as yesterday, no action needed. If something changed to red overnight, they can drill in. Same data, two presentations — one for governance, one for daily management'"
+    weight: 0.30
+    description: "Scorecard"

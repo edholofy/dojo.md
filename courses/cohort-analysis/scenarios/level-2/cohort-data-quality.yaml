@@ -1,0 +1,33 @@
+meta:
+  id: cohort-data-quality
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Validate cohort data quality — detect and fix common data issues that corrupt cohort analyses including duplicate users, timezone misalignment, and tracking gaps"
+  tags: [data-quality, validation, tracking, duplicates, intermediate]
+
+state: {}
+
+trigger: |
+  The data analyst built a cohort analysis and the numbers look wrong.
+  The Head of Analytics says: "Month-1 retention jumped from 35% to 52%
+  overnight when we didn't change anything. And our newest cohort has
+  more users than marketing says they acquired. Something is wrong with
+  the data. How do we validate and fix cohort data?"
+
+  Task: Explain common data quality issues in cohort analyses and how
+  to detect and fix them systematically.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers common data quality issues in cohort analysis — issues: 'Common data quality issues in cohort analysis: Issue 1 — Duplicate user counting: the newest cohort shows more users than marketing reported because some users are counted twice. Causes: a user who signs up, deletes their account, and re-signs up gets two entries. A user with multiple devices may create multiple accounts. Email changes or account merges create duplicate records. Detection: compare cohort sizes to marketing's signup numbers. If the cohort is larger, run SELECT user_id, COUNT(*) FROM signups GROUP BY user_id HAVING COUNT(*) > 1. Fix: deduplicate by the earliest signup date. Use a canonical user ID that survives account changes. Issue 2 — Timezone misalignment: a user who signed up at 11 PM EST on January 31 may be recorded as February 1 in UTC. When cohorts are defined by calendar month in UTC, users near month boundaries get assigned to the wrong cohort. This mostly affects cohort sizes (±5-10%) and creates noise. Detection: check if cohort sizes have unusual patterns at month boundaries. Fix: define a consistent timezone for cohort assignment. Use the user's local timezone or standardize on a single timezone and document it. Issue 3 — Tracking gaps: the month-1 retention jump from 35% to 52% coincides with a tracking instrumentation change. New tracking code was deployed mid-month. Before the change, some user activities were not being captured (undercounting active users). After the change, tracking is more complete (accurately counting active users). Detection: check event volume by day — a sudden spike in events without a corresponding spike in signups indicates a tracking change. Fix: flag the date of the tracking change. Recalculate retention for older cohorts if raw events exist. If not, note the discontinuity and do not compare pre-change cohorts to post-change cohorts'"
+    weight: 0.35
+    description: "Issues"
+  - type: llm_judge
+    criteria: "Response covers systematic validation procedures — validation: 'Systematic cohort data validation checklist: Check 1 — Cohort size validation: for each cohort, compare the count to external sources: marketing signup reports, payment processor records, or app store download counts. Tolerance: within 5% is acceptable (small differences from timezone or duplicate handling). More than 10% discrepancy: investigate before proceeding. Check 2 — Monotonicity check: retention should generally decrease or stay flat over time within a single cohort. If month 3 retention is higher than month 2 for the same cohort, investigate. Valid reasons: reactivation (users returning after absence), seasonal events, feature launches. Invalid reasons: tracking errors, duplicate counting in later periods, data pipeline issues. Check 3 — Cross-cohort consistency: month-1 retention should not vary by more than 10-15pp between adjacent cohorts unless there is a known cause. Sudden jumps suggest data issues, not product changes. Check 4 — Week 0 / Month 0 validation: month 0 retention should be 100% (or very close). If less than 95%, the cohort definition and activity definition are misaligned (the most common cohort construction mistake). Check 5 — Completeness check: for each cohort-period cell, verify: the cohort has existed long enough for the period to be measured. The tracking was active during the measurement period. No data pipeline outages occurred during the period. Check 6 — User-level spot checks: randomly sample 20-30 users from each cohort. Manually verify their signup date, activity dates, and calculated retention. This catches logic errors in the query that aggregate checks may miss'"
+    weight: 0.35
+    description: "Validation"
+  - type: llm_judge
+    criteria: "Response covers fixing data issues and prevention — fixes: 'Fixing data issues and preventing future problems: Fixing the immediate issues: the retention jump (35% to 52%): 1. Identify the exact date of the tracking change. 2. Split the affected cohort into pre-change and post-change periods. 3. For the pre-change period, estimate the true retention by applying the same ratio of tracked-to-actual events from a validation sample. 4. Add a note or visual marker in all retention charts indicating the tracking discontinuity. 5. Going forward, only compare cohorts that are entirely post-change. The inflated cohort size: 1. Identify and remove duplicate user records. 2. Establish a deduplication rule: use earliest signup date, canonical user ID. 3. Rerun the cohort analysis with deduplicated data. 4. Document the deduplication logic for future analysts. Prevention framework: 1. Automated validation pipeline: after each cohort data refresh, run automated checks (monotonicity, size validation, completeness). Alert the analyst if any check fails. 2. Tracking change log: maintain a log of every tracking instrumentation change with dates. Before analyzing cohort data, check the log for changes within the analysis window. 3. Data quality dashboard: a simple dashboard showing: event volume by day (to detect tracking gaps), cohort sizes by month (to detect inflation), month-0 retention (should always be near 100%), month-1 retention trend (to detect sudden jumps). 4. Query versioning: version-control the SQL queries used to build cohort tables. When a number looks wrong, compare the current query to the previous version. 5. Peer review: before presenting cohort data, have another analyst independently spot-check 2-3 cohorts'"
+    weight: 0.30
+    description: "Fixes"

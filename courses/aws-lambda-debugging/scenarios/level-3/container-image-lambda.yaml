@@ -1,0 +1,79 @@
+meta:
+  id: container-image-lambda
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda container image deployments — diagnose ECR issues, runtime interface client errors, and container-based Lambda configuration problems"
+  tags: [AWS, Lambda, container-image, ECR, Docker, runtime-interface, advanced]
+
+state: {}
+
+trigger: |
+  Your team migrated a Lambda function from zip deployment to
+  container image for larger dependency support. The function fails:
+
+  $ aws lambda invoke --function-name ml-model output.json
+  {
+    "errorType": "Runtime.ExitError",
+    "errorMessage": "RequestId: abc-123 Error: Runtime exited
+    without providing a response"
+  }
+
+  The Dockerfile:
+  FROM python:3.12-slim
+  COPY requirements.txt .
+  RUN pip install -r requirements.txt
+  COPY app/ /app/
+  WORKDIR /app
+  CMD ["python", "handler.py"]
+
+  Problem 1: Missing Lambda Runtime Interface Client (RIC).
+  Container image Lambda requires the AWS Lambda Runtime Interface
+  Client to communicate with the Lambda service:
+
+  FROM python:3.12-slim
+  RUN pip install awslambdaric
+  COPY app/ /app/
+  WORKDIR /app
+  ENTRYPOINT ["python", "-m", "awslambdaric"]
+  CMD ["handler.lambda_handler"]
+
+  Or use the AWS-provided base image (includes RIC):
+  FROM public.ecr.aws/lambda/python:3.12
+
+  Problem 2: Image in ECR but Lambda can't pull it:
+  "ImageNotFoundException: The image with imageId ... does not exist"
+  ECR image URI must match exactly: account.dkr.ecr.region.amazonaws.com/
+  repo:tag. Digest-based reference is more reliable than tags.
+
+  Problem 3: Cold start is 15+ seconds.
+  Container image: 2.5GB (ML model + dependencies). Lambda must
+  download and extract the entire image on cold start.
+  Fix: use multi-stage build, strip unnecessary files, consider
+  Lambda SnapStart or provisioned concurrency.
+
+  Problem 4: Working locally but not in Lambda.
+  Local: docker run --rm -p 9000:8080 my-func
+  curl http://localhost:9000/2015-03-31/functions/function/invocations
+  Works! But Lambda has: read-only filesystem (except /tmp),
+  different user, and networking restrictions.
+
+  Task: Explain Lambda container image debugging. Write: AWS base
+  images vs custom images (with RIC), Dockerfile best practices for
+  Lambda, ECR configuration and permissions, cold start impact of
+  image size, local testing with RIE (Runtime Interface Emulator),
+  and when to use container images vs zip packages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Runtime Interface Client is explained — Lambda container images need RIC (Runtime Interface Client) to communicate with Lambda service. Two approaches: (1) AWS base images (public.ecr.aws/lambda/python:3.12) include RIC and RIE, simplest setup. (2) Custom base images: install awslambdaric manually, set ENTRYPOINT to RIC, CMD to handler. ENTRYPOINT + CMD pattern: ENTRYPOINT runs RIC, CMD specifies handler. Without RIC: function exits immediately without responding"
+    weight: 0.35
+    description: "Runtime Interface"
+  - type: llm_judge
+    criteria: "ECR and cold starts are covered — ECR permissions: Lambda execution role needs ecr:GetDownloadUrlForLayer, ecr:BatchGetImage. Cross-account ECR: set ECR repository policy to allow Lambda's account. Image size directly impacts cold start: 2GB image = 10+ second cold start. Optimization: use slim base images, multi-stage builds, remove build tools/caches from final image. Lambda caches frequently-used images (reduced cold start on subsequent invocations). Max image size: 10GB. Consider: if image is > 1GB, cold starts will be significant"
+    weight: 0.35
+    description: "ECR and cold starts"
+  - type: llm_judge
+    criteria: "Local testing and decision-making are practical — RIE (Runtime Interface Emulator): test container images locally. docker run -p 9000:8080 my-func, then curl localhost:9000/.../invocations. AWS base images include RIE; custom images need manual install. When to use container images: dependencies > 250MB, need specific OS packages, existing Docker workflow, ML models. When to use zip: smaller packages, faster cold starts, simpler deployment. Container images: more flexibility, larger size allowed, familiar Docker workflow. Zip: faster deployment, smaller cold starts, simpler"
+    weight: 0.30
+    description: "Local testing"

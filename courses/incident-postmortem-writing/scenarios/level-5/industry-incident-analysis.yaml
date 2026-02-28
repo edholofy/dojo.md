@@ -1,0 +1,47 @@
+meta:
+  id: industry-incident-analysis
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Analyze industry incident reports — extract lessons from public postmortems by AWS, Google, Cloudflare, and others to benchmark and improve your own practices"
+  tags: [postmortem, industry-analysis, benchmarking, AWS, Google, Cloudflare, master]
+
+state: {}
+
+trigger: |
+  Your CEO read about a major cloud provider outage and asked:
+  "Could this happen to us?" You decide to create an industry
+  incident analysis program that systematically learns from public
+  incident reports published by major technology companies.
+
+  Recent public incidents to analyze:
+  1. AWS us-east-1 outage (2021) — cascading failure from network
+     device causing widespread service degradation
+  2. Cloudflare outage (2022) — BGP misconfiguration affecting
+     19 data centers
+  3. Google Cloud (2022) — certificate chain issue causing
+     intermittent TLS errors
+  4. Meta/Facebook (2021) — BGP withdrawal making all services
+     unreachable for 6 hours
+  5. Fastly CDN outage (2021) — configuration bug triggered by
+     a single customer, taking down major websites
+
+  Task: Write an industry incident analysis report that extracts
+  patterns from these public incidents, assesses your organization's
+  exposure to similar failure modes, and proposes a systematic
+  program for learning from industry incidents. Show how public
+  postmortems are a free source of reliability engineering education.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cross-industry pattern analysis extracts transferable lessons — patterns identified: 'Pattern 1: Configuration changes are the dominant trigger. 4 of 5 incidents involved configuration or routing changes. Cloudflare: BGP misconfiguration. Meta: BGP withdrawal via maintenance. Fastly: configuration rule triggered by customer input. Google: certificate management (a form of configuration). Lesson: configuration changes are the highest-risk operational activity across the industry. Our assessment: we process 200+ configuration changes per week. What percentage go through automated validation before deployment? Pattern 2: Blast radius exceeds expectations. Every incident was larger than the failure warranted. AWS: a network issue in one AZ affected services across the region. Fastly: a config bug from one customer took down the entire CDN. Meta: a maintenance action made ALL services unreachable. Lesson: systems have more hidden coupling than engineers expect. Our assessment: do we have blast radius boundaries between our services? Would a failure in one service affect all services? Pattern 3: Recovery is harder than prevention. AWS outage was extended because recovery mechanisms were overwhelmed by the simultaneous restart of thousands of services. Meta could not access their own network management tools because those tools ran on the network that was down. Lesson: design recovery paths that do not depend on the systems that failed. Our assessment: can we access our deployment tools, monitoring, and communication during an outage of our primary infrastructure? Pattern 4: Monitoring blind spots cause cascading delays. Google: monitoring checked certificate files but not actual TLS handshakes (monitoring the wrong thing). Lesson: monitoring must verify end-to-end functionality, not just component health'"
+    weight: 0.35
+    description: "Cross-industry patterns"
+  - type: llm_judge
+    criteria: "Exposure assessment maps industry failures to own organization — exposure assessment framework: 'For each industry pattern, assess: does this failure mode exist in our architecture? If yes, what is the likelihood and impact? What protections do we have? What gaps exist? Assessment: (1) Configuration change risk: Exposure: HIGH. We deploy 200+ config changes weekly with limited automated validation. Current protection: code review for config changes, staging environment. Gap: no automated config validation against safety rules, no canary process for config rollout. Priority: immediate — this is the #1 industry failure mode and we are exposed. (2) Blast radius containment: Exposure: MEDIUM. Our microservices share an API gateway and authentication service. Current protection: separate deployments per service, basic health checks. Gap: no bulkhead pattern at API gateway, shared auth service is single point of failure. Priority: high — shared services create cross-service coupling. (3) Recovery independence: Exposure: HIGH. Our deployment pipeline, monitoring, and incident communication (Slack) all run on our primary cloud provider. A provider-level outage would disable our recovery tools. Gap: no out-of-band access to critical operational tools. Priority: medium — likelihood is low but impact is total. (4) Monitoring completeness: Exposure: MEDIUM. We monitor service health and endpoint availability. Gap: limited end-to-end transaction monitoring, no synthetic transaction testing. Priority: medium.' Risk matrix: map each exposure on a likelihood vs. impact grid to prioritize remediation"
+    weight: 0.35
+    description: "Exposure assessment"
+  - type: llm_judge
+    criteria: "Systematic industry learning program is sustainable — program design: 'Industry Incident Analysis Program: a quarterly practice of learning from public incident reports. Cadence: quarterly review of notable public incidents from the previous quarter. Sources: AWS post-event summaries, Google Cloud incident reports, Cloudflare blog post-incident analyses, Status page archives from major SaaS providers, Hacker News and engineering blog aggregators. Process: (1) Collection: SRE team maintains a list of notable public incidents. (2) Analysis: for each incident, complete the transferability assessment: what happened, what was the root cause pattern, does this pattern exist in our systems, what is our exposure, what would we do if this happened to us. (3) Presentation: quarterly all-hands presentation of 2-3 most relevant industry incidents. Focus on what we learned that applies to us, not just what happened to them. (4) Action: if exposure assessment reveals gaps, create action items tracked alongside postmortem action items.' Integration with internal postmortems: 'When writing internal postmortems, reference industry parallels. Example: this cascading failure is similar to the 2021 AWS us-east-1 outage where recovery mechanisms were overwhelmed. Industry context validates that certain failure modes are universal, not unique to our organization.' CEO answer: 'Could this happen to us? For each industry incident type: here is our specific exposure, here are our current protections, here are our gaps, and here is our plan to address them. We transform the CEO's question from anxiety into a structured risk assessment with a remediation roadmap.' Program cost: 'Approximately 2 SRE-days per quarter for collection and analysis, plus 1 hour quarterly presentation. This is one of the highest-ROI reliability investments: learning from other organizations' failures is free (they published the postmortem) and prevents us from repeating their mistakes'"
+    weight: 0.30
+    description: "Systematic learning program"

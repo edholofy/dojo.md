@@ -1,0 +1,53 @@
+meta:
+  id: expert-etl-shift
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Expert ETL troubleshooting shift — handle an enterprise-scale incident involving distributed systems, data loss risk, and cross-team coordination"
+  tags: [shift, combined, enterprise, assessment, expert]
+
+state: {}
+
+trigger: |
+  You're the on-call data platform lead for a large fintech company.
+  At 3 AM, your pager fires with a critical alert cascade:
+
+  Alert 1: Kafka consumer lag for the 'transactions' topic has grown
+  from normal (< 1,000 messages) to 15 million messages and climbing.
+  The Flink streaming job that processes real-time transactions crashed
+  with OOM after a Spark batch job consumed most of the cluster's
+  memory.
+
+  Alert 2: The nightly Spark ETL job processing 2TB of historical
+  transaction data has been running for 6 hours (normally 2 hours).
+  The Spark UI shows extreme data skew — one partition has 500GB
+  while others have 2-5GB each. The skewed partition corresponds
+  to a single merchant (a major retailer) that processed 10M
+  transactions yesterday (Black Friday aftermath).
+
+  Alert 3: The downstream fraud detection model is running on
+  6-hour-old features because the feature pipeline depends on
+  the Flink job that's down. The risk team reports that $2.3M
+  in suspicious transactions are not being flagged.
+
+  The CTO and Head of Risk are on the bridge call. They need:
+  1. Immediate containment to prevent financial loss
+  2. Estimated time to full recovery
+  3. Root cause and prevention plan
+
+  Task: Lead the incident response with immediate actions, recovery
+  plan, and post-incident prevention strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response prioritizes immediate containment for financial risk — the fraud detection model running on stale features is the highest-priority issue ($2.3M exposure). Immediate actions: escalate to the fraud operations team for manual review of high-value transactions, deploy a fallback fraud detection mechanism (rule-based system, or temporarily lower scoring thresholds to catch more suspicious transactions), restart the Flink streaming job with increased memory allocation (or on a dedicated cluster separate from Spark batch). For the Spark skew: either kill and restart with salting on the merchant key, or allocate a larger dedicated cluster for the batch job"
+    weight: 0.35
+    description: "ImmediateContainment"
+  - type: llm_judge
+    criteria: "Response provides a clear recovery timeline and technical plan — Flink recovery: restart with proper memory isolation (estimated 15-30 minutes to restart + 2-4 hours to process the 15M backlog). Spark skew: apply key salting for the large merchant, estimated 3-4 hours to reprocess with proper partitioning. Feature pipeline: once Flink catches up, features will be current within the stream processing window. Addresses resource contention: separate Spark batch and Flink streaming onto different resource pools or clusters to prevent future OOM cascading. Provides ETA ranges to the CTO for each recovery milestone"
+    weight: 0.35
+    description: "RecoveryPlan"
+  - type: llm_judge
+    criteria: "Response designs a comprehensive prevention strategy — resource isolation: separate compute clusters for batch and streaming workloads (Flink should never be OOM-killed by a Spark batch job), data skew management: implement automatic skew detection and key salting for known high-cardinality dimensions, Kafka consumer lag alerting: alert at 10K messages (not 15M), fraud model resilience: design the fraud detection system with a fallback mode for stale features, and Black Friday preparedness: capacity planning for known high-traffic events. Includes a post-incident review process with documented action items and owners"
+    weight: 0.30
+    description: "PreventionStrategy"

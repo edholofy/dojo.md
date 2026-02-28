@@ -1,0 +1,63 @@
+meta:
+  id: advanced-debugging-shift
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Combined advanced shift — handle state surgery, cross-account issues, and drift remediation in a single complex incident"
+  tags: [Terraform, troubleshooting, combined, shift-simulation, advanced]
+
+state: {}
+
+trigger: |
+  Three interconnected issues escalate during your on-call shift:
+
+  Issue 1 — State divergence after team split:
+  Team A split their resources from the shared state last week using
+  state mv. But they missed moving aws_iam_policy.shared, which is
+  now in both state files:
+  ```
+  Team A state: contains aws_iam_policy.shared
+  Team B state: contains aws_iam_policy.shared (original)
+
+  Team A runs apply → modifies the policy
+  Team B runs apply → overwrites Team A's changes
+  ```
+  The same resource is managed by two state files!
+
+  Issue 2 — Cross-account module failure:
+  A module deployed to the DR account references resources in the
+  primary account via terraform_remote_state:
+  ```
+  Error: error reading S3 bucket: AccessDenied
+
+  The DR account's Terraform role doesn't have cross-account
+  permission to read the primary account's state bucket.
+  ```
+
+  Issue 3 — Drift from security incident response:
+  The security team disabled public access on 15 S3 buckets during
+  an incident. Now terraform plan shows 15 buckets will have public
+  access re-enabled (reverting the security fix):
+  ```
+  ~ resource "aws_s3_bucket_public_access_block" "data" {
+      ~ block_public_acls       = true -> false
+      ~ block_public_policy     = true -> false
+    }
+  ```
+
+  Task: Resolve all three issues with proper procedures and
+  establish preventive measures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Issue 1 (dual-managed resource) is resolved — a resource in two state files is extremely dangerous: both try to manage it, last writer wins. Fix: (1) immediately terraform state rm aws_iam_policy.shared from Team A's state (they don't own it). (2) If Team A needs it: create a separate policy for Team A. (3) If shared: move to a shared-infrastructure state that both teams read via terraform_remote_state. Prevention: during state splits, verify no resource appears in multiple states using terraform state list on all states. Use terraform state list | sort to compare"
+    weight: 0.35
+    description: "Dual-managed resource"
+  - type: llm_judge
+    criteria: "Issue 2 (cross-account state access) is resolved — the DR account's Terraform role needs S3 read permissions on the primary account's state bucket. Fix: (1) add S3 bucket policy on primary's state bucket allowing DR account's role to s3:GetObject, (2) or use assume_role in the terraform_remote_state data source to assume a role in the primary account. Alternative: use Terraform Cloud with cross-workspace state sharing (no S3 permissions needed). Prevention: when setting up multi-account, plan state access patterns upfront and document IAM requirements"
+    weight: 0.35
+    description: "Cross-account access"
+  - type: llm_judge
+    criteria: "Issue 3 (security drift) is resolved — the security fix was correct, Terraform code is wrong. Fix: update all 15 S3 bucket configurations to block_public_acls = true, block_public_policy = true. This aligns code with the desired secure state. Do NOT apply the current plan (it would revert the security fix). Workflow: (1) update .tf files, (2) run plan to verify no changes, (3) commit code. Prevention: security changes should always be reflected in Terraform code. Establish a process: security team opens PR with Terraform changes, not just console modifications"
+    weight: 0.30
+    description: "Security drift"

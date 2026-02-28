@@ -1,0 +1,35 @@
+meta:
+  id: query-performance-optimization
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Optimize query performance — use EXPLAIN plans, indexes, and query rewriting to make slow reports fast"
+  tags: [SQL, performance, EXPLAIN, indexes, optimization, query-tuning, advanced]
+
+state: {}
+
+trigger: |
+  A critical weekly revenue report that used to run in 30 seconds now
+  takes 15 minutes. The orders table has grown from 5 million to 50
+  million rows. The report joins orders with customers and products,
+  filters by date range, groups by region and category, and calculates
+  revenue, order count, and average order value.
+
+  The database admin says: "The execution plan shows full table scans
+  on all three tables. No indexes are being used."
+
+  Task: Diagnose and fix the performance problem.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response demonstrates EXPLAIN plan analysis and index creation — explain: 'Query performance diagnosis: Step 1 — Read the execution plan: EXPLAIN ANALYZE SELECT o.region, p.category, COUNT(*) AS orders, SUM(o.amount) AS revenue, ROUND(AVG(o.amount), 2) AS aov FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN products p ON o.product_id = p.product_id WHERE o.order_date BETWEEN '2024-10-01' AND '2024-10-31' AND c.is_active = true GROUP BY o.region, p.category ORDER BY revenue DESC. EXPLAIN output shows: Seq Scan on orders (cost=0..1500000, rows=50000000). This means: full table scan — reading all 50 million rows to find October orders. Hash Join on customers (cost=..., rows=...). The join itself is efficient but starts with too many rows. Sort for GROUP BY (cost=...). Sorting millions of rows in memory or on disk. Step 2 — Create targeted indexes: CREATE INDEX idx_orders_date ON orders(order_date). CREATE INDEX idx_orders_date_region ON orders(order_date, region). The composite index covers both the WHERE filter and part of the GROUP BY. After indexing: Index Scan on orders using idx_orders_date_region. Now only October rows are read — approximately 4 million instead of 50 million. Step 3 — Covering index (include all needed columns): CREATE INDEX idx_orders_covering ON orders(order_date, region, product_id, customer_id, amount). A covering index includes all columns needed by the query. The database can answer the query entirely from the index without reading the table (index-only scan). This is the single biggest performance optimization for read-heavy reports'"
+    weight: 0.35
+    description: "EXPLAIN"
+  - type: llm_judge
+    criteria: "Response covers query rewriting techniques for performance — rewriting: 'Query rewriting for performance: Technique 1 — Filter early, join late: Slow: JOIN all tables first, then filter. Fast: filter orders to the date range first, then join. WITH filtered_orders AS (SELECT order_id, customer_id, product_id, amount, region FROM orders WHERE order_date BETWEEN '2024-10-01' AND '2024-10-31') SELECT fo.region, p.category, COUNT(*) AS orders, SUM(fo.amount) AS revenue FROM filtered_orders fo JOIN customers c ON fo.customer_id = c.customer_id JOIN products p ON fo.product_id = p.product_id WHERE c.is_active = true GROUP BY fo.region, p.category. The CTE reduces 50M rows to 4M before any joins happen. Technique 2 — Avoid functions on indexed columns: Slow: WHERE EXTRACT(YEAR FROM order_date) = 2024 AND EXTRACT(MONTH FROM order_date) = 10. The function prevents index usage (full table scan). Fast: WHERE order_date >= '2024-10-01' AND order_date < '2024-11-01'. Direct comparison uses the index. Technique 3 — Replace correlated subqueries with joins: Slow: SELECT c.name, (SELECT SUM(amount) FROM orders WHERE customer_id = c.customer_id) FROM customers c. This runs the subquery once per customer (500K executions). Fast: SELECT c.name, COALESCE(SUM(o.amount), 0) FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name. One join instead of 500K subqueries. Technique 4 — Use EXISTS instead of IN for large lists: Slow: WHERE customer_id IN (SELECT customer_id FROM vip_customers). Fast: WHERE EXISTS (SELECT 1 FROM vip_customers v WHERE v.customer_id = orders.customer_id). EXISTS stops after finding the first match. IN must build the full list first'"
+    weight: 0.35
+    description: "Rewriting"
+  - type: llm_judge
+    criteria: "Explanation covers materialized views and ongoing performance management — management: 'Ongoing performance management: Materialized views for expensive reports: CREATE MATERIALIZED VIEW mv_monthly_revenue AS SELECT DATE_TRUNC('month', order_date) AS month, region, p.category, COUNT(*) AS orders, SUM(o.amount) AS revenue FROM orders o JOIN products p ON o.product_id = p.product_id GROUP BY 1, 2, 3. REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_revenue. The report now queries the materialized view (thousands of rows) instead of the base table (50M rows). CONCURRENTLY allows reads during refresh (PostgreSQL). Schedule refresh: every night or every hour depending on freshness needs. Index maintenance: indexes speed up reads but slow down writes. Each INSERT or UPDATE must update all indexes. Monitor: pg_stat_user_indexes shows which indexes are used and which are not. Drop unused indexes to improve write performance. Statistics and ANALYZE: ANALYZE orders. Updates the query planner's statistics about data distribution. Run after bulk inserts or significant data changes. The optimizer makes better decisions with accurate statistics. Performance monitoring checklist: identify the 10 slowest queries (pg_stat_statements in PostgreSQL). Run EXPLAIN ANALYZE on each. Check for: sequential scans on large tables, high-cost sorts, nested loops with many iterations. Create indexes for the most impactful patterns. Re-check after 1 month — query patterns change as the business grows'"
+    weight: 0.30
+    description: "Management"

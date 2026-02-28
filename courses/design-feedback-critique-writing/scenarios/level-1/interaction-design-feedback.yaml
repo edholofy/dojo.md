@@ -1,0 +1,43 @@
+meta:
+  id: interaction-design-feedback
+  level: 1
+  course: design-feedback-critique-writing
+  type: output
+  description: "Interaction design feedback — critique interaction patterns, user flows, and micro-interactions"
+  tags: [interaction, flows, micro-interactions, patterns, beginner]
+
+state: {}
+
+trigger: |
+  A designer shares a prototype for a task management
+  app. You notice these interaction issues:
+
+  1. Deleting a task happens with a single tap — no
+     confirmation dialog or undo option
+  2. Adding a new task opens a full-screen modal that
+     covers the task list — user loses context
+  3. Drag-and-drop reordering works on desktop but
+     there's no alternative for mobile or keyboard users
+  4. Loading states show a blank white screen instead of
+     skeleton screens or spinners
+  5. Successfully completing a task has no visual feedback
+     — the task just silently disappears from the list
+
+  The prototype looks polished visually.
+
+  Task: Write interaction-focused design feedback on
+  these patterns and flows.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides interaction pattern feedback — destructive action without confirmation (single-tap delete violates the principle of error prevention — accidental deletion is common on mobile, recommend: either a confirmation dialog for important tasks, or immediate undo option like Gmail's 'Message deleted — Undo' snackbar — undo is often better UX than confirmation because it doesn't interrupt the flow for intentional deletions), full-screen modal for task creation (covering the task list removes context — user can't see existing tasks while creating a new one, recommend: inline creation — a text field that expands at the top of the list, or a half-sheet modal that keeps the list visible behind it, or a slide-in panel — the user should maintain context of what tasks already exist), each recommendation explains the interaction principle being applied."
+    weight: 0.35
+    description: "InteractionFeedback"
+  - type: llm_judge
+    criteria: "Response addresses accessibility and state feedback — drag-and-drop without alternatives (drag-and-drop is not accessible by default — keyboard users, screen reader users, and motor-impaired users cannot use it, recommend: add move up/move down buttons in a context menu or action sheet, support keyboard reordering with arrow keys + modifier, mobile alternative: long-press to enter reorder mode with move actions — every interaction must have a non-pointer alternative), loading states (blank white screen creates uncertainty — is the app loading, broken, or empty? recommend: skeleton screens that match the layout of actual content — reduces perceived loading time and eliminates ambiguity, or at minimum: a spinner with 'Loading tasks...' text), task completion feedback (silently removing a completed task provides no satisfaction — micro-interactions matter for engagement, recommend: brief animation — strikethrough + fade out, or checkmark animation, optional: celebration for milestone completions — 'All tasks done!' — positive feedback reinforces the habit loop)."
+    weight: 0.35
+    description: "AccessibilityAndStates"
+  - type: llm_judge
+    criteria: "Response frames interaction feedback in terms of user expectations — mental model alignment (users have expectations from apps they already use — iOS/Android patterns, competing task apps like Todoist, Things, Asana — deviating from expected patterns without a good reason creates friction), error recovery (the delete-without-undo pattern violates a core UX principle: users should be able to recover from mistakes easily, reference: Nielsen Norman heuristics — 'Error prevention' and 'Help users recognize, diagnose, and recover from errors'), emotional design (task completion should feel satisfying — this is an app about productivity and accomplishment, the interaction design should reinforce those positive feelings, the visual polish is already strong — adding thoughtful micro-interactions will elevate the experience from polished to delightful), and avoids being overwhelming (5 interaction issues is a lot — prioritize: the delete-without-undo and accessibility gaps are critical, loading states and completion feedback are important, the modal pattern is a consider item)."
+    weight: 0.30
+    description: "UserExpectationFraming"

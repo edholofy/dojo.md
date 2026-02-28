@@ -1,0 +1,43 @@
+meta:
+  id: trade-off-analysis
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Analyze trade-offs systematically — evaluate competing solutions using weighted criteria and make the reasoning transparent"
+  tags: [RFC, trade-offs, decision-matrix, evaluation, criteria, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to choose a state management solution for your
+  growing React application. The app currently uses prop drilling and
+  local useState, but as it's grown to 50+ components across 8 feature
+  areas, state management has become a major pain point.
+
+  Options being debated:
+  1. Redux Toolkit — mature, well-documented, large ecosystem
+  2. Zustand — lightweight, minimal boilerplate, growing community
+  3. React Context + useReducer — built-in, no dependencies, familiar
+  4. Jotai — atomic state model, fine-grained reactivity, modern
+
+  Different team members advocate for different solutions based on
+  personal preference. The discussions are going in circles.
+
+  Task: Write a trade-off analysis section that evaluates these options
+  systematically using weighted criteria. The analysis should make the
+  decision process transparent and help the team converge on a choice
+  regardless of individual preferences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Evaluation criteria are defined and weighted before comparing options — criteria identified from project needs, not abstract quality: (1) Learning curve (weight: 25%) — team has 8 engineers with varying React experience, onboarding new hires quarterly. (2) Bundle size impact (weight: 15%) — mobile-first app, performance budget of 200KB JS. (3) Boilerplate/developer experience (weight: 20%) — team velocity matters, less ceremony preferred. (4) Scalability to 100+ components (weight: 20%) — app is growing, solution must handle complexity. (5) Community and ecosystem (weight: 20%) — long-term viability, available middleware, debugging tools. Weights are justified: 'Learning curve is weighted highest because our team composition means 3 engineers have never used external state management. An unfamiliar tool slows the entire team, not just adoption.' The criteria should emerge from the specific project context, not be a generic comparison"
+    weight: 0.35
+    description: "Weighted criteria"
+  - type: llm_judge
+    criteria: "Each option is scored fairly against criteria with evidence — scoring is specific, not 'good/bad': Redux Toolkit — learning curve: 3/5 (extensive docs but steep initial concepts: slices, thunks, selectors), bundle: 3/5 (11KB gzipped — within budget), DX: 3/5 (RTK reduces boilerplate significantly vs classic Redux but still more ceremony than alternatives), scalability: 5/5 (proven at massive scale, clear patterns), ecosystem: 5/5 (largest ecosystem, Redux DevTools, middleware). Zustand — learning curve: 5/5 (minimal API surface, hooks-based, familiar patterns), bundle: 5/5 (1KB gzipped), DX: 5/5 (minimal boilerplate, no providers), scalability: 4/5 (works well at scale but fewer established patterns for very large apps), ecosystem: 3/5 (growing but smaller than Redux). Similar depth for Context and Jotai. Scores have brief justifications. A weighted total is calculated. Sensitivity analysis: 'If we weight scalability higher (30%), Redux wins. With current weights, Zustand scores highest.' This shows the decision isn't arbitrary"
+    weight: 0.35
+    description: "Fair scoring with evidence"
+  - type: llm_judge
+    criteria: "Analysis leads to a clear recommendation with reversibility assessment — recommendation states: 'Based on weighted scoring, we recommend Zustand (weighted score: X) over Redux Toolkit (score: Y).' Why the scores matter: 'The 2-point advantage in learning curve and DX translates to faster adoption and higher team velocity in the first 3 months.' Acknowledges what's lost: 'We trade Redux's larger ecosystem and proven patterns at extreme scale for simplicity and developer experience. Given our current size (50 components) and growth trajectory, this trade-off favors Zustand.' Reversibility: 'Both Zustand and Redux use hooks-based APIs. Migration from Zustand to Redux, if needed, involves refactoring store definitions — estimated 2-3 weeks for current codebase. This makes Zustand a low-risk starting choice.' Conditions for revisiting: 'If the app exceeds 200 components or we need server-side state synchronization, re-evaluate Redux Toolkit or TanStack Query.' The analysis should feel objective enough that someone favoring Redux could accept the Zustand recommendation"
+    weight: 0.30
+    description: "Clear recommendation"

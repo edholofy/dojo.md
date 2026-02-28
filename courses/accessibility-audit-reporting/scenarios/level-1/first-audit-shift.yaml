@@ -1,0 +1,49 @@
+meta:
+  id: first-audit-shift
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "First audit shift — conduct your first accessibility audit on a simple website, writing up findings in a complete report"
+  tags: [shift, combined, assessment, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior accessibility auditor on your first
+  solo audit. The client is a small business website
+  with 5 pages: homepage, about, services, contact
+  form, and blog.
+
+  Your automated testing with axe found:
+  - 15 images missing alt text across the site
+  - 3 color contrast failures on the homepage
+  - All form fields on the contact page lack labels
+  - No skip navigation link
+  - No page language set (missing lang attribute)
+
+  Your manual testing found:
+  - The mobile hamburger menu can't be opened with
+    keyboard
+  - Focus is invisible on all links and buttons
+  - The contact form shows errors but they're not
+    announced to screen readers
+  - Heading hierarchy is broken on every page
+  - Two links say "Click here" with no context
+
+  Task: Write the complete audit report covering
+  all findings with an executive summary, prioritized
+  findings, and remediation recommendations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a complete executive summary — includes: project overview (client name, site URL, audit date, auditor, scope: 5 pages tested), standard tested against (WCAG 2.1 Level AA), overall compliance status ('The website does not currently meet WCAG 2.1 AA conformance. Significant barriers exist that prevent users with disabilities from accessing key functionality.'), issue count by severity (Critical: X, Major: Y, Minor: Z), top priority recommendations (fix form labels and keyboard navigation on contact page to make the primary conversion path accessible, add alt text to all content images, restore focus visibility across the site), methodology (automated testing with axe DevTools, manual keyboard navigation testing, screen reader testing with NVDA/VoiceOver, visual inspection for contrast and structure)"
+    weight: 0.35
+    description: "ExecutiveSummary"
+  - type: llm_judge
+    criteria: "Response writes prioritized findings — Critical findings first (contact form without labels: WCAG 4.1.2/1.3.1 — form is unusable for screen reader users — the primary conversion path is broken, mobile menu keyboard-inaccessible: WCAG 2.1.1 — mobile users who rely on keyboard can't navigate the site), Major findings (15 images missing alt text: WCAG 1.1.1 — content images convey information that screen reader users miss, focus invisible: WCAG 2.4.7 — keyboard users can't see where they are on the page, color contrast failures: WCAG 1.4.3 — text is difficult to read for users with low vision, form errors not announced: WCAG 3.3.1 — screen reader users don't know submission failed, heading hierarchy broken: WCAG 1.3.1 — navigation by headings is unreliable), Minor findings (no skip navigation: WCAG 2.4.1, missing lang attribute: WCAG 3.1.1, 'Click here' links: WCAG 2.4.4). Each finding has: WCAG criterion, severity, impact, location, and specific fix"
+    weight: 0.35
+    description: "PrioritizedFindings"
+  - type: llm_judge
+    criteria: "Response includes remediation plan and report quality — remediation recommendations organized by priority (Immediate — fix within 1 week: form labels, keyboard navigation for mobile menu — these block critical user paths, Short-term — fix within 2 weeks: alt text, focus visibility, contrast — these affect multiple pages and many users, Medium-term — fix within 1 month: heading hierarchy, skip nav, lang attribute, link text — these improve navigation and structure), effort estimates per fix (form labels: Low — add for attributes, estimated 2 hours; alt text: Medium — requires content writer to describe 15 images, estimated 4 hours; mobile menu keyboard: Medium — requires JavaScript changes, estimated 4 hours), and report quality (professional tone: factual not judgmental — 'The contact form fields lack programmatic labels' not 'The developers forgot to add labels', actionable: every finding includes a specific fix the developer can implement, complete: methodology section shows what was tested and how, ensuring the client understands the audit's thoroughness)"
+    weight: 0.30
+    description: "RemediationPlan"

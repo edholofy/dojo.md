@@ -1,0 +1,45 @@
+meta:
+  id: anomaly-vs-threshold
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Distinguish anomaly detection from threshold alerting — understand when static thresholds miss problems and when dynamic baselines catch real issues"
+  tags: [monitoring, anomaly-detection, thresholds, dynamic-baselines, intermediate]
+
+state: {}
+
+trigger: |
+  Your e-commerce platform has two alerting approaches, and they
+  are giving conflicting signals:
+
+  Scenario A: It's Black Friday. Your API is handling 5x normal
+  traffic. The threshold alert "response time p95 > 500ms" is
+  firing constantly. But every request is succeeding — users are
+  not complaining, and checkout conversion is actually UP because
+  of the sale. The on-call engineer is drowning in threshold alerts.
+
+  Scenario B: It's a normal Tuesday. Traffic is at baseline levels.
+  Response times are within the threshold (p95 at 400ms, threshold
+  is 500ms). But the anomaly detection system flags: "response time
+  is 2x higher than the expected baseline for Tuesday at this hour."
+  Investigation reveals a slow database query from a new feature
+  that is degrading performance — it just hasn't crossed the static
+  threshold yet.
+
+  Task: Analyze both scenarios. Explain why threshold alerting fails
+  in Scenario A and succeeds in Scenario B (but misses the nuance),
+  and why anomaly detection adds value. Propose a combined approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Both scenarios are analyzed correctly with clear reasoning — Scenario A analysis: 'Threshold alerting is failing here because the threshold (500ms) was set for normal traffic conditions. During Black Friday, 5x traffic naturally increases latency due to higher load. The service is performing well given the conditions — users are not experiencing errors and conversion is up. But the static threshold does not know it is Black Friday. It fires at 500ms regardless of context. Result: the on-call engineer receives constant alerts for a healthy system, creating noise that could mask real problems if they occur during the Black Friday surge.' Scenario B analysis: 'Threshold alerting passes here — 400ms is under the 500ms threshold, so no alert fires. But the anomaly detection system catches that 400ms is abnormal for a Tuesday at this hour (normally 200ms). The 2x increase from baseline is meaningful even though it is under the static threshold. This is a real problem developing: a slow query is degrading performance and will likely get worse as load increases. Without anomaly detection, this would only be caught when it crosses 500ms — by which time the degradation is more severe.' Key insight: 'Threshold alerts answer: is the metric above a fixed number? Anomaly detection answers: is the metric behaving differently than expected? These are different questions, and both are valuable'"
+    weight: 0.35
+    description: "Scenario analysis"
+  - type: llm_judge
+    criteria: "Combined approach leverages strengths of both methods — combined alerting strategy: '(1) Use anomaly detection as the primary detection method for latency and throughput metrics. Anomaly detection adapts to context: it knows that Black Friday traffic produces higher latency, so it does not alert. It also knows that Tuesday afternoon should have 200ms latency, so a jump to 400ms is flagged even though it is under any reasonable static threshold. (2) Use static thresholds as safety nets for hard limits. Some thresholds are not relative — they are absolute. Examples: error rate above 5% is always a problem regardless of baseline. Disk at 95% is always urgent. These do not need anomaly detection — a static threshold is correct. (3) Use SLO-based alerting for customer impact. Instead of alerting on latency directly, alert on SLO burn rate: are we consuming our error budget faster than expected? This naturally accounts for traffic variations and focuses on customer impact rather than raw metrics.' Implementation: 'Tier 1 (anomaly detection): detects deviations from expected behavior. Lower severity — generates a WARNING. Used for metrics that vary with context (latency, throughput, queue depth). Tier 2 (SLO-based): detects when customer experience is at risk. Higher severity — generates a CRITICAL when error budget burn rate is high. Tier 3 (static threshold): hard safety limits. Always CRITICAL — used for resource exhaustion (disk, connections), error rates, and health check failures.' When each fires: 'Scenario A — Black Friday: Tier 1 (anomaly) does not fire because high latency is expected. Tier 2 (SLO) does not fire because customers are not impacted. Tier 3 (threshold) could fire for hard limits only. Scenario B — slow Tuesday: Tier 1 (anomaly) fires because latency is 2x baseline. Tier 2 (SLO) may fire if the error budget is being consumed. Tier 3 (threshold) does not fire because 400ms < 500ms'"
+    weight: 0.35
+    description: "Combined approach"
+  - type: llm_judge
+    criteria: "Limitations of anomaly detection are honestly addressed — anomaly detection limitations: '(1) Training data quality: anomaly detection learns from history. If the system has always been broken in a certain way, that brokenness becomes the baseline and will not be flagged as anomalous. Example: if a memory leak has been present for months, the gradual memory increase is normal in the model's view. (2) Novel situations: anomaly detection struggles with unprecedented events. If the platform has never experienced Black Friday traffic before, the model has no baseline for it. The first Black Friday may trigger false anomaly alerts until the model learns. (3) Slow drifts: anomaly detection is great at catching sudden changes but can miss slow degradation. If latency increases by 1% per week for 6 months, each week looks normal compared to the previous week, but the total degradation is significant. (4) Complexity: anomaly detection requires more infrastructure (model training, baseline management) and can be harder to explain to on-call engineers. When an anomaly alert fires, the engineer needs to understand what normal looks like, which requires familiarity with the system's patterns.' Best practice: 'Do not replace all threshold alerts with anomaly detection. Use both: anomaly detection for nuanced signals where context matters, thresholds for absolute limits where context does not matter. The combined approach catches more real issues with less noise than either approach alone'"
+    weight: 0.30
+    description: "Honest limitations"

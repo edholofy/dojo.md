@@ -1,0 +1,34 @@
+meta:
+  id: dashboard-filters
+  level: 1
+  course: dashboard-kpi-design
+  type: output
+  description: "Add filters to dashboards — implement date ranges, dimension filters, and search to let users explore data without requiring new dashboards"
+  tags: [filters, interactivity, date-range, drill-down, self-service, beginner]
+
+state: {}
+
+trigger: |
+  The marketing team has a dashboard showing campaign performance.
+  The VP of Marketing says: "I need to see performance for just the
+  Q1 campaigns. And only for the US market. And only for the email
+  channel. Can you build me three new dashboards?"
+
+  Currently there's one static dashboard showing all campaigns, all
+  markets, all channels, all time.
+
+  Task: Teach how filters eliminate the need for multiple dashboards.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains filter types and placement — filters: 'Dashboard filters: Instead of building 3 new dashboards, add 3 filters to the existing one: Filter 1 — Date range: a date picker or preset buttons at the top. Presets: Last 7 days, Last 30 days, This Quarter, Last Quarter, Custom Range. The VP selects Q1 2026 and all charts instantly update to show only Q1 data. Filter 2 — Market/Region: a dropdown or multi-select for geography. Options: All Markets, US, EU, APAC, LATAM. The VP selects US and all charts filter to US campaigns only. Filter 3 — Channel: a dropdown for marketing channel. Options: All Channels, Email, Paid Search, Social, Organic. The VP selects Email and sees only email campaign performance. All three filters work together: selecting Q1 + US + Email shows Q1 email campaigns in the US market. One dashboard replaces the need for dozens of filtered views. Filter placement: filters belong at the top of the dashboard or in a left sidebar. They should be visible without scrolling so the viewer always knows what filters are active. Show active filter state clearly: a banner reading Showing: Q1 2026 | US | Email tells the viewer exactly what slice of data they are seeing'"
+    weight: 0.35
+    description: "Filters"
+  - type: llm_judge
+    criteria: "Response covers filter design best practices and common mistakes — bestpractices: 'Filter design best practices: 1. Default to the most common view: if most users look at the current month, default the date filter to This Month. Do not default to All Time — large date ranges slow down the dashboard and show too much data. 2. Limit filter options to 4-5 dimensions: date, region, channel, segment, product. More than 5 filters creates decision paralysis — the viewer spends more time configuring filters than reading data. 3. Show the count of results: after filtering, show how many records match. Showing 142 campaigns (of 500 total) confirms the filter is working. 4. Provide a Clear All Filters button: users sometimes apply multiple filters and forget. A reset button returns to the default view instantly. 5. Cascading filters: when the user selects US, the city filter should only show US cities, not all global cities. Filters that update based on other filter selections reduce confusion. Common mistakes: hiding filters behind a menu (users forget they exist), not showing active filter state (users do not realize data is filtered), allowing filter combinations that return zero results (show a friendly empty state instead of a blank chart), and not remembering filter state (if the user navigates away and returns, restore their last filter selection)'"
+    weight: 0.35
+    description: "BestPractices"
+  - type: llm_judge
+    criteria: "Explanation distinguishes between filters, drill-downs, and new dashboards — distinction: 'When to use filters vs drill-downs vs new dashboards: Filters: use when the viewer wants to slice the same data by different dimensions. Same charts, same metrics, different subset of data. Example: revenue by campaign, filtered to US only. The chart shape stays the same; the data narrows. Drill-down: use when the viewer wants to go deeper into a specific data point. Clicking a bar in a bar chart reveals the detail behind that bar. Example: clicking the US bar in a region chart shows US states. The chart changes to show a more granular level. New dashboard: use when the viewer needs a completely different set of charts, metrics, or layout. Example: the finance team needs a P&L dashboard — this has different charts and metrics than the marketing campaign dashboard. Filters cannot transform it. Rule of thumb: if the user says I want to see the same thing but for X — use a filter. If the user says I want to see more detail about X — use drill-down. If the user says I want to see something completely different — build a new dashboard'"
+    weight: 0.30
+    description: "Distinction"

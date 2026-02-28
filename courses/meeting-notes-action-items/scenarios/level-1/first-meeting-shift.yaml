@@ -1,0 +1,55 @@
+meta:
+  id: first-meeting-shift
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "First meeting shift — handle multiple meeting documentation challenges in a single day including conflicting notes, missed meetings, and urgent follow-ups"
+  tags: [shift, beginner, multi-meeting, combined]
+
+state: {}
+
+trigger: |
+  It's Friday afternoon and you're catching up on meeting
+  documentation from a busy week. Three situations need
+  your attention:
+
+  1. Conflicting Notes: You and a coworker (Jamie) both took
+     notes at Tuesday's product meeting. Your notes say the
+     launch date is March 20. Jamie's notes say March 27.
+     You also disagree on an action item — your notes say
+     "Tom will handle the data migration" but Jamie's say
+     "the data migration will be outsourced to a contractor."
+     The meeting had 10 attendees. You need to produce one
+     definitive set of notes.
+
+  2. Missed Meeting: You missed Thursday's design review
+     because of a scheduling conflict. You have:
+     - A 2-sentence Slack message from a colleague: "Design
+       review went well. We're going with option B for the
+       checkout flow."
+     - A calendar invite that shows the agenda had 5 items
+     - Access to the shared Figma file that was reviewed
+     You need to create meeting notes for the team archive.
+
+  3. Urgent Follow-Up: Your manager just told you that a
+     client mentioned in a call on Monday that they want to
+     cancel their contract. Your Monday client call notes
+     don't mention anything about cancellation — you realize
+     you missed it or misheard it. You need to figure out
+     what happened and update the notes.
+
+  Task: Handle all three meeting documentation situations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response resolves the conflicting notes — conflict resolution approach (addresses the conflicting notes systematically: identifies the two conflicts: launch date (March 20 vs 27) and data migration responsibility (Tom vs contractor); proposes a resolution method: reach out to the meeting organizer or key decision-maker to confirm the correct information; check the meeting recording if available; ask attendees who clearly remember; the approach doesn't just pick one version — it seeks the truth; produces a merged set of notes that: uses confirmed information where agreement exists; clearly marks the two disputed items until verified; once verified, produces the definitive notes with the correct information; the final notes don't mention the confusion — they present the verified facts cleanly)."
+    weight: 0.35
+    description: "ConflictResolution"
+  - type: llm_judge
+    criteria: "Response handles the missed meeting appropriately — missed meeting documentation (creates useful notes despite not attending: acknowledges the limitation — these notes are reconstructed, not taken during the meeting; gathers available information: Slack message (option B for checkout flow was selected), agenda items from the calendar invite, Figma file changes; proposes next steps: ask a colleague who attended for a fuller summary, particularly for the 4 agenda items not covered by the Slack message; the reconstructed notes are honest about their source — they don't pretend to be comprehensive meeting notes; they capture what is known and flag what's missing)."
+    weight: 0.35
+    description: "MissedMeetingHandling"
+  - type: llm_judge
+    criteria: "Response addresses the urgent follow-up — note correction process (handles the missing cancellation information: proposes steps to verify: review any recording of Monday's call, ask the manager for more context about what the client said, check email correspondence from the client; if the cancellation mention is confirmed: update the Monday notes with the missing information, marked as a late addition with the date of the update; don't alter the original notes as if the information was always there — add an addendum: 'Updated [date]: Client mentioned potential contract cancellation during this call (confirmed by [source])'; create an immediate action item: schedule a follow-up with the client to address the cancellation concern; the response recognizes the urgency — a potential client cancellation requires immediate action, not just note correction)."
+    weight: 0.30
+    description: "UrgentFollowUp"

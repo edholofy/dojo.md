@@ -1,0 +1,41 @@
+meta:
+  id: error-and-edge-case-specs
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Error and edge case specifications — document error states, boundary conditions, and unusual user scenarios that aren't visible in happy-path wireframes"
+  tags: [errors, edge-cases, boundary-conditions, validation, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "My developer keeps finding
+  scenarios I didn't think of. Recent examples:
+
+  - 'User uploads a 500MB file — what's the limit?'
+  - 'User pastes a 10,000 character comment — what happens?'
+  - 'Two users edit the same document at once — conflict?'
+  - 'User submits the form twice (double-click) — duplicate?'
+  - 'User opens the app in two tabs — session conflict?'
+  - 'The API returns a 500 error — what do we show?'
+  - 'User's session expires while filling a long form'
+  - 'User with a screen name in Chinese/Arabic/emoji'
+
+  How do I systematically think about and document edge cases?"
+
+  Task: Create an edge case specification framework and
+  document specifications for each scenario mentioned.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response documents specific handling for each edge case — file upload: max size (25MB), show error 'File exceeds 25MB limit. Choose a smaller file or compress it.', show progress bar and allow cancel during upload. Comment length: max 2,000 characters, show remaining character count, prevent input beyond limit or truncate with warning. Concurrent editing: show 'This document was edited by [name]. Reload to see changes.' or implement real-time conflict resolution. Double-submit: disable button after first click, implement idempotency key on API call. Multi-tab: most recent tab takes priority, show 'Session active in another tab' warning. API 500: show generic error 'Something went wrong. Try again.' with retry button. Session expiry: auto-save form data, show login prompt, restore data after re-login. Unicode names: support full Unicode display, handle long names with truncation"
+    weight: 0.35
+    description: "EdgeCaseSpecs"
+  - type: llm_judge
+    criteria: "Response creates an edge case framework — systematic categories for thinking about edge cases: Input boundaries (too long, too short, empty, special characters, Unicode, HTML injection, XSS attempts), Volume/scale (0 items, 1 item, 1000 items, maximum), Timing (slow network, timeout, concurrent actions, session expiry, race conditions), State conflicts (multi-user, multi-tab, offline/online transition), Technical failures (API errors, network loss, browser crash, data corruption), and Permission boundaries (unauthorized access attempts, expired permissions). Each category includes guiding questions to ask during design"
+    weight: 0.35
+    description: "EdgeCaseFramework"
+  - type: llm_judge
+    criteria: "Response provides practical specification templates — for each edge case: Scenario description, Trigger condition, Expected behavior, Error message copy, Recovery path (how user gets back to normal), and Prevention (client-side validation to prevent the error). Explains priority: not all edge cases need full specification (rank by likelihood × impact), and which edge cases to raise with the product team as product decisions vs. which are pure implementation details. Provides an edge case review checklist designers should run before each handoff"
+    weight: 0.30
+    description: "SpecificationTemplates"

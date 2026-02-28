@@ -1,0 +1,47 @@
+meta:
+  id: migration-planning-rfc
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Plan migrations in RFCs — write migration strategies for moving between systems with zero or minimal downtime"
+  tags: [RFC, migration, zero-downtime, cutover, rollback, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to migrate from a legacy authentication
+  system (custom JWT implementation with a users table in your main
+  database) to Auth0 (managed identity provider).
+
+  Current state:
+  - 200,000 registered users with email/password
+  - 15,000 users with social login (Google, GitHub)
+  - Custom password hashing (bcrypt with salt)
+  - Session tokens stored in Redis
+  - 30 microservices validate tokens via shared library
+  - Average 500 logins per minute at peak
+
+  Constraints:
+  - Zero user-facing downtime
+  - Users must NOT need to reset passwords
+  - Social login connections must transfer seamlessly
+  - All 30 services must continue working during migration
+
+  Task: Write the migration plan section of this RFC. Detail the
+  phased cutover strategy, data migration approach, dual-running
+  period, and rollback plan. Show how to handle the complexity of
+  migrating a live authentication system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration phases are detailed with dual-running strategy — Phase 1 (Week 1-2): Preparation — set up Auth0 tenant, configure custom database connection for legacy password validation, import user records (email, metadata) without passwords, configure social identity providers. Milestone: Auth0 has all user records, social connections configured. Phase 2 (Week 3-4): Dual-Write — new registrations create users in both systems. Login flow: try Auth0 first, fall back to legacy. On successful legacy login, migrate password hash to Auth0 (lazy migration). Track migration progress: X% of active users migrated. Phase 3 (Week 5-6): Service Migration — update microservices one-by-one to validate Auth0 tokens. Shared library updated to check both token formats. Phase 4 (Week 7-8): Cutover — route all authentication to Auth0. Legacy system in read-only mode for 2 weeks. Decommission legacy auth after validation period. Each phase has explicit entry/exit criteria and can be paused without impact"
+    weight: 0.35
+    description: "Phased migration"
+  - type: llm_judge
+    criteria: "Password and identity migration is handled without user disruption — password strategy: 'Auth0 custom database connection allows validating against legacy bcrypt hashes. When a user logs in, Auth0 validates against legacy, then re-hashes with Auth0 native format. Users never know a migration occurred.' Social login: 'Google and GitHub connections configured in Auth0 with same client IDs. Users social-login tokens are linked to Auth0 accounts via email matching during import.' Edge cases addressed: 'Users who don't log in during dual-write period: after 6 months, remaining unmigrated users (estimated 40% — dormant accounts) are bulk-migrated with a forced password reset on next login.' 'Users with multiple social providers linked: Auth0 account linking rules configured to merge identities.' Session handling: 'Existing Redis sessions remain valid during migration. New sessions use Auth0 tokens. No user is logged out involuntarily.' Validation: 'Shadow mode testing — run both auth systems for 1 week comparing results. Any discrepancy triggers investigation before proceeding'"
+    weight: 0.35
+    description: "Seamless migration"
+  - type: llm_judge
+    criteria: "Rollback plan is comprehensive and tested — rollback per phase: Phase 2 rollback: 'Disable Auth0 login flow, revert to legacy-only. Any users who registered only in Auth0 during dual-write are synced back to legacy. Estimated rollback time: 15 minutes.' Phase 3 rollback: 'Revert service token validation to legacy format. Shared library supports both formats, so rollback is a configuration change, not a code deployment.' Phase 4 rollback: 'Re-enable legacy system from read-only to active. Route authentication back to legacy. Auth0 becomes secondary. Estimated rollback time: 30 minutes.' Rollback triggers: 'Authentication error rate exceeds 1%, login latency exceeds 2 seconds, any data inconsistency between systems.' Rollback testing: 'Perform a rollback drill in staging before Phase 2 begins. Every team member should know how to trigger rollback.' Point of no return: 'After legacy system is decommissioned (Phase 4 + 2 weeks), rollback requires rebuilding legacy system from backups — estimated 2-3 days. This is why the 2-week validation period is non-negotiable'"
+    weight: 0.30
+    description: "Rollback planning"

@@ -1,0 +1,70 @@
+meta:
+  id: resource-references
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Fix resource reference errors — debug circular dependencies, missing attributes, implicit vs explicit dependencies, and data source lookups"
+  tags: [Terraform, references, dependencies, data-sources, expressions, beginner]
+
+state: {}
+
+trigger: |
+  Your Terraform configuration has reference errors:
+
+  ```
+  Error: Cycle: aws_security_group.web, aws_security_group.db
+
+  Error: Unsupported attribute
+
+    on main.tf line 25:
+    25:   vpc_id = aws_vpc.main.vpc_id
+
+  A managed resource "aws_vpc" "main" has not been declared in the
+  root module.
+  ```
+
+  Your configuration:
+
+  ```hcl
+  resource "aws_security_group" "web" {
+    ingress {
+      from_port       = 443
+      to_port         = 443
+      security_groups = [aws_security_group.db.id]
+    }
+  }
+
+  resource "aws_security_group" "db" {
+    ingress {
+      from_port       = 5432
+      to_port         = 5432
+      security_groups = [aws_security_group.web.id]
+    }
+  }
+
+  resource "aws_subnet" "public" {
+    vpc_id = aws_vpc.main.vpc_id
+  }
+  ```
+
+  The VPC already exists in AWS (created by another team) — you need
+  to reference it, not create it.
+
+  Task: Explain Terraform resource references, implicit vs explicit
+  dependencies, circular dependency detection and resolution, data
+  sources for reading existing infrastructure, and expression syntax
+  for accessing resource attributes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Resource references and dependencies are explained — implicit dependency: when resource A references resource B's attribute (aws_security_group.web.id), Terraform automatically creates A after B. Explicit dependency: depends_on = [aws_security_group.web] when there's no attribute reference but order matters. Circular dependency: A references B and B references A — Terraform can't determine creation order. Fix: break the cycle by using aws_security_group_rule as separate resources instead of inline ingress blocks, or use depends_on with one direction only"
+    weight: 0.35
+    description: "Dependencies"
+  - type: llm_judge
+    criteria: "Data sources are explained — data sources read existing infrastructure without managing it. data 'aws_vpc' 'main' { filter { name = 'tag:Name', values = ['production'] } } reads the VPC. Reference: data.aws_vpc.main.id. Use data sources when: resource exists outside your Terraform config, managed by another team/state, or pre-existing infrastructure. Common data sources: aws_ami (find latest AMI), aws_vpc, aws_subnet, aws_caller_identity (current AWS account), aws_region. Data sources are refreshed on every plan"
+    weight: 0.35
+    description: "Data sources"
+  - type: llm_judge
+    criteria: "Expression syntax is covered — resource attributes: aws_instance.web.id, aws_instance.web.public_ip. With count: aws_instance.web[0].id or aws_instance.web[*].id (splat). With for_each: aws_instance.web['key'].id. Module outputs: module.vpc.vpc_id. Data sources: data.aws_vpc.main.id. Local values: local.common_tags. Built-in functions: lookup(), element(), concat(), join(). Conditional: condition ? true_val : false_val. For expressions: [for s in var.list : upper(s)]"
+    weight: 0.30
+    description: "Expression syntax"

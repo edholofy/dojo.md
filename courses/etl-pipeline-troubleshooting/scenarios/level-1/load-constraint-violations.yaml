@@ -1,0 +1,45 @@
+meta:
+  id: load-constraint-violations
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Load constraint violations — troubleshoot primary key violations, foreign key errors, unique constraint failures, and data truncation during the load phase"
+  tags: [load, constraints, primary-key, foreign-key, truncation, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "Our pipeline extracts and transforms
+  data fine, but keeps failing at the load step when inserting into
+  the warehouse. I'm seeing these errors:
+
+  1. 'ERROR: duplicate key value violates unique constraint
+     orders_pkey' — trying to insert an order that already exists
+
+  2. 'ERROR: insert or update on table orders violates foreign key
+     constraint orders_customer_id_fkey' — the customer_id references
+     a customer that doesn't exist in the customers table yet
+
+  3. 'ERROR: value too long for type character varying(50)' — a
+     product name is longer than the column allows
+
+  The pipeline runs daily and should only insert new records, but
+  sometimes it re-processes records from previous days. How do I
+  fix these load failures?"
+
+  Task: Diagnose each constraint violation, explain why it happens,
+  and provide loading strategies that handle these common issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each error — duplicate key: the pipeline is re-inserting records that already exist, likely because it's not properly tracking which records have been processed (missing watermark or idempotency logic). Foreign key: load order matters — customers must be loaded before orders, or the orders table references customers that haven't been synced yet. Value too long: the source data has values that exceed the target column width, either the target schema needs updating or the data needs truncation"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides loading strategies — for duplicates: use UPSERT (INSERT ON CONFLICT UPDATE) or MERGE statements, implement idempotent loads that can be safely re-run, use a staging table pattern (load into staging, then merge into target). For foreign keys: control load order (dimension tables before fact tables), or temporarily disable foreign key checks during bulk loads then validate after. For truncation: either ALTER the target column to accommodate longer values, or add explicit length validation/truncation in the transform step with logging"
+    weight: 0.35
+    description: "LoadingStrategies"
+  - type: llm_judge
+    criteria: "Response explains idempotency and incremental loading basics — what idempotent means (running the same load multiple times produces the same result), why it matters (pipelines need to be re-runnable for error recovery), common patterns for achieving it (UPSERT, DELETE-then-INSERT for a time window, staging tables), and how to track what's been loaded (watermarks based on timestamps or sequence IDs, tracking table that records last processed ID/timestamp)"
+    weight: 0.30
+    description: "Idempotency"

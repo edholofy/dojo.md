@@ -1,0 +1,84 @@
+meta:
+  id: multi-person-calibration
+  level: 2
+  course: employee-performance-review-writing
+  type: output
+  description: "Multi-person calibration — facilitate a calibration session to align ratings across a team of 8 employees"
+  tags: [calibration, consistency, team-alignment, ratings, intermediate]
+
+state: {}
+
+trigger: |
+  You're an HR Business Partner facilitating a calibration
+  session for a Marketing department. The Marketing Director
+  manages 8 people and has submitted initial ratings. Your
+  job is to review the proposed ratings, identify
+  inconsistencies, and prepare calibration recommendations.
+
+  Rating scale: 1-5 (1=Does Not Meet, 3=Meets, 5=Exceptional)
+  Company guideline: Approximate distribution — 5-10% rated 5,
+  20-25% rated 4, 50-60% rated 3, 10-15% rated 2, 0-5% rated 1.
+
+  Proposed ratings and evidence:
+
+  1. Emma (Content Strategist) — Rated 4
+     Published 48 articles (target: 36), organic traffic up
+     35%, leads from content up 22%. Missed 2 deadlines.
+
+  2. Jake (Social Media Manager) — Rated 4
+     Grew Instagram from 12K to 28K followers. Engagement
+     rate: 4.8% (industry avg: 1.2%). Zero revenue attributed
+     to social. Manager says: "Jake is creative and fun."
+
+  3. Nadia (Email Marketing Specialist) — Rated 3
+     Email revenue: $1.8M (target: $1.2M, exceeded by 50%).
+     Open rate: 32% (industry avg: 21%). Built 6 automated
+     sequences. Manager says: "Nadia just does her job well."
+
+  4. Tyler (Graphic Designer) — Rated 4
+     Completed all design requests on time. Quality is
+     "good." No complaints. Manager says: "Tyler is always
+     positive and a great team player."
+
+  5. Aisha (Marketing Analyst) — Rated 3
+     Built a new attribution model that changed how the
+     team measures ROI. Identified $400K in wasted ad spend.
+     Trained 3 team members on the new model. Manager says:
+     "Aisha's work is very technical — I don't fully
+     understand it."
+
+  6. Ben (Events Coordinator) — Rated 2
+     Organized 6 events (target: 8). Attendee satisfaction:
+     4.5/5. One event went significantly over budget ($15K
+     over on a $50K budget). Manager says: "Ben dropped the
+     ball on the budget."
+
+  7. Carmen (Brand Manager) — Rated 4
+     Led rebrand project — on time, on budget. Brand
+     awareness up 18% in target market. Also manages 2 agency
+     relationships. Had a conflict with Jake about brand
+     guidelines that escalated to the director.
+
+  8. Raj (Marketing Operations) — Rated 3
+     Manages the entire marketing tech stack (8 tools).
+     99.9% uptime. Automated 12 manual processes. Manager
+     says: "Raj keeps the lights on — he's reliable."
+
+  Task: Analyze the proposed ratings, identify where ratings
+  seem inconsistent with the evidence, and prepare your
+  calibration recommendations with specific justifications
+  for any rating changes you'd propose.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies the key inconsistencies — Nadia is underrated (rated 3 despite exceeding revenue target by 50%); Aisha is underrated (rated 3 despite building a transformative attribution model and identifying $400K savings); Tyler is overrated (rated 4 with no evidence beyond 'meets standards' and 'positive attitude'); Jake may be overrated (rated 4 but zero revenue attribution — engagement without business impact); the analysis catches the pattern that the manager rates 'likeable' employees higher and undervalues quietly excellent performers."
+    weight: 0.35
+    description: "InconsistencyIdentification"
+  - type: llm_judge
+    criteria: "Response provides specific, evidence-based calibration recommendations — proposes adjusted ratings with clear justification for each change; uses the company's distribution guidelines to check for rating inflation; compares evidence across employees to demonstrate inconsistency (e.g., Nadia's $1.8M vs target rated 3 while Tyler's 'no complaints' rated 4); recommendations are diplomatic but clear."
+    weight: 0.35
+    description: "CalibrationRecommendations"
+  - type: llm_judge
+    criteria: "Response addresses the underlying manager bias patterns — identifies that the manager may be confusing likeability with performance; addresses the 'I don't understand Aisha's work' problem (not understanding ≠ less valuable); notes the gender/personality dynamics if relevant; provides coaching guidance for the manager on evidence-based rating practices; the analysis would help this manager rate more fairly in the future."
+    weight: 0.30
+    description: "BiasPatternAnalysis"

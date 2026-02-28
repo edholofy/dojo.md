@@ -1,0 +1,46 @@
+meta:
+  id: breaking-changes-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write RFCs for breaking changes — propose changes that break backward compatibility with migration paths, communication plans, and deprecation strategies"
+  tags: [RFC, breaking-changes, deprecation, migration, backward-compatibility, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to fundamentally change your API's
+  authentication model. Currently:
+  - API uses API keys (static strings) for authentication
+  - 2,000 active API consumers (external developers)
+  - Some integrations are 4+ years old and rarely updated
+  - No key rotation, no scoped permissions, no expiration
+
+  Proposed change:
+  - Move to OAuth 2.0 with short-lived tokens
+  - Add scoped permissions (read, write, admin)
+  - Require key rotation every 90 days
+  - Deprecate API keys over 12 months
+
+  This is a breaking change that affects every API consumer. Some
+  will be angry. Some won't update until forced. Some will threaten
+  to leave.
+
+  Task: Write an RFC that proposes this breaking change responsibly.
+  Include the migration path for consumers, communication strategy,
+  deprecation timeline, and how you handle the long tail of
+  integrations that won't update voluntarily.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration path is detailed and considerate of consumers — phased deprecation timeline: Month 1-3: announce change, publish migration guide, open OAuth registration. Month 4-6: OAuth available alongside API keys, migration tooling provided (one-click OAuth token generation from existing API key). Month 7-9: API keys emit deprecation warnings in response headers, weekly email to unmigrated consumers. Month 10-11: API keys rate-limited (50% of current limits), final migration push. Month 12: API keys disabled, emergency support line for stragglers. Migration tooling: 'Automated migration tool that: (1) takes existing API key, (2) creates OAuth application with equivalent access, (3) generates client credentials, (4) provides code snippets for popular languages showing the exact change needed.' Compatibility shim: 'For the transition period, accept API keys as a simplified OAuth flow (API key treated as client_credentials grant). This means consumers get OAuth benefits without code changes, reducing migration friction.' Consumer segmentation: identify high-value integrations for white-glove migration support"
+    weight: 0.35
+    description: "Migration path"
+  - type: llm_judge
+    criteria: "Communication strategy is thorough and empathetic — communication timeline: '12 months before: blog post explaining why (security improvements, not arbitrary change). 9 months before: direct email to all API consumers with migration guide link. 6 months before: dashboard banner showing migration status and deadline. 3 months before: personalized emails to unmigrated consumers with specific help offers. 1 month before: final warning with escalation to account managers for enterprise customers.' Messaging framed as benefit: 'Scoped permissions mean your integration only has access to what it needs — reducing your liability if credentials are compromised. Key rotation catches stolen credentials within 90 days instead of never.' Handling pushback: 'We expect resistance from long-standing integrations. Response: (1) acknowledge the disruption, (2) offer 1:1 migration assistance for enterprise consumers, (3) provide a hardship extension of up to 3 months for documented technical constraints, (4) clearly communicate that the security risk of permanent API keys affects all consumers, not just ours.' Developer relations: changelog, migration FAQ, office hours, dedicated Slack channel"
+    weight: 0.35
+    description: "Communication strategy"
+  - type: llm_judge
+    criteria: "Long-tail handling and risk management are realistic — long tail strategy: 'Historical data shows ~20% of integrations are abandoned (no API calls in 90 days). These are automatically disabled — no migration needed. ~30% will migrate proactively. ~30% will migrate with reminders. ~20% will need active intervention or will churn.' Churn analysis: 'Estimated 3-5% consumer churn from this change. Revenue impact: $X/month. This is acceptable because: (1) security incidents from compromised API keys cost $Y/year, (2) unscoped API keys create liability, (3) inability to rotate keys violates SOC 2 requirements we need for enterprise sales.' Risk mitigation: 'If migration rate is below 50% at month 6, extend timeline by 3 months and invest in additional migration tooling.' Emergency rollback: 'API key authentication code is not deleted — it is disabled via feature flag. Can be re-enabled within minutes if critical integrations break. Rollback criteria: if any integration generating more than $Z/month revenue breaks, re-enable API keys for that consumer and escalate.' Metrics: track migration progress weekly — number migrated, API calls still using keys, revenue at risk from unmigrated consumers"
+    weight: 0.30
+    description: "Long-tail management"

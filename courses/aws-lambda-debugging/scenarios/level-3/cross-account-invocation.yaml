@@ -1,0 +1,72 @@
+meta:
+  id: cross-account-invocation
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug cross-account Lambda invocation — diagnose permission issues, resource policies, and multi-account architecture patterns"
+  tags: [AWS, Lambda, cross-account, IAM, resource-policy, multi-account, advanced]
+
+state: {}
+
+trigger: |
+  Your organization uses separate AWS accounts for dev, staging, and
+  production. A shared services account hosts common Lambda functions
+  that other accounts invoke. Cross-account invocation fails:
+
+  Account A (application) tries to invoke a function in Account B (shared):
+
+  $ aws lambda invoke --function-name \
+    arn:aws:lambda:us-east-1:222222222222:function:shared-auth \
+    --region us-east-1 output.json
+
+  Error:
+  An error occurred (AccessDeniedException): User:
+  arn:aws:sts::111111111111:assumed-role/app-role/... is not authorized
+  to perform: lambda:InvokeFunction on resource:
+  arn:aws:lambda:us-east-1:222222222222:function:shared-auth
+
+  Cross-account invocation requires TWO things:
+
+  1. Account B (target) — Resource-based policy on the Lambda function:
+  $ aws lambda add-permission \
+    --function-name shared-auth \
+    --statement-id AllowAccountA \
+    --action lambda:InvokeFunction \
+    --principal 111111111111
+
+  2. Account A (caller) — IAM policy allowing the role to invoke:
+  {
+    "Effect": "Allow",
+    "Action": "lambda:InvokeFunction",
+    "Resource": "arn:aws:lambda:us-east-1:222222222222:function:shared-auth"
+  }
+
+  After fixing, another issue: the shared function uses $LATEST but
+  different accounts see different versions because $LATEST was
+  updated mid-deployment. Use a specific version or alias for
+  consistency across accounts.
+
+  Additional complexity: cross-account event source mappings.
+  Account A's SQS queue triggering Account B's Lambda requires
+  the Lambda execution role to have sqs:* permissions on Account A's
+  queue, AND Account A's queue policy must allow Account B's role.
+
+  Task: Explain cross-account Lambda debugging. Write: resource
+  policies vs IAM policies (both needed), cross-account invocation
+  setup, cross-account event sources, version/alias management
+  across accounts, AWS Organizations for centralized governance,
+  and multi-account architecture patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cross-account permissions are explained — two policies needed: (1) resource-based policy on target Lambda (allows the calling account/role to invoke), (2) IAM policy on calling role (allows invoking the specific function ARN). Either alone is insufficient. Resource policy: aws lambda add-permission with --principal (account or role ARN). IAM policy: lambda:InvokeFunction on the cross-account function ARN. For event sources: both the Lambda execution role and the source resource policy must allow cross-account access"
+    weight: 0.35
+    description: "Cross-account permissions"
+  - type: llm_judge
+    criteria: "Multi-account patterns are covered — common architecture: shared services account (auth, logging, notification), application accounts (dev, staging, prod), security account (audit, compliance). Use AWS Organizations for account management. Share Lambda functions via: cross-account invocation (resource policy), or deploy same function to each account via CI/CD. Version management: use aliases (prod, staging) and specific versions — never $LATEST across accounts. AWS RAM (Resource Access Manager) for sharing other resources"
+    weight: 0.35
+    description: "Multi-account patterns"
+  - type: llm_judge
+    criteria: "Debugging and governance are practical — debugging cross-account: check both IAM policy AND resource policy (common to fix only one). Use aws iam simulate-principal-policy for permission testing. CloudTrail logs in both accounts for access tracking. Governance: use AWS Organizations SCPs to restrict which functions can be invoked cross-account. Tag functions with account access level. Document all cross-account dependencies. Use IaC (CDK/Terraform) to manage resource policies consistently. Cross-account X-Ray: traces can span accounts for end-to-end visibility"
+    weight: 0.30
+    description: "Debugging and governance"

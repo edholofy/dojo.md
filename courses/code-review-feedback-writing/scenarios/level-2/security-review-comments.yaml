@@ -1,0 +1,50 @@
+meta:
+  id: security-review-comments
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Write security-focused review comments — identify and communicate security vulnerabilities clearly with risk assessment and remediation guidance"
+  tags: [code-review, security, vulnerabilities, OWASP, remediation, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR for a user management feature. You've spotted
+  several security issues at different severity levels:
+
+  1. SQL query built with string concatenation:
+     `SELECT * FROM users WHERE name = '${userName}'`
+
+  2. Password stored as MD5 hash (no salt)
+
+  3. API endpoint returns full user object including hashed password,
+     SSN, and internal notes in the response
+
+  4. File upload accepts any file type with no size limit
+
+  5. Admin endpoint has no authorization check — any authenticated
+     user can access it
+
+  6. CORS is configured with Access-Control-Allow-Origin: *
+
+  7. Error messages include stack traces and database column names
+
+  Task: Write security review comments for each vulnerability. For
+  each: explain the vulnerability, describe the attack scenario,
+  rate the severity, and provide the specific fix. These comments
+  should educate the author about WHY the fix matters, not just
+  WHAT to fix.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each vulnerability is explained with attack scenarios — (1) SQL injection: attacker inputs `'; DROP TABLE users; --` as userName, executing arbitrary SQL. (2) MD5: rainbow table attack cracks passwords in seconds (no salt means identical passwords have identical hashes). (3) Data exposure: API consumers (or browser dev tools users) can see passwords, SSNs — violates data minimization. (4) File upload: attacker uploads 10GB file (DoS) or .exe/.php file (remote code execution if served). (5) Broken authorization: any logged-in user can delete other users or modify admin settings. (6) Wildcard CORS: any website can make authenticated API requests on behalf of your users (CSRF-like). (7) Information disclosure: stack traces reveal framework version, file paths, database schema — helps attackers map your system. Each explanation is specific and scary enough to motivate the fix without being fear-mongering"
+    weight: 0.35
+    description: "Vulnerability explanations"
+  - type: llm_judge
+    criteria: "Severity ratings and fixes are specific — critical (must fix before merge): SQL injection (#1), broken auth (#5), password storage (#2). High (must fix before production): data exposure (#3), file upload (#4). Medium (fix before public launch): CORS (#6), information disclosure (#7). Fixes: (1) use parameterized queries: `db.query('SELECT * FROM users WHERE name = $1', [userName])`. (2) Use bcrypt with cost factor 12+. (3) Create a UserResponse DTO that excludes sensitive fields. (4) Allowlist file types (jpg, png, pdf), max 10MB, store outside webroot. (5) Add @RequireRole('admin') middleware/decorator. (6) Set specific allowed origins. (7) Use generic error messages in production, log details server-side. Each fix is implementable from the comment alone"
+    weight: 0.35
+    description: "Severity and fixes"
+  - type: llm_judge
+    criteria: "Comments educate about security principles — don't just fix the symptom, explain the principle: SQL injection → 'Never trust user input in queries — parameterized queries separate data from commands.' Password storage → 'MD5 was designed for speed, not security — bcrypt is intentionally slow, making brute force impractical.' Data exposure → 'API responses should follow the principle of least privilege — only return what the consumer needs.' Authorization → 'Authentication (who are you?) is different from authorization (are you allowed?) — this endpoint checks the first but not the second.' Each comment links to relevant OWASP reference or security guide. Overall comment: 'I'd recommend running the OWASP top 10 checklist against any endpoint handling user data — happy to pair on a security review if helpful.'"
+    weight: 0.30
+    description: "Security education"

@@ -1,0 +1,41 @@
+meta:
+  id: clv-based-segmentation
+  level: 2
+  course: customer-segmentation
+  type: output
+  description: "CLV-based segmentation — segment customers by their predicted lifetime value to prioritize resources and differentiate treatment"
+  tags: [CLV, lifetime-value, value-based, tiering, intermediate]
+
+state: {}
+
+trigger: |
+  A head of customer success says: "We have 8,000 B2B SaaS customers
+  and 15 CSMs. Right now, we assign CSMs based on contract size — big
+  contracts get dedicated CSMs, small contracts get pooled support.
+
+  But contract size doesn't capture the full picture. Some small
+  customers are growing fast and will become large. Some large
+  customers are declining and may churn. I want to segment by
+  predicted lifetime value, not just current contract size.
+
+  Our data: current ARR, account age, growth trajectory (MoM revenue
+  change), product usage, NPS score, support ticket volume, industry,
+  and company size."
+
+  Task: Build a CLV-based segmentation that identifies which customers
+  are most valuable over their lifetime (not just today) and how to
+  allocate CSM resources accordingly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains how to estimate customer lifetime value for B2B SaaS — combining current ARR with predicted retention duration and growth trajectory. Methods: simple CLV (ARR × expected lifetime × margin), historical CLV (sum of past revenue), predictive CLV (incorporating growth trajectory, churn probability, and expansion potential). Shows that a $20K customer growing 30% annually with low churn risk may have higher CLV than a stable $80K customer with high churn risk"
+    weight: 0.35
+    description: "CLVCalculation"
+  - type: llm_judge
+    criteria: "Response creates CLV-based tiers with clear criteria — such as: Platinum (top 10% CLV, highest growth + retention probability), Gold (next 20%, strong CLV with moderate growth), Silver (middle 40%, stable but limited growth potential), Bronze (bottom 30%, low CLV due to churn risk or flat/declining trajectory). Each tier should be defined by specific CLV ranges and key characteristics that differentiate them"
+    weight: 0.35
+    description: "Tiers"
+  - type: llm_judge
+    criteria: "Response maps CLV tiers to differentiated CSM resource allocation — dedicated CSM for Platinum (1:10 ratio), shared CSM for Gold (1:30 ratio), pooled support with digital touchpoints for Silver (1:80 ratio), automated/self-serve for Bronze (tech-touch only). Includes how to handle edge cases: rising stars (low current ARR but high CLV trajectory — treat like Gold), fading stars (high current ARR but declining CLV — intervention needed), and how to re-evaluate tier assignments quarterly"
+    weight: 0.30
+    description: "ResourceAllocation"

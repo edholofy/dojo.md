@@ -1,0 +1,78 @@
+meta:
+  id: sprint-status-report
+  level: 1
+  course: project-status-report-writing
+  type: output
+  description: "Sprint status report — write an agile sprint status report showing velocity, burndown progress, and sprint goal status"
+  tags: [sprint, agile, scrum, velocity, beginner]
+
+state: {}
+
+trigger: |
+  You're a scrum master. Your product owner asked for a
+  sprint status report at the mid-sprint point (end of
+  Week 1 of a 2-week sprint). The team uses story points
+  and follows Scrum.
+
+  Sprint: Sprint 18
+  Sprint Goal: "Users can create and share custom dashboards"
+  Duration: Nov 3 - Nov 14 (2 weeks)
+  Today: Nov 7 (end of Week 1)
+  Team: 5 developers, 1 QA
+
+  Sprint Backlog (committed: 34 story points):
+
+  1. Dashboard creation wizard (8 pts) — IN PROGRESS (70%)
+     Dev: Alice. On track. Core functionality working,
+     styling and validation remaining.
+
+  2. Widget library — basic charts (5 pts) — DONE
+     Dev: Bob. Completed Wednesday. Passed QA.
+
+  3. Widget library — data tables (5 pts) — DONE
+     Dev: Bob. Completed Thursday. In QA now.
+
+  4. Dashboard sharing via link (8 pts) — IN PROGRESS (30%)
+     Dev: Carol. Behind schedule. The sharing permissions
+     model is more complex than estimated. Carol says she
+     needs the full 2nd week and it's "going to be tight."
+
+  5. Dashboard export to PDF (3 pts) — NOT STARTED
+     Dev: Dave. Planned for Week 2. On schedule.
+
+  6. User dashboard gallery (5 pts) — IN PROGRESS (40%)
+     Dev: Eve. On track. API endpoints done, UI in progress.
+
+  Velocity context:
+  - Sprint 17: 31 points completed (committed 32)
+  - Sprint 16: 28 points completed (committed 30)
+  - Sprint 15: 33 points completed (committed 34)
+  - Average velocity: 30.7 points
+
+  Burndown:
+  - Ideal: 17 points completed by mid-sprint
+  - Actual: 10 points completed (5 + 5 from widgets)
+  - 24 points remaining with 5 working days left
+
+  Other notes:
+  - Dave has a dentist appointment Tuesday afternoon (3 hours)
+  - The staging environment was down for 4 hours on Monday,
+    affecting all developers
+  - Product owner mentioned a "nice to have" — dashboard
+    templates — but agreed it's not part of this sprint
+
+  Task: Write the mid-sprint status report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a proper sprint status report — includes sprint identification (Sprint 18), sprint goal, dates, and team; shows each backlog item with status, progress percentage, and owner; presents velocity data and burndown analysis (ideal 17 points at mid-sprint vs actual 10 points); explains the burndown gap without panic (most remaining work is in-progress, not blocked); calculates whether the sprint goal is achievable based on remaining work and velocity history."
+    weight: 0.35
+    description: "SprintStatusStructure"
+  - type: llm_judge
+    criteria: "Response identifies the key risk and provides analysis — flags the dashboard sharing story (8 pts) as the main risk to the sprint goal (behind schedule, complex permissions, developer says it'll be tight); analyzes sprint goal achievability: the sprint goal is about creating AND sharing dashboards — if the sharing story slips, the sprint goal is only partially met; provides factual burndown analysis without sugar-coating (10 of 34 points done at midpoint is behind the ideal line, but in-progress items could close the gap); acknowledges the staging environment downtime as contributing factor."
+    weight: 0.35
+    description: "RiskAnalysis"
+  - type: llm_judge
+    criteria: "Response is useful for the product owner — written in a way that helps the product owner make decisions (should we adjust scope? should we help Carol?); notes the 'dashboard templates' request was deferred appropriately; includes upcoming week's focus areas; is concise enough for a busy PO while detailed enough to understand the situation; uses agile terminology correctly (velocity, burndown, sprint goal, story points) without overcomplicating."
+    weight: 0.30
+    description: "ProductOwnerFocus"

@@ -1,0 +1,40 @@
+meta:
+  id: ab-test-analysis
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Analyze A/B test results — use pandas and scipy to calculate statistical significance, effect sizes, and make data-driven recommendations"
+  tags: [python, pandas, AB-testing, statistics, hypothesis-testing, advanced]
+
+state: {}
+
+trigger: |
+  The product team ran an A/B test on the checkout page redesign:
+
+  - Control (A): existing checkout flow (50,000 users)
+  - Treatment (B): new streamlined checkout (50,000 users)
+  - Duration: 14 days
+  - Primary metric: conversion rate (completed purchases / visitors)
+  - Secondary metrics: average order value, cart abandonment rate
+
+  Results summary:
+  - Control: 3,200 conversions (6.4% conversion rate)
+  - Treatment: 3,450 conversions (6.9% conversion rate)
+  - The product manager says: "Treatment is 0.5% higher — ship it!"
+
+  Task: Properly analyze the A/B test and determine if the result
+  is statistically significant.
+
+assertions:
+  - type: llm_judge
+    criteria: "Statistical analysis correctly tests significance and calculates confidence intervals — analysis: 'A/B test statistical analysis: Step 1 — Set up the data: control = df[df[\"variant\"] == \"control\"]. treatment = df[df[\"variant\"] == \"treatment\"]. n_control = len(control). n_treatment = len(treatment). conv_control = control[\"converted\"].sum(). conv_treatment = treatment[\"converted\"].sum(). rate_control = conv_control / n_control. rate_treatment = conv_treatment / n_treatment. lift = (rate_treatment - rate_control) / rate_control. print(f\"Control: {rate_control:.4f} ({conv_control}/{n_control})\"). print(f\"Treatment: {rate_treatment:.4f} ({conv_treatment}/{n_treatment})\"). print(f\"Lift: {lift:.2%}\"). Step 2 — Statistical significance test (Z-test for proportions): from scipy import stats. pooled_rate = (conv_control + conv_treatment) / (n_control + n_treatment). se = np.sqrt(pooled_rate * (1 - pooled_rate) * (1/n_control + 1/n_treatment)). z_stat = (rate_treatment - rate_control) / se. p_value = 1 - stats.norm.cdf(z_stat). Use one-tailed if testing treatment > control. p_value_two_tailed = 2 * (1 - stats.norm.cdf(abs(z_stat))). print(f\"Z-statistic: {z_stat:.3f}\"). print(f\"P-value (two-tailed): {p_value_two_tailed:.4f}\"). if p_value_two_tailed < 0.05: print(\"Result is statistically significant at 95% confidence\"). else: print(\"Result is NOT statistically significant\"). Step 3 — Confidence interval for the difference: diff = rate_treatment - rate_control. se_diff = np.sqrt(rate_control * (1 - rate_control) / n_control + rate_treatment * (1 - rate_treatment) / n_treatment). ci_lower = diff - 1.96 * se_diff. ci_upper = diff + 1.96 * se_diff. print(f\"Difference: {diff:.4f}\"). print(f\"95% CI: [{ci_lower:.4f}, {ci_upper:.4f}]\"). If the confidence interval includes 0, the result is not significant. If the entire interval is above 0, we are confident the treatment is better. Step 4 — Effect size (practical significance): from scipy.stats import chi2_contingency. contingency_table = pd.crosstab(df[\"variant\"], df[\"converted\"]). chi2, p, dof, expected = chi2_contingency(contingency_table). cramers_v = np.sqrt(chi2 / (len(df) * (min(contingency_table.shape) - 1))). print(f\"Cramer's V (effect size): {cramers_v:.4f}\"). Effect size interpretation: under 0.1 = negligible, 0.1-0.3 = small, 0.3-0.5 = medium, above 0.5 = large. A statistically significant result with a negligible effect size may not be worth the engineering effort to ship'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Recommendation addresses both statistical and practical significance — recommendation: 'A/B test recommendation: Statistical significance alone is not enough. A result can be statistically significant but practically meaningless (or vice versa). For this test: the 0.5 percentage point lift (6.4% to 6.9%) is a 7.8% relative improvement. With 50K users per group, this is likely statistically significant (p < 0.05). But is it practically significant? Revenue impact calculation: current monthly visitors: 500,000. Current conversion rate: 6.4% = 32,000 conversions per month. New conversion rate: 6.9% = 34,500 conversions per month. Additional conversions: 2,500 per month. If average order value is $75: additional revenue = $187,500 per month = $2.25M per year. This is practically significant — a $2.25M annual revenue increase justifies shipping the new checkout. But also check secondary metrics: average order value: did the new checkout change AOV? If treatment AOV is lower (people rush through the simpler checkout and spend less), the revenue impact may be smaller. Cart abandonment: did fewer people abandon carts? This should improve if the checkout is truly simpler. Time on checkout page: a significantly shorter time suggests the new flow is genuinely easier (not just that users are skipping steps). Segmentation: check if the improvement is consistent across segments. Device type: mobile vs desktop (the improvement might only be on mobile). Customer type: new vs returning (new users benefit more from simpler flows). Region: ensure no region is negatively impacted. If the treatment helps mobile users (+2%) but hurts desktop users (-1%), the overall lift of 0.5% hides an important interaction. Final recommendation: ship the new checkout IF: (1) the result is statistically significant (p < 0.05), (2) the effect is consistent across key segments, (3) secondary metrics are neutral or positive, (4) the revenue impact justifies any ongoing maintenance cost'"
+    weight: 0.35
+    description: "Recommendation"
+  - type: llm_judge
+    criteria: "Response covers sample size, power analysis, and common A/B testing pitfalls — pitfalls: 'A/B testing pitfalls: Pitfall 1 — Peeking at results too early. If you check the results every day, you will see a significant result by chance (multiple testing problem). Solution: calculate the required sample size before the test starts and do not check until you reach it. from statsmodels.stats.power import NormalIndPower. power_analysis = NormalIndPower(). sample_size = power_analysis.solve_power(effect_size=0.02, alpha=0.05, power=0.80, ratio=1.0). This calculates how many users per variant are needed to detect a 2 percentage point difference with 80% power. Pitfall 2 — Novelty effect. Users might interact more with the new design simply because it is new. After the novelty wears off, the improvement disappears. Solution: run the test for at least 2-3 weeks. Check if the treatment effect is stable over time (plot daily conversion rate for both variants). Pitfall 3 — Simpson's paradox. The overall result shows treatment is better, but within each segment, control is better (or vice versa). This happens when segment sizes differ between variants. Solution: always check segment-level results. Pitfall 4 — Not accounting for multiple metrics. Testing 5 metrics at 95% confidence: there is a 23% chance of at least one false positive. Solution: apply Bonferroni correction (divide alpha by the number of metrics: 0.05/5 = 0.01) or designate one primary metric and treat others as exploratory. Pitfall 5 — Survivorship bias. If the checkout test only measures users who reach checkout, it misses the effect on users who never get to checkout. The new checkout might be better for those who reach it, but the new product page (deployed simultaneously) might drive fewer users to checkout'"
+    weight: 0.30
+    description: "Pitfalls"

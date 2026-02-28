@@ -1,0 +1,71 @@
+meta:
+  id: dynamic-blocks
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Use dynamic blocks — generate repetitive configuration blocks from variables, handle nested dynamics, and avoid over-engineering"
+  tags: [Terraform, dynamic-blocks, for-each, iteration, DRY, advanced]
+
+state: {}
+
+trigger: |
+  Your security group configuration has grown unwieldy with 20 inline
+  ingress rules hardcoded:
+
+  ```hcl
+  resource "aws_security_group" "web" {
+    name = "web-sg"
+
+    ingress {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+      from_port   = 443
+      to_port     = 443
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = ["10.0.0.0/8"]
+    }
+    # ... 17 more rules
+  }
+  ```
+
+  You want to make this data-driven using variables and dynamic blocks.
+  But your first attempt creates confusing, deeply nested code:
+
+  ```hcl
+  dynamic "ingress" {
+    for_each = var.rules
+    content {
+      dynamic "self" {  # ERROR: can't nest dynamic within dynamic
+                        # for the same block type
+      }
+    }
+  }
+  ```
+
+  Task: Explain dynamic blocks, when to use them, nested dynamic
+  blocks, iterator naming, the content block, and when dynamic blocks
+  hurt readability (over-engineering).
+
+assertions:
+  - type: llm_judge
+    criteria: "Dynamic blocks are explained — dynamic 'ingress' { for_each = var.ingress_rules, content { from_port = ingress.value.from_port, to_port = ingress.value.to_port, protocol = ingress.value.protocol, cidr_blocks = ingress.value.cidr_blocks } }. The iterator name defaults to the block label (ingress). Custom iterator: dynamic 'ingress' { iterator = rule, for_each = ..., content { from_port = rule.value.port } }. for_each accepts: list, set, map. Within content, use iterator.key and iterator.value. Dynamic blocks can only generate repeatable nested blocks, not top-level arguments"
+    weight: 0.35
+    description: "Dynamic blocks"
+  - type: llm_judge
+    criteria: "Nested dynamics and practical patterns are covered — nested dynamic blocks: dynamic blocks can be nested when a block contains another repeatable block. Example: aws_security_group with dynamic ingress that has dynamic cidr_blocks (though cidr_blocks is actually a list attribute, not a block). Real nested example: aws_lb_listener_rule with dynamic condition { dynamic host_header { ... } }. Variable structure: use list of objects for simple rules, map of objects when you need keys. Flatten complex structures with locals before passing to dynamic blocks"
+    weight: 0.35
+    description: "Nested dynamics"
+  - type: llm_judge
+    criteria: "Over-engineering warnings are given — when NOT to use dynamic blocks: (1) fewer than 3-4 rules — just write them out, (2) deeply nested dynamics (3+ levels) — becomes unreadable, (3) when separate resources are clearer (aws_security_group_rule instead of inline ingress blocks). Dynamic blocks trade readability for DRY — sometimes repetition is more maintainable. Alternative to dynamic: use for_each on separate resource blocks (aws_security_group_rule with for_each). This is often clearer and gives each rule its own lifecycle. Rule of thumb: if a new team member can't understand it in 30 seconds, simplify"
+    weight: 0.30
+    description: "Over-engineering"

@@ -1,0 +1,33 @@
+meta:
+  id: aggregate-functions
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Use aggregate functions — calculate totals, averages, counts, and extremes to summarize business data for management reports"
+  tags: [SQL, COUNT, SUM, AVG, MIN, MAX, aggregation, beginner]
+
+state: {}
+
+trigger: |
+  The sales manager needs a quick summary for the morning meeting:
+  "How many orders did we get yesterday? What was the total revenue?
+  Average order value? Largest single order?"
+
+  Table: orders (order_id, customer_id, order_date, amount, status,
+  product_category)
+
+  Task: Write queries using aggregate functions and explain each one.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly uses COUNT, SUM, AVG, MIN, MAX — query: 'Aggregate functions: SELECT COUNT(*) AS total_orders, SUM(amount) AS total_revenue, AVG(amount) AS avg_order_value, MAX(amount) AS largest_order, MIN(amount) AS smallest_order FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day' AND status = 'completed'; Each function: COUNT(*) — counts all rows (including NULLs). COUNT(column) — counts non-NULL values only. COUNT(DISTINCT customer_id) — counts unique customers. SUM(amount) — adds up all values in the column. Returns NULL if all values are NULL. AVG(amount) — calculates the mean. Ignores NULLs (does not count them as zeros). MAX(amount) — returns the highest value. MIN(amount) — returns the lowest value. Important: AVG ignores NULLs. If you have amounts [100, 200, NULL], AVG returns 150 (not 100). If you want NULLs treated as zero: AVG(COALESCE(amount, 0))'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers rounding, NULL handling, and combining aggregates — explanation: 'Practical aggregate patterns: Rounding for reports: SELECT ROUND(AVG(amount), 2) AS avg_order_value, ROUND(SUM(amount), 0) AS total_revenue. Nobody wants to see $47.38291746 in a report. Counting with conditions (conditional aggregation): SELECT COUNT(*) AS total_orders, COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed, COUNT(CASE WHEN status = 'cancelled' THEN 1 END) AS cancelled, COUNT(CASE WHEN status = 'refunded' THEN 1 END) AS refunded FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day'. This gives a status breakdown in a single query instead of running 4 separate queries. Multiple aggregates in one report: SELECT COUNT(*) AS orders, COUNT(DISTINCT customer_id) AS unique_customers, SUM(amount) AS revenue, ROUND(AVG(amount), 2) AS avg_order, ROUND(SUM(amount) / COUNT(DISTINCT customer_id), 2) AS revenue_per_customer FROM orders WHERE order_date >= '2024-10-01'. Revenue per customer is a derived metric — SUM divided by COUNT DISTINCT'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response shows how to present aggregate results for business stakeholders — presentation: 'Presenting aggregates for business reports: Comparison with previous period: SELECT 'Yesterday' AS period, COUNT(*) AS orders, SUM(amount) AS revenue UNION ALL SELECT 'Same day last week', COUNT(*), SUM(amount) FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '8 days'. UNION ALL combines results from two queries into one result set. This lets the manager see yesterday vs the same day last week side by side. Percentage calculations: SELECT product_category, COUNT(*) AS orders, SUM(amount) AS revenue, ROUND(SUM(amount) * 100.0 / (SELECT SUM(amount) FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day'), 1) AS revenue_pct FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day' GROUP BY product_category ORDER BY revenue DESC. The subquery in the percentage calculation gets the total, and each row's revenue is divided by that total. The 100.0 (not 100) forces decimal division — without the decimal, integer division in some databases would return 0'"
+    weight: 0.30
+    description: "Presentation"

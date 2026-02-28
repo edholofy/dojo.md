@@ -1,0 +1,51 @@
+meta:
+  id: lifecycle-rules
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Use lifecycle meta-arguments — configure create_before_destroy, prevent_destroy, ignore_changes, and replace_triggered_by for safe resource management"
+  tags: [Terraform, lifecycle, create-before-destroy, prevent-destroy, ignore-changes, intermediate]
+
+state: {}
+
+trigger: |
+  Three lifecycle issues in your infrastructure:
+
+  Issue 1 — Zero-downtime deployment:
+  Changing the launch template for an ASG causes recreation. During the
+  gap between destroy and create, no instances serve traffic:
+  ```
+  -/+ aws_launch_template.web (forces replacement)
+  ```
+
+  Issue 2 — Accidental database deletion:
+  A developer runs terraform destroy targeting a specific module but
+  accidentally includes the RDS instance:
+  ```
+  aws_db_instance.production: Destroying... [id=prod-db]
+  aws_db_instance.production: Destruction complete
+  ```
+
+  Issue 3 — Auto-scaling interference:
+  Terraform keeps resetting the ASG desired_capacity back to 2, undoing
+  auto-scaling that scaled to 5 during peak traffic:
+  ```
+  ~ desired_capacity = 5 -> 2
+  ```
+
+  Task: Explain all lifecycle meta-arguments, when to use each,
+  common pitfalls, and real-world patterns for safe resource management.
+
+assertions:
+  - type: llm_judge
+    criteria: "create_before_destroy is explained — lifecycle { create_before_destroy = true }: creates the new resource before destroying the old one. Fixes Issue 1: new launch template created first, ASG updated to use it, then old template destroyed. Use for: resources that must have zero downtime (load balancers, launch templates, security groups). Pitfall: some resources have unique constraints (names must be unique) — use name_prefix instead of name to allow both to exist simultaneously. Not all resources support this — some have global uniqueness requirements"
+    weight: 0.35
+    description: "create_before_destroy"
+  - type: llm_judge
+    criteria: "prevent_destroy and ignore_changes are explained — prevent_destroy = true: Terraform errors if any operation would destroy the resource. Fixes Issue 2: protects databases, S3 buckets, encryption keys. To actually destroy: remove prevent_destroy first, then destroy. ignore_changes = [desired_capacity]: tells Terraform to ignore changes to specific attributes. Fixes Issue 3: auto-scaling can change desired_capacity without Terraform reverting it. Use ignore_changes for: attributes managed by external systems (auto-scaling, external controllers). ignore_changes = all: ignore all attribute changes (resource only managed for creation)"
+    weight: 0.35
+    description: "prevent and ignore"
+  - type: llm_judge
+    criteria: "replace_triggered_by and patterns are covered — replace_triggered_by = [aws_ami.latest.id]: force replacement when a different resource changes. Use for: instances that should be recreated when AMI updates. Lifecycle patterns: databases always get prevent_destroy, ASGs get ignore_changes on desired_capacity, stateless resources get create_before_destroy for zero downtime. Pitfall: ignore_changes can mask drift — use sparingly and document why. Lifecycle rules are meta-arguments, not resource arguments — they go in the lifecycle {} block inside the resource"
+    weight: 0.30
+    description: "Patterns"

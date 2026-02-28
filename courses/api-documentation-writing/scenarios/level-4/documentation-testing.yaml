@@ -1,0 +1,41 @@
+meta:
+  id: documentation-testing
+  level: 4
+  course: api-documentation-writing
+  type: output
+  description: "Test API documentation — implement automated testing for documentation accuracy including contract tests, example validation, and link checking"
+  tags: [API, documentation, testing, contract-tests, validation, automation, expert]
+
+state: {}
+
+trigger: |
+  Your documentation has a trust problem. Developers have been burned
+  by inaccurate docs:
+
+  - Code example in docs returns 400 when copied verbatim
+  - Response schema in docs doesn't match actual response
+  - Documented endpoint was renamed 3 months ago
+  - "Required field" in docs is actually optional
+  - Link to authentication guide is 404
+
+  You need automated testing to guarantee documentation accuracy.
+
+  Task: Design a documentation testing strategy. Include: contract
+  testing (docs match API behavior), code example testing (examples
+  actually work), schema validation (OpenAPI spec matches responses),
+  link checking, and freshness monitoring. Provide implementation
+  details for each type of test.
+
+assertions:
+  - type: llm_judge
+    criteria: "Contract testing validates docs match API — contract tests: for each documented endpoint, make the documented request and verify: (1) response status matches documented status, (2) response body matches documented schema (all fields present, types correct), (3) required fields in request are actually required (test with/without), (4) documented error scenarios return documented error codes. Tools: Dredd (OpenAPI contract testing), Schemathesis (property-based API testing from OpenAPI), custom test suite. Run against sandbox in CI/CD on every API or docs change. Report: percentage of endpoints passing contract tests, specific failures with diff between documented and actual"
+    weight: 0.35
+    description: "Contract testing"
+  - type: llm_judge
+    criteria: "Code examples and schemas are tested automatically — code example extraction: parse documentation (MDX/Markdown), extract fenced code blocks tagged with language, identify API calls. Execution: run each code example against sandbox, verify it succeeds (non-error response). For curl examples: execute directly. For Python/Node.js: run in Docker container with dependencies installed. Schema validation: compare OpenAPI response schema against actual API responses using JSON Schema validation. Detect: extra fields in response not in schema, missing fields, type mismatches. Freshness: flag docs pages not updated in 90 days for review, detect OpenAPI spec changes that don't have corresponding docs updates"
+    weight: 0.35
+    description: "Example and schema testing"
+  - type: llm_judge
+    criteria: "Link checking and monitoring are comprehensive — link checking: crawl all documentation pages, verify internal links (no 404s), external links (still valid), anchor links (target exists on page). Run on every build and weekly scheduled scan. Monitoring dashboard: documentation health score (contract pass rate, broken links, stale pages, example failures). Alerts: Slack notification when contract test fails, weekly report of documentation health. Metrics tracked over time: documentation accuracy trend, mean time to fix broken docs, percentage of endpoints with passing tests. Integration: documentation test results visible in PR reviews, blocking merge if critical docs tests fail"
+    weight: 0.30
+    description: "Monitoring"

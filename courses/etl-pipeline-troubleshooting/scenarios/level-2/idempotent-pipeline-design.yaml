@@ -1,0 +1,45 @@
+meta:
+  id: idempotent-pipeline-design
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Idempotent pipeline design — build ETL pipelines that can be safely re-run without creating duplicates or data corruption"
+  tags: [idempotency, upsert, reprocessing, reliability, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "We keep having issues when pipelines need
+  to be re-run after failures:
+
+  1. Our orders pipeline crashed halfway through loading 50,000
+     records. When we re-ran it, we got 25,000 duplicate orders
+     (the ones that loaded before the crash were inserted again).
+
+  2. Our customer update pipeline uses INSERT. When it re-runs, it
+     fails with 'duplicate key violation' on customers that were
+     already updated before the failure.
+
+  3. We tried to backfill 30 days of data by re-running the pipeline
+     for each day. It created triplicate records for some days because
+     the pipeline was already scheduled and ran concurrently with our
+     manual backfill.
+
+  How do I make our pipelines idempotent so they're safe to re-run?"
+
+  Task: Design idempotent loading patterns for each scenario, explain
+  the concept of idempotency, and provide implementation strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains idempotency clearly — an operation is idempotent if running it once or multiple times produces the same result. In ETL context: re-running a pipeline for the same time window should produce the same data in the target, not duplicates. Addresses each scenario: for partial failure duplicates, use a staging table with truncate-and-reload or MERGE/UPSERT; for customer updates, use INSERT ON CONFLICT UPDATE; for concurrent backfill, use partition-based replacement (DELETE-INSERT for a date partition) and concurrency locks"
+    weight: 0.35
+    description: "IdempotencyExplanation"
+  - type: llm_judge
+    criteria: "Response provides concrete implementation patterns — staging table pattern: load into staging, then MERGE into target (atomic swap); UPSERT/MERGE: INSERT ON CONFLICT UPDATE for databases that support it; partition replacement: DELETE all records for the date partition then INSERT (within a transaction); deduplication on load: SELECT DISTINCT or ROW_NUMBER() to eliminate duplicates before inserting; natural keys vs surrogate keys: using business keys (order_id) for deduplication rather than auto-increment IDs"
+    weight: 0.35
+    description: "ImplementationPatterns"
+  - type: llm_judge
+    criteria: "Response addresses operational safeguards — concurrency control to prevent multiple instances of the same pipeline from running simultaneously (Airflow max_active_runs=1, database advisory locks), transaction boundaries that ensure atomicity (either all records load or none do), watermark tracking to know exactly what's been processed, and testing idempotency as part of pipeline development (run the pipeline twice on test data and verify results are identical)"
+    weight: 0.30
+    description: "OperationalSafeguards"

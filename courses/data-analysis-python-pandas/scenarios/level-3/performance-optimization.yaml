@@ -1,0 +1,38 @@
+meta:
+  id: performance-optimization
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Optimize pandas performance — diagnose and fix slow pandas operations using vectorization, dtypes, and efficient patterns"
+  tags: [python, pandas, performance, vectorization, memory, optimization, advanced]
+
+state: {}
+
+trigger: |
+  Your data pipeline processes a 50 million row DataFrame daily.
+  The pipeline takes 45 minutes to run, and your manager says:
+  "This needs to run in under 10 minutes or we miss our SLA."
+
+  Profiling reveals these bottlenecks:
+  1. apply() with a custom function on every row (15 min)
+  2. String operations on a column with 50M rows (10 min)
+  3. Memory usage: 12GB (server has 16GB, leaving no headroom)
+  4. Multiple groupby operations on the same groups (8 min)
+  5. Iterating over rows with iterrows() (12 min)
+
+  Task: Optimize each bottleneck and explain the performance
+  principles.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code replaces slow patterns with optimized alternatives — optimization: 'Optimizing each bottleneck: Bottleneck 1 — Replace apply() with vectorized operations (15 min to under 1 min): Before (slow): df[\"category\"] = df.apply(lambda row: \"high\" if row[\"value\"] > 1000 else \"medium\" if row[\"value\"] > 100 else \"low\", axis=1). After (fast): import numpy as np. conditions = [df[\"value\"] > 1000, df[\"value\"] > 100, df[\"value\"] <= 100]. choices = [\"high\", \"medium\", \"low\"]. df[\"category\"] = np.select(conditions, choices). Why: apply with axis=1 runs a Python function for each of 50M rows. np.select operates on the entire array at once in compiled C code. Speedup: 50-200x. Bottleneck 2 — Optimize string operations (10 min to under 2 min): Before: df[\"email_domain\"] = df[\"email\"].str.split(\"@\").str[1].str.lower(). The .str accessor creates a new Series at each step. For 50M rows, this is 3 separate passes over the data. After: df[\"email_domain\"] = df[\"email\"].str.extract(r\"@(.+)\", expand=False).str.lower(). One regex operation instead of split + index. Even faster with PyArrow strings: df[\"email\"] = df[\"email\"].astype(\"string[pyarrow]\"). df[\"email_domain\"] = df[\"email\"].str.extract(r\"@(.+)\", expand=False).str.lower(). PyArrow string operations are 2-5x faster than object dtype strings. Bottleneck 3 — Reduce memory from 12GB to under 4GB: Before loading: df = pd.read_csv(\"data.csv\"). After optimization: dtype_spec = {\"customer_id\": \"int32\", \"product_id\": \"int32\", \"quantity\": \"int16\", \"region\": \"category\", \"status\": \"category\", \"unit_price\": \"float32\"}. df = pd.read_csv(\"data.csv\", dtype=dtype_spec, usecols=[\"needed_columns\"]). Key dtype changes: int64 to int32 (50% reduction, if values fit in 32-bit range). float64 to float32 (50% reduction, if precision is acceptable). object to category (90% reduction for low-cardinality string columns). Drop unnecessary columns with usecols at load time (never load data you will not use). Memory check: print(df.memory_usage(deep=True).sum() / 1e9, \"GB\"). Bottleneck 4 — Cache groupby results (8 min to under 2 min): Before: region_mean = df.groupby(\"region\")[\"value\"].mean(). region_sum = df.groupby(\"region\")[\"value\"].sum(). region_count = df.groupby(\"region\")[\"value\"].count(). Each groupby operation re-sorts and re-groups 50M rows. After: region_stats = df.groupby(\"region\")[\"value\"].agg([\"mean\", \"sum\", \"count\"]). Single groupby operation, multiple aggregations. Or cache the grouped object: grouped = df.groupby(\"region\"). region_mean = grouped[\"value\"].mean(). region_sum = grouped[\"value\"].sum(). Bottleneck 5 — Replace iterrows() with vectorized operations (12 min to under 30 seconds): Before: results = []. for idx, row in df.iterrows(): if row[\"quantity\"] > 10 and row[\"region\"] == \"West\": results.append(row[\"quantity\"] * row[\"unit_price\"] * 0.9). else: results.append(row[\"quantity\"] * row[\"unit_price\"]). df[\"revenue\"] = results. After: df[\"revenue\"] = df[\"quantity\"] * df[\"unit_price\"]. mask = (df[\"quantity\"] > 10) & (df[\"region\"] == \"West\"). df.loc[mask, \"revenue\"] *= 0.9. Never use iterrows() for computation. It converts each row to a Series (slow) and runs Python on each iteration. Total estimated runtime after optimization: under 5 minutes (from 45 minutes)'"
+    weight: 0.35
+    description: "Optimization"
+  - type: llm_judge
+    criteria: "Explanation teaches the performance hierarchy and profiling techniques — explanation: 'The pandas performance hierarchy (fastest to slowest): (1) NumPy vectorized operations (np.where, np.select, arithmetic). Operates on contiguous memory blocks with SIMD instructions. Speed: millions of rows per second. (2) Pandas built-in methods (.str, .dt, groupby with built-in functions). Implemented in Cython (compiled). Speed: hundreds of thousands of rows per second. (3) apply() with a simple function. Calls Python for each row but with some optimization. Speed: tens of thousands of rows per second. (4) iterrows() or itertuples(). Pure Python loop over rows. Speed: thousands of rows per second. (5) Python for loop with iloc. Slowest — random access on each iteration. Speed: hundreds of rows per second. Profiling your pipeline: import time. start = time.time(). operation_here(). print(f\"Operation took: {time.time() - start:.2f}s\"). For detailed profiling: %timeit df[\"a\"] * df[\"b\"] — in Jupyter, runs the operation multiple times and reports average. For memory profiling: df.info(memory_usage=\"deep\") — shows memory per column. df.memory_usage(deep=True) — returns bytes per column. Rule of thumb: if your operation takes more than 1 second per million rows, you are probably using a slow pattern. Vectorized operations process 50M rows in under 5 seconds. apply processes 50M rows in 5-15 minutes. iterrows processes 50M rows in 30-60 minutes'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers chunked processing and when to move beyond pandas — beyond pandas: 'When pandas is not enough: Chunked processing for memory-constrained environments: result_chunks = []. for chunk in pd.read_csv(\"huge_file.csv\", chunksize=1_000_000): chunk_result = chunk.groupby(\"region\")[\"revenue\"].sum(). result_chunks.append(chunk_result). result = pd.concat(result_chunks).groupby(level=0).sum(). This processes 1M rows at a time, using only 1M rows of memory regardless of file size. Limitation: operations that need the full dataset (sorting, percentiles, deduplication) cannot be easily chunked. Alternatives to pandas for large data: Polars: written in Rust, 2-10x faster than pandas for most operations. Lazy evaluation (query optimization). Uses Apache Arrow (zero-copy data sharing). Syntax: import polars as pl. df = pl.scan_csv(\"data.csv\").filter(pl.col(\"value\") > 100).groupby(\"region\").agg(pl.col(\"revenue\").sum()).collect(). DuckDB: SQL-based analytics on files and DataFrames. Excellent for aggregation queries on large CSV and Parquet files. import duckdb. result = duckdb.sql(\"SELECT region, SUM(revenue) FROM 'data.parquet' GROUP BY region\").df(). Dask: parallel pandas (distributes operations across CPU cores). import dask.dataframe as dd. ddf = dd.read_csv(\"data.csv\"). result = ddf.groupby(\"region\")[\"revenue\"].sum().compute(). Decision tree: under 1M rows — use pandas (any pattern works). 1-50M rows — use optimized pandas (vectorized operations, efficient dtypes). 50M-500M rows — consider Polars or DuckDB. Over 500M rows — use Spark, Dask on a cluster, or a database'"
+    weight: 0.30
+    description: "Beyond pandas"

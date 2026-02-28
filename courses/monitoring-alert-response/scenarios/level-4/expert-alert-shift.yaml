@@ -1,0 +1,46 @@
+meta:
+  id: expert-alert-shift
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Expert alert shift — design and implement a complete monitoring transformation for an organization transitioning from reactive alerting to proactive observability"
+  tags: [monitoring, shift-simulation, expert, transformation, comprehensive]
+
+state: {}
+
+trigger: |
+  You've been hired as the Head of Observability at a company that
+  has grown from 50 to 300 engineers in 2 years. The monitoring
+  situation is a mess:
+
+  - 2,500 active alert rules (no one knows which are important)
+  - Average on-call engineer receives 60 pages per week (10% actionable)
+  - 4 engineers quit in the last quarter citing on-call burden
+  - Monitoring costs: $500K/year and growing 30% annually
+  - 7 different monitoring tools with no integration
+  - MTTD (mean time to detect): 15 minutes (customers often find
+    issues before monitoring does)
+  - No SLOs defined for any service
+  - The CEO has asked: "How is it possible that we spend $500K on
+    monitoring and customers still find our outages before we do?"
+
+  Budget for transformation: $200K additional (total $700K for
+  first year)
+
+  Task: Write the 12-month observability transformation plan.
+  Address the CEO's question directly, define the target state,
+  and show the phased plan to get there.
+
+assertions:
+  - type: llm_judge
+    criteria: "CEO's question is answered directly and the root cause is identified — answer to the CEO: 'We spend $500K on monitoring, and customers find outages first because we are monitoring the wrong things. We have 2,500 alert rules that measure infrastructure health (CPU, memory, disk) but very few that measure customer experience (can users log in, can users check out, can users load the dashboard). When CPU is at 90% and everything is fine, we get a page. When the checkout flow is silently broken but CPU is at 30%, we get nothing. This is the difference between monitoring (watching infrastructure metrics) and observability (understanding customer experience). Our $500K is spent on monitoring infrastructure. We need to redirect it toward observing customer experience.' Root cause of the monitoring mess: '(1) Organic growth: 2,500 rules were created by 300 engineers independently over 2 years. No standards, no review process, no cleanup. (2) Cause-based alerting: most rules alert on causes (CPU, memory) not symptoms (errors, latency). (3) No SLOs: without SLOs, there is no definition of what good looks like. Teams alert on everything because they do not know what matters. (4) Tool sprawl: 7 tools means no correlation, no unified view, and 7x the configuration effort. (5) No governance: alerts are created and never reviewed, tuned, or retired'"
+    weight: 0.35
+    description: "CEO answer and root cause"
+  - type: llm_judge
+    criteria: "Target state is clearly defined with measurable goals — target state (12-month goals): '(1) Alert quality: reduce from 2,500 to 300-400 well-maintained alerts. Actionable rate: from 10% to 70%+. Pages per on-call per week: from 60 to under 10. (2) Detection: MTTD from 15 minutes to under 3 minutes. Customer-detected incidents: from current unknown percentage to under 5% (95% of incidents detected by monitoring before customers notice). (3) SLO coverage: 100% of customer-facing services have defined SLOs with burn-rate alerting. (4) Tool consolidation: from 7 tools to 2-3 integrated tools with correlation between metrics, logs, and traces. (5) Cost efficiency: monitoring costs reduced from $500K to $400K through optimization, with the $200K transformation budget invested in the transition. By year 2: steady-state cost under $350K with better capability. (6) Engineer satisfaction: on-call satisfaction score above 3.5/5 (currently likely below 2). Zero attrition attributed to on-call burden. (7) Observability culture: teams own their service observability. SLO reviews are part of sprint planning. Monitoring is an engineering practice, not an afterthought'"
+    weight: 0.35
+    description: "Measurable target state"
+  - type: llm_judge
+    criteria: "12-month phased plan is actionable with clear milestones — execution plan: 'Quarter 1 (months 1-3): stop the bleeding. Month 1: alert triage. Classify all 2,500 alerts into: keep (critical, actionable), tune (potentially useful but noisy), and retire (stale, duplicative, or non-actionable). Expected: 40% retired immediately (stale, orphaned, or covering decommissioned services). Month 2: noise reduction blitz. For the top 50 noisiest alerts: tune thresholds, add conditions, or convert from pages to notifications. Expected: pages per week drop from 60 to 25. Month 3: SLO foundations. Define SLOs for the top 10 customer-facing services. Implement burn-rate alerting for these 10 services. Expected: the most important services now have customer-experience-based detection. Milestone: pages reduced by 50%, SLOs defined for top 10 services.' Quarter 2 (months 4-6): platform consolidation. Month 4-5: select and deploy the target observability platform (Grafana stack or equivalent). Begin migrating services in batches of 10-15 per week. Month 6: complete SLO coverage for all 50 customer-facing services. Decommission the first 2-3 redundant monitoring tools. Milestone: unified platform for 50% of services, SLOs for all customer-facing services. Quarter 3 (months 7-9): maturity. Complete platform migration. Implement alert automation for top 5 routine remediations. Launch on-call optimization program (rotation design, training requirements, compensation standardization). Milestone: all services on unified platform, automation handling 30% of routine pages. Quarter 4 (months 10-12): optimization and culture. Cost optimization through log reduction, trace sampling, and retention tiering. Launch quarterly alert audit program. Establish monitoring governance framework. First annual observability report for the CEO. Milestone: all targets met, sustainable governance in place'"
+    weight: 0.30
+    description: "Actionable 12-month plan"

@@ -1,0 +1,45 @@
+meta:
+  id: endpoint-description
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Write endpoint descriptions — document HTTP method, path, purpose, and usage for a REST API endpoint"
+  tags: [API, documentation, endpoints, REST, HTTP-methods, beginner]
+
+state: {}
+
+trigger: |
+  You're documenting a REST API for a task management application.
+  A developer gives you this information about an endpoint:
+
+  - It creates a new task
+  - URL: /api/v1/tasks
+  - Method: POST
+  - Needs authentication
+  - Request body: title (required), description (optional),
+    due_date (optional, ISO 8601), priority (optional: low/medium/high)
+  - Returns the created task with an ID
+  - Returns 201 on success
+
+  The developer's current "documentation" is just a Slack message:
+  "POST /tasks to make a new task, send JSON with title etc"
+
+  Task: Write proper endpoint documentation for this API endpoint.
+  Include: HTTP method and path, description, request body with field
+  descriptions and types, example request/response, status codes,
+  and authentication requirement. Also explain what makes good
+  endpoint documentation vs bad.
+
+assertions:
+  - type: llm_judge
+    criteria: "Endpoint documentation is complete — includes: (1) HTTP method and path: POST /api/v1/tasks, (2) clear one-line description of what the endpoint does ('Creates a new task in the authenticated user's task list'), (3) authentication: requires Bearer token, (4) request body: JSON object with field names, types, required/optional status, descriptions, and constraints (priority enum values). Example request with headers (Content-Type, Authorization) and JSON body. Example response (201 Created) with full task object including generated id, created_at timestamp"
+    weight: 0.35
+    description: "Complete documentation"
+  - type: llm_judge
+    criteria: "Examples are realistic and helpful — request example shows actual JSON with realistic values (not 'string' or 'example'). Response example shows the full object as the API actually returns it (including server-generated fields like id, created_at, updated_at, status). Headers included in examples. Multiple status codes documented: 201 (success), 400 (validation error with example error response), 401 (unauthorized), 422 (unprocessable entity). Each status code has a description of when it occurs"
+    weight: 0.35
+    description: "Realistic examples"
+  - type: llm_judge
+    criteria: "Good vs bad documentation is explained — bad: 'POST /tasks to make a new task' (no types, no examples, no error codes, ambiguous). Good: structured, includes every field with type and description, shows real examples, documents errors, explains authentication. Key principles: developers should be able to call the endpoint from documentation alone without guessing. Include: what parameters are required, what format dates should be in, what values enums accept, what the response looks like on success AND failure"
+    weight: 0.30
+    description: "Good vs bad"

@@ -1,0 +1,51 @@
+meta:
+  id: terraform-debugging
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Debug Terraform with TF_LOG — use log levels, provider-specific debugging, crash logs, and systematic troubleshooting for complex failures"
+  tags: [Terraform, debugging, TF_LOG, crash-logs, troubleshooting, advanced]
+
+state: {}
+
+trigger: |
+  A terraform apply fails with a cryptic error that gives no useful
+  information:
+
+  ```
+  Error: error creating ECS Service (my-service): InvalidParameterException:
+  Unable to assume the provided role.
+
+  with aws_ecs_service.web,
+  on ecs.tf line 15, in resource "aws_ecs_service" "web":
+  15: resource "aws_ecs_service" "web" {
+  ```
+
+  The IAM role exists and looks correct. You need to dig deeper.
+
+  You also encounter a Terraform crash:
+  ```
+  !!!!!!!!!!!!!!!!!!!!!!!!!!! TERRAFORM CRASH !!!!!!!!!!!!!!!!!!!!!!!!!
+
+  Terraform crashed! This is always indicative of a bug within
+  Terraform or a provider. Crash log saved to: crash.log
+  ```
+
+  Task: Explain Terraform debugging techniques, TF_LOG levels and
+  environment variables, provider-specific debugging, crash log
+  analysis, and systematic troubleshooting methodology for complex
+  infrastructure failures.
+
+assertions:
+  - type: llm_judge
+    criteria: "TF_LOG debugging is explained — levels (most to least verbose): TRACE, DEBUG, INFO, WARN, ERROR. Set: TF_LOG=DEBUG terraform apply. Save to file: TF_LOG_PATH=./debug.log. Component-specific: TF_LOG_CORE=WARN TF_LOG_PROVIDER=DEBUG (provider operations verbose, core quiet). The ECS error: TF_LOG=DEBUG reveals the actual API request/response — likely IAM role trust policy doesn't include ecs.amazonaws.com, or there's an IAM propagation delay. DEBUG shows: HTTP requests, API responses, retry attempts, timing. TRACE shows everything including internal state operations"
+    weight: 0.35
+    description: "TF_LOG debugging"
+  - type: llm_judge
+    criteria: "Crash logs and provider debugging are covered — crash log: contains Go stack trace, panic message, provider version. Report to: provider GitHub issues if provider crash, Terraform core GitHub if core crash. Include: Terraform version, provider versions, sanitized config, crash.log. Provider debugging: check provider changelog for known bugs, try upgrading/downgrading provider version, reproduce with minimal configuration. AWS-specific: decode authorization failure messages with aws sts decode-authorization-message. Eventual consistency: IAM changes can take seconds to propagate — add depends_on or retry"
+    weight: 0.35
+    description: "Crash and provider"
+  - type: llm_judge
+    criteria: "Systematic troubleshooting is practical — methodology: (1) read the error message carefully (resource, file, line), (2) check provider documentation for the resource, (3) enable TF_LOG=DEBUG and search for the actual API error, (4) reproduce with minimal configuration (isolate the issue), (5) check for known issues on provider GitHub, (6) verify cloud-side (correct permissions, quotas, resource limits). Common hidden causes: IAM propagation delay, API rate limiting (429 errors hidden in retries), eventual consistency, stale provider cache (terraform init -upgrade). terraform plan -refresh-only to verify state matches reality"
+    weight: 0.30
+    description: "Troubleshooting method"

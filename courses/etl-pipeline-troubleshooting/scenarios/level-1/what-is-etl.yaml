@@ -1,0 +1,36 @@
+meta:
+  id: what-is-etl
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "ETL fundamentals — understand extract, transform, load phases and how data moves between systems"
+  tags: [etl, fundamentals, basics, introduction]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "I just joined a team that manages
+  'ETL pipelines' but I'm not sure what that means exactly. I see
+  Airflow DAGs, dbt models, and Fivetran connectors mentioned
+  everywhere.
+
+  Can you explain what ETL is, what each phase does, and how a
+  typical pipeline works end-to-end? I'd also like to understand
+  how 'ELT' differs from 'ETL' since people use both terms."
+
+  Task: Explain the ETL/ELT concepts, describe each phase with
+  concrete examples, and clarify when to use ETL vs ELT approaches.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response clearly explains each ETL phase — Extract: pulling data from source systems (databases, APIs, files, SaaS tools), dealing with different formats and protocols; Transform: cleaning, reshaping, joining, aggregating, applying business logic, data type conversions; Load: writing processed data into the target system (data warehouse, data lake, database). Uses concrete examples like 'extract orders from a PostgreSQL database and a Shopify API, transform by joining and calculating total revenue per customer, load into a Snowflake warehouse'"
+    weight: 0.35
+    description: "ETLPhases"
+  - type: llm_judge
+    criteria: "Response explains ELT vs ETL — ETL transforms before loading (traditional approach, used when compute is limited at the target), ELT loads raw data first and transforms inside the warehouse (modern approach enabled by powerful cloud warehouses like Snowflake/BigQuery/Redshift that have cheap, scalable compute). Explains when each is appropriate: ETL for sensitive data that needs filtering before storage, complex transformations requiring specialized tools; ELT when the warehouse is powerful, when you want to preserve raw data, when transforms may change over time"
+    weight: 0.35
+    description: "ETLvsELT"
+  - type: llm_judge
+    criteria: "Response introduces the modern data stack context — mentions how tools fit together: Fivetran/Airbyte for extraction, dbt for transformation (ELT style), Airflow/Dagster/Prefect for orchestration, Snowflake/BigQuery/Redshift as the warehouse. Explains what an Airflow DAG is at a high level (directed acyclic graph that defines task dependencies and scheduling). Gives a sense of why pipelines fail and need troubleshooting (source changes, network issues, data quality problems)"
+    weight: 0.30
+    description: "ModernStack"

@@ -1,0 +1,62 @@
+meta:
+  id: serverless-testing-strategy
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless testing strategy — implement unit, integration, and end-to-end testing for Lambda applications with mock services and contract testing"
+  tags: [AWS, Lambda, testing, unit-test, integration, mocking, expert]
+
+state: {}
+
+trigger: |
+  Your serverless application has 50 Lambda functions but only 15%
+  test coverage. Bugs frequently reach production because:
+
+  1. Developers don't know how to test Lambda functions locally
+  2. Integration tests require deploying to AWS (slow, expensive)
+  3. No testing strategy for event-driven flows (events are "fire
+     and forget" — how do you verify the chain worked?)
+  4. Mocking AWS services is complex (DynamoDB, SQS, S3)
+
+  Last week, a DynamoDB schema change broke 3 downstream functions.
+  No tests caught it because each function was tested in isolation.
+
+  Testing pyramid for serverless:
+
+  Layer 1 — Unit Tests (70% of tests):
+  Test business logic in isolation. Mock AWS SDK calls.
+  $ npm test  # runs in milliseconds, no AWS needed
+
+  Layer 2 — Integration Tests (20% of tests):
+  Test Lambda handler with real AWS services (or local emulation).
+  $ sam local invoke -e event.json  # local Lambda + local DynamoDB
+  Or: deploy to a test account and run against real services.
+
+  Layer 3 — End-to-End Tests (10% of tests):
+  Deploy full stack to a test environment, send real HTTP requests,
+  verify the complete flow works including async processing.
+  $ sam deploy --stack-name test-stack && npm run e2e
+
+  Contract testing: when Function A writes to DynamoDB and Function B
+  reads from it, test that A's output matches B's expected input
+  schema (using shared TypeScript types or JSON Schema).
+
+  Task: Design the serverless testing strategy. Write: the testing
+  pyramid for serverless, unit testing Lambda (mocking AWS SDK),
+  integration testing (SAM local, LocalStack, real AWS), end-to-end
+  testing for event-driven flows, contract testing between services,
+  and CI/CD test automation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Testing pyramid is adapted for serverless — unit tests: test pure business logic functions (no Lambda handler), mock AWS SDK calls (aws-sdk-client-mock for v3), test input validation, error handling. Integration tests: test Lambda handler with event payloads, use SAM local or deploy to test account. E2E tests: deploy full stack, trigger real events, verify end-to-end flow including async processing (poll for results). Ratio: 70% unit, 20% integration, 10% E2E. Key difference from traditional: more integration tests needed because serverless glue code interacts heavily with AWS services"
+    weight: 0.35
+    description: "Testing pyramid"
+  - type: llm_judge
+    criteria: "Mocking and integration testing are covered — unit test mocking: aws-sdk-client-mock (TypeScript/JavaScript), moto (Python), use dependency injection for testability. Integration: SAM local invoke for Lambda, DynamoDB Local for database, LocalStack for full AWS emulation. Real AWS testing: deploy to dedicated test account with ephemeral stacks (create stack → test → delete). Event testing: generate sample events (sam local generate-event), test with real SQS/EventBridge events. Contract testing: share TypeScript types between producer and consumer, validate schemas in CI"
+    weight: 0.35
+    description: "Mocking and integration"
+  - type: llm_judge
+    criteria: "CI/CD automation is practical — CI pipeline stages: (1) unit tests (fast, every commit), (2) sam build + deploy to test account, (3) integration tests against deployed stack, (4) e2e tests, (5) deploy to staging, (6) smoke tests, (7) deploy to production with canary. Testing async flows: after triggering event, poll DynamoDB/S3 for expected result with timeout. Contract testing in CI: validate shared schemas haven't changed incompatibly. Cost: unit tests are free, integration tests cost a few cents per run. Clean up: delete test stacks after tests to avoid cost. Flaky test mitigation: retry async assertions, use eventually-consistent assertions with polling"
+    weight: 0.30
+    description: "CI/CD automation"

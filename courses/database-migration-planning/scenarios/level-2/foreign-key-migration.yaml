@@ -1,0 +1,39 @@
+meta:
+  id: foreign-key-migration
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Add foreign keys to existing tables — safely add referential integrity constraints to tables with existing data that may contain violations"
+  tags: [database, migration, foreign-key, constraints, data-integrity, intermediate]
+
+state: {}
+
+trigger: |
+  Your team is adding foreign key constraints to tables that were
+  created without them. The database has grown organically and
+  referential integrity was enforced only in application code (which
+  had bugs). You need to add foreign keys to:
+
+  1. orders.customer_id → customers.id (10M orders, 500K customers)
+     - Found: 2,340 orders with customer_id values not in customers
+  2. order_items.order_id → orders.id (30M items, 10M orders)
+     - Found: 156 items with order_id values not in orders
+  3. order_items.product_id → products.id (30M items, 200K products)
+     - Found: 0 violations (clean)
+
+  Task: Plan the migration to add all three foreign keys. Address
+  the data violations and minimize downtime.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data cleanup strategy addresses violations — data cleanup: 'Before adding foreign keys, fix the violations. The strategy depends on the business context of the violations. For orders.customer_id (2,340 orphaned orders): Investigate first: are these from deleted customers? Merged customers? Data import bugs? Options: Option A (soft fix): create a placeholder customer. INSERT INTO customers (id, name, email) VALUES (0, deleted_customer, deleted@placeholder.internal); UPDATE orders SET customer_id = 0 WHERE customer_id NOT IN (SELECT id FROM customers); This preserves order data while making the foreign key valid. Option B (archive): move orphaned orders to an archive table. CREATE TABLE orders_orphaned AS SELECT * FROM orders WHERE customer_id NOT IN (SELECT id FROM customers); DELETE FROM orders WHERE customer_id NOT IN (SELECT id FROM customers); This removes the violations but preserves the data separately. Recommendation: Option A for orders (order data has financial value, should not be deleted). For order_items.order_id (156 orphaned items): 156 items is small enough to investigate individually. Check: are the referenced orders in a soft-delete state? Were they from a bulk import? For items without any recoverable order, delete them (items without orders have no business value). DELETE FROM order_items WHERE order_id NOT IN (SELECT id FROM orders); For order_items.product_id (0 violations): no cleanup needed. Proceed directly to adding the constraint'"
+    weight: 0.35
+    description: "Data cleanup"
+  - type: llm_judge
+    criteria: "Constraint addition uses NOT VALID pattern for large tables — migration approach: 'For large tables, adding a foreign key with full validation locks the table while checking every row. Use the two-step approach with NOT VALID: Step 1: Add constraints as NOT VALID. ALTER TABLE orders ADD CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) NOT VALID; ALTER TABLE order_items ADD CONSTRAINT fk_items_order FOREIGN KEY (order_id) REFERENCES orders(id) NOT VALID; ALTER TABLE order_items ADD CONSTRAINT fk_items_product FOREIGN KEY (product_id) REFERENCES products(id) NOT VALID; NOT VALID means: new rows are validated against the constraint (enforced from now on), but existing rows are NOT checked. This is instant — no table scan, no lock. Step 2: Validate constraints separately. ALTER TABLE orders VALIDATE CONSTRAINT fk_orders_customer; ALTER TABLE order_items VALIDATE CONSTRAINT fk_items_order; ALTER TABLE order_items VALIDATE CONSTRAINT fk_items_product; VALIDATE checks existing rows but acquires only a SHARE UPDATE EXCLUSIVE lock (allows reads and writes, only blocks DDL and VACUUM). For 10M orders: validation takes 1-3 minutes but does not block application queries. For 30M order_items: validation takes 3-8 minutes but does not block queries. Why two steps: if the validation fails (a violation was missed during cleanup), only the VALIDATE fails — the constraint still exists as NOT VALID and new inserts are still protected. Fix the remaining violation and re-run VALIDATE. With a single-step ADD CONSTRAINT (without NOT VALID): the failure would mean no constraint at all, and you start over'"
+    weight: 0.35
+    description: "NOT VALID pattern"
+  - type: llm_judge
+    criteria: "Index and performance considerations included — indexes and performance: 'Foreign key columns should have indexes for performance. Without an index on the referencing column: every DELETE from the referenced table (customers) checks every row in the referencing table (orders) for matching customer_id values. On a 10M row table without an index: this is a sequential scan that can take seconds. Required indexes: CREATE INDEX CONCURRENTLY idx_orders_customer_id ON orders(customer_id); CREATE INDEX CONCURRENTLY idx_items_order_id ON order_items(order_id); CREATE INDEX CONCURRENTLY idx_items_product_id ON order_items(product_id); Create these BEFORE adding the foreign key constraints. The index creation takes longer on large tables, so schedule it during off-peak hours. Migration order: (1) Clean up data violations (run as separate scripts, not in migration). (2) Create indexes CONCURRENTLY (run during off-peak). (3) Add foreign key constraints as NOT VALID (instant). (4) Validate constraints (run during business hours — they do not block queries). (5) Add application-level prevention: ensure application code cannot create new violations (validate customer_id exists before inserting orders). The foreign key is the database safety net; the application should still validate'"
+    weight: 0.30
+    description: "Indexes and performance"

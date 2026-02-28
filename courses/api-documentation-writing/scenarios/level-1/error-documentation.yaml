@@ -1,0 +1,45 @@
+meta:
+  id: error-documentation
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document API errors — write helpful error descriptions, troubleshooting guides, and consistent error response schemas"
+  tags: [API, documentation, errors, troubleshooting, error-codes, beginner]
+
+state: {}
+
+trigger: |
+  Your API returns errors but developers can't figure out what went
+  wrong. Current error response:
+
+  ```json
+  { "error": "Something went wrong" }
+  ```
+
+  Developer feedback:
+  - "The error message doesn't tell me what I did wrong"
+  - "I got an error code 'E1042' — what does that mean?"
+  - "Different endpoints return errors in different formats"
+  - "Is there a list of all possible errors?"
+
+  You need to design and document a consistent error response format
+  and create an error reference guide.
+
+  Task: Design a standard error response format, document common
+  errors with troubleshooting steps, and create an error code
+  reference table. Show both the error schema documentation and
+  endpoint-specific error documentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error response schema is consistent and informative — standard format: { 'error': { 'type': 'validation_error', 'code': 'INVALID_EMAIL', 'message': 'The email address is not valid', 'details': [{ 'field': 'email', 'message': 'Must be a valid email address', 'value': 'not-an-email' }], 'request_id': 'req_abc123', 'documentation_url': 'https://docs.api.com/errors/INVALID_EMAIL' } }. Each field explained: type (category), code (machine-readable), message (human-readable), details (field-level), request_id (for support), documentation_url (link to fix)"
+    weight: 0.35
+    description: "Error schema"
+  - type: llm_judge
+    criteria: "Error reference table is complete — categorized error codes: authentication errors (INVALID_TOKEN, TOKEN_EXPIRED, MISSING_AUTH), validation errors (INVALID_EMAIL, REQUIRED_FIELD, INVALID_FORMAT), resource errors (NOT_FOUND, ALREADY_EXISTS, CONFLICT), rate limiting (RATE_LIMITED), server errors (INTERNAL_ERROR, SERVICE_UNAVAILABLE). Each error: code, HTTP status, description, common causes, fix. Table format for quick scanning. Error codes are stable (won't change between API versions)"
+    weight: 0.35
+    description: "Error reference"
+  - type: llm_judge
+    criteria: "Troubleshooting guidance is developer-friendly — for each common error: (1) what you sent (example bad request), (2) what you got back (error response), (3) what to fix (specific action). Example: 'INVALID_EMAIL — You sent email: \"john@\" — email must include domain: email: \"john@example.com\"'. Per-endpoint error docs: list which errors each endpoint can return. Encourage developers to log request_id for support escalation. SDK error handling example: try/catch with error type checking"
+    weight: 0.30
+    description: "Troubleshooting"

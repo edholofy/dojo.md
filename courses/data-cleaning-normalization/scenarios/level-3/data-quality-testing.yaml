@@ -1,0 +1,38 @@
+meta:
+  id: data-quality-testing
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Data quality testing — build automated test suites that validate data quality at every stage of the pipeline using Great Expectations and similar frameworks"
+  tags: [testing, great-expectations, automation, pipeline, advanced]
+
+state: {}
+
+trigger: |
+  A data engineering lead says: "We have 15 data pipelines that run
+  daily, processing data from source systems to our data warehouse.
+  Last month, a pipeline silently produced bad data for 2 weeks before
+  anyone noticed — the source system changed a field format and our
+  pipeline didn't catch it.
+
+  I want automated data quality tests that catch issues immediately.
+  I've heard about Great Expectations and dbt tests. How do I build
+  a comprehensive data quality test suite?"
+
+  Task: Design an automated data quality testing framework that covers
+  schema validation, business rules, distribution checks, and freshness
+  monitoring across a production data pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a layered testing approach — Layer 1: schema tests (column existence, data types, not-null constraints — catch the source format change that was missed), Layer 2: value tests (range checks, enum validation, pattern matching, uniqueness constraints), Layer 3: aggregate tests (row count expectations, sum/mean within expected bounds, no unexpected nulls), Layer 4: distribution tests (values follow expected distribution, no sudden shifts in mean or variance), Layer 5: cross-table tests (referential integrity, record counts match between related tables). Each layer catches different types of problems"
+    weight: 0.35
+    description: "TestLayers"
+  - type: llm_judge
+    criteria: "Response covers implementation with specific frameworks — Great Expectations: defining expectations (expect_column_values_to_be_between, expect_column_values_to_not_be_null, expect_table_row_count_to_be_between), creating expectation suites per dataset, integrating into pipeline orchestration (run tests before publishing data), and handling test failures (halt pipeline, alert, quarantine bad data). Also covers dbt tests (unique, not_null, accepted_values, relationships) and custom SQL tests. Shows how tests integrate into CI/CD for data"
+    weight: 0.35
+    description: "Implementation"
+  - type: llm_judge
+    criteria: "Response addresses operational practices — managing test expectations over time (expectations need updating as business changes), balancing sensitivity (too many alerts cause fatigue, too few miss issues), implementing test environments (test against production-like data before deploying pipeline changes), monitoring test pass rates as a health metric, and creating runbooks for common test failures (what to do when row count drops 20%, when a column's null rate spikes, when a distribution shifts)"
+    weight: 0.30
+    description: "Operations"

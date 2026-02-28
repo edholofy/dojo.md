@@ -1,0 +1,58 @@
+meta:
+  id: terraform-fmt-validate
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Use terraform fmt and validate — enforce consistent formatting, catch configuration errors before plan, and set up pre-commit hooks"
+  tags: [Terraform, fmt, validate, formatting, pre-commit, beginner]
+
+state: {}
+
+trigger: |
+  Your team's Terraform codebase is a formatting mess. Every developer
+  uses different indentation, alignment, and spacing. Code reviews are
+  full of style nitpicks instead of substance:
+
+  ```hcl
+  resource "aws_instance" "web" {
+      ami = "ami-0c55b159cbfafe1f0"
+    instance_type="t3.micro"
+        tags={
+      Name ="web-server"
+    Environment= "prod"
+        }
+  }
+
+  variable "region" {
+  type=string
+    default ="us-east-1"
+  }
+  ```
+
+  Additionally, a developer pushed this broken config that wasn't caught
+  until CI ran terraform plan (wasting 10 minutes):
+
+  ```hcl
+  resource "aws_s3_bucket" "data" {
+    bucket = var.bucket_name
+    acl    = "private"  # acl argument removed in AWS provider v4+
+  }
+  ```
+
+  Task: Explain terraform fmt (auto-formatting), terraform validate
+  (configuration checking), how to enforce both in CI/CD and pre-commit
+  hooks, and the difference between validate and plan for error catching.
+
+assertions:
+  - type: llm_judge
+    criteria: "terraform fmt is explained — terraform fmt rewrites .tf files to canonical format (2-space indent, aligned equals signs, consistent spacing). terraform fmt -check: returns non-zero exit code if files need formatting (for CI). terraform fmt -recursive: formats all .tf files in subdirectories. terraform fmt -diff: shows the formatting changes. The example code would be auto-fixed to consistent 2-space indentation with aligned = signs. Best practice: run fmt before every commit"
+    weight: 0.35
+    description: "Formatting"
+  - type: llm_judge
+    criteria: "terraform validate is explained with its limitations — validate checks: syntax errors, invalid argument names, type mismatches, missing required arguments, invalid resource references. validate does NOT check: cloud API validity (wrong AMI ID), permissions, resource existence, provider-specific logic. The acl argument error: validate might not catch this because it depends on provider version schema. Plan catches more because it initializes providers and checks against their schemas. Workflow: fmt → validate → plan → apply. validate is fast (no API calls), plan is thorough (makes API calls)"
+    weight: 0.35
+    description: "Validation"
+  - type: llm_judge
+    criteria: "CI/CD and pre-commit integration are practical — pre-commit hook: use pre-commit framework with terraform_fmt and terraform_validate hooks. CI pipeline: (1) terraform fmt -check -recursive (fail if unformatted), (2) terraform init -backend=false (for validate only), (3) terraform validate, (4) terraform plan. This catches formatting issues before PR, validation errors without cloud access, and full errors with plan. Tools: pre-commit-terraform hooks, GitHub Actions, GitLab CI. TFLint for additional linting beyond validate (naming conventions, deprecated syntax, best practices)"
+    weight: 0.30
+    description: "CI integration"

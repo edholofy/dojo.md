@@ -1,0 +1,54 @@
+meta:
+  id: ma-infrastructure-consolidation
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "M&A infrastructure consolidation — design the integration plan for merging two companies' Terraform-managed infrastructure during an acquisition"
+  tags: [Terraform, M&A, acquisition, consolidation, migration, master]
+
+state: {}
+
+trigger: |
+  Your company (acquirer, 100 engineers, $1.5M/month AWS, mature
+  Terraform) acquires a competitor (target, 40 engineers, $500K/month
+  AWS, partial Terraform coverage). Integration timeline: 12 months.
+
+  Acquirer infrastructure:
+  - AWS Organization with 8 accounts
+  - Terraform Cloud Enterprise with 200 workspaces
+  - Private module registry (50 modules)
+  - Full CI/CD pipeline (GitHub Actions + Terraform Cloud)
+  - SOC2 Type II compliant
+
+  Target infrastructure:
+  - Single AWS account (everything in one account)
+  - Terraform used for 40% of resources (rest is CloudFormation + console)
+  - 30 Terraform state files in S3 (no locking, no encryption)
+  - No module library — copy-paste configurations
+  - No compliance certifications
+  - Different region (eu-west-1 vs acquirer's us-east-1)
+
+  Key challenges:
+  1. Account consolidation: bring target into acquirer's Organization
+  2. IaC migration: capture non-Terraform resources under IaC
+  3. State management: migrate 30 unencrypted states to Terraform Cloud
+  4. Module standardization: replace copy-paste with acquirer's modules
+  5. Team integration: onboard 40 engineers to new platform
+
+  Task: Design the M&A infrastructure consolidation plan covering:
+  phased approach, account structure, IaC migration strategy, state
+  management, team onboarding, and risk mitigation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Phased approach is realistic — Phase 1 (months 1-3, Stabilize): invite target's account into acquirer's Organization, apply baseline SCPs, encrypt state files, add DynamoDB locking. DON'T change anything else — stabilize first. Phase 2 (months 3-6, Standardize): migrate console-deployed resources to Terraform (import), convert CloudFormation to Terraform using cf2tf or manual conversion, migrate states to Terraform Cloud. Phase 3 (months 6-9, Consolidate): replace target's copy-paste configs with acquirer's modules, split single account into proper multi-account structure. Phase 4 (months 9-12, Optimize): decommission redundant infrastructure, optimize costs, achieve compliance. Critical principle: keep target's services running throughout — never break production during migration"
+    weight: 0.35
+    description: "Phased approach"
+  - type: llm_judge
+    criteria: "IaC and state migration are detailed — IaC migration for non-Terraform resources: (1) inventory all resources using AWS Config or resource explorer, (2) use terraform import blocks (1.5+) with -generate-config-out for automatic config generation, (3) prioritize by criticality (databases first, then compute, then supporting services). CloudFormation conversion: use cdk import or manual conversion (CF templates map closely to Terraform resources). State migration to Terraform Cloud: (1) add encryption to existing S3 state, (2) add DynamoDB locking, (3) create Terraform Cloud workspaces, (4) terraform init -migrate-state from S3 to TFC. Cross-region: target's eu-west-1 resources stay in eu-west-1 (don't move regions), add eu-west-1 provider alias to acquirer's modules"
+    weight: 0.35
+    description: "IaC and state migration"
+  - type: llm_judge
+    criteria: "Team onboarding and risk mitigation are practical — team onboarding: week 1 — Terraform Cloud access and training. Weeks 2-3 — paired programming with acquirer engineers. Month 2-3 — supervised independent contributions. Month 4+ — full autonomy within guardrails. Support: dedicated Slack channel, weekly office hours, internal documentation. Risk mitigation: (1) don't rush — failed M&A integration costs more than slow integration, (2) keep target's infrastructure running on existing patterns while migrating, (3) rollback plan for every migration phase, (4) dedicated integration manager coordinates across teams, (5) track integration milestones: IaC coverage %, state migration %, team certification rate. Budget: allocate 20% of integration budget to contingency"
+    weight: 0.30
+    description: "Onboarding and risk"

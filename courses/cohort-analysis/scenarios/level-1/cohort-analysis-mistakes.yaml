@@ -1,0 +1,32 @@
+meta:
+  id: cohort-analysis-mistakes
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Avoid common cohort analysis mistakes — recognize and prevent the most frequent errors in building, interpreting, and presenting cohort analyses"
+  tags: [mistakes, pitfalls, data-quality, interpretation, beginner]
+
+state: {}
+
+trigger: |
+  A data analyst presents cohort analysis to the VP. The VP asks
+  skeptical questions: "Why does week 0 show 85% instead of 100%?
+  Why do some cohorts have higher retention than the previous month?
+  This data doesn't look right."
+
+  Task: Explain the most common cohort analysis mistakes and how to
+  avoid them.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers data construction mistakes — construction: 'Common data construction mistakes: Mistake 1 — Week 0 is not 100%: the VP noticed week 0 shows 85% instead of 100%. This means the cohort definition and the activity definition are misaligned. The cohort includes 1,000 users who signed up. But only 850 performed a qualifying activity in week 0. Cause: signup is counted as entering the cohort, but the activity metric requires a different action (e.g., logging in, performing a core action). Fix: either count signup itself as the week 0 activity (week 0 should always be 100%), or redefine the cohort as users who performed the first qualifying action (then week 0 is 100% by definition). Week 0 less than 100% is a red flag that the analysis is misconfigured. Mistake 2 — Using calendar periods instead of lifecycle periods: Wrong: January cohort's month 1 = February (calendar month). Right: January cohort's month 1 = the second month after each user's signup. If a user signs up on January 28, their month 1 should be February 28 - March 27, not all of February. Using calendar months mixes users at different lifecycle stages within the same cell. Users who signed up January 1 have 30 days of data in February. Users who signed up January 31 have only 1 day of data in February. Fix: always calculate time offsets from each user's individual signup date. Mistake 3 — Counting total events instead of unique users: the retention table should count how many unique users were active, not how many total events occurred. A user who logged in 50 times in week 1 should count as 1, not 50. Fix: always use COUNT(DISTINCT user_id)'"
+    weight: 0.35
+    description: "Construction"
+  - type: llm_judge
+    criteria: "Response covers interpretation mistakes — interpretation: 'Common interpretation mistakes: Mistake 4 — Retention jumping up between periods: the VP noticed some cohorts show higher retention in month 3 than month 2. This seems impossible — how can more users be active in month 3 than month 2? Possible explanations: users returned after being inactive (reactivation). This is valid — some products see users leave and come back. This is unbounded retention — it measures whether a user was active at any point during the period. An external event (promotion, feature launch) re-engaged dormant users. If this happens consistently, it may indicate a seasonal pattern. Data error: a tracking change or bug inflated month 3 numbers. Check event logs around that time. Retention going up is not necessarily wrong but it should be investigated and explained. Mistake 5 — Comparing cohorts of different sizes without normalizing: January cohort: 100 signups, 30 retained at month 3 (30%). February cohort: 5,000 signups, 1,000 retained at month 3 (20%). If you compare absolute numbers (30 vs 1,000), February looks better. But February has 10pp lower retention rate — its users are less engaged. Always compare percentages, not absolute counts. Mistake 6 — Concluding causation from correlation: the behavioral cohort shows users who invited a friend retain at 3x the rate. This does NOT mean forcing users to invite friends will triple retention. Users who invite friends may be inherently more engaged — the invitation is a signal of engagement, not a cause of retention. The relationship may be: engagement → invitation AND engagement → retention. Not: invitation → retention. To establish causation, run an A/B test (prompt half of users to invite friends, see if retention improves for the prompted group)'"
+    weight: 0.35
+    description: "Interpretation"
+  - type: llm_judge
+    criteria: "Response covers presentation and methodology mistakes — presentation: 'Common presentation and methodology mistakes: Mistake 7 — Incomplete cohorts presented as final: the most recent cohort (e.g., this month's signups) has very little data — only a few days or weeks. Presenting month 1 retention for a cohort that is only 5 days old gives a meaningless number. Fix: only include cohorts that have completed the full period being measured. Gray out or exclude incomplete data. Mark incomplete cohorts clearly as preliminary. Mistake 8 — Survivorship bias in the retention floor: a retention floor of 15% at month 12 does not mean 15% of ALL users will be retained forever. The 15% who remain at month 12 are survivors — the most engaged, most committed users. They will still churn, just more slowly. Do not extrapolate the retention floor as permanent — it will continue to erode slowly over years. Mistake 9 — Ignoring cohort size in significance: January cohort (50 users): 40% month 1 retention (20 users). February cohort (50 users): 30% month 1 retention (15 users). Is January really better? With only 50 users per cohort, the difference between 20 and 15 users is well within random variation. You cannot conclude that January retention is higher. Fix: check if the difference is statistically significant, especially for small cohorts. Mistake 10 — Not defining active consistently: if the definition of active changes mid-analysis (e.g., the tracking code was updated, a new event was added), cohort comparisons become invalid. Old cohorts measured under the old definition will look different from new cohorts measured under the new definition. Fix: use a consistent activity definition across all cohorts. If the definition must change, recalculate old cohorts under the new definition before comparing'"
+    weight: 0.30
+    description: "Presentation"

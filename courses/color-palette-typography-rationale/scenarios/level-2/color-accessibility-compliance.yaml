@@ -1,0 +1,46 @@
+meta:
+  id: color-accessibility-compliance
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color accessibility compliance — create an accessibility-compliant color palette handling contrast ratios, color blindness, and non-color indicators"
+  tags: [accessibility, contrast, color-blindness, wcag, intermediate]
+
+state: {}
+
+trigger: |
+  A design systems engineer says: "We failed our
+  accessibility audit. The findings:
+
+  1. Our primary green (#22C55E) and secondary red
+     (#EF4444) are indistinguishable to deuteranopic
+     (red-green colorblind) users — ~8% of male users
+  2. Our info blue (#3B82F6) as text on our card
+     background (#F8FAFC) only has 3.8:1 contrast —
+     fails AA for normal text
+  3. Our chart uses 6 colors to distinguish data series
+     but relies on color alone — no patterns or labels
+  4. Form validation uses red borders only to indicate
+     errors — no icon, no text change
+
+  We need to fix the entire palette to be accessible.
+  But the VP says 'don't make it look boring — I don't
+  want everything gray.'"
+
+  Task: Redesign the color palette for accessibility
+  compliance while maintaining visual appeal, with
+  documented rationale for each change.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses each finding with specific fixes — Finding 1 (green/red distinguishability): adjust green and red to be distinguishable in colorblind simulation — increase hue separation, add non-color differentiation (success uses checkmark icon, error uses X icon, different shapes or patterns), test with colorblind simulation tools (Sim Daltonism, Figma colorblind plugins). Finding 2 (blue contrast): darken the blue from #3B82F6 to at least #2563EB or darker to achieve 4.5:1 against #F8FAFC — calculate exact contrast ratio, or lighten the background, provide the exact new contrast ratio. Finding 3 (chart colors): add patterns, shapes, or direct labels to each data series — don't rely on color alone, choose 6 colors that are distinguishable in all common types of color blindness (avoid pure red/green adjacency), consider using colorblind-safe palettes like Wong or Okabe-Ito. Finding 4 (form validation): add error icon, error text message, and aria-invalid attribute alongside red border — never rely on color alone for meaning."
+    weight: 0.35
+    description: "SpecificFixes"
+  - type: llm_judge
+    criteria: "Response creates a revised accessible palette that's still visually appealing — demonstrates that accessibility doesn't mean boring (vibrant colors can be accessible with proper contrast — it's about the right combinations not muted colors), revised palette includes: adjusted primary green (still green but distinguishable from red in colorblind simulation), adjusted error red (hue-shifted slightly for better colorblind differentiation), darkened info blue (meets 4.5:1 on card background), chart palette of 6 colorblind-safe colors with hex values, each color verified against WCAG AA requirements (contrast ratios documented), palette maintains brand vibrancy and visual interest (addresses VP's concern — show before/after to demonstrate accessibility improvements look professional not clinical)."
+    weight: 0.35
+    description: "AccessiblePalette"
+  - type: llm_judge
+    criteria: "Response provides accessibility documentation and testing plan — contrast ratio matrix (every text color tested against every background it will appear on — documented in a table with pass/fail per WCAG AA and AAA), color-alone check (audit every use of color in the UI for places where color is the sole differentiator — each must have a secondary indicator: icon, pattern, text, shape), colorblind testing plan (simulate deuteranopia, protanopia, tritanopia for every key screen — document which colors are used together and verify they remain distinguishable), ongoing governance (new colors must pass contrast check before being added to palette, any new use of semantic color must include non-color indicator, quarterly accessibility review of color usage), and the WCAG criteria referenced (1.4.1 Use of Color, 1.4.3 Contrast Minimum, 1.4.6 Contrast Enhanced, 1.4.11 Non-text Contrast)."
+    weight: 0.30
+    description: "AccessibilityDocumentation"

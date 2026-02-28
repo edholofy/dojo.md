@@ -1,0 +1,35 @@
+meta:
+  id: advanced-window-functions
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Master advanced window functions — use LAG, LEAD, running totals, moving averages, and frame specifications for time series and financial reports"
+  tags: [SQL, window-functions, LAG, LEAD, running-total, moving-average, advanced]
+
+state: {}
+
+trigger: |
+  The finance team needs a comprehensive revenue analytics report:
+  1. Month-over-month and year-over-year revenue comparison
+  2. 3-month moving average to smooth seasonal fluctuations
+  3. Running total with percentage of annual target achieved
+  4. First and last purchase date per customer with days between
+
+  Table: orders (order_id, customer_id, amount, order_date, status)
+  Annual revenue target: $50,000,000
+
+  Task: Build all four using advanced window functions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use LAG, LEAD, running totals, and moving averages with proper frame specs — queries: 'Advanced window functions: Report 1 — MoM and YoY comparison: WITH monthly AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY 1) SELECT month, revenue, LAG(revenue, 1) OVER (ORDER BY month) AS prev_month, LAG(revenue, 12) OVER (ORDER BY month) AS same_month_last_year, ROUND((revenue - LAG(revenue, 1) OVER (ORDER BY month)) * 100.0 / NULLIF(LAG(revenue, 1) OVER (ORDER BY month), 0), 1) AS mom_pct, ROUND((revenue - LAG(revenue, 12) OVER (ORDER BY month)) * 100.0 / NULLIF(LAG(revenue, 12) OVER (ORDER BY month), 0), 1) AS yoy_pct FROM monthly ORDER BY month. LAG(revenue, 1) — one row back (previous month). LAG(revenue, 12) — twelve rows back (same month last year). LEAD works the same but looks forward instead of backward. Report 2 — 3-month moving average: SELECT month, revenue, ROUND(AVG(revenue) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 0) AS moving_avg_3m, ROUND(AVG(revenue) OVER (ORDER BY month ROWS BETWEEN 5 PRECEDING AND CURRENT ROW), 0) AS moving_avg_6m FROM monthly ORDER BY month. ROWS BETWEEN 2 PRECEDING AND CURRENT ROW: the window includes the current row plus 2 previous rows (3 total). For the first 2 months, the window is smaller (only available rows). Report 3 — Running total with target tracking: SELECT month, revenue, SUM(revenue) OVER (ORDER BY month) AS ytd_total, 50000000 AS annual_target, ROUND(SUM(revenue) OVER (ORDER BY month) * 100.0 / 50000000, 1) AS pct_of_target FROM monthly WHERE EXTRACT(YEAR FROM month) = EXTRACT(YEAR FROM CURRENT_DATE) ORDER BY month. SUM() OVER (ORDER BY month) without a frame spec defaults to RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — a cumulative sum. Report 4 — Customer purchase span: SELECT customer_id, FIRST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) AS first_purchase, LAST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_purchase, COUNT(*) OVER (PARTITION BY customer_id) AS total_orders FROM orders. FIRST_VALUE and LAST_VALUE get the earliest and latest dates per customer. LAST_VALUE requires the explicit frame ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING — without it, the default frame only goes to the current row'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers window frame specifications in detail — frames: 'Window frame specifications: The frame defines which rows the window function considers. Default frame (when ORDER BY is specified): RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. This means: include all rows from the start of the partition up to the current row. Frame types: ROWS — physical row count. ROWS BETWEEN 2 PRECEDING AND CURRENT ROW = exactly 3 rows. RANGE — logical value range. RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW = all rows within 7 days. GROUPS — group count (ties counted as one group). Frame boundaries: UNBOUNDED PRECEDING — start of partition. N PRECEDING — N rows/range before current. CURRENT ROW — the current row. N FOLLOWING — N rows/range after current. UNBOUNDED FOLLOWING — end of partition. Common patterns: running total: SUM(x) OVER (ORDER BY date ROWS UNBOUNDED PRECEDING). Moving average: AVG(x) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW). Centered average: AVG(x) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING). Full partition: SUM(x) OVER (PARTITION BY group ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING). Critical gotcha: RANGE vs ROWS with duplicate values. If two rows have the same date, RANGE includes both in the same position. ROWS treats them as separate positions. For financial calculations, ROWS is usually safer because it is deterministic'"
+    weight: 0.35
+    description: "Frames"
+  - type: llm_judge
+    criteria: "Response covers performance optimization for window functions — performance: 'Window function performance: Indexing for window functions: the most important index is on the PARTITION BY and ORDER BY columns. CREATE INDEX idx_orders_customer_date ON orders(customer_id, order_date). This index supports: PARTITION BY customer_id ORDER BY order_date. Without the index, the database must sort all rows — O(n log n) for each window function. Multiple window functions with the same OVER clause: SELECT order_id, SUM(amount) OVER w AS running_total, AVG(amount) OVER w AS running_avg, COUNT(*) OVER w AS running_count FROM orders WINDOW w AS (PARTITION BY customer_id ORDER BY order_date). PostgreSQL WINDOW clause defines the window once and reuses it. Other dialects require repeating the OVER clause (but the optimizer often detects the shared window). Materialization strategy: if the same window calculation is used in multiple places, compute it once in a CTE: WITH windowed AS (SELECT *, SUM(amount) OVER (ORDER BY order_date) AS running_total FROM orders) SELECT * FROM windowed WHERE running_total > 1000000. Avoid nested window functions: SELECT *, AVG(running_total) OVER (ORDER BY month) — this is a window function of a window function. Instead, use two CTEs: first compute running_total, then compute the average of it'"
+    weight: 0.30
+    description: "Performance"

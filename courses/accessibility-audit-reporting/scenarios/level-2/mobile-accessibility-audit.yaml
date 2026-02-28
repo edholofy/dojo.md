@@ -1,0 +1,47 @@
+meta:
+  id: mobile-accessibility-audit
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Mobile accessibility audit — test and report on touch target sizes, gesture alternatives, screen reader on mobile, and responsive accessibility"
+  tags: [mobile, touch, gesture, responsive, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor says: "My client's website gets
+  60% mobile traffic but all our audits are done on
+  desktop. My lead wants me to add mobile accessibility
+  testing. I tested with VoiceOver on iOS and found:
+
+  1. Several buttons are too small to tap reliably
+     (about 20x20 pixels)
+  2. A carousel requires swipe gestures with no
+     alternative navigation
+  3. VoiceOver reads content in a different order
+     than it appears visually on mobile
+  4. A sticky header covers content when VoiceOver
+     focus moves behind it
+  5. Pinch-to-zoom is disabled (meta viewport
+     maximum-scale=1)
+
+  How do I test and report on mobile accessibility?
+  Are there different WCAG criteria for mobile?"
+
+  Task: Write audit findings for mobile accessibility
+  issues with WCAG references, severity, and mobile-
+  specific testing guidance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes mobile-specific findings — Small touch targets (WCAG 2.5.8 Target Size Minimum Level AA in WCAG 2.2: interactive targets must be at least 24x24 CSS pixels, WCAG 2.5.5 Target Size Enhanced Level AAA recommends 44x44 pixels, Severity: Major — users with motor impairments can't reliably tap 20x20 buttons, Fix: increase button size to minimum 44x44 pixels for comfortable tapping), Swipe-only carousel (WCAG 2.5.1 Pointer Gestures Level A: any functionality using multi-point or path-based gestures must have single-pointer alternative — swipe is a path-based gesture, must provide next/previous buttons as alternative, Severity: Major, Fix: add visible next/previous buttons), Zoom disabled (WCAG 1.4.4 Resize Text Level AA: users must be able to zoom to 200% — meta maximum-scale=1 prevents pinch-to-zoom, Severity: Critical — users with low vision can't enlarge content, Fix: remove maximum-scale and user-scalable=no from viewport meta tag)"
+    weight: 0.35
+    description: "MobileFindings"
+  - type: llm_judge
+    criteria: "Response covers reading order and sticky header issues — Reading order mismatch (WCAG 1.3.2 Meaningful Sequence Level A: the reading order must match the meaningful visual sequence — on mobile, CSS flexbox order or grid placement may cause VoiceOver to read elements in DOM order which differs from visual order, Severity: Major, Fix: ensure DOM order matches visual order on mobile, use CSS order property only when it doesn't affect reading sequence, test reading order with VoiceOver swipe-through), Sticky header covering content (WCAG 2.4.7 Focus Visible Level AA + usability: when VoiceOver focus moves to content behind the sticky header, the focused element is visually obscured — users can hear the content but can't see what's focused, Severity: Major, Fix: add scroll-padding-top equal to header height so focused elements scroll below the sticky header, or use scroll-margin-top on focusable elements). Includes mobile-specific context for each finding"
+    weight: 0.35
+    description: "OrderHeaderFindings"
+  - type: llm_judge
+    criteria: "Response provides mobile testing methodology — mobile testing approach (test with real device not just browser emulation — screen reader behavior differs on actual devices, test with VoiceOver on iOS Safari and TalkBack on Android Chrome, test in both portrait and landscape orientation), mobile-specific checks (touch target size measurement: use browser DevTools or accessibility inspector to measure targets, gesture alternatives: test every swipe, pinch, and multi-finger gesture for single-tap alternatives, orientation lock: ensure content is not locked to one orientation per WCAG 1.3.4, text reflow: content should reflow at 400% zoom without horizontal scrolling per WCAG 1.4.10, auto-play: any auto-playing media must have visible pause control reachable by touch), and reporting mobile findings (specify device and OS tested, specify screen reader and version, note orientation tested, include mobile-specific screenshots showing the issue at mobile viewport size — mobile issues should be clearly separated or tagged in the report)"
+    weight: 0.30
+    description: "MobileMethodology"

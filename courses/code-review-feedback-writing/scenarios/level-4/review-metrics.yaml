@@ -1,0 +1,39 @@
+meta:
+  id: review-metrics
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Measure review effectiveness — define and track metrics that indicate code review quality, not just velocity"
+  tags: [code-review, metrics, effectiveness, quality, measurement, expert]
+
+state: {}
+
+trigger: |
+  Leadership asks: "Are our code reviews actually catching bugs, or
+  are we just wasting engineering time?" You need data to answer.
+
+  Available data:
+  - Git/GitHub: PR metadata, review comments, approval times, merge times
+  - Bug tracker: production bugs, their root causes, which PRs introduced them
+  - CI/CD: build failures, test failures, deployment rollbacks
+  - Surveys: developer satisfaction data (quarterly)
+  - Code quality tools: SonarQube, CodeClimate scores over time
+
+  Task: Design a code review metrics program. Define: what to measure,
+  how to measure it, what "good" looks like for each metric, how to
+  use metrics to improve reviews, and what metrics to NOT track (or
+  track privately). Avoid metrics that incentivize bad behavior.
+
+assertions:
+  - type: llm_judge
+    criteria: "Effectiveness metrics measure outcomes, not just activity — primary: (1) Defect escape rate: percentage of production bugs that passed through code review without being caught. Target: < 5%. Measures: is review actually catching things? (2) Review-introduced improvements: how often do review comments lead to code changes that prevent future bugs? Track: comment → code change → no subsequent bug in that area. (3) Knowledge distribution: are review comments teaching? Measure: decrease in similar review comments to same developer over time (they're learning). (4) Developer growth: developers who receive reviews improve their first-submission quality over time (fewer review rounds needed). These measure the PURPOSE of code review, not just the process"
+    weight: 0.35
+    description: "Effectiveness metrics"
+  - type: llm_judge
+    criteria: "Process metrics are balanced with quality safeguards — track: time-to-first-review (SLA compliance), review rounds per PR, time-to-merge. But: pair with quality metrics to prevent gaming. If time-to-merge drops but defect escape rate rises, we're approving too fast. Review depth: average meaningful comments per review (exclude auto-generated, style comments). Review distribution: Gini coefficient of review assignments (0 = perfectly equal, 1 = one person does everything). Target: < 0.4. PR rejection rate: if reviews rarely request changes, either code quality is excellent or reviews are rubber stamps — correlate with defect escape rate to determine which. Comment resolution rate: what percentage of review comments result in code changes? If low, comments may not be actionable"
+    weight: 0.35
+    description: "Process metrics"
+  - type: llm_judge
+    criteria: "Dangerous metrics and gaming are addressed — DO NOT track (or only track privately): (1) number of comments per reviewer — incentivizes volume over quality (nitpicking to boost numbers). (2) Review speed as individual metric — incentivizes rubber-stamp approvals. (3) Bug count per developer — creates blame culture, discourages risk-taking. Instead track: bug patterns (systemic issues, not individual blame). Private metrics (manager only): individual review quality scores (are comments helpful?), reviewer response time per person (are specific people bottlenecks?). Public metrics (team level only): team defect rate, team review turnaround, team satisfaction. Gaming prevention: any metric that becomes a target will be gamed. Use metrics as signals for investigation, not as goals to optimize. 'If your metrics improve but developer satisfaction drops, the metrics are lying.'"
+    weight: 0.30
+    description: "Dangerous metrics"

@@ -1,0 +1,37 @@
+meta:
+  id: real-time-operational-dashboards
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Design real-time operational dashboards — build dashboards for live monitoring with streaming data, auto-refresh, alerts, and operational decision-making"
+  tags: [real-time, operational, streaming, monitoring, alerts, advanced]
+
+state: {}
+
+trigger: |
+  The Head of Customer Support says: "During our Black Friday sale last
+  year, support tickets surged 400% and we didn't notice until customers
+  started complaining on Twitter. By the time we pulled extra staff, we
+  had a 3-hour response backlog. I need a real-time dashboard that shows
+  me what's happening NOW so I can react in minutes, not hours."
+
+  The engineering team adds: "We also need to monitor API error rates
+  and latency during high-traffic events. Last Black Friday our API
+  error rate hit 8% before anyone noticed."
+
+  Task: Design real-time operational dashboards for support and
+  engineering that enable minute-by-minute decision-making.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a real-time support operations dashboard — support: 'Real-time support operations dashboard: Dashboard updates every 30 seconds. Top banner — current status: Support Status: ELEVATED. Tickets in queue: 142 (normally 25). Average wait time: 18 minutes (SLA: 15 minutes). Agents online: 12 of 15. Trend: queue growing. The status indicator (NORMAL / ELEVATED / CRITICAL) is calculated automatically: NORMAL: queue < 50, wait time < 15 min. ELEVATED: queue 50-150 or wait time 15-30 min. CRITICAL: queue > 150 or wait time > 30 min. Row 1 — Live metrics (4 KPI cards, updating every 30 seconds): Tickets opened (last hour): 89 ↑220% vs same hour last week. Tickets resolved (last hour): 47 (agents resolving but not keeping up). Queue depth: 142 and growing at +7 per minute. CSAT (last 50 responses): 3.2 out of 5 ↓ from 4.1 (customers are frustrated). Row 2 — Live trends: Line chart: tickets opened per 5-minute interval (last 4 hours). Shows the surge clearly — a flat line that spikes at 10 AM. Line chart: average response time per 5-minute interval. Shows response time climbing as queue grows. Horizontal reference line at 15 minutes (SLA threshold). The area above the line is shaded red. Row 3 — Agent performance and capacity: Table: each agent, their status (available, on ticket, break), tickets resolved this hour, average handle time. Capacity indicator: if all agents work at current pace, queue will clear in: 45 minutes (if no new tickets) or NEVER (at current inflow rate). This calculation tells the manager: you need more agents NOW. Action buttons (linked to operations): Escalate to Tier 2 (sends alert to senior agents). Activate overflow team (pages off-duty agents). Enable auto-response (turns on templated responses for common issues)'"
+    weight: 0.35
+    description: "Support"
+  - type: llm_judge
+    criteria: "Response designs a real-time engineering monitoring dashboard — engineering: 'Real-time engineering monitoring dashboard: Dashboard updates every 10 seconds. Top banner — system health: System Status: DEGRADED. API error rate: 4.2% (threshold: 2%). P99 latency: 1,200ms (threshold: 500ms). Active incidents: 1 (payment service timeout). Traffic: 12,400 req/sec (3x normal). Row 1 — Traffic and errors: Line chart: requests per second (last 2 hours). Shows the traffic ramp from 4,000 to 12,400 as the sale begins. Area chart overlay: error count per second. Errors started climbing at 11:15 AM when traffic exceeded 8,000 req/sec. Error breakdown by type (stacked bar): 502 Bad Gateway: 45% (backend overload). 504 Gateway Timeout: 35% (payment service slow). 429 Too Many Requests: 15% (rate limiting kicking in). 500 Internal Error: 5% (application bugs). The team sees that 80% of errors are infrastructure-related (502/504), not bugs. Row 2 — Latency distribution: Histogram: response time distribution. P50: 180ms (acceptable). P95: 650ms (above 500ms threshold). P99: 1,200ms (critical). The long tail shows 1% of users waiting over 1 second — likely the payment flow. Heatmap: latency by endpoint. POST /checkout: P99 2,400ms (critical — payment flow is slowest). GET /products: P99 400ms (fine). GET /cart: P99 350ms (fine). Row 3 — Infrastructure: CPU utilization by service: API servers 85%, Payment service 95%, Database 60%. Memory: API servers 70%, Payment service 88%. Auto-scaling status: 2 additional API pods spinning up (ETA: 3 minutes). Alert: Payment service at 95% CPU — recommend scaling or circuit breaker. The dashboard tells the on-call engineer exactly what is wrong (payment service overloaded), why (traffic spike), and what to do (scale payment service or enable circuit breaker)'"
+    weight: 0.35
+    description: "Engineering"
+  - type: llm_judge
+    criteria: "Explanation covers real-time dashboard design principles — principles: 'Real-time dashboard design principles: 1. Prioritize actionability over comprehensiveness: a real-time dashboard should answer what is happening right now? and what should I do about it? — not provide historical analysis. Limit to 8-12 metrics that drive immediate decisions. 2. Use status indicators: at a glance, the viewer should know if things are normal, concerning, or critical. Use traffic light colors (green/yellow/red) with clear thresholds. The thresholds must be defined in advance, not decided during an incident. 3. Time windows: real-time dashboards show narrow time windows — last 1-4 hours, not last 30 days. The x-axis should auto-scroll to always show now at the right edge. Historical context is a faint reference line (same time last week) for comparison. 4. Alert integration: the dashboard should trigger alerts automatically. Do not rely on someone watching the dashboard 24/7. If error rate exceeds 2%, page the on-call engineer. If queue exceeds 100, notify the support manager. The dashboard is for investigation and context after an alert fires. 5. Refresh rate: match refresh to decision cadence. Support: every 30 seconds (decisions change minute by minute). Engineering: every 10 seconds during incidents (every second counts). Executive: never needs real-time — daily is sufficient. 6. Performance: real-time dashboards must load in under 2 seconds. Use pre-aggregated streaming data, not queries against raw tables. WebSocket connections push updates instead of polling. 7. Incident mode: during critical incidents, the dashboard should automatically surface relevant context — recent deployments, configuration changes, related alerts — to accelerate root cause analysis'"
+    weight: 0.30
+    description: "Principles"

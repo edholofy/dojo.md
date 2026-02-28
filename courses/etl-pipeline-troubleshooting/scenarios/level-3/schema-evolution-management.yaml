@@ -1,0 +1,48 @@
+meta:
+  id: schema-evolution-management
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Schema evolution management — handle schema changes across ETL pipelines without breaking downstream consumers or losing data"
+  tags: [schema-evolution, migration, versioning, backward-compatibility, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We're constantly dealing with schema
+  changes breaking our pipelines. Recent incidents:
+
+  1. The product team added a 'subscription_tier' column to the
+     users table. Our COPY command failed because the CSV now has
+     one extra column that the target table doesn't have.
+
+  2. They renamed 'user_type' to 'account_type' across all APIs.
+     15 downstream pipelines broke simultaneously because they all
+     referenced 'user_type'.
+
+  3. A column changed from INTEGER to BIGINT in the source when IDs
+     exceeded 2^31. Our pipeline's type validation rejected all new
+     records.
+
+  4. A JSON payload field changed from a string to an array:
+     'tags: \"premium\"' became 'tags: [\"premium\", \"enterprise\"]'
+     Our parser crashed on the new format.
+
+  How do we manage schema evolution without everything breaking?"
+
+  Task: Design a schema evolution strategy that handles additions,
+  renames, type changes, and structural changes gracefully.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response categorizes schema changes by risk — backward-compatible (additive): new columns, new optional fields, widening types (INT to BIGINT) — should be handled automatically. Breaking: column renames, column removals, type narrowing, structural changes (string to array) — require coordinated migration. Provides strategies for each: additive changes should be auto-detected and applied, breaking changes need a migration plan with deprecation period, dual-write period, or versioned schemas"
+    weight: 0.35
+    description: "ChangeClassification"
+  - type: llm_judge
+    criteria: "Response designs a schema evolution framework — schema registry (centralized definition of all schemas with version history), automated schema drift detection (compare current source schema against expected schema before processing, alert on changes), migration tools (Alembic, Flyway, or dbt schema migrations for target table changes), and pipeline resilience patterns (ignore unknown columns, use column mapping configs, schema-on-read for raw data ingestion then validate during transformation)"
+    weight: 0.35
+    description: "EvolutionFramework"
+  - type: llm_judge
+    criteria: "Response addresses the organizational dimension — data contracts between producer and consumer teams (schema changes require notification and migration period), semantic versioning for schemas (v1.0 → v1.1 for additive, v1.x → v2.0 for breaking), migration runbooks (step-by-step process for coordinating schema changes across teams), and how to decouple pipelines from source schemas (extract raw data into a flexible format like JSON/Parquet, then apply schema during transformation so source changes only affect one step)"
+    weight: 0.30
+    description: "Organizational"

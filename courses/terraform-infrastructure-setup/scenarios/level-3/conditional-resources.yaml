@@ -1,0 +1,66 @@
+meta:
+  id: conditional-resources
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Create conditional resources — use count, for_each, and ternary expressions to conditionally create infrastructure based on environment or feature flags"
+  tags: [Terraform, conditional, feature-flags, count, ternary, advanced]
+
+state: {}
+
+trigger: |
+  Your infrastructure needs different resources per environment:
+  - Prod: NAT Gateway (expensive), multi-AZ RDS, CloudFront
+  - Dev: NAT Instance (cheap), single-AZ RDS, no CloudFront
+  - All: VPC, subnets, security groups
+
+  Your initial attempt:
+
+  ```hcl
+  resource "aws_nat_gateway" "main" {
+    count = var.environment == "prod" ? 1 : 0
+    # ...
+  }
+
+  resource "aws_instance" "nat" {
+    count = var.environment == "prod" ? 0 : 1
+    # ...
+  }
+
+  resource "aws_db_instance" "main" {
+    multi_az = var.environment == "prod" ? true : false
+    # ...
+  }
+
+  resource "aws_cloudfront_distribution" "cdn" {
+    count = var.environment == "prod" ? 1 : 0
+    origin {
+      domain_name = aws_lb.web.dns_name
+    }
+  }
+  ```
+
+  Problem: other resources reference aws_nat_gateway.main.id but it
+  might not exist (count = 0):
+  ```
+  Error: Invalid index
+    aws_nat_gateway.main[0] does not exist
+  ```
+
+  Task: Explain conditional resource creation patterns, how to
+  safely reference conditional resources, feature flags in Terraform,
+  and environment-specific configuration strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Conditional creation patterns are explained — count = condition ? 1 : 0 is the primary pattern. When count = 0, resource doesn't exist. Reference safely: one_of(aws_nat_gateway.main[*].id, aws_instance.nat[*].id) or try(aws_nat_gateway.main[0].id, null). Splat expression: aws_nat_gateway.main[*].id returns empty list when count = 0 (no error). Conditional with for_each: for_each = var.enable_cdn ? { cdn = true } : {} — resource exists when map is non-empty. Ternary for attributes: multi_az = var.environment == 'prod' (direct boolean)"
+    weight: 0.35
+    description: "Conditional patterns"
+  - type: llm_judge
+    criteria: "Safe referencing is covered — problem: aws_nat_gateway.main[0].id errors when count = 0. Solutions: (1) use splat: aws_nat_gateway.main[*].id (returns list, empty if count=0). (2) use try(): try(aws_nat_gateway.main[0].id, ''). (3) use one(): one(aws_nat_gateway.main[*].id) (returns single value or null). (4) use locals to abstract: locals { nat_gateway_id = length(aws_nat_gateway.main) > 0 ? aws_nat_gateway.main[0].id : null }. Then reference local.nat_gateway_id. For route tables: use coalesce() or conditional in the referencing resource's count"
+    weight: 0.35
+    description: "Safe referencing"
+  - type: llm_judge
+    criteria: "Feature flags and environment strategy are practical — feature flags: variable 'features' { type = object({ enable_cdn = bool, enable_waf = bool, enable_monitoring = bool }), default = { enable_cdn = false, enable_waf = false, enable_monitoring = true } }. Each feature conditionally creates resources. Environment strategy: (1) simple: ternary on var.environment, (2) structured: locals map with per-environment settings: locals { env_config = { prod = { nat_type = 'gateway', rds_multi_az = true }, dev = { nat_type = 'instance', rds_multi_az = false } } }. Reference: local.env_config[var.environment].rds_multi_az. Keeps all environment differences in one place"
+    weight: 0.30
+    description: "Feature flags"

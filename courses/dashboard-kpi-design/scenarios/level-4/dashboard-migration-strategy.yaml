@@ -1,0 +1,36 @@
+meta:
+  id: dashboard-migration-strategy
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Plan a dashboard migration — migrate an organization from one BI platform to another without losing trust, breaking reports, or disrupting decision-making"
+  tags: [migration, BI-platform, change-management, parallel-run, expert]
+
+state: {}
+
+trigger: |
+  The VP of Data says: "We're migrating from Tableau to Looker. We
+  have 85 Tableau dashboards used by 300 people across the company.
+  The CEO is nervous — last time we migrated tools (3 years ago), it
+  took 9 months, numbers didn't match for weeks, and executives lost
+  trust in the data team.
+
+  I need a migration plan that ensures: (1) no data discrepancies
+  during the transition, (2) minimal disruption to users, and (3)
+  the migration is completed in 4 months."
+
+  Task: Design a BI platform migration strategy from Tableau to Looker.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a phased migration plan — plan: 'BI migration plan — Tableau to Looker (4 months): Phase 1 — Audit and prioritize (Weeks 1-3): Audit all 85 Tableau dashboards: name, owner, audience, view count (last 90 days), data sources, complexity rating (1-5). Categorize: Tier 1 (critical, high usage): 15 dashboards viewed 100+ times/month. Migrate first. These are executive dashboards, sales pipeline, finance reporting. Tier 2 (important, moderate usage): 30 dashboards viewed 20-99 times/month. Migrate second. Tier 3 (low usage): 25 dashboards viewed 5-19 times/month. Migrate third. Tier 4 (inactive): 15 dashboards viewed fewer than 5 times/month. Archive — do not migrate. Result: migrate 70 dashboards (not 85). 15 are archived, saving effort. Phase 2 — Build foundation (Weeks 2-6): Build the LookML semantic layer for core data models: revenue, customers, product, support. This is the metric layer — every Looker dashboard will reference these centralized definitions. Validate metric calculations: for each core metric (revenue, MRR, churn, NPS), compare the Tableau SQL to the new LookML definition. They must match to the penny. Build the 15 Tier 1 dashboards in Looker. These are exact replicas of the Tableau versions — same layout, same metrics, same filters. Do not redesign during migration — redesign comes later. Phase 3 — Parallel run (Weeks 6-10): Run Tableau and Looker side by side for 4 weeks. Both show the same data. Power users validate that every number matches. Validation protocol: for each Tier 1 dashboard, compare 10 data points daily. If any number differs by more than 0.1%, investigate and fix before proceeding. Build Tier 2 dashboards during the parallel run (30 dashboards). User access: give 50 power users access to Looker alongside Tableau. Collect feedback weekly. Phase 4 — Cutover (Weeks 10-16): Week 10: Tier 1 dashboards switch to Looker as the primary. Tableau versions remain accessible (read-only) as a safety net. Week 12: Tier 2 dashboards switch. Tier 3 dashboards built and validated. Week 14: all remaining dashboards migrated. Training sessions for all 300 users (4 sessions of 50 users each). Week 16: Tableau decommissioned. Redirect all Tableau URLs to equivalent Looker dashboards (prevent broken bookmarks). Archive Tableau exports for historical reference'"
+    weight: 0.35
+    description: "Plan"
+  - type: llm_judge
+    criteria: "Response covers data validation and trust preservation — validation: 'Data validation and trust preservation: The number one risk in BI migration is numbers not matching. If the CEO sees $4.8M revenue in Looker but remembers $4.9M from Tableau, trust is destroyed instantly. Validation strategy: 1. Metric-level validation: for each metric, run the old Tableau query and the new Looker query against the same date range. Compare results: Revenue (Tableau): $4,823,456.78. Revenue (Looker): $4,823,456.78. Match: exact. If they differ, investigate immediately. Common causes: date timezone handling (Tableau in EST, Looker in UTC). NULL handling (Tableau excludes NULLs, Looker includes them). Rounding differences (Tableau rounds at display, Looker rounds at query). Filter defaults (Tableau excludes test accounts, Looker includes them). Fix the root cause — do not adjust numbers to match. 2. Cross-validation dashboard: build a temporary dashboard that shows both Tableau and Looker values side by side for every key metric. Revenue (Tableau): $4.82M. Revenue (Looker): $4.82M. Delta: $0.00. Status: matched. This dashboard is visible to the executive team during the parallel run. It proves the numbers are identical. 3. Certification ceremony: once all Tier 1 metrics pass validation, hold a formal certification meeting with the CFO and CEO. Present the cross-validation results. Have the CFO confirm: the Looker revenue number matches our financial records. This creates a moment of trust transfer — the executives formally accept Looker as the source of truth. Trust preservation during transition: communicate proactively. Weekly email to all dashboard users: migration status, what is changing this week, what to expect next week. If a discrepancy is found, disclose it immediately with the explanation and fix timeline. Do not hide issues — transparency builds trust'"
+    weight: 0.35
+    description: "Validation"
+  - type: llm_judge
+    criteria: "Explanation covers user adoption and post-migration optimization — adoption: 'User adoption strategy: The migration fails if users revert to Tableau (or worse, to spreadsheets). Adoption tactics: 1. Champion network: identify 15-20 power users across departments. Train them first (2 weeks before general rollout). They become the go-to people for Looker questions in their team. They provide feedback on usability issues before the full rollout. 2. Side-by-side training: do not teach Looker in isolation. Show: in Tableau you did X, in Looker you do Y. Users transfer existing knowledge rather than learning from scratch. 30-minute sessions, not 2-hour workshops. Focus on the 5 tasks each user does most often. 3. Quick wins: for each department, identify one thing that is better in Looker than Tableau. For Finance: automated scheduled reports (no more manual exports). For Sales: mobile-friendly dashboards (check pipeline on their phone). For Marketing: self-service exploration without waiting for an analyst. Lead with the improvement, not just the change. 4. Remove Tableau access gradually: Week 10-12: Tableau becomes read-only for Tier 1 dashboards. Week 12-14: Tableau becomes read-only for all dashboards. Week 16: Tableau decommissioned. If users can still access Tableau, they will use Tableau. Post-migration optimization (Months 5-6): once migration is complete, redesign dashboards for Looker's strengths. During migration, dashboards were exact Tableau replicas. Now optimize: leverage LookML explores for self-service drill-downs. Add Looker-native features (content embedding, alerts, schedules). Consolidate dashboards that were separate in Tableau but can be unified in Looker. Measure success: dashboard load time (target: under 3 seconds). User adoption rate (target: 80% of 300 users active within 60 days). Support tickets related to dashboards (should decrease, not increase). User satisfaction survey at 30 and 90 days post-migration'"
+    weight: 0.30
+    description: "Adoption"

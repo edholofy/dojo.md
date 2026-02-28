@@ -1,0 +1,32 @@
+meta:
+  id: building-a-retention-table
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Build a basic retention table — construct a cohort retention matrix from raw user activity data showing how each cohort retains over time"
+  tags: [retention-table, cohort-matrix, construction, beginner]
+
+state: {}
+
+trigger: |
+  The product manager says: "I have a spreadsheet with user signups
+  and logins. I want to see a retention table — you know, the triangle
+  chart that shows what percentage of users come back each week. How
+  do I build one from raw data?"
+
+  Task: Explain how to build a retention table step by step from
+  raw user activity data.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers step-by-step retention table construction — construction: 'Building a retention table step by step: Starting data: two tables: users table: user_id, signup_date. Activity table: user_id, activity_date. Step 1 — Assign users to cohorts: group users by their signup week (or month). User 101 signed up Jan 1 → Week 1 cohort. User 102 signed up Jan 3 → Week 1 cohort. User 103 signed up Jan 8 → Week 2 cohort. Step 2 — Calculate the time offset for each activity: for each user activity, calculate how many weeks after signup it occurred. User 101 signed up Jan 1, active Jan 1 → week 0 (signup week). User 101 active Jan 8 → week 1. User 101 active Jan 22 → week 3. User 101 NOT active Jan 15 → no entry for week 2. Step 3 — Count unique active users per cohort per week offset: Week 1 cohort (200 signups): week 0: 200 active (100%). Week 1: 120 active (60%). Week 2: 90 active (45%). Week 3: 70 active (35%). Week 4: 55 active (27.5%). Week 2 cohort (180 signups): week 0: 180 active (100%). Week 1: 100 active (55.6%). Week 2: 75 active (41.7%). Week 3: 60 active (33.3%). Step 4 — Arrange into a table (the retention matrix): rows = cohorts (signup week). Columns = week offsets (week 0, week 1, week 2, ...). Cells = retention rate (percentage of cohort still active). The table forms a triangle shape because newer cohorts have fewer weeks of data. Week 1 cohort has data through week 4. Week 2 cohort has data through week 3. Week 3 cohort has data through week 2. And so on'"
+    weight: 0.35
+    description: "Construction"
+  - type: llm_judge
+    criteria: "Response covers defining active and handling edge cases — active: 'Defining active — the most important decision: before building the table, you must define what active means. Options: any login or page view (broadest — captures casual browsing). Performed a core action (e.g., sent a message, created a document, made a purchase). Used the product for at least X minutes. The definition should match the product's core value: messaging app: sent or received a message. E-commerce: viewed a product or made a purchase. SaaS tool: used a core feature (not just logged in). A user who logs in but does nothing meaningful should probably not count as active. Choosing the wrong definition leads to misleading retention numbers. Edge cases: 1. Users active in week 0 and week 3 but not weeks 1-2: they count as retained in week 0 and week 3 but NOT in weeks 1-2. This is unbounded retention (did the user come back in this period?). Bounded (N-day) retention: user must be active on exactly day N (e.g., day 7, day 14). Unbounded retention: user was active at any point during the period (e.g., during week 1). Unbounded is more common and more forgiving — it captures users who come back irregularly. 2. Cohort granularity: daily cohorts: precise but noisy (small sample sizes). Weekly cohorts: good balance for most products. Monthly cohorts: smooths out noise, good for products with monthly billing cycles. Choose based on your product's natural usage cycle'"
+    weight: 0.35
+    description: "Active"
+  - type: llm_judge
+    criteria: "Response covers SQL or practical implementation — implementation: 'Practical implementation (SQL example): Step 1 — Create the cohort assignments: SELECT user_id, DATE_TRUNC(week, signup_date) AS cohort_week FROM users. Step 2 — Join with activity and calculate offsets: SELECT c.cohort_week, FLOOR(DATEDIFF(day, c.cohort_week, a.activity_date) / 7) AS week_offset, COUNT(DISTINCT a.user_id) AS active_users FROM cohorts c JOIN activity a ON c.user_id = a.user_id WHERE a.activity_date >= c.cohort_week GROUP BY c.cohort_week, week_offset. Step 3 — Calculate cohort sizes: SELECT cohort_week, COUNT(DISTINCT user_id) AS cohort_size FROM cohorts GROUP BY cohort_week. Step 4 — Calculate retention rates: divide active_users by cohort_size for each cohort and week_offset. Spreadsheet approach: if you do not have SQL access: column A: user_id. Column B: signup_date. Column C: signup_week (use WEEKNUM or manually assign). For each activity date, calculate the week offset from signup. Create a pivot table: rows = signup_week, columns = week_offset, values = count of distinct user_ids. Divide each cell by the cohort size (week 0 count) to get percentages. Common mistakes: 1. Counting total activities instead of unique users (a user who logs in 10 times in week 1 should count as 1, not 10). 2. Using calendar weeks instead of weeks-since-signup (week 1 should mean the user's first week after signup, not the first calendar week of the year). 3. Including the signup event as a week 1 activity (signup is week 0 — the user was active because they signed up, not because they returned)'"
+    weight: 0.30
+    description: "Implementation"

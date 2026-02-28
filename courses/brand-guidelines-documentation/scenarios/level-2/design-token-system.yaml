@@ -1,0 +1,46 @@
+meta:
+  id: design-token-system
+  level: 2
+  course: brand-guidelines-documentation
+  type: output
+  description: "Design token system — create a design token architecture that bridges brand guidelines and code implementation"
+  tags: [design-tokens, code, implementation, system, intermediate]
+
+state: {}
+
+trigger: |
+  Your brand guidelines exist as a PDF but developers keep
+  hardcoding color values, font sizes, and spacing that
+  don't match the brand specifications. The problem:
+
+  - The brand specifies primary blue as #1A3B5C but the app
+    uses #1A3B5D (off by one digit)
+  - Three different button border-radius values exist across
+    the product: 4px, 6px, and 8px
+  - The design system uses spacing values that don't follow
+    any consistent scale
+  - When the brand updated its color palette last quarter,
+    it took 3 weeks to update all the hardcoded values
+
+  The Engineering Lead says: "We need design tokens — a
+  single source of truth that both designers and developers
+  reference. When the brand changes, we update tokens and
+  everything updates automatically."
+
+  Current tech stack: React, Tailwind CSS, Figma for design.
+
+  Task: Create the design token documentation and architecture.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the token architecture — token hierarchy (defines a multi-level token structure: primitive tokens — raw values with no semantic meaning: color-blue-500: #1A3B5C, spacing-4: 16px, font-size-lg: 18px; semantic tokens — purpose-driven references to primitives: color-primary: {color-blue-500}, color-text-body: {color-gray-800}, spacing-component-gap: {spacing-4}; component tokens — specific to UI components: button-background: {color-primary}, button-border-radius: {radius-md}, card-padding: {spacing-component-gap}; this hierarchy means changing the primary blue updates everything that references it automatically), token categories (organizes tokens by type: color tokens — primary, secondary, accent, semantic colors, functional colors, background and surface colors; typography tokens — font families, sizes, weights, line heights, letter spacing; spacing tokens — a consistent scale: 4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px; border radius tokens — small 4px, medium 8px, large 16px, full for circles; shadow tokens — elevation levels for cards, modals, dropdowns; breakpoint tokens — responsive design breakpoints), naming conventions (establishes clear token naming rules: use kebab-case: color-primary, not colorPrimary or COLOR_PRIMARY; follow the pattern: category-variant-state: color-primary-hover, font-size-heading-1; be descriptive but concise; semantic tokens reference the purpose, not the value: color-error not color-red; component tokens reference the component: button-text-color not color-button-text)."
+    weight: 0.35
+    description: "TokenArchitecture"
+  - type: llm_judge
+    criteria: "Response documents implementation across platforms — Figma implementation (describes how tokens work in the design tool: use Figma Variables for color, spacing, and typography tokens; organize variables into collections matching the token categories; create a 'Brand Tokens' collection with primitive values and a 'Semantic' collection that references them; designers use semantic variables in their designs — not raw hex values; when a brand color changes, update the primitive variable and all designs using it update automatically; this prevents the designer using one blue and the developer implementing another), code implementation (describes how tokens translate to code: CSS custom properties as the universal format: --color-primary: #1A3B5C; Tailwind CSS configuration — extend the tailwind.config with token values so utility classes reference the design tokens; create a tokens.json file as the single source of truth — this file generates CSS variables, Tailwind config, and Figma variables; the JSON structure mirrors the token hierarchy: {color: {primary: {value: '#1A3B5C'}}}; consider using a tool like Style Dictionary, Tokens Studio, or a custom build script to transform tokens across platforms), synchronization workflow (describes how tokens stay in sync: the tokens.json file is the canonical source of truth; a build pipeline transforms tokens.json into platform-specific formats — CSS, Tailwind, Figma, iOS, Android; when the brand updates a color, the process is: update tokens.json → run the build → all platforms receive the updated values; this eliminates the 3-week manual update problem; version control the tokens file alongside the codebase; the design team and development team both reference the same token definitions)."
+    weight: 0.35
+    description: "PlatformImplementation"
+  - type: llm_judge
+    criteria: "Response provides governance and documentation — token documentation (creates clear documentation for token usage: a token reference page listing every token with its name, value, and usage context; visual examples showing tokens in context — 'color-primary is used for primary buttons, links, and active states'; migration guide — how to replace hardcoded values with token references; a searchable token catalog that designers and developers can query — 'What token do I use for body text color?'; include the token values for each platform — CSS variable name, Tailwind class, Figma variable path), governance and maintenance (establishes rules for managing tokens: who can add or modify tokens — the design team proposes, engineering reviews for naming consistency; new tokens require documentation — name, value, purpose, and usage examples; deprecated tokens should be marked with a replacement recommendation and a sunset date; review tokens quarterly — remove unused tokens, consolidate duplicates, update values; track token usage across the codebase to identify hardcoded values that should be tokenized), migration strategy (plans the transition from hardcoded values: audit the existing codebase to identify all hardcoded color values, font sizes, spacing, and border radii; map each hardcoded value to the corresponding design token; prioritize migration by frequency — replace the most commonly used values first; use ESLint or Stylelint rules to flag hardcoded values and suggest token alternatives; set a deadline for completing the migration — after which all hardcoded brand values in code reviews are rejected)."
+    weight: 0.30
+    description: "GovernanceAndMigration"

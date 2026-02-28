@@ -1,0 +1,44 @@
+meta:
+  id: postmortem-templates-standards
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Design postmortem templates and quality standards — create templates, review processes, and quality criteria that ensure consistently valuable postmortems"
+  tags: [postmortem, templates, standards, quality, consistency, expert]
+
+state: {}
+
+trigger: |
+  You've been asked to standardize postmortem quality across a
+  200-person engineering organization with 15 teams. Currently:
+
+  - Each team has its own postmortem format (or none)
+  - Quality varies wildly: some are 5-page detailed analyses, others
+    are 3 bullet points in Slack
+  - There's no review process — postmortems are published without
+    any quality check
+  - Action items range from specific ("deploy canary analysis by
+    March 15") to vague ("improve monitoring")
+  - Some postmortems stop at "what" without explaining "why"
+  - Teams that write good postmortems feel their effort is wasted
+    when other teams write nothing
+
+  Task: Design the postmortem template, quality standards, and
+  review process. The template should guide engineers to write
+  thorough postmortems without being so rigid that it becomes a
+  checkbox exercise. Include quality criteria that reviewers use
+  to evaluate postmortem completeness.
+
+assertions:
+  - type: llm_judge
+    criteria: "Template guides thorough analysis while remaining practical — template design: 'The template uses a tiered structure: required sections for all incidents, and additional sections for higher-severity incidents. Required for all postmortems (SEV-1 through SEV-3): (1) Summary (3-5 sentences): what happened, what was the impact, what did we do about it. Written for someone who has 60 seconds to understand the incident. (2) Impact: customer-facing impact (what customers experienced), duration, scope (how many customers, which features), business impact (revenue, SLA). (3) Timeline: key events in chronological order. Minimum entries: detection, diagnosis, mitigation, resolution. Each entry: timestamp, event, and who/what initiated it. (4) Root Cause: explain WHY the incident happened, not just WHAT happened. Template prompt: keep asking why until you reach a systemic cause, not a human action. If your root cause is someone did X, ask why was it possible for X to cause this impact? (5) Contributing Factors: other conditions that enabled or amplified the incident. Prompt: what else had to be true for this incident to happen? (6) Action Items: each action item must have: a specific description (what will be done), an owner (person or team), a due date, and a success criteria (how do we know it is done). Vague items will be rejected in review.' Additional for SEV-1 and SEV-2: '(7) Organizational Factors: process, training, or structural issues that contributed. (8) Detection Analysis: how was the incident detected? Could we have detected it earlier? (9) Communication Review: were stakeholders informed appropriately and accurately?'"
+    weight: 0.35
+    description: "Template design"
+  - type: llm_judge
+    criteria: "Quality criteria enable consistent review — quality scorecard: 'Each postmortem is scored on 5 dimensions. A postmortem must score at least 3/5 on every dimension to pass review. Dimension 1: Root Cause Depth. Score 1: root cause is a surface-level description (the server crashed). Score 3: root cause identifies the technical cause (the server crashed because memory leaked due to unbounded cache growth). Score 5: root cause identifies systemic conditions (memory leaked because there was no memory limit on the cache, no monitoring on memory usage, and the service had not been load-tested with the new feature). Dimension 2: Action Item Quality. Score 1: vague (improve monitoring). Score 3: specific (add memory usage alert for service X with threshold at 80%). Score 5: specific, systemic, and addresses the class of failure (implement memory limits and monitoring for all services using in-memory caching, with automated alerts). Dimension 3: Timeline Completeness. Score 1: missing key events or timestamps. Score 3: all key events present with accurate timestamps. Score 5: includes decision points with rationale and time-to-detect, time-to-mitigate, time-to-resolve explicitly called out. Dimension 4: Impact Assessment. Score 1: impact described vaguely (some customers were affected). Score 3: impact quantified (500 customers, 15 minutes, 200 failed requests). Score 5: impact quantified with business context (500 customers, $12K revenue impact, 2 enterprise SLA breaches). Dimension 5: Blameless Tone. Score 1: names individuals or implies personal fault. Score 3: focuses on systems but occasionally uses blame-adjacent language. Score 5: consistently frames all analysis in terms of systemic conditions'"
+    weight: 0.35
+    description: "Quality criteria"
+  - type: llm_judge
+    criteria: "Review process ensures quality without becoming bureaucratic — review process: 'Every postmortem is reviewed by one peer reviewer from outside the authoring team before it is finalized. Peer reviewer responsibilities: evaluate against the 5-dimension quality scorecard, flag any blame language, verify action items are specific and owned, check that root cause analysis goes deep enough. Time commitment: 30-45 minutes per review. Reviewer rotation: maintain a pool of 15 trained reviewers (one per team). Each reviewer handles approximately 3 reviews per quarter — manageable load.' Review workflow: '(1) Author completes postmortem within 5 business days of incident. (2) Author self-scores against the quality scorecard. (3) Reviewer assigned automatically (round-robin from reviewer pool, excluding the author's team). (4) Reviewer scores and provides feedback within 2 business days. (5) If any dimension scores below 3: author revises with specific feedback. (6) Revised postmortem re-reviewed (same reviewer). (7) Approved postmortem published to the central postmortem registry.' Preventing bureaucracy: 'The review is a quality conversation, not a gatekeeping exercise. Reviewers are trained to provide actionable feedback, not just reject. If a postmortem needs revision, the feedback must specify what is missing. Review SLA: 2 business days. If the reviewer does not respond, the postmortem auto-publishes with a note that it was not reviewed — we do not let the review process block publication indefinitely.' Reviewer training: '1-hour training session covering: quality scorecard application, giving constructive feedback, recognizing and redirecting blame language, the difference between depth and length (a concise postmortem can score 5/5). Annual calibration: reviewers score the same sample postmortem to ensure consistent scoring'"
+    weight: 0.30
+    description: "Review process"

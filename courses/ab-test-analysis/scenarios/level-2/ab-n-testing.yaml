@@ -1,0 +1,33 @@
+meta:
+  id: ab-n-testing
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Design and analyze A/B/n tests — handle experiments with multiple treatment variants, apply appropriate correction methods, and determine the winning variant"
+  tags: [A/B/n, multiple-variants, ANOVA, pairwise-comparisons, intermediate]
+
+state: {}
+
+trigger: |
+  The design team wants to test three different versions of the pricing
+  page against the current control. "We have the current page (A), a
+  simplified version (B), a version with social proof (C), and a version
+  with a comparison table (D). We want to find the best one. Can we just
+  run four groups simultaneously?"
+
+  Task: Explain how to properly design, run, and analyze an A/B/n test
+  with four variants.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers A/B/n test design and sample size requirements — design: 'A/B/n test design (4 variants): Yes, you can test multiple variants simultaneously — this is an A/B/n test (also called a multivariate test when testing multiple variables). Key design decisions: Traffic allocation: equal split — 25% per variant (A, B, C, D). This maximizes statistical power for comparing any pair. Unequal split — more traffic to control (e.g., 40% A, 20% B, 20% C, 20% D). Use when you want more confidence that the winner truly beats the current experience. Minimizes risk if all variants are worse. Sample size: testing 4 variants means 6 pairwise comparisons (A vs B, A vs C, A vs D, B vs C, B vs D, C vs D). Each comparison needs sufficient power. For baseline conversion 5%, MDE 1pp, α = 0.05, power 80%: two-group test: 7,500 per group (15,000 total). Four-group test: 7,500 per group × 4 = 30,000 total. The sample size per group stays the same but you need more total traffic. With Bonferroni correction for 6 comparisons (α = 0.05/6 = 0.0083): approximately 10,000 per group × 4 = 40,000 total. Duration: if the site gets 2,000 visitors per day: without correction: 30,000 / 2,000 = 15 days. With Bonferroni: 40,000 / 2,000 = 20 days. Pre-register: the primary metric (e.g., pricing page → purchase conversion), the comparison structure (all pairwise, or each treatment vs control only), and the correction method'"
+    weight: 0.35
+    description: "Design"
+  - type: llm_judge
+    criteria: "Response covers analysis approach with proper corrections — analysis: 'Analyzing A/B/n results: Step 1 — Overall test (is there any difference?): use a chi-squared test or one-way ANOVA to test if at least one variant differs from the others. Results: A (control) 5.0%, B (simplified) 5.8%, C (social proof) 6.2%, D (comparison table) 5.3%. Chi-squared p = 0.002 → at least one variant is significantly different from the others. Step 2 — Pairwise comparisons: compare each treatment to control: A vs B: difference = 0.8pp, p = 0.04. A vs C: difference = 1.2pp, p = 0.001. A vs D: difference = 0.3pp, p = 0.38. Apply Bonferroni correction (3 comparisons vs control): adjusted α = 0.05/3 = 0.017. A vs B: p = 0.04 > 0.017 → not significant after correction. A vs C: p = 0.001 < 0.017 → significant. A vs D: p = 0.38 > 0.017 → not significant. After correction, only variant C (social proof) significantly outperforms the control. Compare treatments to find the best: B vs C: difference = 0.4pp, p = 0.22 → not significant. C is numerically better than B but the difference between them is not proven. Recommendation: ship variant C (social proof). It significantly beats the control by 1.2pp and is numerically the best performer'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Response covers practical considerations and common pitfalls — practical: 'Practical considerations for A/B/n tests: When to use A/B/n vs sequential A/B tests: A/B/n (test simultaneously): faster — test all ideas at once instead of sequentially. Reduces total calendar time (4 variants in 20 days vs 3 sequential A/B tests at 15 days each = 45 days). Better for related variants where you want a direct comparison. Sequential A/B tests: simpler analysis, no multiple comparison correction needed. Each test gets the full traffic allocation. Better when each variant informs the next (iterative design). Common pitfalls: Pitfall 1 — Not correcting for multiple comparisons: with 6 pairwise comparisons at α = 0.05, the family-wise error rate is 1 - (0.95)^6 = 26%. Almost certainly you will find at least one false positive. Always apply Bonferroni or Benjamini-Hochberg correction. Pitfall 2 — Winner's curse: the winning variant's observed effect is likely to be overestimated. If C showed 6.2% in the test, the true rate might be 5.8-6.0%. Reason: with multiple variants, the highest observed rate benefits from positive random noise. Mitigation: use the confidence interval lower bound for business projections. Run a confirmation test with just control vs the winner. Pitfall 3 — Too many variants dilute traffic: 4 variants need 4x traffic (same per-group but more total). 8 variants would need 8x traffic and 28 pairwise comparisons. Rule of thumb: limit to 3-5 variants. More than 5 usually means you should test in stages. Pitfall 4 — Interaction effects ignored: if you test button color AND page layout simultaneously (not just separate page designs), you need a full factorial design. 3 colors × 3 layouts = 9 cells. This is a multivariate test requiring much larger samples and more sophisticated analysis (covered in advanced scenarios)'"
+    weight: 0.30
+    description: "Practical"

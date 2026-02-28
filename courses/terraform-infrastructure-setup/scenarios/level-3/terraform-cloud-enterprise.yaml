@@ -1,0 +1,59 @@
+meta:
+  id: terraform-cloud-enterprise
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Use Terraform Cloud/Enterprise — configure remote execution, VCS integration, workspace management, and Sentinel policies"
+  tags: [Terraform, Terraform-Cloud, Enterprise, remote-execution, Sentinel, advanced]
+
+state: {}
+
+trigger: |
+  Your team is migrating from local Terraform execution to Terraform
+  Cloud. Current pain points:
+  - Engineers run terraform from laptops with different provider versions
+  - No audit trail of who applied what
+  - State files stored in S3 with overly permissive access
+  - No policy enforcement (anyone can create m5.24xlarge instances)
+
+  Migration configuration:
+
+  ```hcl
+  terraform {
+    cloud {
+      organization = "acme-corp"
+      workspaces {
+        name = "production"
+      }
+    }
+  }
+  ```
+
+  After migration:
+  ```
+  $ terraform plan
+
+  Running plan in Terraform Cloud. Output will stream here.
+
+  Error: Terraform Cloud returned an unexpected error
+  UNAUTHORIZED: You are not authorized to perform this action.
+  ```
+
+  Task: Explain Terraform Cloud features (remote execution, VCS
+  integration, workspace management), Sentinel policies for
+  governance, migration from local/S3 to Terraform Cloud, and
+  when to use Cloud vs Enterprise vs self-hosted.
+
+assertions:
+  - type: llm_judge
+    criteria: "Terraform Cloud features are explained — remote execution: plan and apply run on Terraform Cloud's infrastructure (consistent environment, no laptop dependencies). VCS integration: connect to GitHub/GitLab, automatic plans on PRs, apply on merge. Workspace management: each workspace has its own state, variables, and permissions. Variable sets: share variables across workspaces. Run triggers: chain workspaces (VPC workspace triggers EKS workspace). The auth error: need to run terraform login first, or set TF_TOKEN_app_terraform_io environment variable. Team permissions control who can plan vs apply"
+    weight: 0.35
+    description: "Cloud features"
+  - type: llm_judge
+    criteria: "Sentinel policies are covered — Sentinel: policy-as-code framework for governance. Policy sets: attach to workspaces. Enforcement levels: advisory (warn), soft-mandatory (override with approval), hard-mandatory (no override). Example policies: restrict instance types (no m5.24xlarge), require tags on all resources, enforce encryption, restrict regions. Policy workflow: plan → Sentinel check → cost estimation → apply. Policies written in Sentinel language (not HCL). OPA (Open Policy Agent) also supported as alternative"
+    weight: 0.35
+    description: "Sentinel policies"
+  - type: llm_judge
+    criteria: "Migration and comparison are practical — migration from S3: (1) add cloud block to config, (2) terraform login, (3) terraform init to migrate state. Cloud vs Enterprise vs self-hosted: Cloud (SaaS, free tier available, easiest setup), Enterprise (self-hosted, air-gapped support, custom agents), self-hosted agents with Cloud (hybrid — control plane in Cloud, execution on your infrastructure). When Cloud: most teams. When Enterprise: regulatory requirements for air-gapped, very large scale, custom integrations. Cost: Cloud free for small teams, Enterprise starts at $70K+/year"
+    weight: 0.30
+    description: "Migration and comparison"

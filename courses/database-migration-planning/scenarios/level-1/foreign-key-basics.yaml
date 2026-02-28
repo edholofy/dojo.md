@@ -1,0 +1,39 @@
+meta:
+  id: foreign-key-basics
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Add and remove foreign keys — understand foreign key constraints in migrations and their impact on data integrity and performance"
+  tags: [database, migration, foreign-key, constraints, referential-integrity, beginner]
+
+state: {}
+
+trigger: |
+  Your team has an "orders" table and a "customers" table, but the
+  orders.customer_id column has no foreign key constraint. This means
+  orders can reference customer IDs that do not exist in the customers
+  table. A data quality audit found 150 orders with invalid
+  customer_id values.
+
+  Tables:
+  - customers: id (serial, primary key), name, email
+  - orders: id (serial, primary key), customer_id (integer, not null),
+    total (decimal), created_at (timestamp)
+
+  Task: Write a migration to add the foreign key constraint. Address
+  the problem of existing invalid data that would prevent the
+  constraint from being added.
+
+assertions:
+  - type: llm_judge
+    criteria: "Foreign key concept and the data problem are explained — explanation: 'A foreign key constraint ensures that a value in one table references a valid row in another table. When we add FOREIGN KEY (customer_id) REFERENCES customers(id) to the orders table, the database guarantees: every order must reference a customer that exists. You cannot insert an order with a customer_id that is not in the customers table. You cannot delete a customer who has orders (unless you specify ON DELETE behavior). The problem: we have 150 orders with customer_id values that do not exist in the customers table. If we try to add the foreign key constraint directly: ALTER TABLE orders ADD CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id); This will FAIL. PostgreSQL validates all existing data against the new constraint. The 150 invalid rows violate the constraint, so the database rejects it. We must fix the data before adding the constraint'"
+    weight: 0.35
+    description: "Foreign key explanation"
+  - type: llm_judge
+    criteria: "Migration handles the invalid data and adds the constraint — migration: 'Step 1: Identify and fix invalid data. First, find the invalid orders: SELECT o.id, o.customer_id FROM orders o LEFT JOIN customers c ON o.customer_id = c.id WHERE c.id IS NULL; This returns the 150 orders with invalid customer_id values. Options for fixing: Option A (recommended): assign invalid orders to a default placeholder customer. INSERT INTO customers (id, name, email) VALUES (0, deleted customer, deleted@placeholder.local); UPDATE orders SET customer_id = 0 WHERE customer_id NOT IN (SELECT id FROM customers); This preserves the order data while giving it a valid customer reference. Option B: delete the invalid orders. DELETE FROM orders WHERE customer_id NOT IN (SELECT id FROM customers); This is simpler but destroys 150 order records. Only do this if the business confirms these orders are not needed. Option C: create missing customers. For each invalid customer_id, create a placeholder customer record. This is complex and only makes sense if the customer data can be recovered. Step 2: Add the foreign key constraint. After fixing the data: ALTER TABLE orders ADD CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id); Step 3: Add an index on customer_id (if one does not exist). CREATE INDEX idx_orders_customer_id ON orders(customer_id); Foreign key lookups are faster with an index on the referencing column. PostgreSQL does not create this index automatically. Down migration: ALTER TABLE orders DROP CONSTRAINT fk_orders_customer; Note: the down migration removes the constraint but does not undo the data fix (the placeholder customer and updated orders remain). This is acceptable — the data fix improved data quality regardless of the constraint'"
+    weight: 0.35
+    description: "Migration with data fix"
+  - type: llm_judge
+    criteria: "ON DELETE behavior is explained — on delete: 'When adding a foreign key, decide what happens when the referenced row is deleted. Options: ON DELETE RESTRICT (default): prevent deleting a customer who has orders. The DELETE fails with an error. Use when: orders must always have a valid customer. ON DELETE CASCADE: automatically delete all orders when their customer is deleted. Use when: orders have no value without their customer (careful — this can cause large cascading deletes). ON DELETE SET NULL: set customer_id to NULL when the customer is deleted. Requires customer_id to be nullable. Use when: you want to keep the order record but detach it from the deleted customer. For this scenario: ON DELETE RESTRICT is the safest choice. It prevents accidental deletion of customers who have orders. If a customer needs to be deleted, the application must handle their orders first (archive, reassign, or delete explicitly). The constraint becomes: ALTER TABLE orders ADD CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT; Tip: always make ON DELETE behavior explicit in the migration rather than relying on the default. This documents the intended behavior'"
+    weight: 0.30
+    description: "ON DELETE behavior"

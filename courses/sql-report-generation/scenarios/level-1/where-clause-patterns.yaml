@@ -1,0 +1,37 @@
+meta:
+  id: where-clause-patterns
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Master WHERE clause patterns — use comparison operators, IN, LIKE, BETWEEN, IS NULL, and compound conditions for precise data filtering"
+  tags: [SQL, WHERE, filtering, operators, LIKE, IN, BETWEEN, beginner]
+
+state: {}
+
+trigger: |
+  The support team needs several filtered views of customer data:
+  1. "Premium customers in California or New York"
+  2. "Customers with gmail addresses"
+  3. "Orders between $100 and $500 that are still pending"
+  4. "Customers who haven't provided a phone number"
+  5. "Active customers who are NOT on the free plan"
+
+  Table: customers (customer_id, first_name, last_name, email,
+  phone, plan_type, state, is_active, signup_date)
+  Table: orders (order_id, customer_id, amount, status, order_date)
+
+  Task: Write each filtered query and explain the operators.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use various WHERE clause operators — queries: 'WHERE clause patterns: Query 1 — IN operator for multiple values: SELECT * FROM customers WHERE plan_type = 'premium' AND state IN ('CA', 'NY'). IN is shorthand for multiple OR conditions. state IN ('CA', 'NY') is equivalent to (state = 'CA' OR state = 'NY'). Query 2 — LIKE for pattern matching: SELECT * FROM customers WHERE email LIKE '%@gmail.com'. % matches any number of characters. _ matches exactly one character. LIKE 'J%' — starts with J. LIKE '%son' — ends with son. LIKE '%smith%' — contains smith anywhere. LIKE 'J_n' — matches Jan, Jen, Jon, Jun. PostgreSQL: use ILIKE for case-insensitive matching. MySQL: LIKE is case-insensitive by default. Query 3 — BETWEEN for ranges: SELECT * FROM orders WHERE amount BETWEEN 100 AND 500 AND status = 'pending'. BETWEEN is inclusive on both ends (100 and 500 are included). Equivalent to: amount >= 100 AND amount <= 500. Query 4 — IS NULL for missing data: SELECT * FROM customers WHERE phone IS NULL. Never use phone = NULL — this always returns false because NULL is not equal to anything (not even itself). IS NOT NULL — has a phone number. Query 5 — NOT and compound conditions: SELECT * FROM customers WHERE is_active = true AND plan_type != 'free'. Alternative: plan_type NOT IN ('free'). Or: plan_type <> 'free' (standard SQL not-equal operator)'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers operator precedence and common mistakes — explanation: 'Operator precedence — AND before OR: SELECT * FROM customers WHERE plan_type = 'premium' OR plan_type = 'basic' AND state = 'CA'. This does NOT mean (premium OR basic) AND CA. It means premium OR (basic AND CA), because AND evaluates before OR. Fix with parentheses: WHERE (plan_type = 'premium' OR plan_type = 'basic') AND state = 'CA'. Or use IN: WHERE plan_type IN ('premium', 'basic') AND state = 'CA'. Always use parentheses when mixing AND and OR — it makes the intent clear. Common mistakes: LIKE without wildcards: WHERE email LIKE 'test@gmail.com' matches exactly that string — same as =. You probably meant LIKE '%test%'. NULL comparisons: WHERE phone != NULL returns zero rows. NULLs are not equal to or not equal to anything. Use IS NULL and IS NOT NULL. Case sensitivity: 'CA' and 'ca' may or may not match depending on the database collation. When in doubt: WHERE UPPER(state) = 'CA' or use ILIKE in PostgreSQL. NOT IN with NULLs: WHERE customer_id NOT IN (SELECT customer_id FROM orders) will return zero rows if any customer_id in orders is NULL. Use NOT EXISTS instead for safety'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response includes performance considerations for WHERE clauses — performance: 'WHERE clause performance: Indexed columns: put the most selective filter first. If state has an index, WHERE state = 'CA' AND plan_type = 'premium' is efficient. The database uses the index to quickly find CA customers, then filters by plan_type. Functions on columns prevent index use: WHERE YEAR(signup_date) = 2024 — cannot use index on signup_date. WHERE signup_date >= '2024-01-01' AND signup_date < '2025-01-01' — CAN use index. WHERE LOWER(email) = 'test@gmail.com' — cannot use index on email. PostgreSQL: create a functional index on LOWER(email) if you need this often. LIKE with leading wildcard: WHERE email LIKE '%gmail.com' — full table scan (cannot use index). WHERE email LIKE 'test%' — can use index (prefix match). If you need suffix matching frequently, consider storing a reversed version of the column. Rule of thumb: WHERE clauses should use columns as-is, without wrapping them in functions, to allow index usage'"
+    weight: 0.30
+    description: "Performance"

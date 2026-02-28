@@ -1,0 +1,34 @@
+meta:
+  id: cohort-based-dashboards
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Design cohort-based dashboards — visualize user behavior by cohort to reveal retention patterns, lifecycle trends, and segment-specific insights hidden in aggregate metrics"
+  tags: [cohort, retention, lifecycle, segmentation, heatmap, advanced]
+
+state: {}
+
+trigger: |
+  The Head of Product says: "Our overall retention is 25% at Day 30.
+  But when I talk to different teams, they have wildly different views
+  of whether it's improving. The growth team says new user quality is
+  getting better. The product team says recent changes hurt retention.
+  I need a dashboard that shows retention BY COHORT so I can see which
+  groups are improving and which are declining."
+
+  Task: Design a cohort-based dashboard that reveals retention patterns
+  across user segments and time periods.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a cohort retention dashboard with heatmap — heatmap: 'Cohort retention dashboard: Core visualization — retention heatmap: Rows represent signup cohorts (one row per week or month). Columns represent time since signup (Day 1, Day 7, Day 14, Day 30, Day 60, Day 90). Each cell contains the retention percentage with color intensity: dark green (>40%) to light green (30-40%) to yellow (20-30%) to orange (10-20%) to red (<10%). Example heatmap: Cohort | D1 | D7 | D14 | D30 | D60 | D90. Jan W1 | 68% | 42% | 31% | 22% | 15% | 11%. Jan W2 | 70% | 44% | 33% | 24% | 16% | 12%. Jan W3 | 65% | 38% | 28% | 20% | 14% | 10%. Feb W1 | 72% | 48% | 38% | 28% | -- | --. Feb W2 | 75% | 52% | 42% | 32% | -- | --. Feb W3 | 78% | 55% | 44% | -- | -- | --. Reading the heatmap: read columns to see how retention decays over time for a cohort. Read rows to compare the same retention milestone across cohorts. The growth team is right — recent cohorts (Feb W2, W3) show improving D7 and D14 retention: 52% and 55% vs January's 38-44%. The product team may be looking at aggregate Day 30 retention, which still shows 22-28% because recent cohorts have not reached Day 30 yet. The heatmap resolves the disagreement: early retention is improving, but the aggregate number has not caught up yet because it is weighted by older, lower-performing cohorts. Retention curves: below the heatmap, overlay line charts showing the retention curve for selected cohorts. January cohorts form a lower curve that flattens around 10%. February cohorts show a higher starting point and slower decay. The visual difference between curves confirms the improvement'"
+    weight: 0.35
+    description: "Heatmap"
+  - type: llm_judge
+    criteria: "Response covers cohort segmentation and comparison — segmentation: 'Cohort segmentation: Beyond time-based cohorts, segment by behavioral and acquisition dimensions: Acquisition source cohorts: Organic vs Paid vs Referral. Organic D30 retention: 32%. Paid D30 retention: 18%. Referral D30 retention: 38%. Insight: paid users retain at half the rate of organic users. The growth team should investigate ad targeting quality. Plan tier cohorts: Free vs Starter ($29) vs Pro ($99). Free D30 retention: 15%. Starter D30 retention: 35%. Pro D30 retention: 52%. Insight: paid users retain much better. The free tier is not converting — it is a leaky bucket. Activation cohorts: Users who completed onboarding vs those who did not. Completed onboarding D30 retention: 40%. Did not complete D30 retention: 12%. Insight: onboarding completion is the strongest predictor of retention. Improving onboarding completion from 58% to 75% could significantly improve overall retention. Geography cohorts: US vs EU vs APAC. US D30 retention: 28%. EU D30 retention: 24%. APAC D30 retention: 15%. Insight: APAC retention is low — possible localization or timezone support issues. Dashboard filter panel: allow the viewer to select any combination of cohort dimensions. Show the heatmap filtered by the selected segment. A dropdown for: time period (weekly/monthly), acquisition source, plan tier, geography, activation status. Comparison mode: select two segments and show their retention curves side by side. This reveals which segments over-perform and which need attention'"
+    weight: 0.35
+    description: "Segmentation"
+  - type: llm_judge
+    criteria: "Explanation covers interpreting cohort data and common pitfalls — interpretation: 'Interpreting cohort dashboards: Key patterns to look for: 1. Improving cohorts: if each successive cohort has higher retention at the same milestone, the product is getting better. This is the most positive signal. 2. Declining cohorts: if recent cohorts retain worse than older ones, investigate product changes or acquisition quality. 3. Flattening curves: retention curves that flatten (stop declining) indicate a stable base of engaged users. If the curve flattens at 15%, that is your core user base. The question becomes: how do we move the flattening point higher? 4. Cliff drops: a sharp drop at a specific day (e.g., Day 7) suggests a specific failure point — perhaps the free trial ends, or onboarding requires a payment. Common pitfalls: 1. Survivorship bias: Day 90 retention of 15% looks low, but those users are highly engaged. Do not compare Day 90 users to Day 1 users — they are fundamentally different populations. 2. Incomplete cohorts: recent cohorts have not reached later milestones. February cohorts show higher D7 but no D90 yet. Do not assume D90 will also be higher — the improvement may not persist. Mark incomplete cells with a different color or dash. 3. Cohort size variation: a cohort of 50 users with 40% retention is less reliable than a cohort of 5,000 users with 25% retention. Show cohort size alongside retention percentage. Small cohorts should be flagged or excluded from trend analysis. 4. Aggregate masks segment: overall retention may be flat while one segment improves and another declines. The heatmap solves this if you filter by segment, but the default aggregate view can be misleading. Always check segment-level patterns before drawing conclusions from the aggregate'"
+    weight: 0.30
+    description: "Interpretation"

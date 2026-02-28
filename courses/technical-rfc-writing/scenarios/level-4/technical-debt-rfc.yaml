@@ -1,0 +1,49 @@
+meta:
+  id: technical-debt-rfc
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Write technical debt RFCs — propose and prioritize technical debt remediation using business impact analysis and organizational alignment"
+  tags: [RFC, technical-debt, prioritization, business-impact, remediation, expert]
+
+state: {}
+
+trigger: |
+  You're the Staff Engineer responsible for technical health at a
+  company with a growing technical debt problem. The engineering
+  team has identified 47 items of technical debt, but leadership
+  keeps asking "why should we fix old code instead of building new
+  features?"
+
+  Major debt items include:
+  - Legacy authentication module (security risk, 3 incidents/year)
+  - Monolithic test suite (45-minute CI, developers skip tests)
+  - Deprecated ORM version (2 years behind, blocking framework upgrade)
+  - Hardcoded configuration across 30 services (every config change
+    requires code deployment)
+  - Inconsistent error handling (20% of errors are silently swallowed)
+  - 12 unused microservices still running (costing $15K/month)
+
+  Product roadmap has no room for "tech debt sprints" and previous
+  requests for dedicated debt time were rejected as "not delivering
+  customer value."
+
+  Task: Write an RFC that frames technical debt as a business
+  problem, proposes a prioritization framework, and creates a
+  sustainable remediation strategy that product leadership will
+  approve. Show how to make the business case for technical debt
+  investment.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical debt is framed as business risk, not engineering preference — reframing: 'Technical debt is not code engineers wish was prettier. Technical debt is deferred maintenance with compounding interest that manifests as: slower feature delivery, more production incidents, higher security risk, and increased engineering costs.' Each debt item quantified in business terms: Legacy auth: '$X/year in incident response (3 incidents × average 20 hours × 3 engineers). Security exposure: auth module has 2 known CVEs that can't be patched without rewrite. Risk: a breach costs $Y in remediation, legal, and reputation.' Monolithic tests: '45-minute CI means developers run tests less frequently. 15% of deploys have test-related issues caught in production. Cost: $Z/quarter in production incident response that testing would have prevented.' Unused services: '$15K/month = $180K/year in direct cloud waste. Zero business value.' Prioritization framework: priority = (business impact × likelihood) / (remediation cost). Score each debt item. Present the top 5 as a ranked investment proposal, not a wish list"
+    weight: 0.35
+    description: "Business framing"
+  - type: llm_judge
+    criteria: "Prioritization framework is rigorous and repeatable — scoring dimensions: (1) Revenue impact: does this debt slow feature delivery? By how much? What revenue is delayed? (2) Risk: what's the probability and cost of an incident caused by this debt? (3) Engineering cost: how much time is wasted working around this debt? (4) Remediation cost: how much effort to fix? (5) Strategic alignment: does fixing this unlock future capabilities? Worked example: 'Legacy auth — Revenue impact: 8/10 (blocks SSO feature requested by 5 enterprise prospects worth $2M ARR). Risk: 9/10 (known CVEs, 3 incidents/year). Engineering cost: 6/10 (workarounds add 2 hours/week for 3 engineers). Remediation cost: 40 engineer-days. Strategic value: 9/10 (unblocks security compliance certification). Priority score: calculated.' Ranked list published quarterly. Product leadership sees the same priority list as engineering. If they choose to deprioritize a high-scoring item, they're explicitly accepting the risk — not ignoring it. Framework is reusable: '47 debt items scored, top 10 proposed for the next 2 quarters, reviewed quarterly. Any engineer can submit a debt item for scoring'"
+    weight: 0.35
+    description: "Prioritization framework"
+  - type: llm_judge
+    criteria: "Remediation strategy is sustainable and realistic — strategy: 'Not a dedicated debt sprint (rejected before and rightfully so — it creates an artificial separation between debt work and feature work). Instead: (1) Embedded remediation: 20% of each sprint allocated to debt in the area being worked on. Building a feature that touches auth? Include auth module modernization. This is not overhead — it's the Boy Scout rule at sprint level. (2) Quick wins batch: unused services and hardcoded config are low-effort, high-impact. Batch these into a 2-week focused effort. Immediate ROI ($180K/year savings from unused services alone) builds credibility for larger investments. (3) Strategic projects: legacy auth rewrite and ORM upgrade are too large for embedded work. Propose as projects with business sponsorship (auth: sponsored by enterprise sales team who needs SSO; ORM: sponsored by platform team who needs framework upgrade).' Tracking: 'Debt inventory maintained as a living document. Quarterly debt review with engineering and product leadership. Debt metrics: total debt items, debt added vs resolved per quarter, engineering time spent on workarounds. Target: debt-related incidents reduced by 50% in 6 months, engineering time on workarounds reduced by 30% in 12 months'"
+    weight: 0.30
+    description: "Sustainable strategy"

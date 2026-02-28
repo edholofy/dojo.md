@@ -1,0 +1,39 @@
+meta:
+  id: sql-governance-standards
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Establish organizational SQL standards — define naming conventions, query review processes, performance guardrails, and a SQL style guide that scales across a 50-person data team"
+  tags: [SQL, governance, standards, style-guide, code-review, naming, master]
+
+state: {}
+
+trigger: |
+  The data team has grown from 3 to 50 people across 4 offices.
+  SQL quality is deteriorating:
+
+  - No naming conventions (some tables are snake_case, others
+    camelCase, some have cryptic abbreviations)
+  - No query review process — analysts push SQL directly to
+    production dashboards
+  - Performance incidents from unreviewed queries (a junior analyst
+    wrote a CROSS JOIN on two million-row tables, taking down the
+    analytics database for 2 hours)
+  - No reuse — 15 analysts independently built customer churn queries
+  - Technical debt: 200+ ad-hoc queries with no documentation
+
+  Task: Design the SQL governance framework for the organization.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response establishes comprehensive naming conventions and a SQL style guide — styleguide: 'SQL governance framework: Naming conventions: Tables: snake_case, plural nouns. fact_orders, dim_customers, stg_raw_payments. Prefix indicates layer: fact_ (fact tables), dim_ (dimensions), stg_ (staging), raw_ (raw extracts), agg_ (aggregates), tmp_ (temporary). Columns: snake_case, descriptive. customer_id (not cust_id or custID), order_date (not dt or date1), total_amount_usd (include unit in name). Boolean columns: is_ or has_ prefix. is_active, has_subscription, is_first_order. Date columns: _date suffix for dates, _at suffix for timestamps. created_date, updated_at, deleted_at. Foreign keys: match the primary key name. dim_customers.customer_key → fact_orders.customer_key. Indexes: idx_{table}_{columns}. idx_fact_orders_date_region. Views: v_{purpose}. v_monthly_revenue, v_active_customers. SQL style guide: SELECT on its own line. One column per line, comma-leading for easy commenting. Indent JOINs and WHERE clauses. Always alias tables with meaningful abbreviations. Always qualify column names with table alias (o.amount, not amount). Use CTEs instead of subqueries for readability. Example: SELECT o.order_id, o.order_date, c.customer_name, c.segment, p.product_name, p.category, o.amount, o.amount - COALESCE(o.discount, 0) AS net_amount FROM fact_orders AS o INNER JOIN dim_customers AS c ON o.customer_key = c.customer_key INNER JOIN dim_products AS p ON o.product_key = p.product_key WHERE o.order_date >= DATE_TRUNC('month', CURRENT_DATE) AND c.is_active = true ORDER BY o.order_date DESC. Every query in production must follow this style. Enforce with a SQL linter (sqlfluff) in the CI pipeline'"
+    weight: 0.35
+    description: "StyleGuide"
+  - type: llm_judge
+    criteria: "Response includes query review process and performance guardrails — review: 'Query review process: All SQL destined for production dashboards must go through review: Pull request workflow: analysts write SQL in a Git repository (dbt project or SQL folder). Every change requires a pull request with: description of what the query does and why, EXPLAIN plan showing expected performance, test results (row counts, sample output), and reviewer approval. Review checklist: 1. Does the query follow naming conventions? 2. Are all columns qualified with table aliases? 3. Are CTEs used instead of nested subqueries? 4. Is there a WHERE clause limiting the data scanned? 5. Does EXPLAIN show index usage (no sequential scans on large tables)? 6. Is the query idempotent (safe to rerun)? 7. Are there comments explaining non-obvious business logic? Performance guardrails — automated protection: CREATE OR REPLACE FUNCTION check_query_safety() RETURNS event_trigger AS $$ DECLARE v_plan TEXT; v_estimated_rows BIGINT; v_cost FLOAT; BEGIN EXECUTE 'EXPLAIN (FORMAT JSON) ' || current_query() INTO v_plan; v_estimated_rows := (v_plan::jsonb->0->'Plan'->>'Plan Rows')::bigint; v_cost := (v_plan::jsonb->0->'Plan'->>'Total Cost')::float; IF v_estimated_rows > 100000000 THEN RAISE WARNING 'Query scans over 100M rows — consider adding filters or using a materialized view'; END IF; IF v_cost > 1000000 THEN RAISE EXCEPTION 'Query cost exceeds safety threshold. Submit for review before running.'; END IF; END; $$ LANGUAGE plpgsql. Resource limits per user role: ALTER ROLE analyst SET statement_timeout = '300s'. ALTER ROLE analyst SET work_mem = '256MB'. ALTER ROLE dashboard SET statement_timeout = '30s'. Analysts get 5-minute query timeout. Dashboard queries must complete in 30 seconds or they should be optimized. The CROSS JOIN incident prevention: CREATE EXTENSION pg_stat_statements. Monitor for expensive queries: SELECT query, calls, total_exec_time / 1000 AS total_seconds, rows FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10. Alert when any single query exceeds 10 minutes'"
+    weight: 0.35
+    description: "Review"
+  - type: llm_judge
+    criteria: "Explanation covers reuse promotion and technical debt management — reuse: 'Promoting SQL reuse and managing technical debt: Shared SQL library: create a certified queries catalog that analysts can reference instead of writing from scratch. CREATE TABLE certified_queries (query_id SERIAL, query_name TEXT UNIQUE, description TEXT, sql_text TEXT, owner TEXT, last_verified DATE, usage_count INTEGER DEFAULT 0, tags TEXT[]). INSERT INTO certified_queries VALUES (DEFAULT, 'customer_churn_monthly', 'Monthly customer churn rate — board-approved definition', 'WITH active_start AS (...) SELECT ...', 'analytics_engineering', CURRENT_DATE, 0, ARRAY['churn', 'retention', 'board-metric']). Before writing a new query, search the catalog: SELECT query_name, description FROM certified_queries WHERE 'churn' = ANY(tags). If a certified query exists, use it. Track usage: UPDATE certified_queries SET usage_count = usage_count + 1 WHERE query_name = 'customer_churn_monthly'. High-usage queries are well-maintained. Zero-usage queries are candidates for deprecation. Technical debt cleanup plan: Phase 1 — Inventory: catalog all 200+ ad-hoc queries. Tag each with owner, last_used, dependencies. Phase 2 — Triage: classify as keep (actively used, meets standards), refactor (actively used, does not meet standards), or retire (unused or duplicated). Phase 3 — Migration: for each refactor query, create a certified version and redirect all downstream consumers. Phase 4 — Cleanup: delete retired queries. Archive for reference but remove from production. Ongoing maintenance: quarterly SQL health check. SELECT COUNT(*) AS total_queries, COUNT(CASE WHEN last_verified >= CURRENT_DATE - INTERVAL '90 days' THEN 1 END) AS recently_verified, COUNT(CASE WHEN usage_count = 0 THEN 1 END) AS unused, COUNT(CASE WHEN owner IS NULL THEN 1 END) AS unowned FROM certified_queries. Target: 100% of production queries have owners, fewer than 10% are unused, all queries verified within 90 days'"
+    weight: 0.30
+    description: "Reuse"

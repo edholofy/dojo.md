@@ -1,0 +1,110 @@
+meta:
+  id: build-vs-buy-analysis
+  level: 3
+  course: vendor-evaluation-and-comparison
+  type: output
+  description: "Build vs buy analysis — conduct a comprehensive analysis for a complex capability where both options are viable"
+  tags: [build-vs-buy, make-vs-buy, strategic, analysis, advanced]
+
+state: {}
+
+trigger: |
+  You're the VP of Engineering at a 600-person e-commerce
+  company ($200M annual revenue). The company needs a
+  recommendation engine to personalize product
+  recommendations for 5 million monthly active users. The
+  CEO wants your build-vs-buy analysis within 2 weeks.
+
+  Current state:
+  - Product catalog: 150,000 SKUs across 40 categories
+  - Data available: 3 years of purchase history, browsing
+    behavior, search queries, cart abandonment data
+  - Current "recommendations": Top-selling items by
+    category (static, no personalization)
+  - Engineering team: 45 engineers, 3 ML engineers, 1
+    data scientist
+  - Tech stack: Python/Django backend, React frontend,
+    PostgreSQL, AWS infrastructure
+  - Current conversion rate: 2.8%
+  - Industry benchmark with personalization: 4.5-6%
+  - Each 1% increase in conversion = ~$7M annual revenue
+
+  Build option assessment:
+
+  Technical requirements:
+  - Collaborative filtering + content-based hybrid model
+  - Real-time inference (<100ms latency per request)
+  - Handle 5M users × 150K products matrix
+  - A/B testing framework for model comparison
+  - Retrain models daily with new behavioral data
+  - Edge cases: Cold start (new users, new products),
+    seasonal trends, inventory-aware recommendations
+
+  Estimated build costs:
+  - Team: Hire 2 additional ML engineers ($400K/year
+    total) + 1 ML ops engineer ($180K/year)
+  - Development: 6-9 months to MVP, 12-15 months to
+    production-grade
+  - Infrastructure: $8K-$15K/month for ML training and
+    inference (GPU instances)
+  - Ongoing maintenance: ~30% of dev effort annually
+  - Opportunity cost: Diverts 3 existing engineers for
+    6-9 months from other projects (roadmap impact)
+
+  Buy option — 3 vendor options:
+
+  Vendor A — RecoAI:
+  - Pricing: $0.005 per recommendation served (~$25K/
+    month at your scale)
+  - Features: Collaborative filtering, content-based,
+    real-time, A/B testing built in
+  - Integration: JavaScript snippet + REST API, 2-week
+    integration
+  - Customization: Limited — can tune parameters but
+    can't modify algorithms
+  - Lock-in risk: Proprietary models, your data used
+    to improve their general model
+  - Track record: 200+ e-commerce customers, including
+    3 in your revenue range
+
+  Vendor B — PersonalizeML:
+  - Pricing: $15K/month flat (unlimited requests up to
+    10M users)
+  - Features: Full ML pipeline, custom model training on
+    your data, A/B testing
+  - Integration: SDK + API, 4-6 week integration
+  - Customization: High — can bring your own models and
+    features
+  - Lock-in risk: Models trained on your data are yours,
+    exportable
+  - Track record: 50 customers, newer company (3 years)
+
+  Vendor C — AWS Personalize:
+  - Pricing: Usage-based, estimated $18K-$22K/month
+  - Features: Multiple recipe types, real-time and batch,
+    event tracking
+  - Integration: AWS SDK, 3-4 week integration
+  - Customization: Medium — select from pre-built recipes,
+    tune hyperparameters
+  - Lock-in risk: AWS ecosystem lock-in but data stays
+    in your account
+  - Track record: Large enterprise-grade, part of AWS
+
+  Task: Conduct the build-vs-buy analysis. Quantify the
+  financial comparison (5-year TCO), assess strategic
+  implications, evaluate risks, and make a recommendation
+  with clear rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a rigorous financial comparison — calculates 5-year TCO for build (hiring, development, infrastructure, maintenance, opportunity cost) vs each buy option (subscription fees, integration costs, potential scaling costs); accounts for time-to-value difference (vendor = weeks/months, build = 6-15 months); quantifies the revenue impact of earlier deployment; the financial analysis reveals the true cost gap beyond headline pricing."
+    weight: 0.35
+    description: "FinancialComparison"
+  - type: llm_judge
+    criteria: "Response evaluates strategic implications beyond cost — considers competitive differentiation (is recommendation a differentiator or table stakes?); data ownership and IP (who controls your models and customer behavior data?); flexibility to iterate (can you experiment with new algorithms?); vendor dependency risk vs build maintenance burden; team capability growth; aligns the decision with the company's strategic direction; acknowledges there's no universally right answer."
+    weight: 0.35
+    description: "StrategicImplications"
+  - type: llm_judge
+    criteria: "Response considers hybrid and phased approaches — evaluates starting with a vendor to get immediate value while building capabilities; considers using AWS Personalize as a stepping stone; assesses whether the 3 ML engineers could eventually own a custom solution; identifies which components to buy vs build (e.g., buy the base recommendation engine, build the business logic layer); the recommendation is nuanced rather than a binary build-or-buy choice."
+    weight: 0.30
+    description: "NuancedRecommendation"

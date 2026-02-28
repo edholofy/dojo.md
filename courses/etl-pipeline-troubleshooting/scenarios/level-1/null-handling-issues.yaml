@@ -1,0 +1,48 @@
+meta:
+  id: null-handling-issues
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Null handling issues — understand and resolve problems with NULL values, empty strings, and missing data in ETL pipelines"
+  tags: [null, missing-data, empty-string, validation, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "I keep running into NULL-related
+  problems in our ETL pipeline. Different issues keep appearing:
+
+  1. Some records have NULL in the 'email' field but others have
+     empty string ''. Our downstream analytics treats them
+     differently — NULLs are excluded from COUNT but empty strings
+     aren't.
+
+  2. Our JOIN between customers and orders is dropping records
+     because some orders have NULL customer_id. We're losing about
+     5% of orders in the join.
+
+  3. A calculated field 'total_price = quantity * unit_price'
+     returns NULL whenever either quantity or unit_price is NULL,
+     which makes our revenue reports show less than actual.
+
+  4. Our NOT NULL constraint on the warehouse table rejects records
+     where the source data has NULLs in required fields.
+
+  How do I handle NULLs properly in our pipeline?"
+
+  Task: Explain NULL semantics, diagnose each issue, and provide
+  a systematic approach to handling NULLs in ETL pipelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains NULL semantics clearly — NULL means 'unknown' or 'absent', not 'zero' or 'empty string'. NULL in SQL propagates through operations (NULL * 5 = NULL, NULL = NULL is not TRUE). Explains the difference between NULL, empty string, and default values. Diagnoses each issue: empty string vs NULL inconsistency needs standardization, LEFT JOIN or COALESCE needed for the order join, COALESCE or ISNULL needed for the calculation, and NOT NULL constraints need either default values or upstream data quality fixes"
+    weight: 0.35
+    description: "NULLSemantics"
+  - type: llm_judge
+    criteria: "Response provides concrete fixes for each issue — standardize empty strings to NULL (or vice versa) using NULLIF or CASE statements in the transform step, use LEFT JOIN instead of INNER JOIN to preserve all orders (then handle NULL customer_id separately), use COALESCE(quantity, 0) * COALESCE(unit_price, 0) for the calculation (or decide if NULL should mean 'exclude from calculation'), handle NOT NULL constraints by either adding default values, filtering out NULL records, or fixing the source data"
+    weight: 0.35
+    description: "ConcreteFixes"
+  - type: llm_judge
+    criteria: "Response provides a systematic NULL handling strategy — define a NULL handling policy for each field in the pipeline (is NULL acceptable? should it be replaced? with what default?), implement NULL checks early in the pipeline (validate and flag during extraction), document which fields can be NULL and what NULL means for each field, test for NULL edge cases in pipeline tests, and consider whether NULLs indicate a data quality problem that should be fixed at the source rather than patched in the pipeline"
+    weight: 0.30
+    description: "SystematicApproach"

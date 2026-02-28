@@ -1,0 +1,42 @@
+meta:
+  id: versioning-changelog
+  level: 2
+  course: design-system-documentation
+  type: output
+  description: "Versioning and changelog — document versioning strategy, write changelogs, and create deprecation notices for design system releases"
+  tags: [versioning, changelog, deprecation, releases, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "We just released version 3.0
+  of our design system and it was chaos:
+
+  - Teams didn't know what changed until things broke
+  - A component was removed that 5 teams were still using
+  - Prop names changed without warning (size='sm' became
+    size='small')
+  - The changelog was a dump of Git commits that nobody
+    could understand
+  - Some teams are still on v1.x and won't upgrade because
+    they don't know what's involved
+
+  How do I document versioning, write useful changelogs, and
+  handle deprecations so releases don't break people's trust?"
+
+  Task: Design the versioning documentation strategy including
+  changelog format, deprecation policy, and migration support.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response establishes a clear versioning policy — semantic versioning explained for design systems (Major: breaking changes like prop renames, component removal; Minor: new components, new props, new variants; Patch: bug fixes, style adjustments), with specific examples from the trigger scenario. Defines what constitutes a breaking change in a design system (prop rename, component removal, default value change, visual change that affects layout). Creates a release cadence recommendation (e.g., patches as needed, minors monthly, majors quarterly with advance notice)"
+    weight: 0.35
+    description: "VersioningPolicy"
+  - type: llm_judge
+    criteria: "Response creates a changelog format that humans can understand — structured format: version number, date, and categorized changes (Added, Changed, Deprecated, Removed, Fixed, Security). Each entry written for consumers not developers (not 'refactored Button internals' but 'Button: size prop now accepts small/medium/large instead of sm/md/lg'). Includes migration notes for breaking changes (before/after code examples), impact assessment (which teams/products are affected), and links to detailed migration guides for major releases"
+    weight: 0.35
+    description: "ChangelogFormat"
+  - type: llm_judge
+    criteria: "Response designs a deprecation policy — deprecation timeline (announce → warn → remove pattern: announce in minor release, add console warnings in next minor, remove in next major, minimum 3 months from announce to removal), how to communicate deprecations (deprecation notices in docs, console warnings in code, email to component consumers, migration guide published), how to track who's using deprecated components (usage analytics, automated scanning), and how to support teams still on old versions (support window policy, LTS releases for major versions). Addresses the v1.x teams who won't upgrade"
+    weight: 0.30
+    description: "DeprecationPolicy"

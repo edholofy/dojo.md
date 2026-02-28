@@ -1,0 +1,50 @@
+meta:
+  id: asking-questions
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Ask effective questions — use questions in code reviews to understand context, surface hidden assumptions, and guide the author to better solutions"
+  tags: [code-review, questions, understanding, socratic, curiosity, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing code and encounter things you don't fully understand.
+  Instead of assuming the author made a mistake, you want to ask
+  questions. But questions in code reviews can go wrong:
+
+  Bad questions (disguised demands):
+  - "Why didn't you use a Map here?" (implies they should have)
+  - "Shouldn't this be async?" (tells, doesn't ask)
+  - "Don't you think this is too complex?" (rhetorical)
+
+  Good questions (genuine curiosity):
+  - "What's the expected behavior when user is null?"
+  - "I'm curious about the choice to use recursion here — was there
+    a specific reason over iteration?"
+  - "Could you help me understand the business rule behind this check?"
+
+  Code you're reviewing has:
+  1. A custom retry mechanism instead of using the existing library
+  2. A database query that seems to fetch more data than needed
+  3. A complex regex with no comment explaining the pattern
+  4. A try/catch that catches all exceptions with the same handler
+  5. An unusual data structure choice (array of arrays instead of Map)
+
+  Task: Write genuine questions for each of the 5 situations. Then
+  write a guide on when to ask questions vs make statements in code
+  reviews.
+
+assertions:
+  - type: llm_judge
+    criteria: "Questions are genuine, not passive-aggressive — each question: (1) Custom retry: 'I noticed we have a retry utility in lib/retry.ts — was there a specific requirement that the existing library didn't handle? I'm wondering if we could reuse it here.' Not: 'Why are you reinventing the wheel?' (2) Over-fetching: 'This query fetches all user fields but I only see email used below — is there a reason to fetch the full record? (Maybe for caching or a future use?)' Not: 'You're fetching too much data.' (3) Regex: 'Could you add a comment explaining what this regex matches? I'm having trouble parsing it.' Not: 'This regex is unreadable.' (4) Catch-all: 'What should happen if this throws a NetworkError vs a ValidationError? Right now both are handled the same way.' (5) Array of arrays: 'I'm curious about the array-of-arrays structure — was there a performance consideration? I was thinking a Map might work here but you may know something I don't.'"
+    weight: 0.35
+    description: "Genuine questions"
+  - type: llm_judge
+    criteria: "Questions open dialogue and surface context — each question acknowledges that the author may have a good reason ('was there a specific requirement', 'you may know something I don't', 'maybe for caching'). Questions invite explanation, not defense. The reviewer shows humility: 'I'm having trouble parsing it' (the problem is mine, not yours). Questions are specific to the code, not generic. Each question includes what the reviewer observed and what they expected, creating a productive gap for discussion. Questions that reveal assumptions: 'What happens when...' (reveals the reviewer's mental model for the author to correct or confirm)"
+    weight: 0.35
+    description: "Opens dialogue"
+  - type: llm_judge
+    criteria: "Guide distinguishes questions from statements effectively — use questions when: you genuinely don't understand something, the author may have context you lack, there are multiple valid approaches, you want the author to think through implications ('What happens if this list is empty?'). Use statements when: there's a clear bug (null pointer, off-by-one), security vulnerability (no ambiguity — this must be fixed), style guide violation (team has agreed on this). Never use: rhetorical questions ('Don't you think...?'), questions that are really demands ('Shouldn't this be...?'), questions when you already know the answer (condescending). Technique: Socratic questioning — ask questions that guide the author to discover the issue themselves, which builds understanding better than being told"
+    weight: 0.30
+    description: "Questions vs statements guide"

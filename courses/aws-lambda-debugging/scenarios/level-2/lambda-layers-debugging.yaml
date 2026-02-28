@@ -1,0 +1,76 @@
+meta:
+  id: lambda-layers-debugging
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda Layer issues — diagnose layer version conflicts, incorrect directory structure, and dependency resolution problems"
+  tags: [AWS, Lambda, layers, dependencies, version-conflicts, intermediate]
+
+state: {}
+
+trigger: |
+  Your Lambda function fails after adding a new layer:
+
+  {
+    "errorType": "Runtime.ImportModuleError",
+    "errorMessage": "Unable to import module 'handler': No module
+    named 'pandas'"
+  }
+
+  But pandas IS in your layer! Checking the layer:
+
+  $ aws lambda get-layer-version --layer-name data-layer --version 3 \
+    --query "Content.Location" --output text | xargs curl -o layer.zip
+  $ unzip -l layer.zip
+  Archive: layer.zip
+    Length  Name
+    ------  ----
+           pandas/
+           pandas/__init__.py
+           ...
+
+  Problem: wrong directory structure! Lambda expects Python
+  dependencies in specific paths:
+  - python/
+  - python/lib/python3.x/site-packages/
+
+  The layer has pandas/ at the root instead of python/pandas/.
+  Lambda can't find it.
+
+  Correct structure:
+  $ mkdir -p python/lib/python3.12/site-packages/
+  $ pip install pandas -t python/lib/python3.12/site-packages/
+  $ zip -r layer.zip python/
+
+  After fixing, a new error:
+  "numpy.core._multiarray_umath: undefined symbol: PyFloat_Type"
+
+  The numpy in the layer was compiled for Python 3.11 but the
+  function uses Python 3.12. Native extensions must match the
+  exact Python version.
+
+  Another issue — layer order matters:
+  Function has layers: [common-utils:v2, data-layer:v3]
+  Both layers have a different version of the 'requests' library.
+  Layer 2 (data-layer) overrides layer 1 (common-utils) because
+  layers are merged in order, with later layers taking precedence.
+
+  Task: Explain Lambda Layer debugging. Write: correct layer
+  directory structure for each runtime, version compatibility
+  (runtime, architecture), layer merge order and conflicts, the
+  250MB unzipped limit (function + all layers), and when to use
+  layers vs bundled dependencies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Layer structure is explained — Python: python/ or python/lib/python3.x/site-packages/. Node.js: nodejs/node_modules/. Both: lib/ or bin/ for shared libraries/executables. Wrong directory structure is the #1 layer issue. Lambda adds layer paths to the runtime's module search path. Must match exactly or imports fail. Check with: unzip -l layer.zip to verify structure before publishing"
+    weight: 0.35
+    description: "Layer structure"
+  - type: llm_judge
+    criteria: "Compatibility and conflicts are covered — runtime version: native extensions (numpy, pandas, Pillow) must match the exact Python version. Build on matching Amazon Linux environment or use Docker. Architecture: layers must match function architecture (x86_64 vs arm64). Layer order: layers merged in order, later layers override earlier ones if they have the same file. Up to 5 layers per function. Total size: function code + all layers ≤ 250MB unzipped. Debugging: print sys.path (Python) or module.paths (Node.js) to see layer paths"
+    weight: 0.35
+    description: "Compatibility"
+  - type: llm_judge
+    criteria: "Usage guidance is practical — use layers for: shared code across multiple functions (utility libraries, SDK wrappers), large dependencies that don't change often (pandas, numpy), custom runtimes. Don't use layers for: function-specific code (bundle with function), frequently updated dependencies (layer versioning adds complexity). Alternative: use esbuild/webpack bundling for smaller packages. Container images eliminate layer complexity entirely. Layer versions are immutable — publish new version for updates, update all functions referencing the old version"
+    weight: 0.30
+    description: "Usage guidance"

@@ -1,0 +1,79 @@
+meta:
+  id: project-reporting-ma-due-diligence
+  level: 5
+  course: project-status-report-writing
+  type: output
+  description: "Project reporting in M&A due diligence — evaluate a target company's project portfolio as part of acquisition due diligence, assessing project health, hidden risks, and integration complexity"
+  tags: [mergers-acquisitions, due-diligence, valuation, integration, master]
+
+state: {}
+
+trigger: |
+  You're a managing director at a private equity firm. Your
+  fund is evaluating the acquisition of a mid-market SaaS
+  company for $500M. The target company has a significant
+  technology transformation underway, and the deal thesis
+  depends on the successful completion of their product
+  roadmap.
+
+  Deal context:
+  - Target: CloudSync Inc. — B2B SaaS, $80M ARR, growing 35% YoY
+  - Valuation: $500M (6.25x ARR)
+  - Deal thesis: Post-acquisition, accelerate product development
+    to reach $200M ARR in 3 years, then exit at 8x ($1.6B)
+  - Investment committee deadline: 3 weeks
+
+  Target's active project portfolio (as disclosed):
+  1. Platform Rewrite v3.0 ($15M, 18 months in): Migrating
+     from monolith to microservices. "On track for Q3 launch."
+  2. AI Features ($8M, 12 months in): Adding AI-powered
+     analytics. "Beta testing with 5 customers."
+  3. Enterprise Security ($5M, 8 months in): SOC 2 Type II
+     and FedRAMP authorization. "Progressing well."
+  4. Data Center Migration ($3M, 6 months in): Moving from
+     on-prem to AWS. "Minor delays."
+  5. International Expansion ($4M, 4 months in): Multi-language,
+     multi-currency, GDPR compliance. "Planning phase."
+
+  Your due diligence findings:
+  1. Platform Rewrite: Engineering team interviews reveal it's
+     actually 40% complete, not 70% as reported. Key architect
+     left 2 months ago. Internal Slack messages show the CTO
+     told the team: "We need to look further along than we are
+     for the fundraise."
+  2. AI Features: The "AI" is mostly rule-based with thin ML
+     veneer. The 5 beta customers gave negative feedback. The
+     ML team (3 people) all joined in the last 6 months.
+  3. Enterprise Security: SOC 2 audit found 23 critical findings.
+     FedRAMP is 12+ months away, not 6 as presented. This
+     blocks $20M in government pipeline.
+  4. Data Center Migration: Actually going well. Minor delays
+     are real but manageable.
+  5. International Expansion: No actual engineering work started.
+     The "planning phase" has no technical design documents.
+
+  Additional discovery:
+  - Technical debt: Estimated 40% of engineering capacity goes
+    to maintenance, not disclosed to investors
+  - Team: 15% of engineering turnover in last 6 months
+  - Customer churn: 3 enterprise customers leaving, citing
+    platform reliability issues related to the rewrite
+
+  Task: Write the technology due diligence report for the
+  investment committee. Assess the project portfolio's real
+  status, quantify the risk to the deal thesis, and recommend
+  whether to proceed with the acquisition (and at what terms).
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes a credible investment committee technology due diligence report — systematically assesses each of the 5 projects against disclosed vs actual status; quantifies the gap between presented status and reality for each project (Platform Rewrite: 40% vs 70% disclosed, AI Features: rule-based not true ML, Security: 23 critical findings and 12+ month FedRAMP delay, International: no engineering work started); identifies the CTO's deliberate misrepresentation as a material governance concern; quantifies the financial impact of project delays on the deal thesis ($200M ARR target); assesses the technical debt burden and its impact on future velocity."
+    weight: 0.35
+    description: "DueDiligenceReport"
+  - type: llm_judge
+    criteria: "Response provides actionable deal recommendations — quantifies the risk-adjusted valuation impact (if platform rewrite is 12 months late, what's the ARR impact? if FedRAMP is delayed, what's the pipeline impact?); recommends specific deal structure adjustments (price reduction, earnout tied to project milestones, representations and warranties about project status, escrow for project completion risk); addresses the CTO governance concern and its implications for post-acquisition leadership; provides a go/no-go recommendation with conditions; includes a post-acquisition 100-day plan for project portfolio remediation if the deal proceeds."
+    weight: 0.35
+    description: "DealRecommendations"
+  - type: llm_judge
+    criteria: "Response demonstrates sophisticated understanding of project-valuation intersection — connects project health to revenue projections and exit multiple; addresses how project reporting accuracy reflects management credibility (the CTO's instruction to mislead is a red flag beyond the project itself); quantifies the additional capital needed to complete the project portfolio vs the disclosed budget; addresses the engineering turnover and its correlation with project challenges; provides scenario analysis (best case, base case, worst case) for the project portfolio's impact on the 3-year exit thesis."
+    weight: 0.30
+    description: "ProjectValuationAnalysis"

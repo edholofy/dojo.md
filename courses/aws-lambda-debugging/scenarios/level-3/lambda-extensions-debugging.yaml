@@ -1,0 +1,67 @@
+meta:
+  id: lambda-extensions-debugging
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda Extensions — diagnose extension initialization failures, performance impact, and third-party extension integration issues"
+  tags: [AWS, Lambda, extensions, monitoring, third-party, performance, advanced]
+
+state: {}
+
+trigger: |
+  After adding a Datadog monitoring extension to your Lambda function,
+  cold starts doubled from 800ms to 2.2 seconds, and some invocations
+  timeout:
+
+  CloudWatch REPORT (before extension):
+  REPORT Duration: 150.00 ms Init Duration: 800.00 ms
+
+  CloudWatch REPORT (after extension):
+  REPORT Duration: 350.00 ms Init Duration: 2200.00 ms
+  EXTENSION Name: datadog-agent State: Ready
+
+  The Datadog extension adds 1,400ms to cold start and 200ms to
+  each invocation. For a function with a 3-second timeout, this
+  pushes warm invocations over the limit.
+
+  Investigation:
+
+  1. Extension lifecycle: Extensions run in the INIT, INVOKE, and
+     SHUTDOWN phases. They add overhead to each phase.
+     INIT: extension initializes (downloads config, opens connections)
+     INVOKE: extension runs alongside the function (collects metrics)
+     SHUTDOWN: extension flushes data (sends metrics/logs to backend)
+
+  2. Extensions share the function's memory and timeout:
+     Function memory: 256MB, extension uses 50MB → only 206MB for
+     your code. Extension INIT counts toward the 10-second init limit.
+
+  3. The extension makes outbound HTTPS calls during INVOKE to send
+     telemetry. In a VPC Lambda without internet access, these calls
+     timeout, adding the full HTTP timeout to each invocation.
+
+  4. Multiple extensions stack:
+     Layer 1: Datadog monitoring (+1.4s cold start)
+     Layer 2: Secrets Manager cache (+300ms cold start)
+     Layer 3: Custom logging (+200ms cold start)
+     Total: +1.9s cold start from extensions alone!
+
+  Task: Explain Lambda Extensions debugging. Write: how extensions
+  work (lifecycle phases, resource sharing), performance impact
+  (cold start, duration, memory), common extension issues (timeout,
+  VPC, memory pressure), popular extensions (Datadog, New Relic,
+  Secrets Manager), and when the overhead is worth it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Extension lifecycle is explained — extensions participate in three phases: INIT (initialize alongside runtime, counts toward 10s init timeout), INVOKE (runs concurrently with function handler, shares CPU/memory), SHUTDOWN (cleanup, up to 2 seconds). Internal extensions: run in the same process as the function. External extensions: run as separate processes (Lambda Layers). Extensions share the function's configured memory and timeout. Extension errors don't crash the function but degraded extensions may cause issues"
+    weight: 0.35
+    description: "Extension lifecycle"
+  - type: llm_judge
+    criteria: "Performance impact and debugging are covered — cold start: each extension adds initialization time (100ms to 2+ seconds). Duration: extensions running during INVOKE add latency. Memory: extensions share configured memory — reduce available memory for function code. Debug: check Init Duration increase after adding extension, monitor Duration increase on warm invocations, check Max Memory Used for memory pressure. VPC Lambda: extensions making outbound calls need internet access or VPC endpoints. Consider: is monitoring worth 200ms+ per invocation? For user-facing APIs, maybe not"
+    weight: 0.35
+    description: "Performance impact"
+  - type: llm_judge
+    criteria: "Trade-offs and recommendations are practical — worth it: production functions where observability is critical (revenue-impacting APIs, compliance requirements). Not worth it: high-frequency, low-latency functions where every millisecond matters. Alternatives: CloudWatch native metrics (zero extension overhead), X-Ray (minimal overhead, no extension needed), Powertools (in-process, no extension). If using extensions: increase memory to compensate, increase timeout, test performance before and after. Use CloudWatch Lambda Insights (lighter than third-party alternatives). Minimize number of extensions — each one adds overhead"
+    weight: 0.30
+    description: "Trade-offs"

@@ -1,0 +1,51 @@
+meta:
+  id: data-pipeline-security
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data pipeline security — secure ETL pipelines against credential exposure, PII leakage, access control issues, and compliance violations"
+  tags: [security, PII, credentials, compliance, encryption, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "Our security team just completed
+  an audit of our data pipelines and found critical issues:
+
+  1. Database credentials are stored in plaintext in 12 Airflow DAG
+     files that are committed to Git. Anyone with repo access can
+     see production database passwords.
+
+  2. Our pipeline copies PII (Social Security numbers, credit card
+     numbers) from the source database into 3 intermediate staging
+     tables without any masking or encryption. The staging tables
+     have broad read access.
+
+  3. A data engineer accidentally loaded customer data from our EU
+     database into a US-based Snowflake instance, potentially
+     violating GDPR data residency requirements.
+
+  4. Our pipeline service account has DBA-level access to all
+     production databases, even though it only needs read access
+     to 5 specific tables.
+
+  We have 90 days to remediate or face regulatory penalties.
+  How do we secure our data pipelines?"
+
+  Task: Design a comprehensive data pipeline security strategy
+  that addresses credential management, PII protection, access
+  control, and compliance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses each finding with specific remediation — credentials in Git: rotate all exposed credentials immediately, move to a secret manager (AWS Secrets Manager, HashiCorp Vault, Airflow Connections with encrypted backend), implement secret scanning in CI to prevent future commits, remove credentials from Git history (git filter-branch or BFG). PII in staging: implement data masking/tokenization in the pipeline (hash SSNs, mask credit cards), encrypt at rest, restrict staging table access to pipeline service accounts only, implement column-level security. GDPR violation: identify and delete the exported data, implement data residency controls (region-tagged datasets that pipelines can't move across boundaries), document the incident for regulatory reporting. Over-privileged service account: implement least-privilege access (create pipeline-specific read-only users per source database, grant access only to required tables and columns)"
+    weight: 0.35
+    description: "Remediation"
+  - type: llm_judge
+    criteria: "Response designs a security framework for data pipelines — secret management: centralized vault with rotation policies, no secrets in code or configs. Data classification: tag all datasets with sensitivity levels (public, internal, confidential, restricted), apply appropriate controls based on classification. Access control: RBAC for pipeline operations, column-level security for sensitive fields, audit logging for all data access. PII handling: masking, tokenization, or encryption standards, data lineage tracking for PII fields to know where sensitive data flows"
+    weight: 0.35
+    description: "SecurityFramework"
+  - type: llm_judge
+    criteria: "Response addresses ongoing compliance — automated compliance scanning (detect PII in new tables or columns, flag unauthorized cross-region data movement), regular access reviews (quarterly review of service account permissions), security testing for pipelines (include security checks in CI/CD — secret scanning, PII detection, access validation), incident response plan for data breaches in the pipeline, and how to build a security-aware culture in the data engineering team (security training, secure development practices, blameless reporting of security issues)"
+    weight: 0.30
+    description: "OngoingCompliance"

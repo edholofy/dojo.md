@@ -1,0 +1,33 @@
+meta:
+  id: confidence-intervals
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Master confidence intervals — interpret, calculate, and communicate confidence intervals for A/B test results to convey the range of plausible effects"
+  tags: [confidence-interval, precision, range, uncertainty, intermediate]
+
+state: {}
+
+trigger: |
+  The VP of Product reviews A/B test results and asks: "The test
+  says we got a 12% lift. Can I tell the board we'll get exactly
+  12% more revenue?" The data scientist says: "No — the true effect
+  is likely between 4% and 20%. I need to explain confidence
+  intervals and why the point estimate alone is misleading."
+
+  Task: Explain confidence intervals, how to calculate them for
+  A/B tests, and how to communicate them to stakeholders.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains confidence intervals correctly with examples — explanation: 'Confidence interval explanation: What a 95% confidence interval means: if we ran this exact experiment 100 times with different random samples, approximately 95 of those experiments would produce a confidence interval that contains the true effect. It does NOT mean there is a 95% probability the true effect is within this specific interval. The true effect is fixed — it is either in the interval or it is not. Practical interpretation: 95% CI: [4%, 20%] relative lift. The observed lift is 12% but the true lift could plausibly be as low as 4% or as high as 20%. If the entire interval is above 0%, the effect is statistically significant (positive). If the interval includes 0%, the effect is not significant. Calculation for proportions: observed difference: 5.5% - 5.0% = 0.5 percentage points. Standard error: sqrt(p1(1-p1)/n1 + p2(1-p2)/n2) = sqrt(0.055 × 0.945/18200 + 0.050 × 0.950/18500) = 0.00233. 95% CI: 0.005 ± 1.96 × 0.00233 = [0.0004, 0.0096]. In percentage points: [0.04pp, 0.96pp]. The interval width depends on sample size — larger samples produce narrower (more precise) intervals. With 50,000 per group, the same observed difference would produce: [0.18pp, 0.82pp] — much narrower'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers how to use confidence intervals for business decisions — decisions: 'Using confidence intervals for business decisions: Scenario 1 — Narrow CI, clearly positive: observed lift: 12%. CI: [8%, 16%]. Decision: ship confidently. Even the worst case (8% lift) is meaningful. Revenue projection: $800K to $1.6M annually. Present the range to the board, not just the point estimate. Scenario 2 — Wide CI crossing zero: observed lift: 3%. CI: [-5%, 11%]. Decision: do not ship. The true effect might be negative. The test was underpowered — need more data. Option: extend the test to narrow the interval. Scenario 3 — Narrow CI, small effect: observed lift: 0.5%. CI: [0.1%, 0.9%]. Decision: statistically significant but practically meaningless. The 0.5% lift translates to $5K annual revenue. The implementation cost is $50K. Do not ship — the effect is real but not worth it. Scenario 4 — Wide CI, entirely positive: observed lift: 15%. CI: [2%, 28%]. Decision: ship, but communicate uncertainty. The effect is definitely positive (CI above zero) but the magnitude is uncertain. Best case: $2.8M. Worst case: $200K. Use the conservative end (lower bound) for budgeting and the point estimate for expectations. How to present to the board: instead of: we got a 12% lift, say: we are confident the improvement is between 4% and 20%, with our best estimate at 12%. For revenue planning, assume the conservative end: 4% lift = $400K annually. Any upside above that is a bonus'"
+    weight: 0.35
+    description: "Decisions"
+  - type: llm_judge
+    criteria: "Response covers common CI misconceptions and relationship to sample size — misconceptions: 'Common confidence interval misconceptions: Misconception 1: a wider CI means the treatment does not work. Wrong. A wide CI means we do not have enough data to be precise about the effect size. The treatment might work very well — we just cannot measure it precisely. Misconception 2: the point estimate (center of the CI) is the most likely true effect. Not exactly. The point estimate is our best single guess, but the true effect could be anywhere in the interval. Treat the entire interval as plausible. Misconception 3: values outside the CI are impossible. No. Values outside the 95% CI are unlikely (less than 5% probability collectively) but not impossible. A 99% CI would be wider and capture even more extreme possibilities. Relationship to sample size: the CI width is proportional to 1/sqrt(n). Doubling the sample size narrows the CI by approximately 30% (1/sqrt(2) ≈ 0.71). Example: 10,000 per group → CI: [-2pp, +6pp] (width: 8pp). 40,000 per group → CI: [+0.5pp, +3.5pp] (width: 4pp, half as wide). 160,000 per group → CI: [+1pp, +3pp] (width: 2pp, quarter as wide). To achieve a specific precision (CI width), calculate the sample size needed: for a CI half-width of 1pp around a 5% conversion rate, you need approximately 18,000 per group. This is useful for planning: if the PM needs to know the effect within ±1pp, that determines the sample size'"
+    weight: 0.30
+    description: "Misconceptions"

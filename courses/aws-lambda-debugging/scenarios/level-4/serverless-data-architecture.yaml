@@ -1,0 +1,66 @@
+meta:
+  id: serverless-data-architecture
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless data architecture — implement data storage, processing, and analytics patterns using Lambda with DynamoDB, S3, and streaming services"
+  tags: [AWS, Lambda, data-architecture, DynamoDB, analytics, ETL, expert]
+
+state: {}
+
+trigger: |
+  Your serverless application needs a data architecture that handles:
+  - Transactional data (orders, users, payments)
+  - Analytical queries (daily reports, trend analysis)
+  - Real-time processing (event streams, notifications)
+  - Data lake integration (historical data for ML)
+
+  Current mess:
+  - Everything in DynamoDB (including analytical queries)
+  - Full table scans costing $2K/month in read capacity
+  - No data lake — analytics team exports CSV files manually
+  - Lambda functions with embedded SQL-like logic for reporting
+
+  Proposed architecture:
+
+  Transactional layer:
+  DynamoDB for OLTP (key-value, high throughput, low latency).
+  Design: single-table design with GSIs for access patterns.
+  Lambda reads/writes with DynamoDB SDK.
+
+  Change data capture:
+  DynamoDB Streams → Lambda → Kinesis Firehose → S3 (data lake).
+  All changes replicated to S3 in near-real-time for analytics.
+
+  Analytics layer:
+  S3 (Parquet format) → Athena for SQL queries.
+  QuickSight for dashboards. No separate analytics database needed.
+  Lambda for ETL transformations between formats.
+
+  Real-time:
+  Kinesis Data Streams → Lambda → processed events →
+  EventBridge → downstream consumers.
+
+  ML pipeline:
+  S3 data lake → SageMaker for model training →
+  Lambda for inference (or Bedrock for LLM).
+
+  Task: Design the serverless data architecture. Write: DynamoDB
+  design patterns for Lambda (single-table, access patterns),
+  change data capture pipeline, analytics with Athena/S3, ETL
+  with Lambda (and its limitations for large datasets), real-time
+  processing patterns, and cost optimization for data workloads.
+
+assertions:
+  - type: llm_judge
+    criteria: "DynamoDB design for Lambda is explained — single-table design: model multiple entity types in one table, access patterns drive GSI design. Lambda + DynamoDB: use DocumentClient, batch operations for efficiency, handle ProvisionedThroughputExceededException with exponential backoff. On-demand capacity for unpredictable workloads, provisioned with auto-scaling for steady patterns. Connection reuse: keep SDK client outside handler. TTL for automatic data expiration. Transactions for multi-item atomicity. Avoid: full table scans (use query with partition key), storing large items (max 400KB)"
+    weight: 0.35
+    description: "DynamoDB design"
+  - type: llm_judge
+    criteria: "Data pipeline and analytics are covered — CDC: DynamoDB Streams → Lambda → transform → Kinesis Firehose → S3 (Parquet). Firehose handles batching and compression automatically. S3 data lake: partition by date for efficient Athena queries (year=2024/month=12/day=01/). Athena: serverless SQL on S3, pay per query ($5/TB scanned). Reduce cost: use Parquet (columnar, compressed), partition pruning. Lambda for ETL limitations: 15-minute timeout, 10GB memory max. For large ETL: use AWS Glue or Step Functions with distributed map"
+    weight: 0.35
+    description: "Pipeline and analytics"
+  - type: llm_judge
+    criteria: "Cost optimization is practical — DynamoDB: right-size read/write capacity, use on-demand for variable workloads (avoid over-provisioning). S3: use lifecycle policies (Standard → IA → Glacier). Athena: partition data and use columnar formats to reduce scan cost. Lambda ETL: cost-effective for small transformations but expensive for large datasets (use Glue instead). Data architecture principle: OLTP in DynamoDB, OLAP in Athena/S3, don't mix (DynamoDB scans are expensive). Monitor: DynamoDB consumed capacity, Athena query costs, S3 storage growth. Set budgets per data pipeline"
+    weight: 0.30
+    description: "Cost optimization"

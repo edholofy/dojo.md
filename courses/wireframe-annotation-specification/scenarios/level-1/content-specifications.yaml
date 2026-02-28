@@ -1,0 +1,42 @@
+meta:
+  id: content-specifications
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "Content specifications — specify dynamic content, character limits, truncation rules, and content loading behavior"
+  tags: [content, character-limits, truncation, dynamic-content, beginner]
+
+state: {}
+
+trigger: |
+  A junior designer says: "My developer keeps asking content
+  questions I can't answer:
+
+  - 'The card title says "Project Alpha" — is this always
+    short or could it be 200 characters?'
+  - 'The description is 2 lines in your mockup. What if
+    the user writes 10 paragraphs?'
+  - 'The avatar shows a photo. What if they haven't uploaded
+    one?'
+  - 'The date says "Mar 15, 2024" — is this the creation
+    date? Last modified? What timezone?'
+  - 'The tag says "Active" — what other tags are possible?'
+
+  How do I specify content so developers don't have to guess?"
+
+  Task: Write content specifications for a project card
+  component that answers all content questions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates thorough content specifications — Title: source (project.name), max length (100 characters), truncation (single line, ellipsis after 60 characters on card, full title shown on hover tooltip), empty state (should never be empty — required on creation). Description: source (project.description), max display (3 lines, approximately 150 characters visible), overflow behavior ('Read more' link or clamp with ellipsis), empty state ('No description added' in gray italic). Avatar: source (project.owner.avatar), fallback order (1. uploaded photo, 2. initials on colored background, 3. default silhouette icon). Each content element specifies: data source, display format, max length, truncation behavior, and empty/fallback state"
+    weight: 0.35
+    description: "ContentSpecifications"
+  - type: llm_judge
+    criteria: "Response specifies dates, statuses, and dynamic values — Date: source field (project.updatedAt), format ('Mar 15, 2024' for dates > 7 days ago, 'Yesterday' or '3 hours ago' for recent), timezone (user's local timezone, UTC if not available), null handling ('Date unknown'). Status/tag: all possible values listed (Active, Draft, Archived, Completed) with visual treatment for each (Active: green badge, Draft: gray, Archived: orange, Completed: blue). Numbers: format (member count: '3 members' for small, '1.2K members' for large), singular/plural handling ('1 member' vs '2 members'). Every piece of dynamic content is fully specified"
+    weight: 0.35
+    description: "DynamicContent"
+  - type: llm_judge
+    criteria: "Response covers content loading and error states — loading state (skeleton placeholder showing the card shape with shimmer animation), error state (if project data fails to load: 'Unable to load project' with retry button), partial loading (what if the avatar loads but the description doesn't?), and real-time updates (does the card update if someone else changes the project name while this user is viewing?). Provides a content specification template or checklist that covers: source, format, max length, truncation, empty state, loading state, error state, and real-time behavior"
+    weight: 0.30
+    description: "LoadingErrorStates"

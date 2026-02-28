@@ -1,0 +1,38 @@
+meta:
+  id: report-parameterization
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Parameterize reports — build reusable SQL reports with variables, conditional logic, and dynamic filters for self-service analytics"
+  tags: [SQL, parameters, variables, dynamic-filtering, reusable-reports, intermediate]
+
+state: {}
+
+trigger: |
+  The sales team runs the same revenue report weekly but each
+  manager wants different filters: one wants only their region,
+  another wants a specific date range, a third wants only
+  enterprise customers. You are tired of writing 10 variations
+  of the same query.
+
+  "Build one report that works for everyone — they should be able
+  to choose region, date range, plan type, and minimum order amount."
+
+  Tables: orders, customers
+
+  Task: Create a parameterized report and explain techniques for
+  making queries reusable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates parameterized SQL for different environments — parameterized: 'Parameterized reports: PostgreSQL with prepared statements: PREPARE sales_report(text, date, date, text, numeric) AS SELECT c.name, c.plan_type, o.region, COUNT(o.order_id) AS orders, SUM(o.amount) AS revenue FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE ($1 IS NULL OR o.region = $1) AND o.order_date BETWEEN $2 AND $3 AND ($4 IS NULL OR c.plan_type = $4) AND o.amount >= $5 GROUP BY c.customer_id, c.name, c.plan_type, o.region ORDER BY revenue DESC. EXECUTE sales_report('West', '2024-10-01', '2024-10-31', NULL, 0). EXECUTE sales_report(NULL, '2024-10-01', '2024-10-31', 'enterprise', 100). The NULL trick: ($1 IS NULL OR o.region = $1) means: if no region is specified (NULL), include all regions. If a region is specified, filter to that region. This single query replaces 10 variations. SQL Server with stored procedure: CREATE PROCEDURE sp_SalesReport @region NVARCHAR(50) = NULL, @start_date DATE, @end_date DATE, @plan_type NVARCHAR(50) = NULL, @min_amount DECIMAL = 0 AS SELECT c.name, c.plan_type, o.region, COUNT(o.order_id) AS orders, SUM(o.amount) AS revenue FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE (@region IS NULL OR o.region = @region) AND o.order_date BETWEEN @start_date AND @end_date AND (@plan_type IS NULL OR c.plan_type = @plan_type) AND o.amount >= @min_amount GROUP BY c.customer_id, c.name, c.plan_type, o.region ORDER BY revenue DESC. EXEC sp_SalesReport @start_date = '2024-10-01', @end_date = '2024-10-31', @region = 'West''"
+    weight: 0.35
+    description: "Parameterized"
+  - type: llm_judge
+    criteria: "Explanation covers CTE-based templating and common BI tool patterns — templating: 'CTE-based report templating: WITH parameters AS (SELECT 'West'::text AS region_filter, '2024-10-01'::date AS start_date, '2024-10-31'::date AS end_date, NULL::text AS plan_filter, 0::numeric AS min_amount), filtered_orders AS (SELECT o.* FROM orders o, parameters p WHERE (p.region_filter IS NULL OR o.region = p.region_filter) AND o.order_date BETWEEN p.start_date AND p.end_date AND o.amount >= p.min_amount), filtered_customers AS (SELECT c.* FROM customers c, parameters p WHERE (p.plan_filter IS NULL OR c.plan_type = p.plan_filter)) SELECT fc.name, fc.plan_type, fo.region, COUNT(fo.order_id) AS orders, SUM(fo.amount) AS revenue FROM filtered_customers fc JOIN filtered_orders fo ON fc.customer_id = fo.customer_id GROUP BY fc.customer_id, fc.name, fc.plan_type, fo.region ORDER BY revenue DESC. The parameters CTE is a single place to change all filters. To modify the report, only change the first 5 lines. BI tool patterns: Looker: uses liquid templating — {% if region._is_filtered %} AND region = {{ region._value }} {% endif %}. Metabase: uses {{ variable }} syntax with filter widgets. Mode Analytics: uses Jinja2 templating — {% if region %} AND region = '{{ region }}' {% endif %}. dbt: uses Jinja macros — WHERE order_date >= '{{ var('start_date') }}''"
+    weight: 0.35
+    description: "Templating"
+  - type: llm_judge
+    criteria: "Response addresses security and performance of parameterized queries — security: 'Security and performance: SQL injection prevention: NEVER build parameters with string concatenation. Bad: query = f\"SELECT * FROM orders WHERE region = '{user_input}'\". If user_input is: ' OR 1=1; DROP TABLE orders; -- this deletes the table. Good: use parameterized queries (prepared statements, stored procedure parameters). The database treats parameters as values, not SQL code. Performance impact of optional parameters: the ($1 IS NULL OR column = $1) pattern can prevent index usage because the optimizer does not know at compile time whether the parameter is NULL. Solutions: 1. Use OPTION(RECOMPILE) in SQL Server stored procedures to recompile with actual parameter values. 2. Use separate queries for different filter combinations (cached plans). 3. Use dynamic SQL that builds only the needed WHERE clauses: IF @region IS NOT NULL SET @sql = @sql + ' AND o.region = @region'. 4. In PostgreSQL, the planner handles this better with JIT compilation. For most reports (under 1M rows), the performance impact is negligible. Only optimize if the report is slow'"
+    weight: 0.30
+    description: "Security"

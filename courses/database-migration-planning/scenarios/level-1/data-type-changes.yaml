@@ -1,0 +1,41 @@
+meta:
+  id: data-type-changes
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Change column data types — write a migration to alter a column's data type and understand the risks of type changes"
+  tags: [database, migration, alter-column, data-types, beginner]
+
+state: {}
+
+trigger: |
+  Your team discovers that the "price" column in the "products" table
+  was created as INTEGER (storing prices in cents) but the business
+  now needs to support fractional cents for bulk pricing (e.g.,
+  $0.005 per unit).
+
+  Current products table:
+  - id (serial, primary key)
+  - name (varchar(100), not null)
+  - price (integer, not null) — stores price in cents (e.g., 999 = $9.99)
+  - created_at (timestamp)
+
+  The table has 50,000 products with existing price data.
+
+  Task: Write the migration to change the price column from INTEGER
+  to DECIMAL, explain the risks, and show how to handle the data
+  conversion.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration handles both schema change and data conversion — migration: 'Up migration: ALTER TABLE products ALTER COLUMN price TYPE DECIMAL(12,4) USING price::DECIMAL(12,4); The USING clause tells PostgreSQL how to convert existing data. Without USING: PostgreSQL attempts automatic conversion (INTEGER to DECIMAL works automatically, but it is a best practice to be explicit). DECIMAL(12,4): 12 total digits, 4 decimal places. This supports values up to 99,999,999.9999 — sufficient for prices with fractional cents. The existing data (stored as cents) needs interpretation: currently price = 999 means $9.99 (999 cents). After conversion: price = 999.0000 (which is $999.00 if we now treat it as dollars). Decision needed: do we want to keep prices in cents (999.0000 cents = $9.99) or convert to dollars (9.9900 dollars)? If converting to dollars: ALTER TABLE products ALTER COLUMN price TYPE DECIMAL(12,4) USING (price / 100.0)::DECIMAL(12,4); This converts 999 cents to 9.9900 dollars during the type change. Important: discuss this with the team. Changing the meaning of the column (cents to dollars) requires updating all application code that reads or writes prices. Down migration: ALTER TABLE products ALTER COLUMN price TYPE INTEGER USING (price * 100)::INTEGER; Warning: the down migration loses precision. If a price is 9.9950 (dollars with fractional cents), converting back to integer cents gives 999 (truncating the fractional cent). This is a lossy rollback'"
+    weight: 0.35
+    description: "Migration with data conversion"
+  - type: llm_judge
+    criteria: "Risks of type changes are explained — risks: '(1) Data loss on type change. Not all type changes are safe. Safe: INTEGER → DECIMAL (no precision lost), VARCHAR(100) → VARCHAR(200) (expanding is safe). Unsafe: DECIMAL → INTEGER (fractional data lost), VARCHAR(200) → VARCHAR(100) (data truncated if any value exceeds 100 chars). Always ask: can existing data be represented in the new type without loss? (2) Table locking. ALTER TABLE ... ALTER COLUMN TYPE requires a full table rewrite in PostgreSQL. For 50,000 rows: this takes seconds (acceptable). For 50 million rows: this could take minutes to hours and locks the table for writes during the operation. For large tables, you need special techniques (covered in higher levels). (3) Application compatibility. After changing price from INTEGER to DECIMAL, application code that expects an integer will break. The migration and the application code change should be deployed together (or the application should be updated to handle both types during a transition period). (4) Index rebuilding. If there is an index on the price column, changing the column type rebuilds the index. This adds time to the migration. For small tables: negligible. For large tables: significant. (5) Constraint validation. If the column has CHECK constraints (e.g., price > 0), verify the constraint still makes sense with the new type. A CHECK constraint on an INTEGER column may need adjustment for DECIMAL'"
+    weight: 0.35
+    description: "Risk explanation"
+  - type: llm_judge
+    criteria: "Testing approach for the migration is described — testing: 'Before running this in production: (1) Test in development. Run the migration on your local database. Verify: the column type changed to DECIMAL(12,4). Existing prices converted correctly (spot-check 10 rows). Application code works with the new type (test reading and writing prices). The rollback works (run down migration, verify prices are back to integers). (2) Test in staging with production-like data. Staging should have a copy of production data (or representative sample). Run the migration. Time it (how long does it take with 50,000 rows?). Verify data integrity (compare before and after). Test the full application with the new column type. (3) Plan the production migration. For 50,000 rows, the migration should complete in seconds. But plan for: a maintenance window (even a short one) if the table is write-heavy. A backup taken immediately before the migration. A verification query after: SELECT COUNT(*) FROM products WHERE price IS NULL (should be 0). Communication to the team about the migration timing'"
+    weight: 0.30
+    description: "Testing approach"

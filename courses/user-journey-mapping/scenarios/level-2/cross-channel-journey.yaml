@@ -1,0 +1,60 @@
+meta:
+  id: cross-channel-journey
+  level: 2
+  course: user-journey-mapping
+  type: output
+  description: "Cross-channel journey mapping — map user experiences that span multiple channels and devices"
+  tags: [cross-channel, omnichannel, multi-device, intermediate]
+
+state: {}
+
+trigger: |
+  You're a UX designer at a furniture retailer that sells
+  both online and in-store. Customer satisfaction is high
+  for pure online purchases (4.2/5) and pure in-store
+  purchases (4.0/5), but drops to 2.5/5 when customers
+  use both channels. Your PM says: "Our channels don't
+  talk to each other."
+
+  Typical cross-channel scenario (from customer research):
+
+  Online: Customer browses sofas on mobile during commute,
+  saves 3 favorites to wishlist → that evening, switches
+  to laptop to view in more detail, wishlist doesn't sync
+  (not logged in on mobile) → creates account on laptop,
+  re-finds the 3 sofas, checks dimensions
+
+  In-store: Visits showroom Saturday, can't find 2 of the
+  3 sofas she saved (different in-store inventory), the
+  store associate can't see her online wishlist, she sits
+  on the one available sofa and loves it but wants a
+  different fabric → associate says "we can order custom
+  fabric but you'll need to call our custom orders line"
+
+  Phone: Calls custom orders Monday, gives the sofa model
+  number, the agent can't see her store visit or online
+  wishlist, asks her to re-explain everything from scratch,
+  places the custom order, says delivery will be "6-8 weeks"
+
+  Post-order: Receives no updates for 3 weeks, calls to
+  check — is told "the system shows processing," no one
+  can give a specific date. Gets a text 7 weeks later:
+  "Delivery tomorrow between 8am-6pm" — she'd requested
+  an afternoon window.
+
+  Task: Create a cross-channel journey map highlighting
+  where channel transitions break the experience.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response maps the journey across channels with clear transitions — channel-aware structure (the journey map clearly shows which channel the customer is on at each point: mobile browsing → laptop browsing → in-store visit → phone call → text notification; each channel transition is a potential breakpoint), transition failures documented (every channel switch loses context: mobile to laptop — wishlist doesn't sync because not logged in on mobile; online to in-store — associate can't see online wishlist or browsing history; in-store to phone — custom orders agent has no record of store visit; all channels to delivery — delivery window request lost in translation), the continuity gap (maps the information that should carry across channels but doesn't: product preferences, wishlist, browsing history, conversation context, delivery preferences — each channel starts from zero because the systems don't share customer data)."
+    weight: 0.35
+    description: "CrossChannelMapping"
+  - type: llm_judge
+    criteria: "Response identifies systemic causes of cross-channel failure — system disconnection (the channels likely run on different systems: e-commerce platform for online, POS for in-store, separate CRM for phone orders, logistics system for delivery — these systems don't share a unified customer profile), organizational silos (different teams probably own different channels: digital team owns the website, retail operations owns the stores, call center is outsourced or separate, logistics is another team — each optimizes their channel in isolation), the customer bears the integration burden (when systems don't integrate, the customer becomes the data bridge: she re-explains her preferences, re-identifies products, re-states delivery requirements — she's doing the work that connected systems should do automatically), the satisfaction math (pure channels score 4.0-4.2 because within one channel the experience is coherent; cross-channel drops to 2.5 because the customer experiences the organizational fragmentation directly — this 1.5-1.7 point gap is entirely caused by broken transitions, not bad individual channel experiences)."
+    weight: 0.35
+    description: "SystemicCauses"
+  - type: llm_judge
+    criteria: "Response provides cross-channel design recommendations — unified customer profile (all channels should access the same customer data: online wishlist visible to store associates, store visit history available to phone agents, delivery preferences set once and honored across channels), seamless transitions (design the handoff moments: when a customer moves from online to in-store, the associate should be able to pull up their browsing history with a loyalty card or phone number; when the store directs to custom orders, the order context should transfer automatically; proactive status updates should come regardless of which channel placed the order), channel-transition touchpoints (the journey map should specifically call out the moments of channel transition as designed touchpoints, not accidental gaps: 'arriving at store with online wishlist' is a designed touchpoint that requires QR code scanning or account lookup, not a hope that systems will connect)."
+    weight: 0.30
+    description: "CrossChannelRecommendations"

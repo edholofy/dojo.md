@@ -1,0 +1,35 @@
+meta:
+  id: date-filtering-reports
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Filter by dates and time periods — use date functions to create daily, weekly, monthly, and custom period reports"
+  tags: [SQL, dates, filtering, time-periods, INTERVAL, beginner]
+
+state: {}
+
+trigger: |
+  The finance team needs several time-based reports:
+  1. "All transactions from last week"
+  2. "Monthly revenue for the current year"
+  3. "Customers who signed up in the last 30 days"
+  4. "Orders placed between Black Friday and Cyber Monday"
+
+  Table: orders (order_id, customer_id, amount, order_date, status)
+  Table: customers (customer_id, signup_date, plan_type)
+
+  Task: Write date-filtered queries for each request.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use date functions and range patterns — query: 'Date filtering patterns: Report 1 — Last week's transactions (PostgreSQL): SELECT * FROM orders WHERE order_date >= DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week') AND order_date < DATE_TRUNC('week', CURRENT_DATE) ORDER BY order_date; DATE_TRUNC('week', ...) gives the Monday of that week. This captures exactly Monday through Sunday of last week. MySQL equivalent: WHERE order_date >= DATE_SUB(CURDATE(), INTERVAL (DAYOFWEEK(CURDATE()) + 5) DAY) AND order_date < DATE_SUB(CURDATE(), INTERVAL (DAYOFWEEK(CURDATE()) - 2) DAY). Report 2 — Monthly revenue for current year: SELECT DATE_TRUNC('month', order_date) AS month, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('year', CURRENT_DATE) AND order_date < CURRENT_DATE GROUP BY DATE_TRUNC('month', order_date) ORDER BY month; DATE_TRUNC('year', CURRENT_DATE) gives January 1 of this year. Report 3 — Signups in last 30 days: SELECT * FROM customers WHERE signup_date >= CURRENT_DATE - INTERVAL '30 days' ORDER BY signup_date DESC; Report 4 — Specific date range: SELECT * FROM orders WHERE order_date >= '2024-11-29' AND order_date < '2024-12-03' ORDER BY order_date; Use >= start AND < day_after_end for date ranges (inclusive start, exclusive end)'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers date functions across SQL dialects — explanation: 'Date functions by dialect: Getting the current date: PostgreSQL: CURRENT_DATE, NOW(), CURRENT_TIMESTAMP. MySQL: CURDATE(), NOW(), CURRENT_TIMESTAMP. SQL Server: GETDATE(), CAST(GETDATE() AS DATE). Date arithmetic: PostgreSQL: CURRENT_DATE - INTERVAL '7 days', CURRENT_DATE + INTERVAL '1 month'. MySQL: DATE_ADD(CURDATE(), INTERVAL 7 DAY), DATE_SUB(CURDATE(), INTERVAL 1 MONTH). SQL Server: DATEADD(DAY, -7, GETDATE()), DATEADD(MONTH, 1, GETDATE()). Extracting date parts: PostgreSQL: EXTRACT(MONTH FROM order_date), DATE_PART('year', order_date). MySQL: MONTH(order_date), YEAR(order_date). SQL Server: DATEPART(MONTH, order_date), YEAR(order_date). Truncating to period: PostgreSQL: DATE_TRUNC('month', order_date). MySQL: DATE_FORMAT(order_date, '%Y-%m-01'). SQL Server: DATETRUNC(MONTH, order_date) (SQL Server 2022+). Common gotcha — timestamps vs dates: if order_date is a TIMESTAMP (includes time), WHERE order_date = '2024-10-15' will only match midnight exactly. Use: WHERE order_date >= '2024-10-15' AND order_date < '2024-10-16'. This captures the entire day regardless of time component'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers dynamic date ranges for recurring reports — dynamic: 'Dynamic date ranges for automated reports: Reports should use relative dates so they work without manual date updates: Today: WHERE order_date = CURRENT_DATE. Yesterday: WHERE order_date = CURRENT_DATE - INTERVAL '1 day'. This week (Monday to now): WHERE order_date >= DATE_TRUNC('week', CURRENT_DATE). Last month (full month): WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND order_date < DATE_TRUNC('month', CURRENT_DATE). This quarter: WHERE order_date >= DATE_TRUNC('quarter', CURRENT_DATE). Year to date: WHERE order_date >= DATE_TRUNC('year', CURRENT_DATE). Same period last year: WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 year') AND order_date < CURRENT_DATE - INTERVAL '1 year'. This is essential for comparison reports: this month vs same month last year. If the report runs automatically every Monday at 7 AM, relative dates ensure it always shows the correct period without anyone editing the SQL'"
+    weight: 0.30
+    description: "Dynamic dates"

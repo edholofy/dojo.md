@@ -1,0 +1,41 @@
+meta:
+  id: specification-automation
+  level: 4
+  course: wireframe-annotation-specification
+  type: output
+  description: "Specification automation — leverage design tool plugins, component-level specs, and automated documentation generation to reduce manual annotation effort"
+  tags: [automation, tooling, efficiency, plugins, expert]
+
+state: {}
+
+trigger: |
+  A design director says: "Our designers spend 30-40%
+  of their time on specification work. That's too much.
+  I want to explore automation:
+
+  - Can we auto-generate specs from Figma components?
+  - Can design system components carry their own specs?
+  - Can we use plugins to add standard annotations?
+  - Can we generate spec documents from wireframes?
+  - What can we automate vs what needs human judgment?
+
+  The goal: reduce spec time to 15-20% while maintaining
+  quality. What's automatable and what isn't?"
+
+  Task: Design a specification automation strategy
+  that distinguishes automatable specs from those
+  requiring human judgment, and recommend tooling.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies what's automatable vs human-required — Automatable (save time here): component identification (auto-detect which DS components are used and list them), spacing and layout measurements (auto-extract from Figma), responsive breakpoints (auto-generate from auto-layout properties), design token references (auto-map colors to token names, fonts to type styles), state inventory (auto-detect component variants used = states defined), accessibility basics (auto-check contrast ratios, touch target sizes, heading hierarchy). Requires human judgment (don't automate): interaction behavior (what happens on click — can't be inferred from static designs), business logic conditions (when to show/hide elements), error handling strategy (what error messages say, how to recover), content specifications (character limits, data sources, placeholder decisions), user flow decisions (where actions navigate to, what triggers flows), edge cases (what happens with 0 items, 1000 items, permission denied). Clear framework: automate the 'what' (what components, what styles, what layout) and specify the 'why' and 'how' (why this behavior, how it responds to user actions)"
+    weight: 0.35
+    description: "AutomationBoundary"
+  - type: llm_judge
+    criteria: "Response recommends tooling and implementation approach — Figma plugin strategy (use plugins like Zeplin, Figma Dev Mode, or custom plugins to auto-extract: component names with variants, spacing values, color tokens, typography styles — exported as structured data alongside wireframes), component-level spec embedding (each DS component in Figma carries metadata: default behavior, standard states, accessibility requirements — designers only annotate deviations from defaults), spec document generation (auto-generate spec document skeleton from wireframe: screen name, component inventory table, state list — designer fills in behavior and logic sections), annotation templates (one-click annotation stamps for common patterns: 'Loading state: skeleton', 'Error state: inline message', 'Empty state: illustration + CTA'), and linting (automated spec completeness checker: warns if a screen has interactive elements without interaction annotations, forms without validation specs, lists without empty state annotations)"
+    weight: 0.35
+    description: "ToolingStrategy"
+  - type: llm_judge
+    criteria: "Response provides an implementation roadmap and ROI — phased rollout: Phase 1 (Week 1-2: set up auto-extraction of component inventory and spacing — saves 5% spec time immediately), Phase 2 (Week 3-4: embed standard specs in DS components so defaults don't need re-specification — saves 10% spec time), Phase 3 (Month 2: implement spec document auto-generation skeleton — saves 5% spec time), Phase 4 (Month 3: add spec completeness linter to catch gaps before review — reduces review cycles by 50%). ROI measurement: track time-to-spec per screen before and after each phase, track engineering questions per spec, track spec revision rate. Risk mitigation: over-automation risk (designers skip thinking about specs because they look 'done' from auto-generation — mitigate with required human-judgment sections clearly marked), false confidence risk (auto-generated specs look complete but miss the hard parts — mitigate with linter requiring interaction annotations)"
+    weight: 0.30
+    description: "RoadmapROI"

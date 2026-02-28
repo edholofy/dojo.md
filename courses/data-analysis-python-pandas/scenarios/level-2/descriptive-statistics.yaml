@@ -1,0 +1,38 @@
+meta:
+  id: descriptive-statistics
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Calculate descriptive statistics — use pandas and scipy to compute summary statistics, correlations, and distributions for data analysis"
+  tags: [python, pandas, statistics, correlation, distribution, describe, intermediate]
+
+state: {}
+
+trigger: |
+  Your manager asks for a statistical summary of the sales data:
+
+  1. "What is the typical order? Give me mean, median, and standard
+     deviation for revenue."
+  2. "Is there a correlation between quantity ordered and unit price?
+     (Do people buy less when the price is higher?)"
+  3. "What does the revenue distribution look like? Is it normal or
+     skewed?"
+
+  Using the sales DataFrame with 10,000 orders.
+
+  Task: Compute the statistics and explain what they mean in
+  business terms.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly computes all requested statistics — code: 'Descriptive statistics with pandas: Question 1 — Central tendency and spread: stats = df[\"revenue\"].describe(). mean = df[\"revenue\"].mean(). median = df[\"revenue\"].median(). std = df[\"revenue\"].std(). mode = df[\"revenue\"].mode()[0]. iqr = df[\"revenue\"].quantile(0.75) - df[\"revenue\"].quantile(0.25). print(f\"Mean: ${mean:,.2f}\"). print(f\"Median: ${median:,.2f}\"). print(f\"Std Dev: ${std:,.2f}\"). print(f\"IQR: ${iqr:,.2f}\"). print(f\"Skewness: {df['revenue'].skew():.2f}\"). print(f\"Kurtosis: {df['revenue'].kurtosis():.2f}\"). Interpretation: if mean ($125) is much higher than median ($85): the distribution is right-skewed (a few large orders pull the average up). The median is the better measure of a typical order. Standard deviation tells you how spread out the orders are: if std is $200 and mean is $125, there is huge variability. IQR (interquartile range) is a robust measure of spread (not affected by outliers). Question 2 — Correlation analysis: correlation = df[[\"quantity\", \"unit_price\", \"revenue\"]].corr(). print(correlation). Specific correlation: corr_qty_price = df[\"quantity\"].corr(df[\"unit_price\"]). print(f\"Quantity vs Price correlation: {corr_qty_price:.3f}\"). Interpretation: -0.3 to -0.1: weak negative (slight tendency to buy less at higher prices). -0.5 to -0.3: moderate negative (people noticeably buy less at higher prices). Below -0.5: strong negative correlation. Near 0: no linear relationship. Visualization: import seaborn as sns. sns.heatmap(df[[\"quantity\", \"unit_price\", \"revenue\"]].corr(), annot=True, cmap=\"coolwarm\", center=0, fmt=\".2f\"). plt.title(\"Correlation Matrix\"). Question 3 — Distribution analysis: fig, axes = plt.subplots(1, 3, figsize=(15, 4)). df[\"revenue\"].hist(bins=50, ax=axes[0], color=\"steelblue\", edgecolor=\"white\"). axes[0].set_title(\"Histogram\"). axes[0].axvline(mean, color=\"red\", linestyle=\"--\", label=f\"Mean: ${mean:.0f}\"). axes[0].axvline(median, color=\"green\", linestyle=\"--\", label=f\"Median: ${median:.0f}\"). axes[0].legend(). df[\"revenue\"].plot(kind=\"box\", ax=axes[1]). axes[1].set_title(\"Box Plot\"). from scipy import stats as scipy_stats. scipy_stats.probplot(df[\"revenue\"], dist=\"norm\", plot=axes[2]). axes[2].set_title(\"Q-Q Plot\"). plt.tight_layout(). Normality test: stat, p_value = scipy_stats.shapiro(df[\"revenue\"].sample(5000)). print(f\"Shapiro-Wilk test: statistic={stat:.4f}, p-value={p_value:.4f}\"). if p_value < 0.05: print(\"Distribution is NOT normal (reject null hypothesis)\"). else: print(\"Distribution may be normal (fail to reject null hypothesis)\")'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation translates statistical concepts into business meaning — explanation: 'Translating statistics to business language: Mean vs median: the mean is $125 but the median is $85. This means: half of all orders are under $85 (the median). The average is pulled up by a few large orders. For planning purposes, the median is more representative of a typical customer transaction. The mean is useful for calculating total expected revenue (mean times number of orders). Standard deviation ($200): high variability in order values means the business has a wide range of customers — some buy small items ($10-20), others make large purchases ($500+). This matters for: inventory planning (cannot stock based on the average alone), customer segmentation (different marketing for high-value vs. low-value customers), financial forecasting (high variability means wider confidence intervals). Skewness (1.8 — right-skewed): most orders are small, with a long tail of large orders. This is typical for e-commerce (many small transactions, few large ones). Implication: mean-based metrics will overstate the typical customer experience. Use median for customer-facing metrics, mean for financial projections. Correlation between quantity and price (-0.25): weak negative correlation — people buy slightly less at higher prices, but not dramatically. This is expected (price elasticity). Business implication: small price increases will not significantly reduce quantity ordered. The revenue impact of price increases would likely be positive (higher price times only slightly lower quantity). Correlation does NOT prove causation: the correlation might exist because premium products tend to be bought individually (1 laptop) while cheap products are bought in bulk (20 pens). This is not price sensitivity — it is product characteristics'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers percentiles, quantiles, and practical statistical patterns — patterns: 'Practical statistical patterns: Percentile analysis: percentiles = df[\"revenue\"].quantile([0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]). Business meaning: P10 ($15): 10% of orders are below $15 (very small orders). P50 ($85): half of orders are below $85 (the median). P90 ($350): 90% of orders are below $350. P99 ($2,500): 99% of orders are below $2,500 (the top 1% are very large). Segmentation by percentile: df[\"value_segment\"] = pd.qcut(df[\"revenue\"], q=4, labels=[\"Low\", \"Medium\", \"High\", \"Premium\"]). qcut divides data into equal-frequency bins (each segment has the same number of orders). vs. cut which divides into equal-width bins (each segment covers the same revenue range). Group statistics: group_stats = df.groupby(\"category\").agg(mean=(\"revenue\", \"mean\"), median=(\"revenue\", \"median\"), std=(\"revenue\", \"std\"), cv=(\"revenue\", lambda x: x.std() / x.mean())). The coefficient of variation (cv) is std/mean — it measures relative variability. A cv of 0.5 means the standard deviation is half the mean. Comparing cv across groups shows which category has the most consistent order values. Hypothesis testing example: from scipy.stats import ttest_ind. west = df[df[\"region\"] == \"West\"][\"revenue\"]. east = df[df[\"region\"] == \"East\"][\"revenue\"]. t_stat, p_value = ttest_ind(west, east). print(f\"T-test: t={t_stat:.3f}, p={p_value:.4f}\"). if p_value < 0.05: print(\"Significant difference between West and East revenue\"). This tests whether the revenue difference between regions is statistically significant or just random variation'"
+    weight: 0.30
+    description: "Patterns"

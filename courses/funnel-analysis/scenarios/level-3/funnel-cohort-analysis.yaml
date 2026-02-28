@@ -1,0 +1,41 @@
+meta:
+  id: funnel-cohort-analysis
+  level: 3
+  course: funnel-analysis
+  type: output
+  description: "Funnel cohort analysis — analyze how funnel performance changes across acquisition cohorts to separate real improvements from traffic quality changes"
+  tags: [cohort, funnel-trends, acquisition-quality, temporal-analysis, advanced]
+
+state: {}
+
+trigger: |
+  The VP of Growth reports: "Our overall funnel conversion improved
+  from 2.1% to 2.8% over the last 6 months. But I'm not sure if the
+  funnel actually got better or if our traffic quality changed. How do
+  I use cohort analysis to separate real funnel improvements from
+  changes in who's entering the funnel?"
+
+  Monthly acquisition cohorts (last 6 months):
+  Jan cohort: 50K visitors, 2.0% overall conversion
+  Feb cohort: 55K visitors, 2.1% overall conversion
+  Mar cohort: 48K visitors, 2.3% overall conversion
+  Apr cohort: 60K visitors, 2.5% overall conversion
+  May cohort: 70K visitors, 2.7% overall conversion
+  Jun cohort: 75K visitors, 2.8% overall conversion
+
+  Task: Analyze the funnel by cohort to determine what's really
+  driving the improvement and whether it will continue.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response separates funnel improvement from traffic quality — separation: 'Separating funnel improvement from traffic quality: the core question: did the funnel get better (product improvements converted more users) or did traffic quality improve (better users entered the funnel)? Analysis approach — decompose by traffic source: Jan cohort traffic mix: organic 40%, paid search 30%, social 20%, email 10%. Jun cohort traffic mix: organic 35%, paid search 20%, social 15%, email 30%. Key change: email share tripled from 10% to 30%. Email traffic typically converts 3-5x better than social traffic. Controlled analysis — same-source comparison: organic traffic conversion: Jan 2.5% → Jun 2.9% (+0.4pp, real improvement). Paid search conversion: Jan 1.8% → Jun 2.3% (+0.5pp, real improvement). Social conversion: Jan 1.2% → Jun 1.4% (+0.2pp, modest improvement). Email conversion: Jan 4.0% → Jun 4.2% (+0.2pp, modest improvement). Verdict: within each traffic source, conversion improved 0.2-0.5pp. This represents REAL funnel improvement from product changes. BUT: the overall jump from 2.0% to 2.8% (0.8pp) is larger than any single source's improvement. The extra 0.3-0.4pp came from traffic mix shift (more email, less social). Decomposition: total improvement: +0.8pp (from 2.0% to 2.8%). Real funnel improvement: approximately +0.4pp (average within-source improvement). Traffic mix improvement: approximately +0.4pp (more high-converting traffic). The improvement is roughly 50/50 between real funnel gains and traffic quality gains. Implication: if the marketing team shifts budget back to social (reducing email share), the funnel rate will decline even if the product continues improving. The 2.8% rate is partially dependent on maintaining the current traffic mix'"
+    weight: 0.35
+    description: "Separation"
+  - type: llm_judge
+    criteria: "Response covers cohort-level funnel analysis methodology — methodology: 'Cohort-level funnel analysis: Step 1 — Build cohort funnels: for each monthly cohort, build the complete step-by-step funnel. Jan cohort funnel: visit → signup (4.0%) → activation (30%) → trial (50%) → paid (33%). Overall: 2.0%. Jun cohort funnel: visit → signup (5.2%) → activation (35%) → trial (48%) → paid (31%). Overall: 2.8%. Step-level comparison: step | Jan | Jun | change | driver. Visit → signup: 4.0% | 5.2% | +1.2pp | new landing page launched in March. Signup → activation: 30% | 35% | +5pp | onboarding redesign in April. Activation → trial: 50% | 48% | -2pp | DECLINED (warning sign). Trial → paid: 33% | 31% | -2pp | DECLINED (warning sign). The overall improvement masks step-level declines: the bottom of the funnel is getting WORSE. More users are signing up and activating (good) but a smaller percentage of them are converting to trial and paid (bad). This pattern — improving top, declining bottom — often indicates that the new signups are lower quality. The product changes attracted more users but less committed ones. Step 2 — Cohort maturity analysis: newer cohorts may not have had enough time to complete the funnel. The Jun cohort has had only 30 days, while Jan has had 180 days. Conversion window analysis: days to purchase | Jan cohort | Jun cohort. Within 7 days: 1.2% | 1.8%. Within 14 days: 1.6% | 2.3%. Within 30 days: 1.9% | 2.8%. Within 90 days: 2.0% | TBD. Jun cohort's 2.8% at 30 days vs Jan's 1.9% at 30 days suggests genuine improvement. But Jun's final rate (at 90+ days) may be different from its 30-day rate. Always compare cohorts at the same maturity point'"
+    weight: 0.35
+    description: "Methodology"
+  - type: llm_judge
+    criteria: "Response covers sustainability analysis and forward-looking recommendations — sustainability: 'Sustainability analysis and recommendations: will the improvement continue? Positive signals: within-source conversion is improving (real product gains). Each cohort is better than the previous at the same maturity point. The improvements are tied to specific product changes (not random). Concerning signals: bottom-of-funnel rates are declining (trial and paid conversion). Traffic mix shift is contributing significantly to the improvement. If marketing budget shifts away from email, rates will drop. The improvement is decelerating (Jan→Feb +0.1pp, May→Jun +0.1pp, but Apr→May was +0.2pp). Sustainability forecast: the traffic mix component (+0.4pp) is sustainable only if the email marketing budget continues growing. The funnel improvement component (+0.4pp) is sustainable and could continue if the team maintains optimization velocity. The bottom-of-funnel decline (-2pp at trial and paid stages) is concerning and may accelerate. Net assessment: the headline rate (2.8%) may plateau or decline slightly in the next quarter as bottom-of-funnel issues offset top-of-funnel gains. Recommendations: 1. Shift optimization focus to the bottom of the funnel: the trial → paid conversion decline (-2pp) needs investigation. Are the new users attracted by the improved onboarding less committed? Is the trial experience not delivering enough value? This should be the top priority. 2. Maintain the traffic mix monitoring: report conversion rates both blended AND by traffic source. If a channel's share shifts more than 5pp, flag it as a potential confound. 3. Build a cohort-adjusted conversion metric: instead of reporting the raw blended rate (2.8%), report a mix-adjusted rate (what would the rate be if traffic mix matched January's baseline?). Mix-adjusted Jun rate: approximately 2.4% (vs raw 2.8%). This isolates the real product improvement from the traffic quality improvement. 4. Set cohort-specific targets: not just overall 3.0% target but: organic conversion target: 3.2% (from 2.9%). Paid search target: 2.7% (from 2.3%). Social target: 1.8% (from 1.4%). Email target: 4.5% (from 4.2%). This prevents the team from hitting the overall target through traffic mix gaming while individual channels stagnate'"
+    weight: 0.30
+    description: "Sustainability"

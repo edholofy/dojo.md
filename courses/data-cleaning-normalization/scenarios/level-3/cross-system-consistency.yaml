@@ -1,0 +1,45 @@
+meta:
+  id: cross-system-consistency
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Cross-system data consistency — detect and resolve data inconsistencies across multiple interconnected systems"
+  tags: [consistency, cross-system, reconciliation, integration, advanced]
+
+state: {}
+
+trigger: |
+  A data architect says: "We have 6 systems that share customer data:
+  CRM, billing, support, product analytics, marketing automation, and
+  our data warehouse. The same customer record exists in multiple systems
+  but they've diverged:
+
+  - CRM says customer 'Acme Corp' has 500 employees; billing says 250
+  - Support shows last contact as January; CRM shows last activity
+    as March
+  - Marketing has an old email; CRM has a new one; product analytics
+    has a third different one
+  - The data warehouse should be the source of truth but it's 2 days
+    behind the CRM
+  - Revenue in billing ($150K) doesn't match revenue in the CRM ($145K)
+
+  How do I systematically detect and resolve these cross-system
+  inconsistencies?"
+
+  Task: Design a cross-system data consistency framework that detects
+  inconsistencies, establishes source-of-truth rules, and implements
+  reconciliation processes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a consistency detection approach — systematic cross-system comparison: for each shared entity and field, compare values across all systems where it exists. Create a consistency scorecard showing agreement rates per field across system pairs. Identify fields with frequent disagreements and investigate root causes (manual entry duplication, sync delays, system-specific transformations, lack of bidirectional sync). Prioritize inconsistencies by business impact (revenue discrepancy is critical, employee count is lower priority)"
+    weight: 0.35
+    description: "Detection"
+  - type: llm_judge
+    criteria: "Response establishes source-of-truth rules — for each data attribute, designate which system is authoritative: billing is authoritative for revenue (it's the system of record for transactions), CRM is authoritative for contact information (sales team maintains it), product analytics is authoritative for usage data, support is authoritative for ticket history. Where no single system is clearly authoritative, establish resolution rules (most recently updated value wins, or most complete value wins). Document these rules in a data governance policy"
+    weight: 0.35
+    description: "SourceOfTruth"
+  - type: llm_judge
+    criteria: "Response designs ongoing reconciliation processes — automated daily or weekly reconciliation jobs that compare key fields across systems, alerting on new inconsistencies. Root cause analysis for systematic inconsistencies (a field that's always different between two systems likely has a sync or transformation issue). Fix-forward approach: correct the root cause rather than just patching the symptoms. Monitor consistency metrics over time (consistency rate should improve as root causes are fixed)"
+    weight: 0.30
+    description: "Reconciliation"

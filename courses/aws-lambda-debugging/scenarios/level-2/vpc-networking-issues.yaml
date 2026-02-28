@@ -1,0 +1,71 @@
+meta:
+  id: vpc-networking-issues
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda VPC networking issues — diagnose ENI provisioning failures, NAT Gateway requirements, and VPC endpoint configuration"
+  tags: [AWS, Lambda, VPC, networking, NAT-Gateway, endpoints, intermediate]
+
+state: {}
+
+trigger: |
+  Your Lambda function was recently moved into a VPC to access an
+  RDS database. Now it can reach the database but can't reach any
+  AWS services or external APIs:
+
+  $ aws lambda invoke --function-name order-api output.json
+  {
+    "errorType": "TimeoutError",
+    "errorMessage": "connect ETIMEDOUT 52.119.225.0:443"
+  }
+
+  The function tries to call DynamoDB and S3, but these are public
+  AWS endpoints. A Lambda in a VPC private subnet has NO internet
+  access by default.
+
+  Network architecture:
+
+  Before VPC: Lambda → Internet → AWS Services (S3, DynamoDB) ✓
+  After VPC (private subnet, no NAT): Lambda → VPC → ??? → No route
+
+  Solutions:
+
+  Option A — NAT Gateway ($32/month + data processing):
+  Private subnet → route to NAT Gateway in public subnet → Internet
+  Gateway → Internet → AWS services.
+  Adds internet access but costs money and adds latency.
+
+  Option B — VPC Endpoints (recommended for AWS services):
+  Gateway endpoints (free): S3, DynamoDB
+  Interface endpoints ($7.20/month each): Secrets Manager, SQS,
+  SNS, KMS, and 100+ other services.
+  Traffic stays within AWS network. No internet required.
+
+  Another issue discovered:
+  ENILimitReachedException — Lambda creates Elastic Network Interfaces
+  (ENIs) in your VPC subnets. If the subnet runs out of available
+  IPs or you hit the ENI quota, new Lambda instances can't start.
+
+  $ aws ec2 describe-network-interfaces \
+    --filters Name=requester-id,Values=*lambda*
+  (showing 250 ENIs — hitting the limit)
+
+  Task: Explain Lambda VPC networking. Write: why VPC Lambda loses
+  internet access, NAT Gateway vs VPC endpoints (cost, performance),
+  ENI management (Hyperplane ENIs, subnet sizing, IP exhaustion),
+  security group configuration for Lambda, and when to (and not to)
+  put Lambda in a VPC.
+
+assertions:
+  - type: llm_judge
+    criteria: "VPC networking problem is explained — Lambda in VPC gets a network interface in your subnet but private subnets have no internet route. Two solutions: NAT Gateway (routes through internet — needed for external APIs, costs ~$32/month + data charges) or VPC Endpoints (direct AWS service access without internet — Gateway endpoints for S3/DynamoDB are free, Interface endpoints cost $7.20/month each). Best practice: use VPC endpoints for AWS services, NAT Gateway only for external API access. VPC adds cold start latency (ENI attachment)"
+    weight: 0.35
+    description: "VPC networking"
+  - type: llm_judge
+    criteria: "ENI and subnet management are covered — Lambda uses Hyperplane ENIs (shared across functions with same subnet + security group). ENI limit: default 250 per VPC (request increase). Subnet sizing: /24 gives ~251 usable IPs, adequate for most. Multiple subnets across AZs for availability. Security groups: Lambda needs outbound rules to reach databases/services. Inbound rules typically not needed (Lambda initiates connections). Check: aws ec2 describe-network-interfaces to see Lambda ENIs"
+    weight: 0.35
+    description: "ENI and subnet"
+  - type: llm_judge
+    criteria: "When to use VPC is practical — put Lambda in VPC ONLY when it needs to access VPC resources (RDS, ElastiCache, EC2 instances). Don't use VPC if Lambda only accesses public AWS services (S3, DynamoDB, SQS) — VPC adds complexity, cost, and cold start latency without benefit. If you need both VPC resources AND internet: use VPC endpoints for AWS services + NAT Gateway for external. IAM role needs AWSLambdaVPCAccessExecutionRole for ENI management permissions. Consider RDS Proxy for database connection pooling in VPC"
+    weight: 0.30
+    description: "When to use VPC"

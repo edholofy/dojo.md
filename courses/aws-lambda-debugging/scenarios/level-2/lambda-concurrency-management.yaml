@@ -1,0 +1,70 @@
+meta:
+  id: lambda-concurrency-management
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda concurrency issues — diagnose throttling, configure reserved and provisioned concurrency, and protect downstream services"
+  tags: [AWS, Lambda, concurrency, throttling, reserved, scaling, intermediate]
+
+state: {}
+
+trigger: |
+  A marketing campaign sends a blast email with a link to your API.
+  Traffic spikes 10x. Multiple functions start throttling:
+
+  CloudWatch Metrics (account-wide):
+  ConcurrentExecutions: 1,000 (at limit!)
+  Throttles (order-api): 5,200
+  Throttles (user-api): 1,800
+  Throttles (analytics): 450
+
+  All functions compete for the same 1,000 account concurrency pool.
+  The analytics function (low priority) consumed 600 concurrent
+  executions processing a backlog, leaving only 400 for critical
+  order and user APIs.
+
+  Fix 1 — Reserved concurrency (free):
+  $ aws lambda put-function-concurrency \
+    --function-name order-api \
+    --reserved-concurrent-executions 300
+  $ aws lambda put-function-concurrency \
+    --function-name user-api \
+    --reserved-concurrent-executions 200
+  $ aws lambda put-function-concurrency \
+    --function-name analytics \
+    --reserved-concurrent-executions 50
+
+  Now order-api is guaranteed 300 concurrent executions. But:
+  reserved concurrency is also a MAXIMUM — order-api can never
+  exceed 300 even if capacity is available.
+
+  Unreserved pool: 1000 - 300 - 200 - 50 = 450 for all other functions.
+
+  Fix 2 — Downstream protection:
+  Your RDS database has a max_connections of 100. If 300 Lambda
+  instances each open a connection, the database is overwhelmed:
+  "too many connections" error.
+
+  Solution: RDS Proxy pools database connections. Lambda instances
+  connect to RDS Proxy, which maintains a connection pool to the
+  database.
+
+  Task: Explain Lambda concurrency management. Write: account vs
+  function concurrency limits, reserved concurrency (guarantees AND
+  limits), provisioned concurrency (pre-warmed), protecting downstream
+  services (RDS Proxy, SQS buffering), scaling behavior, and how to
+  request limit increases.
+
+assertions:
+  - type: llm_judge
+    criteria: "Concurrency model is explained — account default: 1,000 concurrent executions (soft limit, can increase). All functions share the pool unless reserved concurrency is set. Reserved concurrency: guarantees AND limits a function's concurrent executions (free, no additional cost). Unreserved pool: total limit minus all reserved concurrency — must leave at least 100 unreserved. Provisioned concurrency: pre-initialized environments for instant response (charged per provisioned unit per hour). Scaling: Lambda scales at 500-3000 instances per minute depending on region"
+    weight: 0.35
+    description: "Concurrency model"
+  - type: llm_judge
+    criteria: "Downstream protection is covered — Lambda can scale faster than downstream services. Database: max_connections limit — use RDS Proxy (connection pooling), or limit Lambda concurrency. APIs: use reserved concurrency to match API rate limits. SQS: use as buffer between Lambda and slow services. Pattern: high-concurrency Lambda → SQS → low-concurrency Lambda → database. ElastiCache: use as cache to reduce database load. Always consider downstream capacity when setting Lambda concurrency"
+    weight: 0.35
+    description: "Downstream protection"
+  - type: llm_judge
+    criteria: "Scaling and limits are practical — request limit increase via AWS Support (usually approved within days). Monitor: ConcurrentExecutions, Throttles, UnreservedAccountConcurrency metrics. Alert on throttles (any throttle = degraded service). Scaling behavior: burst (3000 in us-east-1, 1000 in other regions for first minute), then 500 additional per minute. Event source specific: SQS scales up to 1000 batches/minute, Kinesis limited by shard count. Plan capacity: expected peak concurrent executions = (invocations per second) × (average duration in seconds)"
+    weight: 0.30
+    description: "Scaling and limits"

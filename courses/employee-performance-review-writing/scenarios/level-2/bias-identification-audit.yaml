@@ -1,0 +1,96 @@
+meta:
+  id: bias-identification-audit
+  level: 2
+  course: employee-performance-review-writing
+  type: output
+  description: "Bias identification audit — analyze a set of performance reviews for common biases and rewrite the problematic sections"
+  tags: [bias, audit, recency-bias, halo-effect, leniency, intermediate]
+
+state: {}
+
+trigger: |
+  You're a People Analytics Specialist at a 1,200-person
+  technology company. The VP of HR has asked you to audit
+  a sample of performance reviews from Q4 for bias patterns.
+  You've pulled 6 review excerpts that each contain at
+  least one common bias.
+
+  Your task is to identify the bias, explain why it's
+  problematic, and rewrite the review section to be more
+  accurate.
+
+  Review 1 (Manager: David, Employee: Sarah — Sales Rep):
+  "Sarah had an incredible Q4 — she closed our biggest deal
+  of the year worth $2M in December. This shows she's a
+  truly exceptional performer. Rating: 5/5."
+  Context: Sarah's Q1-Q3 performance was below target.
+  She hit only 65% of her quarterly targets for the first
+  3 quarters. The $2M deal was largely handed to her by a
+  departing colleague.
+
+  Review 2 (Manager: Lisa, Employee: Ahmed — Engineer):
+  "Ahmed is a brilliant engineer. His technical skills are
+  outstanding, and therefore I'm rating him highly across
+  all competencies including communication, leadership, and
+  teamwork. Rating: 4.5/5 across all categories."
+  Context: Ahmed has received 3 complaints from PMs about
+  poor communication. He declined to mentor a junior
+  engineer. His code quality is genuinely excellent.
+
+  Review 3 (Manager: Rachel, Employee: entire team):
+  "My team performed well this year. Everyone gets a 3.
+  We hit our targets as a team and everyone contributed."
+  Context: Rachel manages 6 people. Two consistently
+  exceeded targets (one received a customer award). One
+  underperformed significantly and was on a verbal warning.
+  Three met expectations.
+
+  Review 4 (Manager: Tom, Employee: Kenji — Designer):
+  "Kenji seems like he's not very passionate about design.
+  He doesn't volunteer for extra projects, leaves at 5 PM
+  every day, and doesn't engage in our design Slack channel.
+  I'm concerned about his commitment. Rating: 2.5/5."
+  Context: Kenji delivers all his work on time with
+  excellent quality scores. His designs have the highest
+  client satisfaction. He has young children and has
+  disclosed a need for work-life balance.
+
+  Review 5 (Manager: Maria, Employee: Brittany — PM):
+  "Brittany is such a wonderful person. She's always
+  smiling, brings treats for the team, organizes birthday
+  celebrations, and everyone loves working with her. She's
+  a true asset. Rating: 4/5."
+  Context: Brittany missed 3 project deadlines this year.
+  Two of her projects went 40% over budget. Her stakeholder
+  satisfaction score is 2.8/5. She has not completed her
+  project management certification.
+
+  Review 6 (Manager: James, Employee: Diego — Analyst):
+  "Diego needs to be more professional in meetings. His
+  communication style is too casual and he interrupts
+  others. He needs to learn how to present in a more
+  corporate manner. Rating: 3/5."
+  Context: Diego's analysis work is excellent (99%
+  accuracy). His casual style is cultural — he moved from
+  a startup environment. Other employees with similar
+  communication patterns (notably native English speakers)
+  have not received similar feedback. Diego is the only
+  Latino analyst on the team.
+
+  Task: For each review, identify the specific bias type,
+  explain why it's problematic, and rewrite the review
+  section to be fair and evidence-based.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response correctly identifies the bias in each review — Review 1: recency bias (Q4 overshadowing poor Q1-Q3); Review 2: halo effect (technical excellence assumed across all competencies); Review 3: central tendency bias (everyone rated the same regardless of performance); Review 4: proximity/presenteeism bias (confusing presence with performance); Review 5: likeability/leniency bias (personal qualities overriding performance data); Review 6: cultural/racial bias (holding different standards for minority employee); each identification is clearly explained."
+    weight: 0.35
+    description: "BiasIdentification"
+  - type: llm_judge
+    criteria: "Response rewrites each review to be fair and evidence-based — the rewrites use specific performance data instead of impressions; balanced across the full review period (not just recent events); differentiate between competencies based on actual evidence; the rewrites would produce more accurate ratings; each rewrite demonstrates what good performance review writing looks like."
+    weight: 0.35
+    description: "FairRewrites"
+  - type: llm_judge
+    criteria: "Response handles the sensitive cases appropriately — the Kenji review rewrite addresses the work-life balance issue without penalizing boundary-setting; the Diego review addresses potential discrimination concerns seriously; the Brittany rewrite doesn't dismiss her positive qualities but rebalances with performance data; the overall analysis would be useful as a manager training tool; raises the right red flags for HR to investigate further."
+    weight: 0.30
+    description: "SensitiveCaseHandling"

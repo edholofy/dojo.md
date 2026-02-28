@@ -1,0 +1,35 @@
+meta:
+  id: control-group-design
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Design proper control groups — understand why controls matter, how to set up clean control and treatment groups, and common pitfalls in group design"
+  tags: [control-group, treatment, experimental-design, clean-comparison, beginner]
+
+state: {}
+
+trigger: |
+  The growth team launches an A/B test. Two weeks later, they report:
+  "Treatment group signup rate: 8.2%. This is great! Let's ship it."
+
+  The data analyst asks: "What was the control group's rate?" The
+  growth team says: "We didn't really have one — we compared the
+  treatment's 8.2% to last month's rate of 6.5%. That's a 26%
+  improvement!"
+
+  Task: Explain why this comparison is invalid and how to design
+  proper control groups.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why comparing to historical data is invalid — historical: 'Why comparing to last month is invalid: The growth team compared this month's treatment (8.2%) to last month's baseline (6.5%) and concluded a 26% improvement. This comparison is flawed because many things changed between last month and this month besides the treatment: 1. Seasonality: this month might have naturally higher signups (e.g., January New Year resolutions, September back-to-school). 2. Marketing campaigns: a new ad campaign launched this month driving higher-quality traffic. 3. Other product changes: the engineering team fixed a bug on the signup page last week, improving signups independently. 4. External events: a competitor shut down, driving users to your product. Any of these factors could explain the 1.7pp increase — the treatment may have had zero effect. The proper comparison: run the control and treatment simultaneously. This month's traffic is split 50/50: control (current signup page) sees this month's conditions. Treatment (new signup page) sees this month's conditions. Both groups experience the same seasonality, marketing, bug fixes, and external events. The ONLY difference is the page they see. If the treatment converts at 8.2% and the control converts at 7.8%, the true effect is 0.4pp — not the 1.7pp claimed by the historical comparison. The 1.4pp difference (1.7 - 0.3) was caused by external factors, not the treatment. This is why concurrent control groups are essential'"
+    weight: 0.35
+    description: "Historical"
+  - type: llm_judge
+    criteria: "Response covers proper control group setup — setup: 'Proper control group design: Step 1 — Simultaneous exposure: control and treatment must run at the same time. Never compare treatment this week to control last week. Step 2 — Random assignment: each user is randomly assigned to control or treatment. Assignment happens at the user level (not session level) — a user always sees the same version. Use a hash of user ID to ensure consistent assignment: hash(user_id) mod 100 < 50 → control. hash(user_id) mod 100 >= 50 → treatment. This ensures the split is random and repeatable. Step 3 — Balance check (Sample Ratio Mismatch, SRM): after running the test, verify the groups are balanced. Expected: 50/50 split. If the result is 52/48 within normal variance (chi-square test), it is fine. If the result is 60/40 or 45/55 with a large sample, something is wrong. SRM causes: a bug in the assignment code. The treatment page is slower, causing timeouts for some users (they never load, so they are not counted). Bots disproportionately hitting one variant. SRM invalidates the entire test. Fix the root cause and restart. Step 4 — Sufficient size in both groups: both groups need enough data to detect the minimum detectable effect. A 90/10 split (90% control, 10% treatment) preserves more users on the known-good experience but requires 2.5x more total traffic to achieve the same statistical power as a 50/50 split. Use 50/50 unless there is a strong reason to minimize treatment exposure (e.g., testing a risky change). Step 5 — One control, one treatment per test: do not run multiple tests simultaneously on the same page unless the experimentation platform handles interactions. If Test A changes the headline and Test B changes the button, and both run on the signup page, their effects may interact. A user could be in Treatment A + Control B, creating a confounded experience'"
+    weight: 0.35
+    description: "Setup"
+  - type: llm_judge
+    criteria: "Response covers holdout groups and spillover effects — holdout: 'Holdout groups: A holdout group is a small percentage of users (typically 1-5%) who are permanently excluded from all experiments. They always see the default experience. Purpose: measure the cumulative impact of all experiments over time. After 20 A/B tests, each winning 2-3%, the holdout group shows whether these gains are real when combined. Example: after 6 months of experimentation, the holdout group has a 15% lower conversion rate than the rest of the user base. This proves that the experimentation program has delivered a real 15% improvement. Without the holdout, you cannot prove cumulative impact. Spillover effects: sometimes the treatment affects the control group indirectly. Example 1 — Social network effects: if you test a new sharing feature on 50% of users, the other 50% might receive more shared content (from treated users), improving their engagement too. The control group is contaminated. Example 2 — Supply-constrained marketplaces: if you show better recommendations to 50% of buyers, they buy more inventory, leaving less for the control group. The treatment looks better and the control looks worse — amplifying the observed effect. Example 3 — Customer support: if the treatment drives more signups, the support team is busier, degrading the experience for ALL users including control. Preventing spillover: for social features, use cluster randomization (randomize by social group, not individual). For marketplace tests, account for supply effects in the analysis. For support impact, monitor support metrics as guardrails'"
+    weight: 0.30
+    description: "Holdout"

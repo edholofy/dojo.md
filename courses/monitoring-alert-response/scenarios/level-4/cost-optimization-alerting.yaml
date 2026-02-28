@@ -1,0 +1,45 @@
+meta:
+  id: cost-optimization-alerting
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Optimize monitoring costs — reduce observability spending while maintaining detection quality through smart data management and alert intelligence"
+  tags: [monitoring, cost-optimization, data-management, efficiency, expert]
+
+state: {}
+
+trigger: |
+  Your monitoring costs have grown from $100K/year to $450K/year
+  in 18 months as your platform scaled. The CFO is asking for a
+  30% cost reduction. Your current breakdown:
+
+  - Datadog: $200K/year (metrics, APM, logs)
+  - Cloud infrastructure for monitoring: $120K/year (Prometheus,
+    ELK, Grafana servers)
+  - PagerDuty: $30K/year
+  - Third-party uptime monitoring: $15K/year
+  - Engineering time maintaining monitoring: ~$85K/year equivalent
+
+  Data volumes driving costs:
+  - Metrics: 500K time series (many with high cardinality)
+  - Logs: 2TB/day ingested (80% is debug-level logging)
+  - Traces: 100% sampling (every request traced)
+  - Retention: 90 days for everything
+
+  Task: Design a cost optimization plan that achieves 30% reduction
+  ($135K savings) without degrading alert quality or incident
+  detection capability.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cost reduction opportunities are identified with specific savings — optimization plan: '(1) Log volume reduction (estimated savings: $80-100K). Current: 2TB/day, 80% debug-level. Action: reduce debug logging in production. Debug logs should be enabled on-demand for specific investigations, not continuously in production. Set production log level to INFO. Expected: 2TB → 400GB/day (80% reduction). Keep 7 days of INFO logs, 90 days of ERROR and above. Cost impact: if Datadog charges per-GB ingestion, 80% log reduction directly reduces costs. If using self-hosted ELK, 80% reduction means smaller cluster. (2) Metrics cardinality reduction (estimated savings: $25-35K). Current: 500K time series, many with high cardinality. Action: audit metrics for high-cardinality labels. Common offenders: per-user-ID metrics, per-request-ID metrics, per-URL-path metrics with unbounded paths. Replace high-cardinality labels with aggregated labels (for example, endpoint group instead of full URL path). Expected: 500K → 200K time series. (3) Trace sampling (estimated savings: $20-30K). Current: 100% sampling (every request traced). Action: implement intelligent sampling. Keep 100% sampling for: errors, slow requests (above p95), and requests through critical paths (payment, checkout). Sample 10% of successful, fast requests. Expected: trace volume reduced by 80% with minimal loss of diagnostic value — you rarely need traces for requests that succeeded quickly. (4) Retention optimization (estimated savings: $15-20K). Current: 90 days for everything. Action: tiered retention. Hot tier (0-7 days): full resolution, fast queries. Warm tier (7-30 days): downsampled metrics (5-minute resolution instead of 15-second), compressed logs. Cold tier (30-90 days): only errors, incidents, and compliance-required data. Expected: storage costs reduced by 60%.' Total estimated savings: $140-185K (31-41% reduction). Exceeds the 30% target'"
+    weight: 0.35
+    description: "Specific savings opportunities"
+  - type: llm_judge
+    criteria: "Quality safeguards ensure detection is not degraded — safeguards: '(1) Before reducing any data, verify alert coverage: for each optimization, confirm that the alerts currently working will continue to work. Specifically: log-based alerts must still trigger at INFO level. If any alert relies on DEBUG-level logs, either promote that specific log to INFO or keep debug logging for that service. Metric-based alerts must work with the reduced cardinality. If an alert uses a high-cardinality label, redesign the alert before removing the label. Trace-based investigation must still be possible for incidents. 100% sampling of errors ensures you have traces for every failed request. (2) Implement before removing: set up the new log levels, sampling rules, and retention policies in parallel with the existing configuration for 2 weeks. Compare: are the same alerts firing? Can incidents still be investigated? Then decommission the old configuration. (3) Emergency override: maintain the ability to temporarily increase logging or trace sampling for a specific service during an active incident. This should be a one-click action in the monitoring platform. The default is optimized, but during an incident, full data is available on demand. (4) Cost monitoring: add monitoring for monitoring costs. Alert when: log ingestion volume spikes unexpectedly (a new service or feature may be logging excessively), metric cardinality increases significantly, or monthly monitoring costs exceed budget by 10%'"
+    weight: 0.35
+    description: "Quality safeguards"
+  - type: llm_judge
+    criteria: "Vendor and architecture decisions address long-term cost control — long-term cost strategy: '(1) Evaluate vendor vs. self-hosted: Datadog at $200K is the largest single cost. Evaluate: would Grafana Cloud or a self-hosted Grafana+Prometheus+Loki stack cost less? At current volumes (after optimization), self-hosted may be $80-100K in infrastructure vs. $200K in Datadog licensing. Caveat: self-hosted requires engineering maintenance time. Factor in the $85K engineering time. The true comparison is Datadog at $200K vs. self-hosted at $100K infrastructure + $50K additional engineering time = $150K. Potential savings: $50K/year. (2) Data pipeline optimization: implement a data pipeline (OpenTelemetry collector, Vector, or similar) between services and the monitoring backend. The pipeline can: filter out noise before ingestion (reducing volume and cost), route data to appropriate storage tiers (expensive hot storage vs. cheap cold storage), enforce cardinality limits (reject high-cardinality metrics before they enter the system). (3) Cost attribution: assign monitoring costs to the teams that generate them. When a team sees that their excessive debug logging costs $30K/year, they are motivated to optimize. Without attribution, monitoring costs are a shared overhead with no incentive to reduce. (4) Budget and growth model: set a monitoring cost budget as a percentage of infrastructure spend. Target: monitoring costs should not exceed 10% of total infrastructure costs. If infrastructure grows 2x, monitoring should grow less than 2x through continued optimization'"
+    weight: 0.30
+    description: "Long-term cost control"

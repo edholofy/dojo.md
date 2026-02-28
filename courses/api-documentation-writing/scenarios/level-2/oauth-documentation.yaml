@@ -1,0 +1,47 @@
+meta:
+  id: oauth-documentation
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document OAuth 2.0 flows — write clear documentation for authorization code, client credentials, and refresh token flows"
+  tags: [API, documentation, OAuth, authentication, authorization, JWT, intermediate]
+
+state: {}
+
+trigger: |
+  Your API uses OAuth 2.0 with multiple grant types. Developer
+  onboarding is painful — support tickets about authentication
+  are 40% of total volume:
+
+  - "What's the difference between authorization_code and
+    client_credentials?"
+  - "How do I get a token without a user logging in?"
+  - "My token expired mid-request — how do I refresh?"
+  - "What scopes do I need for each endpoint?"
+  - "The PKCE flow — what's the code_verifier?"
+
+  Your API supports:
+  1. Authorization Code (with PKCE) — for user-facing apps
+  2. Client Credentials — for server-to-server
+  3. Refresh Token — for renewing expired tokens
+
+  Scopes: read, write, admin, payments:read, payments:write
+
+  Task: Write OAuth 2.0 documentation that reduces support tickets.
+  Include: when to use each grant type, step-by-step flow diagrams
+  (text-based), token lifecycle, scope documentation, and complete
+  code examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Grant types are explained with use cases — Authorization Code + PKCE: for web/mobile apps where a user logs in. Flow: (1) redirect to /authorize with client_id, redirect_uri, code_challenge, (2) user logs in and consents, (3) callback receives authorization code, (4) exchange code for tokens at /token. Client Credentials: for server-to-server (no user). Flow: (1) POST /token with client_id, client_secret, grant_type=client_credentials. Decision guide: 'Use Authorization Code when acting on behalf of a user. Use Client Credentials when your server talks to our API directly.'"
+    weight: 0.35
+    description: "Grant types"
+  - type: llm_judge
+    criteria: "Token lifecycle is fully documented — access token: short-lived (1 hour), included as Bearer in Authorization header. Refresh token: long-lived (30 days), used to get new access tokens without re-authentication. Flow: POST /token with grant_type=refresh_token, refresh_token=<token>. Token response: { access_token, refresh_token, expires_in, token_type, scope }. Handle expiry: check expires_in, proactively refresh before expiry, handle 401 by refreshing and retrying. Store tokens securely (never in localStorage for web apps)"
+    weight: 0.35
+    description: "Token lifecycle"
+  - type: llm_judge
+    criteria: "Scopes and code examples are practical — scope documentation: table mapping each scope to what it grants access to. Endpoints list required scopes. Request scopes during authorization: scope=read+payments:write. Token contains granted scopes. Error when scope insufficient: 403 with 'insufficient_scope'. Code examples: complete working example in at least one language showing: (1) initial authorization, (2) token exchange, (3) making an API call, (4) refreshing when expired. PKCE: explain code_verifier/code_challenge for public clients"
+    weight: 0.30
+    description: "Scopes and examples"

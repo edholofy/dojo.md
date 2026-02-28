@@ -1,0 +1,44 @@
+meta:
+  id: alert-driven-incident-declaration
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Declare incidents from alerts — decide when an alert warrants a formal incident declaration with structured response vs. routine on-call handling"
+  tags: [monitoring, incident-declaration, severity, judgment, process, advanced]
+
+state: {}
+
+trigger: |
+  You're on-call and receive this sequence of alerts:
+
+  9:00 AM: WARNING - checkout-service latency p95 > 2s
+  9:05 AM: WARNING - payment-service timeout rate > 1%
+  9:12 AM: CRITICAL - checkout success rate < 90% (normal: 99.5%)
+  9:15 AM: Customer support reports 15 complaints in 15 minutes
+           about failed checkouts
+  9:18 AM: CRITICAL - payment-service circuit breaker open
+  9:20 AM: Your manager Slacks you: "Customers can't buy anything.
+           What's happening?"
+
+  Currently you are investigating alone. No incident has been
+  declared. No communication has been sent. You've been investigating
+  the checkout latency for 20 minutes.
+
+  Task: Assess the situation and decide: should you declare a formal
+  incident? If so, at what severity? Explain when to transition from
+  "on-call engineer investigating an alert" to "declared incident
+  with structured response." Write the incident declaration message.
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident declaration is clearly warranted and the delay is identified as a problem — assessment: 'This should have been declared as a formal incident at 9:12 AM — when checkout success rate dropped below 90%. The warning signs were there at 9:00 AM, but the CRITICAL alert at 9:12 AM with 10% of checkouts failing is an unambiguous signal. By 9:20 AM, this has been an undeclared incident for 20 minutes. In that time: no communication has been sent (customers, support, and management are in the dark), no additional help has been engaged (one engineer investigating alone), the situation has worsened (from latency warning to circuit breaker open). The 20-minute delay is a process failure. Not because the engineer was slow — but because there was no clear threshold for when to stop investigating alone and start coordinating.' Current severity: SEV-1. 'Customers cannot complete purchases. Multiple customer complaints. Payment circuit breaker is open (meaning the system has stopped even trying to process payments). Revenue is being lost in real-time. This is the highest severity: customer-facing, revenue-impacting, and actively worsening'"
+    weight: 0.35
+    description: "Declaration assessment"
+  - type: llm_judge
+    criteria: "Incident declaration message is complete and actionable — declaration message (posted in #incidents): 'SEV-1 DECLARED: Checkout and payment processing failures. IC: [your name]. Impact: checkout success rate at 90% (normally 99.5%). Payment service circuit breaker is open — payments are failing. Customer reports: 15+ complaints in the last 15 minutes. Revenue impact: active. Timeline: 9:00 AM — checkout latency increased. 9:05 AM — payment timeouts began. 9:12 AM — checkout success rate dropped to 90%. 9:18 AM — payment circuit breaker opened. Current status: investigating root cause. Payment service appears to be the primary issue — circuit breaker opened due to timeout rate. Checkout latency may be a secondary effect. What I need: (1) Someone to handle communications (update status page, notify support). (2) Payment service owner to join investigation. (3) Infrastructure check — is anything wrong at the platform level? Next update: 10 minutes. War room: #incident-YYYY-MM-DD-checkout-failures.' Why this message works: 'It declares severity, assigns an IC, describes impact, provides a timeline, states what is known, asks for specific help, and commits to an update schedule. In one message, everyone understands the situation and knows what to do'"
+    weight: 0.35
+    description: "Declaration message"
+  - type: llm_judge
+    criteria: "Clear criteria for when to declare incidents from alerts — declaration criteria framework: 'An alert should trigger incident declaration when any of these are true: (1) Customer impact confirmed: customer complaints, support tickets, social media reports. By the time customers notice, it is already an incident. (2) Revenue-affecting: any alert on a revenue path (checkout, payment, billing) that exceeds warning severity. (3) Data integrity risk: any alert suggesting data corruption, unauthorized access, or data loss. (4) Multiple related alerts: 3+ related alerts within 15 minutes (indicating a systemic issue, not a transient blip). (5) Alert severity is CRITICAL and not resolving: if a CRITICAL alert is still firing after 10 minutes of investigation, declare an incident. (6) The on-call engineer is unsure: when in doubt, declare. It is always better to declare and discover the issue is minor than to not declare and discover it was major.' Why formal incidents matter: 'A formal incident activates the incident response process: structured communication, additional help, executive awareness, and postmortem. Without the declaration, you are one engineer silently investigating while the organization and customers are uninformed. The declaration is not a sign of failure — it is a coordination mechanism that brings the right resources to bear on the problem.' Preventing late declarations: 'Add to the on-call playbook: if you have been investigating alone for more than 15 minutes and the issue is not resolved or clearly resolving, declare an incident. The 15-minute rule prevents the common failure mode of investigate alone too long'"
+    weight: 0.30
+    description: "Declaration criteria"

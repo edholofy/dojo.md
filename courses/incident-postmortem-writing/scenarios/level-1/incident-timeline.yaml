@@ -1,0 +1,48 @@
+meta:
+  id: incident-timeline
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Write an incident timeline — document the sequence of events during an incident with accurate timestamps, actions taken, and decision points"
+  tags: [postmortem, timeline, documentation, sequence, events, beginner]
+
+state: {}
+
+trigger: |
+  Your team's e-commerce checkout service went down for 2 hours
+  yesterday. You need to write the incident timeline for the
+  postmortem. Here's what you remember (and what Slack/logs show):
+
+  - 2:15 PM: PagerDuty alert fires for checkout API error rate
+  - 2:18 PM: On-call engineer (Jamie) acknowledges the alert
+  - 2:22 PM: Jamie checks dashboards, sees 500 errors on checkout
+  - 2:25 PM: Jamie restarts the checkout service — no improvement
+  - 2:35 PM: Jamie escalates to the payments team lead (Sam)
+  - 2:40 PM: Customer support starts getting calls
+  - 2:50 PM: Sam identifies that the payment gateway is returning
+    timeouts — not a checkout service issue
+  - 3:00 PM: Sam contacts the payment provider's support
+  - 3:15 PM: Payment provider confirms they're having an outage
+  - 3:30 PM: Team implements a queue-based fallback for payments
+  - 3:45 PM: Status page updated to "degraded checkout experience"
+  - 4:10 PM: Payment provider resolves their outage
+  - 4:15 PM: Checkout returns to normal
+  - 4:20 PM: All clear confirmed, monitoring for regression
+
+  Task: Write a professional incident timeline from these notes.
+  Make it clear, factual, and useful for the postmortem discussion.
+  Then write a guide on how to create effective incident timelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Timeline is clear, chronological, and factual — each entry has: timestamp, who performed the action, what they did, and the outcome. Format is consistent and scannable. Key decision points highlighted: 'Jamie's decision to restart before investigating was a reasonable first response but delayed root cause identification by 10 minutes.' 'Sam's identification of the upstream cause at 2:50 PM was the turning point — 28 minutes after escalation.' Gap analysis: '2:22-2:25 PM: 3 minutes from dashboard check to restart attempt. 2:25-2:35 PM: 10 minutes of Jamie investigating before escalating. 2:50-3:30 PM: 40 minutes to implement fallback after root cause identified. 3:30-3:45 PM: status page updated 15 minutes after fallback was in place.' Entries are objective, not defensive: 'Jamie restarted the service' not 'Jamie should have checked the payment gateway first.' Timeline includes what happened AND what didn't happen that was expected: 'Status page was not updated until 3:45 PM, 90 minutes after the incident began'"
+    weight: 0.35
+    description: "Clear factual timeline"
+  - type: llm_judge
+    criteria: "Timeline separates detection, investigation, mitigation, and resolution — phases clearly marked: Detection (2:15-2:18 PM): 'Alert triggered by error rate threshold. On-call acknowledged within 3 minutes.' Investigation (2:18-2:50 PM): 'Initial hypothesis: checkout service issue (incorrect). Service restart attempted. Escalation to payments team. Correct root cause identified: upstream payment gateway outage.' Mitigation (2:50-3:45 PM): 'Payment provider contacted. Queue-based fallback implemented. Status page updated.' Resolution (3:45-4:20 PM): 'Payment provider resolves outage. Service returns to normal. Monitoring confirms stability.' Key metrics: 'Time to detect: 0 minutes (automated alert). Time to acknowledge: 3 minutes. Time to correct diagnosis: 32 minutes. Time to mitigate: 40 minutes after correct diagnosis. Total incident duration: 2 hours 5 minutes. Customer impact window: approximately 1 hour 45 minutes (from first customer call to fallback implementation).'"
+    weight: 0.35
+    description: "Phased structure"
+  - type: llm_judge
+    criteria: "Timeline guide provides reusable advice — principles: (1) Write the timeline as close to the incident as possible — memory degrades quickly. Collect Slack messages, logs, and PagerDuty data within 24 hours. (2) Use UTC or a single timezone consistently. Include timezone in the header. (3) Separate facts from interpretation: 'Jamie restarted the service at 2:25 PM' is a fact. 'Jamie restarted the service because he thought it was a checkout issue' is interpretation — put this in a notes column, not the timeline. (4) Include inaction: gaps in the timeline are as important as actions. If no one updated the status page for 90 minutes, that's a timeline entry. (5) Include automated actions: monitoring alerts, auto-scaling events, circuit breaker activations. (6) Don't editorialize: 'Service restarted (unnecessary in retrospect)' is editorial. Save analysis for the root cause section. (7) Get multiple perspectives: different engineers saw different things. Cross-reference with Slack logs and monitoring data. A timeline from one person's perspective is incomplete"
+    weight: 0.30
+    description: "Timeline guide"

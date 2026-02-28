@@ -1,0 +1,47 @@
+meta:
+  id: technology-radar
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Write technology radar RFCs — evaluate emerging technologies and make organizational recommendations for adoption, trial, assessment, or hold"
+  tags: [RFC, technology-radar, evaluation, adoption, strategy, expert]
+
+state: {}
+
+trigger: |
+  You're the Principal Engineer responsible for your company's
+  technology radar — a quarterly publication that categorizes
+  technologies into Adopt, Trial, Assess, or Hold.
+
+  This quarter, your engineering teams are asking about:
+  1. AI code assistants (GitHub Copilot, Cursor) — several teams
+     using personal accounts, no company policy
+  2. Rust for backend services — one team rewrote a Python service
+     in Rust for performance, now others want to follow
+  3. Edge computing (Cloudflare Workers, Deno Deploy) — product team
+     wants to reduce latency for global users
+  4. Platform engineering with Backstage — proposed by infra team
+  5. WebAssembly for plugin systems — CTO saw a conference talk
+
+  Each has advocates and skeptics. You need to evaluate them
+  systematically and make recommendations that the organization
+  can act on.
+
+  Task: Write the technology radar RFC with evaluations for all 5
+  technologies. For each, provide the recommendation (adopt/trial/
+  assess/hold), the evidence, the conditions, and the organizational
+  implications.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each technology has a systematic evaluation with clear recommendation — evaluation framework per technology: (1) Problem it solves for us (specific to our context, not generic benefits). (2) Current evidence (internal experience, industry adoption, maturity). (3) Risks and concerns. (4) Organizational readiness. (5) Recommendation with conditions. Example — AI Code Assistants: 'Recommendation: TRIAL. Problem: developer productivity and code generation for boilerplate. Evidence: 3 teams report 15-20% productivity improvement (self-reported, needs formal measurement). Industry: 70%+ of Fortune 500 companies have adopted. Risks: code quality variance, IP/licensing concerns with generated code, security review of AI-suggested code. Conditions: trial with 2 teams for 3 months with productivity measurement. Must: use enterprise license with IP indemnification, establish code review standards for AI-generated code, security team reviews AI access to codebase.' Rust: 'Recommendation: ASSESS. Reason: one successful case study but team has unique Rust expertise. Organizational readiness: only 2 engineers know Rust. Risk of creating unmaintainable services.' Each recommendation is actionable — teams know exactly what to do"
+    weight: 0.35
+    description: "Systematic evaluation"
+  - type: llm_judge
+    criteria: "Recommendations account for organizational context, not just technical merit — Rust assessment: 'Technically excellent for the performance use case. Organizationally risky: the team that rewrote in Rust has 2 Rust experts. If they leave, the service becomes a maintenance burden. Before moving to Trial: minimum 5 engineers must complete Rust training, and a second team must successfully complete a Rust project.' Edge computing: 'Technically promising for our latency problem. Organizationally, we have zero edge computing experience. Recommendation: ASSESS first by building one non-critical endpoint on Cloudflare Workers. Don't trial with customer-facing critical path until assess phase validates operational readiness.' Backstage: 'Technically sound and addresses a real internal tooling need. Risk: Backstage is a platform that needs a team to maintain it. Our infra team has 4 engineers — can they support Backstage plus existing responsibilities? Recommendation: TRIAL only if headcount plan includes 1 dedicated Backstage engineer.' WebAssembly: 'HOLD. CTO enthusiasm after a conference is not an engineering need. No current problem that WebAssembly uniquely solves. Revisit when a concrete use case emerges with a business justification.' Each recommendation should feel grounded in organizational reality, not just technical assessment"
+    weight: 0.35
+    description: "Organizational context"
+  - type: llm_judge
+    criteria: "Radar process and governance are defined — category definitions: 'Adopt: recommended for broad use, teams should prefer this for new projects. Trial: use in production with specific constraints, limited to volunteering teams. Assess: investigate via proof-of-concept, no production use yet. Hold: do not start new usage, existing usage should plan migration.' Movement between categories: 'Technologies move based on evidence, not hype. Trial → Adopt requires: successful use by 2+ teams over 6+ months, measurable positive impact, organizational readiness (training, tooling, support). Assess → Trial requires: completed proof-of-concept, identified 1-2 willing teams, risk assessment complete.' Governance: 'Technology radar updated quarterly. Proposals to add or move technologies submitted via lightweight RFC. Principal engineers evaluate, engineering leadership approves. Any engineer can propose a technology for assessment.' Communication: 'Radar published to engineering org with 1-paragraph summary per technology. Team leads briefed on changes. Teams currently using Hold technologies get migration guidance and timeline.' Preventing technology sprawl: 'Radar limits active Adopt + Trial technologies. If a new technology enters Trial, evaluate whether an existing Trial technology should move to Hold. Budget for experimentation is finite'"
+    weight: 0.30
+    description: "Radar governance"

@@ -1,0 +1,53 @@
+meta:
+  id: global-monitoring-architecture
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Design global monitoring architecture — architect monitoring for a globally distributed system with multi-region failover, data sovereignty, and unified observability"
+  tags: [monitoring, global, multi-region, architecture, data-sovereignty, master]
+
+state: {}
+
+trigger: |
+  Your company operates a global SaaS platform serving customers in
+  North America, Europe, and Asia-Pacific. You are designing the
+  monitoring architecture for this global footprint.
+
+  Current infrastructure:
+  - 4 cloud regions: us-east-1, eu-west-1, ap-southeast-1, us-west-2 (DR)
+  - Each region runs a full application stack (150 microservices)
+  - Global traffic routing via GeoDNS
+  - Total: ~600 service instances across regions
+
+  Monitoring challenges:
+  - Monitoring is centralized in us-east-1 — when us-east-1 has issues,
+    monitoring goes down with it
+  - Cross-region latency makes centralized log shipping expensive and
+    slow (200ms+ from ap-southeast-1 to us-east-1)
+  - EU data sovereignty (GDPR): customer data in logs cannot leave
+    eu-west-1 without compliance controls
+  - Alert routing varies by region (EU on-call team is in Berlin,
+    APAC team is in Singapore, NA teams are in New York and San Francisco)
+  - No unified view — each region has its own dashboards, making
+    cross-region incidents nearly impossible to diagnose
+  - During a recent cross-region incident, it took 35 minutes to
+    determine that the problem was a global DNS configuration change
+    affecting all regions simultaneously
+
+  Task: Design the global monitoring architecture. Address: regional
+  autonomy vs. global visibility, data sovereignty, cross-region
+  incident detection, and follow-the-sun on-call routing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture balances regional autonomy with global visibility — architecture design: 'Principle: monitor locally, aggregate globally. Each region must be able to monitor itself independently (regional autonomy), while a global layer provides cross-region correlation and a unified view. Tier 1: Regional monitoring (in each of the 4 regions). Each region runs its own independent monitoring stack: metrics collection (Prometheus or Mimir), log aggregation (Loki or regional ELK), trace collection (Tempo or Jaeger), regional alerting and dashboards (Grafana). Regional monitoring is fully self-contained: if all other regions go offline, each region can still detect and alert on its own issues. This solves the single-point-of-failure problem: monitoring in us-east-1 no longer takes down monitoring for eu-west-1 or ap-southeast-1. Tier 2: Global aggregation layer. A global monitoring tier aggregates pre-processed data from regional tiers. Important: the global tier does NOT receive raw data (that would recreate the centralized problem). Instead, each region ships: aggregated metrics (5-minute resolution, not raw 15-second resolution), SLO status and burn rates per service per region, alert states (which alerts are firing in which region), pre-aggregated error rates and latency percentiles. The global tier runs in 2 regions (us-east-1 primary, eu-west-1 secondary) for its own high availability. If the primary global tier is down, the secondary takes over. Global dashboards show: all-region SLO status at a glance, cross-region traffic flow and health, global incident view (correlated alerts across regions). Tier 3: Cross-region intelligence. Correlation engine that detects patterns across regions: if the same alert fires in 3+ regions within 5 minutes, it is likely a global issue (DNS, CDN, shared dependency). Cross-region SLO: some customers use the platform globally — their SLO is measured across all regions they access. Global incident detection: the 35-minute cross-region diagnosis problem is solved by the correlation engine automatically identifying simultaneous multi-region anomalies and declaring a global incident'"
+    weight: 0.35
+    description: "Global architecture"
+  - type: llm_judge
+    criteria: "Data sovereignty and compliance requirements are addressed — data sovereignty: 'GDPR compliance for eu-west-1: (1) Data classification at the source. All log data is classified at the point of generation: PII-containing logs (user IDs, email addresses, IP addresses, request bodies): these MUST stay in eu-west-1. They are stored in the regional Loki instance and are never shipped to the global aggregation layer. Operational logs (service errors, infrastructure metrics, performance data): if they contain no PII, they can be aggregated globally. In practice: most operational logs do not contain PII if structured logging is done correctly. The structured logging standard must enforce separation of PII fields from operational fields. (2) What ships to the global tier from eu-west-1. Aggregated metrics: request count, error rate, latency percentiles — these are statistical aggregates, not individual user data. SLO burn rates: percentage of error budget consumed. Alert states: which alerts are firing (no user data in alert metadata). The global tier for EU data receives ZERO PII. Auditors can verify this by inspecting the aggregation pipeline configuration. (3) Investigation workflow for EU incidents. When investigating an EU incident, engineers access the eu-west-1 regional Grafana directly (not through the global tier). Access is controlled: only engineers on the EU on-call rotation have access to eu-west-1 logs containing potential PII. Access is logged for GDPR audit purposes. For APAC (data localization for specific customers): some APAC enterprise customers require data to remain in-region. The same pattern applies: PII stays in ap-southeast-1, only aggregates are shipped globally. Implementation: OpenTelemetry collectors in each region act as the compliance gateway. They filter, redact, and route data according to regional data sovereignty rules before anything leaves the region'"
+    weight: 0.35
+    description: "Data sovereignty"
+  - type: llm_judge
+    criteria: "Follow-the-sun on-call and cross-region incident response are designed — on-call and incident response: 'Follow-the-sun on-call routing: EU team (Berlin): primary on-call for eu-west-1. On-call hours: 08:00-20:00 CET. APAC team (Singapore): primary on-call for ap-southeast-1. On-call hours: 08:00-20:00 SGT. NA team (New York/San Francisco): primary on-call for us-east-1 and us-west-2. On-call hours: 08:00-20:00 EST/PST. After-hours routing: after each team local hours, alerts route to the next team in the sun rotation. EU after-hours → NA team (who are still in their daytime). NA after-hours → APAC team. APAC after-hours → EU team. This eliminates overnight pages for all teams. Implementation in PagerDuty: time-based routing rules per service, with region-specific schedules and follow-the-sun escalation policies. Cross-region incident response: (1) Regional incidents (single region affected): handled by the regional on-call team. Standard escalation within the regional team. The global tier shows the incident but does not automatically involve other regions. (2) Global incidents (multiple regions affected): the global correlation engine detects multi-region impact and triggers a global incident. A Global Incident Commander (GIC) is paged — this is a senior SRE role with authority across all regions. The GIC coordinates regional responders via a global incident channel. Each regional responder investigates their region and reports to the GIC. The GIC synthesizes the global picture and directs the response. (3) Regional incident with global root cause: sometimes a single-region alert has a global root cause (for example, a shared database or CDN configuration change). The global tier assists by showing: did anything change globally in the last 30 minutes? Are other regions showing early signs of the same problem? This contextual information is presented to the regional responder automatically, reducing the time to identify global root causes from 35 minutes to under 5 minutes'"
+    weight: 0.30
+    description: "On-call and incident response"

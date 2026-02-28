@@ -1,0 +1,47 @@
+meta:
+  id: responsive-design-critique
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Responsive design critique — evaluate designs across breakpoints, orientations, and device contexts"
+  tags: [responsive, breakpoints, adaptive, cross-device, advanced]
+
+state: {}
+
+trigger: |
+  A designer presents a responsive design for a project
+  management dashboard showing 4 breakpoints: mobile
+  (375px), tablet portrait (768px), tablet landscape
+  (1024px), and desktop (1440px). Issues:
+
+  1. The Kanban board on mobile becomes a vertical list
+     but loses the column context — users can't see which
+     status a task belongs to without scrolling
+  2. At tablet portrait (768px), the sidebar and content
+     are both cramped — neither has enough space
+  3. Between 768px and 1024px there's a 'dead zone' where
+     the layout breaks — overlapping elements
+  4. The data table works on desktop but at 768px columns
+     are hidden with no way to access the hidden data
+  5. Desktop at 1440px has lines of text 120+ characters
+     wide in the detail view — too long for comfortable
+     reading
+  6. No consideration for landscape mobile or foldable
+     devices
+
+  Task: Write responsive design feedback evaluating
+  cross-breakpoint behavior and adaptation strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides breakpoint-specific feedback — mobile Kanban (losing column context defeats the purpose of a Kanban board — alternatives: horizontal swipe between columns with column name as sticky header, or toggle between list view and mini-board view with abbreviated column indicators, or grouped list with clear status labels above each group), tablet portrait cramping (768px is the classic awkward breakpoint — sidebar should collapse to icons-only or become a bottom navigation at this width, giving content area full width, don't try to maintain desktop layout at tablet widths), the dead zone (overlapping between 768-1024px indicates missing breakpoint or inflexible layout — needs: either a fluid layout that adapts continuously, or an additional breakpoint at ~900px, test at every 50px interval between breakpoints to find layout breaks), each issue includes the current state, why it's a problem, and a specific solution direction."
+    weight: 0.35
+    description: "BreakpointFeedback"
+  - type: llm_judge
+    criteria: "Response addresses data presentation and reading comfort — hidden table columns (hiding columns with no recovery is data loss — alternatives: horizontal scroll on the table, responsive table that converts to cards on mobile with all data visible, priority columns shown with expandable rows for additional columns — whatever approach is chosen, all data must remain accessible), desktop line length (120+ characters per line significantly exceeds the 60-75 character optimal range — causes eye tracking fatigue, fix: constrain content area with max-width: 65ch or use a multi-column layout at wide viewports, this is a common oversight at large viewports — designers test at 1440px but many users have 1920px+ monitors), each piece of feedback references responsive design principles: content should adapt not just shrink, all information should remain accessible at every breakpoint."
+    weight: 0.35
+    description: "DataAndReadability"
+  - type: llm_judge
+    criteria: "Response addresses edge cases and testing methodology — foldable and landscape considerations (landscape mobile: at 667px × 375px the viewport is wide but short — does the UI work? foldable devices: Samsung Fold inner screen is ~717px — falls between phone and tablet, how does the layout behave? these are growing user segments that need consideration), testing methodology (don't just test at the 4 defined breakpoints — test: at every breakpoint boundary ±50px, in between breakpoints where fluid behavior is visible, with real content of varying length — short and long task names, many and few columns, with browser zoom at 200% — WCAG requirement, on actual devices not just browser resize — rendering differs), and responsive critique checklist (does every breakpoint serve a purpose? is all content accessible at every width? are touch targets 44px+ on touch screens? is text readable without zoom at all sizes? do interactions adapt — hover on desktop, tap on mobile? does performance scale — are mobile users loading desktop images?)."
+    weight: 0.30
+    description: "EdgeCasesAndTesting"

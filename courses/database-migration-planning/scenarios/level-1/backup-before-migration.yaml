@@ -1,0 +1,34 @@
+meta:
+  id: backup-before-migration
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Backup before migration — understand why backups are essential before running migrations and how to create and verify a backup"
+  tags: [database, migration, backup, safety, beginner]
+
+state: {}
+
+trigger: |
+  You are about to run your first migration in production. The
+  migration adds a new column and backfills data for 500,000 rows.
+  Your senior engineer says: "Did you take a backup first?"
+
+  You have not. The production database is PostgreSQL, 20GB in size,
+  hosted on AWS RDS.
+
+  Task: Explain why a backup is necessary before running a migration
+  in production, how to create one, and how to verify it is usable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Explains why backup is essential before migrations — why backup: '(1) Migrations can fail mid-execution. Your migration backfills 500,000 rows. If it fails at row 300,000, the database is in a partial state — some rows have the new data, some do not. The rollback (down migration) may not handle this partial state correctly. A backup lets you restore to the known-good state before the migration. (2) Rollback migrations can have bugs. The down migration is code you wrote. It might have a bug. If the up migration fails and the down migration also fails, you are stuck with a broken database and no way to fix it. A backup is the ultimate safety net — it does not depend on your code being correct. (3) Data loss is irreversible. If a migration accidentally drops a column, truncates a table, or corrupts data, that data is gone unless you have a backup. Unlike code (which is in Git), database data has no version control. The backup is the version control for your data. (4) Production is not staging. The migration worked in staging (where you tested it). But production has different data volumes, different data patterns, and different concurrent access. Issues that did not appear in staging can appear in production'"
+    weight: 0.35
+    description: "Why backup matters"
+  - type: llm_judge
+    criteria: "Backup creation steps are practical and correct — how to backup: 'For AWS RDS PostgreSQL: Option 1 (recommended): RDS snapshot. Create a manual snapshot before migration: aws rds create-db-snapshot --db-instance-identifier my-db --db-snapshot-identifier pre-migration-2026-02-27. This creates a point-in-time snapshot of the entire database. Time: for a 20GB database, typically 5-15 minutes. The snapshot is stored in S3 and can be used to restore the entire RDS instance. Advantage: full database restore including configurations, users, and permissions. Option 2: pg_dump (logical backup). pg_dump --host=my-db.rds.amazonaws.com --username=admin --format=custom --file=pre-migration-backup.dump mydb. This creates a logical backup (SQL dump) of the database. Time: for 20GB, typically 10-30 minutes depending on network speed. Advantage: can restore specific tables. Disadvantage: slower to restore than a snapshot. Which to choose: for a pre-migration backup, the RDS snapshot is recommended. It is faster to create, faster to restore, and captures everything. Use pg_dump when you need a portable backup (for example, to restore to a different environment)'"
+    weight: 0.35
+    description: "Backup creation steps"
+  - type: llm_judge
+    criteria: "Backup verification is covered — verification: 'Creating a backup is not enough — you must verify it is usable. A backup that cannot be restored is not a backup. Verification steps: (1) Check the backup completed successfully. For RDS snapshot: aws rds describe-db-snapshots --db-snapshot-identifier pre-migration-2026-02-27. Verify status is available (not creating or error). For pg_dump: check the exit code (0 = success). Check the file size is reasonable (a 20GB database should produce a backup of roughly 5-20GB depending on compression). (2) Test restore periodically. You do not need to test restore before every migration, but you should periodically verify that backups can actually be restored. Restore the snapshot to a test RDS instance and verify the data is intact. This confirms your backup process works end-to-end. (3) Document the restore procedure. Before migrating, know exactly how to restore: which snapshot or dump file to use, the restore command, and the estimated restore time. For a 20GB RDS snapshot, restore typically takes 15-30 minutes. This means if the migration fails badly: 15-30 minutes to full recovery from backup. Plan for this window of potential downtime. (4) Timing: when to backup. Backup immediately before the migration, not hours or days before. Data changes between the backup and the migration would be lost on restore. For a 20GB database: start the snapshot 15 minutes before the planned migration window'"
+    weight: 0.30
+    description: "Backup verification"

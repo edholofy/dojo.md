@@ -1,0 +1,40 @@
+meta:
+  id: categorical-encoding
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Categorical encoding — transform categorical variables into numeric representations using one-hot, label, target, and ordinal encoding"
+  tags: [encoding, one-hot, label-encoding, target-encoding, intermediate]
+
+state: {}
+
+trigger: |
+  A machine learning engineer says: "I'm preparing features for a churn
+  prediction model. My dataset has several categorical variables:
+
+  - Plan type: ['Free', 'Basic', 'Pro', 'Enterprise'] — 4 values, ordered
+  - Industry: ['Tech', 'Finance', 'Healthcare', ...] — 45 unique values
+  - Country: 120 unique values
+  - Acquisition channel: ['Organic', 'Paid', 'Referral', 'Partner'] — 4
+  - Customer segment: ['SMB', 'Mid-Market', 'Enterprise'] — 3, ordered
+
+  Which encoding method should I use for each? I know one-hot encoding
+  for everything would create hundreds of columns, and label encoding
+  creates false ordinal relationships. What are my options?"
+
+  Task: Select and apply the right categorical encoding method for each
+  variable, explaining the tradeoffs and when each method is appropriate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response selects appropriate encoding per variable — plan type and customer segment: ordinal encoding (natural order exists, preserving order is important for the model — Free=0, Basic=1, Pro=2, Enterprise=3). Acquisition channel: one-hot encoding (4 categories, no natural order, manageable dimensionality). Industry (45 values): target encoding or frequency encoding (one-hot would create 45 columns, many sparse; target encoding maps each industry to its average churn rate). Country (120 values): target encoding, frequency encoding, or hierarchical grouping (group into regions first, then encode). Explains why each choice is optimal"
+    weight: 0.35
+    description: "EncodingSelection"
+  - type: llm_judge
+    criteria: "Response explains each encoding method with tradeoffs — one-hot: creates binary columns, no false relationships, but high dimensionality with many categories. Label encoding: compact, but implies order where none exists (only valid for ordinal variables). Target encoding: powerful for high-cardinality, but risks overfitting (use smoothing or leave-one-out to mitigate). Ordinal encoding: preserves natural order, compact, but the model assumes equal spacing. Frequency encoding: replaces category with its count, useful when frequency is predictive"
+    weight: 0.35
+    description: "Tradeoffs"
+  - type: llm_judge
+    criteria: "Response addresses practical encoding concerns — data leakage with target encoding (must compute target statistics on training data only, apply to test), handling unseen categories at prediction time (new countries or industries not in training data — use a default 'unknown' encoding), the relationship between encoding and model type (tree-based models handle label encoding better than linear models, which need one-hot), and feature importance interpretation after encoding (one-hot features split importance across dummy variables)"
+    weight: 0.30
+    description: "PracticalConcerns"

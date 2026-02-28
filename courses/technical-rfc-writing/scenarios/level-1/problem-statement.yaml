@@ -1,0 +1,41 @@
+meta:
+  id: problem-statement
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Write a clear problem statement — articulate the problem an RFC addresses with context, impact, and urgency that motivates the reader to care"
+  tags: [RFC, problem-statement, context, impact, motivation, beginner]
+
+state: {}
+
+trigger: |
+  You need to write the problem statement section of an RFC. The
+  technical problem: your API response times have degraded from
+  100ms to 800ms over the past 6 months as the database grew from
+  1M to 10M rows. Several key customers have complained. The team
+  has discussed solutions informally but nothing is documented.
+
+  Bad problem statements you've seen:
+  - "The API is slow" (too vague)
+  - "We need to add caching" (jumps to solution)
+  - A 3-page history of the entire system (too much context)
+  - "P99 latency is 800ms" (data without context or impact)
+
+  Task: Write a problem statement that clearly articulates: what the
+  problem is (with data), who is affected, what the impact is (business
+  and technical), how urgent it is, and what happens if we don't act.
+  Then write a guide on what makes a good problem statement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Problem statement includes data, context, and impact — data: 'API response times increased from 100ms (p50) to 800ms (p99) over 6 months as our users table grew from 1M to 10M rows.' Context: 'This degradation corresponds with organic user growth. Query execution plans show full table scans on unindexed columns.' Impact: business ('3 enterprise customers escalated to their account managers, 2 are evaluating competitors'), technical ('downstream services timeout, causing cascading failures during peak hours'). Urgency: 'At current growth rate, we'll reach 20M rows in 4 months. Without intervention, p99 latency will exceed 2 seconds, breaching our SLA commitments.' The statement makes the reader understand WHY this RFC exists and WHY it matters NOW"
+    weight: 0.35
+    description: "Data and impact"
+  - type: llm_judge
+    criteria: "Problem statement avoids common pitfalls — doesn't jump to solutions (no mention of caching, indexing, or any specific fix in the problem section). Doesn't include unnecessary history (only relevant context, not the entire system's evolution). Isn't too vague ('API is slow') or too narrow ('index needed on users.created_at'). Separates symptoms (slow API) from root cause (query patterns on growing tables). Quantifies scope: which endpoints are affected, what percentage of requests, which customers. Distinguishes between the problem (slow queries) and the constraint (can't just throw hardware at it because costs). States success criteria: 'We need to return to sub-200ms p99 latency while supporting 50M+ rows'"
+    weight: 0.35
+    description: "Avoids pitfalls"
+  - type: llm_judge
+    criteria: "Guide explains what makes problem statements effective — principles: (1) Start with impact, not technical details — the reader should care before they understand. (2) Include data — 'slow' is subjective, '800ms p99' is measurable. (3) Show the trend — not just current state but trajectory ('getting worse at X rate'). (4) Separate problem from solution — the problem section should be agreeable regardless of which solution is chosen. (5) Define success — what does 'solved' look like? (measurable criteria). (6) State urgency — what happens if we wait? (timeline and consequences). Anti-patterns: solution-oriented problem statements ('we need caching'), blame-oriented ('the previous developer didn't add indexes'), scope-creep ('while we're at it, let's also...'). The problem statement is the foundation — if reviewers disagree on the problem, the solution discussion is pointless"
+    weight: 0.30
+    description: "Problem statement guide"

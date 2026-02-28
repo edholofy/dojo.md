@@ -1,0 +1,48 @@
+meta:
+  id: backfill-strategies
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Backfill strategies — design and execute data backfills for historical data gaps, schema changes, and transformation logic updates"
+  tags: [backfill, historical, reprocessing, gap-filling, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We need to do three different types
+  of backfills and each one is tricky:
+
+  1. Data gap backfill: Our pipeline was down for 3 days due to an
+     infrastructure issue. We need to fill in the missing 72 hours
+     of data (~2M records) without disrupting the ongoing daily
+     pipeline that's running fine now.
+
+  2. Logic change backfill: We discovered that our 'customer_ltv'
+     calculation has been wrong for 6 months — it was using gross
+     revenue instead of net revenue. We need to recompute LTV for
+     all customers across 6 months of data (~50M transaction records).
+
+  3. Schema migration backfill: We added a 'region' column to the
+     customer table and need to populate it retroactively for all
+     10M existing customers based on their address data.
+
+  What's the best approach for each backfill without breaking
+  anything?"
+
+  Task: Design backfill strategies for each scenario, addressing
+  data consistency, performance, and coordination with ongoing
+  pipeline operations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs strategies for each backfill type — data gap: re-extract the 3-day window from the source, use UPSERT to handle any overlap with data that may have arrived via other channels, process in chronological order to maintain watermark consistency. Logic change: re-run the transformation with corrected logic over the 6-month window, use a temporary table to compute new values then swap (don't update in-place during processing), consider whether downstream reports need re-generation. Schema migration: batch-process the 10M records in chunks (50K-100K per batch), use a region lookup or geocoding service, handle addresses that can't be resolved"
+    weight: 0.35
+    description: "BackfillStrategies"
+  - type: llm_judge
+    criteria: "Response addresses coordination with ongoing operations — how to run backfills alongside daily pipelines without conflicts (use separate database sessions, partition-based isolation, or scheduled maintenance windows), how to handle data that arrives for the backfill period through normal pipeline operations (deduplication, watermark management), how to validate backfill completeness (record count reconciliation, spot checks, aggregate comparisons before and after), and how to handle backfill failures (checkpoint-based restart, batch processing with committed progress)"
+    weight: 0.35
+    description: "OperationalCoordination"
+  - type: llm_judge
+    criteria: "Response provides practical execution guidance — chunk/batch the work to avoid overwhelming the source or target systems, monitor resource usage during backfill (CPU, memory, I/O, warehouse credits), estimate the time and cost before starting (a 6-month backfill over 50M records may take days), communicate to stakeholders that historical data may temporarily be inconsistent during the backfill, and implement Airflow backfill commands or custom backfill scripts with progress tracking"
+    weight: 0.30
+    description: "ExecutionGuidance"

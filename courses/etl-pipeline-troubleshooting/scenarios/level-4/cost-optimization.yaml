@@ -1,0 +1,50 @@
+meta:
+  id: cost-optimization
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "ETL cost optimization — reduce cloud data platform costs by optimizing compute, storage, and data transfer without sacrificing pipeline reliability"
+  tags: [cost, optimization, cloud, efficiency, warehouse-credits, expert]
+
+state: {}
+
+trigger: |
+  A director of data engineering says: "Our monthly Snowflake bill
+  went from $30K to $120K over 12 months and nobody noticed until
+  finance flagged it. The breakdown:
+
+  - Compute (warehouse credits): $85K/month
+    - 40% from a single team running full-table scans on a 4XL
+      warehouse for ad-hoc queries
+    - 25% from pipelines that run on auto-suspended XL warehouses
+      but trigger suspension/resume 50+ times per day
+    - 20% from 3 pipelines that were abandoned but never turned off
+    - 15% from legitimate production workloads
+
+  - Storage: $25K/month
+    - 60% from intermediate staging tables that are never cleaned up
+    - 30% from Snowflake Time Travel set to 90 days on all tables
+    - 10% from legitimate data storage
+
+  - Data transfer: $10K/month
+    - Mostly cross-region replication that was set up for a DR test
+      and never turned off
+
+  How do I get this under control without breaking anything?"
+
+  Task: Design a cost optimization strategy that reduces the bill
+  by at least 50% while maintaining pipeline reliability and SLAs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides specific optimizations for each cost driver — compute: implement warehouse right-sizing (ad-hoc queries don't need 4XL, use query profiling to find appropriate size), consolidate frequent suspend/resume patterns (use auto-suspend timeout of 5+ minutes instead of 1 minute, or keep warehouses running during known busy periods), identify and disable abandoned pipelines (query Snowflake's QUERY_HISTORY to find warehouses with no recent legitimate queries). Storage: implement lifecycle policies to purge staging tables after N days, reduce Time Travel to 1 day for non-critical tables (keep 90 days only for financial/compliance tables). Transfer: disable the unused cross-region replication"
+    weight: 0.35
+    description: "SpecificOptimizations"
+  - type: llm_judge
+    criteria: "Response designs a cost governance framework — resource tagging (tag all warehouses and databases with team/project for cost attribution), showback/chargeback model (each team sees and is responsible for their costs), spending alerts (alert when any team exceeds their monthly budget by 20%), query optimization requirements (queries exceeding $X in compute must be reviewed and optimized), and a regular cost review process (monthly review of top cost drivers, quarterly optimization sprints)"
+    weight: 0.35
+    description: "CostGovernance"
+  - type: llm_judge
+    criteria: "Response addresses the cost-performance trade-off — how to optimize without breaking SLAs (benchmark critical pipelines at different warehouse sizes, find the minimum viable size), how to use Snowflake-specific features for cost reduction (multi-cluster warehouses with auto-scale, result caching, materialized views for repeated queries, clustering keys to reduce scan volumes), how to estimate the impact of optimizations before implementing (use QUERY_HISTORY to model costs at different warehouse sizes), and how to prevent cost creep from recurring (approval process for new warehouses, default cost-conscious settings, automated cleanup policies)"
+    weight: 0.30
+    description: "CostPerformanceTradeoff"

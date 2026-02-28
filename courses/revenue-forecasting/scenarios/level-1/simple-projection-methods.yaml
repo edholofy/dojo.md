@@ -1,0 +1,34 @@
+meta:
+  id: simple-projection-methods
+  level: 1
+  course: revenue-forecasting
+  type: output
+  description: "Simple projection methods — learn basic techniques for projecting revenue including run rate, growth rate, and moving average methods"
+  tags: [projection, run-rate, growth-rate, moving-average, beginner]
+
+state: {}
+
+trigger: |
+  A startup founder says: "I need to project next quarter's revenue
+  for our investor update. I have 12 months of revenue data. What
+  are the simplest methods I can use? Here's my data:
+
+  Jan: $42K, Feb: $45K, Mar: $48K, Apr: $52K, May: $55K, Jun: $51K,
+  Jul: $54K, Aug: $58K, Sep: $62K, Oct: $65K, Nov: $60K, Dec: $68K."
+
+  Task: Apply multiple simple projection methods to this data and
+  explain which one is most appropriate and why.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response applies multiple projection methods to the data — methods: 'Applying simple projection methods: Method 1 — Last month run rate: take December ($68K) and project it forward. Q1 forecast: $68K × 3 = $204K. Assumption: current performance continues unchanged. Problem: December may be unusually high (holiday effect, year-end deals). Method 2 — Average monthly run rate: average of all 12 months: ($42K + $45K + ... + $68K) ÷ 12 = $55K. Q1 forecast: $55K × 3 = $165K. Problem: this underestimates because it includes the lower early months. The business is growing, so the average understates current performance. Method 3 — Trailing 3-month average: average of Oct, Nov, Dec: ($65K + $60K + $68K) ÷ 3 = $64.3K. Q1 forecast: $64.3K × 3 = $193K. This is better — uses recent data to capture current performance level. But it still does not account for growth trend. Method 4 — Growth rate projection: calculate the average month-over-month growth rate. MoM growth rates: Feb +7.1%, Mar +6.7%, Apr +8.3%, May +5.8%, Jun -7.3%, Jul +5.9%, Aug +7.4%, Sep +6.9%, Oct +4.8%, Nov -7.7%, Dec +13.3%. Average MoM growth: approximately +4.6%. Median MoM growth: approximately +6.3%. Using median (more robust to outliers): Jan forecast: $68K × 1.063 = $72.3K. Feb forecast: $72.3K × 1.063 = $76.9K. Mar forecast: $76.9K × 1.063 = $81.7K. Q1 forecast: $72.3K + $76.9K + $81.7K = $230.9K. This accounts for growth but may be optimistic if growth is decelerating. Method 5 — Linear trend: fit a straight line through the 12 data points. Using linear regression: slope ≈ $2.1K/month (revenue increases about $2,100 per month). Intercept ≈ $41K. Jan (month 13): $41K + $2.1K × 13 = $68.3K. Feb (month 14): $41K + $2.1K × 14 = $70.4K. Mar (month 15): $41K + $2.1K × 15 = $72.5K. Q1 forecast: $68.3K + $70.4K + $72.5K = $211.2K. This captures the linear growth trend and is less sensitive to monthly noise'"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response evaluates which method is most appropriate — evaluation: 'Evaluating which method to use: summary of Q1 forecasts: method | Q1 forecast | strengths | weaknesses. Last month run rate: $204K | simple | ignores trend and seasonality. 12-month average: $165K | smooths noise | ignores growth. 3-month average: $193K | captures current level | ignores trend. Growth rate: $231K | captures growth | may overextend trend. Linear trend: $211K | balances growth and noise | assumes linear pattern. The range spans $165K to $231K — a $66K spread (38% difference). Choosing the right method: for this data, the linear trend method ($211K) is the most appropriate because: it captures the upward growth pattern (+$2.1K/month). It is not distracted by month-to-month noise (the Jun and Nov dips). It does not over-extrapolate like the growth rate method. The data appears to follow a roughly linear pattern with some noise. However, notice the concerning pattern: June and November were both down months. If there is a bimonthly or seasonal pattern, the linear trend will miss it. A more sophisticated approach would be seasonal adjustment, which we will cover later. Sanity checks for any projection: 1. Does the forecast make logical sense? $211K Q1 means average monthly revenue of $70K — slightly above December ($68K). This feels reasonable for a growing business. 2. Is the forecast achievable operationally? If the team is not growing and no major initiatives are planned, expecting continued linear growth requires justification. 3. What would have to be true for this forecast to be right? The trend continues at the same pace. No major market disruptions. No seasonal effects in Q1. 4. What is the downside scenario? If growth stalls at December's level: $68K × 3 = $204K. If a dip occurs (like Jun/Nov): $60K + $65K + $68K ≈ $193K. The conservative range: $193K - $211K'"
+    weight: 0.35
+    description: "Evaluation"
+  - type: llm_judge
+    criteria: "Response covers presenting the forecast with appropriate confidence — presentation: 'Presenting the forecast to investors: the right way to present: do not present a single number. Present a range with your base case clearly identified. Q1 revenue forecast: base case: $211K (linear trend projection). Conservative case: $193K (assumes growth stalls at recent average). Optimistic case: $231K (assumes current growth rate continues). Method: linear regression on 12-month revenue data with $2.1K/month growth rate. Key assumptions: no major market changes. Current customer acquisition and retention rates continue. No large one-time revenue events. What investors want to see: 1. Directional accuracy over precision: investors know forecasts are imprecise. They want to see that you understand your business well enough to predict the direction. A forecast of $200-230K with clear assumptions is better than $217,432 with false precision. 2. Understanding of the drivers: revenue is growing because we are acquiring 25 new customers per month at $60 ARPU with 96% monthly retention. This explains WHY the forecast is what it is. 3. Track record of forecast accuracy: if you forecasted Q4 at $180K and actual was $193K, your accuracy was within 7%. This builds credibility. 4. Sensitivity to key assumptions: if customer acquisition drops 20%, Q1 forecast drops to $195K. If churn increases 1pp, forecast drops to $205K. This shows you understand the risks. Common mistakes in startup forecasts: 1. Hockey stick projections without evidence (revenue suddenly accelerates from 5% to 20% growth). 2. Presenting the optimistic case as the base case. 3. Ignoring seasonality (especially Q4 → Q1 transitions). 4. Not including a range (single-point estimates feel overconfident). 5. Not tracking forecast vs actual (so you cannot improve over time)'"
+    weight: 0.30
+    description: "Presentation"

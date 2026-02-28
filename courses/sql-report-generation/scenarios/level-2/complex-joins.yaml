@@ -1,0 +1,41 @@
+meta:
+  id: complex-joins
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Master complex JOIN types — use LEFT, RIGHT, FULL OUTER, and self-joins to handle missing data, find non-matching records, and analyze hierarchical relationships"
+  tags: [SQL, LEFT-JOIN, FULL-JOIN, self-join, anti-join, intermediate]
+
+state: {}
+
+trigger: |
+  The product manager needs three reports that require different
+  join strategies:
+
+  1. "Which products have NEVER been ordered?" (anti-join pattern)
+  2. "Show all customers with their latest order, including customers
+     who haven't ordered yet" (LEFT JOIN with aggregation)
+  3. "Compare each employee's sales to their manager's sales"
+     (self-join on the same table)
+
+  Tables:
+  - products (product_id, product_name, category, price, launch_date)
+  - orders (order_id, customer_id, product_id, amount, order_date)
+  - customers (customer_id, name, email, signup_date)
+  - employees (employee_id, name, manager_id, total_sales)
+
+  Task: Write queries for all three using appropriate join types.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use LEFT JOIN for anti-join, LEFT JOIN with aggregation, and self-join — queries: 'Complex join patterns: Query 1 — Anti-join (products never ordered): SELECT p.product_id, p.product_name, p.category, p.launch_date FROM products p LEFT JOIN orders o ON p.product_id = o.product_id WHERE o.order_id IS NULL ORDER BY p.launch_date. The LEFT JOIN includes all products. WHERE o.order_id IS NULL keeps only products with no matching order. This is the anti-join pattern: find rows in table A with no match in table B. Alternative using NOT EXISTS: SELECT p.product_id, p.product_name FROM products p WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.product_id = p.product_id). NOT EXISTS often performs better on large tables because it can stop searching after finding the first match. Query 2 — LEFT JOIN with aggregation: SELECT c.name, c.email, c.signup_date, COUNT(o.order_id) AS total_orders, COALESCE(SUM(o.amount), 0) AS total_spent, MAX(o.order_date) AS last_order_date FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.email, c.signup_date ORDER BY total_spent DESC. LEFT JOIN ensures customers with zero orders still appear. COALESCE handles NULLs for customers with no orders. Query 3 — Self-join (employee vs manager): SELECT e.name AS employee, e.total_sales AS employee_sales, m.name AS manager, m.total_sales AS manager_sales, ROUND((e.total_sales - m.total_sales) * 100.0 / m.total_sales, 1) AS pct_vs_manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id ORDER BY pct_vs_manager DESC. A self-join joins a table to itself. The alias e represents employees, m represents their managers. LEFT JOIN because the CEO has no manager (manager_id is NULL)'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers FULL OUTER JOIN and join type selection — explanation: 'FULL OUTER JOIN: SELECT c.name, o.order_id, o.amount FROM customers c FULL OUTER JOIN orders o ON c.customer_id = o.customer_id. Returns ALL customers (even without orders) AND ALL orders (even without matching customers). Rows with no match on either side get NULLs. Use case: reconciliation reports where you need to see mismatches in both directions. MySQL does not support FULL OUTER JOIN directly — use UNION: SELECT c.name, o.order_id FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id UNION SELECT c.name, o.order_id FROM customers c RIGHT JOIN orders o ON c.customer_id = o.customer_id. Join type selection guide: INNER JOIN — when you only want matching records (revenue by customer — only paying customers). LEFT JOIN — when you need all records from the primary table (all customers, with or without orders). RIGHT JOIN — rarely used, same as LEFT JOIN with tables swapped. FULL OUTER JOIN — reconciliation (find mismatches in both directions). CROSS JOIN — every combination (useful for generating date-dimension scaffolds). Self-join — hierarchical data (employees-managers, categories-subcategories). WHERE filter placement matters: filtering in WHERE after a LEFT JOIN can convert it to an INNER JOIN. Put filters for the right table in the ON clause: LEFT JOIN orders o ON c.customer_id = o.customer_id AND o.status = 'completed'. This keeps all customers but only joins completed orders'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers join performance and common debugging techniques — debugging: 'Join debugging and performance: Cartesian product detection: if your result has far more rows than expected, you likely have a many-to-many join. Check: SELECT COUNT(*) FROM table_a a JOIN table_b b ON a.key = b.key. If this is much larger than both tables, the join key is not unique on at least one side. Fix: aggregate before joining, or add additional join conditions. Verify join correctness: SELECT COUNT(*) AS total_rows, COUNT(DISTINCT a.id) AS unique_a, COUNT(DISTINCT b.id) AS unique_b FROM table_a a LEFT JOIN table_b b ON a.key = b.key. If unique_a equals COUNT of table_a, the LEFT JOIN is working correctly. If total_rows is much higher than unique_a, the join is producing duplicates. Performance tips: ensure join columns are indexed. Join on integer keys (faster than string comparisons). Filter early — put WHERE conditions that reduce row counts before joining large tables. For complex multi-table joins, check the execution plan with EXPLAIN to see the join order and method (nested loop, hash join, merge join)'"
+    weight: 0.30
+    description: "Debugging"

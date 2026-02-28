@@ -1,0 +1,40 @@
+meta:
+  id: fuzzy-matching-deduplication
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Fuzzy matching for deduplication — use string similarity algorithms to find near-duplicate records across messy real-world data"
+  tags: [fuzzy-matching, string-similarity, Levenshtein, deduplication, intermediate]
+
+state: {}
+
+trigger: |
+  A CRM administrator says: "Our sales team enters customer data
+  manually and we have terrible duplicates. Examples:
+
+  - 'Acme Corp' vs 'ACME Corporation' vs 'Acme Corp.' vs 'Acme Co'
+  - '123 Main St' vs '123 Main Street' vs '123 Main St, Suite 200'
+  - 'john.smith@acme.com' vs 'jsmith@acme.com'
+  - 'John Smith, VP Sales' vs 'Smith, John - VP of Sales'
+
+  We have 100,000 records and estimate 10-15% are duplicates. How do
+  I use fuzzy matching to find these near-duplicates? What algorithms
+  and thresholds should I use?"
+
+  Task: Design a fuzzy matching strategy for CRM deduplication, selecting
+  appropriate string similarity algorithms and thresholds for different
+  field types, and handling the scale of 100,000 records.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains key string similarity algorithms — Levenshtein/edit distance (number of insertions, deletions, substitutions to transform one string to another — good for typos), Jaro-Winkler (gives more weight to matching prefixes — good for names), token-based similarity (Jaccard: compares sets of words regardless of order — good for company names where word order varies), and cosine similarity on character n-grams (handles partial matches well). Recommends different algorithms for different field types: Jaro-Winkler for names, token-based for company names, exact match for emails"
+    weight: 0.35
+    description: "Algorithms"
+  - type: llm_judge
+    criteria: "Response addresses the scale challenge — comparing all 100,000 records against each other is ~5 billion comparisons (O(n²)). Solutions: blocking/bucketing (only compare records that share a common attribute like first 3 characters of name, same zip code, or same email domain — reduces comparisons by 90%+), sorted neighborhood method (sort by a key and only compare nearby records), and indexing approaches. Provides practical guidance on choosing blocking keys that balance completeness (not missing true duplicates) and efficiency (not comparing too many pairs)"
+    weight: 0.35
+    description: "ScaleHandling"
+  - type: llm_judge
+    criteria: "Response covers threshold setting and match rules — how to set similarity thresholds per field (company name >0.85 similarity, address >0.80, name >0.90), combining multiple field scores into a composite match score (weighted combination where email match counts more than name match), creating match tiers (definite match >0.95, probable match 0.85-0.95 for manual review, non-match <0.85), and the importance of tuning thresholds against a labeled sample of known duplicates and non-duplicates"
+    weight: 0.30
+    description: "ThresholdSetting"

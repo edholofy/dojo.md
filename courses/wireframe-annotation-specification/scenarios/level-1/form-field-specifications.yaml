@@ -1,0 +1,44 @@
+meta:
+  id: form-field-specifications
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "Form field specifications — write detailed specifications for form inputs including validation rules, error messages, and field behavior"
+  tags: [forms, validation, inputs, error-messages, beginner]
+
+state: {}
+
+trigger: |
+  A junior designer says: "I designed a registration form
+  with these fields:
+
+  - First Name (text input)
+  - Last Name (text input)
+  - Email (text input)
+  - Password (password input)
+  - Confirm Password (password input)
+  - Date of Birth (date picker)
+  - Country (dropdown)
+  - 'I agree to Terms' (checkbox)
+  - 'Create Account' button
+
+  My developer said my annotations are incomplete. I only
+  wrote the field labels. What else do I need to specify
+  for form fields?"
+
+  Task: Write complete form field specifications for the
+  registration form.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies each field comprehensively — for each field: label text, placeholder text (example values like 'john@example.com'), input type (text/email/password/date), required/optional status, validation rules (min/max length, format requirements, regex pattern if applicable), error messages for each validation failure (specific, not generic: 'Email must include @ and a domain' not 'Invalid email'), help text (if needed: 'Must be at least 8 characters' under password field), and character limits. First Name: required, 1-50 chars, letters/hyphens/spaces only. Email: required, valid email format, must be unique (check on blur). Password: required, min 8 chars, requirements listed"
+    weight: 0.35
+    description: "FieldSpecifications"
+  - type: llm_judge
+    criteria: "Response specifies form behavior and validation timing — when validation occurs (on blur for individual fields, on submit for the full form), inline validation display (error message appears below the field, field border turns red), password requirements display (show checklist that updates in real-time: ✓ 8+ characters, ✓ one uppercase, ✓ one number), confirm password validation (must match password field, validate on blur), email uniqueness check (async validation on blur: 'This email is already registered. Log in instead?'), and date of birth constraints (minimum age requirement, date picker range). Explains the difference between client-side and server-side validation"
+    weight: 0.35
+    description: "FormBehavior"
+  - type: llm_judge
+    criteria: "Response covers submission behavior and edge cases — submit button behavior (disabled until required fields are filled and checkbox is checked, or always enabled with validation on click), submission flow (button shows loading state, POST to API, on success redirect to email verification page, on error show server error message), keyboard behavior (Enter key submits the form, Tab order follows visual order), and accessibility (labels associated with inputs, error messages linked via aria-describedby, focus moves to first error on failed submission). Addresses the Terms checkbox spec: link to terms opens in new tab, checkbox must be checked to submit"
+    weight: 0.30
+    description: "SubmissionEdgeCases"

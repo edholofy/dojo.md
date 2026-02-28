@@ -1,0 +1,50 @@
+meta:
+  id: intermediate-annotation-shift
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Intermediate annotation shift — handle a day of complex annotation tasks including responsive specs, conditional logic, and developer review"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a mid-level designer doing annotation work. Your day:
+
+  9:00 AM — Specify a file upload interaction. The upload area
+  accepts drag-and-drop and click-to-browse. Max file size 10MB,
+  accepted types: images and PDFs. Users can upload multiple
+  files. Write the complete interaction specification.
+
+  11:00 AM — A developer reviews your annotations for a user
+  dashboard and says: "You show a dashboard with 6 widgets.
+  But your spec doesn't say: Can users rearrange widgets? Can
+  they hide widgets? What if the screen is narrow — do widgets
+  stack? What's the default layout for new users?" Address
+  these gaps.
+
+  2:00 PM — You need to specify a multi-step wizard (4 steps).
+  The tricky part: Step 3 has conditional fields that change
+  based on selections in Step 2. Write the flow specification
+  with the conditional logic.
+
+  4:00 PM — QA found a bug that traces back to an ambiguous
+  annotation: you wrote "The table should be sortable" but
+  didn't specify which columns, sort direction, default sort,
+  or behavior with pagination. Rewrite the annotation properly.
+
+  Task: Handle all four annotation challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes complete file upload and dashboard specs — Upload: drag zone visual states (default, hover-with-file, uploading, success, error), file validation (check type and size before upload, show specific error: 'File exceeds 10MB limit' or 'Only images and PDFs are accepted'), multi-file behavior (upload queue, individual progress bars, individual cancel/remove, retry failed uploads), and drag-and-drop (visual feedback when file is dragged over the zone, handle dragging invalid files). Dashboard: widget rearrange (drag-and-drop to rearrange, grid-based layout, save layout to user preferences), hide widgets (overflow menu on each widget: 'Hide widget', 'Add widget' button to restore), responsive behavior (2 columns on tablet, 1 column on mobile, widgets reflow), default layout (predefined widget order for new users)"
+    weight: 0.35
+    description: "UploadDashboardSpecs"
+  - type: llm_judge
+    criteria: "Response creates the conditional wizard specification — flow: Step 1 → Step 2 → Step 3 (conditional) → Step 4. Conditional logic: IF Step 2 selection === 'Option A' THEN Step 3 shows fields X, Y, Z. IF Step 2 selection === 'Option B' THEN Step 3 shows fields W, V. IF Step 2 selection === 'Option C' THEN skip Step 3 entirely (go directly to Step 4). Step navigation: back preserves all selections, progress indicator updates, step validation before proceeding, and data dependency (changing Step 2 selection after completing Step 3 resets Step 3). Clear enough for a developer to implement the branching logic"
+    weight: 0.35
+    description: "ConditionalWizardSpec"
+  - type: llm_judge
+    criteria: "Response fixes the ambiguous table annotation — rewritten spec: sortable columns (Name: alphabetical, Date Created: chronological, Size: numeric, Status: categorical order — not all columns sortable, Amount column is not sortable). Default sort (Date Created, descending — newest first). Sort interaction (click column header to sort, first click: ascending, second click: descending, third click: remove sort / return to default). Visual indicator (sort arrow in column header). Pagination interaction (sorting resets to page 1, sort persists when navigating pages). Multi-column sort (not supported — single column sort only). Shows the before (vague) and after (specific) annotation"
+    weight: 0.30
+    description: "FixedTableAnnotation"

@@ -1,0 +1,42 @@
+meta:
+  id: compliance-audit-migration
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Meet compliance requirements for database migrations — design migration processes that satisfy SOC 2, HIPAA, and GDPR audit requirements"
+  tags: [database, migration, compliance, SOC2, HIPAA, GDPR, audit, expert]
+
+state: {}
+
+trigger: |
+  Your company handles healthcare data (HIPAA), serves EU customers
+  (GDPR), and is SOC 2 Type II certified. You are migrating from
+  an on-premises database to cloud-hosted databases. The compliance
+  team has flagged these requirements:
+
+  1. HIPAA: Protected Health Information (PHI) must be encrypted in
+     transit and at rest during migration. Access to PHI must be
+     logged. Data must not leave approved jurisdictions.
+  2. GDPR: EU customer data must remain in EU data centers. Customers
+     have the right to data portability and deletion. Data processing
+     must be documented.
+  3. SOC 2: All database changes must have audit trails. Access
+     controls must be documented. Incident response procedures must
+     cover migration failures.
+
+  Task: Design a compliance-aware migration process that satisfies
+  all three regulatory frameworks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data classification and jurisdiction requirements are addressed — data classification: 'Before migrating any data, classify every table and column: Classification categories: PHI (HIPAA): patient names, medical records, diagnoses, treatment data, insurance IDs. PII (GDPR): EU customer names, emails, addresses, IP addresses, any data that identifies an EU resident. Business data: non-personal operational data (product catalogs, configuration, analytics aggregates). Classification determines: where the data can be stored (jurisdiction), how it must be encrypted, who can access it during migration, and how long the migration logs must be retained. Jurisdiction mapping: PHI data: must be stored in HIPAA-compliant infrastructure. Cloud provider must have a Business Associate Agreement (BAA). Target: AWS with BAA (US regions only, or specific HIPAA-eligible regions). EU PII data: must remain in EU data centers under GDPR. Target: AWS eu-west-1 or eu-central-1. Cannot transit through US servers during migration. Business data: no jurisdiction restrictions. Can be stored in any region. Migration architecture by jurisdiction: (1) US HIPAA database: on-premises → AWS RDS in us-east-1 (HIPAA-eligible region). Direct Connect or VPN for encrypted transit (no public internet). (2) EU GDPR database: on-premises EU servers → AWS RDS in eu-west-1. Data stays within EU throughout the migration. Direct Connect from EU data center to EU AWS region. (3) Business database: on-premises → AWS RDS in the most cost-effective region. No special jurisdiction requirements'"
+    weight: 0.35
+    description: "Data classification"
+  - type: llm_judge
+    criteria: "Migration process satisfies audit trail and access control requirements — audit and access: 'SOC 2 audit trail requirements: every migration action must be logged: (1) Schema change audit trail. All migration files stored in version control (Git). Every migration has: author, reviewer, approval timestamp, execution timestamp. CI/CD pipeline logs: which migration ran, when, against which database, with what result. These logs are retained for 3 years (SOC 2 audit window is 12 months, but retain longer for compliance buffer). (2) Data access during migration. During the migration, the migration tool accesses production data. Log: which user/service account accessed the data, what data was accessed (tables, row counts), when access occurred. Implementation: enable database audit logging (pg_audit for PostgreSQL, or cloud provider audit logs for RDS). (3) Migration approval evidence. For every production migration: documented approval from authorized personnel, risk assessment document, testing evidence (staging results), rollback plan. This documentation is stored in a compliance evidence repository. Access control during migration: (1) Principle of least privilege. The migration service account has: CREATE, ALTER, DROP permissions on schemas being migrated. SELECT, INSERT, UPDATE, DELETE for data migration. No SUPERUSER or admin permissions. No access to databases/schemas not being migrated. (2) PHI access restrictions. Only engineers with HIPAA training and signed BAAs can access PHI data during migration. The migration tool service account is separate from developer accounts. Developer access to PHI databases requires: manager approval, time-limited access (4-hour maximum), activity logging. (3) GDPR data access. Access to EU customer PII during migration follows the same restrictions. EU data access logs are available for GDPR Subject Access Requests (customers can ask what data we have and who accessed it)'"
+    weight: 0.35
+    description: "Audit and access"
+  - type: llm_judge
+    criteria: "Encryption, incident response, and GDPR-specific requirements covered — encryption and incident response: 'Encryption requirements: (1) In transit: all data transferred during migration must use TLS 1.2 or higher. For on-premises to cloud: use AWS Direct Connect with encryption, or VPN tunnel. No data migrated over unencrypted connections. Verification: network team confirms TLS is enforced on all migration connections. (2) At rest: source database: already encrypted (verify). Target database: enable encryption at rest before any data is loaded. AWS RDS: enable storage encryption with KMS keys. For PHI: use customer-managed KMS keys (not AWS-managed) for HIPAA compliance. (3) In process: during migration, any temporary files (CSV exports, staging tables) must be encrypted or stored on encrypted volumes. After migration: securely delete all temporary files. Incident response for migration failures: (1) If a migration fails and data is in a partial state: assess whether PHI or PII data was exposed or corrupted. If yes: trigger the data breach incident response process. HIPAA: assess whether a breach notification to HHS is required (breach affecting 500+ individuals requires notification within 60 days). GDPR: assess whether notification to the supervisory authority is required (within 72 hours of becoming aware of a breach). (2) If migration data is accidentally sent to the wrong jurisdiction: GDPR violation — EU data in US servers. Immediate action: delete the data from the wrong jurisdiction. Assess: was the data accessed by unauthorized parties? If yes: breach notification process. Document: the incident, the response, and the remediation. GDPR-specific migration requirements: (1) Data portability: after migration, verify that customer data export functionality still works (GDPR Article 20). (2) Right to erasure: after migration, verify that the data deletion process still works. Can we delete all data for a specific EU customer upon request? (3) Processing documentation: document the migration as a data processing activity under GDPR Article 30. Include: what data was processed, why, who had access, and what safeguards were in place'"
+    weight: 0.30
+    description: "Encryption and incident response"

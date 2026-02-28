@@ -1,0 +1,44 @@
+meta:
+  id: web-font-performance
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Web font performance — select and optimize web fonts balancing design quality with loading performance"
+  tags: [web-fonts, performance, loading, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  A tech lead says: "Our Lighthouse performance score
+  dropped to 62. One major issue: web fonts. We're
+  loading 8 font files:
+
+  - Playfair Display: Regular, Bold, Italic (3 files)
+  - Open Sans: Light, Regular, Medium, SemiBold, Bold
+    (5 files)
+
+  Total font payload: 450KB. We see a Flash of
+  Unstyled Text (FOUT) on first load, and Cumulative
+  Layout Shift (CLS) when fonts swap in.
+
+  The designer says she needs ALL these weights. The
+  PM says performance is non-negotiable. How do I
+  balance beautiful typography with fast loading?"
+
+  Task: Optimize the web font loading strategy while
+  maintaining typographic quality, with rationale for
+  each trade-off.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits current font usage and reduces payload — weight audit (do we actually use all 8 weights? audit the codebase — often Light and Medium are unused or barely used, SemiBold and Bold may be interchangeable, Italic may only appear in one place), recommended reduction (keep essential weights only: Playfair Display Regular + Bold for headings — drop Italic unless heavily used, Open Sans Regular + Bold for body — 4 weights covers 90% of needs, reduce from 8 files to 4 files, roughly halving payload), subsetting (if only using Latin characters, subset fonts to remove Cyrillic, Greek, Vietnamese — can reduce file size by 30-50%, use tools like glyphhanger or Google Fonts &subset=latin parameter), modern formats (use WOFF2 instead of WOFF or TTF — WOFF2 is 30% smaller, all modern browsers support it)."
+    weight: 0.35
+    description: "FontOptimization"
+  - type: llm_judge
+    criteria: "Response addresses loading strategy — font-display property (font-display: swap shows system font immediately then swaps when custom font loads — causes FOUT but no invisible text, font-display: optional loads font if available in cache, otherwise uses system font — best performance but may not show custom font on first visit, font-display: fallback is a compromise — short invisible period then swap), preloading critical fonts (preload the most important font file with <link rel='preload' as='font' type='font/woff2' crossorigin> — reduces swap delay for primary body font), system font fallback stack (choose system font fallback that closely matches custom font metrics — reduces CLS when swap occurs, use size-adjust, ascent-override, descent-override CSS properties to match metrics), and self-hosting vs CDN (Google Fonts CDN has caching benefits but separate DNS lookup, self-hosting gives full control over caching and loading strategy)."
+    weight: 0.35
+    description: "LoadingStrategy"
+  - type: llm_judge
+    criteria: "Response provides the design-performance rationale — trade-off documentation (table showing: option, font payload, performance impact, visual quality — from 'system fonts only: 0KB, best performance, generic look' to 'all 8 weights: 450KB, worst performance, maximum design control', recommended middle ground highlighted), variable fonts consideration (if available — a single variable font file can replace multiple weight files, Playfair Display doesn't have variable version but Open Sans does — one variable font file replaces 5 static files), performance budget (recommend font payload budget of 100-150KB total — within this budget, which fonts and weights give maximum design impact?), and communication template (how to present the trade-off to the designer: 'we can keep Playfair for headings and Open Sans for body with 2 weights each — here's how it looks' with before/after comparison showing minimal visual difference but significant performance improvement)."
+    weight: 0.30
+    description: "TradeoffRationale"

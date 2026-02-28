@@ -1,0 +1,40 @@
+meta:
+  id: sdk-documentation
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Document SDK libraries — write SDK documentation that bridges REST API docs and language-idiomatic client libraries with installation, configuration, and usage patterns"
+  tags: [API, documentation, SDK, client-library, language-specific, advanced]
+
+state: {}
+
+trigger: |
+  Your API has official SDKs in Python, Node.js, Go, and Java. But the
+  SDK documentation is just auto-generated from code comments. Developers
+  complain:
+
+  - "The Python SDK docs are just a class list — where's the getting started?"
+  - "How do I configure retries? The REST docs mention it but the SDK docs don't"
+  - "Is the Node.js SDK async? Do I use callbacks or promises?"
+  - "The Go SDK returns errors differently than I expected"
+  - "How do I mock the SDK for testing?"
+
+  Task: Write SDK documentation for the Python and Node.js clients that
+  goes beyond auto-generated API reference. Include: installation,
+  configuration (auth, retries, timeouts), idiomatic usage patterns,
+  error handling in each language, pagination helpers, and testing
+  guidance. The docs should feel native to each language's ecosystem.
+
+assertions:
+  - type: llm_judge
+    criteria: "SDK setup and configuration is language-idiomatic — Python: pip install, client initialization with api_key parameter or PAYMENTS_API_KEY env var, configure timeout/retries via client options, type hints shown throughout. Node.js: npm install, ESM and CommonJS import examples, async/await throughout (no callbacks), TypeScript types included. Both: show how to configure base URL for sandbox vs production, set custom headers, configure HTTP proxy. Authentication: constructor parameter vs environment variable vs config file — show all three. Version pinning recommendation. Quick example: 5 lines from install to first API call"
+    weight: 0.35
+    description: "Language-idiomatic setup"
+  - type: llm_judge
+    criteria: "Error handling follows language conventions — Python: SDK raises typed exceptions (PaymentError, AuthenticationError, RateLimitError, NotFoundError) inheriting from base APIError. Show try/except patterns with specific exception types. Access error.code, error.message, error.param. Node.js: rejects with typed error classes, show try/catch with async/await, error instanceof checks. Both: map HTTP status codes to exception types (401→AuthenticationError, 404→NotFoundError, 429→RateLimitError). Auto-retry on 429 with configurable max_retries. Show idiomatic error handling for each language, not just translated REST error docs"
+    weight: 0.35
+    description: "Error handling"
+  - type: llm_judge
+    criteria: "Advanced patterns cover real usage — Pagination: Python SDK provides auto_paging_iter() that handles cursor pagination automatically (for payment in client.payments.list(limit=100).auto_paging_iter()). Node.js: async iterator (for await (const payment of client.payments.list())). Webhook verification: client.webhooks.verify_signature(payload, header, secret). Testing: mock the client for unit tests — show how to stub responses in pytest/jest. Logging: enable debug logging to see HTTP requests. Resource cleanup: context managers in Python (async with), proper client.close() in Node.js. Bulk operations: helpers for batch processing that respect rate limits"
+    weight: 0.30
+    description: "Advanced patterns"

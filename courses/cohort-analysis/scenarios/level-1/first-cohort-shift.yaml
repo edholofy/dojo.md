@@ -1,0 +1,40 @@
+meta:
+  id: first-cohort-shift
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "First cohort shift — handle multiple cohort analysis requests requiring retention tables, behavioral analysis, and stakeholder communication in a single day"
+  tags: [shift-simulation, beginner, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Three cohort analysis requests arrive on the same day:
+
+  Request 1 (Product Manager): "We launched a new onboarding flow
+  3 months ago. Build me a cohort analysis comparing users before
+  and after the change. Did it help retention?"
+
+  Request 2 (Growth Lead): "I have a spreadsheet with user signups
+  and weekly login data for the past 6 months. Can you build a
+  weekly retention table and tell me how we're doing?"
+
+  Request 3 (CEO): "Our investor is asking about our retention
+  numbers. They want to see month 1 and month 3 retention trends
+  for the last 8 monthly cohorts. Is retention improving?"
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with before/after cohort comparison — onboarding: 'Request 1 — Onboarding change impact analysis: Approach: compare acquisition cohorts before and after the onboarding change. Before cohorts (old onboarding): October cohort: 1,200 signups. Month 1 retention: 32%. Month 3 retention: 18%. November cohort: 1,100 signups. Month 1 retention: 30%. Month 3 retention: 17%. December cohort: 1,300 signups. Month 1 retention: 33%. Month 3 retention: 19%. Average pre-change: 31.7% month 1, 18% month 3. After cohorts (new onboarding, launched January): January cohort: 1,250 signups. Month 1 retention: 40%. Month 3 retention: 26%. February cohort: 1,400 signups. Month 1 retention: 42%. Month 3 retention: 28%. March cohort: 1,300 signups. Month 1 retention: 44%. Month 3 (not yet available — only 2 months of data). Results: month 1 retention improved from approximately 32% to approximately 42% — a 10 percentage point improvement. Month 3 retention improved from approximately 18% to approximately 27% — a 9 percentage point improvement. The new onboarding is working. The improvement is consistent across all post-change cohorts (not a one-month fluke). Caveats: other factors may have changed (marketing channels, product features, seasonality). To isolate the onboarding effect, ideally an A/B test would have been run. But the consistent 10pp improvement across 3 cohorts is strong evidence. Recommendation: the new onboarding works. Continue refining it — the February and March cohorts are slightly better than January, suggesting the team is still improving the flow'"
+    weight: 0.35
+    description: "Onboarding"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with a weekly retention table — retention: 'Request 2 — Weekly retention table: Step 1: group users by signup week. Step 2: for each user, calculate weeks since signup for each login. Step 3: count distinct active users per cohort per week offset. Step 4: divide by cohort size for retention rate. Weekly retention table (last 6 cohorts shown): Week 1 cohort (200 signups): W0: 100%, W1: 45%, W2: 32%, W3: 28%, W4: 25%, W8: 20%, W12: 16%. Week 5 cohort (220 signups): W0: 100%, W1: 48%, W2: 35%, W3: 30%, W4: 27%, W8: 22%. Week 10 cohort (250 signups): W0: 100%, W1: 50%, W2: 38%, W3: 33%, W4: 29%. Week 15 cohort (230 signups): W0: 100%, W1: 52%, W2: 40%, W3: 35%. Week 20 cohort (260 signups): W0: 100%, W1: 55%, W2: 42%. Week 24 cohort (240 signups): W0: 100%, W1: 53%. Key findings: 1. Week 1 retention is improving: from 45% to 53% over 6 months. The product is getting better at retaining users after their first week. 2. The retention curve shape is healthy: sharp drop in week 1 (expected — many first-time users do not return). Gradual decline through week 4. Beginning to flatten around week 8-12 (retention floor emerging around 16-20%). 3. Week 4 retention (a common benchmark): improving from 25% to approximately 29%. Healthy for most product categories. Overall assessment: the product has a healthy retention pattern with improving trends. The biggest opportunity is the week 0 to week 1 drop (45-55% of users never return) — improving the first session experience would have the largest impact'"
+    weight: 0.35
+    description: "Retention"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with investor-ready retention trends — investor: 'Request 3 — Investor-ready retention trend: The investor wants two things: month 1 and month 3 retention for the last 8 monthly cohorts. Whether retention is trending up or down. Retention trend table: Cohort | Month 1 | Month 3. June: 28% | 14%. July: 29% | 15%. August: 27% | 14%. September: 30% | 16%. October: 32% | 18%. November: 33% | 19%. December: 38% | 22%. January: 42% | 26%. Trend analysis: month 1 retention: improved from 28% to 42% over 8 months (+14pp, +50% relative improvement). Month 3 retention: improved from 14% to 26% over 8 months (+12pp, +86% relative improvement). The improvement accelerated starting October-November — likely when the team began investing in onboarding improvements. For the CEO: present this data as a simple line chart with two lines (month 1 and month 3 retention) trending upward. Key messages for the investor: retention has improved consistently for 8 consecutive months. Month 1 retention improved 50% (28% → 42%). Month 3 retention nearly doubled (14% → 26%). The improvement is driven by product investments in onboarding and engagement. We expect continued improvement as we target the week 1 activation gap. Format: one slide with the chart, a headline (Retention has improved 50% in 8 months), and 2-3 bullet points explaining the drivers and next steps'"
+    weight: 0.30
+    description: "Investor"

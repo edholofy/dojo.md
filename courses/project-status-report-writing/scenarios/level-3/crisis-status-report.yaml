@@ -1,0 +1,89 @@
+meta:
+  id: crisis-status-report
+  level: 3
+  course: project-status-report-writing
+  type: output
+  description: "Crisis status report — write a status report during a project crisis that manages executive expectations, proposes recovery options, and maintains stakeholder confidence"
+  tags: [crisis, recovery, executive, confidence, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior project manager. Your project just
+  experienced a catastrophic failure and you need to write
+  an emergency status report for the C-suite within 2 hours.
+
+  Project: Core Banking Platform Migration
+  Budget: $15M | Duration: 24 months | Current: Month 18
+  Sponsor: CFO | Oversight: Board Technology Committee
+
+  What happened (Saturday night, 11 PM):
+  The team executed the planned production cutover from the
+  legacy banking system to the new platform. The cutover
+  was the culmination of 18 months of work. At 2 AM Sunday:
+
+  1. The new system went live but transaction processing was
+     30x slower than required. Customer ATM transactions were
+     timing out. Online banking was unresponsive.
+
+  2. By 4 AM, the team made the decision to rollback to the
+     legacy system. The rollback took 3 hours (target was
+     1 hour) because the rollback scripts had an error.
+
+  3. The legacy system came back online at 7 AM Sunday.
+     During the 8-hour window (11 PM to 7 AM):
+     - 12,400 ATM transactions failed
+     - 3,200 online banking sessions were interrupted
+     - 47 ACH payments were delayed (will settle Monday)
+     - No data was lost (confirmed)
+
+  4. Regulatory notification: The bank's regulator (OCC)
+     requires notification of significant system outages.
+     Legal is preparing the notification.
+
+  5. Media: Two local news outlets picked up the story from
+     customer social media complaints. The comms team is
+     drafting a response.
+
+  Root cause (preliminary):
+  - The performance issue is traced to the new system's
+     database connection pooling configuration. In testing,
+     the maximum concurrent connections was 500. In
+     production, Saturday night processing hit 8,000
+     concurrent connections. The performance testing
+     environment did not simulate production-scale load.
+  - The rollback script error: a database schema version
+     mismatch between the rollback script and the current
+     legacy system state.
+
+  Current status (Monday morning):
+  - Legacy system is stable and processing normally
+  - All failed transactions have been identified and
+    customers will be made whole
+  - The new platform is in the staging environment for
+    further testing
+  - Team morale is very low — they worked 36 hours straight
+
+  Questions the C-suite will ask:
+  - Can we still migrate? When?
+  - How did this pass testing?
+  - What's the financial impact?
+  - What do we tell the regulator?
+  - What do we tell customers?
+  - Who is responsible?
+
+  Task: Write the emergency status report for the C-suite.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear, factual crisis status report — leads with current status (legacy system stable, no data loss, customers being made whole); presents the timeline of events clearly (cutover at 11 PM, issues at 2 AM, rollback decision at 4 AM, recovery at 7 AM); quantifies the impact (12,400 failed ATM transactions, 3,200 interrupted sessions, 47 delayed ACH payments); presents the preliminary root cause without finger-pointing (performance testing didn't simulate production-scale load); the report is honest about the failure without being defensive or blame-shifting."
+    weight: 0.35
+    description: "CrisisClarity"
+  - type: llm_judge
+    criteria: "Response addresses all C-suite questions proactively — answers: can we still migrate (yes, the root cause is identifiable and fixable — not a fundamental architecture problem), when (estimate 4-8 weeks to fix connection pooling and conduct proper load testing), how did this pass testing (the performance test environment didn't simulate production scale — this is a process failure that will be corrected), financial impact (customer remediation costs, potential regulatory fines, delayed project timeline cost), regulatory notification (legal preparing OCC notification, facts being compiled), customer communication (proactive outreach to affected customers, public statement if needed); does NOT explicitly blame individuals but identifies process failures."
+    weight: 0.35
+    description: "CSuiteQuestions"
+  - type: llm_judge
+    criteria: "Response includes recovery plan and next steps — proposes immediate actions (customer remediation, regulatory notification, root cause analysis completion); proposes a revised migration approach (enhanced load testing, phased migration instead of big-bang cutover, improved rollback procedures); addresses team wellbeing (36-hour shift, low morale — team needs recovery time before resuming); includes a timeline for the formal post-incident review; maintains appropriate confidence (the failure is serious but recoverable — the team and the platform are capable, the process failed not the technology); the report builds a path forward, not just a post-mortem."
+    weight: 0.30
+    description: "RecoveryPlan"

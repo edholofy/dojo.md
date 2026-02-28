@@ -1,0 +1,66 @@
+meta:
+  id: crisis-meeting-documentation
+  level: 3
+  course: meeting-notes-action-items
+  type: output
+  description: "Crisis meeting documentation — document a high-stakes incident response meeting with real-time updates, decision logging, and post-incident reporting"
+  tags: [crisis, incident, response, high-stakes, advanced]
+
+state: {}
+
+trigger: |
+  A major production outage has been ongoing for 3 hours.
+  You're the designated note-taker for the war room. Here's
+  what's happened:
+
+  8:00 AM — Alert triggered: payment processing down
+  8:15 AM — War room opened. Present: CTO (Diana), VP Eng
+    (Mark), 2 senior engineers (Raj, Yuki), Head of Support
+    (Elena), Head of Comms (Paul)
+  8:20 AM — Initial diagnosis: database connection pool
+    exhausted. Cause unknown.
+  8:30 AM — Decision: restart the connection pool as
+    immediate mitigation. Diana approved.
+  8:35 AM — Connection pool restarted. Payments resuming but
+    slow.
+  8:45 AM — Root cause identified: a query from the new
+    reporting feature is running a full table scan on the
+    orders table (50M rows). It was deployed last night.
+  8:50 AM — Decision: roll back the reporting feature
+    deployment. Mark approved, Raj executing.
+  8:55 AM — Rollback complete. Performance returning to
+    normal.
+  9:00 AM — Elena reports: 340 support tickets received.
+    15 enterprise clients called directly. 3 clients
+    threatening to escalate to executives.
+  9:10 AM — Paul asks: what do we communicate externally?
+    Decision: post a status page update acknowledging the
+    issue and resolution. Do NOT mention the root cause
+    publicly yet.
+  9:15 AM — Financial impact: estimated $45K in failed
+    transactions during the outage. Need to retry all
+    failed payments.
+  9:30 AM — Decision: Raj will create a hotfix for the
+    reporting query before it's redeployed. Yuki will audit
+    all other queries in the reporting feature.
+  9:45 AM — Diana asks for a post-incident report by EOD
+    tomorrow. Full RCA with prevention measures.
+  10:00 AM — War room closed. Service restored at 8:55 AM.
+    Total outage duration: 55 minutes.
+
+  Task: Create the war room meeting log AND the post-
+  incident report template.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates accurate war room documentation — chronological incident log (documents the war room as a timestamped log: every event, decision, and action is recorded with exact time; the log distinguishes between: observations/diagnosis, decisions (who approved), actions taken (who executed), and outcomes; the chain of events is clear: alert → diagnosis → mitigation → root cause → rollback → resolution; decision authority is recorded: Diana approved the initial mitigation, Mark approved the rollback; this log is a legal and operational record of what happened and who decided what), impact assessment (captures the business impact: duration: 55 minutes (8:00-8:55 AM); affected service: payment processing; customer impact: 340 support tickets, 15 enterprise calls, 3 escalation threats; financial impact: $45K in failed transactions; the impact data is quantified — not 'a lot of customers were affected' but specific numbers)."
+    weight: 0.35
+    description: "WarRoomDocumentation"
+  - type: llm_judge
+    criteria: "Response creates a post-incident report template — RCA report structure (creates a comprehensive post-incident report: executive summary — 2-3 sentence overview of the incident; timeline — the chronological log from the war room, cleaned up; root cause — the reporting feature's full table scan on 50M rows, deployed the previous night without adequate performance testing; impact — customer, financial, and operational; resolution — connection pool restart as immediate mitigation, feature rollback as resolution; prevention measures — required performance testing for database queries before deployment, query analysis tooling, staging environment load testing; the report template is reusable for future incidents), action items from incident (captures the remediation and prevention work: Raj — create hotfix for the reporting query (before redeployment); Yuki — audit all queries in the reporting feature; team — implement mandatory query performance review before deployment; team — create a deployment runbook that includes performance benchmarks; Elena — communicate resolution to the 15 enterprise clients who called; finance — process retry of all $45K in failed transactions; the action items address both the immediate fix and the systemic prevention)."
+    weight: 0.35
+    description: "PostIncidentReport"
+  - type: llm_judge
+    criteria: "Response handles communication decisions and sensitive information — communication handling (the decision about external communication is documented: what was decided: status page update acknowledging the issue and resolution; what was explicitly decided NOT to communicate: the root cause (the reporting feature deployment); this decision is recorded internally for reference; the communication approach is appropriate for the situation — acknowledge and resolve, don't over-explain), sensitive information management (certain details are appropriately handled: the war room log is an internal document — not for distribution to clients; the post-incident report has internal and external versions: internal includes full root cause, code-level details, and process failures; external for clients focuses on impact, resolution, and prevention measures; the 3 clients threatening escalation are flagged for personal executive outreach)."
+    weight: 0.30
+    description: "CommunicationAndSensitivity"

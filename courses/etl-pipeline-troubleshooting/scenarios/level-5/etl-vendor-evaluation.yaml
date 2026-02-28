@@ -1,0 +1,52 @@
+meta:
+  id: etl-vendor-evaluation
+  level: 5
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "ETL vendor evaluation — conduct rigorous evaluation of ETL/ELT tools and data integration platforms for enterprise adoption"
+  tags: [vendor-evaluation, build-vs-buy, procurement, enterprise, master]
+
+state: {}
+
+trigger: |
+  A CTO says: "We're evaluating our ETL tooling strategy. Currently
+  we have a mix of custom Python scripts, Airflow, and some legacy
+  Informatica. Our options:
+
+  1. All-in on custom (Python + Airflow + dbt): Maximum flexibility,
+     full control, but high maintenance burden and requires deep
+     engineering talent
+
+  2. Managed ETL platform (Fivetran + dbt Cloud): Lower maintenance,
+     but vendor lock-in, recurring costs, and we lose control over
+     connectors
+
+  3. Unified data platform (Databricks or Snowflake ecosystem):
+     Single vendor for storage + compute + orchestration, but high
+     cost and deep dependency
+
+  4. Hybrid: Managed ingestion (Fivetran) + custom transforms
+     (dbt + Airflow) + cloud warehouse (Snowflake)
+
+  We process 5TB daily across 200 source connectors, have 30 data
+  engineers, and our annual data platform budget is $2M.
+
+  How do we evaluate these options systematically?"
+
+  Task: Design an evaluation framework for ETL tooling decisions,
+  compare the four options against weighted criteria, and provide
+  a recommendation with migration path.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a rigorous evaluation framework — evaluation criteria with weights: total cost of ownership (licensing + engineering time + infrastructure, 25%), flexibility and customization (ability to handle edge cases, custom transformations, 20%), operational burden (maintenance, monitoring, on-call effort, 20%), scalability (handle 2x-5x data growth without re-architecture, 15%), talent availability (can we hire and retain engineers for this stack?, 10%), vendor risk (lock-in, financial stability, product roadmap, 10%). Evaluates all four options against these criteria with clear scoring"
+    weight: 0.35
+    description: "EvaluationFramework"
+  - type: llm_judge
+    criteria: "Response provides a detailed comparison — TCO analysis for each option (including hidden costs like engineering time for custom maintenance, vendor price increases, migration costs), connector coverage assessment (which of the 200 sources are supported natively vs require custom development), operational comparison (custom requires 24/7 on-call for pipeline issues vs managed services handle infrastructure), scalability assessment (5TB today, what happens at 25TB?), and talent strategy implications (custom requires senior engineers who are expensive and scarce, managed tools enable more junior engineers to be productive)"
+    weight: 0.35
+    description: "DetailedComparison"
+  - type: llm_judge
+    criteria: "Response provides a clear recommendation with migration path — recommends one of the four options (or a variant) with explicit rationale tied to the evaluation criteria, acknowledges trade-offs and risks of the recommendation, provides a phased migration plan from the current state (custom Python + Airflow + Informatica) to the target state, includes decision criteria for specific connector choices (when to use managed vs custom), and includes an exit strategy if the chosen approach doesn't work out (how to de-risk vendor lock-in, how to evaluate success after 12 months)"
+    weight: 0.30
+    description: "RecommendationAndPath"

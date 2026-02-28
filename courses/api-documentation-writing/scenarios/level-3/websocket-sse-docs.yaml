@@ -1,0 +1,47 @@
+meta:
+  id: websocket-sse-docs
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Document real-time APIs — write documentation for WebSocket and Server-Sent Events endpoints covering connection lifecycle, message formats, and reconnection strategies"
+  tags: [API, documentation, WebSocket, SSE, real-time, streaming, events, advanced]
+
+state: {}
+
+trigger: |
+  Your platform is adding real-time features alongside the REST API:
+
+  1. WebSocket endpoint: wss://api.example.com/ws
+     - Real-time payment status updates
+     - Live dashboard data streaming
+     - Bi-directional: client can subscribe/unsubscribe to channels
+
+  2. Server-Sent Events: https://api.example.com/events/payments
+     - Uni-directional stream of payment events
+     - Simpler alternative for clients that only need to listen
+
+  Developers are confused:
+  - "Which should I use — WebSocket or SSE?"
+  - "How do I authenticate a WebSocket connection?"
+  - "What happens when the connection drops?"
+  - "What's the message format? Is it JSON?"
+  - "How do I subscribe to specific payment updates?"
+
+  Task: Document both the WebSocket and SSE endpoints. Include:
+  connection setup, authentication, message formats, subscription
+  management, error handling, reconnection strategies, and a
+  comparison to help developers choose between them.
+
+assertions:
+  - type: llm_judge
+    criteria: "WebSocket documentation covers full lifecycle — connection: wss:// URL, authentication via token query param or first message. Handshake example with headers. Message format: JSON with type field (subscribe, unsubscribe, ping, pong, event). Subscribe: { type: 'subscribe', channel: 'payments', filters: { customer_id: 'cus_123' } }. Server events: { type: 'event', channel: 'payments', event: 'payment.succeeded', data: {...}, timestamp: '...' }. Heartbeat: server sends ping every 30s, client must respond with pong within 10s or connection is closed. Connection states: connecting, open, closing, closed. Max message size, max connections per client, idle timeout"
+    weight: 0.35
+    description: "WebSocket docs"
+  - type: llm_judge
+    criteria: "SSE documentation and comparison are clear — SSE setup: EventSource API in browser, curl with streaming, library examples. Authentication: Bearer token via headers (not supported by native EventSource — show polyfill or library). Event format: event type, data (JSON), id (for resumption), retry. Last-Event-ID header for reconnection — server resumes from where client left off. Comparison table: WebSocket vs SSE — bidirectional vs unidirectional, protocol complexity, browser support, firewall friendliness, auto-reconnection (SSE has built-in), load balancer compatibility. Recommendation: SSE for simple event listening (payments feed), WebSocket for interactive features (live dashboard with filtering)"
+    weight: 0.35
+    description: "SSE and comparison"
+  - type: llm_judge
+    criteria: "Reconnection and error handling are production-ready — WebSocket reconnection: detect close event, implement exponential backoff (1s, 2s, 4s, 8s, max 30s), re-authenticate on reconnect, re-subscribe to channels, request missed events by timestamp. SSE reconnection: automatic via EventSource (browser handles it), Last-Event-ID for resumption, server backfills missed events. Error scenarios: invalid auth (close code 4001), rate limited (close code 4029), server restart (close code 1001), invalid subscription (error message with details). Code examples showing robust connection management in JavaScript and Python. Monitoring: how to detect connection health, metrics to track (connection duration, reconnection frequency, message latency)"
+    weight: 0.30
+    description: "Reconnection patterns"

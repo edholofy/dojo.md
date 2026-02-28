@@ -1,0 +1,37 @@
+meta:
+  id: multi-tenant-dashboard-architecture
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Design multi-tenant dashboard architecture — build dashboards that serve multiple teams, business units, or clients with shared infrastructure but isolated data and customized views"
+  tags: [multi-tenant, business-units, data-isolation, parameterized, expert]
+
+state: {}
+
+trigger: |
+  A holding company owns 5 portfolio companies. The Group CFO says:
+  "I need a single dashboard platform that serves all 5 companies.
+  Each company CEO should see only their own data. I should see a
+  consolidated view across all companies. But each company has
+  different KPIs — a SaaS company tracks MRR, an e-commerce company
+  tracks GMV, and a marketplace tracks take rate.
+
+  The platform must be cost-effective — I don't want 5 separate BI
+  installations."
+
+  Task: Design a multi-tenant dashboard architecture for a holding
+  company with diverse portfolio companies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a multi-tenant architecture with data isolation — architecture: 'Multi-tenant dashboard architecture: Data architecture: Shared BI platform (single Looker or Tableau instance) with tenant-based access control. Option A — Schema-per-tenant: each company's data lives in its own Snowflake schema. company_alpha.revenue, company_beta.revenue, etc. Row-level security is implicit — queries are scoped to the schema. Option B — Shared schema with tenant ID: all companies' data in one schema with a company_id column. Row-level security policy: each user can only see rows where company_id matches their assigned company. Recommendation: Schema-per-tenant for this use case. Five companies is manageable and schema isolation is simpler to audit and maintain. Access control: Group CFO: sees all 5 company dashboards + consolidated view. Company Alpha CEO: sees only Company Alpha dashboards. Company Alpha VP Sales: sees only Company Alpha sales dashboards. Implemented via: Looker user attributes (company_id = alpha). Each LookML model references the company-specific schema. A user with company_id = alpha can only access the alpha model. Dashboard template architecture: instead of building 5 × N dashboards, build parameterized templates. Revenue dashboard template: shared layout, shared chart types, company-specific data source. The template connects to different models based on the tenant. Company Alpha sees: MRR $2.8M (SaaS metrics). Company Beta sees: GMV $12M (e-commerce metrics). The template handles this by including company-specific metric sections that show/hide based on the tenant's business type: type = saas: show MRR, ARR, NRR, churn. type = ecommerce: show GMV, AOV, conversion rate, return rate. type = marketplace: show GMV, take rate, seller count, buyer count'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response designs the consolidated portfolio view — consolidated: 'Consolidated portfolio view (Group CFO dashboard): The Group CFO needs to compare all 5 companies on a common set of metrics. Challenge: each company has different KPIs. How do you compare MRR to GMV? Solution: define holding-level metrics that apply to all companies regardless of business model. Universal metrics: Revenue: total top-line revenue (MRR for SaaS, GMV × take rate for marketplace, net sales for e-commerce). Revenue growth: YoY percentage change. Operating margin: (revenue - operating costs) / revenue. Customer count: total paying customers or active accounts. Employee count and revenue per employee. Cash position and runway. Consolidated dashboard layout: Top row — Portfolio summary: Total portfolio revenue: $42M ARR-equivalent ↑18% YoY. Total operating margin: 12% (target: 15%). Combined cash: $28M. Runway: 22 months. Middle — Company comparison table: Company | Revenue | Growth | Margin | Customers | Health. Alpha (SaaS) | $8.2M | +32% | 15% | 1,240 | Green. Beta (E-commerce) | $18M | +12% | 8% | 85K | Yellow. Gamma (Marketplace) | $6.5M | +45% | 22% | 12K | Green. Delta (SaaS) | $5.8M | +8% | -5% | 680 | Red. Epsilon (Services) | $3.5M | +5% | 18% | 45 | Yellow. Color-coded health status based on growth and margin targets. The Group CFO sees which companies are performing and which need attention. Bottom — Drill path: click any company row to enter that company's CEO dashboard with company-specific metrics. Alpha → SaaS dashboard (MRR, churn, NRR). Beta → E-commerce dashboard (GMV, AOV, conversion). The transition is seamless — same platform, different data scope'"
+    weight: 0.35
+    description: "Consolidated"
+  - type: llm_judge
+    criteria: "Explanation covers customization, cost optimization, and governance — governance: 'Customization and governance: Customization per tenant: each company can customize their dashboards within the template framework. Customizable: company logo and brand colors. KPI thresholds (what counts as green vs red). Default date ranges and fiscal calendar (some companies have fiscal years starting in April). Company-specific metrics unique to their business model. Not customizable: overall layout structure (consistency for the Group CFO). Data definitions for holding-level metrics (revenue must be calculated the same way). Access control rules (no company can see another company's data). Cost optimization: shared infrastructure: one Looker instance serves all 5 companies. Cost: approximately $5K/month shared across the portfolio vs $5K/month per company ($25K total) for separate instances. 80% cost reduction. Shared data warehouse: one Snowflake account with separate schemas. Shared compute for common queries (Group CFO consolidated view). Company-specific compute for heavy individual queries. Shared data engineering: one dbt project with company-specific models. Common transformations (date standardization, currency conversion) are shared. Company-specific logic is isolated in separate model folders. Governance: the holding company data team (2-3 people) manages the shared platform. Each portfolio company has a dashboard admin who manages their company-specific views. Changes to holding-level metrics require Group CFO approval. Changes to company-specific dashboards require only the company CEO approval. Quarterly review: the Group CFO reviews the consolidated dashboard with all 5 company CEOs. Each company presents their company-specific metrics. The consolidated view reveals cross-company patterns (e.g., all companies seeing customer acquisition cost increase due to market conditions)'"
+    weight: 0.30
+    description: "Governance"

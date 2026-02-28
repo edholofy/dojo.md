@@ -1,0 +1,45 @@
+meta:
+  id: retry-and-error-handling
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Retry and error handling — implement robust retry strategies that handle transient failures without masking permanent errors"
+  tags: [retry, error-handling, backoff, transient-errors, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our pipeline retries aren't working well:
+
+  1. An API extraction task retries 3 times on any error, but when
+     the error is '401 Unauthorized' (expired token), retrying
+     the same request 3 times just wastes 3 minutes before failing.
+     Meanwhile, a '503 Service Unavailable' genuinely needs retries.
+
+  2. A database load task retries immediately on failure, but the
+     database was temporarily overloaded — the rapid retries made
+     the overload worse, and all 5 retries failed within 2 seconds.
+
+  3. A task that processes 100,000 records takes 2 hours. When it
+     fails at record 80,000, the retry starts from record 1 again,
+     wasting the work already done.
+
+  How do I build a proper error handling and retry strategy?"
+
+  Task: Design a retry and error handling strategy that distinguishes
+  transient from permanent errors, uses appropriate backoff, and
+  supports resumable processing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response classifies errors as transient vs permanent — transient errors (worth retrying): 503 Service Unavailable, connection timeout, rate limit (429), temporary network failures. Permanent errors (don't retry): 401 Unauthorized (fix credentials first), 404 Not Found (resource doesn't exist), 400 Bad Request (fix the request), data validation failures (fix the data). Explains that retrying permanent errors wastes time and delays the actual fix. Provides a classification framework for deciding whether to retry"
+    weight: 0.35
+    description: "ErrorClassification"
+  - type: llm_judge
+    criteria: "Response designs proper backoff strategies — exponential backoff with jitter (wait 1s, 2s, 4s, 8s + random jitter to avoid thundering herd), explains why immediate retry is harmful (hammering an overloaded system makes it worse), provides appropriate retry counts and max wait times (3-5 retries with max 5-minute wait for API calls), and implements rate limiting awareness (respect Retry-After headers from 429 responses)"
+    weight: 0.35
+    description: "BackoffStrategy"
+  - type: llm_judge
+    criteria: "Response addresses resumable processing — checkpoint/bookmark pattern: save progress periodically so retries can resume from the last checkpoint rather than starting over, batch processing with committed checkpoints, and dead letter queues for records that fail individual processing. Also covers: alerting on retries (retry success is still a warning worth investigating), logging retry attempts for debugging, and configuring retries in orchestration tools (Airflow retry_delay, retries, retry_exponential_backoff)"
+    weight: 0.30
+    description: "ResumableProcessing"

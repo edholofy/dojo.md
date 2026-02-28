@@ -1,0 +1,42 @@
+meta:
+  id: data-platform-due-diligence
+  level: 5
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data platform due diligence — assess data infrastructure quality and technical debt as part of M&A, investment evaluation, or technology audits"
+  tags: [due-diligence, MA, audit, technical-debt, assessment, master]
+
+state: {}
+
+trigger: |
+  A PE firm partner says: "We're evaluating a $500M acquisition of
+  a data analytics company. They claim their 'real-time data
+  platform' is a key differentiator — processing 1B events/day
+  with sub-second latency.
+
+  In our last acquisition, the target's data platform turned out
+  to be fragile: held together by 3 senior engineers who left
+  post-acquisition, pipelines broke constantly, and rebuilding
+  the platform cost $15M and took 2 years.
+
+  How do we properly evaluate this company's data infrastructure
+  before making the bid? What should we look for, what are the
+  red flags, and how does platform quality affect the valuation?"
+
+  Task: Design a data platform due diligence framework for M&A
+  that assesses infrastructure quality, identifies risks, and
+  informs valuation adjustments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a comprehensive assessment framework — architecture review (is the 'real-time platform' genuinely real-time or micro-batch? is it scalable? is it well-architected or held together with duct tape?), operational metrics (pipeline success rates, mean time to recovery, incident frequency, on-call burden), code and documentation quality (is the platform well-documented? are there tests? is the code maintainable?), people dependency (how many engineers understand the platform? what happens if key people leave?), technical debt assessment (age of dependencies, known issues backlog, deferred maintenance), and scalability verification (can the platform handle 2-5x growth without re-architecture?)"
+    weight: 0.35
+    description: "AssessmentFramework"
+  - type: llm_judge
+    criteria: "Response identifies specific red flags — key person risk (fewer than 3 people understand the core platform), no monitoring or observability (they don't know when things break), no tests or CI/CD (changes are deployed manually to production), undocumented tribal knowledge (architecture only exists in people's heads), vendor lock-in without exit plan (deeply tied to a single vendor with no migration path), inflated metrics (1B events/day but most are duplicates or internal health checks), and cost trajectory (infrastructure costs growing faster than revenue). Each red flag maps to a valuation risk"
+    weight: 0.35
+    description: "RedFlags"
+  - type: llm_judge
+    criteria: "Response translates findings into valuation impact — how to quantify technical debt (estimated cost and time to rebuild or remediate), integration cost estimation (what will it cost to integrate with the acquirer's stack?), retention risk pricing (if 3 key engineers leave, what's the cost of rebuilding their knowledge?), platform rebuild scenario (probability-weighted cost of full platform rebuild if quality is lower than claimed), and how to structure the deal to mitigate platform risk (earnouts tied to platform stability, retention bonuses for key engineers, escrow for technical debt remediation)"
+    weight: 0.30
+    description: "ValuationImpact"

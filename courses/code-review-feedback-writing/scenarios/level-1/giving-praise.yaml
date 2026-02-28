@@ -1,0 +1,44 @@
+meta:
+  id: giving-praise
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Give meaningful praise — write positive review comments that reinforce good practices and make code review a positive experience"
+  tags: [code-review, praise, positive-feedback, reinforcement, motivation, beginner]
+
+state: {}
+
+trigger: |
+  Your team's code reviews are 100% criticism — reviewers only comment
+  when something is wrong. This creates anxiety around PRs and makes
+  developers dread reviews. You want to model positive feedback.
+
+  You're reviewing a PR that implements a new caching layer. You notice
+  several things done well:
+
+  1. The cache invalidation strategy handles edge cases gracefully
+  2. The author wrote comprehensive tests including race conditions
+  3. Complex business logic is broken into small, well-named functions
+  4. The PR description clearly explains the problem, approach, and
+     trade-offs considered
+  5. Error handling includes specific error types with helpful messages
+  6. The author proactively added a monitoring dashboard for cache
+     hit rates
+
+  Task: Write specific praise comments for each of the 6 positive
+  observations. Then write a guide on how to incorporate positive
+  feedback into code reviews without it feeling hollow or performative.
+
+assertions:
+  - type: llm_judge
+    criteria: "Praise is specific, not generic — each comment references the exact thing that's good and why it matters. Not: 'Nice work!' or 'LGTM!' Instead: (1) 'The cache invalidation handling for concurrent writes (lines 45-60) is really well thought out — this prevents the stale data issue we had in the orders service.' (2) 'Love the race condition tests — especially the test at line 120 that simulates concurrent cache reads during invalidation. This catches exactly the kind of bug that's hard to find in production.' (3) 'The function decomposition here is excellent — readProcessingQueue(), validateCacheEntry(), and evictStaleEntries() each do one thing and are easy to test independently.' Each praise explains WHAT is good and WHY it matters"
+    weight: 0.35
+    description: "Specific praise"
+  - type: llm_judge
+    criteria: "Praise reinforces patterns worth repeating — the praise comments teach: (1) cache invalidation: 'This is exactly how we should handle invalidation — I'd love to see this pattern adopted in other services.' (2) Testing: 'These race condition tests are a great example of testing what matters, not just chasing coverage.' (3) Function naming: points out that these names make the code self-documenting. (4) PR description: 'The trade-off analysis in the PR description is really helpful — it makes the review much easier when I understand why alternatives were rejected.' Each praise implicitly sets an example for other developers. Praise isn't just about making the author feel good — it's about amplifying best practices"
+    weight: 0.35
+    description: "Reinforces patterns"
+  - type: llm_judge
+    criteria: "Guide makes praise practical and authentic — principles: (1) be specific (point to exact lines/functions, not 'good job'), (2) explain impact ('this will prevent production incidents' is more meaningful than 'nice'), (3) praise effort on hard problems (cache invalidation IS hard — acknowledge it), (4) don't force it (only praise what genuinely impresses you), (5) ratio: aim for at least one positive comment per review (not necessarily equal to negatives). When praise feels fake: it's because it's vague ('looks good!') or obligatory ('starting with something positive'). Authentic praise comes from recognizing genuine skill, effort, or thoughtfulness. Timing: start the review with what you noticed that's good, then move to improvements — sets collaborative tone. Impact: teams that balance positive and constructive feedback have faster PR turnaround and lower developer turnover"
+    weight: 0.30
+    description: "Practical praise guide"

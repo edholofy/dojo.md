@@ -1,0 +1,66 @@
+meta:
+  id: intermediate-debugging-shift
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Combined intermediate shift — handle module errors, state corruption, and lifecycle issues during a busy infrastructure day"
+  tags: [Terraform, troubleshooting, combined, shift-simulation, intermediate]
+
+state: {}
+
+trigger: |
+  Three issues hit your team today:
+
+  Issue 1 — Module version conflict:
+  ```
+  $ terraform init -upgrade
+
+  Error: Failed to query available provider packages
+
+  Module "vpc" (source: terraform-aws-modules/vpc/aws, version 5.5.0)
+  requires aws provider >= 5.30.0, but the root module constrains
+  aws to ~> 4.0.
+  ```
+  The VPC module was upgraded but the root module still pins an old
+  provider version.
+
+  Issue 2 — State file corruption:
+  ```
+  $ terraform plan
+
+  Error: Failed to load state: unsupported state file format
+
+  The state file could not be loaded. Terraform detected that the
+  state file is not a supported format.
+  ```
+  Someone manually edited the state file and introduced a JSON syntax
+  error.
+
+  Issue 3 — Unexpected resource replacement:
+  ```
+  $ terraform plan
+
+  # aws_db_instance.main must be replaced
+  -/+ resource "aws_db_instance" "main" {
+      ~ engine_version = "14.9" -> "14.11" # forces replacement
+    }
+  ```
+  Updating the PostgreSQL minor version triggers a full database
+  replacement (destroy + create) instead of an in-place upgrade!
+
+  Task: Diagnose and resolve all three issues with proper explanations
+  and preventive measures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Issue 1 (provider version conflict) is resolved — the module requires aws >= 5.30.0 but root constrains to ~> 4.0 (allows 4.x only). Fix options: (1) update root provider constraint to ~> 5.0 (breaking changes between v4 and v5 — review changelog), (2) pin module to an older version compatible with aws ~> 4.0, (3) gradually migrate by testing with aws ~> 5.0 in dev first. Prevention: use version ranges that allow updates (~> 5.0 not = 5.5.0), test module upgrades in non-prod first, terraform init -upgrade in CI to catch conflicts early"
+    weight: 0.35
+    description: "Version conflict"
+  - type: llm_judge
+    criteria: "Issue 2 (state corruption) is resolved — state file is JSON, manual edits can break it. Recovery: (1) if using S3 backend with versioning: restore previous version from S3 version history. (2) terraform state pull from backup. (3) If no backup: terraform import all resources again (last resort). Prevention: NEVER manually edit state files — use terraform state mv/rm/import commands. Enable S3 versioning on state bucket. Set up automated state backups. Use DynamoDB locking to prevent concurrent writes"
+    weight: 0.35
+    description: "State corruption"
+  - type: llm_judge
+    criteria: "Issue 3 (unexpected replacement) is resolved — some RDS parameter changes force replacement instead of in-place modification. The engine_version change: check AWS provider docs for which attributes force replacement. Fix options: (1) use allow_major_version_upgrade or apply_immediately for in-place upgrades, (2) check if the provider version has a bug (some versions incorrectly force replacement), (3) use lifecycle { ignore_changes = [engine_version] } and manage upgrades outside Terraform. Prevention: always review plan for -/+ changes, test infrastructure changes in dev before prod, pin exact engine versions and upgrade deliberately"
+    weight: 0.30
+    description: "Unexpected replacement"

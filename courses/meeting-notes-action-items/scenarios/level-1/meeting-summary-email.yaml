@@ -1,0 +1,49 @@
+meta:
+  id: meeting-summary-email
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Meeting summary email — write a concise follow-up email summarizing a meeting for attendees and stakeholders who couldn't attend"
+  tags: [summary, email, follow-up, distribution, beginner]
+
+state: {}
+
+trigger: |
+  You need to send a follow-up email after a cross-team
+  meeting about the upcoming product launch. The meeting
+  had 8 attendees but 3 key stakeholders couldn't make it
+  (the VP of Engineering, the Head of Customer Success, and
+  the PR Manager). Here are your meeting notes:
+
+  Attendees: Product (Kim, Lead), Engineering (Dev, Priya),
+  Marketing (Jason), Design (Nora), QA (Tony), Sales (Beth),
+  Support (Luis)
+
+  Key discussions:
+  - Launch date confirmed: March 15. No more delays.
+  - Engineering says the core features are ready but the
+    mobile app has 3 known bugs (none critical, all cosmetic).
+  - Marketing wants to do a soft launch to existing customers
+    first (March 15), then public launch (March 22).
+  - Sales needs updated pricing sheets by March 10.
+  - Support needs training on the new features by March 12.
+  - Design is finalizing launch page — draft ready March 8.
+  - QA will do a final regression test March 11-13.
+  - Risk: if the mobile bugs aren't fixed by March 13, the
+    mobile app launch may need to be delayed separately.
+
+  Task: Write the meeting summary follow-up email.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes an effective summary email — email structure (the email follows professional meeting summary format: clear subject line that includes the meeting topic and key outcome — something like 'Product Launch Planning — March 15 Confirmed'; recipients — attendees in To, the 3 absent stakeholders in CC or noted as FYI recipients; the email opens with the single most important takeaway: launch date confirmed March 15; body organized with clear sections: key decisions, timeline, action items, risks; the email is concise — someone should be able to read it in 2 minutes), content prioritization (leads with what matters most: the confirmed launch date is the headline; the two-phase launch strategy (soft March 15, public March 22) is the key strategic decision; critical dates are highlighted: March 8, 10, 11-13, 12, 15, 22; the risk about mobile bugs is clearly communicated — this might affect the absent VP of Engineering; the summary doesn't include every detail discussed — it focuses on decisions, dates, and actions)."
+    weight: 0.35
+    description: "EmailStructure"
+  - type: llm_judge
+    criteria: "Response includes clear action items and timeline — action items in email (each action item is clearly stated: Nora/Design — launch page draft by March 8; Beth/Sales — needs updated pricing sheets by March 10; Dev, Priya/Engineering — fix 3 mobile cosmetic bugs by March 13; QA/Tony — final regression test March 11-13; Luis/Support — needs feature training by March 12; Marketing/Jason — execute soft launch March 15, public launch March 22; the action items include who, what, and when; the timeline is presented chronologically so readers can see the sequence), stakeholder awareness (addresses the absent stakeholders' needs: VP of Engineering — needs to know about the mobile bugs risk and the March 13 deadline; Head of Customer Success — needs to know about the soft launch strategy for existing customers first; PR Manager — needs to know about the two-phase launch dates for PR planning; the email either addresses these directly or ensures the information is prominent enough that they'll notice)."
+    weight: 0.35
+    description: "ActionsAndTimeline"
+  - type: llm_judge
+    criteria: "Response handles risks and next steps — risk communication (the mobile bug risk is clearly communicated: if 3 cosmetic bugs aren't fixed by March 13, mobile app launch may be delayed; this is flagged as a risk, not buried in the body; the VP of Engineering (absent from the meeting) needs to see this and potentially take action), next steps (the email closes with clear next steps: when is the next meeting or check-in; who should reach out if they have questions or concerns; the email invites the absent stakeholders to flag any issues with the plan; the tone is professional, action-oriented, and appropriately urgent without being alarmist)."
+    weight: 0.30
+    description: "RisksAndNextSteps"

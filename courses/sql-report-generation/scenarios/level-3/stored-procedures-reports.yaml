@@ -1,0 +1,35 @@
+meta:
+  id: stored-procedures-reports
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Build report stored procedures — encapsulate complex report logic with parameters, error handling, and logging for production reporting"
+  tags: [SQL, stored-procedures, functions, production, error-handling, advanced]
+
+state: {}
+
+trigger: |
+  The weekly revenue report is a 200-line SQL query that an analyst
+  copies, updates the date parameters, runs manually, and exports.
+  This process is error-prone — last week the analyst used the wrong
+  date range and the CFO presented incorrect numbers.
+
+  The data engineering manager says: "Wrap this in a stored procedure.
+  It should accept a date range, validate inputs, log execution,
+  handle errors, and return formatted results. No more copy-paste."
+
+  Task: Convert the ad-hoc query into a production stored procedure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code creates a stored procedure with parameters, validation, and error handling — procedure: 'Production stored procedure: PostgreSQL function: CREATE OR REPLACE FUNCTION generate_revenue_report(p_start_date DATE, p_end_date DATE, p_region TEXT DEFAULT NULL) RETURNS TABLE (region TEXT, category TEXT, total_orders BIGINT, total_revenue NUMERIC, avg_order_value NUMERIC, pct_of_total NUMERIC) LANGUAGE plpgsql AS $$ DECLARE v_total_revenue NUMERIC; v_start_time TIMESTAMP := clock_timestamp(); BEGIN IF p_start_date IS NULL OR p_end_date IS NULL THEN RAISE EXCEPTION 'Start date and end date are required'; END IF; IF p_end_date < p_start_date THEN RAISE EXCEPTION 'End date (%) must be after start date (%)', p_end_date, p_start_date; END IF; IF p_end_date - p_start_date > 366 THEN RAISE EXCEPTION 'Date range cannot exceed 1 year'; END IF; SELECT SUM(amount) INTO v_total_revenue FROM orders WHERE order_date BETWEEN p_start_date AND p_end_date AND status = 'completed'; IF v_total_revenue IS NULL OR v_total_revenue = 0 THEN RAISE NOTICE 'No revenue data for period % to %', p_start_date, p_end_date; RETURN; END IF; INSERT INTO report_execution_log (report_name, parameters, started_at) VALUES ('revenue_report', jsonb_build_object('start', p_start_date, 'end', p_end_date, 'region', p_region), v_start_time); RETURN QUERY SELECT o.region, p.category, COUNT(*)::BIGINT, ROUND(SUM(o.amount), 2), ROUND(AVG(o.amount), 2), ROUND(SUM(o.amount) * 100.0 / v_total_revenue, 1) FROM orders o JOIN products p ON o.product_id = p.product_id WHERE o.order_date BETWEEN p_start_date AND p_end_date AND o.status = 'completed' AND (p_region IS NULL OR o.region = p_region) GROUP BY o.region, p.category ORDER BY SUM(o.amount) DESC; UPDATE report_execution_log SET completed_at = clock_timestamp(), duration_ms = EXTRACT(EPOCH FROM clock_timestamp() - v_start_time) * 1000 WHERE report_name = 'revenue_report' AND started_at = v_start_time; EXCEPTION WHEN OTHERS THEN INSERT INTO report_error_log (report_name, error_message, error_detail, occurred_at) VALUES ('revenue_report', SQLERRM, SQLSTATE, clock_timestamp()); RAISE; END; $$. Usage: SELECT * FROM generate_revenue_report('2024-10-01', '2024-10-31'); SELECT * FROM generate_revenue_report('2024-10-01', '2024-10-31', 'West')'"
+    weight: 0.35
+    description: "Procedure"
+  - type: llm_judge
+    criteria: "Response covers SQL Server equivalent and testing strategy — testing: 'SQL Server stored procedure: CREATE PROCEDURE sp_RevenueReport @StartDate DATE, @EndDate DATE, @Region NVARCHAR(50) = NULL AS BEGIN SET NOCOUNT ON; BEGIN TRY IF @StartDate IS NULL OR @EndDate IS NULL THROW 50001, 'Start and end dates are required', 1; IF @EndDate < @StartDate THROW 50002, 'End date must be after start date', 1; DECLARE @TotalRevenue DECIMAL(18,2); SELECT @TotalRevenue = SUM(amount) FROM orders WHERE order_date BETWEEN @StartDate AND @EndDate AND status = 'completed'; INSERT INTO report_execution_log (report_name, parameters, started_at) VALUES ('revenue_report', CONCAT('start=', @StartDate, ',end=', @EndDate, ',region=', ISNULL(@Region, 'ALL')), GETDATE()); SELECT o.region, p.category, COUNT(*) AS total_orders, SUM(o.amount) AS total_revenue, ROUND(AVG(o.amount), 2) AS avg_order_value, ROUND(SUM(o.amount) * 100.0 / @TotalRevenue, 1) AS pct_of_total FROM orders o JOIN products p ON o.product_id = p.product_id WHERE o.order_date BETWEEN @StartDate AND @EndDate AND o.status = 'completed' AND (@Region IS NULL OR o.region = @Region) GROUP BY o.region, p.category ORDER BY SUM(o.amount) DESC; END TRY BEGIN CATCH INSERT INTO report_error_log VALUES ('revenue_report', ERROR_MESSAGE(), ERROR_NUMBER(), GETDATE()); THROW; END CATCH END. Testing the stored procedure: Test 1 — Normal execution: EXEC sp_RevenueReport '2024-10-01', '2024-10-31'. Verify row count and total revenue match a manual query. Test 2 — With region filter: EXEC sp_RevenueReport '2024-10-01', '2024-10-31', 'West'. Verify only West region rows are returned. Test 3 — Invalid dates: EXEC sp_RevenueReport '2024-10-31', '2024-10-01'. Verify error is thrown with clear message. Test 4 — Empty date range: EXEC sp_RevenueReport '2099-01-01', '2099-01-31'. Verify graceful handling (no data). Test 5 — Check execution log: SELECT * FROM report_execution_log ORDER BY started_at DESC LIMIT 5'"
+    weight: 0.35
+    description: "Testing"
+  - type: llm_judge
+    criteria: "Explanation covers when to use procedures vs views vs CTEs — comparison: 'Procedures vs views vs CTEs: Stored procedures — use when: complex logic with validation and error handling. Multiple output formats from the same logic. Audit trail of report executions needed. Parameters control behavior (date range, filters). Scheduled execution via database scheduler. Views — use when: the report is a fixed query without parameters. Multiple consumers query the same logic. You want to abstract table structure from users. CREATE VIEW v_monthly_revenue AS SELECT .... Materialized views — use when: the query is expensive and data changes infrequently. Consumers need fast read performance. Stale data (hours old) is acceptable. CTEs — use when: building ad-hoc analysis with logical steps. The query is used once (not reused across reports). You want readability without creating database objects. Progression path: start with CTEs for prototyping. If the query is reused, promote to a view. If it needs parameters, promote to a function/procedure. If it needs scheduling, add to the job scheduler. The analyst's copy-paste workflow was essentially a stored procedure without the safety features. The production procedure adds: input validation, error handling, execution logging, consistent results, and no risk of wrong parameters'"
+    weight: 0.30
+    description: "Comparison"

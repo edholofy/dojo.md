@@ -1,0 +1,40 @@
+meta:
+  id: first-analysis-shift
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "First analysis shift — complete an end-to-end data analysis task from loading raw data to delivering business insights"
+  tags: [python, pandas, end-to-end, analysis, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  It is your first day as a data analyst. Your manager hands you
+  a CSV file and says:
+
+  "Here is last quarter's sales data — 10,000 transactions. I need
+  a summary for the team meeting in 2 hours. Tell me:
+  1. Total revenue and number of orders
+  2. Which region performed best and worst?
+  3. What are our top 5 products by revenue?
+  4. Are there any data quality issues I should know about?
+  5. One chart that tells the most important story."
+
+  The CSV file is `q4_sales.csv` with columns: date, product_name,
+  category, quantity, unit_price, region, customer_id.
+
+  Task: Complete the full analysis and prepare the summary.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis follows a logical workflow from loading through insight delivery — workflow: 'End-to-end analysis workflow: Step 1 — Load and inspect: import pandas as pd. import matplotlib.pyplot as plt. df = pd.read_csv(\"q4_sales.csv\", parse_dates=[\"date\"]). print(f\"Shape: {df.shape}\"). print(f\"Date range: {df[\"date\"].min()} to {df[\"date\"].max()}\"). print(f\"Missing values: {df.isnull().sum().sum()}\"). df.info(). Step 2 — Clean: df[\"customer_id\"] = df[\"customer_id\"].astype(str). df[\"unit_price\"] = df.groupby(\"product_name\")[\"unit_price\"].transform(lambda x: x.fillna(x.median())). df = df.dropna(subset=[\"product_name\"]). df[\"revenue\"] = df[\"quantity\"] * df[\"unit_price\"]. print(f\"Rows after cleaning: {len(df)}\"). print(f\"Missing values remaining: {df.isnull().sum().sum()}\"). Step 3 — Answer the questions: Q1 — Total revenue and orders: total_revenue = df[\"revenue\"].sum(). total_orders = len(df). avg_order = df[\"revenue\"].mean(). print(f\"Total Revenue: ${total_revenue:,.2f}\"). print(f\"Total Orders: {total_orders:,}\"). print(f\"Average Order Value: ${avg_order:,.2f}\"). Q2 — Best and worst region: region_summary = (df.groupby(\"region\").agg(revenue=(\"revenue\", \"sum\"), orders=(\"revenue\", \"count\"), avg_order=(\"revenue\", \"mean\")).sort_values(\"revenue\", ascending=False)). print(\"\\nRevenue by Region:\"). for region, row in region_summary.iterrows(): print(f\"  {region}: ${row[\"revenue\"]:,.0f} ({row[\"orders\"]} orders)\"). best = region_summary.index[0]. worst = region_summary.index[-1]. print(f\"\\nBest: {best}, Worst: {worst}\"). Q3 — Top 5 products: top_products = (df.groupby(\"product_name\")[\"revenue\"].sum().nlargest(5)). print(\"\\nTop 5 Products by Revenue:\"). for product, rev in top_products.items(): print(f\"  {product}: ${rev:,.0f}\"). Q4 — Data quality issues: issues = []. if df.isnull().any().any(): issues.append(f\"Missing values found in: {df.columns[df.isnull().any()].tolist()}\"). if (df[\"quantity\"] <= 0).any(): issues.append(f\"Non-positive quantities: {(df[\"quantity\"] <= 0).sum()} rows\"). if (df[\"unit_price\"] <= 0).any(): issues.append(f\"Non-positive prices: {(df[\"unit_price\"] <= 0).sum()} rows\"). duplicates = df.duplicated().sum(). if duplicates > 0: issues.append(f\"Duplicate rows: {duplicates}\"). print(\"\\nData Quality Issues:\"). for issue in issues: print(f\"  - {issue}\"). if not issues: print(\"  No issues found.\"). Q5 — The most important chart: fig, ax = plt.subplots(figsize=(10, 5)). daily_revenue = df.groupby(\"date\")[\"revenue\"].sum(). daily_revenue.plot(ax=ax, color=\"lightsteelblue\", linewidth=1, label=\"Daily\"). daily_revenue.rolling(7).mean().plot(ax=ax, color=\"steelblue\", linewidth=2, label=\"7-day avg\"). ax.set_title(\"Q4 Daily Revenue Trend\", fontsize=14). ax.set_ylabel(\"Revenue ($)\"). ax.legend(). ax.spines[\"top\"].set_visible(False). ax.spines[\"right\"].set_visible(False). plt.tight_layout(). plt.savefig(\"q4_revenue_trend.png\", dpi=150). plt.show(). Why this chart: the revenue trend is the most important story because it shows whether the business is growing, stable, or declining. The 7-day moving average reveals the underlying trend without daily noise'"
+    weight: 0.35
+    description: "Workflow"
+  - type: llm_judge
+    criteria: "Summary is presented in a manager-friendly format, not just code output — summary: 'Manager-ready summary: Q4 Sales Summary (prepared for the team meeting): Overview: total revenue: $X (10,000 transactions). Average order value: $Y. Date range: October 1 - December 31. Regional Performance: Best: West region ($X — Z% of total revenue). Worst: North region ($X — Z% of total revenue). The West region outperforms the North by X%. Recommend investigating what drives West's success (larger customer base? Higher prices? More orders?). Top 5 Products: (listed with revenue and percentage of total). These 5 products account for X% of total revenue (Pareto principle — a small number of products drive most revenue). Data Quality: X missing product names (removed — negligible impact). Y missing prices (filled with product median — standard approach). No duplicate transactions detected. Z negative quantities found (flagged for investigation — may be returns). Recommendation: the daily revenue trend shows [growth/stability/decline]. [If growth]: strong Q4 performance, likely driven by [holiday season/new products/specific region]. [If decline]: revenue declining in the last 3 weeks of Q4 — investigate if this is seasonal or a trend that continues into Q1. Key takeaway: one sentence that captures the most important insight from the data. This is what the manager will remember and repeat to their manager'"
+    weight: 0.35
+    description: "Summary"
+  - type: llm_judge
+    criteria: "Analysis includes validation and sanity checks throughout — validation: 'Sanity checks throughout the analysis: After loading: does the row count match expectations (10,000)? Does the date range cover Q4 (Oct-Dec)? Are there dates outside Q4 (data error)? After cleaning: how many rows were removed? (Should be negligible — if you removed 20% of data, something is wrong.) Does total revenue make sense? (If average order is $50 and there are 10,000 orders, total should be around $500,000. If it shows $50 million, there is a calculation error.) After aggregation: do the regional totals sum to the overall total? (A quick df.groupby(\"region\")[\"revenue\"].sum().sum() == df[\"revenue\"].sum() check.) Do the percentages add up to approximately 100%? After visualization: does the chart tell a story that makes sense? (If daily revenue shows a spike to $1M on one day when the average is $5K, that is probably a data error, not a real spike.) The goal of sanity checks: catch errors before your manager does. It is much better to say I found and corrected an issue than to have your manager say this number does not look right'"
+    weight: 0.30
+    description: "Validation"

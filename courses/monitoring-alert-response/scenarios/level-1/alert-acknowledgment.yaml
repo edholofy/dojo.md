@@ -1,0 +1,41 @@
+meta:
+  id: alert-acknowledgment
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Acknowledge and communicate alert status — properly acknowledge alerts and communicate your response status to the team"
+  tags: [monitoring, acknowledgment, communication, on-call, beginner]
+
+state: {}
+
+trigger: |
+  You just received a SEV-2 alert: "API error rate > 5% on
+  user-service for 10 minutes." You're the primary on-call engineer.
+
+  Your team uses PagerDuty for alerting, Slack for communication,
+  and has a #incidents channel. Your on-call buddy (secondary) is
+  in a different timezone and currently sleeping.
+
+  You need to:
+  1. Acknowledge the alert properly
+  2. Communicate to your team what is happening
+  3. Decide whether to wake up your secondary
+
+  Task: Write out exactly what you would do in the first 10 minutes
+  after receiving this alert. Include the specific messages you
+  would post in Slack and the criteria you would use to decide on
+  escalation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert acknowledgment is immediate and proper — minute 0-2: 'Acknowledge the alert in PagerDuty immediately. This does three things: (1) stops the escalation timer (your secondary will not be paged unnecessarily), (2) signals to the team that someone is aware and responding, (3) starts the clock on your response time metric.' Minute 2-5: 'Post in #incidents channel. First message should be brief and informative: Investigating: API error rate > 5% on user-service. Alert firing for 10 minutes. I am looking at it now. This message: names the problem, indicates you are actively working on it, and sets expectations (no resolution yet, investigation in progress).' Communication format: 'Use a structured format: Status: Investigating. Alert: API error rate > 5% on user-service. Duration: 10 minutes and counting. Impact: checking now. Next update: 10 minutes.' Why this matters: 'If you do not acknowledge and communicate, three bad things happen: (1) your secondary gets woken up unnecessarily, (2) other team members see the alert and do not know if anyone is handling it, (3) there is no record of when you started responding'"
+    weight: 0.35
+    description: "Proper acknowledgment"
+  - type: llm_judge
+    criteria: "Investigation steps and status updates are well-structured — minute 5-10 investigation: 'Check the monitoring dashboard for user-service: (1) Is the error rate still climbing, stable, or recovering? This determines urgency. (2) What type of errors? 500s (server errors) vs. 502/503 (upstream/availability) vs. 429 (rate limiting) — each points to a different cause. (3) Did anything change recently? Check the deployment timeline — was there a recent deploy? (4) Is this affecting all endpoints or specific ones? A single broken endpoint is easier to mitigate than a systemic issue.' 10-minute update in Slack: 'Update: error rate is [stable/climbing/recovering]. Errors are [type]. Appears to be [initial assessment]. Checking [next investigation step]. No customer reports yet. Will update in 10 minutes or sooner if situation changes.' Key communication principles: 'Always include: what you know, what you do not know, and when you will update next. Never go silent — even if you have nothing new, post I am still investigating. No new information yet. Next update in 10 minutes. Silence during an incident creates anxiety and triggers others to jump in, creating confusion'"
+    weight: 0.35
+    description: "Structured investigation and updates"
+  - type: llm_judge
+    criteria: "Escalation decision criteria are clear and reasonable — when to wake up the secondary: 'Escalate (wake up secondary) if any of these are true: (1) The error rate is climbing (getting worse, not stable or recovering). (2) You have been investigating for 15+ minutes with no diagnosis. (3) The issue requires expertise you do not have (e.g., database issue and you are a frontend engineer). (4) Customer impact is confirmed and growing. (5) You need to make a risky mitigation decision (rollback, failover) and want a second opinion.' When NOT to escalate: '(1) The error rate is stable or declining — you have time to investigate. (2) You have identified the cause and a mitigation plan. (3) The issue is in a non-critical path and customer impact is minimal.' How to escalate: 'If you decide to escalate, page the secondary through PagerDuty (not a Slack DM — they may not see Slack). Include context: Paging you for SEV-2 on user-service. Error rate > 5% for 20 minutes and climbing. I have checked [X, Y, Z]. Need help with [specific ask]. Provide what you have already checked so they do not repeat your work.' Escalation is not failure: 'Escalating to your secondary is a good decision when warranted. It is better to wake someone up and resolve the issue in 30 minutes than to struggle alone for 2 hours while customers are affected'"
+    weight: 0.30
+    description: "Escalation criteria"

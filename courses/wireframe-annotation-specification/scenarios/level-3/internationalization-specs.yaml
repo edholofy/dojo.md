@@ -1,0 +1,45 @@
+meta:
+  id: internationalization-specs
+  level: 3
+  course: wireframe-annotation-specification
+  type: output
+  description: "Internationalization specifications — annotate wireframes for multi-language support, RTL layouts, locale-specific formatting, and content expansion"
+  tags: [i18n, internationalization, RTL, localization, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "Our product is expanding to
+  6 new markets: Germany, Japan, Saudi Arabia, Brazil,
+  France, and South Korea. Engineering needs specs for
+  how the UI handles:
+
+  - Text that expands 30-40% in German translation
+  - Right-to-left (RTL) layout for Arabic
+  - Different date/number/currency formats per locale
+  - Character sets (Latin, CJK, Arabic)
+  - Content that doesn't translate (proper nouns, codes)
+
+  The localization team says: 'Designers never account
+  for text expansion. Buttons overflow, layouts break,
+  and truncation looks terrible in German.'
+
+  How do I annotate wireframes for internationalization?"
+
+  Task: Write internationalization-aware wireframe
+  specifications covering layout adaptation, text
+  expansion, RTL support, and locale formatting.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies text expansion and layout adaptation — text expansion budgets (buttons: allow 40% expansion, use min-width not fixed width, German 'Submit' → 'Absenden' fits but 'Settings' → 'Einstellungen' needs wider button), content containers (use flexible height for text blocks, specify max-width with text-overflow: ellipsis for constrained areas, tooltip shows full text on truncation), navigation labels (test with longest translation, hamburger menu fallback if labels exceed container), heading specifications (H1 allows 2 lines on mobile for longer translations, line-height accommodates ascenders/descenders in all scripts), and dynamic layout (cards with text grow vertically not horizontally, table columns use percentage widths not fixed pixels, form labels above inputs not beside — prevents misalignment with long labels)"
+    weight: 0.35
+    description: "TextExpansionLayout"
+  - type: llm_judge
+    criteria: "Response specifies RTL layout and bidirectional support — layout mirroring (navigation moves to right side, back arrows point right, progress bars fill right-to-left, sidebar switches sides, form fields right-aligned), elements that do NOT mirror (media playback controls stay LTR, phone numbers stay LTR, code snippets stay LTR, logos stay in original position, sliders like volume stay LTR), bidirectional text handling (mixed content: 'Order #12345 confirmed' — number stays LTR within RTL sentence, email addresses and URLs remain LTR), icon mirroring (directional icons mirror: arrows, reply, undo — non-directional icons stay: search, settings, home), and CSS annotation (specify logical properties: margin-inline-start instead of margin-left, use dir='rtl' attribute, text-align: start instead of text-align: left)"
+    weight: 0.35
+    description: "RTLBidirectional"
+  - type: llm_judge
+    criteria: "Response covers locale-specific formatting and content strategy — date formats (US: MM/DD/YYYY, Germany: DD.MM.YYYY, Japan: YYYY/MM/DD, annotate that dates use locale-aware formatting not hardcoded), number formats (US: 1,234.56, Germany: 1.234,56, specify decimal and thousands separators follow locale), currency display (symbol position varies: $100 vs 100€ vs ¥100, specify currency code for ambiguous symbols), content that doesn't translate (product codes, usernames, technical identifiers marked as 'do not localize'), character set considerations (CJK characters need more line-height, Arabic needs different font stack, specify font fallback chain per script), and annotation format (wireframes include locale indicator showing which locale is displayed, with callouts for locale-dependent elements)"
+    weight: 0.30
+    description: "LocaleFormatting"

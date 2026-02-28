@@ -1,0 +1,42 @@
+meta:
+  id: getting-started-guide
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Write a getting started guide — create a quickstart that takes developers from zero to first successful API call in minutes"
+  tags: [API, documentation, getting-started, quickstart, onboarding, beginner]
+
+state: {}
+
+trigger: |
+  Your API has comprehensive reference documentation but developers
+  still struggle to get started. Analytics show:
+  - Average time to first API call: 45 minutes
+  - 60% of developers never make a second call
+  - Top search query: "how to get started"
+  - Support tickets: "I don't know where to begin"
+
+  The API is a payment processing API (like Stripe). Key flows:
+  1. Create account → get API key
+  2. Create a customer
+  3. Create a payment method
+  4. Charge the customer
+
+  Task: Write a getting started guide that takes a developer from
+  zero to their first successful payment in under 10 minutes.
+  Include: prerequisites, step-by-step instructions with curl
+  examples, expected output at each step, and next steps.
+
+assertions:
+  - type: llm_judge
+    criteria: "Guide has clear structure and flow — starts with: what you'll build (outcome), prerequisites (account, API key, curl/Postman), estimated time (10 minutes). Steps numbered and sequential: (1) get your API key, (2) make your first call (simple GET to verify auth works), (3) create a customer, (4) add a payment method, (5) charge the customer. Each step has: what you'll do, curl command, expected response, what to note from the response (e.g., 'save the customer_id for the next step')"
+    weight: 0.35
+    description: "Clear structure"
+  - type: llm_judge
+    criteria: "Examples are copy-paste ready — curl commands that work out of the box (just replace API key). Use test/sandbox mode API key (no real charges). Full command with headers, body, and expected output. Each step's output feeds into the next step (customer_id from step 3 used in step 4). Environment setup: 'export API_KEY=your_key_here' at the start, then reference $API_KEY in all commands. Highlight values that developers need to copy from one step to the next"
+    weight: 0.35
+    description: "Copy-paste ready"
+  - type: llm_judge
+    criteria: "Onboarding experience is optimized — progressive complexity: start with simplest possible call, add complexity gradually. Success validation at each step: 'You should see a response with status 200 and...' Troubleshooting inline: 'If you see 401, check that your API key is correct.' End with: what you built, next steps (link to specific guides for production setup, webhooks, error handling). Call to action: 'Ready for production? Read our Production Checklist.' Don't overwhelm: guide covers one happy path, not every option"
+    weight: 0.30
+    description: "Optimized onboarding"

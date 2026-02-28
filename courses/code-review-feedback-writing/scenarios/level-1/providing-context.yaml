@@ -1,0 +1,46 @@
+meta:
+  id: providing-context
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Provide context in comments — write review comments that include enough background for the author to understand the issue without additional back-and-forth"
+  tags: [code-review, context, explanation, self-contained, beginner]
+
+state: {}
+
+trigger: |
+  You review a lot of code and notice a pattern: your comments
+  generate multiple rounds of "What do you mean?" replies. Examples
+  of your low-context comments:
+
+  - "This won't scale" (at what load? why?)
+  - "Use the helper for this" (which helper? where?)
+  - "This conflicts with the RFC" (which RFC? which section?)
+  - "We had a bug like this before" (when? what happened?)
+  - "This pattern is discouraged" (by whom? documented where?)
+
+  You're reviewing a PR that adds a new user search endpoint. Issues:
+  1. The search uses LIKE '%term%' on a 10M row table
+  2. The response doesn't include pagination
+  3. The endpoint path is GET /searchUsers instead of GET /users/search
+  4. A race condition exists between checking and updating user count
+  5. The error response format differs from all other endpoints
+
+  Task: Write high-context review comments for each issue. Each
+  comment should be self-contained — the author shouldn't need to
+  ask follow-up questions or look anything up to understand the
+  comment and act on it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each comment provides complete context — (1) LIKE query: explain that '%term%' prevents index usage on a 10M row table, expected response time will be 5-10 seconds, suggest full-text search index or Elasticsearch, link to your team's search pattern documentation if applicable. (2) Pagination: 'Our API standard returns paginated responses for list endpoints (see /api/v1/orders as an example). Without pagination, a search returning 50K results would timeout and consume excessive memory. Suggest cursor-based pagination matching our existing pattern.' (3) URL path: 'Our API follows RESTful conventions — resources as nouns, actions via HTTP methods. GET /users/search follows our existing pattern (see GET /products/search). The style guide is at [link].' (4) Race condition: explain the specific sequence of operations that causes the race, show which concurrent requests trigger it, suggest the fix (transaction, atomic operation, or optimistic locking). (5) Error format: show the standard format with example, point to the shared error utility function"
+    weight: 0.35
+    description: "Complete context"
+  - type: llm_judge
+    criteria: "Comments include references and evidence — each comment links to relevant documentation, code examples, or precedent. 'We use cursor-based pagination — see OrdersController.ts:45 for the pattern.' 'The REST naming convention is documented in our style guide: [URL].' 'We had a similar LIKE query performance issue in PR #1234 — the fix was adding a GIN index.' Evidence makes comments authoritative, not just opinion. Numbers where applicable: '10M rows means this query will do a full table scan taking ~8 seconds.' Specific file paths, function names, and line numbers rather than vague references to 'the existing pattern'"
+    weight: 0.35
+    description: "References and evidence"
+  - type: llm_judge
+    criteria: "Comments eliminate need for follow-up — each comment answers: what's the problem, why it matters, what's the fix, and where to look for examples. The author can implement the fix without asking a single follow-up question. Test: read each comment as if you're a new developer on the team — could you fix the issue based only on this comment? If not, more context is needed. Include: before/after code snippets where helpful, links to relevant documentation, similar patterns in the codebase. The goal: one round of review, not three rounds of clarification. Time investment: spending 2 extra minutes writing a high-context comment saves 30 minutes of back-and-forth"
+    weight: 0.30
+    description: "Eliminates follow-up"

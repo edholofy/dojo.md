@@ -1,0 +1,41 @@
+meta:
+  id: navigation-flow-annotations
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "Navigation flow annotations — annotate user flows showing navigation paths, screen transitions, and back button behavior"
+  tags: [navigation, user-flows, transitions, routing, beginner]
+
+state: {}
+
+trigger: |
+  A junior designer says: "I have a 5-screen checkout flow:
+
+  1. Cart → 2. Shipping → 3. Payment → 4. Review → 5. Confirmation
+
+  I annotated each screen individually but my developer says
+  I'm missing the flow between screens:
+  - 'What happens when I click Back on the Payment screen?'
+  - 'Can users jump to the Cart from the Review screen?'
+  - 'What happens if I navigate away mid-checkout?'
+  - 'Does the browser back button work?'
+  - 'What if I deep-link to step 3 without completing step 2?'
+
+  How do I annotate the navigation between screens?"
+
+  Task: Write navigation flow annotations for the checkout
+  flow covering all transition scenarios.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response annotates the linear flow and back navigation — forward flow: each step's 'Continue' button target and pre-conditions (Step 2 requires valid shipping address, Step 3 requires shipping method selected). Back navigation: 'Back' button on each screen returns to previous step with data preserved (user doesn't re-enter information). Browser back button behavior (should mirror the 'Back' button, not break the flow). Progress indicator behavior (shows current step, completed steps are clickable to return, future steps are locked). Each transition specifies: trigger, destination, data preservation, and URL change (if applicable)"
+    weight: 0.35
+    description: "LinearFlowAnnotation"
+  - type: llm_judge
+    criteria: "Response handles non-linear navigation and edge cases — step jumping (can users click Step 1 in the progress bar from Step 4? Yes for completed steps, No for future steps), abandonment (navigating away mid-checkout: save cart but not form data, or save everything?), deep linking (direct URL to Step 3: redirect to Step 1 if prerequisites not met), session expiration (checkout times out after 30 minutes of inactivity: show warning at 25 minutes), and cart modification (if user goes back to Cart and removes an item, what happens to shipping and payment selections?). Each edge case has a clear specified behavior"
+    weight: 0.35
+    description: "EdgeCaseNavigation"
+  - type: llm_judge
+    criteria: "Response uses clear flow annotation format — flow diagram or structured notation showing screen-to-screen transitions (Screen A → [trigger] → Screen B), URL structure for each step (/checkout/cart, /checkout/shipping, /checkout/payment, /checkout/review, /checkout/confirmation), page title for each step (for browser tab and accessibility), and transition animation (slide left for forward, slide right for back, or simple page load). Includes annotation for the Confirmation screen: can't go back, refreshing doesn't create duplicate orders, 'Continue Shopping' link"
+    weight: 0.30
+    description: "FlowFormat"

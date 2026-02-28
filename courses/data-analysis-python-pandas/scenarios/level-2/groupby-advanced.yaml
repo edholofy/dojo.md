@@ -1,0 +1,37 @@
+meta:
+  id: groupby-advanced
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Advanced groupby operations — use transform, apply with groups, multiple aggregations, and group filtering"
+  tags: [python, pandas, groupby, transform, apply, aggregation, intermediate]
+
+state: {}
+
+trigger: |
+  Your analysis requires more sophisticated groupby operations:
+
+  1. "For each product, calculate the percentage of total revenue
+     it contributes." (requires transform)
+  2. "Show me only regions where total revenue exceeds $100K."
+     (requires filter)
+  3. "Within each category, rank products by revenue." (requires
+     transform with rank)
+  4. "Calculate the rolling 3-order average revenue per customer."
+     (requires groupby + rolling)
+
+  Task: Write the advanced groupby code for each question.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly uses transform, filter, and group-wise operations — code: 'Advanced groupby operations: Question 1 — Percentage of total using transform: total_revenue = df.groupby(\"product_name\")[\"revenue\"].transform(\"sum\"). df[\"revenue_pct\"] = (df[\"revenue\"] / df[\"revenue\"].sum() * 100).round(2). Or for percentage within a group (e.g., percentage of category total): category_total = df.groupby(\"category\")[\"revenue\"].transform(\"sum\"). df[\"pct_of_category\"] = (df[\"revenue\"] / category_total * 100).round(2). Key: transform returns a Series with the same index as the original DataFrame. This means you can add the group statistic back as a column without changing the DataFrame's shape. transform vs agg: agg returns one row per group (reduces). transform returns the same number of rows (broadcasts the group result back). Question 2 — Filter groups: high_revenue_regions = df.groupby(\"region\").filter(lambda g: g[\"revenue\"].sum() > 100000). filter returns only the rows belonging to groups that satisfy the condition. The entire group is kept or discarded (you cannot filter individual rows within a group). Alternative (often clearer): region_totals = df.groupby(\"region\")[\"revenue\"].sum(). big_regions = region_totals[region_totals > 100000].index. df_filtered = df[df[\"region\"].isin(big_regions)]. Question 3 — Rank within groups: df[\"rank_in_category\"] = df.groupby(\"category\")[\"revenue\"].rank(ascending=False, method=\"dense\").astype(int). This ranks products by revenue within each category. dense ranking: 1, 2, 3 (no gaps for ties). To get the top 3 per category: top3_per_category = df[df[\"rank_in_category\"] <= 3]. Or using nlargest within groups: top3 = df.groupby(\"category\").apply(lambda g: g.nlargest(3, \"revenue\")).reset_index(drop=True). Question 4 — Groupby with rolling: df = df.sort_values([\"customer_id\", \"order_date\"]). df[\"rolling_avg_3\"] = (df.groupby(\"customer_id\")[\"revenue\"].transform(lambda x: x.rolling(3, min_periods=1).mean())). This calculates a 3-order rolling average for each customer independently. sort_values is critical — rolling operates on row order, so orders must be chronologically sorted within each customer group'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation teaches when to use transform vs agg vs apply in groupby context — explanation: 'Transform vs agg vs apply — choosing the right method: agg (aggregate): reduces each group to a single value. Output: one row per group. Use for: summary tables, reporting. Example: df.groupby(\"region\")[\"revenue\"].agg([\"sum\", \"mean\", \"count\"]). transform: broadcasts a group-level computation back to each row. Output: same shape as input. Use for: adding group statistics as new columns, normalizing within groups, calculating percentages of group totals. Example: df[\"group_mean\"] = df.groupby(\"region\")[\"revenue\"].transform(\"mean\"). Now every row in the West region has the West average in the group_mean column. apply: the most flexible — applies any function to each group. Output: depends on the function (can reduce, transform, or filter). Use for: complex operations that cannot be expressed with agg or transform. Example: df.groupby(\"region\").apply(lambda g: g.nlargest(5, \"revenue\")). Warning: apply is slower than agg and transform. Use it only when the others cannot do what you need. Decision tree: need a summary table? Use agg. Need to add a group statistic as a column? Use transform. Need complex group-wise logic? Use apply. Named aggregation — the cleanest syntax: summary = df.groupby(\"region\").agg(total_revenue=(\"revenue\", \"sum\"), avg_revenue=(\"revenue\", \"mean\"), order_count=(\"order_id\", \"count\"), unique_customers=(\"customer_id\", \"nunique\"), top_product=(\"product_name\", lambda x: x.value_counts().index[0])). Named aggregation produces clean column names and allows mixing different columns and functions in a single call'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers practical groupby patterns for business analysis — patterns: 'Business analysis patterns with groupby: Pattern 1 — Cohort analysis (customer retention): df[\"cohort_month\"] = df.groupby(\"customer_id\")[\"order_date\"].transform(\"min\").dt.to_period(\"M\"). df[\"order_month\"] = df[\"order_date\"].dt.to_period(\"M\"). df[\"months_since_first\"] = (df[\"order_month\"] - df[\"cohort_month\"]).apply(lambda x: x.n). cohort_table = df.groupby([\"cohort_month\", \"months_since_first\"])[\"customer_id\"].nunique().unstack(). This creates a retention table showing how many customers from each cohort are active in subsequent months. Pattern 2 — RFM analysis (Recency, Frequency, Monetary): rfm = df.groupby(\"customer_id\").agg(recency=(\"order_date\", lambda x: (pd.Timestamp.now() - x.max()).days), frequency=(\"order_id\", \"count\"), monetary=(\"revenue\", \"sum\")). rfm[\"r_score\"] = pd.qcut(rfm[\"recency\"], 4, labels=[4, 3, 2, 1]). rfm[\"f_score\"] = pd.qcut(rfm[\"frequency\"].rank(method=\"first\"), 4, labels=[1, 2, 3, 4]). rfm[\"m_score\"] = pd.qcut(rfm[\"monetary\"], 4, labels=[1, 2, 3, 4]). Pattern 3 — Growth rate by group: monthly_revenue = df.groupby([\"region\", df[\"order_date\"].dt.to_period(\"M\")])[\"revenue\"].sum().unstack(). growth = monthly_revenue.pct_change(axis=1). This shows month-over-month revenue growth rate for each region'"
+    weight: 0.30
+    description: "Patterns"

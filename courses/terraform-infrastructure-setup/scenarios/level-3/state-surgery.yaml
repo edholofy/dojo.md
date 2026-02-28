@@ -1,0 +1,57 @@
+meta:
+  id: state-surgery
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Perform state surgery — use state mv, rm, pull, push for complex migrations, module extraction, and resource address changes"
+  tags: [Terraform, state, migration, state-mv, state-rm, advanced]
+
+state: {}
+
+trigger: |
+  Your monolithic Terraform configuration with 200 resources needs
+  to be split into separate modules. Current flat structure:
+
+  ```hcl
+  # main.tf (2000 lines)
+  resource "aws_vpc" "main" { ... }
+  resource "aws_subnet" "public" { ... }
+  resource "aws_instance" "web" { ... }
+  resource "aws_rds_instance" "db" { ... }
+  ```
+
+  Target: split into modules/networking, modules/compute, modules/database.
+
+  Attempt 1 — Just move code into modules:
+  ```
+  $ terraform plan
+  # aws_vpc.main will be destroyed
+  # module.networking.aws_vpc.main will be created
+  # aws_instance.web will be destroyed
+  # module.compute.aws_instance.web will be created
+  # aws_rds_instance.db will be destroyed (!!!)
+  # module.database.aws_rds_instance.db will be created
+  Plan: 6 to add, 0 to change, 6 to destroy.
+  ```
+
+  All resources will be destroyed and recreated — unacceptable for
+  production! The database would be lost.
+
+  Task: Explain state surgery operations (mv, rm, pull, push),
+  how to migrate resources between modules without recreation,
+  moved blocks (Terraform 1.1+), state backup best practices,
+  and complex migration strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "State mv migration is explained — terraform state mv moves a resource from one address to another in state without modifying infrastructure. To migrate to modules: terraform state mv aws_vpc.main module.networking.aws_vpc.main, terraform state mv aws_instance.web module.compute.aws_instance.web, etc. After all moves: terraform plan should show no changes. Always backup state first: terraform state pull > backup.tfstate. State mv is atomic per resource — if interrupted, some resources moved, others not. Plan carefully and script the moves"
+    weight: 0.35
+    description: "State mv"
+  - type: llm_judge
+    criteria: "Moved blocks are covered as the modern alternative — moved { from = aws_vpc.main, to = module.networking.aws_vpc.main }. Benefits over state mv: (1) declarative and code-reviewable, (2) handled during plan/apply, (3) no manual state manipulation, (4) works across plan/apply workflow. Multiple moved blocks can coexist. Moved blocks are removed after successful apply. Supports: resource address changes, module refactoring, count to for_each migration. Terraform 1.1+ required. Preferred over state mv for most migrations"
+    weight: 0.35
+    description: "Moved blocks"
+  - type: llm_judge
+    criteria: "State rm and complex operations are practical — terraform state rm: removes resource from state without destroying it. Use when: (1) resource should no longer be managed by Terraform, (2) moving resource to different state file, (3) removing accidentally imported resource. terraform state pull/push: download/upload entire state file. Use for: manual state repair, migrating between backends, debugging. Complex migration: for splitting state files, (1) state pull, (2) manipulate JSON, (3) state push to new backend. Always: backup before surgery, verify with plan after, use -dry-run where available"
+    weight: 0.30
+    description: "Complex operations"

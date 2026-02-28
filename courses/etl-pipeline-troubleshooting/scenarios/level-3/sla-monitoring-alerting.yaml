@@ -1,0 +1,48 @@
+meta:
+  id: sla-monitoring-alerting
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "SLA monitoring and alerting — design pipeline SLAs, implement monitoring, and build actionable alerting for ETL operations"
+  tags: [SLA, monitoring, alerting, observability, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We have 80 production pipelines and
+  our monitoring is a mess:
+
+  1. We only know a pipeline failed when a business user complains
+     about stale data — sometimes hours after the failure.
+
+  2. When we do get alerts, we get too many. Last week we had 200
+     Slack alerts in one night because a single database outage
+     caused cascading failures across 30 pipelines. Everyone
+     ignored the alerts.
+
+  3. We have no SLAs defined. When the CFO asks 'when will the
+     revenue data be ready?', we say 'usually by 8 AM' but we have
+     no formal commitment or tracking.
+
+  4. Our pipelines have gotten 30% slower over the past 6 months
+     but nobody noticed until we started missing our informal
+     target times.
+
+  How do I build a proper monitoring and SLA system?"
+
+  Task: Design an SLA framework, monitoring strategy, and alerting
+  system for 80 production ETL pipelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs an SLA framework — how to define SLAs for data pipelines (freshness: data available by X time, completeness: 100% of expected records loaded, accuracy: no quality gate failures), how to tier pipelines by criticality (Tier 1: revenue/financial data with strict SLAs, Tier 2: operational dashboards with moderate SLAs, Tier 3: exploratory/ad-hoc with best-effort), how to set realistic SLA targets (measure current performance first, set targets with buffer), and how to track SLA compliance (percentage of on-time completions per pipeline per month)"
+    weight: 0.35
+    description: "SLAFramework"
+  - type: llm_judge
+    criteria: "Response addresses the alerting problems — alert fatigue: group related failures (one database outage = one alert, not 30), implement alert deduplication and correlation, set escalation tiers (page for Tier 1, Slack for Tier 2, daily digest for Tier 3). Late detection: implement proactive monitoring (alert when a pipeline hasn't started by expected time, not just when it fails), heartbeat checks (alert if a pipeline that should run daily hasn't run in 25 hours). Distinguishes between different alert types: failure, SLA at risk (pipeline running longer than usual), SLA breach, data quality issue"
+    weight: 0.35
+    description: "AlertingDesign"
+  - type: llm_judge
+    criteria: "Response addresses performance degradation detection — trend monitoring: track pipeline duration over time, alert when duration increases by more than 20% compared to the 30-day average, identify which tasks within a pipeline are slowing down. Includes: dashboards showing pipeline health at a glance (green/yellow/red), historical trend charts for duration and data volumes, capacity planning metrics (when will current infrastructure be insufficient?), and regular performance reviews (monthly review of pipeline health trends with the team)"
+    weight: 0.30
+    description: "PerformanceMonitoring"

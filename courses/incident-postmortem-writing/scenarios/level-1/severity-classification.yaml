@@ -1,0 +1,46 @@
+meta:
+  id: severity-classification
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Classify incident severity — determine the appropriate severity level for incidents based on scope, duration, and business impact"
+  tags: [postmortem, severity, classification, triage, SEV-levels, beginner]
+
+state: {}
+
+trigger: |
+  Your team has no formal severity classification system. Incidents
+  are described as "bad," "really bad," or "everything is on fire."
+  This makes it impossible to prioritize response or compare incidents
+  over time.
+
+  You've been asked to create a severity classification guide after
+  three recent incidents that were all called "critical" despite very
+  different impacts:
+
+  Incident A: 5-minute blip where 2% of API requests returned 503.
+  Auto-recovered. No customer complaints.
+
+  Incident B: Payment processing down for 45 minutes during peak
+  hours. 5,000 failed transactions. Customer support flooded.
+
+  Incident C: Internal admin dashboard slow for 3 hours. Only
+  affected 5 internal users. No customer impact.
+
+  Task: Create a severity classification system, classify these
+  three incidents correctly, and write a guide for your team on
+  how to classify severity during an active incident.
+
+assertions:
+  - type: llm_judge
+    criteria: "Severity levels are clearly defined with measurable criteria — at least 4 levels defined: SEV-1 (Critical): 'Complete loss of a customer-facing service, OR data loss/breach, OR revenue-generating function unavailable. Example: payment processing down, database corruption, security breach.' SEV-2 (Major): 'Significant degradation of customer-facing service affecting >10% of users, OR partial loss of a critical function for >15 minutes. Example: checkout flow intermittently failing, search returning errors for a segment of users.' SEV-3 (Minor): 'Minor customer-facing impact, OR brief disruption that auto-recovers, OR internal service degradation. Example: elevated error rate under 5% for under 10 minutes, non-critical feature unavailable.' SEV-4 (Informational): 'No customer-facing impact. Internal tooling issues, minor monitoring anomalies. Example: internal dashboard slow, staging environment issue.' Classification of the three incidents: 'Incident A: SEV-3 (brief, auto-recovered, minimal impact). Incident B: SEV-1 (revenue function unavailable for extended period, significant customer impact). Incident C: SEV-4 (internal only, no customer impact).' Each level has clear thresholds on: user impact percentage, duration, revenue impact, and data integrity"
+    weight: 0.35
+    description: "Clear severity levels"
+  - type: llm_judge
+    criteria: "Each severity level maps to response expectations — SEV-1: 'All-hands response. Incident commander assigned. Customer communication within 15 minutes. Status page updated immediately. Executive notification. Postmortem required within 48 hours.' SEV-2: 'On-call team response. Team lead notified. Status page updated within 30 minutes. Postmortem required within 1 week.' SEV-3: 'On-call engineer investigates. Team lead informed. Postmortem optional (recommended if pattern detected). No external communication unless customer reports.' SEV-4: 'Logged and tracked. No immediate response required. Addressed in regular sprint work.' Escalation rules: 'An incident starts at the assessed severity. It can be upgraded but should rarely be downgraded during active response — err on the side of higher severity when uncertain. If in doubt between SEV-2 and SEV-1, treat as SEV-1. The cost of over-responding is much lower than the cost of under-responding.' SLA/SLO connection: 'SEV-1 and SEV-2 incidents consume error budget. Track consumption monthly'"
+    weight: 0.35
+    description: "Response expectations"
+  - type: llm_judge
+    criteria: "Classification guide is usable during active incidents — decision tree for active incidents: 'Step 1: Is there customer-facing impact? If no → SEV-3 or SEV-4. If yes → Step 2. Step 2: Is a revenue-generating function unavailable? If yes → SEV-1. If no → Step 3. Step 3: Are more than 10% of users affected for more than 15 minutes? If yes → SEV-2. If no → SEV-3.' Quick reference card: a 1-page cheat sheet for on-call engineers with the decision tree and key thresholds. Edge cases addressed: 'Security incidents are always SEV-1 regardless of apparent impact (data breach potential). Data loss incidents are always SEV-1. Potential issues (monitoring anomaly, not yet impacting customers) start at SEV-3 and escalate if impact materializes.' Retrospective classification: 'Initial severity is assessed during the incident with limited information. Final severity is determined in the postmortem with full data. It's acceptable to reclassify — a SEV-1 declared during response might be reclassified to SEV-2 in the postmortem with better impact data. This is not a failure of initial classification'"
+    weight: 0.30
+    description: "Usable during incidents"

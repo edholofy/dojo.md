@@ -1,0 +1,41 @@
+meta:
+  id: intermediate-dashboard-shift
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Intermediate dashboard shift — handle multiple dashboard requests requiring frameworks, drill-downs, alerting, and storytelling in a single day"
+  tags: [shift-simulation, intermediate, frameworks, alerting, storytelling]
+
+state: {}
+
+trigger: |
+  Three requests arrive on the same morning:
+
+  Request 1 (VP Product): "Our product dashboard shows DAU, MAU,
+  and session duration, but I can't tell if the product is healthy.
+  Help me structure the right metrics using a framework."
+
+  Request 2 (Head of Sales): "Revenue dropped 15% this week. My
+  dashboard shows the drop but I can't figure out where it's coming
+  from. I need to investigate in the next 30 minutes before my
+  standup."
+
+  Request 3 (CFO): "I'm presenting to the board tomorrow. I need
+  a one-page dashboard that tells the story of our quarter — what
+  went well, what didn't, and what we're doing about it."
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response applies HEART framework for the product dashboard — product: 'Request 1 — Product health dashboard using HEART: Current dashboard only shows engagement metrics (DAU, MAU, session duration). Missing: happiness, adoption, retention, and task success. Redesigned product dashboard: Happiness: In-app NPS: 62 ↑3 vs last quarter. Target: 65. Trend: improving. App store rating: 4.4 stars. Trend: stable. These show whether users are satisfied. Engagement: DAU: 15,200 ↑5% MoM. DAU/MAU ratio: 0.42 (42% of monthly users return daily — indicates moderate stickiness). Sessions per user per week: 3.8. Target: 4.0. Adoption: Percentage of new users completing onboarding: 58%. Target: 70%. New feature adoption (latest release): 23% of users tried it within 7 days. These show whether new users are getting value. Retention: Day 7 retention: 38%. Target: 45%. Day 30 retention: 18%. Target: 25%. Cohort retention table showing recent cohorts vs historical. These reveal the retention problem — D7 and D30 are below target. Task Success: Core action completion rate: 82%. Target: 90%. Error rate during checkout: 2.1%. Target: below 1%. Time to complete core action: 45 seconds. Target: under 30 seconds. These show whether the product works well. The VP can now see: the product is engaging (E is good) and users are happy (H is good), but adoption (A) and retention (R) are below target. The team should focus on onboarding and Day 7 retention'"
+    weight: 0.35
+    description: "Product"
+  - type: llm_judge
+    criteria: "Response provides a drill-down investigation for the revenue drop — investigation: 'Request 2 — Revenue drop investigation via drill-down: The Head of Sales has 30 minutes. Design the investigation path: Step 1 (2 minutes) — Overview: Revenue KPI: $425K this week ↓15% vs last week ($500K). Is the drop across all segments or concentrated? Bar chart: revenue by segment this week vs last week. Enterprise: $250K → $240K (↓4% — normal fluctuation). SMB: $180K → $120K (↓33% — the problem is here). Startup: $70K → $65K (↓7% — minor). Finding: the entire 15% drop is driven by SMB. Step 2 (3 minutes) — Drill into SMB: Click SMB bar. Revenue by sales rep (SMB team): Rep A: $60K → $55K (normal). Rep B: $50K → $48K (normal). Rep C: $40K → $2K (↓95% — anomaly). Rep D: $30K → $15K (↓50%). Finding: Rep C accounts for most of the drop. Step 3 (5 minutes) — Root cause: Click Rep C. Rep C's deals: 3 deals worth $38K were marked as closed-won last week but reverted to pipeline this week (misclassification). 1 deal worth $15K in Rep D's pipeline was pushed to next month (delayed). Finding: the revenue drop is partly a data correction ($38K was never real revenue — it was prematurely marked closed) and partly a timing issue ($15K delayed). True business impact: about $15K delayed, not $75K lost. The Head of Sales now knows: the 15% drop is misleading. The real situation is a $38K data correction and a $15K delay. No crisis. She communicates this clearly at the standup: the reported drop is inflated by a CRM data correction'"
+    weight: 0.35
+    description: "Investigation"
+  - type: llm_judge
+    criteria: "Response creates a board-ready narrative dashboard for the CFO — board: 'Request 3 — Board quarterly narrative dashboard: One-page layout with story arc: Headline banner: Q4 was a tale of two segments: Enterprise soared while SMB requires strategic attention. Revenue: $3.8M, 22% above target. Section 1 — The win (top-left, 40% of page): Revenue: $3.8M | Target: $3.1M | ↑34% YoY. Green. Enterprise expansion drove the beat: 3 new Enterprise deals worth $800K. Line chart: quarterly revenue trend (8 quarters) with the Q4 bar highlighted in green. Annotation: Enterprise pricing launch in Q3 created a pipeline surge. Section 2 — The concern (top-right, 40% of page): SMB churn: 6.8% | Target: 4.0% | ↑2.8pp QoQ. Red. Horizontal bar chart: churn by reason — pricing (45%), competitor (25%), product (20%), other (10%). Annotation: free tier removal in Q3 caused 45% of SMB churn. The pricing concern was raised in the Q3 board meeting. Section 3 — Next quarter plan (bottom, 20% of page): Three action items with owners and timelines: 1. Expand Enterprise sales team (+3 reps). Owner: VP Sales. Q1. 2. Launch SMB starter tier at $29/month to address pricing churn. Owner: CPO. February. 3. Target 120% net revenue retention by Q2. Owner: Head of CS. The CFO presents this page in 5 minutes. The board sees the win, the concern, and the plan. Questions are answered before they are asked'"
+    weight: 0.30
+    description: "Board"

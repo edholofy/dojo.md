@@ -1,0 +1,39 @@
+meta:
+  id: interaction-effects
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Detect and analyze interaction effects — identify when multiple simultaneous experiments interfere with each other and design factorial experiments to measure interactions"
+  tags: [interaction-effects, factorial-design, concurrent-experiments, interference, advanced]
+
+state: {}
+
+trigger: |
+  Two teams ran A/B tests simultaneously on the same user population:
+
+  Team A tested a new checkout button (green vs blue).
+  Team B tested free shipping messaging on the product page.
+
+  Both tests individually showed no significant effect. But when the
+  data scientist looks at users who got BOTH the green button AND the
+  free shipping message, conversion jumped 18%.
+
+  The VP asks: "How is this possible? Neither change worked alone but
+  together they're amazing?"
+
+  Task: Explain interaction effects in experimentation, how to detect
+  them, and how to design experiments that properly measure them.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains interaction effects — interactions: 'Interaction effects in experimentation: An interaction effect occurs when the combined impact of two changes is different from the sum of their individual effects. Main effect of green button: +0.2pp (not significant alone). Main effect of free shipping message: +0.3pp (not significant alone). Expected combined effect (if no interaction): 0.2 + 0.3 = 0.5pp. Observed combined effect: +2.5pp (the 18% relative lift). The interaction effect = 2.5 - 0.5 = 2.0pp. This is a synergistic (super-additive) interaction — the two changes amplify each other. Why this happens: the free shipping message creates purchase intent on the product page. When the user reaches checkout and sees the green button (which may feel more confirmatory, like go), the combined experience reinforces the purchase decision. Neither change alone was enough to move behavior, but together they created a coherent experience. Types of interactions: Synergistic (super-additive): A + B > effect_A + effect_B. The changes amplify each other (as in this example). Antagonistic (sub-additive): A + B < effect_A + effect_B. The changes partially cancel each other. Example: two competing CTAs confuse the user. Interference (negative interaction): A + B < 0 even when effect_A > 0 and effect_B > 0. The changes actively undermine each other. Why this matters for concurrent experiments: most companies run 5-50 experiments simultaneously. If experiments interact, the measured effects are wrong — each test's result is contaminated by the other. An experiment that appears null might only be null because of interference from another concurrent test'"
+    weight: 0.35
+    description: "Interactions"
+  - type: llm_judge
+    criteria: "Response covers factorial experiment design — factorial: 'Factorial experiment design: To properly measure interactions, use a full factorial design: Factor 1: button color (blue, green) — 2 levels. Factor 2: shipping message (no, yes) — 2 levels. Full factorial: 2 × 2 = 4 cells. Cell 1 (control): blue button + no shipping message. Cell 2: green button + no shipping message. Cell 3: blue button + free shipping message. Cell 4: green button + free shipping message. Each cell gets 25% of traffic. Analysis: main effect of green button = (Cell 2 + Cell 4)/2 - (Cell 1 + Cell 3)/2. Main effect of shipping message = (Cell 3 + Cell 4)/2 - (Cell 1 + Cell 2)/2. Interaction effect = Cell 4 - Cell 3 - Cell 2 + Cell 1. Hypothetical results: Cell 1 (blue, no msg): 5.0%. Cell 2 (green, no msg): 5.2% (+0.2pp). Cell 3 (blue, msg): 5.3% (+0.3pp). Cell 4 (green, msg): 7.5% (+2.5pp). Main effect button: (5.2 + 7.5)/2 - (5.0 + 5.3)/2 = 6.35 - 5.15 = 1.2pp. Main effect message: (5.3 + 7.5)/2 - (5.0 + 5.2)/2 = 6.4 - 5.1 = 1.3pp. Interaction: 7.5 - 5.3 - 5.2 + 5.0 = 2.0pp. The interaction effect (2.0pp) is larger than either main effect — this is a strong synergy. Sample size for factorial designs: each cell needs the same sample size as a standard A/B test group. A 2×2 design needs 4 groups instead of 2, so it requires 2x total traffic. A 2×3 design needs 6 groups — 3x total traffic. A 3×3 design needs 9 groups — 4.5x total traffic. This is why factorial designs are limited to 2-3 factors with 2-3 levels each. More factors require fractional factorial designs (test only a subset of combinations)'"
+    weight: 0.35
+    description: "Factorial"
+  - type: llm_judge
+    criteria: "Response covers managing concurrent experiments in practice — concurrent: 'Managing concurrent experiments: Strategy 1 — Mutual exclusion (isolation): assign users to at most one experiment at a time. User pool is divided into non-overlapping slices (layers). Experiment A gets users 1-5000. Experiment B gets users 5001-10000. Pros: no interaction effects possible. Clean measurement. Cons: each experiment gets less traffic. Cannot run many experiments simultaneously. Use when: experiments might interact (same page, same funnel) or for high-stakes tests. Strategy 2 — Full overlap with independence assumption: all users can be in multiple experiments simultaneously. Assignment is independent — being in experiment A does not affect your chance of being in experiment B. Pros: each experiment gets full traffic. Can run many experiments concurrently. Cons: interaction effects are unmeasured and ignored. Only safe when experiments are unlikely to interact (different parts of the product). Use when: experiments affect completely different features or pages (e.g., checkout button test and email subject line test). Strategy 3 — Layered experimentation (Google's approach): organize experiments into layers. Within a layer: mutual exclusion (only one experiment per user). Across layers: full overlap (users can be in one experiment per layer). Layers correspond to product areas: checkout layer, homepage layer, email layer. This balances traffic efficiency with interaction protection. Strategy 4 — Monitor for interactions: run concurrent experiments with full overlap but actively test for interactions. For every pair of concurrent experiments, test the interaction term. Flag pairs with significant interactions for follow-up factorial analysis. Automated systems: experimentation platforms (Optimizely, Statsig) can automatically detect interaction effects across concurrent tests. For the VP: the 18% combined lift is likely real — it reflects a genuine synergy between the green button and shipping message. Ship both changes together. Running them as independent tests missed this interaction because neither test measured the combination. For future experiments on the same funnel: use factorial designs or mutual exclusion to properly account for interactions'"
+    weight: 0.30
+    description: "Concurrent"

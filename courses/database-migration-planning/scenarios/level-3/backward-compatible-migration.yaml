@@ -1,0 +1,41 @@
+meta:
+  id: backward-compatible-migration
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Write backward-compatible migrations — design schema changes that work with both old and new application versions during rolling deployments"
+  tags: [database, migration, backward-compatibility, rolling-deployment, advanced]
+
+state: {}
+
+trigger: |
+  Your team deploys using rolling updates: new application versions
+  are deployed gradually (10% → 25% → 50% → 100%) over 30 minutes.
+  During this window, BOTH old and new application versions are
+  running simultaneously against the SAME database.
+
+  A developer wrote a migration that renames "users.username" to
+  "users.handle" and deploys the code change with it. During the
+  rolling deployment:
+  - New instances query "handle" (works, column exists)
+  - Old instances query "username" (FAILS — column no longer exists)
+
+  Result: 500 errors for 15 minutes until all old instances were
+  replaced.
+
+  Task: Explain the rules for backward-compatible migrations and
+  rewrite this specific migration to be safe for rolling deployments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rules for backward-compatible migrations are clear — rules: 'Rule 1: Migrations must be backward-compatible with the CURRENT application version. When the migration runs, old application code is still running. The migration cannot break old code. This means: you can ADD columns (old code ignores them), you can ADD tables (old code ignores them), you CANNOT RENAME columns (old code references the old name), you CANNOT DROP columns (old code references them), you CANNOT change column types in breaking ways (old code expects the old type). Rule 2: Application code must be backward-compatible with the PREVIOUS schema. When new application code deploys, the migration may not have run yet (or may be running). New code must work with both the old schema and the new schema. This means: new code should handle missing columns gracefully, new code should not assume new tables exist until verified. Rule 3: Breaking changes require multiple deployments. Any change that breaks backward compatibility must be split into multiple releases: Release 1: expand (add new, keep old). Release 2: migrate (switch code to use new). Release 3: contract (remove old). This is the expand-and-contract pattern applied to deployment cycles. Each release is a separate migration + code deployment that is independently safe'"
+    weight: 0.35
+    description: "Backward-compatibility rules"
+  - type: llm_judge
+    criteria: "The username-to-handle migration is rewritten correctly — rewritten migration: 'The rename of username → handle requires 3 separate releases: Release 1: Expand. Migration: ALTER TABLE users ADD COLUMN handle VARCHAR(100); UPDATE users SET handle = username WHERE handle IS NULL; CREATE OR REPLACE FUNCTION sync_username_handle() RETURNS TRIGGER AS $$ BEGIN IF TG_OP = INSERT OR TG_OP = UPDATE THEN NEW.handle := COALESCE(NEW.handle, NEW.username); NEW.username := COALESCE(NEW.username, NEW.handle); END IF; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER trg_sync_username_handle BEFORE INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION sync_username_handle(); Application code change: read from username (no change). Write to BOTH username and handle. After this release: both columns exist and are synced. Old instances use username (works). New instances use username and write to handle (works). Release 2: Migrate. No migration needed. Application code change: switch reads from username to handle. Continue dual-writing to both columns. After this release: all code reads from handle. Old instances (briefly, during rolling update) still read username (works — column still exists). New instances read handle (works). Release 3: Contract. Migration: DROP TRIGGER trg_sync_username_handle ON users; DROP FUNCTION sync_username_handle(); ALTER TABLE users DROP COLUMN username; Application code change: stop writing to username. After this release: only handle exists. All code uses handle. Total timeline: 3 releases over 1-3 weeks (depending on release cadence). Each release is independently safe for rolling deployments'"
+    weight: 0.35
+    description: "Rewritten migration"
+  - type: llm_judge
+    criteria: "Common backward-incompatible patterns and their safe alternatives listed — common patterns: '(1) Renaming a column: unsafe (one-step rename). Safe alternative: expand-and-contract as shown above. 3 releases. (2) Removing a column: unsafe (drop column). Safe alternative: Release 1: deploy code that no longer reads the column. Release 2: drop the column (safe because no code references it). (3) Adding a NOT NULL column without default: unsafe (old code does not set the column, INSERT fails). Safe alternative: add the column as nullable with a default. Update old code to set the column. In a future release, add the NOT NULL constraint. (4) Changing a column type: unsafe (code expects the old type). Safe alternative: expand-and-contract with a new column of the new type. (5) Renaming a table: unsafe (same as renaming a column). Safe alternative: create new table, dual-write, switch reads, drop old. (6) Adding a unique constraint: unsafe if old code creates duplicates. Safe alternative: add the constraint as NOT VALID first, deploy code that prevents duplicates, then validate. General principle: if you cannot deploy the migration and the code change atomically (and in a rolling deployment, you cannot), the migration must be safe for both old and new code simultaneously'"
+    weight: 0.30
+    description: "Common patterns"

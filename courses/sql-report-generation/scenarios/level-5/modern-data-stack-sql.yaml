@@ -1,0 +1,42 @@
+meta:
+  id: modern-data-stack-sql
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "SQL in the modern data stack — integrate dbt for transformations, Snowflake/BigQuery for cloud warehousing, and orchestration tools for end-to-end analytics pipelines"
+  tags: [SQL, modern-data-stack, dbt, Snowflake, BigQuery, orchestration, master]
+
+state: {}
+
+trigger: |
+  The CTO has approved migrating from the on-premise PostgreSQL
+  data warehouse to a modern cloud data stack. The current state:
+
+  - 500 stored procedures handle all transformations
+  - No version control on SQL — changes are made directly in the
+    database
+  - No testing — transformations are assumed to be correct
+  - No documentation — only 2 engineers understand the pipeline
+
+  Target architecture: Fivetran (ingestion) → Snowflake (warehouse)
+  → dbt (transformations) → Looker (BI) → Monte Carlo (observability)
+
+  The migration must be zero-downtime — old and new systems run in
+  parallel until the new system is validated.
+
+  Task: Design the migration plan and the modern data stack
+  architecture.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the dbt-based transformation layer with testing — dbt: 'Modern data stack with dbt: dbt project structure: dbt_project/ models/ staging/ stg_orders.sql — SELECT with renamed columns and type casts stg_customers.sql stg_payments.sql intermediate/ int_customer_orders.sql — join customers with their order history int_revenue_daily.sql — daily revenue aggregation marts/ finance/ fct_revenue.sql — certified revenue fact table dim_customers.sql — SCD Type 2 customer dimension marketing/ fct_campaign_performance.sql fct_attribution.sql. Example dbt model (models/marts/finance/fct_revenue.sql): WITH orders AS (SELECT * FROM {{ ref('stg_orders') }}), customers AS (SELECT * FROM {{ ref('stg_customers') }}), payments AS (SELECT * FROM {{ ref('stg_payments') }}) SELECT o.order_id, o.order_date, c.customer_id, c.segment, p.payment_method, o.amount AS gross_amount, COALESCE(o.discount, 0) AS discount, o.amount - COALESCE(o.discount, 0) AS net_amount, o.amount - COALESCE(o.discount, 0) - COALESCE(o.cogs, 0) AS gross_profit FROM orders o JOIN customers c ON o.customer_id = c.customer_id LEFT JOIN payments p ON o.order_id = p.order_id WHERE o.status = 'completed'. dbt testing (models/marts/finance/schema.yml): models: - name: fct_revenue columns: - name: order_id tests: [unique, not_null] - name: net_amount tests: [not_null] - tests: - dbt_utils.expression_is_true: expression: net_amount = gross_amount - discount - accepted_values: column_name: segment values: ['Enterprise', 'SMB', 'Startup', 'Free']. Run: dbt test — every model is automatically validated before it reaches the BI layer. If a test fails, the pipeline stops and alerts fire. No bad data reaches dashboards. dbt documentation: dbt docs generate creates a browsable data catalog with lineage graphs. Every model, column, and test is documented in YAML — the 2-engineer knowledge bottleneck is eliminated'"
+    weight: 0.35
+    description: "dbt"
+  - type: llm_judge
+    criteria: "Response covers the Snowflake warehouse configuration and cost optimization — snowflake: 'Snowflake warehouse architecture: Warehouse sizing for different workloads: CREATE WAREHOUSE wh_etl WITH WAREHOUSE_SIZE = 'LARGE' AUTO_SUSPEND = 60 AUTO_RESUME = true INITIALLY_SUSPENDED = true COMMENT = 'ETL transformations — runs dbt models nightly'. CREATE WAREHOUSE wh_dashboard WITH WAREHOUSE_SIZE = 'SMALL' AUTO_SUSPEND = 120 AUTO_RESUME = true COMMENT = 'Dashboard queries — always-on during business hours'. CREATE WAREHOUSE wh_analyst WITH WAREHOUSE_SIZE = 'MEDIUM' AUTO_SUSPEND = 300 AUTO_RESUME = true MAX_CLUSTER_COUNT = 3 COMMENT = 'Ad-hoc analyst queries — auto-scales'. Separate warehouses mean ETL workloads do not compete with dashboard queries. Auto-suspend reduces cost when idle. Cost optimization: Snowflake zero-copy cloning for development: CREATE DATABASE dev_warehouse CLONE prod_warehouse. Developers get a full copy of production data instantly — no storage cost for unchanged data. Only modified data consumes additional storage. Time travel for debugging: SELECT * FROM fct_revenue AT (TIMESTAMP => '2025-12-31 23:59:59'). Compare current data with historical state without maintaining separate backup tables. Clustering for large tables: ALTER TABLE fct_orders CLUSTER BY (order_date, region). Micro-partitions are organized by date and region — queries filtering on these columns scan fewer partitions. Snowflake cost monitoring: SELECT warehouse_name, SUM(credits_used) AS total_credits, SUM(credits_used) * 3.00 AS estimated_cost_usd FROM snowflake.account_usage.warehouse_metering_history WHERE start_time >= DATEADD(month, -1, CURRENT_DATE) GROUP BY warehouse_name ORDER BY total_credits DESC. If wh_analyst costs $3,000/month but wh_etl costs $500/month, investigate whether analysts are running expensive queries that should be materialized'"
+    weight: 0.35
+    description: "Snowflake"
+  - type: llm_judge
+    criteria: "Explanation covers the migration strategy for zero-downtime cutover — migration: 'Zero-downtime migration strategy: Phase 1 — Parallel run (4 weeks): run both old PostgreSQL warehouse and new Snowflake/dbt stack simultaneously. Old system continues to serve all dashboards. New system processes the same data independently. Daily reconciliation: compare outputs. SELECT 'revenue' AS metric, pg.total AS postgresql_value, sf.total AS snowflake_value, ABS(pg.total - sf.total) AS difference FROM (SELECT SUM(revenue) AS total FROM pg_fct_revenue WHERE month = '2025-01') pg, (SELECT SUM(net_amount) AS total FROM sf_fct_revenue WHERE order_date BETWEEN '2025-01-01' AND '2025-01-31') sf. Phase 2 — Validation (2 weeks): when daily reconciliation shows less than 0.01% discrepancy for 14 consecutive days, the new system is validated. Involve finance team in validation — they verify P&L numbers match. Phase 3 — Cutover (1 week): redirect dashboards from PostgreSQL to Snowflake one at a time. Start with low-risk dashboards (marketing). End with high-risk dashboards (finance, board). Keep PostgreSQL running as fallback. Phase 4 — Decommission (2 weeks): after 2 weeks with no issues on Snowflake, decommission the old PostgreSQL warehouse. Archive stored procedures in Git for reference. Stored procedure migration: the 500 stored procedures become dbt models. Each stored procedure maps to one or more dbt SQL files. Version control: every transformation is in Git. Pull requests for changes. Code review required. Testing: dbt test validates every model. CI/CD: GitHub Actions runs dbt build on every merge to main. Orchestration: Airflow or dbt Cloud triggers the pipeline daily at 2 AM. If any step fails, the pipeline stops and Slack alerts fire. Total migration timeline: 8-10 weeks for parallel run plus validation plus cutover'"
+    weight: 0.30
+    description: "Migration"

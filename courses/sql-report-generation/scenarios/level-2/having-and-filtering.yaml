@@ -1,0 +1,38 @@
+meta:
+  id: having-and-filtering
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Filter aggregated results — use HAVING to filter groups, combine with WHERE for pre-aggregation filtering, and build exception reports"
+  tags: [SQL, HAVING, filtering, exception-reports, intermediate]
+
+state: {}
+
+trigger: |
+  The operations team needs exception-based reports — they want to
+  see things that are OUTSIDE normal ranges:
+
+  1. "Products with fewer than 10 orders this month (underperforming)"
+  2. "Customers who ordered more than 5 times but spent less than
+     $100 total (high frequency, low value)"
+  3. "Regions where the average order value dropped more than 20%
+     compared to last month"
+
+  Tables: orders (order_id, customer_id, product_id, amount,
+  order_date, region), products (product_id, product_name)
+
+  Task: Write exception reports using HAVING.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use HAVING for aggregate-based filtering — queries: 'Exception reports with HAVING: Query 1 — Underperforming products: SELECT p.product_name, COUNT(o.order_id) AS order_count, COALESCE(SUM(o.amount), 0) AS revenue FROM products p LEFT JOIN orders o ON p.product_id = o.product_id AND o.order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY p.product_id, p.product_name HAVING COUNT(o.order_id) < 10 ORDER BY order_count ASC. LEFT JOIN ensures products with zero orders appear (INNER JOIN would miss them). HAVING COUNT < 10 filters after aggregation — WHERE cannot reference COUNT. Query 2 — High frequency, low value customers: SELECT c.customer_id, c.name, COUNT(o.order_id) AS order_count, SUM(o.amount) AS total_spent, ROUND(AVG(o.amount), 2) AS avg_order FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY c.customer_id, c.name HAVING COUNT(o.order_id) > 5 AND SUM(o.amount) < 100 ORDER BY order_count DESC. Multiple HAVING conditions with AND — both must be true. These customers might be gaming a free shipping threshold. Query 3 — Regions with declining AOV: WITH current_month AS (SELECT region, AVG(amount) AS avg_order FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY region), previous_month AS (SELECT region, AVG(amount) AS avg_order FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND order_date < DATE_TRUNC('month', CURRENT_DATE) GROUP BY region) SELECT cm.region, ROUND(pm.avg_order, 2) AS last_month_aov, ROUND(cm.avg_order, 2) AS this_month_aov, ROUND((cm.avg_order - pm.avg_order) * 100.0 / pm.avg_order, 1) AS pct_change FROM current_month cm JOIN previous_month pm ON cm.region = pm.region WHERE (cm.avg_order - pm.avg_order) * 100.0 / pm.avg_order < -20 ORDER BY pct_change ASC'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers WHERE vs HAVING and execution order — explanation: 'WHERE vs HAVING: WHERE filters individual rows BEFORE grouping. HAVING filters groups AFTER aggregation. Execution order: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. This means: WHERE can filter on column values (amount > 100, status = 'active'). WHERE cannot use aggregate functions (WHERE COUNT(*) > 5 is an ERROR). HAVING can filter on aggregate results (HAVING COUNT(*) > 5). HAVING can technically filter on columns too, but WHERE is more efficient for non-aggregate filters. Performance difference: WHERE reduces rows before grouping — less work for GROUP BY. HAVING filters after grouping — the aggregation already happened. Always prefer WHERE when possible: SELECT region, AVG(amount) FROM orders WHERE status = 'completed' GROUP BY region HAVING AVG(amount) > 100. The WHERE clause eliminates cancelled orders before aggregation (efficient). The HAVING clause filters regions with low AOV after aggregation (necessary because AVG is an aggregate)'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response demonstrates exception reporting patterns — patterns: 'Exception report patterns: Data quality exceptions: SELECT column_name, COUNT(*) AS null_count, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 1) AS null_pct FROM (SELECT 'customer_id' AS column_name FROM orders WHERE customer_id IS NULL UNION ALL SELECT 'amount' FROM orders WHERE amount IS NULL UNION ALL SELECT 'order_date' FROM orders WHERE order_date IS NULL) nulls GROUP BY column_name HAVING COUNT(*) > 0. This shows which columns have NULL values and what percentage of rows are affected. Anomaly detection — orders outside expected ranges: SELECT order_date, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL '30 days' GROUP BY order_date HAVING COUNT(*) < (SELECT AVG(daily_count) * 0.5 FROM (SELECT COUNT(*) AS daily_count FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL '90 days' GROUP BY order_date) daily) OR COUNT(*) > (SELECT AVG(daily_count) * 1.5 FROM (SELECT COUNT(*) AS daily_count FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL '90 days' GROUP BY order_date) daily). This flags days with order counts more than 50% below or above the 90-day average — useful for detecting system outages or data issues'"
+    weight: 0.30
+    description: "Patterns"

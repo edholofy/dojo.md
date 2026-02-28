@@ -1,0 +1,42 @@
+meta:
+  id: migration-guides
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Write API migration guides — document breaking changes, provide step-by-step migration paths, and minimize developer friction during version upgrades"
+  tags: [API, documentation, migration, versioning, breaking-changes, upgrade, advanced]
+
+state: {}
+
+trigger: |
+  You're releasing API v2 with breaking changes from v1. 2,000 active
+  integrations need to migrate. The changes:
+
+  - Response envelope: { "user": {...} } → { "data": {...}, "meta": {...} }
+  - Pagination: offset/limit → cursor-based
+  - Authentication: API key in query param → Bearer token in header
+  - Field renames: "userName" → "user_name", "createdAt" → "created_at"
+  - Removed endpoints: GET /users/search (merged into GET /users with
+    query params)
+  - New required field: "idempotency_key" on all POST requests
+
+  Timeline: v1 deprecated now, sunset in 12 months.
+
+  Task: Write a comprehensive migration guide that walks developers
+  through upgrading from v1 to v2. Include: change catalog, migration
+  steps, code examples showing before/after, compatibility helpers,
+  and a testing strategy for the migration.
+
+assertions:
+  - type: llm_judge
+    criteria: "Change catalog is complete and categorized — every breaking change listed with: what changed, why it changed (business reason), impact level (high/medium/low), migration effort estimate. Categorized: (1) Authentication changes (API key → Bearer), (2) Response format changes (envelope, field renames), (3) Pagination changes (offset → cursor), (4) Endpoint changes (removed/merged), (5) New requirements (idempotency key). Each change has before/after code comparison. Impact assessment: which changes affect all integrations vs specific use cases. Quick reference table: v1 pattern → v2 pattern for scanning"
+    weight: 0.35
+    description: "Change catalog"
+  - type: llm_judge
+    criteria: "Migration steps are ordered and practical — recommended migration order: (1) Update authentication first (affects all requests), (2) Handle response envelope changes (wrap response parsing), (3) Update field names (find/replace with mapping), (4) Switch pagination (may require storage schema changes), (5) Update removed endpoints, (6) Add idempotency keys. Each step: code example (before → after), common pitfalls, how to test this step in isolation, rollback strategy if something breaks. Compatibility helpers: v1-compat middleware/SDK option that translates v2 responses to v1 format (temporary bridge). Dual-write period: send to both v1 and v2, compare responses"
+    weight: 0.35
+    description: "Migration steps"
+  - type: llm_judge
+    criteria: "Timeline and testing strategy enable safe migration — timeline: v1 deprecated now (no new features), v1 supported 12 months, monthly email reminders at 9/6/3/1 months, dashboard showing v1 usage per integration. Testing: sandbox environment with v2, migration verification endpoint (POST /v2/migration/verify — tests your integration against v2), automated compatibility checker that scans your code for v1 patterns. Monitoring: dashboard showing v1 vs v2 request ratio, per-endpoint migration status. Support: dedicated migration support channel, office hours for complex migrations, case studies of successful migrations. FAQ: address common migration fears (data loss, downtime, partial migration)"
+    weight: 0.30
+    description: "Timeline and testing"

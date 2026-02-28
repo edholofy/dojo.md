@@ -1,0 +1,50 @@
+meta:
+  id: performance-feedback
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Give performance feedback — identify and communicate performance issues in code reviews with data-backed reasoning and optimization suggestions"
+  tags: [code-review, performance, optimization, complexity, N+1, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR for a dashboard that displays order analytics.
+  The page loads slowly in staging. You've identified performance
+  issues:
+
+  1. N+1 query: loops through 100 orders and makes a separate DB
+     query for each order's customer data
+
+  2. Loading all 50,000 orders into memory to calculate totals
+     instead of using SQL aggregation
+
+  3. A nested loop (O(n²)) matching orders to products when a
+     Map/dictionary lookup would be O(n)
+
+  4. Fetching the same user profile 3 times on the same page
+     (3 separate API calls in 3 components)
+
+  5. Rendering a 10,000-row table without virtualization
+
+  6. Computing expensive derived values on every render instead
+     of memoizing
+
+  Task: Write performance review comments for each issue. For each,
+  explain the performance impact with approximate numbers, explain
+  why the current approach is slow, and suggest the optimized approach
+  with enough detail to implement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Performance impact is quantified — (1) N+1: 100 orders = 101 queries (1 list + 100 customer lookups). Each query ~5ms = 500ms total. Fix with JOIN or eager loading: 1 query ~10ms. 50x improvement. (2) 50K orders in memory: ~200MB memory, 2-3 seconds to load and iterate. SQL aggregate: `SELECT SUM(total), COUNT(*) FROM orders WHERE ...` returns one row in ~50ms. (3) O(n²): 1000 orders × 500 products = 500,000 comparisons. Map lookup: 1000 + 500 = 1,500 operations. 300x fewer operations. (4) 3 duplicate API calls: 3 × ~200ms = 600ms wasted. Fetch once and share. (5) 10K rows: DOM rendering 10K rows takes 2-3 seconds, causes jank. Virtualization renders ~50 visible rows. (6) Recomputing on every render: if computation takes 100ms and renders happen 10x/second, the page stutters. Numbers don't need to be exact — approximate is fine for review"
+    weight: 0.35
+    description: "Quantified impact"
+  - type: llm_judge
+    criteria: "Optimized approaches include implementation detail — (1) N+1 fix: show the JOIN query or ORM eager loading syntax (e.g., `Order.findAll({ include: Customer })`). (2) SQL aggregation: show the exact query `SELECT status, COUNT(*), SUM(total) FROM orders GROUP BY status`. (3) Map lookup: show building a Map first `const productMap = new Map(products.map(p => [p.id, p]))`, then `productMap.get(order.productId)`. (4) Shared fetch: use React context, SWR/React Query (deduplication built in), or lift the fetch to a parent component. (5) Virtualization: suggest react-window or react-virtualized, show the component change. (6) Memoization: show useMemo with dependency array. Each fix is a concrete code change, not just 'optimize this'"
+    weight: 0.35
+    description: "Implementation detail"
+  - type: llm_judge
+    criteria: "Comments explain WHY the current approach is slow — don't just say 'use a JOIN' — explain: 'Each database query has overhead: connection, parsing, execution, network round-trip. Doing this 100 times multiplies that overhead. A JOIN does one trip and the database optimizes the execution plan.' For O(n²): 'Nested loops compare every order with every product. When data grows from 1K to 10K items, this goes from 500K to 50M comparisons — it doesn't just get 10x slower, it gets 100x slower.' For memory: 'Loading 50K rows into Node.js means serializing from Postgres, deserializing in JS, iterating in a single-threaded event loop. The database can do this math on indexed data in milliseconds.' The reviewer teaches performance thinking, not just performance fixes"
+    weight: 0.30
+    description: "Explains why slow"

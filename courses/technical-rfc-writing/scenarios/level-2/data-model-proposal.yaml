@@ -1,0 +1,44 @@
+meta:
+  id: data-model-proposal
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Propose data model changes — present schema designs, migration strategies, and data integrity considerations in an RFC"
+  tags: [RFC, data-model, schema, migration, database, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to add an audit logging system. Every
+  significant action in the application needs to be recorded:
+  - Who performed the action (user, API key, system)
+  - What was changed (resource type, resource ID, field changes)
+  - When it happened (timestamp with timezone)
+  - Where it originated (IP, user agent, API endpoint)
+  - Why (if provided — e.g., "bulk update per customer request")
+
+  Requirements:
+  - Must capture all CRUD operations on 15 resource types
+  - Must be queryable (filter by user, resource, time range)
+  - Must retain data for 2 years (compliance requirement)
+  - Must not significantly impact application performance
+  - Current database: PostgreSQL 15
+
+  Task: Write the data model section of this RFC. Include schema
+  design, indexing strategy, data retention approach, and migration
+  plan. Address the trade-offs between query flexibility and write
+  performance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Schema design is thorough and justified — primary table: audit_logs (id UUID, actor_type ENUM, actor_id UUID, action ENUM, resource_type VARCHAR, resource_id UUID, changes JSONB, metadata JSONB, ip_address INET, user_agent TEXT, endpoint VARCHAR, reason TEXT, created_at TIMESTAMPTZ). Design decisions explained: 'JSONB for changes allows flexible before/after recording without schema changes when resource models evolve. Trade-off: less type safety vs adaptability.' 'actor_type ENUM (user, api_key, system) rather than a polymorphic foreign key because audit logs must survive if the actor is deleted.' 'UUID primary key rather than sequential because audit logs may come from multiple sources.' 'TIMESTAMPTZ (not TIMESTAMP) because audit records must be unambiguous across timezones for compliance.' Partitioning strategy: 'Range partition by created_at (monthly partitions) for efficient retention management and query performance on time-range filters'"
+    weight: 0.35
+    description: "Schema design"
+  - type: llm_judge
+    criteria: "Indexing and query performance are addressed — indexes justified by query patterns: (1) 'Index on (resource_type, resource_id, created_at DESC) — supports the most common query: show all changes to a specific resource, most recent first.' (2) 'Index on (actor_id, created_at DESC) — supports user activity audit: show everything a specific user did.' (3) 'Index on (created_at) — supports time-range queries and partition pruning.' (4) 'Partial index on (action) WHERE action IN (DELETE, UPDATE) — most compliance queries focus on modifications, not reads.' Not indexed: 'changes JSONB column is not indexed — full-text search on change content uses sequential scan on filtered partition. Acceptable because these queries are rare and run against bounded time ranges.' Write performance: 'Audit logging is asynchronous — changes are published to an internal queue and written by a background worker. This adds ~5ms latency to audit visibility but zero latency to the user-facing operation.' Estimated table size: 'At ~2KB per record, 1M operations/day = 2GB/day, ~730GB/year, ~1.5TB for 2-year retention'"
+    weight: 0.35
+    description: "Indexing and performance"
+  - type: llm_judge
+    criteria: "Data retention and migration are practical — retention strategy: 'Monthly partitions enable efficient retention management. Partitions older than 24 months are detached and archived to cold storage (S3) before deletion. Archived data remains queryable via foreign data wrapper if needed for legal requests.' Migration plan: (1) 'Create audit_logs table with partitioning — no impact on existing tables.' (2) 'Deploy audit logging middleware in shadow mode — logs are written but not relied upon. Validate completeness by comparing with existing application logs for 1 week.' (3) 'Enable audit logging in production — monitor for performance impact.' (4) 'Backfill historical audit data from application logs where available (estimated 3 months of history).' Data integrity: 'Audit logs are append-only. No UPDATE or DELETE operations permitted (enforced by database trigger). This ensures audit trail integrity for compliance.' Schema evolution: 'New resource types require only adding to the resource_type enum. New metadata fields go into the JSONB metadata column without schema changes'"
+    weight: 0.30
+    description: "Retention and migration"

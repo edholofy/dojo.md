@@ -1,0 +1,65 @@
+meta:
+  id: serverless-migration-strategy
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless migration strategy — plan migration from monolithic/container applications to Lambda with risk mitigation and team enablement"
+  tags: [AWS, Lambda, migration, monolith, strangler-fig, modernization, expert]
+
+state: {}
+
+trigger: |
+  Your company runs a monolithic Node.js API on EC2 Auto Scaling
+  Groups. The infrastructure costs $25K/month with 3 ops engineers
+  managing servers, patching, and scaling. The CTO wants to migrate
+  to serverless to reduce costs and operational burden.
+
+  Current state:
+  - Monolith: 150K lines of code, Express.js, PostgreSQL
+  - 45 API endpoints, 12 background jobs
+  - 2M requests/day, peak at 500 req/s
+  - Average response time: 200ms
+  - EC2: 8 c5.xlarge instances + RDS Multi-AZ
+  - Team: 15 developers, 3 ops engineers
+
+  Migration approaches:
+
+  Option A — Lift and shift (Lambda Web Adapter):
+  Wrap the existing Express.js app in Lambda using Lambda Web Adapter.
+  Minimal code changes. But: cold starts with 150K LOC = 10+ seconds,
+  15-minute timeout limit for background jobs, connection pooling
+  issues with RDS.
+
+  Option B — Strangler Fig pattern:
+  Migrate one endpoint at a time. New Lambda function per endpoint,
+  API Gateway routes traffic. Old and new run simultaneously.
+  Timeline: 6-12 months for full migration.
+
+  Option C — Rewrite:
+  Rebuild from scratch as serverless-native. Best architecture
+  but highest risk and longest timeline (12-18 months).
+
+  Recommended: Option B with selective rewrites. Start with:
+  1. Background jobs → Lambda + EventBridge (quick win, no user impact)
+  2. Read-heavy endpoints → Lambda + DynamoDB (low risk)
+  3. Write-heavy endpoints → Lambda + RDS Proxy (medium risk)
+  4. Complex business logic → last (highest risk)
+
+  Task: Design the serverless migration strategy. Write: assessment
+  criteria (what migrates well vs poorly), strangler fig approach,
+  database strategy (RDS to DynamoDB vs RDS Proxy), team enablement,
+  risk mitigation, and success metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration assessment is structured — good Lambda candidates: stateless API endpoints, event-driven processing, scheduled tasks, data transformation, webhooks. Poor candidates: long-running processes (> 15 min), WebSocket connections (use API Gateway WebSocket), heavy computation (consider Fargate), tight database coupling (needs refactoring). Assessment matrix: score each component on statelessness, execution time, dependencies, business criticality, and team readiness. Start with low-risk, high-value candidates"
+    weight: 0.35
+    description: "Migration assessment"
+  - type: llm_judge
+    criteria: "Strangler fig and database strategy are covered — strangler fig: API Gateway routes specific paths to new Lambda functions, everything else to existing monolith via HTTP proxy. Gradually migrate endpoints until monolith is empty. Database: keep RDS initially (Lambda + RDS Proxy for connection pooling), migrate to DynamoDB only for tables that benefit from it (high read, key-value access patterns). Don't force DynamoDB for relational data. Keep PostgreSQL for complex queries. Dual-write period during migration for validation"
+    weight: 0.35
+    description: "Strangler fig"
+  - type: llm_judge
+    criteria: "Team and risk management are practical — team enablement: training program (Lambda basics → event-driven design → testing → operations). Pair experienced serverless developers with migration teams. Start with a pilot team of 3-4 developers. Risk mitigation: keep monolith running until migration is validated (6+ months), implement feature flags for switching between old and new, comprehensive testing at each migration step. Success metrics: infrastructure cost reduction (target: 40-60%), deployment frequency (target: 10x), MTTR (target: 50% reduction), developer velocity (features shipped per sprint)"
+    weight: 0.30
+    description: "Team and risk"

@@ -1,0 +1,37 @@
+meta:
+  id: common-ab-test-mistakes
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Avoid common A/B testing mistakes — identify and prevent the most frequent errors that invalidate experiments and lead to wrong conclusions"
+  tags: [mistakes, pitfalls, validity, best-practices, beginner]
+
+state: {}
+
+trigger: |
+  A new data analyst reviews the company's last 10 A/B tests and
+  finds concerning patterns:
+  - 3 tests were stopped early because they "looked significant"
+  - 2 tests compared treatment to a historical baseline
+  - 1 test ran during Black Friday and the results were applied to
+    normal traffic
+  - 2 tests had no documented hypothesis
+  - 1 test had a 70/30 traffic split but claimed 50/50
+  - 1 test changed the treatment mid-test
+
+  Task: Explain each mistake, why it invalidates the results, and
+  how to prevent it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains early stopping and historical comparison mistakes — earlystopping: 'Mistake 1 — Early stopping (3 tests): what happened: the analyst checked results daily and stopped the test when p < 0.05, sometimes after just 3-4 days. Why it is wrong: checking repeatedly inflates the false positive rate. With daily checks over 14 days, the effective false positive rate can reach 25-30% instead of the intended 5%. The apparent significant result may be a false positive caused by random fluctuation early in the test. How to fix: calculate the required sample size before launching. Commit to running until that sample size is reached. Do not check results before the test is complete. If you must monitor during the test (for safety), use sequential testing methods designed for continuous monitoring (e.g., group sequential design or always-valid p-values). Mistake 2 — Historical comparison (2 tests): what happened: the team compared the treatment's performance this month to the control's performance last month. Why it is wrong: many factors change between months — seasonality, marketing campaigns, product changes, external events. The observed difference could be caused by any of these factors, not the treatment. How to fix: always run a concurrent control group. Split current traffic 50/50 between control and treatment. Both groups experience the same external conditions. The only difference is the treatment variable'"
+    weight: 0.35
+    description: "EarlyStopping"
+  - type: llm_judge
+    criteria: "Response explains the seasonal, hypothesis, and SRM mistakes — othermistakes: 'Mistake 3 — Testing during Black Friday (1 test): what happened: the test ran during Black Friday and the winning treatment was shipped for all traffic year-round. Why it is wrong: Black Friday traffic is fundamentally different — higher purchase intent, more price-sensitive shoppers, higher urgency. A treatment that wins during Black Friday (e.g., a countdown timer) may perform poorly or even hurt conversions during normal periods. How to fix: results from holiday tests apply only to holiday traffic. If you want to optimize for normal traffic, run the test during a normal period. You can run separate tests for holiday and non-holiday periods. Mistake 4 — No documented hypothesis (2 tests): what happened: the team launched tests with vague goals like see if the new design is better. Why it is wrong: without a hypothesis, there is no pre-defined success metric, no MDE, and no sample size calculation. The team might cherry-pick a metric that happens to look good. If you look at enough metrics, one will be significant by chance (multiple testing problem). How to fix: require a written hypothesis before every test launch. Template: if we [change], then [metric] will [direction] by [amount] because [reasoning]. Mistake 5 — Sample Ratio Mismatch (1 test): what happened: the test was supposed to be 50/50 but actually split 70/30. The team did not notice. Why it is wrong: a 70/30 split when 50/50 was intended indicates a bug in the assignment system. Maybe the treatment page crashes for some users (they get reassigned to control). Maybe a bot disproportionately hits one variant. The underlying data is corrupted — no conclusion is valid. How to fix: run an SRM check at the start of every analysis. If the observed split differs significantly from the intended split, invalidate the test and investigate the cause. Mistake 6 — Changed treatment mid-test (1 test): what happened: three days into the test, the design team tweaked the treatment (changed a button color). Why it is wrong: the first 3 days measured treatment version 1. The remaining days measured treatment version 2. The results are a blend of two different treatments — neither can be evaluated cleanly. How to fix: if the treatment needs to change, stop the current test and start a new one. Never modify a running experiment'"
+    weight: 0.35
+    description: "OtherMistakes"
+  - type: llm_judge
+    criteria: "Response provides a pre-launch checklist to prevent these mistakes — checklist: 'A/B test pre-launch checklist: Before launching any test, verify: 1. Hypothesis documented: written hypothesis with specific metric, expected direction, and reasoning. Signed off by the PM and data analyst. 2. Primary metric defined: one primary metric that determines success. No changing the primary metric after seeing results. 3. Sample size calculated: minimum sample per group calculated based on MDE, alpha (0.05), and power (80%). Translated to test duration in complete weeks. 4. Guardrail metrics identified: 2-3 metrics that must NOT degrade. Thresholds defined in advance. 5. Randomization verified: assignment logic reviewed by an engineer. Test the split with a small percentage of traffic before full launch. SRM check planned for the first day. 6. Duration committed: start date and end date specified. No early stopping unless a critical safety issue arises. Full weeks only. 7. Analysis plan written: who analyzes, when, what statistical test is used, and what decision criteria apply. 8. Segment analysis planned: pre-specified segments for secondary analysis (mobile vs desktop, new vs returning, geographic). Post-hoc segments are exploratory only — not for decision-making. This checklist prevents all 6 mistakes found in the audit. Require it for every test — no exceptions'"
+    weight: 0.30
+    description: "Checklist"

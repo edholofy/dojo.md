@@ -1,0 +1,71 @@
+meta:
+  id: serverless-platform-design
+  level: 5
+  course: aws-lambda-debugging
+  type: output
+  description: "Design enterprise serverless platform — build an internal developer platform with self-service Lambda deployment, governance, and operational excellence"
+  tags: [AWS, Lambda, platform, IDP, self-service, governance, enterprise, master]
+
+state: {}
+
+trigger: |
+  Your organization (500 engineers, 200+ Lambda functions) needs
+  an Internal Developer Platform (IDP) for serverless. Currently:
+
+  - Each team deploys Lambda functions differently (SAM, CDK,
+    Serverless Framework, console)
+  - No standard for logging, metrics, or error handling
+  - Security reviews take 2 weeks per function deployment
+  - New developers take 3 weeks to deploy their first function
+  - 40% of production incidents stem from misconfiguration
+
+  Platform requirements:
+
+  Developer experience: "I want to create and deploy a new Lambda
+  function in under 30 minutes with zero infrastructure knowledge."
+
+  Security team: "Every function must pass security checks
+  automatically. No manual reviews needed for standard deployments."
+
+  Operations: "We need unified observability across all functions,
+  automated incident detection, and self-healing capabilities."
+
+  Finance: "Cost attribution per team, per service, per feature."
+
+  Proposed platform layers:
+
+  Layer 1 — Templates and Standards:
+  CDK constructs for approved patterns (API + Lambda, SQS + Lambda,
+  EventBridge + Lambda). Pre-configured: logging, tracing, error
+  handling, security, cost tagging.
+
+  Layer 2 — CI/CD Pipeline:
+  Standardized pipeline: build → test → scan → deploy staging →
+  integration test → deploy production (canary). Automatic rollback.
+
+  Layer 3 — Governance:
+  AWS Config rules for compliance, IAM permission boundaries,
+  cost alerts per team, deployment policies (no console deployments).
+
+  Layer 4 — Observability:
+  Centralized logging (Powertools), unified dashboards, automated
+  alerting, incident detection.
+
+  Task: Design the serverless platform. Write: template library
+  design (CDK constructs), developer onboarding experience, automated
+  governance (security, cost, compliance), observability standard,
+  platform team structure, and success metrics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Template library is well-designed — CDK construct library: pre-built, opinionated patterns for common Lambda use cases. Each construct includes: Lambda function with Powertools (logging, metrics, tracing), IAM role with least privilege, CloudWatch alarms, X-Ray tracing, cost tags. Patterns: API endpoint (API Gateway + Lambda + DynamoDB), event processor (SQS + Lambda), scheduled task (EventBridge + Lambda), stream processor (Kinesis + Lambda). Templates enforce standards without restricting developers. Escape hatch for non-standard use cases with security review"
+    weight: 0.35
+    description: "Template library"
+  - type: llm_judge
+    criteria: "Developer experience and governance are covered — onboarding: developer runs 'create-service' CLI command, selects template, gets deployed service in 30 minutes with full observability. Self-service: no tickets for standard deployments. Governance: IAM permission boundaries (prevent privilege escalation), AWS Config rules (detect non-compliant resources), SCPs (prevent dangerous actions), automated security scanning in CI (no manual review needed for standard patterns). Cost: tagging enforced by CDK constructs, budget alerts per team, cost dashboards in platform portal"
+    weight: 0.35
+    description: "Developer experience"
+  - type: llm_judge
+    criteria: "Platform team and metrics are practical — team structure: 4-6 engineers (2 platform/IaC, 1 security, 1 observability, 1-2 developer experience). Platform as a product: treat internal developers as customers, measure NPS, iterate based on feedback. Success metrics: time to first deployment (target: < 1 hour), deployment frequency per team, security findings per deployment (target: 0 for template-based), MTTR (target: < 15 min), developer satisfaction (NPS > 50), platform adoption (% of functions on platform). Cost efficiency: platform team cost / number of functions managed = cost per function decreasing over time"
+    weight: 0.30
+    description: "Team and metrics"

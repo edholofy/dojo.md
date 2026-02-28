@@ -1,0 +1,49 @@
+meta:
+  id: decision-documentation
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Decision documentation — record meeting decisions with context, rationale, alternatives considered, and impact"
+  tags: [decisions, documentation, rationale, beginner]
+
+state: {}
+
+trigger: |
+  During a product team meeting, the following decision was
+  made. Document it properly based on this discussion:
+
+  "We've been going back and forth on the pricing model for
+  the new pro tier. Option A was $29/month with all features
+  included. Option B was $19/month base plus $5/month per
+  add-on module (there are 4 modules). Option C was a
+  usage-based model at $0.10 per transaction.
+
+  After discussing, we decided on Option B — $19/month base
+  plus add-on modules. The main reasons were: it gives
+  customers flexibility, the average customer would pay about
+  $29 anyway so revenue is similar to Option A, and it makes
+  upselling easier. We were worried that usage-based pricing
+  (Option C) would make revenue unpredictable and scare off
+  risk-averse customers.
+
+  The team voted: 4 for Option B, 1 for Option A, 0 for
+  Option C. The dissenting vote (Jake) felt that Option A's
+  simplicity was worth more than the flexibility of Option B.
+  We agreed to revisit this in 6 months based on actual
+  customer behavior data."
+
+  Task: Create a proper decision record.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a complete decision record — decision record structure (includes all essential elements of a decision record: decision title: Pro Tier Pricing Model Selection (or similar); date of decision; decision makers: who was involved and who had authority; decision: Option B — $19/month base plus $5/month per add-on module; status: approved/decided; the decision is clearly stated upfront — a reader should know what was decided within the first few lines), alternatives analysis (documents all options considered: Option A — $29/month all-inclusive: pros (simplicity), cons (less flexibility, no upsell path); Option B — $19/month base + $5/month modules: pros (customer flexibility, similar average revenue, upsell opportunity), cons (more complex pricing page, potential customer confusion); Option C — $0.10 per transaction: pros (aligns cost with value), cons (unpredictable revenue, may deter risk-averse customers); each option is documented with enough detail that a future reader understands what was evaluated)."
+    weight: 0.35
+    description: "DecisionRecord"
+  - type: llm_judge
+    criteria: "Response captures rationale and dissent — decision rationale (explains why Option B was chosen: customer flexibility as primary driver; revenue equivalence with Option A; upsell opportunity; the reasons are specific and tied to business value, not just 'the team liked it'), dissenting opinion (records Jake's dissent professionally: Jake preferred Option A for its simplicity; this is recorded as a valid perspective, not dismissed; documenting dissent is important for future reference — if the modular pricing causes confusion, the team knows this concern was raised; the record should note that dissent was respected and considered)."
+    weight: 0.35
+    description: "RationaleAndDissent"
+  - type: llm_judge
+    criteria: "Response includes follow-up and review plan — review and next steps (captures the commitment to revisit: the decision will be reviewed in 6 months; the review criteria: actual customer behavior data; this creates accountability — the team committed to evaluating their decision with real data; any immediate action items are captured: who implements the pricing change, when does it launch, what needs to happen next)."
+    weight: 0.30
+    description: "FollowUpPlan"

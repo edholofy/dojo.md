@@ -1,0 +1,97 @@
+meta:
+  id: intermediate-risk-assessment-shift
+  level: 2
+  course: risk-assessment-documentation
+  type: output
+  description: "Intermediate risk assessment shift — handle a data breach risk escalation, a workplace injury root cause analysis, and a contract risk review with conflicting stakeholder priorities"
+  tags: [shift-simulation, data-breach, root-cause, contract-risk, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Risk Manager at a 350-person logistics company
+  ($110M revenue). Three risk situations require your
+  immediate attention today.
+
+  SITUATION 1 — Data Breach Risk Escalation:
+  The IT Director has discovered that a former employee's
+  credentials were used to access the company's TMS
+  (Transportation Management System) 47 times over the past
+  3 weeks — after the employee was terminated. The access
+  was from an IP address in a different state.
+
+  What you know:
+  - Employee was terminated 4 weeks ago (involuntary, poor
+    performance)
+  - Their Active Directory account was disabled but TMS
+    credentials were not (separate system)
+  - TMS contains: Customer shipping addresses, shipment
+    volumes, pricing information, some credit card data for
+    small shippers
+  - 47 access events — browsed customer records, exported
+    2 reports containing pricing data for top 50 customers
+  - No evidence of credit card data access (yet)
+  - The employee joined a competitor 2 weeks ago
+
+  SITUATION 2 — Workplace Injury Root Cause Analysis:
+  A warehouse worker fractured their wrist when a conveyor
+  belt safety guard failed, allowing their hand to be caught
+  in the mechanism. This is the third conveyor-related
+  injury in 18 months (previous two were minor — bruises
+  and lacerations). OSHA has been notified and will likely
+  investigate.
+
+  Investigation findings so far:
+  - Safety guard was present but the latch was broken — the
+    guard swung open during operation
+  - Maintenance records show the latch was reported broken
+    2 weeks ago but the work order was still "pending"
+  - The conveyor was not locked out during the guard repair
+    attempt because "it would stop production"
+  - Other conveyors: Quick inspection found 4 more guards
+    with broken or loose latches
+  - Training records: Worker had completed safety training
+    but the training didn't cover what to do if a guard is
+    broken (the SOP says "report it," not "don't use the
+    equipment")
+
+  SITUATION 3 — Contract Risk Review:
+  The Sales VP wants to sign a new 3-year contract with a
+  major retailer ($18M/year, 16% of company revenue) but
+  the contract has risk provisions you're concerned about:
+  - Unlimited liability for late delivery penalties ($5,000
+    per shipment per day)
+  - "Most favored customer" pricing clause (must match any
+    lower rate offered to other customers)
+  - Right to audit all subcontractor relationships
+  - 30-day termination for convenience by the retailer
+  - Insurance requirement: $25M umbrella (company currently
+    has $10M)
+  - Indemnification for "any loss arising from logistics
+    services" — broad and uncapped
+
+  Sales VP: "This is our biggest deal ever. Don't kill it
+  with risk concerns."
+  General Counsel: "Some of these terms are non-starters."
+
+  Task: Address all three situations with appropriate risk
+  documentation. For the data breach, assess the risk level
+  and recommend immediate actions. For the workplace injury,
+  conduct the root cause analysis and recommend systemic
+  improvements. For the contract, document the risk exposure
+  and propose negotiation positions that protect the company
+  while preserving the deal.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles the data breach risk appropriately — assesses whether breach notification is required (state laws, credit card data exposure determination); recommends immediate containment actions (disable credentials, preserve logs, forensic investigation); evaluates the competitive intelligence theft angle (pricing data exported, employee at competitor); proposes incident documentation and escalation path; the response demonstrates understanding of both cybersecurity incident response and legal notification requirements."
+    weight: 0.35
+    description: "DataBreachRiskResponse"
+  - type: llm_judge
+    criteria: "Response conducts proper root cause analysis for the injury — goes beyond the immediate cause (broken latch) to systemic causes (maintenance work order backlog, production pressure preventing lockout, inadequate SOP, training gaps); identifies the pattern (3rd conveyor injury in 18 months indicates systemic failure, not one-off incident); recommends both immediate corrective actions (inspect all guards, stop-work authority for broken guards) and systemic improvements (maintenance prioritization, LOTO enforcement, SOP revision); the analysis would demonstrate good faith to OSHA investigators."
+    weight: 0.35
+    description: "RootCauseAnalysisQuality"
+  - type: llm_judge
+    criteria: "Response navigates the contract risk diplomatically — quantifies the financial exposure of each problematic clause (unlimited late delivery penalties on $18M contract, MFN pricing impact, uncapped indemnification); proposes specific alternative language for each risky clause (cap penalties, limit MFN to comparable customers, narrow indemnification scope, extend termination notice period); balances risk protection with deal preservation (doesn't just say 'no' but proposes workable alternatives); the response helps the Sales VP and General Counsel find common ground."
+    weight: 0.30
+    description: "ContractRiskNavigation"

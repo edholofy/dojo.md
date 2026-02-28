@@ -1,0 +1,46 @@
+meta:
+  id: cascading-alert-response
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Respond to cascading alerts — navigate an alert storm where a single root cause triggers dozens of alerts across dependent services"
+  tags: [monitoring, cascading, alert-storm, dependency, triage, advanced]
+
+state: {}
+
+trigger: |
+  At 3:12 AM, your pager explodes. In the span of 8 minutes, you
+  receive 47 alerts across 9 services. Here is a sample:
+
+  3:12 - CRITICAL: Redis cluster unreachable
+  3:13 - CRITICAL: session-service error rate > 50%
+  3:13 - CRITICAL: auth-service error rate > 30%
+  3:14 - WARNING: cart-service latency p99 > 5s
+  3:14 - CRITICAL: checkout-service error rate > 20%
+  3:15 - WARNING: search-service degraded
+  3:15 - CRITICAL: API gateway 5xx rate > 10%
+  3:16 - WARNING: CDN cache miss rate > 80%
+  3:16 - CRITICAL: order-service health check failing
+  ...and 38 more alerts continuing to fire
+
+  Your monitoring dashboard shows everything red. PagerDuty is
+  sending escalation after escalation. Your phone is buzzing
+  non-stop.
+
+  Task: Describe your response strategy for the first 30 minutes.
+  How do you find the root cause in an alert storm? How do you
+  manage the noise? What do you do when everything appears broken?
+
+assertions:
+  - type: llm_judge
+    criteria: "Response strategy cuts through noise to find root cause — immediate actions (minutes 0-5): '(1) Stop the noise: acknowledge all alerts in PagerDuty to stop the escalation cascade. You cannot think clearly with a buzzing phone. (2) Do NOT investigate 47 alerts individually. This is one incident generating many symptoms. (3) Look for the earliest alert: Redis cluster unreachable at 3:12 AM was the first alert. This is the most likely root cause — everything else fired after it. (4) Check the dependency map: Redis is used by session-service, auth-service, cart-service, and many others. If Redis is down, all Redis-dependent services will fail in cascade.' Root cause identification: 'The cascade follows a clear pattern: Redis failed → session-service lost sessions → auth-service cannot validate sessions → all services requiring authentication fail → API gateway returns 5xx for all authenticated requests → CDN sees cache misses because backends are returning errors → health checks fail because services are unhealthy. This is one problem (Redis down) creating 47 symptoms. Fix Redis, and 46 other alerts should resolve.' Focus: 'Ignore everything except Redis for now. Every other alert is a downstream symptom. Investigating why checkout-service has errors while Redis is down is wasting time on symptoms while the cause goes unfixed'"
+    weight: 0.35
+    description: "Root cause through noise"
+  - type: llm_judge
+    criteria: "Alert storm management techniques are practical — noise management: '(1) Mute non-root-cause alerts: in your alerting system, suppress alerts from services downstream of Redis. This is not hiding problems — it is preventing 46 distractions while you fix the 1 actual problem. (2) Declare an incident: page your secondary on-call (Jamie) and declare a SEV-1. Post in #incidents: SEV-1 declared. Redis cluster unreachable. All Redis-dependent services affected. Working on Redis recovery. Please do not investigate individual service alerts — they are all downstream of Redis. This message prevents well-meaning colleagues from investigating 9 different services when there is only 1 problem. (3) Focus your investigation: is Redis actually down or is the network between your services and Redis broken? Can you ping the Redis nodes? Can you reach the Redis admin interface? Is this a Redis crash, a network partition, or a cloud infrastructure issue?' Escalation: 'At 3:12 AM with 47 alerts, this is not a solo operation. Page your secondary. If Redis recovery requires DBA or infrastructure expertise you do not have, escalate immediately. Do not spend 20 minutes trying to fix something outside your expertise while every customer-facing service is down'"
+    weight: 0.35
+    description: "Storm management"
+  - type: llm_judge
+    criteria: "30-minute timeline demonstrates structured crisis response — 30-minute plan: 'Minutes 0-5: acknowledge all alerts, identify root cause (Redis), declare SEV-1, page secondary. Minutes 5-10: investigate Redis specifically. Is the Redis cluster running? Can any node be reached? Check: cloud provider status (is there an infrastructure issue in your availability zone?), Redis process status, network connectivity to Redis nodes. Post first update in #incidents. Minutes 10-15: based on findings, choose remediation path: (a) if Redis nodes are crashed: attempt restart. (b) if network issue: check cloud provider status, consider failing over to a different availability zone. (c) if data corruption: restore from snapshot. Minutes 15-20: implement remediation. Monitor for recovery signs in Redis first, then in downstream services. Post second update with progress. Minutes 20-25: as Redis recovers, verify downstream services are recovering. Some services may need restart after Redis returns (connection pools may be in a bad state). Monitor service-by-service recovery. Minutes 25-30: confirm all services recovered. Post update: services recovering, monitoring for stability. Unmute suppressed alerts. Begin post-incident data collection (timeline notes).' Post-storm: 'After recovery, do not just close the incident. Document: (1) what would have reduced the alert storm (better alert suppression rules, dependency-aware alerting), (2) whether Redis redundancy was adequate (should there be automatic failover?), (3) whether the first responder had the right access and knowledge to fix Redis at 3 AM'"
+    weight: 0.30
+    description: "Structured 30-minute timeline"

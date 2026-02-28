@@ -1,0 +1,38 @@
+meta:
+  id: zero-downtime-column-add
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Add a column without downtime — understand which schema changes are safe online and which require special handling for zero-downtime deployments"
+  tags: [database, migration, zero-downtime, online-ddl, intermediate]
+
+state: {}
+
+trigger: |
+  Your application serves 10,000 requests per minute and cannot
+  tolerate downtime. You need to add a "subscription_tier" column
+  (varchar, not null, default 'free') to the users table, which has
+  2 million rows.
+
+  A junior developer wrote this migration:
+  ALTER TABLE users ADD COLUMN subscription_tier VARCHAR(20) NOT NULL DEFAULT 'free';
+
+  Your DBA says: "This might lock the table. We need to be careful."
+
+  Task: Explain which schema changes are safe for zero-downtime
+  deployments in PostgreSQL, whether this specific migration is safe,
+  and what the general rules are.
+
+assertions:
+  - type: llm_judge
+    criteria: "Safe vs unsafe online schema changes are categorized — categorization: 'In PostgreSQL (version 11+), this specific migration IS safe for zero-downtime. Adding a column with a DEFAULT value is an online operation in PostgreSQL 11+ because it stores the default as metadata rather than rewriting every row. The table is not locked for writes. However, adding NOT NULL with a default on older PostgreSQL versions (before 11) WOULD rewrite the entire table, locking it for the duration. Safe online operations in PostgreSQL: (1) ADD COLUMN (nullable, no default): instant, metadata-only change. (2) ADD COLUMN with DEFAULT (PostgreSQL 11+): instant, default stored as metadata. (3) DROP COLUMN: instant, column is marked as dropped but not physically removed until VACUUM. (4) RENAME COLUMN: instant, metadata-only. (5) ADD CONSTRAINT ... NOT VALID: adds constraint without validating existing data (validation done separately). (6) CREATE INDEX CONCURRENTLY: builds index without locking writes (but takes longer). Unsafe operations (may lock the table): (1) ALTER COLUMN TYPE: rewrites entire table for most type changes. (2) ADD COLUMN with DEFAULT (PostgreSQL < 11): rewrites entire table. (3) ADD CONSTRAINT (without NOT VALID): validates all existing data while holding a lock. (4) CREATE INDEX (without CONCURRENTLY): locks writes during index build. (5) VACUUM FULL or CLUSTER: rewrites entire table with exclusive lock'"
+    weight: 0.35
+    description: "Safe vs unsafe changes"
+  - type: llm_judge
+    criteria: "General rules for zero-downtime migrations are explained — general rules: '(1) Separate deployment from migration. The application code and the migration should be independently deployable. If the migration requires new application code, deploy the migration first, then deploy the code. If the code requires the migration, ensure the code handles both old and new schema during the transition. (2) Never assume a migration is fast. Even safe operations can be slow under certain conditions: heavy concurrent load, large transaction logs, or lock contention from long-running queries. Always test timing in staging with production-like data. (3) Use NOT VALID for constraint additions. Instead of: ALTER TABLE users ADD CONSTRAINT check_tier CHECK (subscription_tier IN (free, pro, enterprise)); Do: ALTER TABLE users ADD CONSTRAINT check_tier CHECK (subscription_tier IN (free, pro, enterprise)) NOT VALID; Then separately: ALTER TABLE users VALIDATE CONSTRAINT check_tier; The NOT VALID step is instant (no data check). The VALIDATE step checks existing data but allows concurrent writes. (4) Use CONCURRENTLY for indexes. Instead of: CREATE INDEX idx_users_tier ON users(subscription_tier); Do: CREATE INDEX CONCURRENTLY idx_users_tier ON users(subscription_tier); Takes longer but does not lock writes. Cannot be used inside a transaction. (5) Avoid table rewrites in production. If a migration requires rewriting the table (ALTER COLUMN TYPE on a large table), use an expand-and-contract approach instead (add new column, backfill, switch application, drop old column)'"
+    weight: 0.35
+    description: "General rules"
+  - type: llm_judge
+    criteria: "Version-specific and database-specific considerations addressed — considerations: 'PostgreSQL version matters: PostgreSQL 11+ added instant ADD COLUMN with DEFAULT. If your production database is PostgreSQL 10 or earlier, the same migration that is safe on 11+ will lock the table. Always check your PostgreSQL version before assuming a migration is safe. MySQL differences: MySQL has a different set of online DDL capabilities. InnoDB supports many online ALTER TABLE operations, but not all. For MySQL, tools like gh-ost and pt-online-schema-change are commonly used for safe schema changes. gh-ost: creates a ghost copy of the table, applies the change to the copy, replays changes from the binary log, then swaps the tables. Zero-locking but more complex. pt-online-schema-change: uses triggers to keep a copy table in sync, then swaps. Application-level considerations: even if the migration is safe at the database level, consider: does the application handle the new column gracefully? If the migration adds subscription_tier with a default of free, old application instances (during rolling deployment) will not set this column — is the default correct for those requests? New application code should handle the case where the column might not exist yet (during the transition window)'"
+    weight: 0.30
+    description: "Version considerations"

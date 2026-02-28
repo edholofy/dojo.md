@@ -1,0 +1,38 @@
+meta:
+  id: geospatial-analysis
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Analyze geospatial data — combine pandas with geopandas to analyze location-based data, calculate distances, and create geographic visualizations"
+  tags: [python, pandas, geopandas, geospatial, location, mapping, advanced]
+
+state: {}
+
+trigger: |
+  A logistics company has delivery data with latitude and longitude
+  for each pickup and dropoff. They want to answer:
+
+  1. "What is the average delivery distance by city?"
+  2. "Which zip codes have the highest delivery density?"
+  3. "Show me a heatmap of delivery hotspots."
+  4. "Calculate the estimated delivery time based on distance."
+
+  Data: 500,000 deliveries with columns: delivery_id, pickup_lat,
+  pickup_lng, dropoff_lat, dropoff_lng, city, zip_code,
+  delivery_time_min, delivery_date.
+
+  Task: Analyze the delivery data with geographic calculations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly calculates geographic distances and performs spatial analysis — code: 'Geospatial analysis with pandas: Distance calculation using the Haversine formula: def haversine_distance(lat1, lon1, lat2, lon2): R = 6371. lat1, lat2 = np.radians(lat1), np.radians(lat2). dlat = np.radians(lat2 - lat1). dlon = np.radians(lon2 - lon1). a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2. c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a)). return R * c. df[\"distance_km\"] = haversine_distance(df[\"pickup_lat\"], df[\"pickup_lng\"], df[\"dropoff_lat\"], df[\"dropoff_lng\"]). This is fully vectorized — it calculates 500,000 distances in under 1 second. The Haversine formula gives great-circle distance (straight line on Earth's surface). For road distance, you would need a routing API (Google Maps, OSRM). Question 1 — Average delivery distance by city: city_distance = (df.groupby(\"city\").agg(avg_distance_km=(\"distance_km\", \"mean\"), median_distance_km=(\"distance_km\", \"median\"), total_deliveries=(\"delivery_id\", \"count\")).sort_values(\"avg_distance_km\", ascending=False).round(2)). Question 2 — Delivery density by zip code: zip_density = (df.groupby(\"zip_code\").agg(deliveries=(\"delivery_id\", \"count\"), avg_distance=(\"distance_km\", \"mean\"), avg_time=(\"delivery_time_min\", \"mean\")).sort_values(\"deliveries\", ascending=False)). top_zips = zip_density.head(20). Question 3 — Delivery hotspot visualization: import folium. from folium.plugins import HeatMap. m = folium.Map(location=[df[\"dropoff_lat\"].mean(), df[\"dropoff_lng\"].mean()], zoom_start=11). heat_data = df[[\"dropoff_lat\", \"dropoff_lng\"]].values.tolist(). HeatMap(heat_data, radius=10).add_to(m). m.save(\"delivery_heatmap.html\"). For static plots: fig, ax = plt.subplots(figsize=(10, 10)). ax.hexbin(df[\"dropoff_lng\"], df[\"dropoff_lat\"], gridsize=50, cmap=\"YlOrRd\", mincnt=1). ax.set_title(\"Delivery Dropoff Density\"). plt.colorbar(ax.collections[0], label=\"Deliveries\"). Question 4 — Distance-based delivery time estimation: from sklearn.linear_model import LinearRegression. X = df[[\"distance_km\"]]. y = df[\"delivery_time_min\"]. model = LinearRegression().fit(X, y). print(f\"Estimated formula: time = {model.intercept_:.1f} + {model.coef_[0]:.1f} * distance_km\"). print(f\"R-squared: {model.score(X, y):.3f}\"). The intercept represents the base delivery time (pickup, loading, etc.). The coefficient represents minutes per km'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Analysis provides actionable logistics insights — insights: 'Logistics insights from geospatial analysis: Finding 1 — Distance distribution: the median delivery distance is 5.2 km but the mean is 8.7 km. This right-skew means a few long deliveries pull the average up. Action: consider pricing tiers (short, medium, long) instead of a flat rate. The median is a better basis for capacity planning. Finding 2 — Top 5 zip codes account for 35% of all deliveries. These high-density areas are candidates for hub-and-spoke optimization (a local hub reduces individual delivery distances). Action: model the cost savings of placing a micro-distribution center in the top 3 zip codes. Finding 3 — Delivery time vs distance: the linear model shows time = 15 + 3.2 * distance_km (R-squared = 0.65). The 15-minute base time (intercept) represents pickup overhead. The 3.2 minutes per km suggests an average speed of about 19 km/h (city driving with stops). The R-squared of 0.65 means distance explains 65% of delivery time variation — the other 35% is traffic, parking, building access, etc. Action: add time-of-day and day-of-week features to improve the model. Peak hours likely increase the base time significantly. Finding 4 — Geographic clusters: deliveries form 4 distinct clusters (downtown, east residential, west commercial, south suburban). Each cluster has different characteristics: downtown has short distances but long delivery times (traffic, parking), suburban has long distances but short actual delivery times (easy parking, less traffic). Action: optimize routing separately for each cluster rather than using one algorithm for the entire city'"
+    weight: 0.35
+    description: "Insights"
+  - type: llm_judge
+    criteria: "Response covers geopandas integration for advanced spatial operations — geopandas: 'Advanced spatial analysis with geopandas: import geopandas as gpd. from shapely.geometry import Point. Converting pandas to geopandas: geometry = [Point(xy) for xy in zip(df[\"dropoff_lng\"], df[\"dropoff_lat\"])]. gdf = gpd.GeoDataFrame(df, geometry=geometry, crs=\"EPSG:4326\"). Spatial joins — deliveries by neighborhood: neighborhoods = gpd.read_file(\"neighborhoods.geojson\"). deliveries_by_neighborhood = gpd.sjoin(gdf, neighborhoods, how=\"inner\", predicate=\"within\"). This assigns each delivery to the neighborhood polygon it falls within — much more useful than zip codes for urban analysis. Buffer analysis — deliveries within 2 km of a hub: hub = Point(-73.985, 40.748). hub_buffer = hub.buffer(0.018). Approximately 2 km in degrees at NYC latitude. nearby = gdf[gdf.geometry.within(hub_buffer)]. print(f\"Deliveries within 2km of hub: {len(nearby)} ({len(nearby)/len(gdf)*100:.1f}%)\"). Distance matrix for route optimization: from scipy.spatial.distance import cdist. pickup_coords = df[[\"pickup_lat\", \"pickup_lng\"]].values. dropoff_coords = df[[\"dropoff_lat\", \"dropoff_lng\"]].values. Caution: a full distance matrix for 500K points would be enormous. Use a sample: sample = df.sample(1000). distances = cdist(sample[[\"pickup_lat\", \"pickup_lng\"]], sample[[\"dropoff_lat\", \"dropoff_lng\"]], metric=\"haversine\") * 6371'"
+    weight: 0.30
+    description: "Geopandas"

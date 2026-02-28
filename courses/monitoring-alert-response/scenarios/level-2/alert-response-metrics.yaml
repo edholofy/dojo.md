@@ -1,0 +1,46 @@
+meta:
+  id: alert-response-metrics
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Measure alert response quality — track MTTA, MTTR, and other metrics to assess and improve on-call effectiveness"
+  tags: [monitoring, metrics, MTTA, MTTR, measurement, intermediate]
+
+state: {}
+
+trigger: |
+  Your SRE lead asks you to create a monthly on-call health report.
+  Here is last month's raw data:
+
+  Total alerts: 156
+  Alerts acknowledged within 5 minutes: 112 (72%)
+  Alerts acknowledged within 15 minutes: 138 (88%)
+  Alerts never acknowledged (auto-resolved): 18 (12%)
+
+  Of the 138 acknowledged alerts:
+  - Resolved within 15 minutes: 45
+  - Resolved within 30 minutes: 38
+  - Resolved within 1 hour: 30
+  - Resolved within 2 hours: 15
+  - Resolved in 2+ hours: 10
+
+  Actionable alerts (required human intervention): 82 (53%)
+  False positives: 24 (15%)
+  Self-resolving (no action needed): 50 (32%)
+
+  Task: Calculate the key metrics, interpret what they mean, and
+  identify the most important areas for improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Key metrics are correctly calculated and interpreted — calculated metrics: 'MTTA (Mean Time To Acknowledge): to calculate properly, we would need individual acknowledgment times, but from the data: 72% acknowledged within 5 minutes, 88% within 15 minutes. The median MTTA is likely around 3-4 minutes (since over 72% are under 5 minutes). This is acceptable — industry benchmark for SEV-1/2 is under 5 minutes. MTTR (Mean Time To Resolve): approximate calculation from the distribution: (45×7.5 + 38×22.5 + 30×45 + 15×90 + 10×150) / 138 = approximately 35 minutes average. This is reasonable for a mixed-severity alert set but could improve. Actionable rate: 82/156 = 53%. This means 47% of alerts did not require human action. The 15% false positive rate is concerning — that is 24 wasted pages per month. Alert-to-incident ratio: if 82 alerts were actionable, what percentage were unique incidents vs. multiple alerts for the same issue? This is not in the data but would be valuable to track — if 82 actionable alerts represent only 30 unique incidents, we have an alert duplication problem.' Interpretation: 'The MTTA is good. The MTTR is acceptable. The biggest problem is the 47% non-actionable rate: 74 alerts per month (almost 3 per day) wake someone up or interrupt them for nothing. This is the primary driver of any alert fatigue in the team'"
+    weight: 0.35
+    description: "Metric calculation and interpretation"
+  - type: llm_judge
+    criteria: "Improvement areas are prioritized by impact — priority 1 (highest impact): reduce non-actionable alerts. '47% of alerts do not require action. Breaking this down: 15% false positives (24 alerts) — these should not fire at all. Fix: tune thresholds, add conditions, or remove the alerts. 32% self-resolving (50 alerts) — these are real conditions that fix themselves. Fix: increase the duration requirement before alerting (require the condition to persist for 10-15 minutes instead of 5 minutes). Many transient spikes resolve within a few minutes and do not need human intervention. Target: reduce non-actionable rate from 47% to under 25% within 2 months. This would cut approximately 35 alerts per month.' Priority 2: improve MTTR for long-duration incidents. '10 alerts took more than 2 hours to resolve. These are dragging the average up and represent the most painful on-call experiences. Investigate: do these share common characteristics? (same service? same time of day? same root cause category?) If they do, targeted runbook improvements or automation for those specific scenarios could significantly reduce the average MTTR.' Priority 3: investigate the 18 unacknowledged alerts. '12% of alerts were never acknowledged. Were these off-hours alerts that auto-resolved before the on-call engineer woke up? Were they intentionally ignored? If they were real issues that resolved before acknowledgment, that is a detection-to-response gap. If they were noise that did not warrant acknowledgment, they should be tuned or removed'"
+    weight: 0.35
+    description: "Improvement priorities"
+  - type: llm_judge
+    criteria: "Report format is useful for ongoing tracking and team visibility — monthly report format: 'On-Call Health Report — [Month]. Summary metrics: Total alerts: 156. Actionable rate: 53% (target: 75%). Median MTTA: approximately 4 minutes (target: under 5 minutes). Mean MTTR: approximately 35 minutes. False positive rate: 15% (target: under 5%). Trend: [compare to previous month — improving or declining?]. Top 5 noisiest alerts: list the alerts that fired most frequently with their actionable rates. These are the candidates for tuning. Longest resolution incidents: list the 3-5 incidents that took longest to resolve. These are candidates for runbook improvement or automation. On-call engineer feedback: include qualitative input from on-call engineers — which alerts are most frustrating? What tools or runbooks are missing? Action items from this report: (1) Tune [specific alert] — expected to reduce volume by X. (2) Improve runbook for [specific scenario] — expected to reduce MTTR by Y minutes. (3) [Other specific actions].' Why this report matters: 'Without measurement, alert quality degrades silently. This report makes the on-call experience visible to the team and management. Trends over time show whether investments in alert quality are paying off. If the team sees the actionable rate improving from 53% to 70% over 3 months, it validates the effort and motivates continued improvement'"
+    weight: 0.30
+    description: "Report format and tracking"

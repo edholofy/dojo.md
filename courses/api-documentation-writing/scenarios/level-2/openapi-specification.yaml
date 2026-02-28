@@ -1,0 +1,46 @@
+meta:
+  id: openapi-specification
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Write OpenAPI specifications — create OAS 3.0/3.1 definitions with paths, schemas, and security schemes"
+  tags: [API, documentation, OpenAPI, Swagger, OAS, specification, intermediate]
+
+state: {}
+
+trigger: |
+  Your team hand-writes all API documentation in Markdown. Problems:
+  - Documentation drifts from actual API behavior
+  - No interactive "try it out" functionality
+  - Can't auto-generate client SDKs
+  - No machine-readable API contract
+
+  You're tasked with writing the OpenAPI spec for the payment API.
+  First endpoint to document:
+
+  POST /api/v2/payments
+  - Creates a payment
+  - Auth: Bearer JWT
+  - Body: amount (integer, cents), currency (USD/EUR/GBP),
+    payment_method_id (string), metadata (object, optional)
+  - Returns: payment object with id, status, created_at
+  - Errors: 400, 401, 422
+
+  Task: Write the OpenAPI 3.1 specification for this endpoint.
+  Explain the OAS structure (info, servers, paths, components),
+  $ref references, schema definitions, and how OAS enables
+  interactive documentation and SDK generation.
+
+assertions:
+  - type: llm_judge
+    criteria: "OAS structure is complete and valid — includes: openapi version (3.1.0), info (title, version, description), servers (production + sandbox URLs), paths with the POST /payments endpoint, components/schemas for request and response objects, components/securitySchemes for Bearer JWT. The path definition includes: summary, operationId, tags, requestBody with $ref to schema, responses for 201/400/401/422 each with $ref to response schemas. Schema properties have types, constraints (minimum, enum), descriptions, and required fields marked"
+    weight: 0.35
+    description: "Valid OAS"
+  - type: llm_judge
+    criteria: "$ref and schema patterns are used correctly — reusable schemas in components/schemas: CreatePaymentRequest, Payment, Error. Referenced via $ref: '#/components/schemas/Payment'. Reusable responses in components/responses. Benefits of $ref: DRY (define once, reference everywhere), consistent schemas across endpoints, easier maintenance. Schema composition: allOf for inheritance, oneOf for polymorphic responses. Example values included in schemas or as separate examples object"
+    weight: 0.35
+    description: "Schema patterns"
+  - type: llm_judge
+    criteria: "Benefits over hand-written docs are explained — OAS enables: (1) interactive documentation via Swagger UI or Redoc (try-it-out buttons), (2) client SDK generation (openapi-generator for TypeScript, Python, Go, etc.), (3) server stub generation, (4) contract testing (validate requests/responses against spec), (5) API gateway configuration, (6) mock servers (Prism). The spec IS the documentation — changes to spec automatically update docs. Single source of truth eliminates documentation drift"
+    weight: 0.30
+    description: "OAS benefits"

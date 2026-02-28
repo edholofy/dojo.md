@@ -1,0 +1,47 @@
+meta:
+  id: cross-team-incident
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Analyze cross-team incidents — write postmortems for failures that span multiple team boundaries where handoffs, communication, and shared ownership create complexity"
+  tags: [postmortem, cross-team, coordination, handoffs, shared-ownership, advanced]
+
+state: {}
+
+trigger: |
+  A customer-facing incident lasted 4 hours because it fell between
+  team boundaries. The failure chain crossed 4 teams:
+
+  1. Platform team deployed a Kubernetes upgrade that changed default
+     resource limits (documented in release notes, but no team read them)
+  2. API team's service hit the new lower memory limits during a
+     traffic spike — pods were OOM-killed
+  3. Frontend team's error handling showed a generic "Something went
+     wrong" instead of a useful error, so customer reports were vague
+  4. On-call SRE team investigated the frontend error, not the
+     backend cause, for the first 90 minutes
+
+  Each team's local postmortem concludes: "Not our fault — the issue
+  originated in another team's change." No team owns the systemic
+  fix because the failure is in the gaps between teams, not within
+  any single team.
+
+  Task: Write a cross-team postmortem that owns the full failure
+  chain, identifies where team boundaries created vulnerabilities,
+  and proposes fixes that address the inter-team gaps. Show how to
+  facilitate accountability without blame across organizational
+  boundaries.
+
+assertions:
+  - type: llm_judge
+    criteria: "Full failure chain is owned holistically, not by any single team — framing: 'This incident was not caused by one team's mistake. It was caused by gaps in how teams communicate, coordinate, and handle changes that cross boundaries. Each team's individual actions were reasonable in isolation.' Chain with team boundaries marked: 'Platform team upgrade changed resource limits [boundary: platform → API team]. API team pods hit new limits [boundary: API → frontend]. Frontend showed generic error [boundary: frontend → SRE]. SRE investigated the wrong layer for 90 minutes [boundary: SRE → backend investigation].' Each boundary gap analyzed: (1) 'Platform → API: upgrade release notes existed but no mechanism to ensure downstream teams are aware of changes affecting their services.' (2) 'API → Frontend: frontend error handling doesn't distinguish between backend unavailability and other errors.' (3) 'Frontend → SRE: vague customer error messages gave SRE no signal about which backend service was failing.' (4) 'SRE → Backend: SRE runbooks don't include checking for recent infrastructure changes as a diagnostic step.' The postmortem is not about which team failed — it's about how the system of teams failed"
+    weight: 0.35
+    description: "Holistic ownership"
+  - type: llm_judge
+    criteria: "Inter-team accountability is addressed without blame — shared accountability model: 'Every team contributed to the 4-hour duration. No team is solely responsible. Shared responsibility: Platform team for not actively notifying downstream teams. API team for not configuring resource limits explicitly (relying on defaults). Frontend team for generic error handling that obscured the root cause. SRE team for not checking infrastructure changes during diagnosis.' Each team's contribution framed constructively: 'The Platform team's release process assumes downstream teams monitor release notes. This is a reasonable assumption that doesn't work in practice. The fix is a process change (automated notifications), not blaming the Platform team for poor communication.' Cross-team action items have shared ownership: 'Infrastructure change notification system — Platform team implements, all teams subscribe. Joint ownership of the process, not siloed responsibility.' Cultural intervention: 'Schedule a cross-team incident review meeting (not per-team postmortems). All 4 teams hear the full story, understand how their piece connected to others, and jointly own the systemic fixes'"
+    weight: 0.35
+    description: "Cross-team accountability"
+  - type: llm_judge
+    criteria: "Fixes address the gaps between teams, not just within them — inter-team fixes: (1) 'Infrastructure change notification: any change to shared infrastructure (Kubernetes defaults, networking, DNS) automatically notifies all teams with services affected. Not release notes — active notifications. Owner: Platform team + engineering leadership.' (2) 'Service-level resource configuration: all services must explicitly configure resource limits (not rely on defaults). Infrastructure changes to defaults become informational, not impactful. Owner: each team for their services, Platform team for validation.' (3) 'Error propagation standard: frontend services must propagate specific backend error codes to monitoring, even if showing generic messages to users. Error code in monitoring enables faster triage. Owner: Frontend team + SRE team.' (4) 'Cross-system diagnostic runbook: SRE triage includes checking recent infrastructure changes, deployment history, and cross-team change logs within the first 15 minutes. Owner: SRE team with input from all teams.' (5) 'Quarterly cross-team incident simulation: practice incidents that cross team boundaries to build muscle memory for cross-team debugging. Owner: Engineering leadership.' These fixes strengthen the connections between teams, not just the teams themselves"
+    weight: 0.30
+    description: "Inter-team fixes"

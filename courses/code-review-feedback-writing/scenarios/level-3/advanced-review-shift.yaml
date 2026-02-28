@@ -1,0 +1,48 @@
+meta:
+  id: advanced-review-shift
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Combined advanced shift — review a cross-team database migration PR while mentoring a junior developer, balancing speed with thoroughness during a sprint deadline"
+  tags: [code-review, combined, shift-simulation, cross-team, mentoring, advanced]
+
+state: {}
+
+trigger: |
+  It's Wednesday afternoon, sprint ends Friday. You have one complex
+  review situation:
+
+  A junior developer on another team wrote a PR that adds multi-tenant
+  support to the shared authentication service. Your team depends on
+  this service heavily. The PR:
+
+  - Database migration: adds tenant_id to 3 tables (users, sessions, api_keys)
+  - Auth middleware changes: adds tenant context to every request
+  - API changes: new endpoints for tenant management
+  - Breaking change: all existing API calls need a X-Tenant-ID header
+  - Tests: basic coverage, missing edge cases
+  - The junior dev is under pressure from their manager to ship by Friday
+
+  You need to:
+  1. Review from your team's perspective (impact on your services)
+  2. Mentor the junior developer (this is their biggest PR)
+  3. Be thorough on security (auth changes are critical)
+  4. Be fast enough to not block the sprint
+  5. Navigate the cross-team politics (their manager wants quick approval)
+
+  Task: Write the complete review that balances all five concerns.
+  Include your communication strategy for the sensitive dynamics.
+
+assertions:
+  - type: llm_judge
+    criteria: "Security concerns are non-negotiable regardless of deadline — auth middleware review: 'Tenant isolation is a security boundary — if tenant_id can be spoofed via header, any user can access any tenant's data. The X-Tenant-ID header must be validated against the authenticated user's allowed tenants, not just trusted.' Specific checks: (1) Can user A set X-Tenant-ID to tenant B's ID? (2) What happens when the header is missing? (3) What happens when an invalid tenant ID is provided? (4) Are all existing queries properly scoped by tenant_id? Migration: 'Adding tenant_id without a foreign key constraint means invalid tenant IDs can exist in the database.' Mark as blocking: 'These security items must be addressed before merge — no exceptions for sprint deadlines on authentication code.'"
+    weight: 0.35
+    description: "Security non-negotiable"
+  - type: llm_judge
+    criteria: "Impact on dependent teams is clearly communicated — breaking change assessment: 'The X-Tenant-ID header requirement is a breaking change for all consuming services. Our payments service makes 200 requests/second to auth — this will fail after deploy unless we're coordinated.' Migration plan needed: 'How is this being deployed? All consuming services need to be updated simultaneously, or: make the header optional first (default to primary tenant), deploy all consumers, then make it required.' Communication: raise in cross-team channel, not just PR comment. Specific impact: 'Our team needs 2-3 days to update our services to include X-Tenant-ID. This can't ship Friday without a backward-compatible migration path.' Propose solution: 'Make tenant_id optional with default for single-tenant mode. Phase 2 makes it required after all services migrate.'"
+    weight: 0.35
+    description: "Impact communication"
+  - type: llm_judge
+    criteria: "Mentoring and politics are handled with care — mentoring: 'This is an ambitious and important feature — the overall approach is solid. I have some security items that need to be addressed and some suggestions for safer deployment.' Don't overwhelm: separate blocking items (3-4) from suggestions (5+) from follow-up items. Offer help: 'Happy to pair on the tenant validation logic if that would help move faster.' Politics: direct message to the junior dev's manager: 'The PR is well-written but has security issues that need to be addressed — I want to help [name] fix them quickly rather than rush a merge. The breaking change also needs a migration plan that involves our team. Can we sync briefly?' Don't: approve under pressure ('it's fine, ship it'), block passive-aggressively ('I have 47 comments'), or escalate unnecessarily. Frame as: 'We're on the same team — let's ship this right.'"
+    weight: 0.30
+    description: "Mentoring and politics"

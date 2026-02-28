@@ -1,0 +1,44 @@
+meta:
+  id: color-naming-conventions
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color naming conventions — establish consistent, scalable naming systems for color palettes in design systems"
+  tags: [naming, conventions, tokens, semantic, intermediate]
+
+state: {}
+
+trigger: |
+  A design system designer says: "Our color naming is
+  inconsistent. Three different developers named colors
+  differently:
+
+  Developer A: $blue, $dark-blue, $light-blue, $navy
+  Developer B: --primary, --primary-hover, --link-color
+  Developer C: bg-brand, text-brand, border-accent
+
+  Now we have 3 naming conventions in one codebase.
+  We need ONE naming system that:
+  - Works for light and dark mode
+  - Scales as we add new colors
+  - Makes sense to designers AND developers
+  - Prevents naming collisions
+
+  What naming convention should we use?"
+
+  Task: Design a color naming convention with structure,
+  examples, and rationale for the chosen approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response evaluates naming approaches — literal naming ($blue, $dark-blue: pros — immediately understood, cons — breaks if blue becomes teal during rebrand, doesn't indicate purpose, 'dark-blue' is ambiguous — dark blue for text? dark blue for background?), semantic naming (--primary, --primary-hover: pros — describes purpose not appearance, survives rebrand, cons — 'primary' alone is vague, needs structure to scale), component-scoped naming (bg-brand, text-brand: pros — very specific usage, cons — too granular, creates too many names), recommended approach (two-tier or three-tier: reference layer uses descriptive names like blue-500, semantic layer uses purpose names like color-action-primary, this separation gives stability — reference names can change values, semantic names describe intent permanently)."
+    weight: 0.35
+    description: "NamingEvaluation"
+  - type: llm_judge
+    criteria: "Response provides a complete naming convention — naming structure (pattern: category-role-modifier-state — color-action-primary-hover, color-bg-surface-elevated, color-text-secondary-disabled, color-border-default), naming rules (use lowercase with hyphens — no camelCase, PascalCase, or underscores in token names, always start with category 'color' for greppability, role describes function not appearance — 'action' not 'blue', 'feedback-error' not 'red', modifier adds specificity — 'surface' vs 'surface-elevated', state is optional — default state has no suffix, hover/active/disabled are suffixed), concrete examples for full palette (color-action-primary, color-action-primary-hover, color-action-secondary, color-bg-page, color-bg-surface, color-bg-surface-elevated, color-text-primary, color-text-secondary, color-text-disabled, color-text-inverse, color-border-default, color-border-strong, color-feedback-success, color-feedback-error, color-feedback-warning, color-feedback-info — comprehensive enough to cover real product needs)."
+    weight: 0.35
+    description: "NamingConvention"
+  - type: llm_judge
+    criteria: "Response includes scalability and migration guidance — dark mode compatibility (semantic names stay identical in dark mode — color-bg-page maps to white in light, dark gray in dark — the name describes purpose, not the actual color value, this means code never references light/dark — theme swap changes values behind names), adding new colors (when someone needs a new color: find the semantic intent first — is it a new action state? a new surface level? a new feedback type? — name follows the established pattern, if the intent is truly new: add to the convention documentation and announce), migration from current chaos (provide mapping: $blue → color-action-primary, --primary → color-action-primary, bg-brand → color-bg-brand — complete lookup, implement as aliases first — old names point to new names, then phase out old names with lint rules warning about deprecated names), and governance (naming review: new token names approved by design system team before merging, naming convention documented with examples in design system docs, linter enforces naming pattern for new tokens)."
+    weight: 0.30
+    description: "ScalabilityMigration"

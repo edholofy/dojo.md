@@ -1,0 +1,44 @@
+meta:
+  id: user-flow-documentation
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "User flow documentation — create wireflow diagrams that combine wireframes with flow annotations showing complete user journeys"
+  tags: [user-flows, wireflows, journeys, decision-points, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I designed 12 screens for
+  an e-commerce return process. I annotated each screen
+  individually, but the developer says: 'I can see each
+  screen but I don't understand the flow between them. Which
+  screen leads to which? What are the decision points?'
+
+  The return flow has branching logic:
+  - Reason for return → different paths for 'defective' vs
+    'changed mind' vs 'wrong item received'
+  - Return method → mail-in vs in-store drop-off
+  - Refund method → original payment vs store credit
+  - Some paths skip screens (in-store drop-off skips the
+    shipping label screen)
+
+  How do I document the complete flow with all its branches?"
+
+  Task: Create a wireflow specification for the return
+  process showing all paths, decision points, and screen
+  transitions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a complete wireflow — maps all 12 screens into a flow diagram with: entry point (how user reaches the return flow: order details page → 'Return Item' button), linear steps (select item → reason → method → refund → confirmation), decision points (diamond shapes at branching logic: reason selection branches to different paths, method selection skips/includes screens), conditional paths (defective items get free return shipping, 'changed mind' may have restocking fee notice), merge points (where different paths converge back: all paths reach the confirmation screen), and exit points (completion: return confirmed, abandonment: back to order details). Each transition has a trigger (button click, selection) and any conditions"
+    weight: 0.35
+    description: "WireflowDiagram"
+  - type: llm_judge
+    criteria: "Response annotates each decision point with clear logic — Reason selection: IF 'defective' THEN skip restocking fee notice, show free shipping label, add defect photo upload step. IF 'changed mind' THEN show restocking fee notice (10%), standard return shipping options. IF 'wrong item received' THEN skip shipping cost, show 'Contact support for exchange' option. Method selection: IF 'mail-in' THEN show shipping label generation screen, print label option, QR code option. IF 'in-store' THEN show store locator, skip shipping label, show 'Bring this QR code to the store' screen. Each decision point has clear rules and screen routing"
+    weight: 0.35
+    description: "DecisionPointAnnotations"
+  - type: llm_judge
+    criteria: "Response includes flow metadata and edge cases — flow entry conditions (can only return items within 30 days, only delivered items, not sale items — show error if conditions aren't met), back navigation (can user go back in the flow? Which steps preserve selections?), abandonment handling (if user exits mid-flow, save progress? show 'Continue your return' on next visit?), timer or urgency (return label expires in 14 days), and status tracking (after submission: return status page showing progress: label created → item shipped → item received → refund processed). Includes a legend for the wireflow notation (arrows, decision diamonds, skip paths)"
+    weight: 0.30
+    description: "FlowMetadataEdgeCases"

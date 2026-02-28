@@ -1,0 +1,57 @@
+meta:
+  id: multi-account-strategy
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design multi-account Terraform strategy — implement AWS Organizations landing zone, cross-account roles, and account vending with Terraform"
+  tags: [Terraform, multi-account, AWS-Organizations, landing-zone, cross-account, expert]
+
+state: {}
+
+trigger: |
+  Your company is moving from a single AWS account (everything in one
+  account) to a multi-account strategy using AWS Organizations. Plan:
+
+  ```
+  Management Account (root)
+  ├── Security OU
+  │   ├── Security Account (GuardDuty, SecurityHub)
+  │   └── Log Archive Account (CloudTrail, Config)
+  ├── Infrastructure OU
+  │   ├── Shared Services (DNS, VPN, Transit Gateway)
+  │   └── Network Hub (centralized networking)
+  ├── Workloads OU
+  │   ├── Production OU
+  │   │   ├── App1-Prod
+  │   │   └── App2-Prod
+  │   └── Non-Production OU
+  │       ├── App1-Dev
+  │       └── App2-Staging
+  └── Sandbox OU
+      └── Developer Sandboxes
+  ```
+
+  Terraform needs to:
+  1. Create and manage the Organization structure
+  2. Provision new accounts automatically (account vending)
+  3. Apply baseline security controls to every account
+  4. Manage cross-account networking (Transit Gateway)
+
+  Task: Design the multi-account Terraform strategy covering:
+  Organization management, account vending machine, baseline
+  security controls (SCPs, GuardDuty, Config), cross-account
+  IAM, and state management across accounts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Organization management with Terraform is designed — aws_organizations_organization for the org, aws_organizations_organizational_unit for OUs, aws_organizations_account for member accounts, aws_organizations_policy (SCP) for guardrails. Account vending: module that creates account, configures baseline (IAM roles, logging, security), outputs account ID. SCPs: restrict allowed services and regions, deny root user actions, enforce encryption. Terraform runs from management account with OrganizationAccountAccessRole to configure member accounts"
+    weight: 0.35
+    description: "Organization management"
+  - type: llm_judge
+    criteria: "Baseline security and cross-account are covered — baseline module per account: (1) CloudTrail → Log Archive bucket, (2) AWS Config → centralized rules, (3) GuardDuty member enrollment, (4) IAM password policy, (5) EBS default encryption, (6) S3 Block Public Access account-level setting. Cross-account IAM: create TerraformRole in each account with trust to management/CI account. Cross-account networking: Transit Gateway in network hub, RAM sharing to workload accounts. VPC peering or Transit Gateway attachments managed by network team's Terraform"
+    weight: 0.35
+    description: "Baseline and cross-account"
+  - type: llm_judge
+    criteria: "State management across accounts is practical — one state file per account per domain (not one giant state). State bucket: centralized in management or shared services account with cross-account access policies. State architecture: management-account/org.tfstate, security-account/baseline.tfstate, each-workload-account/baseline.tfstate + app.tfstate. CI/CD: pipeline assumes different roles per account. terraform_remote_state: network team's outputs consumed by workload teams. DynamoDB locking table: centralized with per-state granularity. Least privilege: each team's CI role can only access their account's state"
+    weight: 0.30
+    description: "State management"

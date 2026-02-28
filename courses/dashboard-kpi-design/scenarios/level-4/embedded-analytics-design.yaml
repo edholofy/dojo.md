@@ -1,0 +1,38 @@
+meta:
+  id: embedded-analytics-design
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Design embedded analytics — build customer-facing dashboards embedded within your product that provide value to end users while maintaining security, performance, and multi-tenancy"
+  tags: [embedded, customer-facing, multi-tenant, product-analytics, expert]
+
+state: {}
+
+trigger: |
+  The CPO says: "Our competitors offer in-product analytics — their
+  customers can see dashboards showing their own data right inside the
+  app. Our customers keep asking for the same thing. The sales team
+  says we're losing deals because of it.
+
+  I want to embed dashboards into our product. Each customer should
+  see only their own data. The dashboards need to look like part of
+  our product, not a third-party tool. And they need to load fast —
+  our app loads in under 2 seconds and the analytics can't slow it
+  down."
+
+  Task: Design an embedded analytics architecture for a multi-tenant
+  SaaS product.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a multi-tenant embedded analytics architecture — architecture: 'Embedded analytics architecture: Architecture options: Option A — Embed a BI tool (Looker, Metabase, Sigma): Use the BI tool's embedding SDK to render dashboards inside your product. The BI tool handles visualization, querying, and caching. Your app provides the authentication and tenant context. Pros: fast to implement (weeks, not months). Leverage the BI tool's charting library and query engine. Automatic updates as the BI tool adds features. Cons: limited UI customization — the dashboard may look like a third-party widget. Performance depends on the BI tool's infrastructure. Per-user pricing can get expensive at scale. Option B — Build custom analytics (React + charting library + API): Build dashboards using a frontend charting library (Recharts, Visx, ECharts) with a backend analytics API. Your app queries the data warehouse directly and renders custom visualizations. Pros: full control over UI — dashboards look native to your product. No per-user licensing costs. Best performance (optimized for your data model). Cons: significant engineering investment (2-4 months for initial build). Must build and maintain the query engine, caching, and visualization components. Recommendation for this company: start with Option A (embedded BI tool) for speed to market. Migrate to Option B when analytics becomes a competitive differentiator and the team can invest in custom development. Multi-tenant data isolation: the most critical requirement. Each customer must see ONLY their own data. Implementation: every analytics query includes a mandatory tenant filter: WHERE tenant_id = current_user_tenant_id. This filter is injected at the server level — the frontend cannot override it. Row-level security (RLS) in Snowflake as a second safeguard: CREATE POLICY tenant_rls AS (tenant_id = CURRENT_SESSION_TENANT_ID). Even if the application has a bug, the database enforces isolation. Testing: automated tests that log in as Tenant A and verify they cannot see Tenant B's data. Run this test suite on every deployment'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response covers the dashboard design for customer-facing analytics — design: 'Customer-facing dashboard design: The customer-facing dashboard must be simpler than internal dashboards. Customers are not analysts — they want insights, not data exploration. Dashboard layout for each customer: Section 1 — Summary banner: Your account at a glance: 1,240 active users (↑12% this month). 98.5% uptime (SLA: 99.5%). 4,200 API calls today. This gives the customer an immediate status check. Section 2 — Usage trends: Line chart: daily active users over the last 30 days. The customer sees their product adoption trend. Bar chart: feature usage breakdown. Feature A: 850 users. Feature B: 420 users. Feature C: 180 users. The customer sees which features their team uses most. Section 3 — Performance: API response time (P50, P95): trend over 30 days. Error rate: 0.3% (within SLA). Availability: 98.5% this month (SLA: 99.5%). The customer monitors the service they are paying for. Section 4 — Export and scheduling: Download as PDF button (for executive reporting). Schedule weekly email report. API access to their own analytics data. White-labeling: the dashboards must use your product's design system. Match the product's font, colors, spacing, and navigation patterns. Remove all BI tool branding. The dashboard should be indistinguishable from a native product page. Performance target: embedded dashboards must load within the same performance budget as the rest of the product. Target: first meaningful paint under 2 seconds. Technique: pre-compute each tenant's analytics nightly. The dashboard reads from a pre-computed summary table, not a live query against the full dataset. Tenant summary tables contain 100-1,000 rows per tenant — queries return in under 100ms'"
+    weight: 0.35
+    description: "Design"
+  - type: llm_judge
+    criteria: "Explanation covers scaling, caching, and monetization of embedded analytics — scaling: 'Scaling embedded analytics: Caching strategy: Level 1 — Application cache: cache dashboard data in Redis with a per-tenant key. TTL: 1 hour for daily-refresh dashboards. When a customer views their dashboard, check the cache first. Cache hit rate target: above 90% (most customers view dashboards during business hours, and data refreshes nightly). Level 2 — CDN cache for static assets: chart images, CSS, and JavaScript cached at the CDN edge. Level 3 — Pre-computation: nightly batch job computes each tenant's analytics and writes to a summary table. The dashboard reads from the summary table, not the raw data. This decouples dashboard performance from data volume. Even a tenant with 10 million events loads their dashboard in under 1 second because the summary table has 500 rows. Scaling considerations: at 1,000 tenants, pre-computation takes 2 hours nightly (2 seconds per tenant). At 10,000 tenants, it takes 5.5 hours (optimized with parallel processing). Budget for compute growth as tenant count scales. Stale data handling: if the nightly job fails, the dashboard shows the previous day's data with a notice: Data as of yesterday. Today's refresh is processing. This is better than showing an error or no data at all. Monetization: Tier 1 (included in base plan): basic usage dashboard with 5 charts. Standard 30-day data retention. This adds product value and reduces support queries (customers can self-serve usage data). Tier 2 (premium add-on, +$50/month): advanced analytics with drill-downs, cohort analysis, and custom date ranges. 12-month data retention. API access to export analytics data. Tier 3 (enterprise, +$200/month): white-label dashboards the customer can show to their own clients. Custom metrics and KPIs. Real-time data (streaming instead of nightly batch). Embedded analytics becomes a revenue line, not just a cost center'"
+    weight: 0.30
+    description: "Scaling"

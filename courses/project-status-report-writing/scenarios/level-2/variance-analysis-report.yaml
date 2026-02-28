@@ -1,0 +1,87 @@
+meta:
+  id: variance-analysis-report
+  level: 2
+  course: project-status-report-writing
+  type: output
+  description: "Variance analysis report — create a detailed variance analysis showing planned vs actual performance with root cause analysis and corrective actions"
+  tags: [variance, analysis, planned-vs-actual, root-cause, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior project manager. The PMO requires a monthly
+  variance analysis report for any project with greater than
+  10% variance in schedule or budget. Your project just
+  crossed that threshold.
+
+  Project: Data Warehouse Modernization
+  Planned Duration: 9 months (Jan - Sep 2026)
+  Planned Budget: $600K
+  Current Month: April 2026 (Month 4 of 9)
+
+  Schedule Variance:
+  Planned progress at Month 4: 44% complete
+  Actual progress at Month 4: 31% complete
+  Schedule Variance: -13 percentage points (29.5% behind plan)
+
+  Detailed schedule breakdown:
+  | Work Package | Planned % | Actual % | Variance |
+  |---|---|---|---|
+  | Data modeling | 100% | 100% | 0% |
+  | ETL pipeline design | 100% | 85% | -15% |
+  | Source system connectors | 60% | 35% | -25% |
+  | Data quality rules | 40% | 15% | -25% |
+  | Reporting layer | 20% | 5% | -15% |
+  | Testing framework | 30% | 10% | -20% |
+  | Documentation | 15% | 5% | -10% |
+
+  Budget Variance:
+  Planned spend at Month 4: $267K (44% of $600K)
+  Actual spend at Month 4: $295K (49% of $600K)
+  Budget Variance: +$28K (10.5% over plan)
+  Forecast at completion: $680K (13.3% over original budget)
+
+  Budget breakdown:
+  | Category | Planned YTD | Actual YTD | Variance |
+  |---|---|---|---|
+  | Internal labor | $160K | $155K | -$5K (under) |
+  | External consultants | $60K | $85K | +$25K (over) |
+  | Cloud infrastructure | $30K | $38K | +$8K (over) |
+  | Software licenses | $17K | $17K | $0 |
+
+  Root Causes (your analysis):
+  1. Source system complexity: The 3 legacy source systems
+     have undocumented data formats that require reverse
+     engineering. This wasn't identified during planning.
+     Impact: -25% on source connectors, +$25K in consultant
+     costs for legacy system expertise.
+
+  2. Cloud cost model: The development environment cloud
+     costs are 27% higher than estimated because data
+     volumes in dev are larger than assumed. Impact: +$8K
+     in infrastructure costs.
+
+  3. Team ramp-up: Two new team members joined in Month 2
+     and took 6 weeks to become productive (estimated 3
+     weeks). Impact: -15% on ETL pipeline and reporting.
+
+  4. Dependency delay: The data quality rules depend on
+     business rules documentation from the finance team,
+     which is 3 weeks late. Impact: -25% on data quality
+     rules.
+
+  Task: Create the variance analysis report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a comprehensive variance analysis — presents both schedule and budget variance with planned vs actual comparison tables; calculates variance percentages correctly; shows the variance at both the overall project level and the work package/category level; includes a forecast at completion ($680K, 13.3% over budget); the report makes the magnitude of the variance clear and quantifiable; uses appropriate project management terminology (SPI, CPI, EAC, or equivalent plain-language metrics)."
+    weight: 0.35
+    description: "VarianceAnalysis"
+  - type: llm_judge
+    criteria: "Response provides thorough root cause analysis — each root cause is clearly connected to specific variance items (source complexity → connector delays + consultant costs, cloud costs → infrastructure overage, team ramp-up → ETL and reporting delays, finance dependency → data quality delay); distinguishes between internal causes (team ramp-up, estimation errors) and external causes (dependency on finance team, undocumented legacy systems); the root causes are specific and actionable, not vague ('things took longer than expected')."
+    weight: 0.35
+    description: "RootCauseAnalysis"
+  - type: llm_judge
+    criteria: "Response includes corrective actions and revised forecast — proposes specific corrective actions for each root cause; includes a revised schedule forecast showing expected completion date; addresses whether the project can be brought back on track or needs a formal rebaseline; provides options for budget recovery (absorb in contingency, request additional funding, reduce scope); the report serves as both a diagnostic (what went wrong) and a prescription (what to do about it); meets PMO standards for formal variance reporting."
+    weight: 0.30
+    description: "CorrectiveActions"

@@ -1,0 +1,34 @@
+meta:
+  id: cuped-variance-reduction
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Apply CUPED variance reduction — use pre-experiment data to reduce noise in A/B test metrics, increase statistical power, and detect smaller effects with the same sample size"
+  tags: [CUPED, variance-reduction, covariate-adjustment, power, advanced]
+
+state: {}
+
+trigger: |
+  The experimentation team lead says: "Our A/B tests consistently need
+  4-6 weeks to reach significance because our metrics are noisy —
+  revenue per user has a coefficient of variation of 3x. The product
+  team is frustrated with the slow pace. I've read about CUPED
+  (Controlled-experiment Using Pre-Experiment Data) from Microsoft.
+  They claim it can reduce required sample sizes by 50%. Is this real?"
+
+  Task: Explain CUPED, how it works mathematically, and how to
+  implement it to speed up experimentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains CUPED and the core intuition — cuped: 'CUPED — Controlled-experiment Using Pre-Experiment Data: Core intuition: much of the noise in A/B test metrics comes from pre-existing differences between users, not from the treatment. User A naturally spends $100/month. User B naturally spends $5/month. This 20x difference in baseline spending creates enormous variance in the revenue metric, making it hard to detect a small treatment effect. CUPED uses pre-experiment data (what the user did BEFORE the test started) to remove this pre-existing variance. How it works: 1. For each user, collect a pre-experiment covariate X — typically the same metric measured before the test. For revenue per user: X = revenue in the 30 days before the test. Y = revenue during the test. 2. Calculate the CUPED-adjusted metric: Y_cuped = Y - θ × (X - mean(X)). Where θ = Cov(Y, X) / Var(X) — the regression coefficient of Y on X. 3. The adjusted metric Y_cuped has lower variance than Y because we subtracted the predictable component. Variance reduction: Var(Y_cuped) = Var(Y) × (1 - ρ²). Where ρ is the correlation between the pre-experiment covariate and the test metric. If pre-experiment revenue correlates at ρ = 0.7 with test-period revenue: variance reduction = 1 - 0.49 = 51%. Required sample size drops by approximately 50%. If ρ = 0.5: variance reduction = 25%. Sample size drops by 25%. If ρ = 0.9: variance reduction = 81%. Sample size drops by 81%. The claim is real — CUPED routinely reduces required sample sizes by 30-60% for metrics with strong pre-experiment predictors. Revenue, engagement, and retention metrics typically have ρ = 0.5-0.8 with their pre-experiment values'"
+    weight: 0.35
+    description: "CUPED"
+  - type: llm_judge
+    criteria: "Response covers implementation details and covariate selection — implementation: 'CUPED implementation: Step 1 — Choose the pre-experiment covariate: the covariate must be measured BEFORE the experiment starts (to avoid treatment contamination). Best covariate: the same metric from the pre-experiment period. Revenue during test → use revenue from 30 days before test. Clicks during test → use clicks from 30 days before test. Retention during test → use retention from the previous period. The pre-experiment window should match the test duration (if the test runs 2 weeks, use 2 weeks of pre-data). Alternative covariates: user tenure, historical engagement score, predicted baseline (from an ML model). Multiple covariates: extend to multivariate regression. Y_cuped = Y - θ₁(X₁ - mean(X₁)) - θ₂(X₂ - mean(X₂)) - ... Using multiple covariates can increase variance reduction beyond a single covariate, but diminishing returns apply after 3-5 covariates. Step 2 — Calculate θ: pool all users (treatment + control). Compute θ = Cov(Y, X) / Var(X) using the pooled data. This is valid because X is measured pre-experiment and is independent of treatment assignment. Step 3 — Apply the adjustment: for each user: Y_cuped_i = Y_i - θ × (X_i - mean(X)). The mean subtraction ensures E[Y_cuped] = E[Y] — the adjustment does not change the expected value, only reduces the variance. Step 4 — Run the standard test on Y_cuped: compute mean(Y_cuped) for treatment and control. The difference in means is the same as the standard ATE estimate (unbiased). But the standard error is smaller → narrower confidence intervals → smaller p-values. Critical requirements: the covariate X must be measured before randomization. X must not be affected by the treatment. X must correlate with Y (higher correlation → more variance reduction). The randomization must be valid (no selection bias). If these conditions hold, CUPED produces unbiased estimates with strictly lower variance'"
+    weight: 0.35
+    description: "Implementation"
+  - type: llm_judge
+    criteria: "Response covers practical impact and extensions — practical: 'Practical impact: Before CUPED (raw revenue metric): mean revenue per user: $50. Standard deviation: $150 (CV = 3x — very noisy). To detect a $2 lift (4% relative) at 80% power: n = (1.96 + 0.84)² × 2 × 150² / 2² = approximately 88,000 per group. At 5,000 users per day: 88,000 / 2,500 per group per day = 35 days. After CUPED (ρ = 0.7 with pre-experiment revenue): adjusted standard deviation: $150 × sqrt(1 - 0.49) = $107. Required sample: 88,000 × (1 - 0.49) = approximately 44,800 per group. Duration: 44,800 / 2,500 = 18 days. Savings: 17 days per test — nearly halved. With 20 tests per month, this translates to significantly faster iteration. Extensions beyond basic CUPED: CUPAC (Controlled-experiment Using Pre-existing and Control Attributes): uses a machine learning model (e.g., gradient boosted trees) trained on pre-experiment data to predict the test-period outcome. Y_cupac = Y - predicted_Y. Can achieve higher variance reduction than linear CUPED because ML models capture non-linear relationships. Typically reduces variance by 40-70% for revenue metrics. Stratified CUPED: combine CUPED with stratified randomization. First, stratify users into buckets based on pre-experiment behavior (e.g., low/medium/high spenders). Then apply CUPED within each stratum. Double variance reduction — stratification handles between-group variance, CUPED handles within-group variance. When CUPED does not help: new user metrics (no pre-experiment data available for new users). Metrics with low temporal autocorrelation (if last month's behavior does not predict this month's). One-time events (purchase of a specific product — hard to predict from history). For the experimentation team lead: implement CUPED as a standard part of your analysis pipeline. Apply it to all A/B tests with metrics that have pre-experiment history (revenue, engagement, retention). Expect 30-50% reduction in required sample sizes. Pair with stratified randomization for maximum power gains. The combined approach can reduce test durations from 6 weeks to 2-3 weeks for most metrics'"
+    weight: 0.30
+    description: "Practical"

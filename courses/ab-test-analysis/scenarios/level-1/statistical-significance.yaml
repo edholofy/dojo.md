@@ -1,0 +1,35 @@
+meta:
+  id: statistical-significance
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Understand statistical significance — explain p-values, significance levels, and how to determine whether an A/B test result is real or due to random chance"
+  tags: [p-value, significance, alpha, chance, beginner]
+
+state: {}
+
+trigger: |
+  A product manager runs an A/B test and sees the results:
+  - Control: 4.2% conversion rate (1,050 conversions / 25,000 visitors)
+  - Treatment: 4.6% conversion rate (1,150 conversions / 25,000 visitors)
+
+  They exclaim: "The treatment won! 4.6% is higher than 4.2%, so let's
+  ship it." The data analyst says: "Wait — we need to check if this
+  difference is statistically significant."
+
+  Task: Explain what statistical significance means and whether this
+  result is trustworthy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains statistical significance and p-values — significance: 'Statistical significance explained: The treatment (4.6%) appears better than the control (4.2%). But could this difference have happened by chance? Imagine flipping a coin 100 times. You might get 52 heads and 48 tails — that does not mean the coin is biased. Similarly, the 0.4 percentage point difference might be random variation in user behavior, not a real effect of the design change. Statistical significance answers: how likely is it that we would see a difference this large (or larger) if the treatment had NO actual effect? This likelihood is called the p-value. P-value interpretation: p-value = 0.03 means: there is a 3% chance of seeing a difference this large if the treatment has no real effect. In other words, if the treatment does nothing, we would see this result only 3 out of 100 times. p-value = 0.30 means: there is a 30% chance of seeing this difference by random chance. That is too common to trust — the result is likely noise. The significance level (alpha): before the test, we set a threshold called alpha (α). The industry standard is α = 0.05 (5%). If p-value < 0.05: the result is statistically significant. We reject the hypothesis that there is no difference. We conclude the treatment likely has a real effect. If p-value ≥ 0.05: the result is NOT statistically significant. We cannot conclude there is a real difference. The treatment may or may not be better — we do not have enough evidence. For this test: running a two-proportion z-test on the data. Control: 1,050/25,000 = 4.20%. Treatment: 1,150/25,000 = 4.60%. Difference: 0.40 percentage points. p-value: 0.028. Since 0.028 < 0.05, the result IS statistically significant. The PM can ship the treatment with reasonable confidence'"
+    weight: 0.35
+    description: "Significance"
+  - type: llm_judge
+    criteria: "Response covers what p-values do NOT mean and common misinterpretations — misinterpretations: 'What p-values do NOT mean: Misinterpretation 1: p-value = 0.03 means there is a 97% chance the treatment is better. WRONG. The p-value does not tell you the probability that the treatment works. It tells you the probability of seeing this data if the treatment does NOT work. These are different statements. Misinterpretation 2: p-value = 0.03 means the treatment will always produce a 0.4pp improvement. WRONG. The 0.4pp is the observed effect in this specific test. The true effect could be higher or lower. The confidence interval tells you the range. Misinterpretation 3: p-value = 0.06 means the treatment does not work. WRONG. p = 0.06 means we do not have ENOUGH EVIDENCE to conclude it works at the 5% threshold. It might work — we just need more data. This is a failure to reject the null hypothesis, not proof that the null is true. Misinterpretation 4: a statistically significant result is practically significant. WRONG. A test with 1 million visitors might detect a 0.05 percentage point improvement with p = 0.01. That is statistically significant but practically meaningless — a 0.05pp improvement might not be worth the engineering effort to implement. Always consider: is the effect SIZE large enough to matter? Statistical significance says the effect is REAL. Practical significance says the effect is MEANINGFUL. You need both'"
+    weight: 0.35
+    description: "Misinterpretations"
+  - type: llm_judge
+    criteria: "Response explains Type I and Type II errors — errors: 'Type I and Type II errors: When we set α = 0.05, we accept a 5% risk of a false positive. Type I error (false positive): concluding the treatment works when it actually does not. Rate: controlled by alpha (5% if α = 0.05). Example: you ship the new design thinking it improves signups. In reality, it has no effect. You made a change for no reason. Consequence: wasted engineering effort, possible slight degradation from the change. Type II error (false negative): concluding the treatment does NOT work when it actually does. Rate: controlled by statistical power (typically set at 80%, meaning 20% false negative rate). Example: you discard the new design thinking it has no effect. In reality, it would have improved signups by 5%. You missed a real improvement. Consequence: missed opportunity for growth. The trade-off: reducing false positives (stricter alpha, e.g., α = 0.01) increases false negatives. Reducing false negatives (more power, e.g., 90%) requires larger sample sizes. For most product A/B tests, the standard settings are reasonable: α = 0.05 (5% false positive rate). Power = 80% (20% false negative rate). This means: 1 in 20 significant results is a false positive. 1 in 5 real effects will be missed. If the cost of a false positive is very high (e.g., a pricing change that could lose revenue), use a stricter alpha like 0.01'"
+    weight: 0.30
+    description: "Errors"

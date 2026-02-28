@@ -1,0 +1,52 @@
+meta:
+  id: architectural-feedback
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Give architectural feedback — review code for design patterns, separation of concerns, and consistency with the system's architecture"
+  tags: [code-review, architecture, design, patterns, separation-of-concerns, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR that adds a notification system. The code
+  works and has tests, but the architecture concerns you:
+
+  1. The notification logic is embedded directly in the OrderController
+     — it checks order status and sends emails/SMS inline with the
+     order processing logic
+
+  2. The email templates are hardcoded strings in the notification
+     code, not in template files
+
+  3. The PR introduces a new database connection for notifications
+     instead of using the existing connection pool
+
+  4. There's no interface/abstraction for notification channels —
+     adding push notifications later would require modifying the
+     existing email/SMS code
+
+  5. The notification sending is synchronous — if the email service
+     is slow, order processing is slow
+
+  The code works perfectly in tests. The author will argue: "It works,
+  why change it?"
+
+  Task: Write architectural review feedback for each of the 5 concerns.
+  For each, explain the current design problem, the future risk, and
+  propose a better approach. Address the "it works, why change it?"
+  objection.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each concern identifies a specific architectural principle violation — (1) Mixed concerns: OrderController handles orders AND notifications — violates single responsibility. Risk: changes to notification logic require touching order code. Fix: extract NotificationService. (2) Hardcoded templates: templates change independently from code (marketing wants to update copy). Risk: every text change requires a code deploy. Fix: template files or a template engine. (3) Separate connection: multiple connection pools waste resources, harder to manage transactions. Fix: share existing pool. (4) No abstraction: adding push notifications means modifying email/SMS code (open/closed principle violation). Fix: NotificationChannel interface with EmailChannel, SMSChannel implementations. (5) Synchronous: email service timeout blocks order completion. Fix: async queue (send notification event, process separately). Each concern: principle, current risk, future risk, concrete fix"
+    weight: 0.35
+    description: "Architectural concerns"
+  - type: llm_judge
+    criteria: "Feedback addresses 'it works, why change it?' constructively — acknowledge: 'The implementation is correct and well-tested — I'm not questioning whether it works. My concern is about how it will work as the system grows.' Address each concern with a concrete scenario: 'When marketing wants to change the email copy, they'll need an engineering deploy (template concern).' 'When we add push notifications next quarter (it's on the roadmap), we'll need to refactor this code AND the tests (abstraction concern).' 'If SendGrid has a 30-second timeout, users wait 30 seconds to place an order (sync concern).' Frame as investment: 'Fixing this now takes 2 hours. Fixing it later when 10 features depend on this pattern takes 2 weeks.' Not condescending: 'I've seen this pattern cause problems in [specific project/service]'"
+    weight: 0.35
+    description: "Addresses objection"
+  - type: llm_judge
+    criteria: "Proposed alternatives are concrete and proportionate — each suggestion includes enough detail to implement: extract NotificationService with send(type, recipient, data) method. Show the interface: NotificationChannel with send() method, EmailChannel and SMSChannel implementations. Show the queue pattern: emit OrderCompleted event, NotificationWorker listens and sends. Don't over-engineer: 'We don't need a full event bus — a simple background job queue is sufficient for now.' Prioritize: 'If you only address one concern, make notifications async (#5) — that's the production risk. The others are maintainability and can be follow-up PRs.' Offer to pair: 'Happy to pair on the refactor if you'd like — the extraction should be straightforward.'"
+    weight: 0.30
+    description: "Proportionate alternatives"

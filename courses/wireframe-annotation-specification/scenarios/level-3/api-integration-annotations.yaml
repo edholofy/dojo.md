@@ -1,0 +1,46 @@
+meta:
+  id: api-integration-annotations
+  level: 3
+  course: wireframe-annotation-specification
+  type: output
+  description: "API integration annotations — specify how UI elements connect to backend APIs including request/response handling, caching, and optimistic updates"
+  tags: [API, integration, backend, requests, responses, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "I'm working closely with backend
+  developers on a feature. They want my specs to include API
+  integration details so they can see how the UI connects to
+  the backend. The feature: a team management page where
+  admins can:
+
+  - View team members list (paginated)
+  - Invite new members (by email)
+  - Change member roles (dropdown)
+  - Remove members
+  - Search members
+
+  The backend developer says: 'For each UI action, I need to
+  know: what API call is made, what data is sent, what the
+  success/failure responses look like, and how the UI updates.
+  Should it be optimistic or wait for the server?'
+
+  How technical should my annotations be?"
+
+  Task: Write API-aware UI specifications for the team
+  management feature.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies UI-to-API mapping for each action — View members: on page load, fetch GET /api/teams/{id}/members?page=1&limit=25, display loading skeleton while waiting, populate list on 200 response, show error on failure. Invite member: on submit, POST /api/teams/{id}/invitations with {email, role}, show loading on button, on 201: add 'Pending' member to list with optimistic update, show toast 'Invitation sent to email@example.com', on 409 (already member): show inline error 'This person is already a team member', on 400 (invalid email): show inline validation error. Role change: PATCH /api/teams/{id}/members/{memberId} with {role}, optimistic update (change role immediately in UI, rollback on failure). Remove: DELETE /api/teams/{id}/members/{memberId}, confirmation dialog first, then remove from list with optimistic update"
+    weight: 0.35
+    description: "APIMapping"
+  - type: llm_judge
+    criteria: "Response specifies optimistic vs pessimistic update strategy — explains the concept: optimistic (update UI immediately, revert on failure — better for fast actions like role change), pessimistic (wait for server response before updating UI — better for critical actions like invite where validation matters). Applied to each action: role change (optimistic: change dropdown immediately, on failure revert to previous role and show error toast), member removal (pessimistic: show loading state, wait for server confirmation, then remove from list — prevents removing the wrong person), search (immediate: filter client-side for cached results, debounced server search for full results). For each approach: success behavior, failure behavior, and race condition handling"
+    weight: 0.35
+    description: "OptimisticPessimistic"
+  - type: llm_judge
+    criteria: "Response balances designer and developer responsibilities — clarifies what designers should specify (UI behavior for each API response: success, specific error codes, timeout, loading), what developers determine (exact endpoint paths, authentication, rate limiting, caching headers), and what they should align on together (response time expectations: 'If the API takes > 3 seconds, show a timeout message', data pagination strategy: offset vs cursor, real-time vs polling for member updates). Includes a specification format: Action → API Call → Loading UI → Success UI → Error UI → Edge Cases. Notes that designers don't need to write API documentation but should understand the interaction model"
+    weight: 0.30
+    description: "DesignerDevBalance"

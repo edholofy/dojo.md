@@ -1,0 +1,46 @@
+meta:
+  id: typography-for-multilingual
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography for multilingual products — select typefaces that work across Latin, CJK, Arabic, Devanagari, and other scripts"
+  tags: [multilingual, cjk, arabic, scripts, typography, advanced]
+
+state: {}
+
+trigger: |
+  A globalization engineer says: "Our app supports 12
+  languages across 4 scripts: Latin (English, French,
+  German, Spanish, Portuguese), CJK (Japanese, Korean,
+  Simplified Chinese), Arabic, and Devanagari (Hindi).
+
+  Current problem: We use Inter for everything. It looks
+  great in Latin but:
+  - CJK characters fall back to system fonts and look
+    inconsistent — different font on Mac vs Windows
+  - Arabic text renders in a generic Naskh that doesn't
+    match Inter's modern feel
+  - Hindi text in Devanagari uses a system fallback that's
+    too heavy compared to Inter's weight
+  - Line heights designed for Latin are too tight for CJK
+    and Devanagari
+
+  How do we create a typography system that looks
+  intentional across all scripts?"
+
+  Task: Design a multilingual typography system with
+  script-specific font selections and technical rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response selects complementary fonts per script — Latin: Inter (existing, excellent Latin support), CJK recommendation: Noto Sans CJK or Source Han Sans (designed to harmonize with Inter's geometry — matched x-height and stroke weight, covers Japanese, Korean, and Simplified Chinese in one family, or separate recommendations per CJK language if needed), Arabic: Noto Sans Arabic or IBM Plex Arabic (modern geometric sans-serif that matches Inter's personality — avoid traditional Naskh if the product is modern/tech), Devanagari: Noto Sans Devanagari or Mukta (designed for digital screens with weights matching Inter, clear and readable at body text sizes), selection criteria for each (visual harmony with Inter: similar x-height proportions, stroke thickness, and overall personality — the fonts should feel like they belong together even though they're different families)."
+    weight: 0.35
+    description: "ScriptSpecificFonts"
+  - type: llm_judge
+    criteria: "Response addresses technical typography challenges — line-height by script (Latin: 1.5 for body is fine, CJK: needs 1.6-1.8 because characters are taller and denser, Arabic: needs 1.6+ for diacritical marks above and below baseline, Devanagari: needs 1.7+ for shirorekha headline bar and vowel signs — suggest script-specific line-height tokens), font-size adjustments (CJK characters are visually denser — may appear smaller at the same px size as Latin, consider size-adjust CSS property or script-specific scale factors like CJK at 105% of Latin size), vertical alignment (mixing scripts in one line — rare but possible in headers or menus — ensure baselines align properly, test with real mixed-script content), and weight matching (if Inter Regular is 400, verify the CJK and Arabic fonts' 400 weight appears visually similar — some font families' 'Regular' is lighter or heavier than Inter's)."
+    weight: 0.35
+    description: "TechnicalChallenges"
+  - type: llm_judge
+    criteria: "Response provides font stack implementation and documentation — CSS font-family stack (ordered for proper fallback: Inter, 'Noto Sans CJK JP', 'Noto Sans Arabic', 'Noto Sans Devanagari', system-ui, sans-serif — browser selects the first font that supports each character), loading strategy (Latin Inter: preloaded for all users, CJK/Arabic/Devanagari: loaded on-demand based on user locale — don't load 4MB of CJK fonts for English users, use unicode-range in @font-face to trigger loading only when needed), documentation (typography specification per script: font family, weights available, recommended sizes, line-heights, any script-specific spacing rules, example text in each script showing the font at different sizes), and testing protocol (render the same UI in all 12 languages, verify: visual consistency, readability at body size, heading hierarchy looks balanced, no text overflow or clipping, text truncation works correctly per script including RTL)."
+    weight: 0.30
+    description: "ImplementationDocs"

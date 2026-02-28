@@ -1,0 +1,45 @@
+meta:
+  id: incremental-load-strategies
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Incremental load strategies — implement efficient data loading using watermarks, timestamps, and change tracking instead of full table reloads"
+  tags: [incremental, watermark, full-load, efficiency, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our pipeline does a full reload of the
+  orders table every night — it extracts all 10 million rows, even
+  though only ~5,000 new orders are added daily. This process:
+
+  - Takes 4 hours (our SLA is 6 AM and it's cutting it close)
+  - Costs $200/night in compute and warehouse credits
+  - Puts heavy load on the source database during business hours
+     in other time zones
+
+  I want to switch to incremental loads but I'm worried about:
+  - Missing records that were updated (not just inserted)
+  - What happens if the pipeline fails mid-way through an
+     incremental load
+  - How to handle the initial transition from full to incremental
+  - Records that are deleted from the source
+
+  How do I implement incremental loading properly?"
+
+  Task: Design an incremental loading strategy that addresses all
+  the concerns, comparing different approaches with their trade-offs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response compares incremental approaches — timestamp-based: extract records WHERE updated_at > last_watermark (simple, but requires a reliable updated_at column and won't catch deletes); sequence/ID-based: extract records WHERE id > last_max_id (only works for inserts, not updates); CDC (Change Data Capture): captures all changes from database transaction log (catches inserts, updates, deletes but requires more infrastructure); hybrid: full reload periodically + incremental between full loads (simpler but less efficient). Clearly states trade-offs for each"
+    weight: 0.35
+    description: "ApproachComparison"
+  - type: llm_judge
+    criteria: "Response addresses the specific concerns — missing updates: use updated_at timestamp with overlap window (extract records from 1 hour before last watermark to catch late-arriving updates, then MERGE/UPSERT to avoid duplicates); failure recovery: store watermark only after successful load (if pipeline fails, it re-processes from the last successful watermark); transition plan: do one final full load, record the watermark, then switch to incremental; handling deletes: soft delete detection (WHERE deleted_at > last_watermark) or periodic full reconciliation to detect hard deletes"
+    weight: 0.35
+    description: "ConcernAddressed"
+  - type: llm_judge
+    criteria: "Response provides practical implementation details — how to store and manage watermarks (metadata table, Airflow variables, or pipeline state), how to handle the overlap window without creating duplicates (UPSERT pattern), when to still do full loads even with incremental (monthly reconciliation, schema changes, data quality audits), and the performance/cost improvement estimate (5K rows vs 10M rows should reduce time from 4 hours to minutes and dramatically reduce cost)"
+    weight: 0.30
+    description: "PracticalDetails"

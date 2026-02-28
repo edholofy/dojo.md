@@ -1,0 +1,42 @@
+meta:
+  id: knowledge-transfer-at-scale
+  level: 5
+  course: code-review-feedback-writing
+  type: output
+  description: "Design knowledge transfer through reviews — create systems that preserve institutional knowledge when key engineers leave, using code review as the primary knowledge capture mechanism"
+  tags: [code-review, knowledge-transfer, institutional-knowledge, bus-factor, retention, master]
+
+state: {}
+
+trigger: |
+  Your principal engineer (15 years at the company, built the core
+  platform) just gave 4 weeks notice. They're the only person who
+  deeply understands:
+  - The payment reconciliation system (6 other engineers can maintain
+    it, but only at a surface level)
+  - Why certain architectural decisions were made (not documented)
+  - How to debug the most complex production incidents
+  - The relationships between 30 microservices
+
+  You have 4 weeks to capture as much knowledge as possible. But
+  you also need a long-term strategy so this never happens again.
+
+  Task: Design both the emergency knowledge transfer plan (4 weeks)
+  and the long-term knowledge preservation strategy using code review
+  as the primary mechanism. Include: immediate capture methods, how
+  to restructure reviews to prevent knowledge concentration, and how
+  to measure knowledge distribution across the team.
+
+assertions:
+  - type: llm_judge
+    criteria: "Emergency 4-week plan maximizes knowledge capture — week 1: (1) record video walkthroughs of the 5 most critical systems (payment reconciliation first), (2) pair programming sessions with 2-3 engineers on each critical system (record these too), (3) document all 'why' decisions in ADRs (Architecture Decision Records). Week 2: (1) have the departing engineer review all recent PRs in critical systems — their review comments capture tacit knowledge, (2) create runbooks for the 10 most common production incidents they handle. Week 3: (1) shadow debugging sessions — the departing engineer debugs a real issue while 2 engineers observe and document the process, (2) system architecture diagrams with relationships between services. Week 4: (1) Q&A sessions — other engineers bring their 'I always wondered...' questions, (2) handoff: verify 2+ engineers can independently operate each critical system"
+    weight: 0.35
+    description: "Emergency plan"
+  - type: llm_judge
+    criteria: "Long-term review strategy prevents knowledge concentration — review rotation policy: no engineer reviews more than 50% of PRs in any code area (prevents single-point-of-knowledge). Mandatory cross-review: every PR to critical systems gets reviewed by someone who DOESN'T usually work in that area (forces knowledge spreading). 'Explain your review' comments: reviewers who catch subtle issues must explain HOW they knew (captures the pattern recognition that experts have). Review knowledge base: significant review discussions are tagged, categorized, and searchable — becomes a 'why we did this' knowledge base. Architectural review requirement: changes to critical systems require a review comment explaining 'why this approach' not just 'does this work.' Bus factor tracking: dashboard showing how many engineers can independently review/maintain each system — alert when any system drops below 3"
+    weight: 0.35
+    description: "Prevention strategy"
+  - type: llm_judge
+    criteria: "Knowledge distribution measurement is systematic — metrics: (1) bus factor per system: number of engineers who have reviewed PRs in the system in the last 90 days AND resolved a production issue in the system. Target: minimum 3 per critical system. (2) Knowledge Gini coefficient: how concentrated is review expertise? 0 = perfectly distributed, 1 = one person knows everything. Track monthly, target < 0.4. (3) Review breadth per engineer: number of distinct code areas each engineer has reviewed — increasing means knowledge is spreading. (4) Independent operation test: quarterly exercise where each critical system is 'owned' by a different engineer for a week — can they handle incidents? Organizational change: (1) promote knowledge sharing in performance reviews, (2) engineer titles should require breadth of system knowledge, not just depth, (3) 'knowledge sharing bonus' for engineers who actively distribute their expertise through reviews"
+    weight: 0.30
+    description: "Distribution measurement"

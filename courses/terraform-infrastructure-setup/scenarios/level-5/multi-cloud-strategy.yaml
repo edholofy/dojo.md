@@ -1,0 +1,49 @@
+meta:
+  id: multi-cloud-strategy
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design multi-cloud IaC strategy — architect Terraform for AWS + GCP + Azure, handle provider differences, and manage cross-cloud complexity"
+  tags: [Terraform, multi-cloud, AWS, GCP, Azure, strategy, master]
+
+state: {}
+
+trigger: |
+  A global logistics company ($2B revenue) is adopting multi-cloud
+  after a 6-hour AWS us-east-1 outage disrupted their operations.
+  Board mandate: "Never be single-cloud again."
+
+  Current state:
+  - 100% AWS, $3M/month, 2000+ Terraform-managed resources
+  - 50 engineers across infrastructure, platform, and application teams
+  - Terraform Cloud Enterprise for governance
+
+  Proposed multi-cloud strategy:
+  - Primary: AWS (80% of workloads)
+  - Secondary: GCP (disaster recovery + some ML workloads)
+  - Tertiary: Azure (required by 2 European enterprise customers)
+
+  Challenges:
+  - Different naming conventions (AWS VPC vs GCP VPC Network vs Azure VNet)
+  - Different IAM models (AWS IAM vs GCP IAM vs Azure AD)
+  - Different networking models (AWS Transit Gateway vs GCP Cloud Interconnect)
+  - Team expertise: 100% AWS, 0% GCP/Azure knowledge
+  - Module library: 50 AWS modules, 0 GCP/Azure modules
+
+  Task: Design the multi-cloud Terraform strategy covering:
+  abstraction approach, module design, team upskilling, state
+  management across clouds, and realistic timeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Abstraction approach is realistic — DON'T: try to create cloud-agnostic modules that abstract all provider differences (cloud-agnostic = lowest common denominator, loses cloud-native advantages). DO: create per-cloud modules with consistent interfaces. Pattern: modules/compute/aws/, modules/compute/gcp/, modules/compute/azure/ — each uses cloud-native resources but exports similar outputs (instance_id, public_ip, private_ip). Root module selects cloud via variable. Shared logic in locals and common variable definitions. Some services don't translate: use cloud-native where appropriate (DynamoDB on AWS, BigQuery on GCP)"
+    weight: 0.35
+    description: "Abstraction approach"
+  - type: llm_judge
+    criteria: "State and module design are practical — state management: separate state files per cloud per environment. S3 backend for AWS state, GCS backend for GCP state, Azure Blob for Azure state (each cloud manages its own state). Cross-cloud references: output values shared via Terraform Cloud workspace outputs or data sources. Module design: start with critical DR modules for GCP (networking, compute, storage), then expand. Don't rebuild all 50 AWS modules for GCP — only what's needed for DR and specific workloads. Estimated: 15-20 GCP modules needed initially. Timeline: 6 months for GCP DR, 12 months for Azure customer requirements"
+    weight: 0.35
+    description: "State and modules"
+  - type: llm_judge
+    criteria: "Team upskilling and risk are realistic — upskilling: (1) cloud-specific training for 10 engineers (not all 50), (2) GCP/Azure certifications for platform team, (3) pair programming: platform engineers with cloud vendor solutions architects, (4) start with DR workloads (lower risk learning environment). Risk assessment: multi-cloud adds complexity (more providers, more modules, more expertise needed). Cost: may increase 15-20% due to cross-cloud networking and duplicate infrastructure. Mitigation: don't go multi-cloud for everything — only for DR and specific customer requirements. Keep 80% on AWS (where expertise exists). The real question: is multi-cloud the right answer, or is multi-region within AWS sufficient for most outage scenarios?"
+    weight: 0.30
+    description: "Upskilling and risk"

@@ -1,0 +1,60 @@
+meta:
+  id: b2b-buyer-journey
+  level: 2
+  course: user-journey-mapping
+  type: output
+  description: "B2B buyer journey mapping — map the complex multi-stakeholder B2B purchasing journey"
+  tags: [b2b, buyer-journey, stakeholders, enterprise, intermediate]
+
+state: {}
+
+trigger: |
+  You're a UX researcher at a B2B cybersecurity software
+  company. Your sales cycle averages 6 months and involves
+  multiple stakeholders. You've been asked to map the
+  buyer journey to find where deals stall and die.
+
+  Win/loss analysis from 50 deals shows:
+  - 30% of deals die during "security evaluation" stage
+  - 25% die waiting for "budget approval"
+  - 20% lost to a competitor at final decision
+  - Average 6.3 stakeholders involved per deal
+
+  The typical stakeholders in a deal:
+  - CISO (Chief Information Security Officer) — the champion,
+    finds your product, drives evaluation
+  - IT Director — responsible for implementation, worried
+    about integration with existing tools
+  - Procurement — focused on contract terms and pricing
+  - CFO — approves budget, wants ROI justification
+  - Legal — reviews security certifications and data handling
+  - End users (security analysts) — will use the product daily
+
+  From stakeholder interviews:
+  CISO: "Your product is great but I can't get my CFO to
+  understand why we need to spend $200K on this"
+  IT Director: "Nobody asked me until late in the process.
+  By then I had to say no because it conflicts with our
+  existing stack"
+  Procurement: "Your pricing page says 'contact us' — I
+  need a number to put in my comparison spreadsheet"
+  CFO: "Show me the breach cost vs product cost math"
+  Security analyst: "I tried the free trial and loved it
+  but nobody told me we were evaluating it officially"
+
+  Task: Create a B2B buyer journey map that accounts for
+  multiple stakeholders and identifies where deals break.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response maps the multi-stakeholder B2B journey — stakeholder swim lanes (instead of a single user journey, creates parallel lanes showing when each stakeholder enters the journey: CISO engages early in awareness and evaluation; IT Director should be involved in evaluation but currently enters late; end users may try the product independently; procurement enters at negotiation; CFO enters for budget approval; legal enters for compliance review), journey stages for B2B (adapts stages to B2B context: problem recognition, solution discovery, initial evaluation, technical evaluation, security evaluation, business case/ROI, budget approval, procurement/negotiation, final decision, implementation — longer and more complex than B2C), stakeholder entry timing (maps when each stakeholder actually enters vs when they should enter: IT Director currently enters late causing 'no' decisions that could have been avoided; end users try the product independently creating shadow evaluation; procurement can't do their job without pricing information — the timing mismatches cause deal failures)."
+    weight: 0.35
+    description: "MultiStakeholderMapping"
+  - type: llm_judge
+    criteria: "Response diagnoses where deals break using the journey map — 30% die at security evaluation (the map reveals: IT Director wasn't involved during technical evaluation, discovers integration conflicts late, says no; fix: bring IT Director in during initial evaluation to assess integration requirements before the CISO is emotionally invested), 25% die at budget approval (the CFO enters the journey cold — they have no context for why $200K is justified; the CISO can't translate security value into financial language; fix: provide ROI tools and breach-cost calculators that the CISO can use to build the CFO's business case early), 20% lost to competitor at final decision (by the time procurement enters, they have no pricing information to compare — 'contact us' pricing puts the company at a disadvantage in comparison spreadsheets; the competitor may simply have been more transparent; fix: provide pricing guidance or ranges that procurement can use for comparison), stakeholder alignment gaps (each stakeholder has different concerns and enters at different times — the journey map reveals that no single touchpoint aligns all stakeholders simultaneously, creating fragmented understanding and misaligned expectations)."
+    weight: 0.35
+    description: "DealBreakDiagnosis"
+  - type: llm_judge
+    criteria: "Response adapts journey mapping for B2B complexity — B2B vs B2C differences acknowledged (B2B journeys involve: multiple decision-makers with different goals, longer timelines measured in months not minutes, organizational buying process with formal stages, the person who finds the product often isn't the person who approves the purchase), the champion's journey (the CISO's experience is the critical thread — they must navigate internal politics, build coalitions, translate technical value into business language, and manage a buying process that involves 6+ stakeholders; the journey map should track the CISO's internal selling journey alongside the external buying journey), actionable output for sales (the B2B journey map should produce: a recommended stakeholder engagement sequence — who to involve when and with what content, enablement materials matched to each stakeholder's concerns — ROI calculator for CFO, integration guide for IT Director, compliance documentation for Legal, a sales playbook that proactively addresses the pain points where 75% of deals die)."
+    weight: 0.30
+    description: "B2BAdaptation"

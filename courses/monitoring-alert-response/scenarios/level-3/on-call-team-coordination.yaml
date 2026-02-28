@@ -1,0 +1,47 @@
+meta:
+  id: on-call-team-coordination
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Coordinate on-call team response — manage primary/secondary on-call, cross-team escalation, and coverage during complex multi-service incidents"
+  tags: [monitoring, on-call, coordination, team, coverage, advanced]
+
+state: {}
+
+trigger: |
+  A complex incident spans three team boundaries:
+
+  - Your team's API gateway is returning 503 errors
+  - The database team's PostgreSQL primary shows high replication lag
+  - The infrastructure team's load balancer health checks are failing
+
+  You are the primary on-call for the API gateway team. The database
+  team's on-call (Sarah) is already investigating their issue. The
+  infrastructure team's on-call has not responded to their alert
+  (15 minutes with no acknowledgment).
+
+  Complicating factors:
+  - It's 2 AM, and your secondary on-call (Mike) is traveling and
+    unreachable
+  - You are not sure if these three issues are related or independent
+  - Each team has their own monitoring tools and dashboards
+  - There is no cross-team incident channel set up
+
+  Task: Coordinate the cross-team response. How do you bring three
+  teams together when no one owns the overall picture? How do you
+  handle the infrastructure team's missing on-call? What processes
+  should exist to make this smoother next time?
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate coordination actions bring teams together — immediate actions: '(1) Create the cross-team incident channel: since none exists, create #incident-2am-multi-service-outage in Slack. This is the single coordination point. Invite Sarah (database on-call). (2) Handle the missing infrastructure on-call: escalate through PagerDuty's escalation policy. If primary infrastructure on-call has not responded in 15 minutes, PagerDuty should auto-escalate to secondary. If it has not, manually trigger the escalation. If no one on the infrastructure team responds within another 10 minutes, escalate to the infrastructure engineering manager. (3) Assume IC role: someone needs to coordinate across teams. Since you identified the cross-team nature of the incident, you are the de facto IC until someone more senior takes over. Post in the incident channel: I am acting as IC for this multi-team incident until we have a designated coordinator. Current state: API gateway returning 503s, database replication lag high, infrastructure load balancer health checks failing. These may be related. Sarah (DB) is investigating. Waiting for infrastructure on-call. (4) Establish communication cadence: request updates from each team every 10 minutes. Post a unified status every 15 minutes'"
+    weight: 0.35
+    description: "Immediate coordination"
+  - type: llm_judge
+    criteria: "Cross-team investigation connects the three issues — correlation investigation: 'Before each team goes deep into their own issue, check if these are connected. Correlation hypothesis: the load balancer health checks failing could be causing the API gateway 503s (if the load balancer thinks backends are unhealthy, it returns 503s instead of routing traffic). The database replication lag could be independent OR could be caused by increased load from the API gateway retrying failed requests. Investigation steps: (1) Ask Sarah: when did the replication lag start? If it started around the same time as the 503s, it might be related (retry storms creating database load). If it started earlier, the database issue might be the root cause. (2) Check the load balancer health check configuration: what does it check? If it health-checks the API gateway, and the API gateway health-checks the database, then database slowness → API gateway health check failure → load balancer marking backends unhealthy → 503s. This is a health check cascade. (3) Check the API gateway's health check endpoint: is it passing or failing? If it depends on the database being responsive, and the database is slow (replication lag = high load on primary), the chain is: database overload → slow health checks → load balancer removes backends → 503s.' Sharing findings: 'Post every finding in the incident channel so all three teams see the same picture. Each team investigating in isolation will find their own symptom but miss the cross-team connection'"
+    weight: 0.35
+    description: "Cross-team investigation"
+  - type: llm_judge
+    criteria: "Process improvements prevent this coordination failure next time — improvements needed: '(1) Cross-team on-call directory: a single page listing current on-call for every team with contact information and escalation paths. No one should have to figure out who is on-call for infrastructure at 2 AM. This should be automated and always current. (2) Automatic cross-team channel creation: when alerts fire across 2+ teams within a time window, automatically create a cross-team incident channel and invite the relevant on-call engineers. Do not rely on someone manually creating a channel at 2 AM. (3) Mandatory PagerDuty acknowledgment SLA: on-call engineers must acknowledge within 10 minutes. If not acknowledged, auto-escalate to secondary. If secondary does not acknowledge in 10 minutes, escalate to manager. No alert should go unacknowledged for 15+ minutes. (4) Secondary on-call reachability: Mike (your secondary) was traveling and unreachable. The on-call policy should require: secondary on-call must be reachable (phone, laptop available). If traveling to a location without connectivity, the secondary must hand off to a backup before leaving. (5) Cross-team dependency alerting: if the API gateway depends on the database for health checks, the monitoring system should recognize this dependency. When the database alerts, it should flag that dependent services (API gateway) may be affected. This gives the IC a dependency-aware view of the incident.' Coordination playbook: 'Create a cross-team incident playbook that answers: who creates the coordination channel, who assumes IC when multiple teams are involved, how often do teams update the channel, and who communicates externally. This playbook should be exercised in a tabletop simulation before the next real cross-team incident'"
+    weight: 0.30
+    description: "Process improvements"

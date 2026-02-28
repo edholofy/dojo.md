@@ -1,0 +1,46 @@
+meta:
+  id: enterprise-incident-governance
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Design enterprise incident governance — create governance structures for incident management across business units, geographies, and regulatory jurisdictions"
+  tags: [postmortem, enterprise, governance, multi-BU, global, master]
+
+state: {}
+
+trigger: |
+  You're the VP of Reliability for a global enterprise with:
+  - 5 business units (payments, commerce, lending, insurance, data)
+  - 3,000 engineers across 12 countries
+  - Each BU has its own engineering org and incident practices
+  - Regulatory requirements vary by geography and BU (PCI-DSS for
+    payments, SOX for lending, insurance regulations, GDPR for all)
+  - Cross-BU incidents are increasing as shared platform services
+    grow (auth, data platform, API gateway)
+  - Board of directors receives quarterly reliability reports
+  - Each BU reports reliability metrics differently, making
+    comparison impossible
+
+  A recent cross-BU incident (shared authentication service outage)
+  affected all 5 BUs simultaneously and revealed that no one owned
+  cross-BU incident response.
+
+  Task: Design the enterprise incident governance framework. Include:
+  governance structure, standardized metrics across BUs, cross-BU
+  incident response, regulatory compliance mapping, and the board
+  reporting framework. This document will be presented to the
+  executive leadership team.
+
+assertions:
+  - type: llm_judge
+    criteria: "Governance structure balances standardization with BU autonomy — governance model: 'Federated governance: central standards with BU implementation flexibility. Central team (Enterprise Reliability Office — 8 people): owns the incident governance framework, standardized metrics definitions, cross-BU incident coordination, board reporting, compliance framework mapping, and tool standardization. Does NOT own individual BU incident response — each BU runs their own incidents. BU reliability leads (1 per BU): implement the framework within their BU, adapted to their specific regulatory and technical context. Report standardized metrics to the central team. Own their BU's postmortem process and action item tracking.' What is standardized (non-negotiable): 'Severity definitions: consistent across all BUs so SEV-1 means the same thing everywhere. Board and executive reporting metrics: same definitions, same calculation methods. Postmortem template: core sections standardized for cross-BU pattern analysis. Regulatory incident classification: shared framework for determining which incidents require regulatory notification. Cross-BU incident response process: how to coordinate when an incident affects multiple BUs.' What is flexible (BU adapts): 'Tooling choices (within approved vendors). On-call rotation structure. Internal communication protocols. Team-level postmortem practices beyond the template. Severity thresholds (a SEV-1 for payments may have different dollar thresholds than for data). BU-specific regulatory requirements beyond the shared framework.' Cross-BU incident commander: 'For incidents affecting 2+ BUs, a Cross-BU IC is activated from a dedicated pool (2 per BU, 10 total). The Cross-BU IC coordinates between BU incident teams but does not override BU-level decisions. They own the unified timeline, cross-BU communication, and the cross-BU postmortem'"
+    weight: 0.35
+    description: "Governance structure"
+  - type: llm_judge
+    criteria: "Standardized metrics and board reporting enable enterprise-wide visibility — metric framework: 'All BUs report the same core metrics with the same definitions: (1) Availability: percentage of successful requests divided by total requests. Measured per customer-facing service. (2) Incident frequency: count of incidents by severity per month. Normalized per 100 services for fair BU comparison. (3) MTTR: mean time from incident detection to resolution. Broken down by severity. (4) Customer impact hours: number of customers multiplied by hours of impact. This is the single metric that best captures total incident cost. (5) Postmortem completion rate: percentage of SEV-1/2 incidents with completed postmortems within 5 business days. (6) Action item completion rate: percentage of postmortem action items completed within stated due dates. (7) Incident recurrence rate: percentage of incidents that share root cause category with a previous incident within 12 months.' Board reporting format: 'Quarterly reliability report: one page per BU plus one enterprise summary page. Enterprise summary: overall availability across all BUs, top 3 cross-BU risk areas, reliability investment ROI (cost of incidents vs. cost of prevention), regulatory compliance status (green/yellow/red per regulation per BU). Each BU page: availability trend (12-month rolling), top 3 incidents and their status, error budget status, key reliability investments and their expected impact. Board narrative: connect reliability metrics to business outcomes. Example: payments BU availability of 99.95% in Q3 vs. target 99.99% resulted in estimated $2.1M in failed transactions. Investment in payment gateway redundancy ($400K) projected to recover $1.8M annually'"
+    weight: 0.35
+    description: "Metrics and board reporting"
+  - type: llm_judge
+    criteria: "Cross-BU incident response and compliance mapping are operationally ready — cross-BU incident response: 'Trigger: any incident that affects services owned by 2 or more BUs, or any incident affecting shared platform services (auth, data platform, API gateway). Process: (1) First BU to detect activates their IC and notifies the Enterprise Reliability Office. (2) ERO activates a Cross-BU IC from the designated pool. (3) Cross-BU IC creates a cross-BU incident channel and invites each affected BU's IC. (4) Each BU IC manages their BU's response. Cross-BU IC manages coordination: shared timeline, dependency management, unified communication. (5) Cross-BU postmortem conducted within 1 week, with representatives from all affected BUs. Postmortem focuses on: why did the incident cross BU boundaries, what isolation should exist, how to prevent cross-BU propagation.' Regulatory compliance mapping: 'Each incident is classified against all applicable regulations: PCI-DSS (payments BU): incidents involving cardholder data environment require specific documentation and may require notification to acquiring bank. SOX (lending BU): incidents affecting financial reporting systems require documentation for auditors. Insurance regulations: incidents affecting policyholder data have state-specific notification requirements. GDPR (all BUs with EU data): incidents involving personal data of EU residents require 72-hour notification to supervisory authority if breach confirmed. HIPAA (if applicable): 60-day notification for breaches affecting 500+ individuals. The IC checklist includes a regulatory impact assessment. For cross-BU incidents, each BU assesses their own regulatory exposure. The Cross-BU IC ensures all regulatory assessments are completed and aggregated. Compliance team receives automated notification for any incident classified as potentially regulatory-relevant'"
+    weight: 0.30
+    description: "Cross-BU response and compliance"

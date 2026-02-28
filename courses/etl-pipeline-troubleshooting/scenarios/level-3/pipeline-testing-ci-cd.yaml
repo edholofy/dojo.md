@@ -1,0 +1,43 @@
+meta:
+  id: pipeline-testing-ci-cd
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Pipeline testing and CI/CD — implement automated testing for ETL pipelines and continuous integration for data pipeline code changes"
+  tags: [testing, CI-CD, automation, quality, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "We deploy pipeline changes by
+  editing production DAGs directly. There's no testing, no code
+  review for data pipelines, and no staging environment.
+
+  Last month, three incidents were caused by pipeline code changes:
+  - A developer changed a SQL JOIN and introduced duplicates
+  - A filter condition was accidentally inverted (> instead of <)
+  - A new column was added to the SELECT but not to the INSERT
+
+  All three were simple mistakes that would have been caught by
+  basic testing. But we don't have any testing infrastructure for
+  our data pipelines.
+
+  How do I implement testing and CI/CD for our ETL pipelines?"
+
+  Task: Design a testing strategy and CI/CD pipeline for data
+  engineering, covering unit tests, integration tests, and
+  deployment practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a multi-layer testing strategy — unit tests: test individual transformation functions with known inputs and expected outputs (test that revenue calculation handles edge cases correctly), use pytest with sample data fixtures. Integration tests: test full pipeline stages against a test database with seed data, verify row counts, aggregations, and key transformations. Contract tests: validate schema (column names, types, not-null constraints) matches expectations. Data quality tests: dbt tests (unique, not_null, relationships, accepted_values) that run after every pipeline execution. Regression tests: compare output against a known-good baseline (golden file testing)"
+    weight: 0.35
+    description: "TestingStrategy"
+  - type: llm_judge
+    criteria: "Response designs a CI/CD pipeline for data engineering — version control for all pipeline code (DAGs, SQL, dbt models, Python scripts), code review requirements for pipeline changes, CI pipeline that runs on every PR (lint SQL, run unit tests, validate DAG parsing, run dbt compile), staging environment that mirrors production (with sanitized data), and CD pipeline that deploys tested changes to production (with rollback capability). Addresses the 'no staging environment' problem with practical approaches (Snowflake zero-copy clones, dbt target environments, separate Airflow instances or DAG folders)"
+    weight: 0.35
+    description: "CICDPipeline"
+  - type: llm_judge
+    criteria: "Response addresses practical adoption — how to introduce testing incrementally (start with the most critical pipelines, add tests as part of every bug fix, mandate tests for new pipelines), how to create test data (fixtures, factories, anonymized production subsets), how to handle the 'testing takes too long' objection (fast unit tests in CI, slower integration tests nightly, data quality tests in production), and how to build a testing culture in the data team (make it easy, show the ROI of prevented incidents, celebrate when tests catch bugs)"
+    weight: 0.30
+    description: "PracticalAdoption"

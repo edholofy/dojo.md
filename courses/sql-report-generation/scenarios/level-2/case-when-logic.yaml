@@ -1,0 +1,39 @@
+meta:
+  id: case-when-logic
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Apply conditional logic with CASE WHEN — create dynamic columns, conditional aggregation, and business rule implementation in SQL reports"
+  tags: [SQL, CASE-WHEN, conditional, business-rules, categorization, intermediate]
+
+state: {}
+
+trigger: |
+  The revenue team needs a report that categorizes orders by size,
+  calculates conditional metrics, and applies business rules:
+
+  1. Categorize orders as "Small" (<$50), "Medium" ($50-200),
+     "Large" ($200-1000), "Enterprise" (>$1000)
+  2. Show revenue breakdown by category AND order size in a
+     cross-tab format (categories as rows, order sizes as columns)
+  3. Apply a tiered discount: 0% for small, 5% for medium, 10%
+     for large, 15% for enterprise — show discounted revenue
+
+  Table: orders (order_id, customer_id, amount, product_category,
+  order_date, status)
+
+  Task: Write CASE WHEN queries for all three requirements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use CASE WHEN for categorization and conditional aggregation — queries: 'CASE WHEN for business logic: Requirement 1 — Order size categorization: SELECT order_id, amount, CASE WHEN amount < 50 THEN 'Small' WHEN amount BETWEEN 50 AND 200 THEN 'Medium' WHEN amount BETWEEN 200 AND 1000 THEN 'Large' ELSE 'Enterprise' END AS order_size FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE). CASE evaluates conditions in order and returns the first match. ELSE catches everything that did not match. Without ELSE, unmatched rows get NULL. Requirement 2 — Cross-tab with conditional aggregation: SELECT product_category, COUNT(CASE WHEN amount < 50 THEN 1 END) AS small_orders, COUNT(CASE WHEN amount BETWEEN 50 AND 200 THEN 1 END) AS medium_orders, COUNT(CASE WHEN amount BETWEEN 200 AND 1000 THEN 1 END) AS large_orders, COUNT(CASE WHEN amount > 1000 THEN 1 END) AS enterprise_orders, SUM(CASE WHEN amount < 50 THEN amount ELSE 0 END) AS small_revenue, SUM(CASE WHEN amount BETWEEN 50 AND 200 THEN amount ELSE 0 END) AS medium_revenue, SUM(CASE WHEN amount BETWEEN 200 AND 1000 THEN amount ELSE 0 END) AS large_revenue, SUM(CASE WHEN amount > 1000 THEN amount ELSE 0 END) AS enterprise_revenue FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY product_category ORDER BY product_category. This is the manual PIVOT technique — works in all SQL dialects. Requirement 3 — Tiered discount calculation: SELECT order_id, amount AS original_amount, CASE WHEN amount < 50 THEN 0 WHEN amount BETWEEN 50 AND 200 THEN 0.05 WHEN amount BETWEEN 200 AND 1000 THEN 0.10 ELSE 0.15 END AS discount_rate, ROUND(amount * CASE WHEN amount < 50 THEN 1.0 WHEN amount BETWEEN 50 AND 200 THEN 0.95 WHEN amount BETWEEN 200 AND 1000 THEN 0.90 ELSE 0.85 END, 2) AS discounted_amount FROM orders'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers CASE WHEN in different SQL clauses — explanation: 'CASE WHEN in different positions: In ORDER BY — custom sort order: SELECT * FROM orders ORDER BY CASE status WHEN 'urgent' THEN 1 WHEN 'pending' THEN 2 WHEN 'processing' THEN 3 WHEN 'completed' THEN 4 ELSE 5 END. This sorts by business priority rather than alphabetically. In WHERE — conditional filtering: SELECT * FROM orders WHERE CASE WHEN @include_cancelled = 1 THEN 1 WHEN status != 'cancelled' THEN 1 ELSE 0 END = 1. In GROUP BY — group by derived categories: SELECT CASE WHEN amount < 50 THEN 'Small' WHEN amount < 200 THEN 'Medium' ELSE 'Large' END AS order_tier, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders GROUP BY CASE WHEN amount < 50 THEN 'Small' WHEN amount < 200 THEN 'Medium' ELSE 'Large' END. The CASE expression must be repeated in both SELECT and GROUP BY (cannot use the alias in GROUP BY in standard SQL). PostgreSQL allows GROUP BY aliases. In HAVING: HAVING SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) > 5. This filters to only show groups with more than 5 completed orders'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers NULL handling and nested CASE — advanced: 'CASE with NULLs and nesting: CASE with NULL — use IS NULL: SELECT customer_id, CASE WHEN last_login IS NULL THEN 'Never logged in' WHEN last_login < CURRENT_DATE - INTERVAL '90 days' THEN 'Inactive' WHEN last_login < CURRENT_DATE - INTERVAL '30 days' THEN 'At risk' ELSE 'Active' END AS engagement_status FROM customers. WHEN last_login = NULL does NOT work. Always use IS NULL. Nested CASE for complex business rules: SELECT order_id, CASE WHEN region = 'US' THEN CASE WHEN amount > 500 THEN 'Free shipping' ELSE '$9.99 shipping' END WHEN region = 'EU' THEN CASE WHEN amount > 300 THEN 'Free shipping' ELSE '12.99 EUR shipping' END ELSE '$24.99 international shipping' END AS shipping_policy FROM orders. Nested CASE is readable for 2 levels but becomes unwieldy beyond that. For deeply nested logic, consider a lookup table joined to the query. COALESCE as simplified CASE: COALESCE(phone, mobile, office_phone, 'No phone') is equivalent to: CASE WHEN phone IS NOT NULL THEN phone WHEN mobile IS NOT NULL THEN mobile WHEN office_phone IS NOT NULL THEN office_phone ELSE 'No phone' END'"
+    weight: 0.30
+    description: "Advanced"

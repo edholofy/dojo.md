@@ -1,0 +1,36 @@
+meta:
+  id: migration-testing
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Test migrations before production — learn how to verify that migrations work correctly in development and staging before applying to production"
+  tags: [database, migration, testing, staging, verification, beginner]
+
+state: {}
+
+trigger: |
+  Your team lead reviews your migration PR and says: "This looks
+  correct, but how did you test it?" You wrote the SQL and reviewed
+  it manually, but you did not actually run it anywhere.
+
+  The migration:
+  1. Adds a "phone" column to users (nullable varchar)
+  2. Creates a new "addresses" table with a foreign key to users
+  3. Adds an index on addresses.user_id
+
+  Task: Describe the complete testing process for a database migration,
+  from local development through staging to production readiness.
+
+assertions:
+  - type: llm_judge
+    criteria: "Local testing process is described step by step — local testing: '(1) Run the migration against your local database. Command: npx knex migrate:latest (or equivalent for your tool). Verify: no errors during execution. Check the schema: the phone column exists on users, the addresses table exists with correct columns and constraints, the index on addresses.user_id exists. Quick verification queries: SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = users AND column_name = phone; (should show varchar, YES for nullable). SELECT * FROM information_schema.tables WHERE table_name = addresses; (should return one row). SELECT indexname FROM pg_indexes WHERE tablename = addresses; (should include idx_addresses_user_id). (2) Test the rollback. Run: npx knex migrate:rollback. Verify: the phone column is removed from users, the addresses table is dropped, no errors during rollback. (3) Re-apply the migration. Run: npx knex migrate:latest again. Verify: everything works when applying from a rolled-back state. This catches issues where the rollback was incomplete (left behind a partial state that blocks re-application). (4) Test with sample data. Insert some test data after the migration: insert a user with a phone number, insert an address referencing that user. Verify the foreign key works: try inserting an address with an invalid user_id (should fail). This confirms the constraints work as expected, not just the schema'"
+    weight: 0.35
+    description: "Local testing"
+  - type: llm_judge
+    criteria: "Staging testing and production readiness are covered — staging and production: 'Staging testing: (1) Run the migration against the staging database. Staging should have production-like data (a recent copy or representative dataset). This catches issues that do not appear with an empty local database: data that violates new constraints (NOT NULL on a column that has nulls in production data), performance issues with large tables, lock contention with concurrent access. (2) Time the migration. How long does it take? For adding a nullable column and creating a new table: usually seconds. But timing matters for production planning. If it takes 30 seconds in staging: plan for potentially longer in production (production may be larger). (3) Verify application compatibility. Deploy the application code that uses the new schema alongside the migration. Test: can the application read and write to the new phone column? Can it create and query addresses? Does existing functionality still work? Production readiness checklist: before running the migration in production: [ ] Migration tested locally (up and down). [ ] Migration tested in staging with production-like data. [ ] Timing noted (how long it takes in staging). [ ] Backup taken (or scheduled to be taken before migration). [ ] Rollback plan documented (what to do if the migration fails). [ ] Application code is compatible (deployed at the same time or already backward-compatible). [ ] Team notified (on-call knows a migration is running). [ ] Low-traffic window identified (if the migration locks tables, run during off-peak hours)'"
+    weight: 0.35
+    description: "Staging and production readiness"
+  - type: llm_judge
+    criteria: "Common testing mistakes are identified — common mistakes: '(1) Testing only the up migration. Many developers run the migration and check that it works, but never test the rollback. When the rollback is needed (during a production incident), that is the worst time to discover it has a bug. Always test both up and down. (2) Testing with an empty database. Your local database might be empty. The migration works perfectly on an empty users table. But production has 1 million users — the ALTER TABLE takes longer and may lock the table. Test with representative data volumes. (3) Not testing concurrent access. Your local test runs the migration alone. In production, the application is actively reading and writing. Some schema changes lock the table, blocking all queries. Test in staging where the application is running to catch lock issues. (4) Skipping staging entirely. Going directly from local to production is risky. Staging catches environment-specific issues (different PostgreSQL version, different data, different permissions). Even for simple migrations, run them in staging first. (5) Not checking for dependent changes. This migration adds an addresses table. Does another team have a migration that also creates a table called addresses? Does any existing code reference the phone column name for something else? Check for conflicts before merging'"
+    weight: 0.30
+    description: "Common mistakes"

@@ -1,0 +1,45 @@
+meta:
+  id: severity-classification
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "Severity classification — learn how to consistently classify accessibility issue severity based on user impact, frequency, and WCAG level"
+  tags: [severity, classification, prioritization, beginner]
+
+state: {}
+
+trigger: |
+  A junior auditor has found 25 accessibility issues
+  on a website but doesn't know how to classify their
+  severity. They ask: "My report template has
+  Critical, Major, Minor, and Best Practice categories.
+  But I don't know which issues go where.
+
+  For example:
+  - A skip navigation link is missing
+  - One decorative image has unnecessary alt text
+  - The entire checkout flow is keyboard-inaccessible
+  - A heading is marked as H4 when it should be H2
+  - Focus order is slightly illogical on one page
+
+  Are these all equally important? How do I decide
+  what's Critical vs Minor? I want my severity ratings
+  to be consistent and defensible."
+
+  Task: Create a severity classification framework
+  for accessibility issues and classify the example
+  issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear severity framework — Critical (blocks users completely: feature or page is unusable for users with specific disabilities, affects primary user flows, no workaround available — examples: keyboard trap, missing form labels on entire form, no alt text on navigation images, keyboard-inaccessible checkout), Major (significant barrier: users can complete the task but with significant difficulty or confusion, affects common user flows, workaround is burdensome — examples: missing skip navigation, low color contrast on body text, focus not visible, error messages not associated with fields), Minor (noticeable issue: creates inconvenience but doesn't prevent task completion, affects secondary flows or non-critical content, easy workaround exists — examples: heading hierarchy gaps, slightly illogical focus order on one page, redundant alt text on decorative images, missing landmark regions), Best Practice (not a WCAG violation: improves experience but not required for conformance — examples: target size slightly below recommendation, autocomplete attribute missing, language of parts not specified for occasional foreign words). Framework based on: user impact × frequency × workaround availability"
+    weight: 0.35
+    description: "SeverityFramework"
+  - type: llm_judge
+    criteria: "Response classifies the five example issues with justification — Skip navigation missing (Major: affects keyboard and screen reader users on every page, they must Tab through entire navigation to reach content — not Critical because content is still reachable, just inefficiently), Decorative image with alt text (Minor: screen reader announces unnecessary 'divider line' text — distracting but doesn't block any task), Checkout flow keyboard-inaccessible (Critical: entire checkout flow is unusable for keyboard-only users — blocks the primary conversion task, no workaround, affects the most important business flow), Heading hierarchy H4 instead of H2 (Minor: screen reader users navigating by headings may be confused by the hierarchy gap but can still find content — structure is misleading but not blocking), Focus order slightly illogical (Minor: users may Tab to elements in unexpected order on one page but can still reach and operate all controls — confusing but not blocking). Each classification includes the reasoning linking to the framework criteria"
+    weight: 0.35
+    description: "ExampleClassification"
+  - type: llm_judge
+    criteria: "Response provides guidance on consistent classification — consistency tips (classify based on user impact not technical complexity — a one-line code fix can be Critical if it blocks users, a complex refactor can be Minor if it's just a polish issue), calibration approach (review all findings at the end and compare severities — if two issues are classified differently but have similar user impact, adjust), WCAG level correlation (Level A violations are often Critical or Major since they represent minimum accessibility, Level AA violations are often Major or Minor, Level AAA violations are typically Minor or Best Practice — but this is a guideline not a rule, context matters), and documentation (always write a 1-sentence justification for the severity: 'Critical — keyboard-only users cannot complete checkout, blocking the primary user flow with no alternative' — this prevents severity being questioned without context)"
+    weight: 0.30
+    description: "ConsistencyGuidance"

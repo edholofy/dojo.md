@@ -1,0 +1,44 @@
+meta:
+  id: pipeline-scheduling-basics
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Pipeline scheduling basics — understand cron schedules, DAG dependencies, and common scheduling issues that cause pipeline failures"
+  tags: [scheduling, cron, DAG, airflow, orchestration, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "I'm confused about how our pipelines
+  are scheduled and why they sometimes run in the wrong order. We use
+  Airflow and I see these issues:
+
+  1. The 'load_orders' task ran before 'extract_orders' finished
+     because I set them up as separate DAGs without dependencies
+
+  2. A pipeline scheduled for '0 6 * * *' (6 AM daily) didn't run
+     on a day when the Airflow scheduler was down for maintenance.
+     Now I have a gap in yesterday's data.
+
+  3. A task that takes 2 hours to run is scheduled every hour, and
+     I see multiple instances running simultaneously, causing
+     database locks
+
+  How do I properly schedule and orchestrate ETL pipelines?"
+
+  Task: Explain pipeline scheduling concepts, diagnose each issue,
+  and provide best practices for reliable pipeline orchestration.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains scheduling fundamentals — what cron expressions mean (minute hour day month weekday), how DAGs define task dependencies (upstream/downstream relationships), why task ordering matters (extract must complete before transform, transform before load). Fixes each issue: tasks should be in the same DAG with explicit dependencies (extract >> transform >> load), explains catchup/backfill for missed runs, and concurrency limits or depends_on_past to prevent overlapping runs"
+    weight: 0.35
+    description: "SchedulingFundamentals"
+  - type: llm_judge
+    criteria: "Response addresses the specific issues — for wrong ordering: put related tasks in the same DAG with set_downstream/set_upstream or >> operator, never assume execution order across independent DAGs. For missed runs: enable catchup=True in Airflow to backfill missed intervals, or manually trigger backfill for the missing date. For overlapping runs: set max_active_runs=1 on the DAG, use depends_on_past=True on tasks, or adjust the schedule interval to be longer than the expected runtime"
+    weight: 0.35
+    description: "IssueResolution"
+  - type: llm_judge
+    criteria: "Response provides scheduling best practices — set appropriate timeouts on tasks so they don't run indefinitely, use SLA alerts to notify when pipelines run longer than expected, build in buffer time between dependent pipelines, implement retry logic with delays for transient failures, monitor pipeline duration trends to catch degradation early, and test DAG definitions before deploying to production"
+    weight: 0.30
+    description: "BestPractices"

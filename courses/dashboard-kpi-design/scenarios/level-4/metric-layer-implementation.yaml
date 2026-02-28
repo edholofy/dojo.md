@@ -1,0 +1,36 @@
+meta:
+  id: metric-layer-implementation
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Implement a metric layer — build a centralized semantic layer that defines all metrics in one place, ensuring consistency across every dashboard, report, and ad-hoc query"
+  tags: [metric-layer, semantic, dbt-metrics, consistency, governance, expert]
+
+state: {}
+
+trigger: |
+  The Head of Data says: "We have 35 dashboards and I just discovered
+  that 'revenue' is calculated differently in 12 of them. Some include
+  refunds, some don't. Some use booking date, some use invoice date.
+  The CFO's number never matches the VP Sales' number.
+
+  I want to define every metric ONCE in a central place. Every
+  dashboard, every report, every ad-hoc query should use the same
+  definition. If we change the revenue definition, it should change
+  everywhere automatically."
+
+  Task: Design and implement a metric layer architecture.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a metric layer architecture — architecture: 'Metric layer architecture: What is a metric layer: a centralized layer between the data warehouse and the dashboards where every metric is defined exactly once. Instead of each dashboard defining revenue with its own SQL, every dashboard references the canonical revenue definition from the metric layer. Architecture diagram: Raw data (Snowflake) → Transformation (dbt models) → Metric Layer (metric definitions) → Dashboards (Looker, Tableau, API). The metric layer sits between dbt and the BI tool. It contains: 1. Metric definitions: the business logic for every KPI. 2. Dimensions: the attributes you can slice metrics by (region, segment, time). 3. Relationships: how tables join together. 4. Governance: who can modify definitions, change history, certification status. Implementing with dbt metrics (dbt Semantic Layer): In dbt, define metrics in YAML alongside models: metric name: revenue. description: Total net revenue from invoiced subscriptions, excluding refunds and credits. type: simple. label: Revenue. type_params: measure: total_revenue (defined in the model as SUM of invoice_amount WHERE status = paid AND type = subscription, excluding refunds). Dimensions available: date (daily, weekly, monthly, quarterly, yearly), region, segment (Enterprise, SMB, Startup), product_line, sales_rep. Filters: by default excludes internal test accounts and free trial invoices. Now every dashboard queries revenue through the semantic layer. Whether the CEO's dashboard or a sales rep's report, revenue means the same thing. metric name: mrr. description: Monthly Recurring Revenue — total active paid subscription amounts prorated to monthly. type: derived. type_params: expr: revenue / billing_period_months. metrics: revenue. filter: subscription_status = active AND type = paid. MRR is derived from revenue — if the revenue definition changes, MRR updates automatically'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response covers metric governance and the definition workflow — governance: 'Metric governance workflow: Defining a new metric (5-step process): Step 1 — Propose: the metric requester (business user or analyst) submits a metric request. Template: name, description, business purpose, proposed calculation, who needs it, how often. Step 2 — Model: the data engineer implements the metric in dbt with proper SQL, tests, and documentation. They validate the numbers against known sources (e.g., does the dbt revenue match the billing system's total?). Step 3 — Review: the data team peer-reviews the definition. Check: is the SQL correct? Are edge cases handled (refunds, credits, free trials, test accounts)? Are appropriate dimensions included? Step 4 — Certify: the business owner (CFO for financial metrics, CPO for product metrics) reviews and approves the definition. Once certified, the metric gets a certified badge on all dashboards. Step 5 — Publish: the metric is available in the semantic layer. All dashboards can use it. The definition is visible in the data catalog. Modifying an existing metric: any change to a certified metric requires the same review process. Changes are version-controlled in git — the team can see every historical change to the revenue definition. Before deploying a definition change, run a comparison: old definition vs new definition for the past 12 months. If MRR changes by more than 1%, the change must be communicated to all stakeholders before deployment. The deployment includes a changelog entry: Revenue v3 (March 2026): now excludes pilot program invoices. Historical revenue numbers for Jan-Feb 2026 will decrease by approximately 2% under the new definition. Metric catalog: a searchable interface where any employee can look up any metric. Each entry shows: name, description, calculation, SQL, owner, certification status, last updated, dashboards that use it, known caveats'"
+    weight: 0.35
+    description: "Governance"
+  - type: llm_judge
+    criteria: "Explanation covers the benefits and challenges of metric layer adoption — adoption: 'Benefits of a metric layer: 1. Single source of truth: revenue means the same thing everywhere. The CFO and VP Sales never disagree on the number again. Time saved: approximately 5-10 hours per month previously spent reconciling different definitions. 2. Faster dashboard development: building a new dashboard takes hours instead of days because the metrics are pre-defined. The analyst selects revenue by region by month and the dashboard is built — no need to write SQL or debate definitions. 3. Consistent ad-hoc analysis: when an analyst runs an ad-hoc query, they reference the semantic layer instead of writing raw SQL. They cannot accidentally calculate revenue differently. 4. Audit trail: every metric has a version history. Auditors can verify that the revenue reported to the board matches the metric definition and trace it to the source data. Challenges: 1. Initial modeling effort: defining 50-100 metrics with proper SQL, documentation, and certification takes 2-4 months for a data team. This is a significant upfront investment. Mitigation: start with the top 20 metrics that cause the most confusion (revenue, MRR, churn, CAC, NPS). Add others incrementally. 2. BI tool compatibility: not all BI tools support semantic layers natively. Looker has LookML (its own semantic layer). Tableau requires a separate tool like dbt Semantic Layer or Cube.dev. Power BI has its own DAX semantic model. Mitigation: if using Looker, LookML is the metric layer. If using Tableau or mixed tools, use dbt Metrics with an API layer that serves metrics to any consumer. 3. Change management: analysts accustomed to writing their own SQL may resist using a pre-defined metric. They feel constrained. Mitigation: frame the metric layer as a foundation, not a cage. Analysts can still explore freely — but the published metrics that executives see must come from the certified layer. 4. Performance: adding a semantic layer adds a query translation step. Queries may be slower than raw SQL. Mitigation: use pre-aggregated tables for common metric + dimension combinations. The metric layer generates optimized SQL, not naive queries'"
+    weight: 0.30
+    description: "Adoption"

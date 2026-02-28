@@ -1,0 +1,61 @@
+meta:
+  id: regulatory-serverless
+  level: 5
+  course: aws-lambda-debugging
+  type: output
+  description: "Design regulatory compliance for serverless — implement controls for SOC2, PCI-DSS, HIPAA, and GDPR in Lambda-based architectures"
+  tags: [AWS, Lambda, compliance, SOC2, PCI-DSS, HIPAA, GDPR, master]
+
+state: {}
+
+trigger: |
+  Your serverless application processes payment card data and
+  personal health information. You need compliance with PCI-DSS,
+  HIPAA, and GDPR simultaneously.
+
+  Auditor challenges:
+
+  1. "Where does the code run? Show me the server."
+  Lambda: there IS no server to inspect. Compliance frameworks
+  designed for servers need adaptation for serverless.
+  Answer: AWS manages the infrastructure (shared responsibility).
+  You control: code, configuration, data, access.
+
+  2. "How do you ensure data encryption at rest?"
+  Lambda environment variables: encrypted with AWS-managed or
+  customer-managed KMS key. DynamoDB: encryption at rest default.
+  S3: SSE-S3 or SSE-KMS. All data in transit: TLS 1.2+.
+
+  3. "Show me access logs for the last 90 days."
+  CloudTrail: every API call logged (Lambda invocations, config
+  changes, IAM actions). CloudWatch Logs: function execution logs.
+  API Gateway: access logs with source IP, user agent, response code.
+
+  4. "How do you handle right to erasure (GDPR Article 17)?"
+  Serverless challenge: data may exist in DynamoDB, S3, CloudWatch
+  Logs, X-Ray traces, DLQ messages, Step Functions execution history.
+  Must identify and delete from ALL locations.
+
+  5. "Demonstrate vulnerability management."
+  No OS to patch (AWS responsibility). But: application dependencies,
+  Lambda runtime versions, third-party layers. Must scan and update.
+
+  Task: Design regulatory compliance for serverless. Write: shared
+  responsibility model for Lambda, control mappings for PCI-DSS
+  and HIPAA, GDPR data handling (right to erasure, data portability),
+  audit evidence collection, vulnerability management without
+  servers, and compliance automation with AWS Config.
+
+assertions:
+  - type: llm_judge
+    criteria: "Shared responsibility for serverless is explained — AWS responsibility: physical security, hypervisor, OS patching, runtime patching, network infrastructure. Customer responsibility: function code, dependencies, IAM configuration, data encryption configuration, application logging, input validation. This is MORE favorable than EC2 (where customer patches OS). Compliance advantage: smaller attack surface, no server hardening needed. Compliance challenge: less visibility into infrastructure, new tooling needed for serverless-specific controls"
+    weight: 0.35
+    description: "Shared responsibility"
+  - type: llm_judge
+    criteria: "Control mappings and GDPR are covered — PCI-DSS: Req 2 (secure config) → Lambda function settings, no default passwords. Req 3 (protect stored data) → KMS encryption. Req 6 (secure development) → code scanning, dependency management. Req 10 (logging) → CloudTrail + CloudWatch. HIPAA: BAA with AWS, encrypt PHI (KMS), restrict access (IAM), audit all PHI access (CloudTrail). GDPR right to erasure: identify all data stores (DynamoDB, S3, CloudWatch Logs, X-Ray, SQS DLQ), implement deletion workflow across all stores, set log retention to minimum required, mask PII in logs"
+    weight: 0.35
+    description: "Controls and GDPR"
+  - type: llm_judge
+    criteria: "Compliance automation is practical — AWS Config rules: monitor Lambda configuration compliance (encryption enabled, VPC configured, timeout < max, memory within policy). Custom Config rules via Lambda for organization-specific checks. AWS Security Hub: aggregate findings from GuardDuty, Inspector, Config. Automated evidence collection: CloudTrail logs (access audit), Config snapshots (configuration audit), CloudWatch (operational audit). Vulnerability management: scan dependencies in CI (Snyk/npm audit), update Lambda runtimes before EOL, monitor AWS security bulletins. SOC2 continuous compliance: automated control testing, evidence generation, dashboard for auditors"
+    weight: 0.30
+    description: "Compliance automation"

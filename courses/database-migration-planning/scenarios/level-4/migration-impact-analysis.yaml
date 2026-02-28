@@ -1,0 +1,39 @@
+meta:
+  id: migration-impact-analysis
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Conduct migration impact analysis — systematically assess the downstream effects of a database migration on applications, integrations, and business processes"
+  tags: [database, migration, impact-analysis, risk-assessment, planning, expert]
+
+state: {}
+
+trigger: |
+  You are leading a database migration that will restructure the
+  "customers" schema — splitting it from 5 tables into 12 tables
+  with different column names, data types, and relationships. The
+  current customers schema is used by:
+
+  - 8 internal applications (e-commerce, CRM, billing, support,
+    analytics, marketing, admin panel, mobile API)
+  - 3 external integrations (Salesforce sync, Stripe, HubSpot)
+  - 15 scheduled jobs and reports (nightly ETL, weekly reports)
+  - 2 data warehouse feeds (real-time CDC and nightly batch)
+
+  Task: Conduct the impact analysis. Identify everything that will
+  be affected, assess the risk, and create the dependency-aware
+  migration plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Impact discovery is systematic and comprehensive — discovery process: 'Step 1: Map all database consumers. (1) Application code scanning. Search all application codebases for references to the customers schema tables. Tools: grep for table names, column names, and schema references across all 8 application repositories. For ORMs: search for model definitions that map to customers tables. For raw SQL: search for SELECT, INSERT, UPDATE, DELETE statements referencing customers tables. Output: a matrix of application × table × columns used. Example: e-commerce reads customers.name, customers.email. Billing reads customers.billing_address, customers.payment_method. (2) Integration mapping. For each external integration: document which tables it reads and writes. Salesforce sync: reads customers.name, email, phone. Writes customers.salesforce_id. Stripe: reads customers.stripe_customer_id. HubSpot: reads customers.email, customers.marketing_consent. (3) Job and report inventory. For each scheduled job: which tables does it query? What columns does it use? The nightly ETL: selects all columns from 3 customers tables. Weekly reports: aggregate queries on customers.created_at, customers.status. (4) Data warehouse feeds. CDC feed: streams all changes from the 5 customers tables. Nightly batch: pg_dump of the customers schema. Both feeds must be updated when the schema changes. Step 2: Classify the impact. For each consumer, classify: breaking change (the consumer will fail without code changes), compatible change (the consumer continues to work but may need updates for new features), no impact (the consumer does not use affected columns or tables)'"
+    weight: 0.35
+    description: "Impact discovery"
+  - type: llm_judge
+    criteria: "Risk assessment prioritizes by business criticality — risk assessment: 'Risk matrix — for each impacted consumer, assess: business criticality (what happens if it breaks?) × migration complexity (how hard is the update?). High criticality, high complexity (top priority): Billing application: if billing breaks, revenue stops. It reads payment data that is being restructured. Requires significant code changes for the new schema. Risk: HIGH. Mitigation: dedicate a senior engineer to billing migration. Test extensively with production data. Have a rollback plan that restores billing within 15 minutes. Stripe integration: payment processing depends on stripe_customer_id mapping. If the mapping breaks, payments fail. Risk: HIGH. Mitigation: verify the stripe_customer_id mapping is preserved exactly. Test with Stripe test mode before production cutover. High criticality, low complexity: E-commerce application: critical for revenue but uses standard customer queries that can be updated with find-and-replace. Risk: MEDIUM. Mobile API: customer-facing but reads only name and email. Simple column rename. Risk: LOW-MEDIUM. Low criticality, high complexity: Analytics: complex queries with multiple joins. Will require significant rewriting. But analytics can tolerate a few hours of downtime. Risk: MEDIUM. Nightly ETL: reads all columns. Must be rewritten. But it runs once per day and can be delayed. Risk: LOW-MEDIUM. Migration order based on risk: (1) Billing and Stripe (highest risk first — get these right). (2) E-commerce and Mobile API (revenue-impacting). (3) CRM, Support, Admin (internal tools). (4) Salesforce, HubSpot integrations (external but non-critical). (5) Analytics, Reports, Data warehouse (can tolerate delay). (6) ETL and batch jobs (run on schedules, easiest to reschedule)'"
+    weight: 0.35
+    description: "Risk assessment"
+  - type: llm_judge
+    criteria: "Dependency-aware migration plan coordinates all consumers — migration plan: 'The schema change affects 26+ consumers. Coordinating all of them for a single cutover is impossible. Use a phased approach with compatibility layers. Phase 1: Create new schema alongside old. Create the 12 new tables with the new structure. Set up triggers or CDC to sync data from the old 5 tables to the new 12 tables. Both old and new schemas exist simultaneously. No consumer is affected — everything still reads from the old tables. Phase 2: Migrate consumers one at a time. Starting with the lowest-risk consumers: update each application to read from the new schema. Use feature flags to switch between old and new schema reads. If the new schema reads produce errors: flip the feature flag back to old schema. Work through the priority order: billing first (most testing), then e-commerce, then others. Each consumer migration is an independent deployment — no big-bang cutover. Phase 3: Switch writes. After all consumers are reading from the new schema: switch writes to the new schema (application writes to new tables). Set up reverse sync: new tables → old tables (for any consumer that was missed). Phase 4: Decommission old schema. After 30 days with all consumers on the new schema and no old-schema reads detected: drop the sync triggers, drop the old tables. Compatibility view option: create views with the old table names that map to the new schema. For example: CREATE VIEW customers AS SELECT id, first_name || space || last_name AS name, email FROM customer_profiles JOIN customer_contacts USING (customer_id); This allows consumers that have not been updated to continue working. It buys time for slower-moving teams (especially external integrations) without blocking the migration. Timeline: 8-12 weeks for all consumers. Each week: 2-3 consumers migrated. No single day has more than 2 consumer migrations (to isolate issues)'"
+    weight: 0.30
+    description: "Migration plan"

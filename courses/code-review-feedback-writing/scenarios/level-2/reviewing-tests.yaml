@@ -1,0 +1,53 @@
+meta:
+  id: reviewing-tests
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Review test code — evaluate test quality including coverage, edge cases, test naming, and the relationship between tests and implementation"
+  tags: [code-review, testing, test-quality, coverage, edge-cases, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing test code for a payment processing module. The
+  author says "I added tests" and the coverage report shows 85%.
+  But coverage doesn't mean quality. You find these issues:
+
+  1. All 8 tests only cover the happy path (valid inputs, successful
+     operations) — no error cases tested
+
+  2. Test names are "test1", "test2", "test3" — no description of
+     what's being tested
+
+  3. Tests share mutable state — test order matters (test3 fails
+     if run alone)
+
+  4. One test is 60 lines long with 12 assertions (testing too many
+     things at once)
+
+  5. Tests mock the database but the mocks always return success —
+     database errors are never simulated
+
+  6. No test for the boundary condition: payment amount of exactly
+     $0.50 (minimum) and $999,999.99 (maximum)
+
+  7. A test that just checks the function doesn't throw — doesn't
+     verify the actual output
+
+  Task: Write review comments for each testing issue. For each,
+  explain why it matters for test quality, and suggest the specific
+  test(s) that should be added or changed.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each test quality issue is explained clearly — (1) Happy path only: '85% coverage looks good on paper, but these tests only verify that correct inputs produce correct outputs. What happens when the payment gateway returns a timeout? When the amount is negative? When the customer doesn't exist? These are the scenarios that cause production incidents.' (2) Test names: 'When a test fails in CI, the name is all you see. test3 failing tells me nothing — but should_reject_payment_when_amount_below_minimum tells me exactly what broke.' (3) Shared state: 'Tests that depend on execution order are fragile — they pass in your suite but fail when run individually or in parallel. Each test should set up its own state.' (4) Long test: '12 assertions means 12 different things can fail — but you only see the first failure. Split into focused tests that each verify one behavior.'"
+    weight: 0.35
+    description: "Test quality explanations"
+  - type: llm_judge
+    criteria: "Specific missing tests are suggested — error cases to add: payment gateway timeout, gateway returns decline, invalid card number, duplicate payment (idempotency), insufficient funds, network error, database write failure. Boundary tests: amount = 49 cents (below minimum, should reject), amount = 50 cents (exact minimum, should accept), amount = $999,999.99 (exact maximum, should accept), amount = $1,000,000.00 (above maximum, should reject), amount = 0 (should reject), amount = -1 (should reject). State tests: payment in each status (pending, processing, succeeded, failed) — can each be refunded? cancelled? retried? Each suggestion is a specific test case with expected behavior, not just 'add more tests'"
+    weight: 0.35
+    description: "Specific missing tests"
+  - type: llm_judge
+    criteria: "Test naming and structure improvements are demonstrated — naming pattern: 'should_[expected behavior]_when_[condition]' or 'it [behavior] when [condition]'. Examples: 'should_create_payment_when_valid_amount_and_card', 'should_return_error_when_amount_below_minimum', 'should_reject_refund_when_payment_already_refunded'. Test structure: Arrange-Act-Assert clearly separated. Each test: set up specific state (arrange), call the function (act), verify one specific outcome (assert). Fixture usage: suggest beforeEach for common setup but ensure each test has its own state. Mock improvement: show how to make the database mock return an error: `mockDb.query.mockRejectedValueOnce(new Error('connection timeout'))`. Independence: show how to reset state between tests"
+    weight: 0.30
+    description: "Structure improvements"

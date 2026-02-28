@@ -1,0 +1,37 @@
+meta:
+  id: statistical-testing-framework
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build a rigorous statistical testing framework — implement hypothesis tests, confidence intervals, multiple comparison corrections, and effect size calculations"
+  tags: [python, pandas, statistics, hypothesis-testing, confidence-intervals, expert]
+
+state: {}
+
+trigger: |
+  The product team runs 15-20 A/B tests per quarter but keeps making
+  contradictory decisions. Last quarter, they launched a feature that
+  "won" its A/B test but revenue actually dropped. Investigation
+  revealed: the test had insufficient power, they peeked at results
+  early, and they did not account for multiple comparisons.
+
+  The VP of Product asks you to build a statistical testing framework
+  that prevents these mistakes. The framework should handle: sample
+  size calculation, proper hypothesis testing, multiple comparison
+  correction, and effect size estimation.
+
+  Task: Build the testing framework and explain common pitfalls.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code implements sample size calculation and proper hypothesis tests — tests: 'Statistical testing framework: Sample size calculation — before running the test: from scipy import stats. import numpy as np. def calculate_sample_size(baseline_rate, min_detectable_effect, alpha=0.05, power=0.80): p1 = baseline_rate. p2 = baseline_rate * (1 + min_detectable_effect). effect_size = abs(p2 - p1) / np.sqrt(p1 * (1 - p1)). z_alpha = stats.norm.ppf(1 - alpha / 2). z_beta = stats.norm.ppf(power). n = ((z_alpha + z_beta) / effect_size) ** 2. return int(np.ceil(n)). n = calculate_sample_size(baseline_rate=0.05, min_detectable_effect=0.10). print(f\"Need {n} users per group to detect a 10% relative lift\"). If baseline conversion is 5% and you want to detect a lift to 5.5%, you need approximately 31,000 users per group. Running the test with 5,000 users has only 30% power — you will miss real effects 70% of the time. Proper hypothesis testing: def run_ab_test(control, treatment, metric=\"conversion\", alpha=0.05): if metric == \"conversion\": control_rate = control.mean(). treatment_rate = treatment.mean(). pooled_se = np.sqrt(control_rate * (1 - control_rate) / len(control) + treatment_rate * (1 - treatment_rate) / len(treatment)). z_stat = (treatment_rate - control_rate) / pooled_se. p_value = 2 * (1 - stats.norm.cdf(abs(z_stat))). ci_low = (treatment_rate - control_rate) - 1.96 * pooled_se. ci_high = (treatment_rate - control_rate) + 1.96 * pooled_se. elif metric == \"continuous\": t_stat, p_value = stats.ttest_ind(treatment, control). diff = treatment.mean() - control.mean(). se = np.sqrt(treatment.var() / len(treatment) + control.var() / len(control)). ci_low = diff - 1.96 * se. ci_high = diff + 1.96 * se. return {\"control_metric\": control.mean(), \"treatment_metric\": treatment.mean(), \"absolute_lift\": treatment.mean() - control.mean(), \"relative_lift_pct\": (treatment.mean() - control.mean()) / control.mean() * 100, \"p_value\": p_value, \"significant\": p_value < alpha, \"ci_95\": (ci_low, ci_high)}. The confidence interval is more informative than p-value alone. If CI is (0.001, 0.05), the effect is statistically significant but the practical impact might be tiny'"
+    weight: 0.35
+    description: "Tests"
+  - type: llm_judge
+    criteria: "Framework addresses multiple comparison correction and peeking — corrections: 'Multiple comparison correction: The problem: running 20 tests at alpha=0.05 means you expect 1 false positive even if nothing changed. P(at least one false positive) = 1 - (0.95)^20 = 64%. Bonferroni correction (conservative): def bonferroni_correction(p_values, alpha=0.05): adjusted_alpha = alpha / len(p_values). corrected = pd.DataFrame({\"test\": range(len(p_values)), \"p_value\": p_values, \"significant_uncorrected\": [p < alpha for p in p_values], \"significant_bonferroni\": [p < adjusted_alpha for p in p_values]}). return corrected. With 20 tests, the adjusted alpha is 0.0025 instead of 0.05. Benjamini-Hochberg (less conservative, controls false discovery rate): from statsmodels.stats.multitest import multipletests. rejected, corrected_pvals, _, _ = multipletests(p_values, method=\"fdr_bh\"). BH is preferred for exploratory analysis — it allows more discoveries while controlling the proportion of false positives among discoveries. Peeking problem — checking results before the test is complete: every time you check results early, you are running an implicit hypothesis test. If you check daily for 14 days, you effectively ran 14 tests. Solution 1 — Sequential testing (group sequential design): from scipy.stats import norm. def obrien_fleming_boundary(num_looks, alpha=0.05): boundaries = []. for k in range(1, num_looks + 1): info_fraction = k / num_looks. z_boundary = norm.ppf(1 - alpha / 2) / np.sqrt(info_fraction). boundaries.append(z_boundary). return boundaries. The O Brien-Fleming boundary starts very conservative (z=4.5 at 20% of data) and relaxes as more data arrives (z=2.0 at 100%). This allows early stopping for large effects while controlling overall false positive rate. Solution 2 — Always Valid Inference: use confidence sequences instead of confidence intervals. These are valid at any stopping time. Solution 3 — Simply do not peek. Set a fixed end date based on sample size calculation and only analyze once'"
+    weight: 0.35
+    description: "Corrections"
+  - type: llm_judge
+    criteria: "Response covers effect sizes and practical significance — effect: 'Effect size and practical significance: Statistical significance is not the same as practical significance. A test with 10 million users can detect a 0.01% lift as statistically significant — but is that worth launching? Effect size measures: Cohens d for continuous metrics: def cohens_d(control, treatment): pooled_std = np.sqrt((control.std()**2 + treatment.std()**2) / 2). return (treatment.mean() - control.mean()) / pooled_std. d = 0.2 is small, 0.5 is medium, 0.8 is large. Relative lift for business context: relative_lift = (treatment.mean() - control.mean()) / control.mean() * 100. Revenue impact estimation: daily_users = 100_000. conversion_lift = 0.005. avg_order_value = 50. annual_impact = daily_users * conversion_lift * avg_order_value * 365. A 0.5% absolute lift in conversion at $50 AOV = $912,500 annual revenue. Minimum detectable effect should be set based on business value: the engineering cost to implement the feature determines the minimum ROI needed. If implementation costs $100K, you need at least $100K in annual revenue lift. Work backwards to the minimum relative lift needed. Complete test report: def generate_test_report(test_name, control, treatment): result = run_ab_test(control, treatment). result[\"effect_size\"] = cohens_d(control, treatment). result[\"annual_revenue_impact\"] = estimate_revenue_impact(result). result[\"recommendation\"] = \"LAUNCH\" if (result[\"significant\"] and result[\"relative_lift_pct\"] > 1 and result[\"annual_revenue_impact\"] > implementation_cost) else \"DO NOT LAUNCH\" if not result[\"significant\"] else \"MONITOR — significant but small effect\". return result. The framework forces the product team to consider power, significance, effect size, and business impact — not just the p-value'"
+    weight: 0.30
+    description: "Effect size"

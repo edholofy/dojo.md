@@ -1,0 +1,79 @@
+meta:
+  id: eventbridge-patterns
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug EventBridge and Lambda integration — diagnose rule matching failures, event pattern issues, and event-driven architecture debugging"
+  tags: [AWS, Lambda, EventBridge, events, patterns, event-driven, advanced]
+
+state: {}
+
+trigger: |
+  Your event-driven architecture uses EventBridge to route events to
+  Lambda functions. A new event type isn't being processed:
+
+  Event published:
+  {
+    "source": "myapp.orders",
+    "detail-type": "OrderCreated",
+    "detail": {
+      "orderId": "ORD-123",
+      "status": "created",
+      "amount": 99.99,
+      "customer": { "tier": "premium" }
+    }
+  }
+
+  EventBridge rule pattern:
+  {
+    "source": ["myapp.orders"],
+    "detail-type": ["OrderCreated"],
+    "detail": {
+      "status": ["created"],
+      "customer": {
+        "tier": ["premium", "enterprise"]
+      }
+    }
+  }
+
+  The event matches but the Lambda isn't invoked. Investigation:
+
+  1. The rule exists but the target Lambda function ARN has a typo.
+     No error raised — EventBridge silently fails to invoke the target.
+     EventBridge metrics: FailedInvocations shows the failures.
+
+  2. After fixing the ARN, the Lambda resource policy doesn't allow
+     EventBridge to invoke it. Need:
+     $ aws lambda add-permission \
+       --function-name process-premium-order \
+       --statement-id EventBridgeInvoke \
+       --action lambda:InvokeFunction \
+       --principal events.amazonaws.com \
+       --source-arn arn:aws:events:us-east-1:...:rule/premium-order-rule
+
+  3. Some events match but the Lambda receives a different format
+     than expected. EventBridge wraps the detail in its envelope:
+     { "source": "...", "detail-type": "...", "detail": { ... }, ... }
+     The Lambda must extract data from event.detail, not event directly.
+
+  4. Events from another account don't arrive. Cross-account
+     EventBridge requires: event bus policy + rule on the receiving bus.
+
+  Task: Explain EventBridge + Lambda debugging. Write: event patterns
+  (matching rules, content filtering), common pattern mistakes, rule
+  and target configuration, cross-account/cross-region events, dead-
+  letter queues for failed deliveries, and EventBridge testing tools.
+
+assertions:
+  - type: llm_judge
+    criteria: "Event patterns are explained — patterns match on exact values (array of allowed values), prefix, numeric comparison, exists check. Common mistakes: putting a string instead of array ('created' vs ['created']), wrong nesting level, case sensitivity. Pattern testing: use EventBridge sandbox to test patterns before deploying. Content-based filtering: only process events matching specific criteria. All fields in pattern must match — fields not in pattern are ignored (open matching). Input transformation: reshape the event before sending to target"
+    weight: 0.35
+    description: "Event patterns"
+  - type: llm_judge
+    criteria: "Target and delivery issues are covered — target Lambda must have resource policy allowing events.amazonaws.com. Misconfigured targets fail silently — check FailedInvocations metric. DLQ for rules: configure DLQ to capture events that fail to deliver to target. EventBridge invokes Lambda asynchronously — standard async retry behavior applies (2 retries). Maximum event size: 256KB. Event bus has a throughput limit (default varies by region). Cross-account: sender's event bus → receiver's event bus (requires event bus policy)"
+    weight: 0.35
+    description: "Target and delivery"
+  - type: llm_judge
+    criteria: "Testing and debugging are practical — EventBridge sandbox: test event patterns without deploying. Archive and replay: archive events for debugging, replay to test fixes. aws events put-events: manually send test events. CloudWatch Logs: enable EventBridge logging to see which rules matched. Metrics: Invocations, FailedInvocations, TriggeredRules, ThrottledRules. Use EventBridge Schema Registry to document event formats. Design events with versioning (include version field) for backward compatibility. Event catalog: document all event types, sources, and consumers"
+    weight: 0.30
+    description: "Testing and debugging"

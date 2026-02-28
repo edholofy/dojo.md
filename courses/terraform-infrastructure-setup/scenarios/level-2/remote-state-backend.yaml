@@ -1,0 +1,55 @@
+meta:
+  id: remote-state-backend
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Configure remote state backend — set up S3+DynamoDB locking, migrate from local to remote state, and troubleshoot backend errors"
+  tags: [Terraform, state, backend, S3, DynamoDB, locking, intermediate]
+
+state: {}
+
+trigger: |
+  Your team has been using local state files. Problems are mounting:
+  - Two engineers ran apply simultaneously, corrupting the state
+  - A laptop crash lost the state file for the staging environment
+  - No one knows who changed what or when
+
+  You're migrating to S3 backend with DynamoDB locking. During migration:
+
+  ```
+  $ terraform init -migrate-state
+
+  Initializing the backend...
+  Do you want to copy existing state to the new backend?
+    Enter a value: yes
+
+  Error: Failed to save state
+
+  Error saving state: failed to upload state: AccessDenied:
+  Access Denied
+  ```
+
+  After fixing permissions, another error:
+  ```
+  Error: Error acquiring the state lock
+
+  Error message: ConditionalCheckFailedException
+  ```
+
+  Task: Explain remote state setup (S3 + DynamoDB), state migration
+  from local to remote, state locking mechanics, backend configuration
+  options, and how to share state across teams using terraform_remote_state.
+
+assertions:
+  - type: llm_judge
+    criteria: "S3 backend setup is complete — backend configuration: bucket (S3 bucket name), key (state file path), region, encrypt = true (SSE), dynamodb_table (for locking). Bootstrap: create S3 bucket with versioning enabled, create DynamoDB table with LockID partition key (String). The AccessDenied error: IAM policy needs s3:GetObject, s3:PutObject, s3:ListBucket on the bucket, plus dynamodb:GetItem, dynamodb:PutItem, dynamodb:DeleteItem on the lock table. State migration: terraform init -migrate-state copies local state to S3"
+    weight: 0.35
+    description: "Backend setup"
+  - type: llm_judge
+    criteria: "State locking mechanics are explained — DynamoDB locking: before any state-modifying operation, Terraform writes a lock record to DynamoDB with a unique ID, who holds it, and operation type. If lock exists, operation fails with ConditionalCheckFailedException. Lock released after operation completes. Stale locks: if process crashes, lock remains. Fix: terraform force-unlock <LOCK_ID> (only if holder process is confirmed dead). S3 versioning: enables state recovery if corruption occurs. terraform state pull to download, terraform state push to upload manually"
+    weight: 0.35
+    description: "Locking mechanics"
+  - type: llm_judge
+    criteria: "Cross-team state sharing is covered — terraform_remote_state data source reads another team's state outputs: data 'terraform_remote_state' 'network' { backend = 's3', config = { bucket = '...', key = 'network/terraform.tfstate' } }. Reference: data.terraform_remote_state.network.outputs.vpc_id. State file organization: separate state per environment and per team/service to limit blast radius. Pattern: s3://state-bucket/<env>/<service>/terraform.tfstate. IAM: restrict which teams can read/write which state files using S3 bucket policies"
+    weight: 0.30
+    description: "State sharing"

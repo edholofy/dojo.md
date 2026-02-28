@@ -1,0 +1,36 @@
+meta:
+  id: sample-ratio-mismatch-forensics
+  level: 4
+  course: ab-test-analysis
+  type: output
+  description: "Conduct SRM forensics — systematically diagnose and resolve sample ratio mismatches that invalidate A/B test results, identifying root causes across randomization, logging, and filtering layers"
+  tags: [SRM, data-quality, forensics, debugging, randomization, expert]
+
+state: {}
+
+trigger: |
+  The experimentation team discovers a critical issue: a high-profile
+  experiment testing a new subscription flow has been running for 3
+  weeks with a severe SRM. Expected split: 50/50. Actual: 50,000
+  treatment vs 46,200 control (7.6% fewer control users). The PM
+  wants to use the results anyway because the treatment shows a 15%
+  conversion lift. The data scientist says the results are completely
+  untrustworthy.
+
+  Task: Explain why SRM invalidates results regardless of the observed
+  effect, conduct a forensic investigation to find the root cause, and
+  provide a remediation plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why SRM invalidates results — invalidation: 'Why SRM invalidates results regardless of the observed lift: The PM's reasoning: the treatment has 15% more conversions, and even though we lost some control users, the lift is so large it must be real. Why this is wrong: SRM means something systematic is different between the groups beyond the intended treatment. The 3,800 missing control users are not random — they were lost due to a specific mechanism. If that mechanism is correlated with the outcome (conversion), the measured treatment effect is biased. Example of how SRM creates fake lifts: suppose the control variant's page loads 200ms slower due to a bug. Impatient users (who load slowly) bounce before being counted. These impatient users also convert at lower rates. Result: the control group loses its lowest-converting users. The remaining control users have artificially HIGH conversion rates. The treatment group retains all users (including low-converters). Despite the control group being artificially improved, the treatment still shows a 15% lift. This means the true lift might be even larger — or the entire lift might be due to a different mechanism (e.g., the treatment has a bug that inflates conversion tracking). The problem is we do not know: the SRM tells us the groups are not comparable. Any comparison between non-comparable groups is meaningless. It does not matter how large the effect is — the foundation (comparable groups) is broken. Analogy: if you are weighing two objects on a broken scale, it does not matter how large the difference appears. Fix the scale first, then weigh'"
+    weight: 0.35
+    description: "Invalidation"
+  - type: llm_judge
+    criteria: "Response covers systematic SRM investigation methodology — investigation: 'SRM forensic investigation: Step 1 — Timing analysis: when did the SRM appear? Query: daily assignment counts by variant since test start. Day 1-3: treatment 2,400/day, control 2,400/day (balanced). Day 4: treatment 2,400, control 2,100 (imbalance begins). Day 5+: consistent 2,400 vs 2,100 pattern. Finding: something changed on day 4. Check deployment logs, platform changes, infrastructure events on day 4. Step 2 — Platform segmentation: is the SRM present on all platforms? Web: treatment 30,000, control 29,800 (ratio: 1.007, no SRM). iOS: treatment 12,000, control 11,900 (ratio: 1.008, no SRM). Android: treatment 8,000, control 4,500 (ratio: 1.778, severe SRM). Finding: the SRM is isolated to Android. Something specific to the Android implementation is causing user loss in control. Step 3 — Event pipeline analysis: compare assignment events to exposure events by variant and platform. Android assignment events: treatment 8,000, control 8,000 (balanced at assignment). Android exposure events: treatment 8,000, control 4,500 (3,500 control exposures lost). Finding: 3,500 Android control users were assigned but never logged an exposure event. The randomization is working correctly — the problem is downstream. Step 4 — Client-side investigation: check Android app logs for control variant errors. Finding: on day 4, a code deployment introduced a JavaScript error in the control variant's subscription page on Android. The error prevents the page from fully loading, which prevents the exposure tracking event from firing. Users who hit the error either see a broken page (and leave) or the page partially loads but the tracking script fails. Step 5 — Root cause confirmed: Android control variant has a client-side error introduced on day 4. This error: prevents exposure events from being logged (causing the SRM). Degrades the control user experience (making the treatment look artificially better). Both effects inflate the apparent treatment advantage'"
+    weight: 0.35
+    description: "Investigation"
+  - type: llm_judge
+    criteria: "Response covers remediation and prevention — remediation: 'Remediation plan: Immediate actions: 1. Fix the Android bug in the control variant. Deploy the fix immediately. 2. Quarantine the experiment results: mark the experiment as invalid in the platform. Do not allow any ship decisions based on current data. 3. Restart the experiment: option A — restart from scratch with a new randomization seed. Cleanest approach. Loses 3 weeks of data. Option B — analyze only post-fix data. Faster (no need to re-collect pre-fix data). But users who experienced the broken control may behave differently even after the fix (carry-over frustration). Option C — analyze only pre-day-4 data (days 1-3). The SRM was not present in these days, so the data is valid. But 3 days of data is likely underpowered. Recommendation: option A (restart). The experiment was compromised for 3 of 3 weeks. Starting fresh gives clean data. Communicate to the PM: the 15% lift was an artifact. The true effect is unknown. We need 3 more weeks of clean data. Prevention framework: 1. Automated SRM monitoring: run chi-squared SRM test for every experiment daily. Alert threshold: p < 0.001. Auto-pause experiments with persistent SRM (3+ consecutive days). 2. Pre-deployment experiment impact checks: before any code deployment, check if the change affects code paths used by active experiments. If yes, require experiment owner review before deploying. 3. Exposure event validation: for every experiment, validate that exposure event counts match assignment counts within expected tolerance (accounting for users who were assigned but never reached the page). Alert if the ratio deviates by more than 5%. 4. Cross-platform monitoring: monitor SRM separately by platform (web, iOS, Android). Platform-specific SRMs are easier to diagnose (usually client-side bugs). 5. Code review checklist for experiment variants: does each variant's code fire all required tracking events? Are there code paths where tracking could fail (error handling, timeouts, race conditions)? Are there platform-specific code paths that might diverge? Process change: add SRM check as a mandatory step in the experiment review process. No experiment can be declared conclusive without a passing SRM check (p > 0.05 on the chi-squared test). This should be automated in the platform — block the ship button if SRM is detected'"
+    weight: 0.30
+    description: "Remediation"

@@ -1,0 +1,46 @@
+meta:
+  id: intermediate-report-shift
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Intermediate report shift — handle a day of complex reporting requests requiring CTEs, window functions, and multi-table analysis"
+  tags: [SQL, shift-simulation, intermediate, CTE, window-functions]
+
+state: {}
+
+trigger: |
+  You are the team's SQL analyst. Today's requests:
+
+  Request 1 (CFO): "Show me monthly revenue with month-over-month
+  growth percentage AND a running total for the year."
+
+  Request 2 (VP Sales): "Rank our top 3 customers in each region
+  by revenue. I want to see who dominates each market."
+
+  Request 3 (Product Manager): "How many customers used Feature A
+  but NOT Feature B? Compare to customers who used both. This tells
+  us if Feature B has an adoption problem."
+
+  Request 4 (Marketing): "Build a customer acquisition report:
+  new customers per month, broken down by acquisition channel.
+  Include the cost per acquisition (marketing spend / new customers)."
+
+  Tables: orders, customers (with acquisition_channel), product_usage
+  (customer_id, feature_name, first_used_date), marketing_spend
+  (channel, month, spend_amount)
+
+  Task: Write all four reports.
+
+assertions:
+  - type: llm_judge
+    criteria: "All four queries are correct and use appropriate intermediate SQL techniques — queries: 'Intermediate report queries: Request 1 — Monthly revenue with MoM growth and running total: WITH monthly AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue FROM orders WHERE status = 'completed' AND EXTRACT(YEAR FROM order_date) = EXTRACT(YEAR FROM CURRENT_DATE) GROUP BY 1) SELECT month, revenue, LAG(revenue) OVER (ORDER BY month) AS prev_month, ROUND((revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0 / NULLIF(LAG(revenue) OVER (ORDER BY month), 0), 1) AS mom_growth_pct, SUM(revenue) OVER (ORDER BY month) AS ytd_running_total FROM monthly ORDER BY month. Combines LAG for growth calculation with SUM OVER for running total. Request 2 — Top 3 customers per region: WITH customer_revenue AS (SELECT o.region, c.customer_id, c.name, SUM(o.amount) AS revenue, ROW_NUMBER() OVER (PARTITION BY o.region ORDER BY SUM(o.amount) DESC) AS rank_in_region FROM orders o JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_date >= DATE_TRUNC('year', CURRENT_DATE) GROUP BY o.region, c.customer_id, c.name) SELECT region, name, revenue, rank_in_region FROM customer_revenue WHERE rank_in_region <= 3 ORDER BY region, rank_in_region. Top-N-per-group using ROW_NUMBER with PARTITION BY. Request 3 — Feature adoption comparison (EXCEPT pattern): WITH feature_a_users AS (SELECT DISTINCT customer_id FROM product_usage WHERE feature_name = 'Feature A'), feature_b_users AS (SELECT DISTINCT customer_id FROM product_usage WHERE feature_name = 'Feature B') SELECT 'A only (not B)' AS segment, COUNT(*) AS customers FROM feature_a_users WHERE customer_id NOT IN (SELECT customer_id FROM feature_b_users) UNION ALL SELECT 'Both A and B', COUNT(*) FROM feature_a_users WHERE customer_id IN (SELECT customer_id FROM feature_b_users) UNION ALL SELECT 'B only (not A)', COUNT(*) FROM feature_b_users WHERE customer_id NOT IN (SELECT customer_id FROM feature_a_users). Request 4 — Acquisition report with CPA: WITH new_customers AS (SELECT DATE_TRUNC('month', signup_date) AS month, acquisition_channel, COUNT(*) AS new_customers FROM customers GROUP BY 1, 2) SELECT nc.month, nc.acquisition_channel, nc.new_customers, ms.spend_amount, ROUND(ms.spend_amount / NULLIF(nc.new_customers, 0), 2) AS cost_per_acquisition FROM new_customers nc LEFT JOIN marketing_spend ms ON nc.month = ms.month AND nc.acquisition_channel = ms.channel ORDER BY nc.month, cost_per_acquisition'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Response provides insights from each report, not just queries — insights: 'Insights from the reports: CFO report insights: if MoM growth is slowing while the running total is on track, the business may be hitting a growth ceiling. If Q4 growth is consistently higher, it is seasonal — do not celebrate Q4 growth as organic. VP Sales insights: if one customer represents more than 30% of a region's revenue, that is concentration risk. If the same customers dominate every region, the business depends on a handful of accounts. Product Manager insights: if 5,000 customers use Feature A but only 1,000 use both A and B, Feature B has a 20% cross-adoption rate. This might mean: Feature B is hard to discover, Feature B does not add value for Feature A users, or the features serve different use cases. Marketing insights: if the organic channel has CPA of $0 but paid social is $150, that is expected. But if paid social CPA was $80 last quarter and is now $150, the channel is getting more expensive. Compare CPA to customer lifetime value — if CPA exceeds LTV, the channel is unprofitable'"
+    weight: 0.35
+    description: "Insights"
+  - type: llm_judge
+    criteria: "Response shows how to document and share report queries — documentation: 'Documenting report queries: Add a header comment to every report query: -- Report: Monthly Revenue with MoM Growth. -- Owner: Finance team (CFO). -- Frequency: Monthly, first business day. -- Last updated: 2024-10-15. -- Dependencies: orders table (status must be populated). -- Notes: excludes cancelled orders, uses calendar month. Save queries in a version-controlled repository: reports/finance/monthly_revenue.sql, reports/sales/top_customers_by_region.sql. Include sample output as a comment so future analysts understand what the query returns. When sharing with stakeholders: send the result, not the query. Add a one-sentence interpretation. Offer to schedule the report if it is recurring. For the CFO: Revenue grew 8.5% MoM in October, our strongest month this year. YTD revenue is $4.2M, tracking 12% ahead of last year. Not: Here is a 30-line SQL query'"
+    weight: 0.30
+    description: "Documentation"

@@ -1,0 +1,46 @@
+meta:
+  id: aggregation-errors
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Aggregation errors — debug incorrect GROUP BY results, window function mistakes, and double-counting in ETL transform logic"
+  tags: [aggregation, group-by, window-functions, double-counting, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our financial reports are showing wrong
+  aggregations and I can't figure out why. Three separate issues:
+
+  1. Monthly revenue totals don't match when I sum daily totals
+     vs query monthly directly. Daily sums show $1.2M but the
+     monthly query shows $1.05M. The difference is exactly the
+     revenue from customers who made purchases on multiple days.
+
+  2. A 'running total' column using a window function is resetting
+     to zero partway through each month:
+     SUM(amount) OVER (ORDER BY date ROWS BETWEEN UNBOUNDED
+     PRECEDING AND CURRENT ROW)
+
+  3. When I add a LEFT JOIN to a reference table for region
+     enrichment, my SUM(revenue) increases by 15% because some
+     customers match multiple regions.
+
+  How do I debug and fix these aggregation issues?"
+
+  Task: Diagnose each aggregation error, explain the math behind
+  what's going wrong, and provide correct approaches.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each error correctly — double-counting: the monthly query likely deduplicates by customer while the daily sum counts each transaction separately, or a join before aggregation is creating duplicates. Window function reset: the window frame or PARTITION BY clause is causing the running total to reset (likely a PARTITION BY month that wasn't intended, or ORDER BY has ties causing non-deterministic ordering). Region join inflation: the LEFT JOIN matches some customers to multiple regions (many-to-many relationship), inflating the SUM. Explains why pre-join aggregation vs post-join aggregation produces different results"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides correct fixes — for double-counting: aggregate before joining (subquery or CTE), or use DISTINCT in the appropriate place, verify grain of each table before joining; for window function: check the PARTITION BY clause, ensure ORDER BY is deterministic (add a tiebreaker column), verify the frame specification (ROWS vs RANGE); for region join inflation: deduplicate the region table first, or aggregate before the join, or use a subquery to get a single region per customer. Shows the corrected SQL for at least one case"
+    weight: 0.35
+    description: "Fixes"
+  - type: llm_judge
+    criteria: "Response provides aggregation debugging methodology — always check the grain (what does one row represent?) before and after each join and aggregation, use COUNT(*) and COUNT(DISTINCT key) to detect unexpected duplication, compare aggregates at multiple levels to catch discrepancies early, validate aggregations against known reference numbers, and add dbt tests or assertions that verify critical aggregation results (SUM should match a control total, COUNT should match expected grain)"
+    weight: 0.30
+    description: "Methodology"

@@ -1,0 +1,47 @@
+meta:
+  id: incident-response-iac
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Handle infrastructure incidents with Terraform — implement emergency change procedures, rollback strategies, and post-incident IaC reconciliation"
+  tags: [Terraform, incident-response, rollback, emergency, recovery, expert]
+
+state: {}
+
+trigger: |
+  Production is down. The sequence of events:
+
+  10:00 — Engineer deploys Terraform changes (new ECS task definition)
+  10:05 — Health checks start failing on 3 of 8 ECS services
+  10:10 — ALB marks targets unhealthy, 502 errors spike
+  10:15 — Pager fires, incident declared
+  10:20 — Investigation: new task definition has wrong environment
+           variable pointing to staging database
+  10:25 — Need to rollback immediately
+
+  Options debated during the incident:
+  1. Revert the git commit and re-apply
+  2. terraform apply -target to fix just the task definition
+  3. Manually update ECS in console
+  4. terraform state replace-provider (someone suggested this randomly)
+
+  After the immediate fix, terraform plan shows drift because someone
+  made emergency changes in the console during the incident.
+
+  Task: Design the incident response procedure for Terraform-managed
+  infrastructure covering: rollback strategies, emergency change
+  procedures, post-incident reconciliation, and runbook development.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rollback strategies are evaluated — Option 1 (git revert + apply): safest, maintains IaC integrity, but slow (5-10 minutes for plan+apply). Option 2 (targeted apply): faster, fixes specific resource, but skips normal review process. Option 3 (console change): fastest (30 seconds), but creates drift. Recommendation: (1) for critical outages: fix in console first to restore service, then reconcile Terraform. (2) for moderate issues: git revert + targeted apply. (3) for minor issues: normal git revert + full apply. Speed of recovery matters more than IaC purity during incidents"
+    weight: 0.35
+    description: "Rollback strategies"
+  - type: llm_judge
+    criteria: "Emergency change procedure is defined — emergency procedure: (1) declare incident, (2) fix immediately using fastest safe method (console if needed), (3) document all manual changes made, (4) after incident resolved: create PR with Terraform changes matching manual fixes, (5) run terraform plan to verify no drift, (6) apply to reconcile state. Emergency access: pre-configured 'break glass' IAM role with broad permissions, used only during incidents, logged via CloudTrail. Never run terraform destroy during an incident. Incident commander approves all infrastructure changes"
+    weight: 0.35
+    description: "Emergency procedure"
+  - type: llm_judge
+    criteria: "Post-incident reconciliation is practical — after incident: (1) terraform plan -refresh-only to see all drift, (2) review each drift: accept intentional changes (update .tf), revert accidental changes (apply). (3) Update IaC to prevent recurrence (add validation, pre-deploy checks). Runbook: document common failure scenarios with exact rollback commands. Example runbooks: bad ECS deployment (terraform apply -target=aws_ecs_task_definition.app -var='image_tag=v1.2.3'), database connection issue (terraform apply -target=aws_security_group.db). Store runbooks alongside Terraform code. Post-mortem: identify what IaC improvements would have prevented the incident"
+    weight: 0.30
+    description: "Reconciliation"

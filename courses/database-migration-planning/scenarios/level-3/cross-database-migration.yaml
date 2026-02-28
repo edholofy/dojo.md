@@ -1,0 +1,41 @@
+meta:
+  id: cross-database-migration
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Plan a cross-database migration — migrate from MySQL to PostgreSQL including schema conversion, data type differences, and application code changes"
+  tags: [database, migration, cross-database, MySQL, PostgreSQL, advanced]
+
+state: {}
+
+trigger: |
+  Your company is migrating from MySQL 8.0 to PostgreSQL 15. The
+  database has:
+  - 120 tables
+  - 50GB of data
+  - 15 stored procedures
+  - 8 triggers
+  - Application uses MySQL-specific features: ENUM types, ON DUPLICATE
+    KEY UPDATE, GROUP_CONCAT, IFNULL, auto_increment, TINYINT(1) for
+    booleans
+
+  The migration must be completed in 4 weeks with maximum 2 hours
+  of downtime during the final cutover.
+
+  Task: Plan the cross-database migration. Include: schema conversion
+  strategy, data type mapping, application code changes, and the
+  cutover plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Schema conversion addresses MySQL-to-PostgreSQL differences — schema conversion: 'Key data type mappings: MySQL INT AUTO_INCREMENT → PostgreSQL SERIAL or GENERATED ALWAYS AS IDENTITY. MySQL TINYINT(1) → PostgreSQL BOOLEAN. MySQL ENUM(value1, value2) → PostgreSQL VARCHAR with CHECK constraint or custom ENUM type (CREATE TYPE status_enum AS ENUM (value1, value2)). MySQL DATETIME → PostgreSQL TIMESTAMP. MySQL TEXT/MEDIUMTEXT/LONGTEXT → PostgreSQL TEXT (no size variants needed). MySQL DOUBLE → PostgreSQL DOUBLE PRECISION. MySQL BLOB → PostgreSQL BYTEA. SQL syntax differences in application code: MySQL ON DUPLICATE KEY UPDATE → PostgreSQL ON CONFLICT ... DO UPDATE (upsert syntax). MySQL GROUP_CONCAT(col SEPARATOR ,) → PostgreSQL STRING_AGG(col, ,). MySQL IFNULL(a, b) → PostgreSQL COALESCE(a, b). MySQL LIMIT offset, count → PostgreSQL LIMIT count OFFSET offset (same but parameter order differs if using positional). MySQL backtick quoting (column) → PostgreSQL double-quote quoting (\"column\") or no quoting for lowercase. MySQL NOW() → PostgreSQL NOW() (same). Stored procedure conversion: MySQL stored procedures use BEGIN/END blocks with different syntax than PostgreSQL PL/pgSQL. Each of the 15 stored procedures must be manually rewritten. This is the most labor-intensive part of the migration. Tool assistance: pgloader can automate schema conversion for most tables. AWS Schema Conversion Tool (SCT) can convert stored procedures and identify unconvertable patterns. Expect 60-70% automated conversion; the remaining 30-40% requires manual work'"
+    weight: 0.35
+    description: "Schema conversion"
+  - type: llm_judge
+    criteria: "Migration execution plan achieves the 2-hour cutover target — execution plan: 'Week 1: Schema conversion and testing. Convert MySQL schema to PostgreSQL using pgloader or AWS SCT. Manually convert stored procedures and triggers. Create a test PostgreSQL instance with the converted schema. Run application test suite against PostgreSQL to identify SQL compatibility issues. Fix application code for PostgreSQL syntax (ON CONFLICT, STRING_AGG, etc.). Week 2: Data migration testing. Perform a full data migration from MySQL to PostgreSQL. Measure: how long does the full data load take? For 50GB: typically 2-6 hours depending on network and complexity. Validate data integrity: compare row counts per table, spot-check data samples, verify foreign key relationships. Identify and fix any data conversion issues (character encoding, date formats, numeric precision). Run the application against the migrated PostgreSQL database. Test all critical paths. Week 3: Performance tuning and rehearsal. Run the migration end-to-end as a dress rehearsal. Time every step. Identify bottlenecks and optimize. Tune PostgreSQL configuration (shared_buffers, work_mem, effective_cache_size). Rebuild and optimize indexes. Run load tests against PostgreSQL to verify performance matches or exceeds MySQL. Week 4: Cutover. Cutover plan for 2-hour downtime window: T-24h: final data migration rehearsal with latest production data. T-0: announce maintenance window. Stop application traffic (maintenance page). T+5min: take final MySQL backup. T+10min: begin data migration from MySQL to PostgreSQL. T+90min: data migration complete (based on rehearsal timing). Verify row counts and data integrity checks. T+100min: switch application database connection strings to PostgreSQL. T+105min: start application, run smoke tests. T+110min: verify all critical paths work. T+115min: open traffic to users. T+120min: maintenance window ends. Post-cutover: monitor PostgreSQL performance for 48 hours. Keep MySQL running as read-only for 1 week (fallback data source)'"
+    weight: 0.35
+    description: "Execution plan"
+  - type: llm_judge
+    criteria: "Risk mitigation and rollback strategy included — risk mitigation: '(1) Rollback strategy. The biggest risk: PostgreSQL performs differently than expected in production. Rollback plan: keep MySQL running for 1 week after cutover. If critical issues are found: switch application back to MySQL (update connection strings). Data written to PostgreSQL during the failed cutover period must be migrated back to MySQL (or lost). Minimize this risk: keep the cutover window short and monitor intensively. (2) Dual-write option (for near-zero-downtime). Instead of a hard cutover: run both MySQL and PostgreSQL simultaneously for 1-2 weeks. Application writes to both databases. Application reads from MySQL (primary) with PostgreSQL as shadow. Compare: do both databases produce the same results? When confident: switch reads to PostgreSQL. After 1 week of stable PostgreSQL reads: stop writing to MySQL. This eliminates the 2-hour downtime window but adds significant complexity (dual-write logic, data comparison, conflict resolution). (3) Application testing coverage. The highest risk is SQL syntax differences causing application errors. Mitigation: run the full test suite against PostgreSQL. If test coverage is low: manually test every page and API endpoint that queries the database. Common surprises: case sensitivity (MySQL is case-insensitive by default, PostgreSQL is case-sensitive for LIKE and string comparisons), NULL handling differences, date/time format differences. (4) Data integrity verification. After migration: run COUNT(*) on every table in both databases — must match. Run checksum on 10 critical tables (sample 1000 random rows, compare values). Run the top 20 most common application queries against both databases — results must match'"
+    weight: 0.30
+    description: "Risk mitigation"

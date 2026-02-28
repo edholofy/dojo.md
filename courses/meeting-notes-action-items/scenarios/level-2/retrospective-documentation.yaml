@@ -1,0 +1,104 @@
+meta:
+  id: retrospective-documentation
+  level: 2
+  course: meeting-notes-action-items
+  type: output
+  description: "Retrospective documentation — capture a sprint retrospective discussion and transform it into actionable improvement items with accountability"
+  tags: [retrospective, agile, improvement, sprint, reflection]
+
+state: {}
+
+trigger: |
+  You're the scrum master for a 7-person development team.
+  You just facilitated a sprint retrospective for Sprint 22.
+  The retro used the "Start, Stop, Continue" format and got
+  quite emotional at points. You need to create the
+  retrospective documentation.
+
+  Sprint 22 Summary:
+  - Duration: 2 weeks
+  - Committed: 34 story points
+  - Completed: 21 story points (62% completion)
+  - Carried over: 13 points (3 user stories)
+  - Sprint goal: "Complete user authentication v2 and payment
+    integration" — PARTIALLY MET (auth done, payment not)
+
+  Team: Jordan (Tech Lead), Priya (Senior Dev), Marcus
+  (Mid Dev), Lisa (Junior Dev), Omar (Junior Dev), Chen
+  (QA), Aisha (Designer)
+
+  Retro Discussion (what actually happened in the room):
+
+  START (what we should start doing):
+  - Priya: "Start doing actual code reviews instead of just
+    clicking approve. I found 3 bugs in production that would
+    have been caught if anyone had actually read the code."
+    Jordan looked uncomfortable — he's the one who approved
+    those PRs.
+  - Marcus: "Start estimating as a team. Jordan assigned
+    points to stories without asking us. The payment
+    integration was 8 points but it should have been 13."
+  - Lisa: "Start pairing me with someone senior. I spent 2
+    days stuck on the OAuth implementation and didn't know
+    who to ask. I felt stupid asking in Slack."
+  - Omar: "Start having a mid-sprint check-in. By day 7 we
+    knew payment was behind but nobody said anything."
+
+  STOP (what we should stop doing):
+  - Chen: "Stop treating QA as an afterthought. I got 4
+    stories to test on the last day of the sprint. I can't
+    do quality testing in 4 hours per story."
+  - Aisha: "Stop changing designs mid-sprint. Jordan asked
+    me to redesign the login flow on day 6 after I'd already
+    handed off the approved designs. Then the developers had
+    to redo work."
+  - Jordan (defensively): "I changed the design because
+    the CEO saw the original and wanted changes. I can't say
+    no to the CEO."
+  - Marcus: "Stop overcommitting. This is the 4th sprint in
+    a row where we've carried over stories. We need to be
+    honest about our velocity."
+
+  CONTINUE (what's working):
+  - Everyone agreed: the daily standups are useful and
+    well-run
+  - Priya: "Continue the architecture decision records —
+    they've saved us twice already"
+  - Lisa: "Continue the Friday demos — stakeholders love them
+    and it motivates me"
+  - Chen: "Continue using the automated test suite — it
+    caught 12 regressions this sprint"
+
+  Emotional moments:
+  - Lisa teared up talking about feeling unsupported
+  - Jordan got defensive when multiple items pointed to his
+    leadership decisions
+  - Priya and Jordan had a tense exchange about code review
+    accountability
+  - The team rallied around Lisa, with Priya volunteering to
+    be her pairing partner
+
+  Voted improvement items (each person got 3 dots):
+  1. Team estimation sessions (7 votes)
+  2. Code review standards (6 votes)
+  3. QA involvement earlier in sprint (5 votes)
+  4. Mid-sprint health check (4 votes)
+  5. Pairing program for juniors (4 votes)
+  6. Design change freeze after day 3 (3 votes)
+
+  Task: Create the retrospective documentation that captures
+  the outcomes while maintaining psychological safety.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates retrospective documentation that maintains psychological safety — captures the substance of feedback without assigning individual blame or documenting emotional reactions (Lisa's tears, Jordan's defensiveness should not be in the notes); depersonalizes issues: instead of 'Jordan approved PRs without reading them,' frames it as 'the team identified that code reviews need more thoroughness'; instead of 'Jordan assigned points without asking,' frames it as 'estimation should be a collaborative team activity'; captures the underlying systemic issues (process problems, not people problems); maintains a constructive, forward-looking tone; does NOT include the CEO pressure excuse as it creates a blame chain."
+    weight: 0.35
+    description: "PsychologicalSafety"
+  - type: llm_judge
+    criteria: "Response creates actionable improvement items from the vote results — transforms the top-voted items into specific, actionable improvement commitments with: clear description of what changes, who is responsible for implementing the change, when it starts, and how success will be measured; for team estimation: specifies the new estimation process (planning poker or similar), starting next sprint; for code review standards: defines minimum review criteria, review time expectations, and a checklist; for QA involvement: establishes when QA begins (earlier in the sprint, not last day); includes the sprint metrics (21/34 points, 62%) as baseline data; carries forward the 'continue' items as recognized team strengths."
+    weight: 0.35
+    description: "ActionableImprovements"
+  - type: llm_judge
+    criteria: "Response documents the retrospective completely and professionally — includes sprint summary with key metrics; documents all three categories (Start, Stop, Continue) with themes rather than verbatim quotes; records the dot-vote results as the team's prioritized improvement backlog; limits commitments to top 2-3 items (teams can't change everything at once); includes a mechanism for tracking whether improvements are actually implemented in the next sprint; the documentation would be useful as a historical reference for tracking team improvement over time; balances honesty about problems with respectful treatment of team dynamics."
+    weight: 0.30
+    description: "CompleteDocumentation"

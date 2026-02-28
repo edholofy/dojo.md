@@ -1,0 +1,47 @@
+meta:
+  id: reviewing-senior-code
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review senior engineer's code — navigate the dynamics of providing feedback to more experienced developers while maintaining quality standards"
+  tags: [code-review, senior-engineer, dynamics, confidence, speaking-up, advanced]
+
+state: {}
+
+trigger: |
+  You're a mid-level engineer asked to review a PR from the team's
+  most senior developer (10 years experience, built the core system).
+  Their PR refactors the authentication middleware — 250 lines.
+
+  You find several concerns:
+  1. A race condition when refreshing OAuth tokens concurrently
+  2. The new middleware doesn't handle the edge case of expired
+     refresh tokens (the old code did)
+  3. Magic numbers: timeout values without named constants
+  4. No tests for the concurrent token refresh scenario
+  5. The refactor changes behavior — previously failed silently,
+     now throws (affects all callers)
+
+  You're nervous because:
+  - This person is far more experienced than you
+  - They might know something you don't
+  - You've seen them dismiss junior reviewers before
+  - But you're genuinely concerned about #1 and #2
+
+  Task: Write the review navigating the power dynamic. Show how to
+  give feedback to someone more senior while being confident in your
+  observations. Write a guide for reviewing up.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical concerns are communicated with appropriate confidence — for genuine bugs (#1, #2): be direct but frame as observations, not accusations. 'I traced through the concurrent token refresh path and I believe there's a race condition: if two requests trigger a refresh simultaneously, both will attempt to write the new token. The old code used a mutex here (auth.ts:89 in the previous version) — was the removal intentional?' For the behavior change (#5): 'I noticed the error handling shifted from silent failure to throwing. Since this middleware is used by all 40 endpoints, this changes behavior for every request — was this intentional? If so, should we coordinate the rollout?' Confidence where warranted: 'The race condition is a real concern regardless of experience level — concurrent access bugs don't care about seniority.'"
+    weight: 0.35
+    description: "Confident feedback"
+  - type: llm_judge
+    criteria: "Power dynamic is navigated without being deferential or aggressive — don't start with: 'I might be wrong but...' or 'I'm sure you thought of this...' (undermines your review). Don't say: 'This is obviously wrong' (confrontational with senior). Do: state observations factually. 'Lines 45-60: when two concurrent requests both have expired tokens, the first refresh succeeds but the second attempts to refresh with the already-used refresh token, which will fail.' Ask genuine questions for things you're unsure about: 'I see the silent failure was changed to throwing — is there a design document for this change? I want to understand the migration plan for callers.' Nits (#3) are fine to raise normally — everyone gets nits. The key: treat the code the same regardless of who wrote it"
+    weight: 0.35
+    description: "Dynamic navigation"
+  - type: llm_judge
+    criteria: "Guide for reviewing up is practical — principles: (1) Your job is to review the CODE, not the PERSON. Experience doesn't make code bug-free. (2) If you see a potential bug, say so — you were asked to review for a reason. (3) Frame uncertain observations as questions ('Could this cause X?'), but frame clear issues as statements ('This race condition will cause Y'). (4) Don't pre-apologize for having feedback — it undermines the review process. (5) Senior engineers generally WANT honest review — they chose you as a reviewer. (6) If dismissed unfairly, escalate to your manager — review quality is everyone's responsibility. Common mistake: being so deferential that you provide a useless rubber-stamp review. The worst outcome isn't disagreeing with a senior — it's a production bug you saw but didn't mention"
+    weight: 0.30
+    description: "Reviewing up guide"

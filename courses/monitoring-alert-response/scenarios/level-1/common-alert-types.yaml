@@ -1,0 +1,47 @@
+meta:
+  id: common-alert-types
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Understand common alert types — identify and categorize infrastructure, application, and business metric alerts to respond appropriately"
+  tags: [monitoring, alert-types, categorization, infrastructure, application, beginner]
+
+state: {}
+
+trigger: |
+  Your team uses three categories of alerts. A new on-call engineer
+  asks you to explain what each type means and how to respond to
+  them differently. Here are examples:
+
+  Infrastructure alerts:
+  - CPU > 90% on host X
+  - Disk usage > 85% on volume Y
+  - Network packet loss > 1% on interface Z
+
+  Application alerts:
+  - HTTP 5xx error rate > 2%
+  - Request latency p99 > 3 seconds
+  - Queue depth > 10,000 messages
+
+  Business metric alerts:
+  - Checkout completion rate < 95%
+  - Payment success rate < 99%
+  - User signup rate dropped 50% from baseline
+
+  Task: Explain each alert category to the new engineer. For each
+  category, describe: what it measures, why it matters, and how the
+  response approach differs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Infrastructure alerts are explained clearly with response guidance — infrastructure alerts explained: 'Infrastructure alerts monitor the health of the underlying compute, storage, and network resources that your applications run on. What they measure: CPU usage, memory usage, disk space, disk I/O, network throughput, and network errors. These are resource utilization metrics. Why they matter: when infrastructure resources are exhausted, everything running on that infrastructure degrades or fails. A disk filling up to 100% can crash a database. CPU at 100% means requests queue and time out. Network packet loss means data is not reaching its destination.' Response approach: 'Infrastructure alerts are often leading indicators — they warn you before the application fails. Key response principle: check whether the infrastructure issue is already causing application impact. CPU at 90% with normal latency is different from CPU at 90% with spiking latency. Typical mitigation: infrastructure alerts often have straightforward fixes — free up disk space, scale up instances, investigate network issues. Many infrastructure issues can be temporarily mitigated by adding resources (scaling up or out) while you investigate the root cause. Common trap: do not just fix the symptom (free disk space) without understanding why (is a log file growing unboundedly? Is the application storing temp files without cleanup?)'"
+    weight: 0.35
+    description: "Infrastructure alerts"
+  - type: llm_judge
+    criteria: "Application alerts are explained with emphasis on customer impact — application alerts explained: 'Application alerts monitor the behavior of your software as experienced by users. What they measure: error rates (percentage of requests returning errors), latency (how long requests take), throughput (requests per second), and queue depths (backlog of unprocessed work). Why they matter: these directly reflect what customers experience. A 5xx error rate of 2% means 2 out of every 100 customer requests are failing. A p99 latency of 3 seconds means the slowest 1% of requests take 3+ seconds.' Response approach: 'Application alerts require understanding both what is broken and why. Check: (1) Is the error rate affecting a specific endpoint or all endpoints? (2) Did a deployment happen recently? (3) Are downstream dependencies healthy? Application alerts are often the first sign of a real customer problem and usually warrant faster response than infrastructure alerts. Typical mitigation: if a recent deployment is suspected, rolling back is often the fastest mitigation. If a dependency is failing, check the dependency's health. Queue depth alerts: these indicate work is accumulating faster than it is being processed. Check if workers are running, if they are processing slowly, or if input volume has spiked. Common trap: do not assume every 5xx spike is a code bug — external dependencies, infrastructure issues, and traffic spikes all manifest as application errors'"
+    weight: 0.35
+    description: "Application alerts"
+  - type: llm_judge
+    criteria: "Business metric alerts are explained with their unique characteristics — business metric alerts explained: 'Business metric alerts monitor outcomes that directly represent business value. What they measure: conversion rates, payment success rates, signup rates, revenue per minute, and other business KPIs. These are typically derived from application metrics but represent the business impact rather than the technical symptom. Why they matter: a checkout completion rate drop from 99% to 95% means 4% of customers who wanted to buy something could not. This directly translates to lost revenue. Business metric alerts answer the question: is the business working?' Response approach: 'Business metric alerts are different from technical alerts in several important ways: (1) They may not have a clear technical cause. A 50% drop in signups could be a technical issue (signup form broken) OR a non-technical issue (marketing campaign ended, competitor launched a promotion, seasonal variation). (2) They require correlation with technical metrics. When you see a business metric alert, immediately check: are there any application or infrastructure alerts firing? If yes, the business metric alert is likely a symptom of the technical issue. If no technical alerts are firing, the cause may be external to your systems. (3) They often require cross-functional response. A payment success rate drop may need engineering (check for technical issues), payment operations (check payment processor status), and business team (check for fraud patterns) to investigate together. Common trap: do not dismiss business metric alerts as not my problem. Even if the root cause is a business decision or external factor, the on-call engineer should confirm there is no technical cause and document that finding'"
+    weight: 0.30
+    description: "Business metric alerts"

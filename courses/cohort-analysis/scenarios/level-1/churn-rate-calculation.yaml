@@ -1,0 +1,35 @@
+meta:
+  id: churn-rate-calculation
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Calculate churn rate from cohort data — understand the relationship between retention and churn, calculate churn rates at different time horizons, and interpret churn patterns"
+  tags: [churn-rate, retention, calculation, metrics, beginner]
+
+state: {}
+
+trigger: |
+  The CEO asks the analyst: "What's our churn rate?" The analyst
+  responds: "It depends — our monthly churn is 8%, our weekly churn
+  is 3%, and our annual churn is 65%. Which one do you want?"
+
+  The CEO is confused: "How can we have three different churn rates?
+  And 65% annual churn sounds terrible — is it?"
+
+  Task: Explain churn rate calculation from cohort data, the
+  relationship between different churn time horizons, and what
+  constitutes good or bad churn.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains churn rate calculation and its relationship to retention — calculation: 'Churn rate calculation: Churn rate = 1 - retention rate (for a given period). If 92% of users are retained from one month to the next: monthly churn rate = 1 - 0.92 = 8%. The three numbers are consistent: weekly churn: 3% of users churn each week. Monthly churn: not simply 3% × 4 = 12%. It compounds: monthly retention = (1 - 0.03)^4 = 0.97^4 = 0.885. Monthly churn = 1 - 0.885 = 11.5%. But the analyst said 8% — this means weekly churn is closer to 2%. Let us verify: (1 - 0.02)^4 = 0.98^4 = 0.922. 1 - 0.922 = 7.8% ≈ 8%. Annual churn from monthly churn: annual retention = (1 - 0.08)^12 = 0.92^12 = 0.367. Annual churn = 1 - 0.367 = 63.3% ≈ 65%. The three churn rates are all describing the same underlying behavior — users leave at a rate of approximately 2% per week. Over longer periods, the churn compounds, which is why annual churn (65%) looks much worse than monthly churn (8%). Key insight: small monthly churn compounds into large annual churn. 5% monthly churn = 46% annual churn. 8% monthly churn = 63% annual churn. 10% monthly churn = 72% annual churn. This is why even a 1-2 percentage point improvement in monthly churn has enormous long-term impact'"
+    weight: 0.35
+    description: "Calculation"
+  - type: llm_judge
+    criteria: "Response covers cohort-based vs aggregate churn — cohort: 'Cohort-based churn vs aggregate churn: Aggregate churn (the simple version): churned users this month / total users at start of month. January: 10,000 users, 800 churned → 8% churn. Problem: this mixes users of all ages (tenures). A user who signed up yesterday and a user who has been active for 2 years both count equally. But churn is not uniform across tenure: new users (month 1): 25% churn. Established users (month 6+): 3% churn. The aggregate 8% is a blend that obscures the real pattern. Cohort-based churn (the accurate version): calculate churn for each cohort separately. January 2025 cohort (1 year old): month-over-month churn = 3%. July 2025 cohort (6 months old): month-over-month churn = 5%. January 2026 cohort (1 month old): month-over-month churn = 25%. This reveals that churn is heavily front-loaded — most churn happens early in the user lifecycle. The aggregate 8% is misleading because it averages the high-churn new users with the low-churn established users. If the company acquires many new users in a given month, aggregate churn will spike (because new users churn more) even if nothing changed about the product. Cohort churn avoids this distortion — each cohort's churn is measured independently'"
+    weight: 0.35
+    description: "Cohort"
+  - type: llm_judge
+    criteria: "Response covers churn benchmarks and what constitutes good vs bad churn — benchmarks: 'Is 65% annual churn bad? Churn benchmarks by business type: B2B SaaS: monthly churn 2-5%. Annual churn 22-46%. Logo churn (customers lost) vs revenue churn (revenue lost — can be negative if upsells exceed churn). B2C subscription: monthly churn 5-10%. Annual churn 46-72%. Higher than B2B because consumers switch more easily. Consumer apps (non-subscription): monthly churn 10-20% is common. Most free apps have 70-80% annual churn. Marketplace/platform: varies widely. Depends on supply-demand dynamics. E-commerce: repurchase rate is more relevant than churn (users do not subscribe — they buy when needed). The CEO's company with 8% monthly / 65% annual churn: if B2B SaaS: this is bad. Best-in-class B2B SaaS has 2-3% monthly churn. If B2C subscription: this is average. Room for improvement but not alarming. If consumer app: this is actually decent. Most consumer apps are worse. Revenue churn vs logo churn: logo churn: 8% of customers leave each month. Revenue churn: may be different if churning customers are smaller or larger than average. If small customers churn more: revenue churn might be only 4% (better than logo churn). If large customers churn more: revenue churn might be 12% (worse than logo churn). Net revenue churn: includes expansion revenue from existing customers. If existing customers upgrade and expand by 5% monthly while 4% of revenue churns: net revenue churn = -1% (negative churn — revenue grows even without new customers). Negative net revenue churn is the gold standard — it means the installed base grows on its own'"
+    weight: 0.30
+    description: "Benchmarks"

@@ -1,0 +1,41 @@
+meta:
+  id: analytics-maturity-assessment
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Assess and advance analytics maturity — evaluate an organization's analytics capabilities across the maturity spectrum and design improvement roadmaps"
+  tags: [python, pandas, maturity, assessment, organizational, capability, master]
+
+state: {}
+
+trigger: |
+  A private equity firm has acquired a portfolio of 5 mid-market
+  companies ($20-80M revenue each). They want to assess the analytics
+  maturity of each company and build a plan to advance them.
+
+  Company profiles:
+  - Company A (manufacturing): uses Excel for everything, no database
+  - Company B (SaaS): has a data warehouse but only 1 analyst
+  - Company C (retail): has a BI tool but dashboards are unused
+  - Company D (healthcare): strong compliance but no self-service
+  - Company E (fintech): mature ML team but poor data governance
+
+  The PE firm asks: "Score each company, identify quick wins, and
+  build a 2-year roadmap to bring them all to at least Level 3
+  maturity."
+
+  Task: Conduct the maturity assessment and build the roadmap.
+
+assertions:
+  - type: llm_judge
+    criteria: "Assessment defines a clear maturity model and scores each company — maturity: 'Analytics maturity model: Level 1 — Ad Hoc: data lives in spreadsheets and email. Analysis is manual, one-off, and inconsistent. No single source of truth. Metrics are calculated differently by different people. Company A is here: Excel-based, no database, no automation. Level 2 — Defined: a database or warehouse exists. Basic reporting is automated. Some dashboards exist. Metrics are partially standardized. Companies B, C, and D are here (with different strengths). Level 3 — Managed: self-service analytics available. Data quality is monitored. Metrics are standardized and governed. Analysts spend more time on analysis than data wrangling. Level 4 — Optimized: predictive analytics and ML in production. Data products serve the business. Analytics informs all major decisions. Data literacy is widespread. Company E is partially here (ML capability but governance gaps pull it back). Level 5 — Leading: data-driven culture at all levels. Real-time analytics and automated decision-making. Continuous experimentation culture. Data is a strategic asset and competitive advantage. Scoring dimensions (1-5 each): Infrastructure: data storage, compute, pipelines. People: team size, skills, data literacy. Process: governance, documentation, quality. Tools: BI, analytics, ML platforms. Culture: data-driven decision-making, experimentation. Company scorecards: Company A: Infrastructure=1, People=1, Process=1, Tools=1, Culture=2. Overall=1.2. Company B: Infrastructure=3, People=1, Process=2, Tools=2, Culture=2. Overall=2.0. Company C: Infrastructure=3, People=2, Process=2, Tools=3, Culture=1. Overall=2.2. Company D: Infrastructure=2, People=2, Process=4, Tools=2, Culture=2. Overall=2.4. Company E: Infrastructure=4, People=4, Process=1, Tools=4, Culture=3. Overall=3.2. Analysis: Company E is the most mature overall but governance is a critical gap (regulatory risk in fintech). Company D has the strongest process/compliance but needs tools and self-service. Company A requires the most investment but also has the most upside'"
+    weight: 0.35
+    description: "Maturity model"
+  - type: llm_judge
+    criteria: "Plan identifies quick wins and builds company-specific roadmaps — roadmap: 'Quick wins by company (first 90 days): Company A (manufacturing, Level 1): quick win — migrate the 3 most-used Excel reports to Google Sheets with automated data pulls from their ERP system. This alone eliminates manual copy-paste errors and version confusion. Cost: $5K for Google Workspace setup. Impact: 10 hours per week saved across the finance team. Company B (SaaS, Level 2): quick win — hire a second analyst and deploy a BI tool (Metabase, free tier) on top of the existing warehouse. The single analyst is a bus factor of 1 and a bottleneck. Cost: $80K salary. Impact: 50% reduction in analytics request backlog. Company C (retail, Level 2): quick win — conduct dashboard adoption workshops. The BI tool exists but nobody uses it because no one was trained. Retrain with business-relevant dashboards (daily sales by store, inventory alerts). Cost: $0 (internal training). Impact: dashboard adoption from 10% to 60%. Company D (healthcare, Level 2): quick win — add a self-service analytics layer while maintaining compliance. Deploy a BI tool with row-level security that respects HIPAA. Compliance team pre-approves approved datasets. Cost: $30K for BI tool license. Impact: analysts can self-serve on 80% of queries without compliance review. Company E (fintech, Level 3): quick win — implement data governance immediately. Deploy Great Expectations for data quality testing. Document all ML model inputs. Assign data owners to every table. This is urgent because a regulatory audit could expose the gap. Cost: $50K for tooling. Impact: regulatory risk reduction. 2-year roadmap to Level 3 for all companies: Year 1 Q1: Company A gets a database (PostgreSQL). Company B hires analyst 2. Company C runs adoption training. Company D deploys BI tool. Company E deploys governance. Year 1 Q2: All companies standardize metric definitions. Shared analytics playbook across the portfolio. Year 1 Q3-Q4: Companies A and B deploy BI tools. Companies C and D build automated pipelines. Company E builds data catalog. Year 2: all companies at Level 3 minimum. Focus shifts to advanced analytics (ML, experimentation) for companies ready for Level 4'"
+    weight: 0.35
+    description: "Roadmap"
+  - type: llm_judge
+    criteria: "Response addresses portfolio-level synergies and PE value creation — synergies: 'Portfolio-level data strategy: Shared services opportunity: instead of each company building its own data infrastructure independently, the PE firm can create a shared data platform team. Shared platform team (5-7 people): provides a standardized data stack (warehouse, BI tool, pipeline tooling) to all 5 companies. Reduces cost by 40% compared to each company building independently. Ensures consistency — analysts can move between portfolio companies. Cost sharing: $600K annual platform team cost split across 5 companies = $120K each. Individual builds would cost $200-300K each. Technology standardization: all companies on the same warehouse (Snowflake or BigQuery). All companies on the same BI tool (Looker or Metabase). All companies on the same transformation layer (dbt). Standardization enables: cross-portfolio benchmarking, shared best practices, easier M&A integration for future acquisitions. Cross-portfolio analytics using pandas: import pandas as pd. company_metrics = {}. for company in [\"a\", \"b\", \"c\", \"d\", \"e\"]: df = pd.read_sql(f\"SELECT * FROM {company}.monthly_kpis\", engine). company_metrics[company] = df. portfolio = pd.concat(company_metrics.values(), keys=company_metrics.keys()). portfolio_revenue = portfolio.groupby(level=0)[\"revenue\"].sum(). portfolio_growth = portfolio.groupby(level=0)[\"revenue\"].apply(lambda x: x.pct_change(12).iloc[-1]). PE value creation through data: data maturity directly correlates with valuation multiples. A SaaS company with Level 1 analytics trades at 5-8x revenue. The same company at Level 4 (with ML-driven retention, predictive LTV, automated reporting) trades at 10-15x revenue. Improving analytics maturity from Level 1 to Level 3 across the portfolio could increase aggregate valuation by $50-100M. This makes the shared data platform (costing $3M over 2 years) one of the highest-ROI investments the PE firm can make. Reporting to the PE firm: monthly portfolio analytics dashboard showing revenue trends, growth rates, and analytics maturity scores. Quarterly maturity reassessment to track progress against the roadmap'"
+    weight: 0.30
+    description: "Synergies"

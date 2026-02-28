@@ -1,0 +1,43 @@
+meta:
+  id: success-metrics
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Define success metrics — specify how to measure whether a proposed solution actually solves the problem it was designed to address"
+  tags: [RFC, metrics, success-criteria, measurement, KPIs, beginner]
+
+state: {}
+
+trigger: |
+  You're writing the success metrics section of an RFC. The proposal:
+  introduce a caching layer (Redis) between your API and database to
+  improve response times and reduce database load.
+
+  Current state:
+  - API p50 latency: 200ms, p99: 1.2 seconds
+  - Database CPU: 85% average during peak hours
+  - 50,000 API requests per minute at peak
+  - Database connection pool frequently exhausted (5-10 times/day)
+
+  Your first draft says: "Success: the API is faster and the database
+  is less loaded." This doesn't work — how fast? How much less? By when?
+  How do you know it actually worked?
+
+  Task: Write a success metrics section with specific, measurable
+  criteria. Include leading indicators (early signals), lagging
+  indicators (final outcomes), and how you'll measure them. Then write
+  a guide on defining success metrics for technical proposals.
+
+assertions:
+  - type: llm_judge
+    criteria: "Success metrics are specific and measurable — primary metrics with targets: (1) API latency: 'p50 latency below 50ms for cached endpoints (75% reduction). p99 latency below 300ms (75% reduction). Measured via existing APM tooling (Datadog/New Relic).' (2) Database load: 'Database CPU below 50% during peak hours (40% reduction). Zero connection pool exhaustion events per day. Measured via CloudWatch/database monitoring.' (3) Cache effectiveness: 'Cache hit rate above 85% within 2 weeks of deployment. Cache miss latency no worse than current latency (200ms p50). Measured via Redis metrics and custom instrumentation.' (4) Reliability: 'No increase in error rate (currently 0.1%). Graceful degradation to direct database queries if Redis is unavailable.' Each metric has a specific number, a measurement method, and a timeline for when the target should be reached"
+    weight: 0.35
+    description: "Specific metrics"
+  - type: llm_judge
+    criteria: "Leading and lagging indicators are distinguished — leading indicators (visible within days): cache hit rate trending upward, database connection pool utilization declining, Redis memory usage stable and within capacity. These tell you early if the solution is working. Lagging indicators (visible within weeks): sustained p99 latency improvement, database CPU reduction during peak hours, reduction in customer-reported latency complaints, cost savings from potential database downscaling. Timeline: 'Week 1: validate cache hit rate above 80% and no error rate increase. Week 2: confirm sustained latency improvement across all endpoints. Month 1: measure database CPU trend and evaluate downscaling opportunity. Month 3: full cost-benefit analysis including Redis infrastructure cost vs database savings.' Failure criteria: 'If cache hit rate is below 60% after 2 weeks, investigate cache key strategy. If p99 latency does not improve by at least 50%, the caching layer may not address the root cause'"
+    weight: 0.35
+    description: "Leading and lagging indicators"
+  - type: llm_judge
+    criteria: "Metrics guide provides reusable principles — principles: (1) Every metric needs a baseline: you can't measure improvement without knowing where you started. Capture current state before any changes. (2) Metrics should be SMART: Specific (not 'faster'), Measurable (has a number), Achievable (realistic target), Relevant (actually measures the problem), Time-bound (by when). (3) Include counter-metrics: if you optimize latency, also track error rate — fast but wrong is worse than slow but correct. (4) Distinguish vanity metrics from actionable metrics: 'cache hit rate' is actionable (you can improve key strategy), 'total requests served' is vanity (doesn't tell you if the solution works). (5) Define failure criteria: what metric values would cause you to reconsider the approach? This makes the RFC intellectually honest. (6) Automate measurement: if you can't measure it automatically, you won't measure it consistently. Set up dashboards before launch, not after. Anti-patterns: no baseline measurements, metrics that only show success (confirmation bias), metrics that require manual collection, and metrics disconnected from the original problem statement"
+    weight: 0.30
+    description: "Metrics guide"

@@ -1,0 +1,41 @@
+meta:
+  id: infrastructure-testing
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Test Terraform infrastructure — implement unit tests with terraform test, integration tests with Terratest, and policy testing with checkov and tfsec"
+  tags: [Terraform, testing, Terratest, checkov, tfsec, terraform-test, expert]
+
+state: {}
+
+trigger: |
+  Your Terraform modules have no tests. Last month, three incidents
+  were caused by module changes that broke consumers:
+  - VPC module changed output name (vpc_id → id), breaking 5 services
+  - RDS module removed a variable, breaking all callers
+  - Security group module allowed 0.0.0.0/0 ingress by default
+
+  Your testing strategy needs to cover:
+  1. Module contract validation (inputs/outputs don't break)
+  2. Security compliance (no open security groups, encryption enabled)
+  3. Integration testing (resources actually work in AWS)
+  4. Cost validation (changes don't blow budget)
+
+  Task: Design the infrastructure testing strategy covering: terraform
+  test (native, Terraform 1.6+), Terratest (Go-based integration),
+  policy scanning (checkov, tfsec), testing pyramid for infrastructure,
+  and CI integration for automated testing.
+
+assertions:
+  - type: llm_judge
+    criteria: "terraform test (native testing) is explained — terraform test runs .tftest.hcl files. command = plan: validates without creating resources (fast, free). command = apply: creates real resources (slow, costs money, thorough). Assert conditions: assert { condition = output.vpc_id != '', error_message = 'VPC ID must not be empty' }. Variables block for test inputs. Run blocks chain: create VPC → verify VPC → create subnet using VPC. Module contract testing: verify required outputs exist and have correct types. Run with: terraform test. Best for: unit testing modules without external dependencies"
+    weight: 0.35
+    description: "terraform test"
+  - type: llm_judge
+    criteria: "Terratest and policy scanning are covered — Terratest (Go): creates real infrastructure, validates properties, destroys after test. Pattern: InitAndApply → verify outputs → verify cloud resources (SDK calls) → Destroy. Example: deploy VPC, verify CIDR block matches, verify subnets are in correct AZs, destroy. Best for: integration testing that verifies real cloud behavior. Policy scanning: checkov scans for security misconfigurations (CIS benchmarks, HIPAA, PCI-DSS). tfsec: Terraform-specific security scanner. OPA/Conftest: custom policy validation. Run in CI before plan to catch issues early"
+    weight: 0.35
+    description: "Terratest and policy"
+  - type: llm_judge
+    criteria: "Testing pyramid and CI integration are practical — testing pyramid for infrastructure: base = static analysis (fmt, validate, tfsec, checkov — fast, run on every PR), middle = plan-based tests (terraform test with command = plan — moderate speed, no cost), top = integration tests (Terratest/terraform test with command = apply — slow, costly, run nightly or on release). CI integration: every PR gets static analysis + plan tests. Nightly: full integration tests against ephemeral AWS account. Release: full integration suite. Cost management: use smallest instance types in tests, set up auto-cleanup for failed test runs, dedicated test AWS account with budget alerts"
+    weight: 0.30
+    description: "Pyramid and CI"

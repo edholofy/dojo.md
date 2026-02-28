@@ -1,0 +1,44 @@
+meta:
+  id: platform-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write platform RFCs — propose internal platforms and developer tools that serve multiple teams with different needs"
+  tags: [RFC, platform, developer-tools, internal-tooling, self-service, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to build an internal developer platform. The
+  problem: your 8 engineering teams each handle their own:
+  - CI/CD pipelines (3 different CI systems in use)
+  - Infrastructure provisioning (mix of Terraform, CloudFormation, manual)
+  - Monitoring and alerting (Datadog, Prometheus, CloudWatch)
+  - Secret management (env files, Vault, AWS Secrets Manager)
+  - Database provisioning (manual tickets to DBA team, 2-week wait)
+
+  Result: new service deployment takes 3-4 weeks instead of 1 day.
+  Teams spend 30% of time on infrastructure instead of product work.
+  Inconsistent practices cause incidents.
+
+  But you're also the Platform Team (3 engineers) proposing to serve
+  8 product teams (45 engineers). Your consumers are internal, opinionated,
+  and can route around you if your platform doesn't meet their needs.
+
+  Task: Write an RFC for the developer platform that balances
+  standardization with team autonomy, defines the platform's scope,
+  and shows how 3 engineers can serve 45.
+
+assertions:
+  - type: llm_judge
+    criteria: "Platform scope is realistic for a 3-person team — scope explicitly bounded: 'The platform provides golden paths for common operations, not a mandatory framework for everything.' What the platform provides: (1) Service scaffolding: 'Create a new service with CI/CD, monitoring, and database in 1 command (service-create CLI).' (2) Standardized CI/CD: 'Shared pipeline templates for common patterns (Node.js API, React frontend, Python worker). Teams use templates with minimal configuration.' (3) Infrastructure self-service: 'Terraform modules for databases, caches, queues. Teams provision via PR to infra repo, auto-approved if within guardrails.' (4) Unified observability: 'Standard logging format, pre-configured dashboards, common alerting rules.' What the platform does NOT provide: 'Custom CI steps for team-specific needs (teams extend templates). Application-level monitoring (teams own their business metrics). Service-to-service communication patterns (architectural decision, separate RFC).' Prioritization: 'Phase 1 (Months 1-2): service scaffolding + CI/CD templates (highest impact, most time wasted currently). Phase 2 (Months 3-4): infrastructure self-service. Phase 3 (Months 5-6): unified observability.'"
+    weight: 0.35
+    description: "Realistic scope"
+  - type: llm_judge
+    criteria: "Standardization vs autonomy balance is thoughtfully addressed — framework: 'Standardize the boring stuff, leave the interesting stuff to teams.' Mandatory standards (non-negotiable): logging format (structured JSON), health check endpoint (/healthz), deployment through CI (no manual deploys), secrets via centralized management (not env files). Golden paths (recommended, opt-out with justification): CI/CD templates, infrastructure modules, monitoring dashboards. Teams can diverge but must document why and accept maintenance burden. Team autonomy preserved: 'Teams choose their language, framework, database. The platform works with any Docker-containerized service. Templates exist for common patterns but teams can write custom pipelines.' Escape hatches: 'Every platform capability has a documented escape hatch. If the CI/CD template doesn't support a team's needs, they can extend it or write their own. If the infrastructure module is too restrictive, they can fork it.' Feedback loop: 'Monthly platform office hours. Teams can propose platform features via lightweight RFC. Usage metrics show which platform features are adopted and which are bypassed (bypassed features need improvement or removal).'"
+    weight: 0.35
+    description: "Standardization balance"
+  - type: llm_judge
+    criteria: "Adoption strategy treats internal consumers as real customers — internal product mindset: 'Product teams are our customers. They can route around us. If our platform is harder to use than doing it themselves, they will (and should). Our success metric is voluntary adoption, not mandated compliance.' Adoption strategy: 'Start with 2 early-adopter teams for Phase 1. These teams provide feedback and help shape the platform. Their success stories become the pitch for other teams.' Migration: 'No forced migration. Teams migrate on their schedule. Platform team offers migration assistance (pair programming, not just documentation). Target: 50% voluntary adoption in 6 months, 80% in 12 months.' Developer experience as priority: 'Platform capabilities are CLI-first with clear error messages. Documentation includes complete examples, not just API references. Every operation that takes more than 5 minutes is a platform bug.' Support model: 'Slack channel with 4-hour response SLA during business hours. Runbook library for common issues. Escalation path for blocking issues.' Success metrics: 'Time from code merge to production (target: under 1 hour). Developer satisfaction survey (quarterly). Percentage of teams using platform golden paths. Mean time to provision new service (target: under 1 day).'"
+    weight: 0.30
+    description: "Adoption strategy"

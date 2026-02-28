@@ -1,0 +1,45 @@
+meta:
+  id: slo-error-budget
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Assess SLO and error budget impact — calculate how an incident affects service level objectives and error budget consumption"
+  tags: [postmortem, SLO, error-budget, SLA, availability, intermediate]
+
+state: {}
+
+trigger: |
+  Your team operates an API service with the following SLOs:
+  - Availability: 99.9% monthly (error budget: 43.8 minutes/month)
+  - Latency: p99 under 500ms
+  - Error rate: less than 0.1% of requests
+
+  This month, you've had two incidents:
+  - Incident 1 (week 1): 15-minute partial outage, 30% of requests
+    failed
+  - Incident 2 (week 3): 45-minute complete outage, 100% of requests
+    failed
+
+  It's now week 3 and the product team wants to deploy a major new
+  feature this week. The engineering manager says "we've burned
+  through our error budget" but the product manager says "I don't
+  understand what that means or why it affects our release."
+
+  Task: Calculate the error budget impact of both incidents. Explain
+  the current error budget status. Write the SLO impact section for
+  both postmortems. Then write a guide explaining error budgets and
+  how to use them in postmortem context.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error budget calculations are correct and clear — monthly error budget: '99.9% availability over 30 days = 43,200 minutes. Error budget = 0.1% = 43.2 minutes of allowed downtime.' Incident 1 consumption: '15 minutes × 30% of requests affected = 4.5 equivalent minutes of total downtime consumed. Error budget remaining after Incident 1: 43.2 - 4.5 = 38.7 minutes (89.6% remaining).' Incident 2 consumption: '45 minutes × 100% of requests affected = 45 equivalent minutes of total downtime consumed. Error budget remaining after Incident 2: 38.7 - 45 = -6.3 minutes. Error budget EXCEEDED by 6.3 minutes.' Current status: 'The service is at 99.84% availability for the month, below the 99.9% SLO. Error budget is exhausted — we are in SLO violation.' Implication for feature deployment: 'With the error budget exhausted, our SLO policy recommends freezing non-essential changes to reduce risk of further incidents. The feature deployment adds risk (any deployment can cause incidents) when we have zero budget for additional downtime'"
+    weight: 0.35
+    description: "Correct calculations"
+  - type: llm_judge
+    criteria: "SLO impact section is written for both postmortems — Incident 1 postmortem SLO section: 'This incident consumed 4.5 minutes (10.4%) of our monthly error budget. After this incident, 38.7 minutes remained. The incident did not breach our SLO but consumed a significant portion of budget. If similar incidents recur, we risk SLO breach.' Incident 2 postmortem SLO section: 'This incident consumed 45 minutes of error budget, exceeding the remaining 38.7 minutes by 6.3 minutes. This incident alone would have consumed our entire monthly error budget (45 minutes > 43.2 minutes budget). Combined with Incident 1, we are at 114.6% budget consumption — in SLO violation. Per our error budget policy: feature deployments are paused until the error budget recovers (next calendar month) or until remediation actions from both postmortems are implemented and validated. Exception: security patches and critical bug fixes are still permitted.' Historical context: 'This is the first SLO violation in 6 months. Previous months averaged 20-30% error budget consumption'"
+    weight: 0.35
+    description: "SLO impact sections"
+  - type: llm_judge
+    criteria: "Error budget guide explains the concept for non-SRE audiences — error budget explained: 'An error budget is the amount of unreliability your service is allowed before it falls below its reliability commitment. If your SLO is 99.9%, your error budget is 0.1% — about 43 minutes per month. Think of it like a spending budget: you have 43 minutes to spend on downtime. Some of that budget goes to planned maintenance, some to unexpected incidents.' Why error budgets matter for product teams: 'Error budgets create a shared language between reliability and feature velocity. When budget is healthy, ship features fast — you can afford some risk. When budget is low, prioritize stability — another incident would breach customer commitments.' How to use in postmortems: 'Every postmortem should include error budget impact. This connects individual incidents to the service's overall reliability posture.' Error budget policy: 'When error budget is exhausted: (1) freeze non-essential deployments, (2) prioritize reliability action items, (3) resume normal velocity when budget recovers. This is not punishment — it is risk management. Deploying features when the error budget is exhausted means any new incident puts us further in debt with customers.' Common misconception: 'Error budget is not a target to hit. Being at 0% remaining doesn't mean you're doing well — it means you had exactly enough reliability. Healthy services typically use 20-50% of their error budget'"
+    weight: 0.30
+    description: "Error budget guide"

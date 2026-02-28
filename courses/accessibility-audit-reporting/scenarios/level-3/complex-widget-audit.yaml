@@ -1,0 +1,50 @@
+meta:
+  id: complex-widget-audit
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Complex widget audit — evaluate custom date pickers, carousels, tree views, and autocomplete components against ARIA Authoring Practices"
+  tags: [widgets, date-picker, carousel, tree-view, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor is testing a web application with
+  several complex custom widgets:
+
+  1. A date picker that opens a calendar grid — no
+     keyboard navigation within the calendar, no
+     screen reader announcements of selected date
+  2. A carousel/slideshow that auto-rotates with no
+     pause control, slides announced only as "slide 1
+     of 5" with no content description
+  3. A tree view (file/folder navigation) that only
+     works with mouse clicks — no keyboard expand/
+     collapse or navigation
+  4. An autocomplete search with dropdown suggestions
+     that aren't announced to screen readers
+  5. A multi-select tag input where selected tags
+     can't be removed with keyboard
+
+  The auditor asks: "These widgets are all custom-built.
+  I know they need ARIA but what's the correct ARIA
+  pattern for each one? Where do I find the expected
+  keyboard behavior?"
+
+  Task: Audit each complex widget against ARIA
+  Authoring Practices and write detailed findings
+  with correct patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits date picker and carousel against ARIA patterns — Date picker (ARIA pattern: Dialog + Grid, Expected keyboard: Arrow keys navigate calendar grid, Enter selects date, Escape closes picker and returns focus to input, Page Up/Down change month, Home/End move to first/last day of month, current date and selected date indicated with aria-selected and aria-current=date, screen reader should announce: 'March 15, 2026, Saturday' — Findings: no keyboard navigation = WCAG 2.1.1 Level A Critical, no screen reader announcements = WCAG 4.1.2 Level A Critical, Fix: implement ARIA grid pattern per APG Date Picker guidance), Carousel (ARIA pattern: Carousel with role=group for slides, Expected: auto-rotation must have visible pause button per WCAG 2.2.2, each slide container must have aria-roledescription=slide and accessible name describing content not just 'slide 1 of 5' — should include slide content description, navigation controls keyboard-operable, current slide indicated with aria-current=true, Fix: add pause control, announce slide content, implement previous/next and dot indicator keyboard navigation)"
+    weight: 0.35
+    description: "DatePickerCarousel"
+  - type: llm_judge
+    criteria: "Response audits tree view, autocomplete, and tag input — Tree view (ARIA pattern: role=tree on container, role=treeitem on each item, aria-expanded=true/false on expandable items, Expected keyboard: Up/Down arrows move between visible items, Right arrow expands closed item or moves to first child, Left arrow collapses open item or moves to parent, Home moves to first item, End moves to last visible item, Enter activates item — Findings: mouse-only = WCAG 2.1.1 Level A Critical, no ARIA roles = WCAG 4.1.2 Level A Critical), Autocomplete (ARIA pattern: Combobox, role=combobox on input, aria-expanded, aria-autocomplete=list, aria-controls pointing to listbox, role=listbox with role=option children, Expected keyboard: type filters suggestions, Down arrow moves to suggestion list, Enter selects highlighted suggestion, Escape closes suggestions — Finding: suggestions not announced = WCAG 4.1.2 Level A Major), Tag input (selected tags need role=group with remove buttons that have aria-label='Remove [tag name]', keyboard: Tab to tags, Enter/Delete to remove — Finding: can't remove with keyboard = WCAG 2.1.1 Level A Major)"
+    weight: 0.35
+    description: "TreeAutocompleteTag"
+  - type: llm_judge
+    criteria: "Response references ARIA Authoring Practices Guide (APG) — for each widget, references the specific APG pattern with expected keyboard interactions (APG: https://www.w3.org/WAI/ARIA/apg/ — the definitive resource for how each widget pattern should work), explains the auditor's approach (for custom widgets: Step 1 — identify which APG pattern the widget matches, Step 2 — compare actual keyboard behavior to APG expected behavior, Step 3 — compare actual ARIA attributes to APG required attributes, Step 4 — test with screen reader to verify announcements match APG expectations), and notes common pitfalls (partially implemented ARIA: adding roles without keyboard behavior is worse than no ARIA because it creates false expectations, mixing patterns: using menu role on a component that should be listbox causes wrong keyboard behavior expectations, over-engineering: sometimes a simple native HTML element like select is more accessible than a complex ARIA combobox — recommend native elements when they meet the design requirements)"
+    weight: 0.30
+    description: "APGReference"

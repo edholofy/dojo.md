@@ -1,0 +1,63 @@
+meta:
+  id: fix-bad-job-description
+  level: 1
+  course: job-description-writing
+  type: output
+  description: "Fix a bad job description — identify and fix problems in a poorly written job description"
+  tags: [fixing, rewriting, common-mistakes, beginner]
+
+state: {}
+
+trigger: |
+  You're an HR specialist at a tech company. A hiring manager
+  just submitted this job description for your review. It has
+  multiple problems. Your job is to identify the issues and
+  rewrite it.
+
+  The submitted JD:
+
+  ---
+  ROCKSTAR FULL-STACK DEVELOPER WANTED!!!
+
+  We need a coding ninja to join our fast-paced, aggressive
+  team! If you can't handle the heat, don't apply.
+
+  Requirements:
+  - Bachelor's degree in Computer Science from a top-tier
+    university (MIT, Stanford, CMU preferred)
+  - 10+ years of experience with React (must have used it
+    since its initial release)
+  - Expert in ALL of the following: React, Angular, Vue,
+    Svelte, Next.js, Node.js, Python, Java, Go, Rust, C++,
+    Ruby, PHP, Swift, Kotlin
+  - Must be available 24/7 for production issues
+  - Must be willing to work 60+ hour weeks during crunch time
+  - Young, energetic, and hungry
+  - Must live within 30 minutes of our Palo Alto office
+  - 5+ years managing teams of 20+ engineers
+
+  Nice to have:
+  - MBA
+  - Published author
+  - Open source celebrity
+
+  Salary: Competitive
+  ---
+
+  Task: Identify every problem in this JD (legal, practical,
+  and strategic), explain why each is problematic, and write
+  a corrected version of the full job description.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies all major problems — flags: 'rockstar/ninja' as exclusionary jargon, 'aggressive' as potentially hostile, 'top-tier university' as elitist and potentially discriminatory, '10+ years of React' as impossible (React released 2013), requiring expertise in 15+ languages as unrealistic, '24/7 availability' as potential labor law issue, '60+ hour weeks' as concerning, 'young' as illegal age discrimination, location restriction without justification, management experience mismatched with IC role title, 'Competitive' salary as opaque, missing benefits/EEO statement; each issue is explained with the specific risk (legal, practical, or strategic)."
+    weight: 0.35
+    description: "ProblemIdentification"
+  - type: llm_judge
+    criteria: "Response rewrites the JD correctly — transforms the problematic JD into a professional, inclusive, legally compliant job description; uses proper job title (not 'rockstar'), realistic experience requirements, focused tech stack, appropriate work expectations, inclusive language (no age references), salary transparency, EEO statement; the rewrite maintains the underlying need (hire a strong full-stack developer) while fixing every identified problem."
+    weight: 0.35
+    description: "CorrectedJD"
+  - type: llm_judge
+    criteria: "Response explains the 'why' behind each fix — doesn't just flag problems but teaches why they matter: 'young' is age discrimination (ADEA violation), unrealistic requirements reduce applicant pool by 90%, 'rockstar' culture signals discourage underrepresented groups, hidden salary wastes everyone's time, '24/7 availability' creates labor compliance risk; the explanations are educational and would help the hiring manager write better JDs in the future."
+    weight: 0.30
+    description: "EducationalExplanation"

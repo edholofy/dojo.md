@@ -1,0 +1,44 @@
+meta:
+  id: data-quality-for-ml-systems
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Data quality for ML systems — design data validation and cleaning specifically for production ML pipelines with drift detection, training-serving skew, and feature store quality"
+  tags: [ML-systems, drift-detection, feature-store, training-serving-skew, expert]
+
+state: {}
+
+trigger: |
+  A ML platform engineer says: "Our ML models degrade in production and
+  we think data quality is the root cause. Specific problems:
+
+  1. Feature drift: the distribution of input features changes over time
+     but our model was trained on historical data
+  2. Training-serving skew: features computed differently in training
+     (batch) vs serving (real-time)
+  3. Label quality: our training labels have ~5% error rate from human
+     annotators
+  4. Feature store staleness: some features are updated daily but served
+     from a cache that might be hours old
+  5. Upstream data changes: a source system changed their data format
+     and our feature pipeline silently produced wrong values
+
+  How do I build data quality guardrails specifically for our ML system?"
+
+  Task: Design data quality guardrails for a production ML system
+  covering feature drift detection, training-serving consistency,
+  label quality, and upstream dependency monitoring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses feature drift detection — monitoring feature distributions in production against training distributions using statistical tests (KS test, PSI — Population Stability Index, Jensen-Shannon divergence), setting drift thresholds per feature (more sensitive for high-importance features), detecting both gradual drift (slow distribution change) and sudden shifts (abrupt change from upstream data issue), and distinguishing genuine distribution change (model may need retraining) from data quality issues (upstream bug)"
+    weight: 0.35
+    description: "DriftDetection"
+  - type: llm_judge
+    criteria: "Response addresses training-serving skew and feature store quality — identifying skew sources (different code paths for batch feature computation vs real-time, different data sources, different timestamps), validation approaches (compute features both ways on a sample and compare), feature store freshness monitoring (alerting when cached features exceed acceptable staleness for each feature), and integration testing that verifies the serving path produces the same feature values as the training path for the same input"
+    weight: 0.35
+    description: "SkewAndFeatureStore"
+  - type: llm_judge
+    criteria: "Response covers label quality and upstream monitoring — measuring label quality through inter-annotator agreement, consensus scoring, and systematic auditing of a random sample, handling noisy labels in training (label smoothing, confident learning to identify likely mislabeled examples), monitoring upstream data dependencies (data contracts with source systems, schema validation, distribution monitoring on inputs), and alerting when upstream changes could affect model performance. Includes the concept of ML-specific data tests that run before model retraining"
+    weight: 0.30
+    description: "LabelAndUpstream"

@@ -1,0 +1,56 @@
+meta:
+  id: intermediate-postmortem-shift
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Intermediate postmortem shift simulation — write a complete postmortem for a complex multi-system incident with business impact quantification and multi-audience communication"
+  tags: [postmortem, shift-simulation, multi-system, business-impact, intermediate]
+
+state: {}
+
+trigger: |
+  A complex incident requires a thorough postmortem. Here's what
+  happened:
+
+  Your e-commerce platform's Black Friday sale started at midnight.
+  At 12:15 AM, the promotional pricing service started returning
+  incorrect prices — showing full price instead of sale prices for
+  30% of products. The issue lasted 2 hours and 45 minutes.
+
+  What happened:
+  - The pricing cache was pre-warmed with sale prices at 11:55 PM
+  - At 12:10 AM, an auto-scaling event spun up 5 new pricing service
+    instances
+  - New instances loaded pricing data from the database, which had
+    not yet been updated with sale prices (cron job scheduled for
+    12:15 AM ran late due to database load)
+  - The 5 new instances served full-price data while the 3 original
+    instances served correct sale prices
+  - Load balancer distributed requests randomly — ~60% of requests
+    hit correct instances, ~40% hit incorrect ones
+  - Customer support received 500+ complaints in 30 minutes
+  - Engineers identified the issue at 1:00 AM
+  - Fix: manually triggered cache refresh on new instances at 2:00 AM
+  - Full recovery at 3:00 AM after cache propagation
+
+  Impact: ~15,000 customers saw wrong prices. 2,000 abandoned carts.
+  500 customers purchased at full price (need refunds). Estimated
+  $200K in lost sales plus $50K in required refunds.
+
+  Task: Write the complete postmortem including all sections. Include
+  business impact quantification, SLO assessment, root cause chain,
+  and communications for engineering, executive, and customer audiences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root cause chain identifies all contributing factors — primary root cause: 'New pricing service instances loaded stale data because the database price update (cron job) was scheduled after auto-scaling could add instances. The cache pre-warming strategy assumed a fixed number of instances and did not account for dynamic scaling.' Contributing factors: (1) 'Auto-scaling configuration did not trigger cache pre-warming for new instances. New instances bootstrapped from database, not from cache.' (2) 'Price update cron job scheduled for 12:15 AM ran late due to database load from Black Friday traffic. The 5-minute buffer between pre-warming (11:55 PM) and cron job (12:15 AM) was insufficient.' (3) 'No validation that all instances served consistent prices. Monitoring checked response codes but not response content.' (4) 'Load balancer distributed requests randomly — no session affinity meant the same customer could see different prices on refresh.' (5) 'Manual cache refresh required — no automated mechanism to propagate cache updates to new instances.' Failure mode: 'This is a split-brain pricing failure caused by inconsistent data across instances during a scaling event'"
+    weight: 0.35
+    description: "Root cause chain"
+  - type: llm_judge
+    criteria: "Business impact and executive communication are comprehensive — business impact: 'Revenue: $200K in estimated lost sales from abandoned carts (2,000 carts × $100 average value). Refunds: $50K owed to 500 customers who purchased at full price. Customer trust: 15,000 customers saw inconsistent pricing during the highest-traffic event of the year. Brand impact: Black Friday pricing errors create social media amplification. SLA: no formal SLA breach but significant customer expectation violation.' Executive summary: 'During our Black Friday launch, a pricing inconsistency caused 30% of products to show full prices instead of sale prices for 2 hours 45 minutes. Root cause: auto-scaling added service instances that loaded stale pricing data. Impact: ~$250K in lost sales and refunds. 15,000 affected customers. Immediate actions: all affected customers who purchased at full price will receive automatic refunds plus a 10% discount on their next order. Prevention: implementing cache synchronization that ensures all service instances serve consistent prices, regardless of when they start.' Customer communication: 'We identified that some customers saw incorrect pricing during our Black Friday sale. If you purchased an item at full price that should have been on sale, we are automatically refunding the difference to your original payment method within 3-5 business days, plus a 10% discount on your next purchase as an apology'"
+    weight: 0.35
+    description: "Impact and communication"
+  - type: llm_judge
+    criteria: "Action items prevent the class of incidents, not just this instance — prevention: 'New pricing service instances must receive cache state from existing instances before accepting traffic (warm-up period). Implementation: new instances join the load balancer only after cache sync is verified. Owner: Backend team. Due: 2 weeks.' Detection: 'Price consistency monitoring: compare prices served by each instance for the same product. Alert if instances disagree. This catches split-brain pricing regardless of cause. Owner: SRE team. Due: 1 week.' Mitigation: 'Automated cache propagation mechanism triggered when new instances start OR when pricing data changes. Eliminates reliance on manual cache refresh. Owner: Backend team. Due: 3 weeks.' Process: 'Black Friday readiness checklist: includes scaling test with cache consistency verification. Run the full scaling scenario in staging 1 week before the event. Owner: Engineering manager. Due: before next major event.' Customer recovery: 'Automatic refund processing for all 500 affected customers. Proactive email with apology and 10% discount. Owner: Customer operations. Due: completed within 48 hours.' SLO review: 'Add price consistency SLI to service SLOs. Current SLOs only track availability and latency — serving wrong data at 200 OK is not currently measurable'"
+    weight: 0.30
+    description: "Comprehensive action items"

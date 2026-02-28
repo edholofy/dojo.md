@@ -1,0 +1,44 @@
+meta:
+  id: intermediate-cohort-shift
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Intermediate cohort shift — handle complex cohort analysis requests requiring segmentation, LTV calculation, survival analysis, and data validation in a single day"
+  tags: [shift-simulation, intermediate, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Four cohort analysis requests arrive on the same day:
+
+  Request 1 (VP of Product): "Our overall month-1 retention has been
+  flat at 32% for 6 months but I KNOW we've been making improvements.
+  What's going on? Break it down."
+
+  Request 2 (Finance): "We need cohort-based LTV for the last 4
+  quarterly cohorts to update our financial model. The board wants
+  6-month and projected 12-month LTV by cohort."
+
+  Request 3 (Data Science Lead): "Some of our cohort numbers look
+  fishy — month-3 retention jumped 8 points last month. Before we
+  present to the exec team, can you validate the data?"
+
+  Request 4 (Lifecycle Marketing): "We reactivated 500 users last
+  month with a win-back campaign. Did it work? Should we keep
+  investing in win-back?"
+
+  Task: Handle all four requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with Simpson's paradox and segmentation and Request 2 with cohort-based LTV — analysis: 'Request 1 — The flat retention paradox: the VP is right — retention HAS improved within segments. The flat overall number is Simpson's paradox. Breaking down by acquisition channel: organic users: month-1 retention improved from 42% to 50% over 6 months (+8pp). Paid search: improved from 30% to 38% (+8pp). Paid social: stable at 18%. But acquisition mix shifted: 6 months ago: 50% organic, 30% paid search, 20% paid social. Now: 30% organic, 25% paid search, 45% paid social. Paid social (with 18% retention) grew from 20% to 45% of signups, dragging down the blended rate even though every channel improved. Proof: 6 months ago blended = 0.50×42% + 0.30×30% + 0.20×18% = 33.6%. Now blended = 0.30×50% + 0.25×38% + 0.45×18% = 32.6%. Every segment improved but the mix shift made overall retention flat. Recommendation: report retention by channel, not just blended. Reduce paid social or improve its retention before scaling. Request 2 — Cohort-based LTV for the board: Q1 cohort (2,000 signups): month 3 cumulative: $42/user. Month 6 cumulative: $78/user. Projected month 12: $78 × 1.55 = $121 (using the 1.55x ratio from mature cohorts). Q2 cohort (2,500 signups): month 3: $38/user. Month 6: $68/user. Projected month 12: $68 × 1.55 = $105. Q3 cohort (3,000 signups): month 3: $35/user. Month 6: $60/user. Projected month 12: $93. Q4 cohort (3,500 signups): month 3: $32/user. Month 6 not yet available. Projected month 12: extrapolated from month-3 using Q1-Q3 ratio (month-12/month-3 ≈ 2.9x) = $93. Trend: per-user LTV is declining (Q1 $121 → Q4 projected $93) even as total cohort sizes grow. This is the classic growth scaling problem — more users of lower quality. The board should understand: total revenue is growing (3,500 × $93 > 2,000 × $121) but unit economics are weakening'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with data validation — validation: 'Request 3 — Data validation for the suspicious retention jump: the 8pp month-3 retention jump needs investigation before presenting to executives. Validation checklist applied: 1. Tracking change check: review the tracking changelog — was there an instrumentation update in the last month? Finding: a new event tracking SDK was deployed 3 weeks ago. It captures events that the old SDK missed (particularly mobile sessions). This would inflate recent retention measurements. 2. Cohort size check: is the affected cohort's size consistent with marketing's signup numbers? Finding: cohort size matches — not a duplicate user issue. 3. Cross-cohort consistency: did the jump affect only one cohort or multiple? Finding: the jump appears in the most recent complete month for ALL cohorts (the diagonal of the retention triangle). This confirms a measurement change, not a genuine product improvement. 4. Event volume analysis: compare daily event volume before and after the SDK change. Finding: event volume increased 15% after the SDK deployment without a corresponding increase in signups. Diagnosis: the 8pp jump is a measurement artifact from improved tracking, not a real retention improvement. Fix: recalculate retention for all cohorts using only events captured by both the old and new SDK (common denominator). Present the recalculated numbers to execs with a note about the tracking improvement. Going forward, use the new SDK as the baseline. Recommendation: do NOT present the inflated numbers. Show the corrected numbers and explain the tracking improvement separately'"
+    weight: 0.35
+    description: "Validation"
+  - type: llm_judge
+    criteria: "Response handles Request 4 with reactivation cohort analysis — reactivation: 'Request 4 — Win-back campaign evaluation: campaign summary: 5,000 churned users contacted. 500 reactivated (10% reactivation rate). Campaign cost: $3,500 (email platform + discount offered). Post-return retention of the 500 reactivated users: R+1 (1 month after return): 25% (125 users still active). R+2: 15% (75 users). R+3: 10% (50 users). Compare to organic reactivation in the same period: 120 users returned organically. R+1: 35% (42 users still active). R+2: 25% (30 users). R+3: 18% (22 users). Campaign ROI analysis: campaign revenue: 500 users × average $12 in the return month + declining revenue over 3 months ≈ $9,500 total revenue. Campaign cost: $3,500 + $2,000 in discounts offered = $5,500. Net profit: $4,000 over 3 months. Marginal analysis: would these 500 users have returned anyway? Organic baseline was 120 returns. Incremental returns from the campaign: approximately 380 users. Marginal revenue from 380 incremental users: approximately $7,200. Marginal cost: $5,500. Marginal profit: $1,700 — positive but thin. Should they keep investing? The campaign is marginally profitable at $1,700 net on $5,500 spend (31% ROI over 3 months). But diminishing returns are likely — the most reactivatable users were reached first. Recommendation: continue the campaign but shift from discounts (which attract low-quality returns) to feature-based messaging (which attracts higher-retention returns). Test reactivation at the 30-day mark instead of waiting longer. Cap win-back attempts at 2 per user. Set a minimum ROI threshold (e.g., 50%) — if the next campaign falls below, reallocate budget to new user acquisition'"
+    weight: 0.30
+    description: "Reactivation"

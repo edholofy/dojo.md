@@ -1,0 +1,32 @@
+meta:
+  id: cohort-based-forecasting
+  level: 3
+  course: cohort-analysis
+  type: output
+  description: "Forecast business metrics using cohorts — project future revenue, active users, and churn using cohort-based bottom-up forecasting instead of top-down averages"
+  tags: [forecasting, revenue-projection, active-users, bottom-up, advanced]
+
+state: {}
+
+trigger: |
+  The VP of Finance says: "Our revenue forecast is a spreadsheet that
+  multiplies average users by average ARPU. It's been wrong by 20%+
+  for three quarters. Can you build a cohort-based forecast that
+  actually accounts for how different cohorts behave over time?"
+
+  Task: Explain cohort-based bottom-up forecasting and build a
+  forecast model for revenue and active users.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why top-down forecasts fail and how cohort forecasting works — methodology: 'Why top-down forecasting fails: top-down forecast: total active users × ARPU = revenue. Problem 1: average ARPU mixes new users ($5/month) with mature users ($20/month). If user mix shifts toward newer users, ARPU drops even if no individual user's spending changes. Problem 2: average retention mixes recent cohorts (high retention — they are new) with older cohorts (low retention — many have churned). Problem 3: it cannot distinguish between growth from new acquisitions and growth from better retention. Cohort-based bottom-up forecast: for each existing and future cohort, project: how many users remain active at each future month. How much revenue each active user generates. Sum across all cohorts for each future month. Step 1 — Project existing cohorts forward: January cohort (1,000 signups, currently month 6 at 32% retention): use the retention model (BG/NBD or curve fit) to project: M7: 30% (300 users), M8: 29% (290), M9: 28% (280), M10: 27% (270), M11: 27% (270), M12: 26% (260). Revenue per active user by month: M7: $18, M8: $18.50, M9: $19 (ARPU increases with tenure as users upgrade). Monthly revenue from Jan cohort: M7: 300×$18=$5,400, M8: 290×$18.50=$5,365, etc. Repeat for every existing cohort. Step 2 — Project future cohorts: estimate new signups per month (from marketing plan). New cohort sizes: July: 1,500, August: 1,600, September: 1,700 (growing 7% monthly). Apply the retention curve of the most recent similar cohort. Apply the ARPU ramp of similar cohorts. Step 3 — Sum all cohorts: for each future month, sum active users and revenue across all cohorts (existing + new). This produces a forecast that properly accounts for cohort aging, mix shifts, and growth'"
+    weight: 0.35
+    description: "Methodology"
+  - type: llm_judge
+    criteria: "Response includes a concrete forecast example — example: 'Concrete cohort forecast example: existing cohorts (simplified to 3): Jan (1,000 signups, now M6), Mar (1,200, now M4), May (1,400, now M2). New cohorts: Jul 1,500, Aug 1,600, Sep 1,700. Forecasting active users for July, August, September: January cohort in Jul/Aug/Sep: M7: 300, M8: 290, M9: 280 users. March cohort in Jul/Aug/Sep: M5: 396, M6: 372, M7: 360 users. May cohort in Jul/Aug/Sep: M3: 588, M4: 518, M5: 462 users. July new cohort: M0: 1,500, M1: 600, M2: 420 users. August new cohort: M0: 1,600, M1: 640 users. September new cohort: M0: 1,700 users. Total active users: July: 300+396+588+1,500 = 2,784. August: 290+372+518+600+1,600 = 3,380. September: 280+360+462+420+640+1,700 = 3,862. Forecasting revenue (applying ARPU by tenure): January cohort (mature, $18 ARPU): Jul $5,400, Aug $5,220, Sep $5,040. March cohort ($15 ARPU): Jul $5,940, Aug $5,580, Sep $5,400. May cohort ($12 ARPU): Jul $7,056, Aug $6,216, Sep $5,544. July new ($8 ARPU): Jul $12,000, Aug $4,800, Sep $3,360. August new ($8 ARPU): Aug $12,800, Sep $5,120. September new ($8 ARPU): Sep $13,600. Total revenue: Jul $30,396, Aug $34,616, Sep $38,064. Key insight: 40-45% of each month's revenue comes from new cohorts ($12K-$13K). This means the business is heavily dependent on new acquisition — if signups drop, revenue drops immediately. Compare to top-down: simple model would say 3,000 users × $13 ARPU = $39,000/month (constant). Cohort model shows Jul $30K growing to Sep $38K — the trajectory is different and more accurate'"
+    weight: 0.35
+    description: "Example"
+  - type: llm_judge
+    criteria: "Response covers sensitivity analysis and forecast maintenance — sensitivity: 'Sensitivity analysis and forecast maintenance: sensitivity analysis — what drives the forecast most? Test 1: what if new signups are 20% lower than planned? Revenue impact: approximately -$2,500/month by month 3 (direct loss from missing cohorts). The business is sensitive to acquisition volume. Test 2: what if month-1 retention improves by 5pp (from 40% to 45%)? Revenue impact: +$600/month by month 3 (each new cohort retains more users). Retention improvement has a compounding effect over time — larger impact in months 6-12. Test 3: what if ARPU per active user increases by 10%? Revenue impact: +$3,500/month immediately (affects all cohorts). ARPU changes have the fastest impact because they affect every active user. Sensitivity ranking: 1. ARPU changes (fastest, broadest impact). 2. Acquisition volume (large immediate impact). 3. Retention improvement (slow but compounding). Present all three scenarios to the VP of Finance for planning. Maintaining the forecast: monthly update cycle: 1. Actual vs forecast comparison: compare predicted active users and revenue to actuals for each cohort. 2. Refit retention curves: if actual retention is consistently higher or lower, update the projected curves. 3. Update acquisition plan: revise new cohort size projections based on actual signups. 4. Recalculate: regenerate the forward forecast with updated inputs. Track forecast accuracy: mean absolute percentage error (MAPE) by month. Target: under 10% MAPE at 3-month horizon. Cohort forecasts should be 50-70% more accurate than top-down models because they capture mix effects, tenure-based ARPU ramps, and cohort-specific retention patterns'"
+    weight: 0.30
+    description: "Sensitivity"

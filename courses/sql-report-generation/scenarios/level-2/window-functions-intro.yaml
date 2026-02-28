@@ -1,0 +1,35 @@
+meta:
+  id: window-functions-intro
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Introduction to window functions — use ROW_NUMBER, RANK, DENSE_RANK, and NTILE for ranking, pagination, and segmentation in reports"
+  tags: [SQL, window-functions, ROW_NUMBER, RANK, NTILE, OVER, intermediate]
+
+state: {}
+
+trigger: |
+  The sales team needs several ranking-based reports:
+  1. "Rank our sales reps by total revenue this quarter"
+  2. "Show each customer's most recent order" (top-1-per-group)
+  3. "Divide customers into 4 equal segments by spending for
+     targeted marketing campaigns"
+
+  Tables: orders (order_id, customer_id, amount, order_date,
+  sales_rep_id), sales_reps (rep_id, name, region, team)
+
+  Task: Solve each using window functions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use ROW_NUMBER, RANK, and NTILE window functions — queries: 'Window functions for ranking: Query 1 — Rank sales reps (RANK with ties): SELECT sr.name, sr.region, SUM(o.amount) AS total_revenue, RANK() OVER (ORDER BY SUM(o.amount) DESC) AS revenue_rank, DENSE_RANK() OVER (ORDER BY SUM(o.amount) DESC) AS dense_rank FROM sales_reps sr JOIN orders o ON sr.rep_id = o.sales_rep_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY sr.rep_id, sr.name, sr.region ORDER BY total_revenue DESC. RANK vs DENSE_RANK: if two reps tie for #2, RANK gives 1, 2, 2, 4 (skips 3). DENSE_RANK gives 1, 2, 2, 3 (no gap). Use RANK for competitive leaderboards, DENSE_RANK for tier assignments. Query 2 — Most recent order per customer (top-1-per-group): WITH ranked_orders AS (SELECT o.*, c.name AS customer_name, ROW_NUMBER() OVER (PARTITION BY o.customer_id ORDER BY o.order_date DESC) AS rn FROM orders o JOIN customers c ON o.customer_id = c.customer_id) SELECT customer_name, order_id, amount, order_date FROM ranked_orders WHERE rn = 1. ROW_NUMBER assigns 1, 2, 3... within each partition (customer). PARTITION BY customer_id restarts numbering for each customer. Filtering WHERE rn = 1 keeps only the most recent order per customer. This is the top-N-per-group pattern — one of the most useful SQL patterns. Query 3 — Customer quartiles (NTILE): WITH customer_spending AS (SELECT customer_id, SUM(amount) AS total_spent FROM orders GROUP BY customer_id) SELECT customer_id, total_spent, NTILE(4) OVER (ORDER BY total_spent DESC) AS spending_quartile FROM customer_spending. NTILE(4) divides customers into 4 roughly equal groups. Quartile 1 = top 25% spenders, Quartile 4 = bottom 25%. Use for: RFM segmentation, tiered pricing, targeted campaigns'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers window function syntax and PARTITION BY — explanation: 'Window function anatomy: function_name() OVER (PARTITION BY column ORDER BY column). OVER — turns an aggregate or ranking function into a window function. PARTITION BY — divides rows into groups (like GROUP BY but without collapsing rows). ORDER BY — determines the order within each partition. Key difference from GROUP BY: GROUP BY collapses rows: 1000 orders become 10 category rows. Window functions keep all rows: 1000 orders stay as 1000 rows, each annotated with the window result. This is powerful: you can see both the detail AND the aggregate in the same row. Example showing the difference: GROUP BY: SELECT category, SUM(amount) FROM orders GROUP BY category — returns 10 rows. Window: SELECT order_id, category, amount, SUM(amount) OVER (PARTITION BY category) AS category_total FROM orders — returns 1000 rows, each showing its category total. Ranking within groups: RANK() OVER (PARTITION BY region ORDER BY SUM(amount) DESC) AS rank_in_region. This ranks sales reps within their region, not globally. The top performer in each region gets rank 1'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response shows practical window function use cases — use-cases: 'Practical window function patterns: Percentage of total: SELECT product_category, SUM(amount) AS revenue, ROUND(SUM(amount) * 100.0 / SUM(SUM(amount)) OVER (), 1) AS pct_of_total FROM orders GROUP BY product_category. SUM(SUM(amount)) OVER () calculates the grand total across all categories. Each row shows its category revenue AND its percentage of total. Running count (row numbering for pagination): SELECT ROW_NUMBER() OVER (ORDER BY signup_date DESC) AS row_num, name, email, signup_date FROM customers. Row numbers are useful for pagination: WHERE row_num BETWEEN 21 AND 40 gives page 2 of 20 rows each. Deduplication with ROW_NUMBER: DELETE FROM customers WHERE customer_id IN (SELECT customer_id FROM (SELECT customer_id, ROW_NUMBER() OVER (PARTITION BY email ORDER BY signup_date DESC) AS rn FROM customers) ranked WHERE rn > 1). This keeps the most recent record for each duplicate email and removes the rest'"
+    weight: 0.30
+    description: "Use cases"

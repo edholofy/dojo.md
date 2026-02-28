@@ -1,0 +1,44 @@
+meta:
+  id: data-pipeline-observability
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data pipeline observability — build comprehensive observability for ETL systems using data quality metrics, lineage, anomaly detection, and incident correlation"
+  tags: [observability, monitoring, anomaly-detection, lineage, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "We have 300 production pipelines
+  across 5 teams. Our observability is primitive — we know when
+  pipelines fail, but we don't know:
+
+  - When data quality silently degrades (no failures, just wrong data)
+  - Which upstream changes caused downstream issues
+  - Whether the data consumers are actually using the data we produce
+  - How our data freshness compares to SLA commitments
+  - What the 'normal' profile of our data looks like (to detect anomalies)
+
+  We want to build a data observability platform similar to what
+  Monte Carlo, Bigeye, or Soda offer, but integrated with our
+  existing stack (Airflow, dbt, Snowflake, Kafka).
+
+  What does a comprehensive data observability strategy look like?"
+
+  Task: Design a data observability strategy covering the five
+  pillars — freshness, volume, schema, distribution, and lineage —
+  with practical implementation using existing tools.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers the five observability pillars — freshness: is data arriving on time? (track last update timestamp per table, alert when data is staler than expected), volume: is the expected amount of data arriving? (track daily row counts, alert on significant deviations from historical patterns), schema: has the structure changed? (detect column additions, removals, type changes), distribution: do the values look normal? (statistical profiling — mean, stddev, null rates, cardinality — alert on distribution shifts), lineage: where does data come from and who uses it? (column-level lineage for impact analysis and root cause tracing)"
+    weight: 0.35
+    description: "FivePillars"
+  - type: llm_judge
+    criteria: "Response provides practical implementation using existing tools — Airflow: task duration tracking, success/failure metrics, DAG run metadata. dbt: source freshness checks, model tests (unique, not_null, relationships), custom generic tests for distribution checks. Snowflake: query history for usage tracking, INFORMATION_SCHEMA for schema monitoring, TIME_TRAVEL for historical comparisons. Kafka: consumer lag monitoring, message rate tracking. Integration: OpenTelemetry for cross-system tracing, centralized metrics in Datadog/Grafana, incident management integration with PagerDuty/OpsGenie"
+    weight: 0.35
+    description: "ToolIntegration"
+  - type: llm_judge
+    criteria: "Response addresses anomaly detection and incident correlation — ML-based anomaly detection for data metrics (seasonal patterns, trend detection, not just static thresholds), automated root cause suggestion (when a downstream table has anomalous data, trace upstream to find which source or transformation changed), usage-based prioritization (monitor which tables are queried most and by whom, prioritize observability for high-usage assets), and building toward self-healing (when known anomaly patterns are detected, automatically trigger remediation — re-run a pipeline, alert the data owner, quarantine suspicious data)"
+    weight: 0.30
+    description: "AnomalyDetection"

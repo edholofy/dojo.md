@@ -1,0 +1,40 @@
+meta:
+  id: data-transformation-techniques
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Data transformation techniques — apply log, Box-Cox, and power transformations to normalize skewed distributions for analysis and modeling"
+  tags: [transformation, log-transform, box-cox, skewness, intermediate]
+
+state: {}
+
+trigger: |
+  A data scientist says: "Several features in my dataset are heavily
+  skewed and this is hurting my linear regression model:
+
+  - Revenue per customer: right-skewed (many small, few very large)
+  - Days since last purchase: right-skewed (most recent, few very old)
+  - Number of products owned: right-skewed (most own 1-3, few own 20+)
+  - Customer satisfaction score: left-skewed (most score 8-10, few 1-3)
+
+  My model's residuals are non-normal and the R² is poor. I've heard
+  log transformation helps but I'm not sure when to use log vs other
+  transforms. What are my options?"
+
+  Task: Select and apply appropriate transformations for skewed features,
+  comparing log, Box-Cox, square root, and other power transformations
+  with guidance on when each is appropriate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains common transformations — log transformation (compress large values, handles right-skew, requires positive values, preserves multiplicative relationships), square root transformation (milder than log, handles right-skew, works for count data), Box-Cox transformation (automatically finds optimal power parameter λ, generalizes log and power transforms, requires positive values), Yeo-Johnson transformation (like Box-Cox but handles zero and negative values), and reciprocal transformation (1/x, strongest compression). Explains the mathematical basis simply"
+    weight: 0.35
+    description: "Transformations"
+  - type: llm_judge
+    criteria: "Response selects the right transformation per feature — revenue: log transform (multiplicative data, strictly positive, strong right-skew). Days since last purchase: log transform or square root (depends on skew severity, check for zeros). Products owned: square root (count data with zeros, log(0) is undefined). Satisfaction score: reflect then transform for left-skew (subtract from max+1, then log or sqrt). Shows how to check transformation effectiveness using histograms, Q-Q plots, and skewness statistics before and after"
+    weight: 0.35
+    description: "Selection"
+  - type: llm_judge
+    criteria: "Response covers practical considerations — handling zeros (add small constant before log: log(x+1), or use Yeo-Johnson), back-transforming for interpretation (predictions need to be exponentiated back to original scale), the bias introduced by back-transformation (the mean of log-transformed values doesn't equal the log of the mean — Jensen's inequality), when NOT to transform (tree-based models are invariant to monotonic transformations, so transforms don't help), and documenting transformations for reproducibility"
+    weight: 0.30
+    description: "Practical"

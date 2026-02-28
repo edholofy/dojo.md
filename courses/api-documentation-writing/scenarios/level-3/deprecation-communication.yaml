@@ -1,0 +1,44 @@
+meta:
+  id: deprecation-communication
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Document API deprecation — write clear deprecation notices, sunset timelines, and communication plans that minimize developer disruption"
+  tags: [API, documentation, deprecation, sunset, lifecycle, communication, advanced]
+
+state: {}
+
+trigger: |
+  You need to deprecate several API features and communicate this to
+  developers without causing panic or confusion:
+
+  1. Entire endpoint removal: DELETE /users/{id}/avatar (replaced by
+     PATCH /users/{id} with avatar: null)
+  2. Field deprecation: "user.username" field being replaced by
+     "user.display_name" (different validation rules)
+  3. Authentication method sunset: Basic Auth being removed, only
+     OAuth 2.0 going forward
+  4. SDK version end-of-life: Python SDK v2.x, only v3.x supported
+  5. Response format change: XML response format being dropped, JSON only
+
+  Each has a different timeline and impact level. Some affect all
+  developers, others affect a small subset.
+
+  Task: Write deprecation documentation for all five items. Include:
+  deprecation notices, migration paths for each, timeline with key
+  dates, HTTP headers/response fields that signal deprecation, and
+  a communication plan (how developers are notified).
+
+assertions:
+  - type: llm_judge
+    criteria: "Each deprecation is documented with full lifecycle — for each item: (1) what is deprecated (specific endpoint/field/feature), (2) why (security, simplification, standards compliance), (3) replacement (exact alternative with code example), (4) timeline with four phases: announced → deprecated (still works, warnings) → sunset warning (rate-limited or degraded) → removed. Dates for each phase. HTTP signals: Deprecation header (RFC 8594), Sunset header with date, Warning header with human message. API response includes deprecation_warnings array when deprecated features are used. Documentation: deprecated items visually marked (strikethrough, warning banner) but still documented until removal"
+    weight: 0.35
+    description: "Deprecation lifecycle"
+  - type: llm_judge
+    criteria: "Migration paths are specific and actionable — endpoint removal: show curl before/after, explain that PATCH with null achieves the same result. Field deprecation: both fields returned during transition period, show how to update code to use new field, document different validation rules between old and new. Basic Auth sunset: step-by-step OAuth 2.0 setup guide, tool to generate OAuth credentials from existing Basic Auth credentials. SDK EOL: changelog of breaking changes between v2→v3, automated upgrade tool or codemods if available, v2 receives security patches only during transition. XML removal: show Content-Type/Accept header changes, library migration for XML parsers"
+    weight: 0.35
+    description: "Migration paths"
+  - type: llm_judge
+    criteria: "Communication plan covers all channels — notification channels: (1) email to registered developers (personalized: 'Your integration uses Basic Auth, which sunsets on DATE'), (2) dashboard banner, (3) changelog entry, (4) API response headers on affected requests, (5) status page announcement, (6) developer blog post explaining the reasoning. Cadence: initial announcement, then reminders at 6 months, 3 months, 1 month, 1 week before sunset. Metrics: track adoption of replacements, identify developers who haven't migrated, offer direct support to high-impact integrations. Escalation: what happens after sunset — hard failure (401/410) with helpful error message pointing to migration docs, not silent data loss"
+    weight: 0.30
+    description: "Communication plan"

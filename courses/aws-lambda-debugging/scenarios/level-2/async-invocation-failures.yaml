@@ -1,0 +1,72 @@
+meta:
+  id: async-invocation-failures
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda async invocation failures — diagnose retry behavior, dead-letter queue issues, and Lambda Destination configuration"
+  tags: [AWS, Lambda, async, DLQ, destinations, retry, intermediate]
+
+state: {}
+
+trigger: |
+  Your S3-triggered Lambda function processes uploaded images. Some
+  images fail processing but you have no idea which ones or why:
+
+  $ aws cloudwatch get-metric-statistics --namespace AWS/Lambda \
+    --metric-name Errors --dimensions Name=FunctionName,Value=process-image
+  Errors: 45 in the last hour
+
+  45 errors but no visibility into which uploads failed. The function
+  is invoked asynchronously (S3 event) — errors don't go back to a
+  caller. Where do they go?
+
+  Async invocation error flow:
+  1. First attempt: function fails
+  2. Lambda waits 1 minute, retries (attempt 2)
+  3. Lambda waits 2 minutes, retries (attempt 3)
+  4. All 3 attempts failed → event is discarded (lost!)
+
+  Without a DLQ or destination, failed events simply disappear.
+
+  Fix 1 — Dead Letter Queue:
+  $ aws lambda update-function-configuration \
+    --function-name process-image \
+    --dead-letter-config TargetArn=arn:aws:sqs:...:image-dlq
+
+  Now failed events go to SQS after all retries exhausted. But the
+  DLQ only contains the original event, not the error details.
+
+  Fix 2 — Lambda Destinations (better):
+  $ aws lambda put-function-event-invoke-config \
+    --function-name process-image \
+    --destination-config '{
+      "OnSuccess": {"Destination": "arn:aws:sqs:...:success-queue"},
+      "OnFailure": {"Destination": "arn:aws:sqs:...:failure-queue"}
+    }'
+
+  Destinations include: the original event, the function response or
+  error, request/response metadata. Much more useful than DLQ.
+
+  Additional issue: MaximumRetryAttempts set to 0 means no retries.
+  But this also means transient errors (temporary network glitch)
+  are not retried. Tradeoff: retries help with transient failures
+  but tripling processing for permanent errors wastes compute.
+
+  Task: Explain async invocation debugging. Write: the retry behavior
+  (timing, attempt count), DLQ vs Lambda Destinations (comparison),
+  configuring retry limits and maximum event age, monitoring async
+  failures, and designing robust async processing pipelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Async retry behavior is explained — async invocation: Lambda queues event internally, returns 202 immediately. On failure: retries 2 more times (3 total). Delay: ~1 minute between first and second, ~2 minutes between second and third. After all retries: event sent to DLQ/destination or discarded. MaximumRetryAttempts: configure 0-2 retries. MaximumEventAgeInSeconds: discard events older than X seconds (60-21600). Important: retries mean the function must be idempotent — same event may be processed multiple times"
+    weight: 0.35
+    description: "Retry behavior"
+  - type: llm_judge
+    criteria: "DLQ vs Destinations are compared — DLQ: only captures original event on failure, configured on function, supports SQS and SNS only. Lambda Destinations: captures original event + function response/error + metadata, supports SQS/SNS/Lambda/EventBridge, can handle both success and failure. Destinations are preferred (more information, more flexible). DLQ limitation: doesn't tell you WHY it failed. Destination OnFailure: includes error message, stack trace, request context. Use destinations for new functions, DLQ still works for existing setups"
+    weight: 0.35
+    description: "DLQ vs Destinations"
+  - type: llm_judge
+    criteria: "Monitoring and design are practical — monitor: AsyncEventsDropped metric (events lost without DLQ/destination), DeadLetterErrors (failed to send to DLQ). Alert on both! Design pattern: S3 event → Lambda → on failure: SQS DLQ → monitoring Lambda that alerts and logs details. Make functions idempotent: use a deduplication table to prevent reprocessing. For critical events: record event in DynamoDB before processing, mark as processed when done, sweep unprocessed events periodically as backup. Test failure scenarios: deliberately throw errors to verify DLQ/destination works"
+    weight: 0.30
+    description: "Monitoring and design"

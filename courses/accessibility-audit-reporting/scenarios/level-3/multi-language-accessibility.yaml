@@ -1,0 +1,47 @@
+meta:
+  id: multi-language-accessibility
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Multi-language accessibility audit — evaluate accessibility in multilingual sites including language declaration, RTL support, and localized assistive technology behavior"
+  tags: [language, multilingual, RTL, localization, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "I'm auditing a government
+  website that serves content in English, Spanish,
+  French, Arabic, and Mandarin Chinese. It's my first
+  multilingual accessibility audit and I'm finding
+  unique issues:
+
+  1. The page lang attribute is set to 'en' even on
+     Spanish and French pages
+  2. Inline quotes in Spanish within English content
+     have no lang attribute change
+  3. The Arabic version has RTL layout but some
+     interactive elements behave incorrectly
+  4. Screen reader pronunciation is wrong for
+     Spanish content because it reads in English
+  5. Translated alt text on images is machine-
+     translated and sometimes nonsensical
+
+  Which WCAG criteria cover language accessibility?
+  How do I test across languages I don't speak?"
+
+  Task: Audit multilingual accessibility issues and
+  provide methodology for testing across languages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits language-specific issues — Wrong page lang attribute (WCAG 3.1.1 Language of Page Level A: the html lang attribute must match the primary language of the page content — en on a Spanish page causes screen readers to read Spanish text with English pronunciation rules, making content incomprehensible, Severity: Critical, Fix: set lang=es for Spanish pages, lang=fr for French, lang=ar for Arabic, lang=zh for Mandarin), Inline language changes (WCAG 3.1.2 Language of Parts Level AA: when content includes text in a different language, the element must have a lang attribute for that language — Spanish quote in English content: <span lang=es>Buenos días</span> — without this, screen reader reads Spanish with English pronunciation, Severity: Major, Fix: add lang attribute to inline content in different languages), Screen reader pronunciation (this is a direct consequence of incorrect lang attributes — screen reader uses pronunciation rules based on lang attribute, English pronunciation rules applied to Spanish text makes words unrecognizable, testing: listen to how screen reader pronounces content in each language version)"
+    weight: 0.35
+    description: "LanguageFindings"
+  - type: llm_judge
+    criteria: "Response covers RTL and translation quality issues — RTL interactive elements (WCAG 1.3.2 Meaningful Sequence Level A: interactive elements in RTL languages must mirror appropriately — back arrows should point right, progress bars should fill right-to-left, but number inputs and media controls should NOT mirror, Severity: Major for elements that create confusion, Fix: audit each interactive element for correct mirroring behavior, use CSS logical properties for proper RTL adaptation), Machine-translated alt text (WCAG 1.1.1 Level A: alt text must accurately describe the image — machine translation of alt text can produce nonsensical descriptions that misinform rather than inform, Severity: Major, Fix: have native speakers review translated alt text, use professional translation for critical content, flag auto-translated content for human review), and testing approach (test each language version separately — accessibility issues may exist in one language version but not another due to different page layouts, text length differences, or translation-specific rendering issues)"
+    weight: 0.35
+    description: "RTLTranslationFindings"
+  - type: llm_judge
+    criteria: "Response provides multilingual testing methodology — testing across languages you don't speak (use native-speaking testers or accessibility consultants for each language, at minimum verify: lang attribute correct, screen reader pronunciation sounds correct to a native speaker, RTL layout mirrors properly, translated content is present — not showing untranslated English, form labels and error messages are translated), screen reader behavior per language (different screen readers have different language support: test that the screen reader actually switches to the correct voice/pronunciation when lang attribute changes, verify that screen readers can read CJK characters correctly, verify Arabic/Hebrew screen reader behavior with JAWS or NVDA Arabic voice), and audit report format for multilingual (organize findings by: global issues affecting all languages — then language-specific issues — test each language version on at least 3 representative pages, note which language versions were tested and which were not, flag any languages where screen reader support is limited and recommend additional user testing for those languages)"
+    weight: 0.30
+    description: "MultilingualMethodology"

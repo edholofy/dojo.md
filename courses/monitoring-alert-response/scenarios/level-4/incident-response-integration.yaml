@@ -1,0 +1,49 @@
+meta:
+  id: incident-response-integration
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Integrate monitoring with incident response — design the end-to-end flow from alert firing to incident resolution with automation and feedback loops"
+  tags: [monitoring, incident-response, integration, workflow, automation, expert]
+
+state: {}
+
+trigger: |
+  Your organization has a disconnect between monitoring and incident
+  response. Current problems:
+
+  - Alerts fire in PagerDuty but there is no standard process for
+    what happens next
+  - Engineers acknowledge alerts but investigation steps vary wildly
+    depending on who is on-call
+  - Incidents are declared informally (someone says "this looks bad"
+    in Slack) — no criteria for when an alert becomes an incident
+  - Communication during incidents is chaotic: updates go to random
+    Slack channels, stakeholders are not notified consistently
+  - After incidents resolve, there is no feedback loop to monitoring:
+    the same alerts that were unhelpful during the incident remain
+    unchanged
+  - Mean time to detect (MTTD): 8 minutes
+  - Mean time to acknowledge (MTTA): 12 minutes
+  - Mean time to resolve (MTTR): 95 minutes
+  - 40% of incidents are escalated at least once because the first
+    responder did not know what to do
+
+  Task: Design the integrated alert-to-resolution workflow. Include:
+  incident declaration criteria, communication automation, escalation
+  framework, and the post-incident feedback loop that improves
+  monitoring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert-to-incident workflow is clearly defined with declaration criteria — workflow design: 'Phase 1: Alert fires. The alert includes: severity (P1-P4), affected service, linked runbook, owning team, and SLO impact (if SLOs defined). Alert routing: P1/P2 → page on-call engineer immediately. P3 → notification to team channel, respond within 30 minutes during business hours. P4 → ticket created, respond within next business day. Phase 2: Acknowledgment and initial triage (target: 5 minutes). On-call engineer acknowledges the alert. Initial triage checklist: (1) Is this a real problem? Check customer impact. (2) What is the blast radius? Single user, single service, or platform-wide? (3) Does the runbook apply? Follow it if yes. (4) Is this an incident? Apply declaration criteria. Incident declaration criteria: An alert becomes an incident when any of these are true: customer impact is confirmed (errors, degraded performance affecting users), an SLO burn rate exceeds the alert threshold, multiple related alerts fire within 5 minutes (correlated failure), the issue cannot be resolved by one engineer within 15 minutes, or the issue affects a critical business function (payment processing, authentication, data integrity). Phase 3: Incident declaration. Automated actions on incident declaration: create a dedicated Slack channel (#inc-YYYY-MM-DD-short-description), page the incident commander (IC) for P1/P2 incidents, create an incident ticket in the tracking system, start the incident timeline automatically, notify stakeholders via predefined distribution lists. Phase 4: Investigation and resolution. IC coordinates. Communication follows structured updates every 15-30 minutes. Resolution follows runbook or ad-hoc investigation with documented steps.' Escalation framework: 'Time-based escalation: if not acknowledged within 5 minutes → escalate to secondary on-call. If not resolved within 30 minutes (P1) or 60 minutes (P2) → escalate to engineering manager. If not resolved within 60 minutes (P1) → escalate to VP of Engineering. Skill-based escalation: if the responder identifies a domain outside their expertise (database, network, security) → escalate to the domain specialist on-call. Escalation is not blame — it is bringing more resources to the problem'"
+    weight: 0.35
+    description: "Alert-to-incident workflow"
+  - type: llm_judge
+    criteria: "Communication automation reduces chaos — communication design: '(1) Automated status page updates: when an incident is declared at P1/P2, the status page automatically updates to investigating. Templates for status page updates: Investigating: We are aware of [issue description] affecting [service/feature]. We are actively investigating and will provide updates every [15/30] minutes. Identified: We have identified the cause of [issue]. We are implementing a fix. Monitoring: A fix has been deployed. We are monitoring to confirm the issue is resolved. Resolved: The issue has been resolved. [Brief description of what happened and what was fixed]. (2) Stakeholder notification automation: P1 incidents: notify engineering leadership, customer support lead, and account managers for affected enterprise customers. Notification is automated — the IC does not need to manually find and notify people. P2 incidents: notify engineering leadership and customer support. P3/P4: no automatic stakeholder notification. (3) Structured incident updates: every 15 minutes (P1) or 30 minutes (P2), the IC posts a structured update: Current status: [investigating/identified/monitoring]. What we know: [summary]. What we are doing: [current actions]. Next update: [time]. Customer impact: [description]. These updates go to the incident Slack channel and are automatically cross-posted to a stakeholder channel. (4) Post-resolution communication: within 24 hours: incident summary sent to stakeholders. Within 5 business days: postmortem published. Within 10 business days: action items assigned and tracked'"
+    weight: 0.35
+    description: "Communication automation"
+  - type: llm_judge
+    criteria: "Post-incident feedback loop improves monitoring — feedback loop: '(1) Monitoring retrospective in every postmortem. Every postmortem includes a monitoring assessment section: Did the alert detect the issue? If yes: was it timely? Could MTTD be improved? If no: what alert should have caught this? Create the alert as a postmortem action item. Was the alert actionable? Did the runbook help? What was missing? Were the dashboards useful during investigation? What additional dashboards or queries would have helped? (2) Alert improvement actions. Every postmortem produces at least one monitoring improvement. Examples: create a new alert that would have detected this issue 5 minutes earlier. Tune the existing alert threshold that fired too late. Add a dashboard panel that shows the metric the engineer had to manually query. Update the runbook with the actual investigation steps used (not the outdated steps). (3) Quarterly monitoring improvement review. Track: number of incidents detected by monitoring vs. detected by customers (target: 95%+ by monitoring). Average MTTD trend (should decrease quarter over quarter). Alert actionable rate trend (should increase). Runbook usage rate and accuracy (percentage of incidents where the runbook was followed and was correct). (4) Closing the loop on MTTD, MTTA, MTTR. Current: MTTD 8min, MTTA 12min, MTTR 95min. Target after integration: MTTD under 3min (improved alerts and SLO-based detection), MTTA under 5min (clear routing, linked runbooks, mobile-friendly pages), MTTR under 45min (runbooks, automation, clear escalation paths, better investigation tools). The 40% escalation rate should drop to under 15% through better runbooks, training, and domain-specific routing'"
+    weight: 0.30
+    description: "Post-incident feedback loop"

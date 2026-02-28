@@ -1,0 +1,32 @@
+meta:
+  id: behavioral-ltv-prediction
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Predict LTV from early behaviors — use behavioral cohort data to estimate long-term user value based on first-week actions"
+  tags: [behavioral-prediction, early-signals, LTV-prediction, activation, intermediate]
+
+state: {}
+
+trigger: |
+  The VP of Marketing says: "I need to know within the first week
+  whether a cohort of users will be valuable long-term. Right now
+  we wait 6 months to know LTV. By then the budget is already spent.
+  Can we predict LTV from early behaviors?"
+
+  Task: Explain how to use behavioral cohort data from the first
+  week to predict long-term LTV and retention outcomes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains early behavior to LTV correlation methodology — methodology: 'Predicting LTV from first-week behaviors: the core insight is that what users do in their first 7 days strongly predicts their 6-month and 12-month outcomes. Step 1 — Build behavioral cohorts for mature users: take cohorts that are at least 6 months old (so you know their actual LTV). For each user, record both their first-7-day behaviors AND their 6-month cumulative revenue. Step 2 — Correlate early behaviors with LTV: first-week behavior | users who did it | avg 6-month LTV | users who did not | avg 6-month LTV. Completed onboarding: 60% | $95 | 40% | $25. Invited teammate: 15% | $180 | 85% | $45. Used mobile app: 30% | $110 | 70% | $40. Made first purchase: 25% | $150 | 75% | $35. Visited 3+ days: 40% | $120 | 60% | $30. Step 3 — Identify the strongest predictors: invited teammate shows the largest LTV gap ($180 vs $45 — a 4:1 ratio). Completed onboarding has the highest reach (60% of users do it) with a meaningful gap ($95 vs $25). Use these to build a simple scoring model. Step 4 — Score new users in their first week: assign points based on behaviors: completed onboarding: +2 points. Invited teammate: +5 points. Used mobile: +2 points. Made purchase: +4 points. 3+ day visits: +3 points. Score ranges: 0-2 points (low engagement): predicted 6-month LTV approximately $25-35. 3-6 points (moderate): predicted LTV approximately $60-90. 7+ points (high engagement): predicted LTV approximately $130-180'"
+    weight: 0.35
+    description: "Methodology"
+  - type: llm_judge
+    criteria: "Response covers applying predictions to marketing decisions — application: 'Applying early LTV predictions to marketing decisions: use case 1 — Real-time channel evaluation: week 1 data for current month's cohorts: organic signups (500 users): average score 5.2, predicted LTV $78. Paid search (300 users): average score 3.8, predicted LTV $55. Paid social (400 users): average score 1.9, predicted LTV $28. Within ONE WEEK of acquisition, the VP can see that paid social users are predicted to generate only $28 LTV — below the $35 CAC. Action: reduce paid social spend immediately instead of waiting 6 months to confirm. Use case 2 — Cohort quality monitoring: track the average first-week score for each weekly cohort: week 1: avg score 4.2. Week 2: avg score 4.0. Week 3: avg score 3.5. Week 4: avg score 2.8. Scores are declining — this is an early warning that user quality is degrading. Investigate: did the acquisition mix shift? Did a product change break onboarding? Did a competitor launch? Use case 3 — Targeted interventions: segment week-1 users by predicted LTV: high-predicted-LTV users (score 7+): send personalized retention email, offer premium trial, assign to success team. Medium users (score 3-6): trigger targeted onboarding nudges for behaviors they have not completed (invite teammate, use mobile). Low users (score 0-2): automated re-engagement sequence or accept churn (do not over-invest in users unlikely to retain). This turns cohort analysis from retrospective (look back at what happened) to prospective (act now based on predictions)'"
+    weight: 0.35
+    description: "Application"
+  - type: llm_judge
+    criteria: "Response covers validation and limitations — validation: 'Validating and calibrating predictions: validation is critical — a prediction model is useless if it is inaccurate. Step 1 — Backtest on historical cohorts: take the August cohort (now 6 months old). Pretend you only had their first-week data. Score each user. Compare predicted LTV to actual LTV. Metric: correlation between predicted score and actual 6-month LTV. Good: R² > 0.3 (first-week behaviors explain 30%+ of LTV variance). Excellent: R² > 0.5. Step 2 — Calibration check: for users with predicted LTV of $80, is the actual average LTV close to $80? If the model consistently over-predicts, apply a calibration factor. Step 3 — Monitor prediction accuracy monthly: as the product changes, the relationship between early behaviors and LTV may shift. A new feature may create a new activation behavior that was not in the original model. Recalibrate quarterly. Limitations: 1. Correlation is not causation: forcing users to invite teammates will not make them worth $180 — some high-LTV users naturally invite teammates. 2. The model cannot predict external factors: economic downturns, competitor launches, pricing changes. 3. First-week predictions are less accurate for individual users — use them at the cohort level (average predicted LTV for a group of 100+ users). 4. Selection bias: if the product already nudges users toward certain behaviors (onboarding), those behaviors may be less predictive (everyone does them). Look for differentiating behaviors that users choose voluntarily. 5. Time lag in validation: you need 6+ months to validate predictions, so the model always reflects historical patterns'"
+    weight: 0.30
+    description: "Validation"

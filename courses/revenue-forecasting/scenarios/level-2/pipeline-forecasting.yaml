@@ -1,0 +1,41 @@
+meta:
+  id: pipeline-forecasting
+  level: 2
+  course: revenue-forecasting
+  type: output
+  description: "Pipeline forecasting — learn to forecast B2B revenue using sales pipeline data, stage-weighted probabilities, and pipeline velocity metrics"
+  tags: [pipeline, b2b, sales, probability, weighted, intermediate]
+
+state: {}
+
+trigger: |
+  A sales operations manager says: "My VP of Sales keeps asking for
+  an accurate quarterly forecast but our pipeline is messy. Here's
+  our current Q3 pipeline:
+
+  Stage: Prospect (10%) — 25 deals, $3.2M total value.
+  Stage: Discovery (20%) — 18 deals, $2.1M total value.
+  Stage: Demo (40%) — 12 deals, $1.8M total value.
+  Stage: Proposal (60%) — 8 deals, $1.2M total value.
+  Stage: Negotiation (80%) — 5 deals, $900K total value.
+  Stage: Verbal commit (90%) — 3 deals, $450K total value.
+
+  Historical close rates by stage don't match these default
+  percentages. How do I build a reliable pipeline forecast?"
+
+  Task: Explain pipeline forecasting methodology, calibrate the
+  probabilities, and build a reliable forecast from this pipeline data.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains pipeline forecasting and calibrates probabilities — methodology: 'Pipeline forecasting methodology: what is pipeline forecasting: pipeline forecasting estimates future revenue by multiplying the value of deals in each sales stage by the probability they will close. The sum of all weighted deal values gives the expected revenue. The basic weighted pipeline: default calculation using listed probabilities: prospect: $3.2M × 10% = $320K. Discovery: $2.1M × 20% = $420K. Demo: $1.8M × 40% = $720K. Proposal: $1.2M × 60% = $720K. Negotiation: $900K × 80% = $720K. Verbal commit: $450K × 90% = $405K. Total weighted pipeline: $3,305K. Problem: the default stage probabilities (10%, 20%, 40%, etc.) are generic — they do not reflect THIS company's actual close rates. Calibrating with historical data: analyze the last 12 months of closed deals. Track what percentage of deals that entered each stage actually closed. Example historical analysis: stage | deals entered | deals closed | actual close rate | default rate. Prospect: 200 | 12 | 6% | 10%. Discovery: 120 | 15 | 12.5% | 20%. Demo: 80 | 22 | 27.5% | 40%. Proposal: 50 | 20 | 40% | 60%. Negotiation: 30 | 22 | 73% | 80%. Verbal commit: 25 | 23 | 92% | 90%. Key insight: the default probabilities OVERESTIMATE close rates in early stages and slightly overestimate in late stages. This means the naive weighted pipeline is too optimistic. Recalculated weighted pipeline with calibrated rates: prospect: $3.2M × 6% = $192K. Discovery: $2.1M × 12.5% = $263K. Demo: $1.8M × 27.5% = $495K. Proposal: $1.2M × 40% = $480K. Negotiation: $900K × 73% = $657K. Verbal commit: $450K × 92% = $414K. Calibrated total: $2,501K. The calibrated forecast ($2.5M) is 24% lower than the default ($3.3M). This 24% gap is exactly the kind of over-forecasting that leads to missed quarterly targets'"
+    weight: 0.35
+    description: "Methodology"
+  - type: llm_judge
+    criteria: "Response covers pipeline velocity and timing — velocity: 'Pipeline velocity and timing: the pipeline velocity formula: pipeline velocity = (number of deals × average deal size × win rate) ÷ average sales cycle length. Current metrics: deals in pipeline: 71 total. Average deal size: $9.65M ÷ 71 = $136K. Overall win rate (calibrated): approximately 15% (from prospect stage). Average sales cycle: assume 90 days. Velocity = (71 × $136K × 15%) ÷ 90 = $16.1K/day = approximately $483K/month. This gives an independent check: at current velocity, Q3 (3 months) should generate approximately $1.45M in NEW closed revenue, plus the deals already in late stages. Timing analysis — will deals close THIS quarter: not all pipeline deals will close in Q3. Deals must progress through remaining stages within the quarter. Average time per stage: prospect to discovery: 14 days. Discovery to demo: 21 days. Demo to proposal: 14 days. Proposal to negotiation: 21 days. Negotiation to close: 14 days. Verbal commit to close: 7 days. Total cycle from prospect: 91 days (approximately one quarter). This means: deals currently in prospect stage have approximately 50% chance of closing this quarter (timing). Deals in demo or later: high probability of closing this quarter (if they close at all). Deals in verbal commit: will almost certainly close this quarter. Time-adjusted Q3 forecast: prospect: $192K × 50% timing probability = $96K. Discovery: $263K × 65% = $171K. Demo: $495K × 85% = $421K. Proposal: $480K × 95% = $456K. Negotiation: $657K × 98% = $644K. Verbal commit: $414K × 99% = $410K. Time-adjusted forecast: $2,198K. Plus new pipeline created during Q3 that closes within the quarter: typically 15-20% of quarterly revenue comes from deals not yet in pipeline. Add approximately $330K for coverage. Revised Q3 forecast: approximately $2,528K. The forecast has been refined through three lenses: stage probability (calibrated from historical data). Timing probability (will it close THIS quarter?). Pipeline coverage (new deals that will enter and close)'"
+    weight: 0.35
+    description: "Velocity"
+  - type: llm_judge
+    criteria: "Response covers pipeline health assessment and forecast confidence — health: 'Pipeline health assessment and forecast confidence: pipeline coverage ratio: pipeline coverage = total pipeline value ÷ quarterly target. If Q3 target is $2.5M: coverage = $9.65M ÷ $2.5M = 3.86x. Benchmark: 3x coverage is the minimum for a healthy pipeline. 4-5x is ideal. Below 2x is a red flag — not enough deals to hit target even with good execution. Our 3.86x is adequate but not comfortable. Pipeline shape analysis: a healthy pipeline is shaped like a funnel — more deals at the top, fewer at the bottom. Our pipeline: prospect (25 deals) → discovery (18) → demo (12) → proposal (8) → negotiation (5) → verbal (3). This is a healthy funnel shape. Warning signs: inverted funnel (more deals in late stages than early): means pipeline is drying up — future quarters are at risk. Bulge in the middle (many deals stuck in demo/proposal): means deals are stalling — conversion process needs improvement. Empty top (few prospects): means lead generation is failing — revenue will decline in 2-3 quarters. Deal quality indicators: average deal size by stage: if deal sizes shrink as they progress (discounting to close), the weighted pipeline overestimates. Track average deal size at entry vs at close. Deal age analysis: deals that have been in a stage longer than average are less likely to close. Deals older than 2x the average stage duration should have their probability discounted by 50%. Stale deal example: a deal in proposal stage for 45 days (vs 21-day average) — discount from 40% to 20%. Presenting the pipeline forecast to the VP: Q3 revenue forecast: method 1 — calibrated weighted pipeline: $2,501K. Method 2 — time-adjusted pipeline: $2,198K + coverage buffer = $2,528K. Method 3 — pipeline velocity extrapolation: $1,450K new closes + $1,070K late-stage = $2,520K. Consensus forecast: $2,500K. Confidence range: conservative: $2,100K (if win rates underperform by 15%). Base: $2,500K. Optimistic: $2,900K (if two large negotiation deals close early). Weekly tracking: report pipeline changes weekly. Pipeline created this week vs pipeline closed this week. Deals that moved forward, moved backward, or were lost. Changes to the weighted pipeline total. This creates early warning signals — if the weighted pipeline drops below 3x the remaining quarterly target, raise the alarm immediately'"
+    weight: 0.30
+    description: "Health"

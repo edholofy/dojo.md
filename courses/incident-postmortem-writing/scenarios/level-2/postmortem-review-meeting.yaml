@@ -1,0 +1,43 @@
+meta:
+  id: postmortem-review-meeting
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Facilitate postmortem review meetings — run productive blameless discussions that surface insights and build consensus on action items"
+  tags: [postmortem, review-meeting, facilitation, discussion, consensus, intermediate]
+
+state: {}
+
+trigger: |
+  You're facilitating the postmortem review meeting for a significant
+  incident. The postmortem document is written and shared. Now you
+  need to run the 1-hour meeting with 8 engineers, 2 managers, and
+  the VP of Engineering.
+
+  Challenges you anticipate:
+  - The engineer whose code caused the bug is nervous and defensive
+  - The manager of the team that was slow to respond may get blamed
+  - The VP will want to know "who's responsible"
+  - Two senior engineers have different theories about the root cause
+  - Some attendees will want to rehash the entire incident
+  - Action items from the last postmortem haven't been completed
+
+  Task: Write a meeting facilitation guide including: agenda with
+  time allocations, ground rules, specific facilitation techniques
+  for handling difficult moments, and a template for capturing
+  meeting outcomes. Show how to turn a potentially blame-filled
+  meeting into a productive learning discussion.
+
+assertions:
+  - type: llm_judge
+    criteria: "Agenda is structured with clear time allocations — agenda: (1) Opening and ground rules (5 min): facilitator reads the blameless principles, sets expectations. (2) Timeline walkthrough (15 min): walk through the incident timeline chronologically. Clarify facts, add missing details. Do not analyze yet — just establish what happened. (3) Root cause discussion (15 min): facilitator presents the documented root cause analysis. Open floor for questions and alternative theories. Goal: consensus on what caused the incident. (4) Contributing factors and what went well (10 min): identify systemic factors that enabled the incident AND things that worked well during response. (5) Action items (10 min): review proposed action items, assign owners, set deadlines. Check if previous postmortem action items are complete. (6) Closing (5 min): summarize decisions, confirm next steps, collect feedback on the meeting. Total: 60 minutes. Strict time boxing: 'If the root cause discussion extends, the facilitator cuts discussion at 15 minutes and tables unresolved points for async follow-up'"
+    weight: 0.35
+    description: "Structured agenda"
+  - type: llm_judge
+    criteria: "Ground rules and facilitation techniques handle difficult moments — ground rules read at the start: (1) 'We are here to learn, not to blame. Focus on systems, not individuals.' (2) 'Assume everyone involved made the best decision they could with the information they had.' (3) 'Challenge ideas, not people.' (4) 'It is safe to say I made a mistake — this meeting will not be used for performance evaluation.' Technique for defensive engineer: 'If the engineer starts defending themselves, redirect: Thank you for sharing. Let me reframe — we're not asking what you should have done differently. We're asking: what could the system have done to prevent this situation? Was there a missing guard rail that would have caught this?' Technique for VP asking who's responsible: 'Redirect to systemic accountability: The system that allowed untested code to reach production is responsible. Let us focus on the systemic fixes that make this class of issue impossible.' Technique for disagreeing senior engineers: 'Both theories documented. Ask: what evidence would distinguish between these theories? If we can't resolve now, create an action item to investigate further.' Technique for rehashing: 'We documented the timeline. If there are corrections, let us capture them. But let us not re-experience the incident — we are here for analysis and action'"
+    weight: 0.35
+    description: "Facilitation techniques"
+  - type: llm_judge
+    criteria: "Meeting outcome capture and follow-up process are defined — outcome template: 'Meeting date, attendees, facilitator. Timeline corrections (if any). Root cause: agreed / needs further investigation. Contributing factors: list. What went well: list. Action items: each with owner, deadline, and verification criteria. Open questions: items that need async investigation. Previous action items status: completed / in progress / overdue.' Follow-up process: 'Postmortem document updated with meeting outcomes within 24 hours. Action items entered into issue tracker within 24 hours. Action item owners confirm acceptance within 48 hours. Weekly action item check-in for first 2 weeks. Overdue action items escalated to engineering manager.' Addressing incomplete previous action items: 'Facilitator reviews previous postmortem action items at the start of the action items section. Overdue items are discussed: why are they late? Are they still relevant? Do they need to be reprioritized? This prevents action item decay — the most common postmortem failure.' Feedback collection: 'Anonymous 1-question survey after meeting: Was this meeting a valuable use of your time? (1-5 scale + optional comment). If average score drops below 3.5, review the meeting format'"
+    weight: 0.30
+    description: "Outcome capture"

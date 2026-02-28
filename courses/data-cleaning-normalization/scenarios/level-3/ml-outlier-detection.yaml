@@ -1,0 +1,40 @@
+meta:
+  id: ml-outlier-detection
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "ML-based outlier detection — use isolation forest, LOF, and autoencoders to detect anomalies in high-dimensional data"
+  tags: [outliers, isolation-forest, LOF, autoencoders, anomaly-detection, advanced]
+
+state: {}
+
+trigger: |
+  A data scientist says: "I'm working with transaction data that has 40
+  features. Statistical methods like z-score and IQR only work on one
+  variable at a time — they miss multivariate outliers where individual
+  values look normal but the combination is unusual.
+
+  For example, a $200 purchase is normal and buying electronics is normal,
+  but a $200 electronics purchase from a customer who usually buys $20
+  groceries, at 3 AM, from a foreign country, is suspicious.
+
+  I need multivariate anomaly detection. What ML methods work for this,
+  and how do I implement them on 500,000 transactions?"
+
+  Task: Apply ML-based anomaly detection methods to high-dimensional
+  transaction data, comparing isolation forest, local outlier factor,
+  and autoencoder approaches.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains isolation forest — the core insight: anomalies are easier to isolate (require fewer random splits in a tree). Build many random trees, each splitting on random features at random thresholds. Anomalies end up in shorter paths because they're easier to separate from the rest. Anomaly score based on average path length across trees. Advantages: linear time complexity O(n), handles high dimensions well, no distance computation needed. Practical guidance: set contamination parameter based on expected anomaly rate, feature scaling is less important than for distance-based methods"
+    weight: 0.35
+    description: "IsolationForest"
+  - type: llm_judge
+    criteria: "Response explains LOF and autoencoders — LOF (Local Outlier Factor): compares the local density of a point to its neighbors. A point in a sparse region surrounded by dense regions has a high LOF score. Good at finding local anomalies that global methods miss. Limitation: computationally expensive for large datasets (O(n²) for naive implementation). Autoencoders: train a neural network to compress and reconstruct normal data. Anomalies produce high reconstruction error because the model hasn't learned to represent them. Advantages: handles very high dimensions, captures nonlinear relationships. Disadvantage: requires training, harder to interpret"
+    weight: 0.35
+    description: "LOFAutoencoders"
+  - type: llm_judge
+    criteria: "Response provides a practical decision framework — when to use each: isolation forest for general-purpose anomaly detection at scale (best default choice), LOF when local context matters (anomalies relative to their neighborhood), autoencoders for very high-dimensional data or when capturing complex nonlinear patterns. Also covers practical implementation: how to handle the 40 features (feature selection or PCA before LOF), how to validate anomaly detection without labels (domain expert review of top-scored anomalies), and how to set thresholds (percentile-based, business rule-based, or adaptive)"
+    weight: 0.30
+    description: "DecisionFramework"

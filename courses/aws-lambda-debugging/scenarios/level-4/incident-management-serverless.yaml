@@ -1,0 +1,61 @@
+meta:
+  id: incident-management-serverless
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless incident management — implement on-call processes, runbooks, and incident response procedures for Lambda-based applications"
+  tags: [AWS, Lambda, incident-management, on-call, runbooks, SRE, expert]
+
+state: {}
+
+trigger: |
+  Your team has had 15 production incidents in the past quarter.
+  Average MTTR (Mean Time To Resolve): 2.5 hours. The engineering
+  VP wants MTTR under 30 minutes.
+
+  Analysis of past incidents:
+
+  Incident 1 (3.5 hours):
+  - Alert: "Lambda Errors > 100/minute"
+  - 45 minutes spent finding which function
+  - 30 minutes finding the root cause (DynamoDB throttling)
+  - 1 hour trying different fixes
+  - 1 hour implementing and deploying the fix
+  - 15 minutes verifying
+
+  Incident 2 (4 hours):
+  - No alert! Customer reported "orders not processing"
+  - 1 hour investigating (SQS DLQ had 10K messages)
+  - 1 hour finding root cause (Lambda VPC ENI limit reached)
+  - 1 hour requesting ENI limit increase
+  - 1 hour waiting for AWS support + reprocessing DLQ
+
+  Incident 3 (1 hour):
+  - Alert: Step Functions ExecutionsFailed
+  - On-call engineer knew the system, diagnosed in 10 minutes
+  - Fix: increase Lambda timeout from 30s to 60s
+  - Deploy and verify in 50 minutes
+
+  Patterns: incidents are slow when engineers don't know the system,
+  when alerts don't provide enough context, and when there's no
+  runbook.
+
+  Task: Design the serverless incident management process. Write:
+  alert design (actionable alerts with context), runbook structure
+  for serverless (per-function and per-workflow), on-call rotation
+  and escalation, automated remediation (Lambda-based auto-fixing),
+  post-incident review process, and SLO/SLI framework for Lambda.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert design is actionable — alerts must include: what is broken (function/workflow name), impact (customer-facing? internal?), severity (P1-P3), link to dashboard, link to runbook. Serverless-specific alerts: Lambda Errors by function (not account-wide), Step Functions ExecutionsFailed, SQS ApproximateAgeOfOldestMessage (processing lag), DLQ message count > 0 (something is failing silently), EventBridge FailedInvocations. Reduce noise: use anomaly detection instead of static thresholds, composite alarms for related metrics"
+    weight: 0.35
+    description: "Alert design"
+  - type: llm_judge
+    criteria: "Runbooks and automation are covered — runbook per function: what it does, dependencies, common failure modes, diagnostic commands, fix procedures. Automated runbook steps: link to CloudWatch Logs Insights query (pre-built), link to X-Ray trace search, link to function configuration. Automated remediation: Lambda function triggered by CloudWatch alarm that can: increase concurrency limits, restart event source mappings, reprocess DLQ messages, scale DynamoDB capacity. Guard rails: automated remediation must be safe (idempotent, bounded, logged)"
+    weight: 0.35
+    description: "Runbooks and automation"
+  - type: llm_judge
+    criteria: "SLOs and process are practical — define SLOs: order completion rate > 99.5%, API p99 latency < 2 seconds, payment success rate > 99.9%. SLIs: measure from CloudWatch custom metrics. Error budget: 0.5% error budget for order completion — when budget is consumed, focus on reliability instead of features. On-call rotation: weekly rotation, 2 tiers (primary responds in 5 min, secondary backup). Post-incident: blameless review within 48 hours, identify: timeline, root cause, detection gap, prevention measures. Track: MTTD (detect), MTTR (resolve), incident count, error budget consumption"
+    weight: 0.30
+    description: "SLOs and process"

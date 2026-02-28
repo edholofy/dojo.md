@@ -1,0 +1,46 @@
+meta:
+  id: intermediate-revenue-shift
+  level: 2
+  course: revenue-forecasting
+  type: output
+  description: "Intermediate revenue forecasting shift — a combined scenario testing cohort analysis, pipeline forecasting, scenario modeling, and variance analysis"
+  tags: [shift, combined, assessment, multi-method, intermediate]
+
+state: {}
+
+trigger: |
+  A VP of Finance is preparing for the quarterly business review. The
+  company has $8M ARR with three revenue streams:
+
+  SaaS subscriptions: $5.5M ARR, NRR 105%, acquiring 30 new customers/month
+  at $500 ARPU. Recent cohort analysis shows paid-ad cohorts churn 2x
+  faster than organic cohorts.
+
+  Professional services: $1.5M ARR. Pipeline shows $600K weighted for
+  next quarter but historical close rates are 20% below CRM-stated
+  probabilities.
+
+  Marketplace commissions: $1.0M ARR, growing 35% YoY but highly
+  seasonal (Q4 is 40% of annual revenue).
+
+  Last quarter, total revenue was forecast at $2.1M but came in at
+  $1.85M. The CFO wants: (1) a variance analysis of last quarter,
+  (2) next quarter's forecast using proper methods for each stream,
+  and (3) a scenario analysis for the full year.
+
+  Task: Complete all three deliverables with appropriate methodology
+  for each revenue stream.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response delivers the variance analysis for last quarter — variance: 'Variance analysis of last quarter: overall: forecast $2.1M, actual $1.85M, variance -$250K (-11.9%). Decomposition by stream: SaaS subscriptions: forecast $1.4M, actual $1.35M, variance -$50K (-3.6%). Root cause: paid-ad cohorts churned faster than the blended churn rate assumed. The forecast used a single churn rate across all customers, but cohort analysis reveals paid-ad cohorts churn at 2x the rate. Organic cohort monthly churn: approximately 3%. Paid-ad cohort monthly churn: approximately 6%. Blended rate used in forecast: 3.5%. Actual blended rate (because paid-ad mix was higher): 4.2%. The 0.7pp higher churn translated to approximately $50K in lost revenue. Fix: forecast using cohort-specific churn rates, not blended average. Professional services: forecast $500K, actual $350K, variance -$150K (-30.0%). Root cause: CRM-stated pipeline probabilities were inflated. Weighted pipeline of $600K implied $500K should close. Historical data shows actual close rates are 20% below stated probabilities. Adjusted pipeline: $600K × 80% = $480K. But timing also played a role — two projects shifted to this quarter. Fix: apply historical haircut to CRM probabilities. Calibrate: prospect (stated 10%, actual 5%), demo (stated 40%, actual 28%), etc. Marketplace commissions: forecast $200K, actual $150K, variance -$50K (-25.0%). Root cause: seasonality not properly modeled. The forecast assumed flat quarterly distribution (25% per quarter). But marketplace is highly seasonal (Q4 = 40%). Last quarter was Q1 — historically only 15-18% of annual revenue. $1.0M ARR × 17% seasonal share = $170K expected (closer to actual $150K). Fix: apply seasonal indices to marketplace forecasts. Variance bridge: $2.1M forecast → -$50K SaaS churn miss → -$150K services pipeline overstatement → -$50K marketplace seasonality = $1.85M actual'"
+    weight: 0.35
+    description: "Variance"
+  - type: llm_judge
+    criteria: "Response delivers next quarter's forecast using proper methods — nextquarter: 'Next quarter forecast by stream: SaaS subscriptions — cohort-based MRR model: starting MRR: $458K ($5.5M ARR ÷ 12). Organic customer base: 60% of customers (330), churn 3%/month. Paid-ad customer base: 40% of customers (220), churn 6%/month. New acquisition: 30/month (assume 50/50 organic/paid split). Month 1: organic MRR: $275K × (1 + 5% expansion - 3% churn) = $275K × 1.02 = $280.5K. Paid MRR: $183K × (1 + 5% expansion - 6% churn) = $183K × 0.99 = $181.2K. New MRR: 30 × $500 = $15K. Month 1 ending MRR: $476.7K. Month 2: similar calculation with updated base. Ending MRR: approximately $493K. Month 3: ending MRR: approximately $510K. Quarter SaaS revenue: $476.7K + $493K + $510K = $1,479.7K. Confidence: high (±5%). Range: $1,405K - $1,554K. Professional services — calibrated pipeline: CRM weighted pipeline: $600K. Apply 20% historical haircut: $600K × 80% = $480K. Apply timing adjustment (85% closes within quarter): $480K × 85% = $408K. Plus expected new pipeline that enters and closes within quarter (approximately 10% of forecast): $408K × 1.10 = $449K. Quarter services revenue: $449K. Confidence: moderate (±15%). Range: $382K - $516K. Marketplace commissions — seasonally adjusted: annual run rate: $1.0M × 1.35 growth = $1.35M projected annual. This is the next quarter — determine seasonal index. If this is Q2: historical Q2 share = 22%. Q2 forecast: $1.35M × 22% = $297K. If this is Q3: historical Q3 share = 23%. Q3 forecast: $1.35M × 23% = $310.5K. Using Q2 assumption: $297K. Confidence: moderate (±12%). Range: $261K - $333K. Combined next quarter forecast: SaaS: $1,480K (67% of total). Services: $449K (20%). Marketplace: $297K (13%). Total: $2,226K. Combined range: $2,048K - $2,403K. Improvement over last quarter: this forecast addresses all three variance root causes. Cohort-specific churn (not blended). Calibrated pipeline probabilities (not CRM defaults). Seasonal adjustment for marketplace (not flat distribution)'"
+    weight: 0.35
+    description: "NextQuarter"
+  - type: llm_judge
+    criteria: "Response delivers the full-year scenario analysis — scenarios: 'Full-year scenario analysis: base case — current trajectory with corrections: SaaS: $5.5M starting + growth from 30 new/month with cohort-adjusted churn. Projected year-end ARR: $7.2M. Annual SaaS revenue: approximately $6.3M. Services: $449K/quarter average (calibrated pipeline). Annual services revenue: approximately $1.8M. Marketplace: $1.35M (35% growth, seasonally distributed). Total base case: $6.3M + $1.8M + $1.35M = $9.45M. Optimistic case — improvements realized: SaaS: paid-ad churn reduced from 6% to 4% (product improvements). Acquisition increases to 40/month (marketing investment). Year-end ARR: $8.5M. Annual revenue: $7.0M. Services: win rate improves (team expansion, better qualification). Annual: $2.2M. Marketplace: growth accelerates to 45% (new merchant partnerships). Annual: $1.5M. Total optimistic: $10.7M. Conservative case — headwinds materialize: SaaS: paid-ad churn stays at 6%, organic churn increases to 4%. Acquisition drops to 25/month (market saturation). Year-end ARR: $6.4M. Annual revenue: $5.9M. Services: pipeline weakens, close rates drop further. Annual: $1.4M. Marketplace: growth slows to 20% (competitive pressure). Annual: $1.15M. Total conservative: $8.45M. Probability-weighted forecast: optimistic (20%): $10.7M. Base (55%): $9.45M. Conservative (25%): $8.45M. Expected value: (0.20 × $10.7M) + (0.55 × $9.45M) + (0.25 × $8.45M) = $2.14M + $5.20M + $2.11M = $9.45M. The expected value equals the base case because the probability distribution is roughly symmetric. Key decision points for the year: Q1: if paid-ad cohort churn improves with new onboarding → increase paid acquisition budget (move toward optimistic). Q2: if marketplace growth exceeds 40% annualized → invest in marketplace features (capture upside). Q3: if services pipeline coverage drops below 2.5x → consider reducing services headcount and redirecting to SaaS. These decision triggers turn the static scenario analysis into a dynamic management tool'"
+    weight: 0.30
+    description: "Scenarios"

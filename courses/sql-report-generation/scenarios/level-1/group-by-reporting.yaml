@@ -1,0 +1,34 @@
+meta:
+  id: group-by-reporting
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Group and summarize data — use GROUP BY to create summary reports broken down by categories, regions, time periods, and other dimensions"
+  tags: [SQL, GROUP-BY, summary, categories, dimensions, beginner]
+
+state: {}
+
+trigger: |
+  The VP of Sales asks: "Break down this month's sales by region.
+  I want to see total revenue, number of orders, and average order
+  size for each region. Also show me the breakdown by product
+  category within each region."
+
+  Table: orders (order_id, customer_id, amount, order_date, region,
+  product_category, sales_rep)
+
+  Task: Write GROUP BY queries for both requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use GROUP BY with single and multiple columns — query: 'GROUP BY for summary reports: Single dimension — by region: SELECT region, COUNT(*) AS total_orders, SUM(amount) AS total_revenue, ROUND(AVG(amount), 2) AS avg_order_size FROM orders WHERE order_date >= '2024-10-01' AND order_date < '2024-11-01' GROUP BY region ORDER BY total_revenue DESC; Multiple dimensions — by region AND category: SELECT region, product_category, COUNT(*) AS orders, SUM(amount) AS revenue, ROUND(AVG(amount), 2) AS avg_order FROM orders WHERE order_date >= '2024-10-01' AND order_date < '2024-11-01' GROUP BY region, product_category ORDER BY region, revenue DESC; The GROUP BY rule: every column in SELECT must either be in the GROUP BY clause or be inside an aggregate function. This is wrong: SELECT region, product_category, SUM(amount) GROUP BY region — product_category is not grouped or aggregated. Think of it this way: GROUP BY region collapses all rows for each region into one row. If you ask for product_category, the database does not know which product_category to show (there are many per region)'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers GROUP BY ordering, NULLs, and common mistakes — explanation: 'GROUP BY details: Execution order — SQL runs in this order: FROM (find the table), WHERE (filter rows), GROUP BY (group remaining rows), HAVING (filter groups), SELECT (compute output columns), ORDER BY (sort results). This is why you cannot use a column alias in WHERE: SELECT SUM(amount) AS revenue FROM orders WHERE revenue > 1000 — ERROR: revenue does not exist yet at the WHERE stage. But you CAN use aliases in ORDER BY: ORDER BY revenue DESC — this works because ORDER BY runs after SELECT. NULLs in GROUP BY: NULL values are grouped together. If region has NULLs, you get a row for NULL. Handle it: SELECT COALESCE(region, 'Unknown') AS region. GROUP BY with dates: GROUP BY order_date gives one row per day. For monthly grouping: PostgreSQL: GROUP BY DATE_TRUNC('month', order_date). MySQL: GROUP BY DATE_FORMAT(order_date, '%Y-%m'). SQL Server: GROUP BY FORMAT(order_date, 'yyyy-MM'). Common mistake — filtering after GROUP BY: use HAVING, not WHERE, to filter aggregated results. WHERE filters individual rows before grouping. HAVING filters groups after aggregation. SELECT region, SUM(amount) AS revenue FROM orders GROUP BY region HAVING SUM(amount) > 10000 — only show regions with more than $10K revenue'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response demonstrates multi-level summary reports — reports: 'Multi-level summary reports: Top N per group — top 3 sales reps per region: This requires a subquery or window function (covered later). Simple approach: SELECT region, sales_rep, SUM(amount) AS revenue FROM orders WHERE order_date >= '2024-10-01' GROUP BY region, sales_rep ORDER BY region, revenue DESC. Then filter in your application or use LIMIT per group. Summary with totals — GROUPING SETS (PostgreSQL): SELECT COALESCE(region, 'ALL REGIONS') AS region, COALESCE(product_category, 'ALL CATEGORIES') AS category, SUM(amount) AS revenue FROM orders GROUP BY GROUPING SETS ((region, product_category), (region), ()). This gives: each region-category combination, subtotals per region, and a grand total. MySQL alternative — use WITH ROLLUP: SELECT region, product_category, SUM(amount) AS revenue FROM orders GROUP BY region, product_category WITH ROLLUP. ROLLUP adds subtotal rows automatically. The rows where product_category is NULL are region subtotals. The row where both are NULL is the grand total'"
+    weight: 0.30
+    description: "Reports"

@@ -1,0 +1,38 @@
+meta:
+  id: refresh-and-data-currency
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Manage data refresh and currency — choose appropriate refresh frequencies, communicate data freshness, and handle stale data situations gracefully"
+  tags: [data-refresh, freshness, staleness, real-time, batch, currency, intermediate]
+
+state: {}
+
+trigger: |
+  Three teams are arguing about dashboard refresh frequency:
+
+  - The fraud team: "We need real-time — every second counts when
+    detecting fraudulent transactions."
+  - The marketing team: "Our campaign dashboard updates daily but
+    we need hourly to optimize spend during a flash sale."
+  - The finance team: "Our board report should only update monthly.
+    If the revenue number changes mid-month, the CFO loses confidence."
+
+  All three are right for their use case. The data platform team
+  asks: "How do we set refresh policies for each dashboard?"
+
+  Task: Design refresh frequency policies for different use cases.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response establishes refresh frequency tiers matched to decision cadence — tiers: 'Refresh frequency policy: The golden rule: refresh frequency should match decision frequency. If the viewer makes decisions every minute (fraud team), data must refresh every minute. If the viewer makes decisions monthly (board), daily refresh is overkill — monthly snapshots provide more consistency. Tier 1 — Real-time (seconds): for operational decisions that change by the minute. Fraud detection dashboard: transaction-level monitoring, anomaly flags within 30 seconds. Customer support queue: live queue size, wait times, agent availability. System health: CPU, memory, error rates for engineering on-call. Technology: streaming (Kafka, CDC), WebSocket push to dashboard. Cost: highest infrastructure cost. Only use for true real-time operational needs. Tier 2 — Near real-time (5-60 minutes): for tactical decisions that change hourly. Marketing campaign dashboard during flash sale: spend, clicks, conversions refresh every 15 minutes. Sales dashboard during end-of-quarter push: pipeline updates every 30 minutes. Technology: micro-batch ETL or scheduled query every 15-60 minutes. Cost: moderate. Good balance of freshness and infrastructure spend. Tier 3 — Daily batch (once per day): for strategic and management decisions. Executive dashboard: revenue, customers, churn, NPS refresh at 6 AM. Department dashboards: team performance, operational metrics updated overnight. Technology: nightly ETL batch job. Cost: lowest. Sufficient for 80% of dashboards. Tier 4 — Snapshot (weekly/monthly): for governance and compliance dashboards. Board report: monthly snapshot locked on the 1st of the month. Financial reports: numbers are frozen after the monthly close and do not change. Technology: scheduled snapshot with version locking. The number reported to the board never changes retroactively'"
+    weight: 0.35
+    description: "Tiers"
+  - type: llm_judge
+    criteria: "Response covers communicating freshness and handling stale data — freshness: 'Communicating data freshness: Every dashboard must answer: how fresh is this data? Methods: 1. Timestamp in the dashboard header: Data as of: Feb 27, 2026, 6:00 AM EST. This is the most common and clearest approach. 2. Relative time for real-time dashboards: Last updated: 45 seconds ago. For operational dashboards where recency matters second by second. 3. Freshness badge: a colored indicator. Green LIVE: real-time data (updated in last 5 minutes). Blue FRESH: updated within the expected refresh window. Yellow STALE: data is older than expected (refresh may have failed). Red ERROR: refresh failed, data is unreliable. Handling stale data: when a refresh fails, the dashboard should not silently show old data. Display a prominent warning: Data last updated 18 hours ago (expected: 6 hours ago). Numbers may not reflect recent activity. This prevents the viewer from making decisions based on stale data. Automatically notify the data team when a refresh fails: if the daily ETL does not complete by 7 AM, send an alert to the data engineering Slack channel. The executive dashboard should display normally by 7 AM — if it does not, something is wrong. For the finance board report: lock the data after the monthly close. Even if new data arrives, the board report for January shows January's numbers as calculated on February 1st. This prevents the CFO's numbers from shifting after they have been presented'"
+    weight: 0.35
+    description: "Freshness"
+  - type: llm_judge
+    criteria: "Explanation covers the cost-benefit of refresh frequencies — costbenefit: 'Cost-benefit of refresh frequency: Real-time infrastructure costs 10-50x more than daily batch: Daily batch ETL: one database query per day, simple scheduling, minimal infrastructure. Cost: $100-500/month. Hourly refresh: 24 queries per day, micro-batch pipeline, moderate infrastructure. Cost: $500-2,000/month. Real-time streaming: continuous processing, Kafka cluster, streaming database, CDC connectors. Cost: $5,000-20,000/month. Decision framework: calculate the cost of stale data. For the fraud team: a 5-minute delay in fraud detection costs $50K per incident. Real-time is justified — $20K/month in infrastructure prevents $600K in annual fraud losses. For the marketing team during a flash sale: a 1-hour delay means $10K in wasted ad spend on underperforming campaigns. 15-minute refresh during sales events costs $2K/month in infrastructure but saves $120K annually. For the finance team: daily vs monthly refresh has zero cost difference. But a number that changes after being presented to the board costs credibility — priceless. Monthly snapshots are the right choice. Rule of thumb: if the cost of stale data exceeds the cost of infrastructure, increase the refresh frequency. If the cost of stale data is zero (board report viewed once per month), do not over-invest in real-time. Match the investment to the business value'"
+    weight: 0.30
+    description: "CostBenefit"

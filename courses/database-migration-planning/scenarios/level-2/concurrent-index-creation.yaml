@@ -1,0 +1,38 @@
+meta:
+  id: concurrent-index-creation
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Create indexes without downtime — use CONCURRENTLY and understand the trade-offs of non-blocking index creation on large tables"
+  tags: [database, migration, index, concurrent, performance, intermediate]
+
+state: {}
+
+trigger: |
+  Your team needs to add an index on the "orders" table (15 million
+  rows) for a new search feature. The query:
+  SELECT * FROM orders WHERE customer_email = $1 ORDER BY created_at DESC;
+
+  Without an index, this query takes 8 seconds. With an index, it
+  should take under 50ms. The application is in production and cannot
+  tolerate downtime.
+
+  A developer writes the migration:
+  CREATE INDEX idx_orders_customer_email ON orders(customer_email, created_at DESC);
+
+  Task: Explain why this migration is dangerous for production and
+  how to create the index safely.
+
+assertions:
+  - type: llm_judge
+    criteria: "The danger of regular CREATE INDEX is explained — danger: 'CREATE INDEX without CONCURRENTLY acquires a SHARE lock on the table. While the index is being built: writes (INSERT, UPDATE, DELETE) are BLOCKED. Reads continue to work. For 15 million rows: index creation could take 2-10 minutes depending on column types, server resources, and concurrent load. During those 2-10 minutes: no new orders can be created, no orders can be updated, and no order statuses can change. For an e-commerce application, this means customers cannot place orders for minutes — which is effectively an outage. The fix: CREATE INDEX CONCURRENTLY. CREATE INDEX CONCURRENTLY idx_orders_customer_email ON orders(customer_email, created_at DESC); CONCURRENTLY builds the index without blocking writes. How it works: PostgreSQL scans the table once to build the initial index, then scans again to pick up any changes that happened during the first scan. This is safe for production because writes continue throughout the process'"
+    weight: 0.35
+    description: "Regular index danger"
+  - type: llm_judge
+    criteria: "CONCURRENTLY trade-offs and limitations are covered — trade-offs: '(1) Cannot run inside a transaction. Regular CREATE INDEX can be part of a migration transaction — if anything fails, the entire migration rolls back. CONCURRENTLY cannot be inside a transaction. If the index creation fails, you must clean up manually. Most migration tools wrap migrations in transactions by default. You must disable this for CONCURRENTLY migrations: in Knex: exports.up = (knex) => knex.raw(CREATE INDEX CONCURRENTLY...). In Rails: disable_ddl_transaction! in the migration file. In Flyway: some versions handle this automatically. (2) Takes longer. CONCURRENTLY requires two passes over the table instead of one. For 15 million rows: regular index might take 3 minutes. CONCURRENTLY might take 5-8 minutes. The extra time is the cost of not locking the table. (3) Can fail and leave an invalid index. If CONCURRENTLY fails (server crash, out of disk space, concurrent DDL), it may leave an invalid index. Check: SELECT * FROM pg_indexes WHERE indexname = idx_orders_customer_email; If the index exists but is marked as invalid: DROP INDEX idx_orders_customer_email; and retry. (4) Cannot run two CONCURRENTLY on the same table simultaneously. If another CONCURRENTLY index build is in progress on the orders table, yours will wait. Check for in-progress builds before starting. (5) Resource usage. CONCURRENTLY consumes CPU and I/O while building. Monitor server load during the build. If the server is already under heavy load, schedule the index build during off-peak hours'"
+    weight: 0.35
+    description: "Trade-offs"
+  - type: llm_judge
+    criteria: "Complete migration with verification is shown — complete migration: 'Migration: CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_orders_customer_email ON orders(customer_email, created_at DESC); IF NOT EXISTS: prevents errors if the index already exists (idempotent). Post-creation verification: (1) Verify the index was created and is valid: SELECT indexname, indexdef FROM pg_indexes WHERE tablename = orders AND indexname = idx_orders_customer_email; (2) Verify the query uses the index: EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_email = test@example.com ORDER BY created_at DESC LIMIT 10; Look for Index Scan using idx_orders_customer_email in the output. If you see Seq Scan instead, the planner is not using the index (possible reasons: statistics are stale, run ANALYZE orders). (3) Measure the performance improvement: before index: 8 seconds. After index: target under 50ms. If performance does not improve, the index design may be wrong. Rollback: DROP INDEX CONCURRENTLY idx_orders_customer_email; DROP INDEX also supports CONCURRENTLY (PostgreSQL 11+). Without CONCURRENTLY, DROP INDEX acquires an exclusive lock (blocking all reads and writes). With CONCURRENTLY, it drops without blocking'"
+    weight: 0.30
+    description: "Complete migration"

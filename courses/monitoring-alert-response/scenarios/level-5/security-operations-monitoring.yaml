@@ -1,0 +1,60 @@
+meta:
+  id: security-operations-monitoring
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Design security operations monitoring — build threat detection and security alerting that integrates with operational monitoring for unified defense"
+  tags: [monitoring, security, threat-detection, SecOps, SIEM, unified-operations, master]
+
+state: {}
+
+trigger: |
+  Your organization is merging its Security Operations Center (SOC)
+  and Site Reliability Engineering (SRE) monitoring under a unified
+  observability strategy. Currently:
+
+  Security monitoring:
+  - SIEM (Splunk) ingesting security logs ($150K/year)
+  - WAF alerts for web attacks
+  - IDS/IPS alerts for network threats
+  - Cloud security posture management (CSPM) alerts
+  - Security team reviews alerts 9-5 weekdays only
+  - 200+ security alert rules, many generating daily noise
+  - Security incidents are handled in a separate workflow from
+    operational incidents
+
+  Operational monitoring:
+  - Prometheus + Grafana for metrics
+  - Loki for operational logs
+  - PagerDuty for on-call (24/7 coverage)
+  - 400+ operational alert rules
+
+  Problems:
+  - Security and operational alerts have no correlation (a DDoS attack
+    looks like a traffic spike to ops, and a performance degradation
+    to security)
+  - The security team and SRE team have different incident response
+    processes
+  - After-hours security events are not detected until next morning
+  - A recent incident was both a security breach AND an operational
+    outage — it took 2 hours to realize the outage was caused by
+    an attack because the teams were investigating separately
+
+  Task: Design the unified security and operational monitoring
+  architecture. Address: alert correlation between security and
+  operational signals, unified incident response, and 24/7 coverage
+  for both security and operational events.
+
+assertions:
+  - type: llm_judge
+    criteria: "Unified architecture addresses the correlation gap — unified architecture: 'The core problem: security events and operational events are analyzed in isolation, but attacks often manifest as both. A DDoS attack is simultaneously a security threat and an availability incident. A compromised service is both a security breach and a source of anomalous behavior. Separation means delayed detection and fragmented response. Architecture: unified observability layer. Data sources (security): WAF logs, IDS/IPS alerts, authentication logs (failed logins, privilege escalations), cloud audit logs (API calls, configuration changes), CSPM findings, threat intelligence feeds. Data sources (operational): application metrics and logs, infrastructure metrics, distributed traces, deployment events, change management records. Unified correlation engine: both security and operational signals flow into a correlation engine that can: detect patterns spanning both domains (for example, a spike in failed authentication attempts + increased API latency + unusual traffic patterns = probable attack), enrich security alerts with operational context (the security alert about unusual API patterns coincides with a deployment 10 minutes ago — likely a false positive caused by a code change, not an attack), enrich operational alerts with security context (the traffic spike that looks like organic growth to ops actually comes from 3 IP addresses — likely a DDoS, not a scaling event). Implementation: retain Splunk for security-specific SIEM capabilities (compliance, forensics, threat hunting) but feed a subset of security signals into the operational Grafana stack for correlation. Use OpenTelemetry to normalize event formats across both domains. Build correlation dashboards in Grafana that show security and operational signals on the same timeline. Specific correlation rules: (1) Traffic anomaly + authentication failure spike → probable credential stuffing attack. (2) Deployment event + security alert → likely false positive, auto-suppress or downgrade. (3) Performance degradation + no deployment + unusual traffic pattern → probable DDoS or abuse. (4) Data access pattern anomaly + infrastructure change → probable compromised credential'"
+    weight: 0.35
+    description: "Unified architecture"
+  - type: llm_judge
+    criteria: "Unified incident response and 24/7 coverage designed — unified incident response: 'Combined incident classification: Operational incidents (O1-O4): availability, performance, functionality issues with no security component. Security incidents (S1-S4): confirmed or suspected security events with no operational impact. Hybrid incidents (H1-H4): events with both security and operational dimensions. Hybrid incidents are the most critical to handle well because they require coordination between security and operational responders. Unified incident response process: (1) Detection: any alert (security or operational) enters the unified triage process. The on-call engineer performs initial classification: operational, security, or hybrid. (2) For operational incidents: standard operational incident response (existing SRE process). Security team is notified at O1/O2 severity to rule out security component. (3) For security incidents: security incident response process engages. SRE team is notified to assess operational impact. (4) For hybrid incidents: both security and operational incident commanders are engaged. Joint war room (shared Slack channel). Security IC handles containment and investigation of the threat. Operational IC handles service restoration and customer communication. A single Incident Commander (either security or operational, depending on primary impact) coordinates overall response. 24/7 coverage model: current gap: security team only covers 9-5 weekdays. Option A (recommended): cross-train SRE on-call for Tier 1 security triage. SRE on-call is already 24/7. Train SRE engineers to handle initial triage of security alerts: is this a real security event or noise? If real: escalate to security on-call (who is now paged 24/7 for confirmed security events only). If noise: document and dismiss. This means the security team is only paged for confirmed events, not for the 200+ daily noisy alerts. Benefit: 24/7 security detection without requiring a dedicated 24/7 security on-call rotation. The SRE team handles the noise; the security team handles the real events. Option B (expensive): build a 24/7 SOC. Staff a 24/7 security operations center. Cost: 5-6 additional security analysts at $150K-200K each = $750K-1.2M/year. This is warranted only if the threat volume and business risk justify it. Recommendation: start with Option A, evolve to Option B if security event volume or regulatory requirements demand it'"
+    weight: 0.35
+    description: "Unified incident response"
+  - type: llm_judge
+    criteria: "Security alert quality and threat-informed monitoring addressed — security alert quality: 'Problem: 200+ security alert rules with significant daily noise. The same alert fatigue problem that plagues operational monitoring affects security monitoring, with a worse consequence: a missed security alert can mean an undetected breach. Security alert triage (same principles as operational): (1) Classify all 200 security alerts: keep (detects real, actionable threats), tune (useful but too noisy — adjust thresholds or add context), retire (stale rules, irrelevant to current architecture, or duplicated by other controls). Expected: 30-40% can be retired, 30% need tuning. (2) Prioritize by threat model. Not all security alerts are equal. Prioritize based on: business impact if the threat is real (data breach > defacement > reconnaissance), likelihood of the threat (common attack patterns > exotic theoretical attacks), detection alternatives (if another control also detects this, the alert is redundant). (3) Threat-informed alerting. Align security alerts with the MITRE ATT&CK framework. Map each alert to a specific technique or tactic. Identify coverage gaps: which MITRE techniques are not covered by any alert? Prioritize new alerts for the gaps that represent the highest risk to the business. This transforms security alerting from ad-hoc rule creation to systematic threat coverage. Integration with operational monitoring for enhanced detection: (1) Anomaly-based detection using operational data. Use operational baselines to detect security events. For example, a service that normally makes 10 database queries per request suddenly makes 1000 — this operational anomaly could indicate SQL injection or a compromised service. Operational monitoring already collects this data — adding security-informed analysis rules extends detection without new instrumentation. (2) Deployment-aware security alerting. Correlate security alerts with deployment events. If a security alert fires within 30 minutes of a deployment to the alerting service, it is likely a false positive caused by the code change. This context reduces security false positives by an estimated 20-30%. (3) User behavior analytics from operational data. Authentication patterns, API usage patterns, and data access patterns from operational logs can detect compromised accounts or insider threats. This does not require a separate data collection — it requires security analysis of data that already exists in operational monitoring'"
+    weight: 0.30
+    description: "Security alert quality"

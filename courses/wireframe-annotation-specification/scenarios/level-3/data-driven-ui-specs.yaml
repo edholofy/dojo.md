@@ -1,0 +1,44 @@
+meta:
+  id: data-driven-ui-specs
+  level: 3
+  course: wireframe-annotation-specification
+  type: output
+  description: "Data-driven UI specifications — specify interfaces that display dynamic data including dashboards, analytics, and data visualization components"
+  tags: [data-driven, dashboards, analytics, visualization, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "I'm specifying an analytics
+  dashboard that displays real-time business metrics. The
+  wireframe shows charts and numbers, but the developer
+  asks questions I can't answer:
+
+  - 'What API endpoint provides this data?'
+  - 'How often does the data refresh? On page load only?'
+  - 'The chart shows 7 data points — is this always 7 days?
+    What if the user selects a different date range?'
+  - 'The number shows $45,230 — what decimal precision?
+    What currency? What if it's negative?'
+  - 'What if the API returns no data for a time period?'
+  - 'Does the chart animate when data updates?'
+
+  I'm a designer, not a data engineer. How much technical
+  detail should my specifications include?"
+
+  Task: Write data-driven UI specifications for an analytics
+  dashboard that bridges design and data requirements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies data display requirements clearly — for each metric/widget: data source reference (endpoint or data model, designer doesn't need exact API path but should reference: 'Revenue data from sales analytics service'), display format (currency: $45,230.00 with locale formatting, use user's currency preference, negative values in red with parentheses), number formatting rules (abbreviation: $1.2M for millions, $45.2K for thousands, full number below $1,000), date range behavior (default: last 7 days, options: 7/30/90 days and custom range, chart data points adapt to selected range), and refresh behavior (auto-refresh every 60 seconds, manual refresh button, show 'Last updated: 2:34 PM' timestamp)"
+    weight: 0.35
+    description: "DataDisplaySpecs"
+  - type: llm_judge
+    criteria: "Response covers chart specifications and empty/error states — chart specs: chart type (line chart for trends, bar chart for comparisons), axis labels and formatting (X: dates, Y: currency), tooltip on hover (show exact value + date), animation on data load (draw-in animation, 500ms), data point limits (max 90 data points, aggregate for larger ranges). Empty data: no data for period ('No data available for this date range. Try selecting a different period.'), partial data (show available data points, gap in chart line for missing periods with dashed line connecting). Error states: data load failure (show last known data with 'Unable to refresh. Showing data from 10 min ago. Retry' banner), individual widget failure (other widgets still work, failed widget shows error with retry)"
+    weight: 0.35
+    description: "ChartEmptyErrorStates"
+  - type: llm_judge
+    criteria: "Response addresses the designer-developer data collaboration — what designers should specify (data format, display rules, update frequency, empty/error states, user interactions with data) vs what developers determine (API endpoints, query optimization, caching strategy). Data specification template: Widget name → Data description → Display format → Update frequency → Date range behavior → Empty state → Error state → Interaction (hover, click, drill-down). Includes guidance on how designers and developers should collaborate on data specs (pre-design data review meeting, API contract shared before wireframing, mock data for design that reflects real data ranges)"
+    weight: 0.30
+    description: "DesignerDevCollaboration"

@@ -1,0 +1,44 @@
+meta:
+  id: search-and-filter-specs
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Search and filter specifications — write detailed specs for search functionality, filter systems, and faceted navigation"
+  tags: [search, filters, facets, autocomplete, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I'm specifying the search
+  and filter system for our marketplace. It has:
+
+  - Global search bar (searches across products, sellers,
+    categories)
+  - Category filter (multi-select checkboxes)
+  - Price range filter (min/max inputs or slider)
+  - Rating filter (star rating selector)
+  - Availability filter (in stock / out of stock toggle)
+  - Sort by (relevance, price low-high, price high-low,
+    newest, best rated)
+
+  I designed the visual layout but the developer wants to
+  know: 'What happens on every interaction? When do results
+  update? What's the URL state? How does search work with
+  filters?' This is more complex than I realized."
+
+  Task: Write complete specifications for the search and
+  filter system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies search behavior comprehensively — search input: auto-suggest after 2 characters (debounce 300ms), show up to 8 suggestions grouped by type (Products, Sellers, Categories), keyboard navigation (arrow keys to select, Enter to search or select suggestion, Escape to dismiss), search execution (Enter or click search icon), results page (URL: /search?q=query, highlight matching text in results). Search scope: global search searches product name, description, category, seller name. Empty search: show trending searches or recent searches. No results: 'No results for \"xyz\". Try different keywords or browse categories.' with category links. Search history: show recent searches on focus, clear individual or all history"
+    weight: 0.35
+    description: "SearchBehavior"
+  - type: llm_judge
+    criteria: "Response specifies filter behavior and interaction — when filters apply (immediately on change — live filtering, or with an 'Apply' button — batch filtering? Recommends one with rationale), filter combinations (AND between categories: price AND rating, OR within category: blue OR red), active filter display (filter chips below search showing active filters with X to remove), URL state (all filters encoded in URL: /search?q=shoes&category=running&minPrice=50&maxPrice=200&rating=4 — for bookmarking and sharing), filter counts (show result count per filter option: 'Running (45)', update counts when other filters change). Price range: min/max inputs with validation (min can't exceed max), slider with histogram showing price distribution"
+    weight: 0.35
+    description: "FilterBehavior"
+  - type: llm_judge
+    criteria: "Response covers sort, clear, and edge cases — sort: default order (relevance when searching, newest when browsing), sort persists across filter changes, URL parameter (&sort=price-asc). Clear all filters: 'Clear all' button resets all filters and sort to defaults, preserves search query. Combined state edge cases: filter + search yields 0 results (show 'No products match your filters. Clear some filters or try a different search.'), applying filter that would show 0 results (either prevent it with disabled state and '0 results' count, or show empty state with suggestion to adjust). Loading behavior: skeleton results while filtering, results count updates immediately"
+    weight: 0.30
+    description: "SortClearEdgeCases"

@@ -1,0 +1,42 @@
+meta:
+  id: writing-for-audience
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Write for your audience — adapt RFC content for different readers including engineers, managers, and executives who all need different information"
+  tags: [RFC, audience, communication, clarity, stakeholders, beginner]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to migrate from a monolithic database to a
+  microservices architecture with separate databases. The RFC will be
+  read by:
+
+  1. Engineers: want technical details (schemas, migration scripts,
+     rollback plans)
+  2. Engineering manager: wants timeline, risk, resource requirements
+  3. VP of Engineering: wants business impact, cost, strategic alignment
+  4. Product manager: wants feature impact and customer-facing changes
+
+  Your first draft is 15 pages of dense technical detail. Engineers
+  love it but the VP says "I can't tell if this is a good idea."
+
+  Task: Rewrite the RFC so it serves all four audiences. Show how to
+  layer information so each reader finds what they need. Include: the
+  executive summary, the management overview, and how the technical
+  detail is structured for engineers without overwhelming others.
+
+assertions:
+  - type: llm_judge
+    criteria: "Executive summary speaks business language — 2-3 paragraphs maximum. No jargon. Focus: 'We propose splitting our single database into service-specific databases to improve reliability, reduce outage blast radius, and enable independent team deployment. This reduces our worst-case outage from total application failure to single-feature degradation.' Cost: 'The migration requires 3 engineers for 8 weeks, with $X/month additional infrastructure cost offset by $Y/month in reduced incident response.' Risk: 'The primary risk is data inconsistency during migration, mitigated by a phased rollout over 4 weeks.' Strategic: 'This aligns with our platform strategy of independent team ownership and enables the Q3 feature roadmap.' A VP should be able to decide 'approve' or 'needs discussion' from this alone"
+    weight: 0.35
+    description: "Executive summary"
+  - type: llm_judge
+    criteria: "Information is layered for progressive depth — layer 1 (everyone reads): summary + problem statement + recommendation (1 page). Layer 2 (managers read): timeline, resources, risks, success metrics (1 page). Layer 3 (engineers read): technical design, data model, migration plan, API changes (5-8 pages). Layer 4 (appendices): detailed schemas, benchmark data, migration scripts (reference only). Navigation: clear headings, table of contents, 'skip to' links. Each layer references but doesn't repeat the others. The manager can stop after layer 2 and understand enough to make resource decisions. Engineers skip to layer 3 for implementation details. No reader has to wade through content intended for a different audience"
+    weight: 0.35
+    description: "Layered information"
+  - type: llm_judge
+    criteria: "Product manager's concerns are specifically addressed — section or callout: 'Impact on Product and Customers.' During migration: 'Users will experience zero downtime. Feature X will have a 24-hour read-only period during data migration (scheduled for low-traffic window).' After migration: 'No customer-facing changes. API contracts remain identical. Internal service boundaries change but external interfaces are preserved.' Feature enablement: 'This migration unblocks: independent feature deployment (features ship without coordinating with other teams), per-service scaling (analytics service can scale independently during report generation), and improved incident isolation (payments outage no longer affects search).' Timeline impact: 'Feature Y is blocked until this migration completes. Feature Z is unaffected.' Product manager should know: what breaks, what improves, and how it affects the roadmap"
+    weight: 0.30
+    description: "Product manager focus"

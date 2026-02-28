@@ -1,0 +1,39 @@
+meta:
+  id: normalization-introduction
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Introduction to normalization — understand why and how to scale numeric data to a common range for analysis and modeling"
+  tags: [normalization, scaling, min-max, z-score, basics]
+
+state: {}
+
+trigger: |
+  A data science student says: "I'm building my first machine learning
+  model to predict customer churn. My features include:
+  - Monthly revenue: ranges from $10 to $50,000
+  - Number of logins: ranges from 0 to 500
+  - Account age in days: ranges from 1 to 3,650
+  - NPS score: ranges from -100 to 100
+
+  My instructor says I need to 'normalize' the data before feeding it
+  into the model. What does normalization mean? Why do I need it? And
+  what are the main methods?"
+
+  Task: Explain data normalization, why it's necessary for many analyses
+  and ML models, and introduce the main normalization methods with
+  guidance on when to use each.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why normalization is necessary — features with larger ranges dominate distance-based calculations (the $50,000 revenue range drowns out the 0-500 login range), many ML algorithms (k-means, KNN, SVM, neural networks, gradient descent-based) are sensitive to feature scales, normalization ensures all features contribute proportionally, and some algorithms (tree-based like random forest, decision trees) don't need normalization. Provides concrete examples of how unnormalized data produces incorrect results"
+    weight: 0.35
+    description: "WhyNormalize"
+  - type: llm_judge
+    criteria: "Response explains the main normalization methods — Min-Max scaling (rescales to [0,1] or [a,b], formula: (x - min) / (max - min), preserves distribution shape, sensitive to outliers), Z-score/Standard scaling (centers to mean 0 and std 1, formula: (x - mean) / std, handles outliers better than min-max, result is unbounded), and briefly mentions other approaches like log transformation (for highly skewed data) and robust scaling (using median and IQR instead of mean and std). Provides examples applying each to the given features"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response provides guidance on choosing the right method — min-max when you need bounded values (0-1) and data has no extreme outliers, z-score when data is approximately normally distributed or you want to preserve outliers' relative distances, log transformation for heavily right-skewed data like revenue, and the critical rule: fit the scaler on training data only, then apply the same transformation to test data (data leakage prevention)"
+    weight: 0.30
+    description: "Choosing"

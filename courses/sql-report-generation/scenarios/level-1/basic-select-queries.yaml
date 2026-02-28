@@ -1,0 +1,33 @@
+meta:
+  id: basic-select-queries
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Write basic SELECT queries — retrieve specific columns, filter rows with WHERE, and sort results for simple business reports"
+  tags: [SQL, SELECT, WHERE, ORDER-BY, basics, beginner]
+
+state: {}
+
+trigger: |
+  Your manager asks: "Can you pull a list of all customers who signed
+  up this month, sorted by signup date? I need their name, email, and
+  plan type."
+
+  Table: customers (customer_id, first_name, last_name, email,
+  plan_type, signup_date, city, state, is_active)
+
+  Task: Write the query and explain each clause.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly uses SELECT, WHERE, and ORDER BY with proper filtering — query: 'Basic SELECT query: SELECT first_name, last_name, email, plan_type, signup_date FROM customers WHERE signup_date >= '2024-10-01' AND signup_date < '2024-11-01' AND is_active = true ORDER BY signup_date ASC; Breaking down each clause: SELECT — specifies which columns to return. Only request the columns you need, not SELECT * (which returns everything and is slower). FROM — specifies the table to query. WHERE — filters rows. Only rows matching ALL conditions are returned. AND means both conditions must be true. OR means either condition can be true. ORDER BY — sorts the results. ASC is ascending (default), DESC is descending. Why signup_date >= and < instead of BETWEEN: BETWEEN '2024-10-01' AND '2024-10-31' might miss signups on October 31 after midnight if the column includes time. The >= start AND < next_month pattern is safer for date ranges'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers column selection, filtering patterns, and sorting — explanation: 'Column selection best practices: always list specific columns instead of SELECT *. SELECT * is bad for reports because: it returns unnecessary data (slower), column order may change if the table is altered, it makes the query intent unclear to readers. Common WHERE patterns for reports: text filtering — WHERE state = 'CA' (exact match), WHERE email LIKE '%@gmail.com' (pattern match). Numeric filtering — WHERE amount > 100, WHERE quantity BETWEEN 1 AND 10. NULL handling — WHERE phone IS NOT NULL (never use = NULL, it does not work). Date filtering — WHERE signup_date >= CURRENT_DATE - INTERVAL '30 days'. Multiple conditions — WHERE plan_type = 'premium' AND state = 'CA', WHERE plan_type IN ('basic', 'premium'). ORDER BY for reports: ORDER BY signup_date DESC — most recent first (common for activity reports). ORDER BY last_name ASC, first_name ASC — alphabetical. ORDER BY amount DESC LIMIT 10 — top 10 by amount. LIMIT restricts the number of rows returned — essential for previewing large result sets'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response includes practical report formatting tips — formatting: 'Report formatting with SQL: Column aliases for readable headers: SELECT first_name AS \"First Name\", last_name AS \"Last Name\", email AS \"Email Address\", plan_type AS \"Plan\", signup_date AS \"Signed Up\" FROM customers. Use double quotes for aliases with spaces. Concatenation for combined columns: PostgreSQL: SELECT first_name || ' ' || last_name AS full_name. MySQL: SELECT CONCAT(first_name, ' ', last_name) AS full_name. SQL Server: SELECT first_name + ' ' + last_name AS full_name. Date formatting: PostgreSQL: TO_CHAR(signup_date, 'Mon DD, YYYY'). MySQL: DATE_FORMAT(signup_date, '%b %d, %Y'). SQL Server: FORMAT(signup_date, 'MMM dd, yyyy'). These make the raw SQL output more presentable when exported to CSV or pasted into a report'"
+    weight: 0.30
+    description: "Formatting"

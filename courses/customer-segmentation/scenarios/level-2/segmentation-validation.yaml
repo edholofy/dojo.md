@@ -1,0 +1,38 @@
+meta:
+  id: segmentation-validation
+  level: 2
+  course: customer-segmentation
+  type: output
+  description: "Segmentation validation — learn how to validate that your segments are meaningful, stable, and actionable before rolling them out"
+  tags: [validation, testing, quality, stability, intermediate]
+
+state: {}
+
+trigger: |
+  A data scientist says: "I've built a customer segmentation using
+  k-means with 5 clusters. The silhouette score looks decent (0.42)
+  and the clusters seem visually separated in a t-SNE plot. But
+  before I present this to the business, I want to validate that
+  these segments are actually meaningful and not just statistical
+  artifacts.
+
+  How do I validate a segmentation? What tests should I run? And
+  what would make me reject a segmentation and start over?"
+
+  Task: Explain how to validate a customer segmentation using both
+  statistical and business criteria, including when to reject a
+  segmentation and iterate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers statistical validation — silhouette score interpretation (>0.5 is good, 0.25-0.5 is reasonable, <0.25 is weak), checking cluster sizes (no cluster should be <5% of the base or >50%), examining intra-cluster vs inter-cluster distances, testing sensitivity to initialization (do you get similar clusters with different random seeds?), comparing against alternative k values, and checking for features that don't contribute to separation"
+    weight: 0.35
+    description: "StatisticalValidation"
+  - type: llm_judge
+    criteria: "Response covers business validation — do segments differ meaningfully on key business metrics (conversion rates, churn rates, ARPU, NPS)? Are segments interpretable (can you explain what makes each segment different in plain language)? Are segments actionable (can you do something different for each segment)? Are segments stable over time (do they persist month-to-month or completely reshuffle)? Are segments identifiable (can you classify new customers into segments with available data)?"
+    weight: 0.35
+    description: "BusinessValidation"
+  - type: llm_judge
+    criteria: "Response explains when to reject and iterate — segments that are not statistically distinct (overlapping significantly), segments that don't differ on business-relevant metrics (all segments have the same churn rate), unstable segments (>30% of customers change segments monthly), unequal sizes that make segments impractical, segments that are driven by a single dominant feature (suggesting the clustering is just sorting by one variable), and segments that domain experts say don't represent real customer types"
+    weight: 0.30
+    description: "RejectionCriteria"

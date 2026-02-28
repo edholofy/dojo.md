@@ -1,0 +1,45 @@
+meta:
+  id: first-report-shift
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "First report shift — handle a morning of ad-hoc SQL report requests combining basic querying skills"
+  tags: [SQL, shift-simulation, reporting, ad-hoc, beginner]
+
+state: {}
+
+trigger: |
+  It's your first day as a junior data analyst. Your inbox has 4
+  urgent requests:
+
+  Request 1 (from CEO, 8:00 AM): "How did we do yesterday? Give me
+  total orders, revenue, and unique customers."
+
+  Request 2 (from Sales Manager, 8:30 AM): "List all orders over
+  $1,000 from this week, sorted by amount. Include customer name."
+
+  Request 3 (from Marketing, 9:00 AM): "How many customers signed
+  up each day this week? Break it down by plan type."
+
+  Request 4 (from Finance, 9:30 AM): "Show me the top 5 customers
+  by total spending this quarter with their email addresses."
+
+  Tables: customers (customer_id, first_name, last_name, email,
+  plan_type, signup_date), orders (order_id, customer_id, amount,
+  order_date, status)
+
+  Task: Write all four queries, prioritizing the CEO's request first.
+
+assertions:
+  - type: llm_judge
+    criteria: "All four queries are correct and demonstrate basic SQL skills — queries: 'Morning report queries: Request 1 — CEO daily summary (highest priority): SELECT COUNT(*) AS total_orders, COUNT(DISTINCT customer_id) AS unique_customers, SUM(amount) AS total_revenue, ROUND(AVG(amount), 2) AS avg_order_value FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day' AND status = 'completed'. Quick, simple, answers the exact question. The CEO does not want 20 columns — just the 4 numbers they asked for. Request 2 — Sales high-value orders: SELECT o.order_id, c.first_name || ' ' || c.last_name AS customer_name, o.amount, o.order_date, o.status FROM orders o INNER JOIN customers c ON o.customer_id = c.customer_id WHERE o.amount > 1000 AND o.order_date >= DATE_TRUNC('week', CURRENT_DATE) ORDER BY o.amount DESC. Uses JOIN to include customer name. Sorted by amount descending so the biggest orders are first. Request 3 — Marketing signup breakdown: SELECT signup_date, plan_type, COUNT(*) AS signups FROM customers WHERE signup_date >= DATE_TRUNC('week', CURRENT_DATE) GROUP BY signup_date, plan_type ORDER BY signup_date, plan_type. Two-dimensional GROUP BY: day and plan type. Shows patterns like: are more people signing up for free on weekdays? Request 4 — Finance top customers: SELECT c.first_name || ' ' || c.last_name AS customer_name, c.email, COUNT(o.order_id) AS total_orders, SUM(o.amount) AS total_spent FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY c.customer_id, c.first_name, c.last_name, c.email ORDER BY total_spent DESC LIMIT 5'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Response demonstrates prioritization and stakeholder communication — communication: 'Handling ad-hoc requests: Prioritization: CEO request first (most senior stakeholder, needs it for morning meeting). Finance next (quarter numbers are time-sensitive). Sales (useful but not blocking a decision). Marketing (informational, can wait an hour). Stakeholder communication: reply to each requester when their query is done. Include the query so they can re-run it themselves next time. Offer to set up a recurring report if they need this regularly. For the CEO: send the numbers in a clean format, not raw SQL output. Total Orders: 342. Unique Customers: 287. Total Revenue: $47,823. Average Order: $139.83. Compare to yesterday if you have the data — the CEO will ask follow-up questions. Building reusable queries: save each query with a descriptive comment. Add date parameters so they work for any date range. Create a folder structure: daily_reports/, weekly_reports/, ad_hoc/. When the same request comes again (and it will), you have the query ready. Common follow-up questions to anticipate: CEO: how does this compare to last week? Same day last month? Sales: who are these high-value customers? Are they new or returning? Marketing: what is the conversion rate from free to paid? Finance: what is the trend — are these top customers spending more or less than last quarter?'"
+    weight: 0.35
+    description: "Communication"
+  - type: llm_judge
+    criteria: "Response covers query validation and result checking — validation: 'Validating your results: Before sending any report, sanity-check the numbers: Row count: does the number of rows make sense? If yesterday had 342 orders but you expected around 300-400, that is reasonable. If it shows 3 or 30,000 — something is wrong. Total revenue: does $47,823 for one day make sense for the business? If the company typically does $40-60K per day, this is plausible. NULL check: are there NULL values in columns that should not have them? SELECT COUNT(*) FROM orders WHERE amount IS NULL. If aggregate functions return NULL, it usually means zero matching rows — verify your WHERE clause. Duplicate check: SELECT order_id, COUNT(*) FROM orders GROUP BY order_id HAVING COUNT(*) > 1. If the same order appears twice, your JOIN might be creating duplicates (check for one-to-many relationships). Quick validation query: SELECT COUNT(*) AS rows, COUNT(DISTINCT order_id) AS unique_orders, MIN(order_date) AS earliest, MAX(order_date) AS latest FROM orders WHERE order_date = CURRENT_DATE - INTERVAL '1 day'. If rows does not equal unique_orders, you have duplicate order_ids. If earliest and latest are not both yesterday, your date filter is wrong'"
+    weight: 0.30
+    description: "Validation"

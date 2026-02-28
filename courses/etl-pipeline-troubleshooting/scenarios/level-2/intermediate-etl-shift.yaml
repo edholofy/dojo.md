@@ -1,0 +1,51 @@
+meta:
+  id: intermediate-etl-shift
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Intermediate ETL troubleshooting shift — handle a complex on-call scenario with interrelated pipeline failures requiring deeper analysis"
+  tags: [shift, combined, on-call, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're the on-call data engineer and multiple pipelines failed
+  over the weekend. After initial investigation, you realize the
+  failures are related:
+
+  Saturday 2 AM: The source database had a maintenance window that
+  wasn't communicated. During this 4-hour window:
+
+  Pipeline 1 — order_sync: Extracted partial data (only 6,000 of
+  the expected 25,000 daily orders) before the connection dropped.
+  The pipeline loaded the 6,000 records and marked Saturday as
+  "complete." Sunday's incremental load used Saturday's watermark,
+  so 19,000 orders from Saturday are now missing.
+
+  Pipeline 2 — customer_updates: Failed entirely with connection
+  timeout. Since it uses INSERT (not UPSERT), Sunday's run
+  succeeded but now Saturday's customer updates are missing.
+  12 customers changed their addresses on Saturday.
+
+  Pipeline 3 — daily_analytics: Ran successfully using the
+  incomplete order data from Pipeline 1. The weekend analytics
+  report sent to leadership shows Saturday revenue at $180K
+  instead of the actual ~$750K.
+
+  Task: Design a recovery plan that restores all missing data,
+  corrects the analytics, and prevents this cascading failure
+  pattern from recurring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a complete recovery plan — for order_sync: re-extract Saturday's orders using a full extract for that date range (not incremental), UPSERT to avoid duplicating the 6,000 already loaded, verify the count matches expected ~25,000. For customer_updates: re-extract Saturday's changes, apply the 12 address updates. For daily_analytics: rebuild Saturday's analytics after the order data is restored, re-send the corrected report to leadership with an explanation. Orders the recovery correctly (fix source data before rebuilding analytics)"
+    weight: 0.35
+    description: "RecoveryPlan"
+  - type: llm_judge
+    criteria: "Response identifies the cascading failure pattern — partial data loaded and marked as complete caused downstream pipelines to use bad data, the incremental watermark advanced past the missing records making them permanently invisible to future runs. Explains why each pipeline's design made this worse: order_sync loaded partial data without validation (should have checked record count), customer_updates used INSERT instead of UPSERT (not idempotent), daily_analytics didn't validate its inputs (should have checked if upstream data was complete)"
+    weight: 0.35
+    description: "RootCause"
+  - type: llm_judge
+    criteria: "Response provides prevention measures — quality gates that detect abnormally low record counts (6,000 vs expected 25,000 should trigger a failure, not a successful load), pipeline dependencies that check upstream pipeline health before running (analytics shouldn't run if order_sync failed or had anomalies), source system maintenance calendar integration (known maintenance windows should pause dependent pipelines), idempotent pipeline design throughout (UPSERT instead of INSERT), and a backfill runbook documenting how to recover from each common failure scenario"
+    weight: 0.30
+    description: "Prevention"

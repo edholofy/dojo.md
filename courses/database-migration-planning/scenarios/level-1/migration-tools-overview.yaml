@@ -1,0 +1,40 @@
+meta:
+  id: migration-tools-overview
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Understand migration tools — compare common database migration tools and understand when to use each one"
+  tags: [database, migration, tools, Flyway, Liquibase, Prisma, beginner]
+
+state: {}
+
+trigger: |
+  Your team is starting a new project and needs to choose a database
+  migration tool. The tech lead asks you to research the options and
+  present a summary. The project uses:
+
+  - Backend: Node.js with TypeScript
+  - Database: PostgreSQL
+  - ORM: considering Prisma or raw SQL
+
+  The tech lead says: "I've heard of Flyway, Liquibase, Prisma
+  Migrate, and Knex migrations. What are the differences and which
+  should we use?"
+
+  Task: Compare the migration tools and recommend one for this
+  project. Explain the key differences in a way a junior developer
+  can understand.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tool comparison covers key differences — comparison: 'Flyway: SQL-based migration tool. Migrations are plain SQL files. Language-agnostic (works with any backend language). Versioned migration files (V1__create_users.sql, V2__add_email.sql). Strengths: simple, mature, widely used in Java/JVM ecosystems. Weakness for this project: not native to the Node.js ecosystem, requires separate installation. Liquibase: XML/YAML/JSON/SQL migration tool. Supports multiple migration formats (XML for database-agnostic, SQL for database-specific). More features than Flyway (diffing, rollback generation, change tracking). Strengths: very flexible, enterprise-grade, database-agnostic migrations. Weakness for this project: complex for a Node.js project, XML migrations feel heavy, not native to the ecosystem. Knex.js migrations: JavaScript/TypeScript migration tool built into the Knex query builder. Migrations are JS/TS files with up() and down() functions. Integrated with Knex query builder (can use Knex API or raw SQL). Strengths: native to Node.js, TypeScript support, lightweight. Weakness: Knex is a query builder, not a full ORM. If you choose Prisma as your ORM, having Knex just for migrations is redundant. Prisma Migrate: TypeScript migration tool built into the Prisma ORM. Migrations are generated from the Prisma schema file. You define your schema in schema.prisma, and Prisma generates the SQL migration. Strengths: fully integrated with Prisma ORM, TypeScript-native, generates migrations automatically from schema changes, excellent developer experience. Weakness: tightly coupled to Prisma (if you switch ORMs, migrations do not transfer)'"
+    weight: 0.35
+    description: "Tool comparison"
+  - type: llm_judge
+    criteria: "Recommendation is justified for the specific project — recommendation: 'For this project (Node.js, TypeScript, PostgreSQL, considering Prisma): if you use Prisma as your ORM: use Prisma Migrate. The integration is seamless — you define your schema in one place (schema.prisma) and Prisma generates the migration SQL. The workflow: edit schema.prisma → run prisma migrate dev → Prisma generates the SQL migration and applies it. You get TypeScript-native tooling, automatic migration generation, and the migration files are plain SQL (you can review and modify them). If you use raw SQL (no ORM): use Knex migrations. Knex gives you a lightweight migration system with TypeScript support. You write migrations as TypeScript files and can use either the Knex query builder API or raw SQL. The workflow: create a migration file → write up() and down() → run knex migrate:latest. Flyway and Liquibase are not recommended for this project because they are not native to the Node.js ecosystem. They add operational complexity (separate Java installation) without significant benefit for a Node.js project. They are better choices for Java/Spring projects'"
+    weight: 0.35
+    description: "Justified recommendation"
+  - type: llm_judge
+    criteria: "Key concepts about migration tools are explained — key concepts: '(1) Migration tracking: all migration tools maintain a tracking table in your database (often called schema_migrations, flyway_schema_history, or _prisma_migrations). This table records which migrations have been applied. When you run migrations, the tool checks this table and only runs migrations that have not been applied yet. (2) Migration ordering: migrations run in order (usually by timestamp or version number). This ensures changes happen in the correct sequence — you cannot add a foreign key before the referenced table exists. (3) Migration environments: the same migration files run in all environments (development, staging, production). This ensures all environments have the same schema. The migration tool is run as part of the deployment process. (4) Idempotency: running migrations multiple times should be safe. The tracking table prevents re-running already-applied migrations. This means you can safely run migrate during every deployment without worrying about duplicate changes'"
+    weight: 0.30
+    description: "Key concepts"

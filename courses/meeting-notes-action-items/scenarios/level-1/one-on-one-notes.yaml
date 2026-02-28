@@ -1,0 +1,48 @@
+meta:
+  id: one-on-one-notes
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "One-on-one meeting notes — document a manager-report 1:1 meeting covering performance, goals, blockers, and personal development"
+  tags: [one-on-one, 1:1, manager, feedback, beginner]
+
+state: {}
+
+trigger: |
+  You just had a 30-minute 1:1 with your direct report,
+  Alex. Here's what was discussed:
+
+  - Alex is feeling overwhelmed with the current sprint.
+    Has 3 tickets assigned but 2 of them have unclear
+    requirements from the product team.
+  - Alex completed the API migration ahead of schedule —
+    you praised the work and noted it for the upcoming
+    performance review.
+  - Alex wants to learn more about system design — asked
+    about attending a conference in March (cost: $800).
+  - You discussed the upcoming team lead role — Alex is
+    interested but nervous about managing people. You
+    suggested shadowing the current team lead, Jordan,
+    for 2 weeks.
+  - Alex mentioned some tension with a coworker (Sam) over
+    code review feedback style — Alex feels Sam's reviews
+    are unnecessarily harsh. You agreed to observe and
+    potentially mediate.
+  - Next review cycle is in 6 weeks — you both agreed to
+    set 2 specific goals by next 1:1.
+
+  Task: Create properly formatted 1:1 meeting notes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates appropriate 1:1 notes — note structure (organizes the 1:1 effectively: meeting header — 1:1 Meeting with Alex, date, duration; the notes cover the key 1:1 categories: current work status, wins and recognition, professional development, career growth, interpersonal concerns, and action items; the tone is appropriate for 1:1 notes — more personal and supportive than formal meeting minutes; sensitive topics are documented carefully), content coverage (captures all discussion points: current work — sprint overwhelm, 2 tickets with unclear requirements; recognition — API migration completed ahead of schedule, noted for performance review; development — interest in system design, conference request ($800); career — interest in team lead role, suggested shadowing Jordan; interpersonal — tension with Sam over code review style; goals — 2 specific goals to be set by next 1:1; review cycle in 6 weeks; each topic is documented with enough context to be useful at the next 1:1)."
+    weight: 0.35
+    description: "OneOnOneStructure"
+  - type: llm_judge
+    criteria: "Response handles action items and sensitive content — action items (extracts clear next steps for both parties: manager actions — observe Sam's code review interactions, potentially mediate; approve or escalate conference request ($800); note API migration success in performance review; Alex's actions — discuss unclear ticket requirements with product team; shadow Jordan for 2 weeks (pending arrangement); prepare 2 specific goals for next 1:1; the action items distinguish between manager actions and report actions), sensitivity handling (handles the interpersonal tension appropriately: the Sam situation is documented factually — Alex's perception that reviews are harsh; the manager's response is noted — will observe and potentially mediate; the notes don't take sides or use inflammatory language; this documentation could be referenced later if the situation escalates; the emotional context — Alex feeling overwhelmed — is noted without being dismissive)."
+    weight: 0.35
+    description: "ActionsAndSensitivity"
+  - type: llm_judge
+    criteria: "Response creates continuity for future 1:1s — follow-up tracking (the notes set up the next 1:1 effectively: items to follow up on are clearly marked: sprint overwhelm resolution, Sam situation, conference decision, shadowing arrangement, goal setting; the notes reference the upcoming performance review timeline — 6 weeks; wins are documented in a way that can be referenced in the review; the format supports ongoing 1:1 continuity — each meeting can reference and update items from previous meetings)."
+    weight: 0.30
+    description: "ContinuityTracking"

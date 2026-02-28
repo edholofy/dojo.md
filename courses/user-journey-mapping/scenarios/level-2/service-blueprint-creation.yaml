@@ -1,0 +1,72 @@
+meta:
+  id: service-blueprint-creation
+  level: 2
+  course: user-journey-mapping
+  type: output
+  description: "Service blueprint creation — map both customer-facing and behind-the-scenes processes"
+  tags: [service-blueprint, backstage, frontstage, systems, intermediate]
+
+state: {}
+
+trigger: |
+  You're a service designer at a hotel chain. Guest
+  satisfaction scores for check-in are 2.9/5, the lowest
+  of any touchpoint. Management blames the front desk
+  staff, but you suspect systemic issues.
+
+  From observation and staff interviews, here's what
+  happens when a guest arrives:
+
+  Customer actions (frontstage):
+  - Arrives at hotel, enters lobby
+  - Waits in line (avg 12 minutes)
+  - Gives name to front desk agent
+  - Shows ID and credit card
+  - Receives room assignment and key cards
+  - Gets directions to room (verbal only)
+  - Walks to room, often gets lost in the hallway layout
+
+  Frontstage employee actions:
+  - Greets guest, asks for name
+  - Searches reservation in the PMS (property management
+    system) — takes 2-3 minutes because of slow software
+  - Manually verifies ID matches reservation
+  - Runs credit card authorization (sometimes declines,
+    causing embarrassment)
+  - Manually assigns room from available inventory
+  - Programs key cards (machine jams 1 in 10 times)
+  - Gives verbal directions to the room
+
+  Backstage processes:
+  - Housekeeping marks rooms clean in a different system
+    that doesn't sync with PMS in real-time (15-min delay)
+  - Revenue management may have overbooked, front desk
+    discovers at check-in
+  - IT maintains the PMS but it's 8 years old with no
+    budget for replacement
+  - Night audit reconciles systems manually every night
+
+  Support processes:
+  - PMS hosted on-premise with frequent slowdowns at peak
+    check-in times (4-6pm)
+  - Key card system is from a different vendor, requires
+    separate login
+  - Guest preferences from loyalty program stored in a
+    third system
+
+  Task: Create a service blueprint for the hotel check-in
+  experience.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a proper service blueprint with all lanes — customer actions lane (the guest's visible experience: arrive, wait in line, give name, show ID/CC, receive room and keys, get directions, find room), frontstage employee actions lane (what the desk agent does that the guest can see: greet, search PMS, verify ID, run credit card, assign room, program keys, give directions), backstage employee actions lane (processes the guest doesn't see: housekeeping updating room status, revenue management overbooking decisions, night audit manual reconciliation), support processes lane (systems and infrastructure: PMS on-premise server with peak-time slowdowns, separate key card vendor system, loyalty program in third system, housekeeping system with 15-min sync delay), line of interaction (between customer and frontstage — marks where the guest directly engages with staff), line of visibility (between frontstage and backstage — marks what the guest can and cannot see), line of internal interaction (between backstage and support processes — marks where human processes depend on system infrastructure)."
+    weight: 0.35
+    description: "ServiceBlueprintStructure"
+  - type: llm_judge
+    criteria: "Response reveals systemic failures through the blueprint — the real problem isn't staff (the blueprint makes visible that the front desk agent is fighting systemic issues: a slow 8-year-old PMS, a separate key card system requiring different login, room availability data that's 15 minutes stale, overbooking decisions made by revenue management that the front desk discovers live — management blaming front desk staff is blaming the symptom not the cause), fail points mapped (marks specific failure points in the blueprint: PMS slowdown at peak times causes the 2-3 minute search delay; housekeeping sync delay means 'clean' rooms might not appear available; overbooking creates walk situations the front desk must manage; key card machine jams 10% of the time; credit card declines create awkward moments staff must handle; no wayfinding system means guests get lost), system fragmentation visible (the blueprint reveals three disconnected systems: PMS, key card system, and loyalty program — the front desk agent is the human integration layer between systems that should be connected)."
+    weight: 0.35
+    description: "SystemicFailureReveal"
+  - type: llm_judge
+    criteria: "Response demonstrates service blueprint value beyond journey mapping — why a journey map wasn't enough (a customer journey map would show the guest experience but wouldn't reveal WHY it's bad — the PMS slowdown, the system fragmentation, the housekeeping sync delay are invisible to the customer but cause the visible problems; the service blueprint connects customer-facing symptoms to backstage causes), improvement opportunities at the right layer (identifies improvements at the correct layer: support process layer — modernize PMS or optimize peak-time performance, integrate key card system with PMS, connect loyalty data to PMS; backstage layer — real-time housekeeping sync, overbooking policy review; frontstage layer — digital check-in option to reduce line, wayfinding map or app; the blueprint shows that most improvements need to happen backstage and in support processes, not at the front desk), management insight (the blueprint provides evidence that improving check-in satisfaction requires infrastructure investment not staff training — this reframes the problem from 'hire better people' to 'fix the systems they work with')."
+    weight: 0.30
+    description: "BlueprintValue"

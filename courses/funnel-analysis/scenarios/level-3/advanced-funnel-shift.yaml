@@ -1,0 +1,43 @@
+meta:
+  id: advanced-funnel-shift
+  level: 3
+  course: funnel-analysis
+  type: output
+  description: "Advanced funnel shift — handle cross-functional funnel challenges requiring attribution modeling, anomaly diagnosis, and experimental design in a single day"
+  tags: [shift-simulation, advanced, cross-functional, multi-request]
+
+state: {}
+
+trigger: |
+  Three advanced funnel requests arrive simultaneously:
+
+  Request 1 (VP of Product): "Our activation funnel suddenly dropped
+  from 35% to 22% over 3 days. Engineering says nothing changed in
+  their code. Marketing says their campaigns are running normally.
+  Find the root cause and tell me how to fix it."
+
+  Request 2 (Data Science Lead): "The CEO saw that our competitor
+  claims 5x better funnel performance. I need you to design an
+  experiment that rigorously tests whether their claimed optimization
+  approach (a gamified onboarding flow) actually works for our product."
+
+  Request 3 (Head of Revenue): "We're planning next year's revenue
+  target. I need a funnel-based revenue model that shows how changes
+  at each stage compound to hit our $10M ARR target. Include sensitivity
+  analysis for the board."
+
+  Task: Handle all three requests with detailed analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with systematic root cause analysis — rootcause: 'Request 1 — Activation drop root cause analysis: systematic diagnostic process: Step 1 — Validate the data (5 minutes): check: is the activation event still firing correctly? Check event volume: if activation events dropped AND non-activation events also dropped, it may be a tracking issue. Result: activation events are firing, but the rate genuinely dropped. Step 2 — Segment the drop (15 minutes): check activation rate by: device: desktop 33% (was 35%), mobile 14% (was 35%). The drop is mobile-specific. Browser: Safari 8% (was 34%), Chrome mobile 18% (was 36%). Safari is the worst affected. Operating system: iOS 16.x is severely affected. This is an iOS/Safari-specific issue. Step 3 — Timeline correlation (10 minutes): the drop started Tuesday at 2pm. Cross-reference: no engineering deployments. No marketing campaign changes. BUT: Apple released iOS 17.3 update on Tuesday morning. Hypothesis: the iOS update changed something that breaks or degrades the mobile activation flow. Step 4 — Deep investigation (30 minutes): session recordings from iOS Safari users show: the activation step requires a JavaScript interaction that iOS 17.3 handles differently. A modal that triggers the activation event is not rendering on the new Safari version. Users are completing the action but the confirmation modal fails silently. The activation EVENT is not firing even though users completed the underlying task. Root cause: the activation tracking depends on a JavaScript API that iOS 17.3 Safari deprecated. The activation is actually happening, but the measurement is broken for 40% of mobile users. Fix: immediate: update the tracking code to use the supported API. Within 48 hours, the reported rate should recover to 32-34%. Retroactive: backfill the missed activation events using server-side logs (users who completed the underlying action but were not tracked). Prevention: add cross-browser compatibility testing to the CI/CD pipeline, specifically testing new OS/browser beta releases before public launch'"
+    weight: 0.35
+    description: "Root cause"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with rigorous experiment design — experiment: 'Request 2 — Designing the gamified onboarding experiment: why we cannot trust the competitor's claim: self-reported metrics are unreliable (survivorship bias, cherry-picked timeframes). Their user base, product, and context differ from ours. The 5x claim may compare different baselines or metrics. We need to test this for OUR product with OUR users. Experiment design: hypothesis: a gamified onboarding flow (progress bars, achievement badges, streak rewards) will improve activation rate by 20% or more (from 35% to 42%+) without degrading downstream metrics (trial-to-paid, retention). Design: randomized controlled experiment with 4 groups: group 1 (control, 25%): current onboarding (no gamification). Group 2 (light gamification, 25%): progress bar + completion percentage only. Group 3 (moderate gamification, 25%): progress bar + achievement badges for key milestones. Group 4 (full gamification, 25%): progress bar + badges + streak rewards + leaderboard. Why 4 groups: we need to understand WHICH elements of gamification drive the effect. If full gamification wins, but moderate gamification performs equally well, we can ship a simpler solution. Sample size calculation: baseline activation: 35%. MDE: 5pp (to 40%) — a meaningful improvement. Power: 80%, significance: 95%. Required per group: approximately 2,000 users. Total: 8,000 users across 4 groups. At current signup rate: approximately 2-3 weeks of testing. Guardrail metrics (must NOT decline): trial-to-paid conversion (gamification may attract users who activate superficially but do not truly engage). 30-day retention (activation driven by extrinsic rewards may not be durable). Time-to-value (gamification should not distract from the core product experience). NPS/satisfaction scores (gamification can feel patronizing to some users). Novelty effect control: gamification effects often fade after the novelty wears off. Run the experiment for a minimum of 4 weeks. Compare week 1-2 results to week 3-4 results. If the effect declines by 50%+ in weeks 3-4, the improvement is not durable'"
+    weight: 0.35
+    description: "Experiment"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with a funnel-based revenue model and sensitivity analysis — revenue: 'Request 3 — Funnel-based revenue model for $10M ARR: current state: monthly visitors: 200,000. Overall funnel conversion: 0.16% (320 new customers/month). ARPU: $60/month. Current paying base: 2,500 customers. Current ARR: 2,500 × $60 × 12 = $1.8M. Monthly churn: 5%. Target: $10M ARR by end of next year. Required paying base: $10M ÷ ($60 × 12) = approximately 13,889 customers. Net growth needed: 13,889 - 2,500 = 11,389 net new customers over 12 months. Funnel model — what needs to change: Lever 1 — Traffic growth: current: 200K/month. If traffic doubles to 400K: new customers = 640/month (at current conversion). Not enough alone. Lever 2 — Conversion improvement: current: 0.16%. If conversion improves to 0.25%: new customers = 500/month at 200K traffic. Lever 3 — ARPU increase: current: $60. If ARPU increases to $80: need fewer customers (10,417 vs 13,889). Lever 4 — Churn reduction: current: 5% monthly. If reduced to 3%: higher net retention compounds dramatically. Combined scenario to reach $10M: month-by-month model with compounding: traffic: 200K growing 5% MoM (reaching 350K by month 12). Conversion: 0.16% improving to 0.22% (step improvements across the funnel). ARPU: $60 growing to $70 (pricing optimization and upselling). Churn: 5% declining to 3.5% (retention improvements). Month 12 projection: traffic: 350K. New customers: 350K × 0.22% = 770/month. Churned customers: base × 3.5%. Running total: approximately 8,500 paying customers. ARR: 8,500 × $70 × 12 = $7.14M. Gap to $10M: $2.86M (the combined levers reach 71% of the target). To close the gap: need ARPU of $85 (add an enterprise tier) or traffic of 450K (more aggressive marketing). Sensitivity analysis for the board: which lever matters most? Lever | 10% improvement | ARR impact | cost estimate. Traffic: +10% visitors | +$420K ARR | $200K marketing spend. Conversion: +10% relative | +$420K ARR | $100K engineering. ARPU: +10% | +$714K ARR | $50K pricing project. Churn: -10% relative | +$890K ARR | $150K product investment. Churn reduction has the highest ROI because it compounds every month. Board presentation: three scenarios: conservative (75% probability): $6.5M ARR. Base case (50%): $8.0M ARR. Aggressive (25%): $10.5M ARR. The $10M target requires aggressive execution across all levers simultaneously. A more realistic target is $7-8M with strong execution on the highest-impact levers (churn and ARPU)'"
+    weight: 0.30
+    description: "Revenue"

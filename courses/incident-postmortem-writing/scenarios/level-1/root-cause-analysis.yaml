@@ -1,0 +1,46 @@
+meta:
+  id: root-cause-analysis
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Identify and document root causes — use structured analysis to find the underlying cause of an incident beyond the immediate trigger"
+  tags: [postmortem, root-cause, five-whys, analysis, investigation, beginner]
+
+state: {}
+
+trigger: |
+  Your web application went down for 45 minutes because the database
+  ran out of disk space. Here's what happened:
+
+  - Immediate cause: PostgreSQL stopped accepting writes because the
+    disk was 100% full
+  - The disk filled up because a log table grew from 10GB to 200GB
+    overnight
+  - The log table grew because a new feature deployed yesterday
+    writes a log entry for every API request (not just errors)
+  - The feature was deployed without a disk space impact review
+  - There was no alerting on disk usage above 80%
+  - There was no log rotation configured for the new table
+
+  A junior engineer writes: "Root cause: disk was full. Fix: add
+  more disk space." This doesn't prevent recurrence.
+
+  Task: Write the root cause analysis section of the postmortem.
+  Use the Five Whys technique to trace the chain of causes. Identify
+  the root cause (not just the trigger) and distinguish between
+  proximate and underlying causes. Then write a guide on root cause
+  analysis for incident postmortems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Five Whys analysis traces beyond the immediate trigger — Why 1: 'The database stopped accepting writes.' Why: 'The disk was 100% full.' Why 2: 'The disk was 100% full.' Why: 'A log table grew from 10GB to 200GB overnight.' Why 3: 'The log table grew 20x overnight.' Why: 'A new feature deployed yesterday writes a log entry for every API request (~2M entries/day) instead of only error events.' Why 4: 'The feature logged every request.' Why: 'The feature's logging behavior was not reviewed for production impact before deployment.' Why 5: 'Logging impact was not reviewed.' Why: 'The deployment process has no checklist for data growth impact, and there are no disk usage alerts that would catch gradual growth before it becomes critical.' Root cause (not the trigger): 'Missing production readiness checks for data growth and missing monitoring for disk utilization. The disk filling up was the symptom; the root cause is the absence of guardrails that would have prevented or detected this condition.'"
+    weight: 0.35
+    description: "Five Whys depth"
+  - type: llm_judge
+    criteria: "Proximate and underlying causes are distinguished — proximate cause (the trigger): 'Deployment of feature X with verbose logging filled the disk.' This is what happened. Contributing factors: (1) 'No disk usage monitoring with alerts at 80% threshold — the team had no warning before 100%.' (2) 'No log rotation or retention policy for the new table — logs accumulated indefinitely.' (3) 'No data growth impact review in deployment checklist — the team had no process to catch this.' Underlying root cause: 'The team lacks production readiness checks that account for data growth. This is a systemic gap — not a one-time mistake. Any future feature that writes data at scale could cause the same incident.' Why this distinction matters: 'Adding more disk space addresses the proximate cause but not the root cause. If we only add disk, the next high-volume feature will fill the larger disk too. Addressing the root cause (production readiness checks + monitoring) prevents the entire class of incidents, not just this one'"
+    weight: 0.35
+    description: "Cause distinction"
+  - type: llm_judge
+    criteria: "Root cause analysis guide is practical and avoids common mistakes — techniques: (1) Five Whys: keep asking why until you reach a systemic issue (process, tooling, or knowledge gap), not just a human action. If your root cause is 'engineer forgot to check disk space' — you haven't gone deep enough. Why didn't the process catch it? (2) Contributing factors: most incidents have multiple causes, not one. List them all. The disk was full AND there was no monitoring AND there was no log rotation — removing any one of these would have prevented or mitigated the incident. (3) Test your root cause: ask 'if we fix this, could a similar incident still happen?' If yes, you haven't found the root cause. Common mistakes: (1) Stopping at the trigger: 'disk was full' is the trigger, not the cause. (2) Blaming a person: 'Jamie deployed bad code' is not a root cause — the system allowed bad code to reach production. (3) Too many root causes: if everything is a root cause, nothing is. Identify 1-2 root causes and several contributing factors. (4) Root cause is too abstract: 'we need better processes' is not actionable. 'Deployment checklist needs a data growth impact section' is actionable"
+    weight: 0.30
+    description: "RCA guide"

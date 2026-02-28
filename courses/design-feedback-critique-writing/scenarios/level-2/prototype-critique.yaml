@@ -1,0 +1,47 @@
+meta:
+  id: prototype-critique
+  level: 2
+  course: design-feedback-critique-writing
+  type: output
+  description: "Prototype critique — evaluate interactive prototypes focusing on interaction quality, flow logic, and user experience"
+  tags: [prototype, interaction, flow, evaluation, intermediate]
+
+state: {}
+
+trigger: |
+  A designer shares a clickable Figma prototype of a
+  food delivery app with you. They ask: "Please review
+  the prototype — click through and give me feedback
+  on the interaction experience."
+
+  As you click through, you notice:
+  1. Restaurant search → results works well, filters
+     are intuitive
+  2. Adding items to cart: no visual confirmation — the
+     cart badge updates but it's subtle
+  3. Customizing an item (toppings, size): the 'Done'
+     button is below the fold — user might not see it
+  4. Cart review: can't edit quantities inline — must
+     go back to the restaurant page
+  5. Checkout: entering a new address opens a full-page
+     form — loses the checkout context
+  6. Order confirmation: no estimated delivery time
+  7. The back navigation is inconsistent — sometimes
+     goes to the previous screen, sometimes to home
+
+  Task: Write prototype-focused feedback evaluating
+  the interaction quality and flow logic.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response evaluates interaction quality specifically — what works (search and filtering is intuitive — acknowledge this first, the core happy path of finding food and browsing menus works well), interaction-specific feedback for each issue (cart addition: needs visual feedback — brief toast notification 'Added to cart', animation on cart icon, or flying element animation — users need confirmation their action worked, 'Done' button below fold: critical interaction blocker — user may not realize they need to scroll to complete customization, move to a sticky bottom bar or floating action button — always visible, cart editing: inline quantity editing is table-stakes for food delivery — forcing navigation back to the restaurant page breaks the flow and risks losing cart state, each point framed as interaction pattern not visual design)."
+    weight: 0.35
+    description: "InteractionQualityFeedback"
+  - type: llm_judge
+    criteria: "Response addresses flow logic issues — address form: full-page form loses checkout context — use a half-sheet modal or inline expandable form that keeps the checkout summary visible, the user should always see what they're paying for, order confirmation gap: estimated delivery time is expected information — users feel anxious without it, show estimate even if approximate: '30-45 minutes' — this is a functional gap not a visual one, back navigation inconsistency: this is a critical flow logic issue — inconsistent back behavior destroys user confidence in the navigation, rule: back should always go to the immediately previous screen in the same flow, 'home' should be accessible via a separate home button or bottom tab — never overload the back button with multiple behaviors. Each issue includes: what the expected behavior should be, why the current behavior is problematic, and the user impact."
+    weight: 0.35
+    description: "FlowLogicFeedback"
+  - type: llm_judge
+    criteria: "Response demonstrates prototype-specific critique skills — evaluates as a user not a designer (clicks through the flow noting friction points — where did I hesitate? where was I confused? where did I want to go back? — this perspective drives the feedback), identifies missing states and edge cases (what happens when: search returns no results? cart item is out of stock? payment fails? address is outside delivery area? — prototypes often miss error and edge cases), distinguishes prototype limitations from design decisions (some issues may be prototype tooling limitations — 'I couldn't test the actual keyboard interaction for search, but the visual flow seems logical' — acknowledge what can and can't be evaluated in the prototype), and suggests testing approach ('I'd recommend having 3-5 users click through this prototype with a specific task — order a customized pizza with a new delivery address — and note where they struggle')."
+    weight: 0.30
+    description: "PrototypeCritiqueSkills"

@@ -1,0 +1,36 @@
+meta:
+  id: segmentation-analysis
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Perform segmentation analysis on A/B test results — analyze treatment effects across user segments, distinguish pre-specified from post-hoc segments, and avoid false discoveries"
+  tags: [segmentation, subgroup-analysis, heterogeneous-effects, pre-specification, intermediate]
+
+state: {}
+
+trigger: |
+  An A/B test of a new checkout flow shows an overall 2% lift in
+  conversion (p = 0.03, significant). The PM asks: "Can you break this
+  down by segment? I want to know if it works better for mobile vs
+  desktop, new vs returning users, and by country."
+
+  After the analysis, the data analyst excitedly reports: "The effect
+  is HUGE for mobile users in Brazil — a 15% lift! We should target
+  the rollout to that segment."
+
+  Task: Explain how to properly conduct and interpret segmentation
+  analysis in A/B tests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains pre-specified vs post-hoc segment analysis — segments: 'Pre-specified vs post-hoc segment analysis: Pre-specified segments (planned before the test): defined in the test plan BEFORE seeing any results. Example: the team decided upfront to analyze mobile vs desktop and new vs returning. These are hypothesis-driven: there is a reason to expect the effect might differ by device type (different UI) or user type (different familiarity). Apply multiple testing correction (Bonferroni or BH) across the pre-specified segments. With 2 dimensions × 2 levels each = 4 segment comparisons: Bonferroni-adjusted α = 0.05/4 = 0.0125. Post-hoc segments (discovered after seeing results): the Brazil + mobile finding was not pre-specified — the analyst explored many segment combinations and found this one. This is data dredging (also called the garden of forking paths). If you analyze: 2 device types × 2 user types × 10 countries = 40 segments. At α = 0.05, you expect 40 × 0.05 = 2 false positives by chance. The 15% lift for mobile users in Brazil is almost certainly a false positive — it emerged from testing many combinations. Rule: post-hoc segment findings are hypotheses for future tests, not conclusions from this test. The correct response to the Brazil mobile finding: interesting hypothesis. Run a targeted follow-up test with mobile users in Brazil as the primary population. If the 15% lift replicates, then it is real'"
+    weight: 0.35
+    description: "Segments"
+  - type: llm_judge
+    criteria: "Response covers proper segmentation methodology — methodology: 'Proper segmentation analysis methodology: Step 1 — Confirm the overall result first: overall lift = 2%, p = 0.03. The treatment works on average. This is the primary finding. Step 2 — Analyze pre-specified segments: mobile (60% of traffic): control 4.0%, treatment 4.4%, lift = 0.4pp, p = 0.01. Desktop (40%): control 5.5%, treatment 5.6%, lift = 0.1pp, p = 0.65. After Bonferroni correction (α = 0.0125): mobile p = 0.01 < 0.0125 → significant. Desktop p = 0.65 → not significant. Interpretation: the treatment effect is concentrated in mobile users. Desktop users see no meaningful benefit. New users: control 3.0%, treatment 3.5%, lift = 0.5pp, p = 0.02. Returning users: control 6.0%, treatment 6.1%, lift = 0.1pp, p = 0.55. After correction: new users p = 0.02 > 0.0125 → borderline, not significant at corrected threshold. Returning users: no effect. Step 3 — Test for interaction (heterogeneous treatment effect): the question is not just does the treatment work differently for mobile? but is the DIFFERENCE in treatment effect between mobile and desktop statistically significant? Interaction test: is the 0.4pp mobile effect significantly different from the 0.1pp desktop effect? Interaction p = 0.08. The difference in effects is not statistically significant at α = 0.05. Even though mobile shows a significant effect and desktop does not, we cannot confidently say the treatment works differently by device. This is a common mistake — absence of significance in one subgroup does not prove the effect differs between subgroups'"
+    weight: 0.35
+    description: "Methodology"
+  - type: llm_judge
+    criteria: "Response covers practical recommendations for segment-based rollout — practical: 'Practical recommendations: Decision framework for segment-based rollout: Scenario 1 — Overall significant, no significant interaction: ship to all users. The treatment works on average and there is no strong evidence that specific segments are harmed. This is the current case: overall p = 0.03, interaction p = 0.08. Ship the new checkout to everyone. Monitor mobile and desktop metrics post-launch. Scenario 2 — Overall significant, significant interaction: consider segment-targeted rollout. Example: if mobile showed a 5% lift (p = 0.001) and desktop showed a -2% lift (p = 0.02), with interaction p = 0.001: ship only to mobile users. Investigate why desktop users are hurt. Run a separate test to fix the desktop experience. Scenario 3 — Overall not significant, one segment significant: be very cautious. This often indicates a false positive in the subgroup. The overall null result is more reliable than a single subgroup finding. Only act if the segment was pre-specified AND the interaction is significant. Best practices: limit pre-specified segments to 2-3 dimensions (device, user type, geography). More segments = more corrections = less power. Ensure adequate sample size per segment. If mobile is 60% of traffic and you need 7,500 per group overall, you have approximately 4,500 mobile users per group — check if this is sufficient for your MDE. Use interaction tests, not separate subgroup tests. Asking is the effect different between mobile and desktop? (interaction test) is more informative than testing mobile and desktop separately. Document segment analysis plan before the test starts. This prevents the temptation to explore many segments and selectively report the exciting ones. For the PM: the new checkout works overall (2% lift) and appears especially effective on mobile. Ship to all users. The Brazil-mobile finding is intriguing but unproven — run a dedicated test to confirm it'"
+    weight: 0.30
+    description: "Practical"

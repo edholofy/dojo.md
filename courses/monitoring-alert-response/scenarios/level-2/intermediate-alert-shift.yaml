@@ -1,0 +1,48 @@
+meta:
+  id: intermediate-alert-shift
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Intermediate alert shift — handle a complex on-call shift with correlated alerts, a deployment rollback decision, and a false positive requiring tuning"
+  tags: [monitoring, shift-simulation, intermediate, comprehensive]
+
+state: {}
+
+trigger: |
+  You're midway through an on-call shift when three situations
+  develop simultaneously:
+
+  Situation 1 (started 30 minutes ago): You're investigating a
+  slow response time increase on the API. Latency p95 went from
+  200ms to 600ms. You've identified the cause: a new feature
+  deployed 2 hours ago added an unindexed database query. The
+  deployment team says "just add an index, no need to rollback."
+  But latency is still climbing slowly.
+
+  Situation 2 (just now): A CRITICAL alert fires: "Payment
+  processing success rate < 98%." You check — it's at 97.2%.
+  There's no obvious connection to Situation 1 (payments use a
+  different database).
+
+  Situation 3 (ongoing): The alert "CPU > 80% on analytics-host-1"
+  has fired for the 4th time today. Each time, CPU spikes to 83%
+  during the hourly analytics batch job and returns to 40% after.
+  It's been doing this for weeks.
+
+  Task: Handle all three situations simultaneously. Prioritize,
+  investigate, and make decisions. Show how to manage competing
+  demands during an on-call shift.
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization is correct and explicit — priority assessment: 'Situation 2 (payment processing) is highest priority. Payments are revenue-critical and the alert is CRITICAL at 97.2% (below 98% threshold). Even a small drop in payment success rate means customers are failing to complete purchases right now. Investigate immediately. Situation 1 (API latency) is second priority. Latency is degraded (3x normal) and still climbing. Customer impact is real (slow experience) but less severe than failed payments. The deployment team suggests adding an index, but the climbing latency means this is getting worse. Situation 3 (analytics CPU) is lowest priority. This is a known false positive — recurring for weeks, resolves itself after each batch job, no customer impact. Do not spend time on this during a shift with real issues.' Action sequence: 'Spend the next 10 minutes on Situation 2 (payments). If payments stabilize or root cause is found, return to Situation 1 (latency). Acknowledge Situation 3 with a note that it is a known false positive and move on'"
+    weight: 0.35
+    description: "Correct prioritization"
+  - type: llm_judge
+    criteria: "Each situation is handled with appropriate actions — Situation 2 (payments CRITICAL): 'Investigate immediately: (1) Check the payment processor status page — is there an external provider issue? (2) Check payment service error logs — what type of failures? Timeouts? Authorization failures? Gateway errors? (3) Check if the payment success rate drop correlates with the API latency increase from Situation 1 — could the slow API be causing payment timeouts? If the payment issues are downstream of the API latency, these are actually related. (4) If they are unrelated: focus on the payment investigation as a separate issue. Page the payments team on-call if not resolved in 10 minutes.' Situation 1 (API latency): 'The deployment team says to add an index rather than rollback. Challenge this: (1) How long will adding an index take? On a large table, it could be hours. (2) Latency is still climbing — this suggests the problem is worsening under load. (3) Recommendation: rollback now to stop the bleeding, then add the index in a test environment, verify it fixes the issue, and redeploy. The cost of rollback is losing the new feature temporarily. The cost of waiting is continued and worsening customer impact.' Situation 3 (analytics CPU): 'Acknowledge the alert. Post a brief note: known false positive — analytics batch job. Will file a ticket to tune this alert. Do not spend another second on this during the current shift. File the ticket tomorrow: change the alert to exclude analytics-host-1 during the scheduled batch window, or raise the threshold to 90% for that host'"
+    weight: 0.35
+    description: "Appropriate actions per situation"
+  - type: llm_judge
+    criteria: "Competing demands are managed without dropping any thread — multi-tasking strategy: 'Do not try to solve all three simultaneously — you will solve none of them well. Strategy: (1) Triage all three in 2 minutes (done above). (2) Focus on the highest priority (payments) for 10 minutes. Set a mental timer. (3) If payments are not resolved in 10 minutes, escalate to the payments team and pivot to Situation 1 (latency). (4) Check back on payments after addressing latency.' Communication: 'Post a single update in #incidents covering all three situations: Three items on my radar: (1) CRITICAL — investigating payment success rate drop (97.2%). (2) SEV-2 — API latency degraded 3x from unindexed query in today's deployment. Evaluating rollback. (3) Known false positive — analytics CPU alert, will tune. Focused on payments first. This single message tells everyone: what is happening, what the priority is, and that someone is handling it.' Checking for connections: 'Important: before treating Situations 1 and 2 as independent, verify they are not connected. The API latency could be causing payment timeouts if the payment flow passes through the slow API. Check: does the payment service call any endpoint affected by the slow query? If yes, Situations 1 and 2 are the same incident, and the rollback becomes even more urgent because it would fix both issues'"
+    weight: 0.30
+    description: "Managing competing demands"

@@ -1,0 +1,51 @@
+meta:
+  id: competing-proposals
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Evaluate competing proposals — objectively assess multiple RFCs addressing the same problem and write a recommendation that builds consensus"
+  tags: [RFC, evaluation, competing-proposals, consensus, decision-framework, advanced]
+
+state: {}
+
+trigger: |
+  Three senior engineers have submitted competing RFCs to solve the
+  same problem: your application's search functionality is too slow
+  (3-5 second queries on a 50M row table).
+
+  RFC A (by Alex): "Add Elasticsearch alongside PostgreSQL"
+  - Pros: powerful full-text search, faceting, near-real-time
+  - Cons: new infrastructure, data sync complexity, cost
+  - Timeline: 8 weeks, requires DevOps support
+
+  RFC B (by Blake): "Optimize PostgreSQL with materialized views and indexes"
+  - Pros: no new infrastructure, familiar technology, lower cost
+  - Cons: limited full-text search, views need refresh strategy
+  - Timeline: 3 weeks, backend team only
+
+  RFC C (by Casey): "Migrate search to Typesense (lightweight search engine)"
+  - Pros: easier than Elasticsearch, good enough for most queries
+  - Cons: less mature ecosystem, smaller community, migration risk
+  - Timeline: 5 weeks, requires evaluation phase
+
+  You've been asked to evaluate all three and write a recommendation.
+  Each author is a respected engineer who will be reading your evaluation.
+
+  Task: Write an evaluation document that fairly assesses all three
+  proposals and arrives at a recommendation. Show how to compare
+  competing RFCs without alienating the authors whose proposals
+  aren't selected.
+
+assertions:
+  - type: llm_judge
+    criteria: "Evaluation framework is consistent and transparent — evaluation criteria defined before comparing proposals: (1) Time to impact (weight: 25%) — how quickly does this solve the immediate problem? (2) Long-term scalability (weight: 20%) — does this solution grow with us? (3) Operational complexity (weight: 20%) — what's the ongoing maintenance burden? (4) Risk (weight: 20%) — what could go wrong and how recoverable is it? (5) Team capability (weight: 15%) — can we build and maintain this with current skills? Each proposal scored against the same criteria with specific reasoning. No post-hoc criteria added to justify a preferred outcome. Scoring shown transparently: 'RFC B scores highest on time-to-impact (3 weeks vs 5-8 weeks) and operational complexity (no new systems). RFC A scores highest on long-term scalability (proven at 100M+ rows with complex queries). RFC C falls in the middle on most criteria.' Total scores calculated and presented"
+    weight: 0.35
+    description: "Transparent evaluation"
+  - type: llm_judge
+    criteria: "Each proposal is treated with intellectual respect — strengths of each highlighted first: 'Alex's Elasticsearch proposal is the most capable long-term solution. The data sync architecture is well-designed and the performance projections are credible.' 'Blake's PostgreSQL optimization is the most pragmatic — it solves 80% of the problem with 30% of the effort and risk.' 'Casey's Typesense proposal offers an interesting middle ground that the team hadn't considered.' Where proposals fall short, framing is 'limitation for our context' not 'flaw': 'Elasticsearch's operational complexity is a limitation for our 3-person DevOps team, not a flaw in Alex's design.' 'PostgreSQL optimization's ceiling is a concern at our growth rate, not a fault in Blake's approach.' Authors' expertise acknowledged: 'Alex's experience with Elasticsearch at their previous company lends credibility to the operational estimates.' No proposal is straw-manned or dismissed"
+    weight: 0.35
+    description: "Respectful assessment"
+  - type: llm_judge
+    criteria: "Recommendation synthesizes rather than just picks a winner — recommendation: 'We recommend a phased approach that incorporates elements from all three proposals. Phase 1 (Weeks 1-3): implement Blake's PostgreSQL optimizations for immediate relief. This buys time and proves whether simple optimizations are sufficient. Phase 2 (Weeks 4-8): if Phase 1 achieves sub-1-second queries, monitor and reassess in 3 months. If not, implement Casey's Typesense proposal as a lightweight search layer. Phase 3 (future): if search requirements grow beyond Typesense's capabilities (complex aggregations, multi-language), Alex's Elasticsearch architecture becomes the roadmap.' Why this synthesis: 'Starting with Blake's approach has the lowest risk and fastest impact. If it's sufficient, we've saved 5-8 weeks of migration work. If not, we've lost only 3 weeks and gained data about what PostgreSQL can't handle, which informs the next step.' Each author contributed: Blake's solution is Phase 1, Casey's is Phase 2, Alex's architecture informs Phase 3. This builds consensus rather than creating winners and losers"
+    weight: 0.30
+    description: "Synthesis recommendation"

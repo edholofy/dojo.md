@@ -1,0 +1,82 @@
+meta:
+  id: cybersecurity-risk-assessment
+  level: 2
+  course: risk-assessment-documentation
+  type: output
+  description: "Cybersecurity risk assessment — conduct and document a cybersecurity risk assessment using NIST CSF framework"
+  tags: [cybersecurity, nist-csf, threat-modeling, vulnerability, intermediate]
+
+state: {}
+
+trigger: |
+  You're the IT Security Manager at a 300-person healthcare
+  technology company that provides electronic health record
+  (EHR) integration services to 45 hospital systems. After
+  a competitor suffered a ransomware attack that affected
+  their hospital clients for 2 weeks, your CISO has asked
+  you to conduct a formal cybersecurity risk assessment
+  using the NIST Cybersecurity Framework.
+
+  IT environment:
+  - Cloud infrastructure: AWS (primary), Azure (some clients)
+  - Data processed: PHI (Protected Health Information) for
+    3.2M patient records
+  - Applications: 8 production applications, 3 internal tools
+  - Users: 300 employees, 120 contractors, 45 client admin
+    accounts
+  - Network: 2 offices, VPN for remote workers, client
+    site-to-site VPN connections
+  - Endpoints: 280 laptops (managed), 50 BYOD mobile devices
+
+  Current security posture:
+  - Firewalls and IDS/IPS: Deployed
+  - Endpoint protection: CrowdStrike on all managed devices
+  - MFA: Enforced for email and VPN, not all applications
+  - Patch management: Monthly cycle (7-14 day lag on critical)
+  - Vulnerability scanning: Quarterly (external only)
+  - Penetration testing: Annual (last test: 8 months ago)
+  - SIEM: Splunk deployed but alert tuning incomplete (200+
+    false positives/day)
+  - Backup: Daily to AWS S3, tested quarterly
+  - Encryption: In transit (TLS), at rest (partial — 3
+    databases not encrypted)
+  - Security training: Annual phishing simulation (22% click
+    rate last round)
+  - Incident response plan: Exists but not tested in 14 months
+
+  Known vulnerabilities and concerns:
+  - 3 unencrypted databases contain PHI
+  - BYOD devices have limited security controls
+  - Contractor access review hasn't been done in 6 months
+  - 14 systems running end-of-life software (no patches)
+  - No data loss prevention (DLP) solution
+  - Client VPN connections create shared attack surface
+  - SOC 2 Type II audit due in 4 months
+
+  CISO's requirements:
+  - "Use NIST CSF core functions as the framework"
+  - "Identify our top 10 cyber risks with quantified impact"
+  - "Map our current maturity across NIST CSF categories"
+  - "Prioritize remediation based on risk, not just compliance"
+  - "This needs to survive the SOC 2 audit review"
+
+  Task: Conduct the cybersecurity risk assessment using NIST
+  CSF. Include threat identification, vulnerability analysis,
+  risk rating with potential impact quantification, current
+  maturity assessment across NIST CSF functions, and a
+  prioritized remediation roadmap. Address HIPAA requirements
+  and SOC 2 readiness.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response uses NIST CSF framework properly — assesses the organization across all CSF core functions (Identify, Protect, Detect, Respond, Recover, and optionally Govern); identifies specific subcategories with maturity ratings; maps current controls to framework requirements; identifies gaps between current state and target state; the assessment demonstrates genuine understanding of NIST CSF (not just listing the function names)."
+    weight: 0.35
+    description: "ProperNISTCSFApplication"
+  - type: llm_judge
+    criteria: "Response identifies and quantifies top cyber risks — identifies at least 10 specific cyber risks (ransomware, data breach, insider threat, supply chain attack through client VPNs, unpatched systems exploitation, phishing compromise); quantifies potential impact for major risks (cost of PHI breach at $180/record × 3.2M records, ransomware downtime costs, regulatory fines); rates risks by likelihood and impact; addresses the healthcare-specific threats (PHI targeting, HIPAA breach notification requirements)."
+    weight: 0.35
+    description: "QuantifiedCyberRisks"
+  - type: llm_judge
+    criteria: "Response provides a prioritized remediation roadmap — ranks remediation actions by risk reduction value (not just compliance checkbox); addresses the most critical gaps first (unencrypted PHI databases, end-of-life software, contractor access review); includes estimated costs and timelines; ensures readiness for SOC 2 Type II audit in 4 months; the roadmap is realistic for a 300-person company's security team; distinguishes between quick wins and long-term improvements."
+    weight: 0.30
+    description: "PrioritizedRemediationRoadmap"

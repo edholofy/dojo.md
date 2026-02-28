@@ -1,0 +1,48 @@
+meta:
+  id: aria-usage-review
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "ARIA usage review — audit ARIA implementation for correctness, necessity, and common misuse patterns"
+  tags: [ARIA, roles, states, properties, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor is reviewing a web application
+  that uses extensive ARIA attributes. They find:
+
+  1. A navigation menu uses role="menu" and
+     role="menuitem" but it's a site navigation
+     (not an application menu)
+  2. A div has role="button" but no keyboard event
+     handlers (only onclick)
+  3. An accordion uses aria-expanded but the value
+     never changes when sections open/close
+  4. A custom tooltip uses aria-describedby pointing
+     to a hidden element but the element uses
+     display:none
+  5. A search input has both a visible label AND
+     aria-label with different text
+
+  The auditor asks: "ARIA seems like it should help
+  accessibility but these all feel wrong. How do I
+  evaluate whether ARIA is used correctly?"
+
+  Task: Audit each ARIA usage for correctness and
+  write findings with proper WCAG references and
+  remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits each ARIA usage — Wrong menu role (role=menu is for application menus like context menus, not site navigation — site navigation should use nav element, list, and link elements, WCAG 4.1.2, Severity: Major — screen readers may switch to application mode expecting arrow key navigation, Fix: remove role=menu/menuitem, use nav with ul/li/a), div role=button without keyboard (WCAG 2.1.1 + 4.1.2: adding role=button makes it appear as a button to screen readers but without keyboard handlers users can't activate it — the role creates an expectation that isn't met, Severity: Critical, Fix: use native button element instead — it provides keyboard, role, and click handling for free), Static aria-expanded (WCAG 4.1.2: aria-expanded must update dynamically when state changes — if it always says false, screen reader users think sections are always collapsed even when visually open, Severity: Major, Fix: toggle aria-expanded=true/false with JavaScript on click)"
+    weight: 0.35
+    description: "ARIAFindings"
+  - type: llm_judge
+    criteria: "Response covers tooltip and conflicting label issues — Hidden tooltip target (aria-describedby pointing to display:none element: the description is not exposed to assistive technology when the referenced element is hidden with display:none — use visibility:hidden or clip pattern instead to keep it in the accessibility tree while visually hidden, WCAG 4.1.2, Severity: Major, Fix: use sr-only CSS pattern instead of display:none for the tooltip content, or show the tooltip visually as well), Conflicting labels (visible label says 'Find products' but aria-label says 'Search' — screen reader users hear 'Search' but sighted users see 'Find products', this creates confusion for voice control users who would say 'Click Find products' but the accessible name is 'Search', WCAG 2.5.3 Label in Name Level A, Severity: Major, Fix: remove aria-label and let the visible label serve as the accessible name, or make aria-label match the visible text)"
+    weight: 0.35
+    description: "TooltipLabelFindings"
+  - type: llm_judge
+    criteria: "Response teaches ARIA evaluation principles — the five rules of ARIA (1: Don't use ARIA if a native HTML element exists — button instead of div role=button, 2: Don't change native semantics — don't add role=heading to a button, 3: All ARIA interactive elements must be keyboard accessible, 4: Don't use role=presentation or aria-hidden=true on focusable elements, 5: All interactive elements must have an accessible name), audit checklist for ARIA (for each ARIA attribute found: Is it necessary? Could native HTML achieve the same thing? Is the role correct for this pattern? Do dynamic states actually update? Are referenced IDs valid and pointing to visible elements? Does the keyboard behavior match the role's expected behavior?), and common ARIA misuse patterns to flag (role=button on div without keyboard support, aria-label on non-interactive elements, aria-hidden=true on focusable elements, incorrect roles from the ARIA taxonomy, ARIA attributes that never update dynamically)"
+    weight: 0.30
+    description: "ARIAPrinciples"

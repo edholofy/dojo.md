@@ -1,0 +1,39 @@
+meta:
+  id: entity-resolution
+  level: 3
+  course: data-cleaning-normalization
+  type: output
+  description: "Entity resolution — resolve real-world entities across multiple data sources using blocking, matching, and clustering techniques"
+  tags: [entity-resolution, record-linkage, blocking, matching, advanced]
+
+state: {}
+
+trigger: |
+  A data platform architect says: "We have 5 million customer records
+  across 8 data sources (CRM, billing, support, marketing, product
+  analytics, mobile app, web analytics, partner portal). The same
+  customer appears in multiple systems with different identifiers,
+  different name spellings, and different contact information.
+
+  We need to build a 'golden record' — one unified view of each
+  customer. Comparing all 5 million records against each other is
+  computationally impossible (25 trillion comparisons). How do we
+  do entity resolution at this scale?"
+
+  Task: Design an entity resolution system for 5 million records
+  across 8 sources, covering blocking strategies, matching algorithms,
+  clustering approaches, and golden record creation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs an efficient blocking strategy — explains why naive pairwise comparison is O(n²) and infeasible at 5M records, presents blocking approaches (group records by shared attributes to reduce comparison space): standard blocking (same first 3 characters of last name + same zip code), sorted neighborhood (sort by key, compare within a sliding window), canopy clustering (use cheap similarity for initial grouping, then expensive matching within groups), meta-blocking (combine multiple blocking keys to maximize coverage while minimizing comparisons). Quantifies the reduction: blocking can reduce comparisons from trillions to millions"
+    weight: 0.35
+    description: "BlockingStrategy"
+  - type: llm_judge
+    criteria: "Response covers matching and scoring — field-level matching (different similarity measures for different field types: Jaro-Winkler for names, exact match for email, token similarity for addresses, phonetic matching for names), record-level scoring (combining field scores into an overall match probability: weighted sum, Fellegi-Sunter probabilistic model, or ML-based classification), and threshold setting (match/non-match/manual-review zones with calibration against labeled data). Addresses the challenge of matching across systems with different schemas and field availability"
+    weight: 0.35
+    description: "MatchingScoring"
+  - type: llm_judge
+    criteria: "Response explains clustering and golden record creation — transitive closure (if A matches B and B matches C, then A=B=C, but this can create over-merging), connected components vs more sophisticated clustering (correlation clustering, star clustering to prevent chain effects), golden record construction (for each cluster of matched records, select the best value for each field: most recent, most complete, from the most trusted source), and ongoing maintenance (incremental entity resolution as new records arrive, handling entity splitting when merged records are later determined to be different entities)"
+    weight: 0.30
+    description: "ClusteringGoldenRecord"

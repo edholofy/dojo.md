@@ -1,0 +1,60 @@
+meta:
+  id: advanced-journey-shift
+  level: 3
+  course: user-journey-mapping
+  type: output
+  description: "Advanced journey shift — handle multiple advanced journey mapping challenges in a single session"
+  tags: [shift, combined, assessment, advanced]
+
+state: {}
+
+trigger: |
+  You're the VP of Customer Experience at a large health
+  insurance company. You face three advanced journey
+  mapping challenges this week:
+
+  TASK 1 — Your CEO wants to see a service blueprint for
+  the claims processing journey after a hospital visit.
+  Behind the scenes: the claim passes through 7 internal
+  departments (intake, coding, verification, authorization,
+  adjudication, payment, appeals), uses 4 different IT
+  systems that don't integrate, and takes an average of
+  34 days. The member (patient) has no visibility into
+  where their claim is. When they call, the agent can
+  only say "it's being processed."
+  Create the service blueprint.
+
+  TASK 2 — Your company is launching a new wellness
+  program that spans the member's full health journey:
+  annual checkup → risk assessment → personalized wellness
+  plan → ongoing coaching → health improvements → reduced
+  premiums. No journey map exists for this cross-functional
+  program that involves medical, wellness coaching,
+  technology, and actuarial teams.
+  Create a cross-functional journey map.
+
+  TASK 3 — Regulators are investigating complaints that
+  your claims denial process is opaque. Denied members
+  say they receive a letter with legal jargon, no clear
+  explanation of why, and an appeals process that requires
+  a lawyer to navigate. The regulator wants evidence that
+  you understand the member's experience.
+  Create a journey map of the denial and appeals
+  experience from the member's perspective.
+
+  Task: Handle all three advanced journey mapping
+  challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Task 1 — claims processing service blueprint — blueprint depth (maps the 7 internal departments as backstage/support process lanes: intake, coding, verification, authorization, adjudication, payment, appeals — showing handoffs between departments; maps the 4 IT systems and where each is used; the member's frontstage experience is minimal: submit claim, wait 34 days, receive explanation of benefits — the vast majority of the journey is invisible backstage activity), the visibility problem (the blueprint reveals why agents can only say 'being processed' — the agent's system likely only shows status from one of the 4 IT systems, not the full pipeline; the member has no status visibility because the internal handoff sequence wasn't designed with member communication in mind), 34-day timeline analysis (maps where time is spent across the 7 departments: which handoffs cause delays? where does the claim sit waiting for the next department? the blueprint should reveal that the 34-day average likely includes significant waiting time between departments, not just processing time within each department)."
+    weight: 0.35
+    description: "ClaimsBlueprintTask"
+  - type: llm_judge
+    criteria: "Response handles Task 2 — cross-functional wellness journey map — multi-team journey (maps the wellness program across the 4 teams: medical team owns the annual checkup and risk assessment; wellness coaching team owns the personalized plan and ongoing coaching; technology team owns the platform connecting these; actuarial team calculates premium reductions based on health improvements), long-term journey arc (this journey spans months to years: annual checkup is a single event, but the wellness journey unfolds over 6-12 months of coaching, behavior change, and health metric improvement; the journey map must accommodate this extended timeframe with milestone markers), member motivation mapping (tracks the member's engagement and motivation over the long journey: initial enthusiasm at checkup, engagement with personalized plan, potential fatigue during ongoing coaching, renewed motivation when health improvements are measured, satisfaction when premiums are reduced — the premium reduction must be significant enough to sustain motivation through the difficult behavior-change months)."
+    weight: 0.35
+    description: "WellnessJourneyTask"
+  - type: llm_judge
+    criteria: "Response handles Task 3 — denial and appeals journey for regulators — member-perspective mapping (maps the denial experience from the member's viewpoint: receives a denial letter full of legal jargon and code references, tries to understand why — can't; calls customer service — agent reads the same jargon from the system; considers appealing — the process requires specific medical documentation, formal letter writing, and deadline compliance; may need to hire a lawyer or patient advocate — adding financial burden to medical stress; the emotional journey: shock, confusion, anger, helplessness, potential resignation), regulatory response framing (the journey map serves as evidence to the regulator: 'yes, we understand the member's experience is poor — here's our documented understanding of every pain point; and here's our remediation plan: plain-language denial explanations, clear step-by-step appeals instructions, dedicated appeals support line, online appeals portal with status tracking'), systemic fix (the journey map should reveal that the denial communication problem isn't just about letter formatting — it's about the entire denial experience being designed for internal legal protection rather than member understanding; the fix requires rewriting denial letters in plain language, providing specific reasons with evidence, and making the appeals process navigable without legal help)."
+    weight: 0.30
+    description: "DenialAppealsTask"

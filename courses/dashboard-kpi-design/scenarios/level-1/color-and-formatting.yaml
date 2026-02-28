@@ -1,0 +1,33 @@
+meta:
+  id: color-and-formatting
+  level: 1
+  course: dashboard-kpi-design
+  type: output
+  description: "Use color and formatting effectively — apply color to convey meaning, ensure accessibility, and format numbers for clarity in dashboards"
+  tags: [color, formatting, accessibility, data-visualization, readability, beginner]
+
+state: {}
+
+trigger: |
+  A dashboard uses 12 different colors with no consistent meaning.
+  The revenue chart is green (positive association), but the churn
+  chart is also green (churn going up is bad). Numbers are displayed
+  as raw values: 1234567.89 instead of $1.2M. One chart uses a
+  rainbow color palette that is unreadable for colorblind users.
+
+  Task: Teach effective use of color and number formatting in
+  dashboards.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response establishes color meaning and consistency rules — color: 'Color usage in dashboards: Rule 1 — Color has meaning: green = positive/good, red = negative/bad, gray = neutral/inactive, blue = informational. Apply this consistently across every chart. If revenue up is green, then churn up must be red (because churn increasing is bad). The current dashboard uses green for both — this confuses the viewer. Rule 2 — Limit your palette: use 5-7 colors maximum. The primary palette: one brand color (blue) for most data, green for positive indicators, red for negative indicators, gray for context and baselines. For categorical comparisons (revenue by region): use distinct but not clashing colors. Avoid similar hues — light blue and slightly lighter blue are indistinguishable. Rule 3 — Use color sparingly: most of the dashboard should be gray or muted. Color should draw attention to what matters. If everything is colorful, nothing stands out. Example: a revenue trend line in gray, with the most recent month highlighted in blue. Or a bar chart in gray where the bar that exceeds the target is green and the one that misses is red. Rule 4 — Sequential color for magnitude: when showing intensity (heatmaps, geographic maps), use a single color gradient from light to dark. Light = low values, dark = high values. Avoid rainbow gradients — they have no natural ordering (is yellow higher than green?)'"
+    weight: 0.35
+    description: "Color"
+  - type: llm_judge
+    criteria: "Response covers number formatting and accessibility — formatting: 'Number formatting rules: Raw number: 1234567.89. Formatted: $1.2M. Rules: abbreviate large numbers (K for thousands, M for millions, B for billions). Always include the unit ($, %, users). Round to appropriate precision — executives need $1.2M, not $1,234,567.89. Analysts may need more precision in drill-down views. Percentages: one decimal place is sufficient (3.2%, not 3.1847%). Show direction with arrows or color: revenue +12% ↑ (green), churn +0.5% ↑ (red — churn up is bad). Dates: spell out months in headers (February 2026, not 2026-02-27). Use consistent date formats throughout the dashboard. Currency: always specify the currency if the company operates internationally. $1.2M USD is unambiguous. Negative numbers: use parentheses for financial contexts: ($50K) instead of -$50,000. Use red color to reinforce the negative meaning. Accessibility: colorblind-safe palettes: avoid red-green combinations as the only differentiator. Use shapes or labels in addition to color. The ColorBrewer palettes are designed for colorblindness. If green = up and red = down, also add ↑ and ↓ arrows so color is not the only signal. Contrast: ensure text has sufficient contrast against the background. Dark text on light background. Minimum contrast ratio of 4.5:1 (WCAG AA standard). Font size: KPI numbers should be 24px or larger. Chart labels should be at least 12px. If someone has to squint, the font is too small'"
+    weight: 0.35
+    description: "Formatting"
+  - type: llm_judge
+    criteria: "Explanation provides before and after examples of applying these principles — examples: 'Before and after: Before (the problematic dashboard): Revenue: 1234567.89 (no currency, no abbreviation, too many decimals). Churn: 3.2% in green (green implies good, but churn increasing is bad). Rainbow bar chart for regions (unreadable for colorblind users, no ordering). 12 colors with no consistent meaning. After (the improved dashboard): Revenue: $1.2M ↑12% in green (clear, abbreviated, direction shown, green means good). Churn: 3.2% ↑0.5pp in red (red signals bad, arrow shows direction, pp = percentage points). Blue sequential bar chart for regions sorted by value (single hue, clear ordering). 5 colors with consistent meaning throughout. Additional improvements: KPI cards use large bold numbers (36px). Trend direction is shown with both color AND arrows (accessible). Gray is the dominant color — red and green appear only where attention is needed. All chart axes have labels and units. The dashboard is readable in grayscale (printed or viewed by colorblind users). Test: print the dashboard in black and white. If you can still understand it, the color design is good'"
+    weight: 0.30
+    description: "Examples"

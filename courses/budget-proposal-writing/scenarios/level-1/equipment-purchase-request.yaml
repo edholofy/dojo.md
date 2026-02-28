@@ -1,0 +1,87 @@
+meta:
+  id: equipment-purchase-request
+  level: 1
+  course: budget-proposal-writing
+  type: output
+  description: "Equipment purchase request — justify a capital expenditure for new equipment with ROI analysis"
+  tags: [capex, equipment, purchase-request, roi, beginner]
+
+state: {}
+
+trigger: |
+  You're the Production Supervisor at a 50-person
+  manufacturing company that makes custom metal parts.
+  Your main CNC milling machine is 12 years old and
+  increasingly unreliable. You need to write a capital
+  expenditure request to the owner/CEO for a replacement.
+
+  Current machine (Haas VF-2, purchased 2014):
+  - Original cost: $65,000
+  - Current condition: Functional but deteriorating
+  - Downtime last 12 months: 47 days (up from 18 days
+    two years ago)
+  - Repair costs last 12 months: $28,000 (up from
+    $8,000 two years ago)
+  - Output: 85 parts/day when running (was 110/day when
+    new)
+  - Accuracy: Starting to drift — 3% rejection rate (was
+    0.5% when new)
+  - Energy consumption: $340/month
+
+  Proposed replacement options:
+
+  Option A — New Haas VF-2SS (same brand, newer model):
+  - Cost: $82,000
+  - Financing available: $1,750/month for 60 months
+  - Output: 130 parts/day
+  - Expected accuracy: 0.3% rejection rate
+  - Energy consumption: $210/month
+  - Warranty: 1 year parts and labor
+  - Delivery: 4 weeks
+
+  Option B — New DMG Mori CMX 600 (premium brand):
+  - Cost: $125,000
+  - Financing available: $2,650/month for 60 months
+  - Output: 150 parts/day
+  - Expected accuracy: 0.1% rejection rate
+  - Energy consumption: $180/month
+  - Warranty: 2 years parts and labor
+  - Delivery: 8 weeks
+
+  Option C — Refurbished Haas VF-3 (larger, used):
+  - Cost: $38,000 (cash purchase)
+  - Output: 105 parts/day
+  - Expected accuracy: 1% rejection rate
+  - Energy consumption: $290/month
+  - Warranty: 90 days
+  - Delivery: 2 weeks
+
+  Financial context:
+  - Each part sells for an average of $12
+  - Each rejected part costs $4 in wasted material
+  - Each day of downtime costs ~$1,020 in lost production
+    (85 parts × $12)
+  - Overtime to catch up from downtime: $6,000 last year
+  - The company just had a profitable year ($2.1M revenue,
+    $280K net profit)
+  - CEO is conservative with spending — "if it ain't
+    broke, don't fix it" mentality
+
+  Task: Write the capital expenditure request. Compare all
+  3 options, calculate ROI for each, make a recommendation,
+  and address the CEO's likely objections. Include the cost
+  of doing nothing (keeping the current machine).
+
+assertions:
+  - type: llm_judge
+    criteria: "Response calculates ROI for each option clearly — quantifies the cost of the current machine (downtime costs: 47 days × $1,020 = ~$48K, repair costs: $28K, rejection costs, energy costs); compares against each replacement option's costs and benefits; calculates payback period for each option; includes the 'do nothing' scenario showing escalating costs; the financial analysis is specific and the math is reasonable."
+    weight: 0.35
+    description: "ROICalculation"
+  - type: llm_judge
+    criteria: "Response compares options fairly and makes a clear recommendation — evaluates each option's pros and cons (refurbished is cheapest but has short warranty and moderate improvement; Haas VF-2SS is middle ground; DMG Mori is best but most expensive); considers financing impact on cash flow; the recommendation aligns with the company's financial situation ($280K profit, conservative CEO); doesn't just recommend the most expensive option — considers what the company can actually afford."
+    weight: 0.35
+    description: "FairComparisonAndRecommendation"
+  - type: llm_judge
+    criteria: "Response addresses the CEO's likely objections — anticipates 'the current machine still works' objection with escalating downtime/repair cost trend data; addresses cost concerns with financing options and payback period; considers the risk of the current machine failing completely; uses language appropriate for a non-financial CEO (avoids jargon, uses concrete examples); the proposal would persuade a conservative business owner."
+    weight: 0.30
+    description: "ObjectionHandling"

@@ -1,0 +1,43 @@
+meta:
+  id: connection-failures
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Connection failures — diagnose and resolve common extract-phase connectivity issues like timeouts, authentication errors, and network problems"
+  tags: [connection, timeout, authentication, extract, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "Our daily ETL pipeline that pulls
+  data from our production PostgreSQL database into the warehouse
+  failed last night. The error log says:
+
+  ERROR: connection to server at '10.0.1.50' port 5432 failed:
+  Connection timed out
+  Is the server running on that host and accepting TCP/IP connections?
+
+  This is the third different connection error this month. Previous
+  errors were:
+  - 'FATAL: password authentication failed for user etl_reader'
+  - 'FATAL: too many connections for role etl_reader'
+
+  How do I troubleshoot these connection issues and prevent them
+  from recurring?"
+
+  Task: Diagnose the three connection error types, explain the root
+  cause of each, and provide fixes and preventive measures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each error correctly — connection timeout: server may be down, firewall blocking the port, network route changed, or server is overloaded and not accepting new connections. Check: is the database server running? Can you ping the host? Is port 5432 open? Has a firewall rule changed? Password authentication failed: credentials changed, password rotated without updating the ETL config, or wrong user specified. Check: verify credentials in the connection config, check if password was recently rotated. Too many connections: the connection pool is exhausted, either the ETL is opening too many concurrent connections or other processes are consuming the pool. Check: pg_stat_activity to see active connections, connection pool settings"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides concrete fixes — for timeout: verify server status, check network connectivity (telnet/nc to port 5432), review firewall rules, add connection timeout parameter to connection string; for auth failure: update credentials in secret manager/config, verify the user exists in pg_hba.conf; for too many connections: implement connection pooling (PgBouncer), limit max connections in the ETL tool, close connections properly after use, increase max_connections if appropriate"
+    weight: 0.35
+    description: "Fixes"
+  - type: llm_judge
+    criteria: "Response provides preventive measures — use a secret manager for credentials (not hardcoded), set up monitoring and alerts on connection pool usage, implement retry logic with exponential backoff for transient failures, use connection pooling as standard practice, set appropriate connection timeouts in the ETL configuration, document the database connection details and ownership so issues can be escalated quickly"
+    weight: 0.30
+    description: "Prevention"

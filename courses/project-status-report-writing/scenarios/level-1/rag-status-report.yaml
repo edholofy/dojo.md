@@ -1,0 +1,73 @@
+meta:
+  id: rag-status-report
+  level: 1
+  course: project-status-report-writing
+  type: output
+  description: "RAG status report — create a Red/Amber/Green status report with appropriate color coding and supporting detail"
+  tags: [rag, traffic-light, color-coded, status, beginner]
+
+state: {}
+
+trigger: |
+  Your PMO (Project Management Office) uses RAG (Red, Amber,
+  Green) status reporting. You need to create this week's RAG
+  report for a mobile app development project.
+
+  Project: Customer Loyalty App
+  Week: 8 of 16
+  Budget: $200K (spent $115K — 57.5% of budget at 50% timeline)
+  Team: 8 people
+
+  Category statuses:
+
+  Schedule:
+  - 3 of 6 milestones completed on time
+  - Milestone 4 (Beta Release) due in 2 weeks — currently
+    on track
+  - However, the QA team just told you they need an extra
+    week for testing because the test environment isn't ready
+  - If QA slips, it pushes Beta to 1 week late
+
+  Budget:
+  - $115K spent of $200K budget
+  - This is $7K over the planned spend for this point
+  - The overage is from an unplanned third-party API license
+    ($5K) and overtime ($2K)
+  - No additional unplanned costs expected
+
+  Scope:
+  - All original requirements on track
+  - The product owner added a "push notification" feature
+    last week (wasn't in original scope)
+  - The team estimated it at 3 weeks of work
+  - No formal change request has been submitted
+
+  Quality:
+  - 47 bugs found in testing so far: 2 critical, 8 major,
+    37 minor
+  - The 2 critical bugs are both related to payment
+    processing and need to be fixed before Beta
+  - Bug fix rate: closing about 10 bugs per week
+
+  Resources:
+  - One developer (Sarah) is going on parental leave in
+    3 weeks
+  - No replacement has been identified yet
+  - The rest of the team is stable
+
+  Task: Create the RAG status report with appropriate color
+  coding for each category and supporting explanations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a proper RAG status report — assigns appropriate RAG colors to each category with justification: Schedule should be AMBER (testing delay risk threatens Beta milestone), Budget should be AMBER (slightly over plan at $7K but manageable), Scope should be RED or AMBER (unscoped push notification feature added without formal change request — this is scope creep), Quality should be AMBER (2 critical payment bugs must be fixed before Beta), Resources should be AMBER or RED (developer leaving in 3 weeks with no replacement); provides an overall project RAG status; each color assignment is justified with specific data from the scenario."
+    weight: 0.35
+    description: "RAGAssignment"
+  - type: llm_judge
+    criteria: "Response includes appropriate supporting detail for each RAG category — each section includes: current status description with key metrics, what's driving the color, and what actions are planned or needed to improve; budget section shows planned vs actual spend; schedule section references milestone progress and the QA delay risk; scope section flags the push notification addition as requiring a formal change request; quality section highlights the critical payment bugs; resources section flags Sarah's upcoming leave and the gap it creates."
+    weight: 0.35
+    description: "SupportingDetail"
+  - type: llm_judge
+    criteria: "Response is formatted for quick executive scanning — uses a visual or clearly formatted RAG structure (table, color indicators, or clear labeling); leads with the overall status and key message before diving into categories; includes a summary of key risks and actions needed; the report can be understood in under 2 minutes; escalation items are clearly marked (scope change needs formal approval, resource gap needs management attention)."
+    weight: 0.30
+    description: "ExecutiveFormat"

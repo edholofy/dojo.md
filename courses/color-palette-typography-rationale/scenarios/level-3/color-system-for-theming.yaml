@@ -1,0 +1,48 @@
+meta:
+  id: color-system-for-theming
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color system for theming — design a flexible color architecture that supports multiple themes, white-labeling, and brand customization"
+  tags: [theming, white-label, customization, architecture, advanced]
+
+state: {}
+
+trigger: |
+  A platform architect says: "Our SaaS platform is used
+  by 50+ enterprise clients. Each wants their own branding:
+
+  - Custom primary color (their brand color)
+  - Custom logo and accent colors
+  - Some want dark mode, some don't
+  - Some government clients need high-contrast mode
+
+  Currently we hard-code our brand colors and offer no
+  customization. Each client request is a nightmare.
+
+  I need a color architecture that:
+  1. Lets clients set their brand color and automatically
+     generates a harmonious palette
+  2. Guarantees accessibility regardless of brand color
+  3. Supports dark mode and high-contrast as themes
+  4. Doesn't require a designer for each new client
+
+  How do I build this?"
+
+  Task: Design a themeable color architecture with
+  algorithmic palette generation from a single brand
+  color input.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs algorithmic palette generation — from one brand color input: automatically generate full palette (primary scale: 10 shades from lightest tint to darkest shade using HSL lightness interpolation, complementary/accent color: calculated from brand color hue rotation — e.g., 180° for complement or 30° for analogous, neutral scale: desaturated version of brand color for warm neutrals — not pure gray but brand-tinted, semantic colors: success/warning/error remain constant across themes — these are universal not brand-specific), generation algorithm (convert brand color to HSL, generate primary scale by fixing hue and saturation while stepping lightness from 95% to 10%, generate accent by rotating hue 150-210°, generate warm neutrals by reducing saturation to 5-10% and using the brand hue), accessibility guardrails built in (auto-check: if generated text color against generated background fails WCAG AA, adjust automatically — darken text or lighten background until 4.5:1 is met, reject brand colors that cannot produce accessible combinations and suggest alternatives)."
+    weight: 0.35
+    description: "AlgorithmicGeneration"
+  - type: llm_judge
+    criteria: "Response creates theme architecture — theme layers (base theme: semantic tokens with sensible defaults, brand theme: overrides from client's brand color — only primary/accent change, layout stays stable, dark mode theme: semantic token remapping as override — every brand theme can enable dark mode, high-contrast theme: increased contrast ratios to WCAG AAA — buttons get borders, focus indicators are larger), theme composition (themes stack: base + brand + dark mode + high contrast — each layer adds or overrides tokens, CSS custom properties cascading enables this: :root for base, [data-brand='clientA'] for brand, [data-theme='dark'] for dark mode), client configuration (client admin provides: one hex value (brand color), optional: secondary/accent hex values, optional: logo upload, system generates: complete palette, verifies accessibility, produces brand-specific CSS custom property file)."
+    weight: 0.35
+    description: "ThemeArchitecture"
+  - type: llm_judge
+    criteria: "Response addresses edge cases and documentation — problematic brand colors (very light brand colors like pastel yellow — primary buttons would be invisible, very dark brand colors — dark mode becomes monochromatic, very saturated neons — fail accessibility on most backgrounds — for each: detection logic and automated fallback or client notification), documentation for clients (theming guide: how to set up your brand, what changes and what stays the same, preview tool to see their brand color applied before committing), documentation for developers (how to add new themed components: always reference semantic tokens, test with multiple brand colors, never hardcode colors — lint rule), and the palette preview tool (build a simple configuration page: client enters hex color, system shows generated palette across sample UI screens in light and dark mode, highlights any accessibility issues, client approves before going live)."
+    weight: 0.30
+    description: "EdgeCasesAndDocs"

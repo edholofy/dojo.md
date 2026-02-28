@@ -1,0 +1,53 @@
+meta:
+  id: ma-incident-readiness
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Assess M&A incident readiness — evaluate acquired companies' incident management maturity and design integration plans for merging reliability practices"
+  tags: [postmortem, M&A, acquisition, due-diligence, integration, master]
+
+state: {}
+
+trigger: |
+  Your company is acquiring a competitor. As CTO, you're responsible
+  for the technology due diligence and integration plan. The
+  acquisition target:
+
+  - 80-person engineering team
+  - SaaS platform with 500 enterprise customers
+  - Revenue: $40M ARR
+  - They had 3 major outages in the past 12 months (one was in
+    the news)
+  - No formal incident response process
+  - No postmortem practice (they do "war stories" in Slack after
+    incidents)
+  - On-call is voluntary (and often nobody is on-call on weekends)
+  - They have no SLOs defined
+  - Their engineering culture is "move fast" — reliability is seen
+    as slowing down feature development
+  - They're running a monolith on a single cloud region
+
+  The acquisition price factors in their customer base and revenue.
+  But the reliability risk could destroy customer value post-
+  acquisition if not addressed.
+
+  Task: Write the incident readiness assessment and integration
+  plan. Include: current state assessment with risk scoring,
+  integration plan for merging their systems and practices into
+  your reliability framework, customer communication strategy for
+  the transition, and a timeline that addresses the highest risks
+  first.
+
+assertions:
+  - type: llm_judge
+    criteria: "Due diligence assessment quantifies reliability risk — current state assessment: 'Reliability Maturity Score: 1.5 / 5 (Critical). Scoring across 8 dimensions: (1) Incident response process: 1/5 — no formal process, ad-hoc response. (2) Postmortem practice: 1/5 — no structured learning from incidents. (3) On-call coverage: 1/5 — voluntary, no weekend coverage. (4) Monitoring and alerting: 2/5 — basic uptime monitoring, no SLOs. (5) Architecture resilience: 1/5 — monolith, single region, no redundancy. (6) Deployment safety: 2/5 — CI/CD exists but no canary or rollback automation. (7) Documentation: 2/5 — some runbooks, no incident playbooks. (8) Cultural readiness: 2/5 — engineering talent is strong but reliability is not valued.' Risk quantification: '3 major outages in 12 months with no structured improvement process means incidents will continue at current or worsening rate. Each major outage risks: customer churn (estimated 5-10% of affected customers), SLA credits (if SLAs exist in contracts), and reputation damage to the combined company post-acquisition. Financial risk model: if current incident rate continues post-acquisition, estimated annual cost: $2-4M in customer churn plus $500K-1M in operational costs. If a major outage occurs during the integration period (high probability): estimated $5-10M in customer value at risk, as acquired customers will question the acquisition's impact on service quality.' Acquisition price implications: 'Recommend the acquisition team factor in $3-5M in reliability remediation costs and $2-4M in potential customer attrition risk during the first 12 months. This does not change the acquisition recommendation but informs the integration budget and timeline'"
+    weight: 0.35
+    description: "Risk assessment"
+  - type: llm_judge
+    criteria: "Integration plan is phased to address highest risks first — phase 0 (pre-close, weeks -4 to 0): 'Before the acquisition closes: (1) Establish interim on-call rotation using our engineers as backup for their systems. This eliminates the weekend coverage gap immediately. (2) Deploy basic monitoring from our stack onto their critical services. We need visibility before we have control. (3) Identify their top 5 most critical services and create emergency runbooks. (4) Brief their engineering leadership on our incident response process — not to adopt yet, but to understand what is coming.' Phase 1 (days 1-30, critical risk mitigation): '(1) Mandatory on-call rotation established for all their production services. 24/7 coverage with our IC process. No more voluntary on-call. (2) Incident response process adopted: severity definitions, escalation paths, communication protocols. Train their engineers in a 4-hour workshop. (3) First postmortem practice: retroactively write postmortems for their 3 recent major outages. Use these as both learning opportunities and training in the postmortem process. (4) Monitoring expansion: add SLI tracking to their top 10 endpoints.' Phase 2 (days 30-90, structural improvements): '(1) SLO definition for all customer-facing services. (2) Architecture review: identify single points of failure in their monolith. Prioritize multi-region deployment for their database tier. (3) Deployment safety: canary deployments and automated rollback for their services. (4) Postmortem process fully operational: peer review, action item tracking, monthly pattern review.' Phase 3 (days 90-180, full integration): '(1) Unified on-call rotation across both organizations. (2) Shared monitoring and alerting platform. (3) Cross-team incident response capability. (4) Cultural integration: joint postmortem reviews, shared learning sessions'"
+    weight: 0.35
+    description: "Phased integration"
+  - type: llm_judge
+    criteria: "Customer communication and cultural change management address the human side — customer communication strategy: 'Acquired company customers are the most at-risk during integration. They worry: will the service get worse? Will the team that built my product be fired? Will the new company understand my needs? Communication plan: (1) Day 1 (acquisition announcement): CEO letter to all acquired customers. Message: we are investing in this platform, not dismantling it. Service continuity is our top priority. Your account team remains the same. (2) Week 2: account manager calls to each enterprise customer. Discuss: what changes they will see (improved reliability), what will not change (their product, their data, their account team). (3) Month 1: publish reliability improvement roadmap. Show customers the specific investments being made in their platform's reliability. Frame it positively: you are getting the benefit of [our company's] reliability engineering investment. (4) Quarterly: reliability reports shared with enterprise customers showing improvement metrics.' Cultural change management: 'The acquired team's move fast culture is valuable — we do not want to kill it. But we need to add break fewer things to the equation. Approach: (1) Respect their culture. Do not position reliability as fixing their broken process. Frame it as adding a new capability to an already strong engineering team. (2) Quick wins. Show the team that reliability practices make their lives better (fewer 3 AM pages, less incident chaos, more confidence in deployments) rather than just creating process overhead. (3) Champions from within. Identify 2-3 engineers from the acquired team who are interested in reliability. Invest in their development. Having internal advocates is more effective than external mandates. (4) Celebrate progress. When their first postmortem prevents a recurrence, publicize it. When their MTTR improves, celebrate it. Show that reliability investment has visible, positive outcomes'"
+    weight: 0.30
+    description: "Customer and cultural strategy"

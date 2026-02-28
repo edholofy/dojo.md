@@ -1,0 +1,48 @@
+meta:
+  id: intermediate-palette-shift
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Intermediate palette shift — handle multiple color and typography challenges in a single session"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a mid-level designer at a product company.
+  Your day's tasks:
+
+  TASK 1 — The e-commerce team says: "Our checkout
+  page has a green 'Place Order' button but it doesn't
+  stand out enough. We want to change it to orange but
+  worried that orange means 'warning' in our design
+  system. Can we use orange for a positive CTA?"
+
+  TASK 2 — The marketing team wants to use a trendy
+  display font (Playfair Display) for the landing page
+  hero text. But the engineering team says: "We already
+  load 3 fonts. Adding a 4th will hurt performance.
+  Can we achieve a similar look with our existing fonts
+  (Inter, Roboto Slab)?"
+
+  TASK 3 — A VP asks: "I noticed our iOS app and Android
+  app use slightly different shades of our brand blue.
+  iOS uses #2563EB, Android uses #1D4ED8. Why are they
+  different and should they be the same?"
+
+  Task: Handle all three design tasks with clear
+  rationale for each decision.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Task 1 — CTA color change rationale — analyzes the request (orange CAN work for CTAs — Amazon uses orange for 'Add to Cart', context determines color meaning not the color itself), provides recommendation (if green doesn't stand out: first check WHY — is the green too similar to surrounding colors? does it lack contrast? if genuinely changing to orange: ensure it's distinct from the warning orange in the design system — different shade, always accompanied by positive action text, perhaps slightly different hue, OR solve the real problem: make the green CTA stand out better through size, contrast, whitespace, or shadow rather than changing the color), addresses the semantic concern (document the distinction: CTA orange is warmer/brighter with action text, warning orange is darker/muted with warning icon — or use a completely different accent color like the brand primary for CTAs to avoid confusion), provides a clear recommendation with hex values."
+    weight: 0.35
+    description: "CTAColorRationale"
+  - type: llm_judge
+    criteria: "Response handles Task 2 — font substitution rationale — explains the performance concern is valid (every additional font adds 50-100KB+ and impacts load time), evaluates existing fonts as alternatives (Roboto Slab: already loaded, serif font that can create editorial/premium feel similar to Playfair Display for hero text — use at large size with specific weight to maximize visual impact, Inter: geometric sans-serif, different character than Playfair but can create strong headlines at large sizes with proper weight/spacing), provides recommendation (use Roboto Slab Bold at hero size 48-72px with slightly tightened letter-spacing — achieves elegant serif look similar to Playfair without adding a new font, or if Playfair is truly essential: use font-display: optional and only load it for the landing page not the entire app), shows comparison (how Roboto Slab looks vs Playfair at hero sizes — acknowledge the difference but argue the performance benefit outweighs the aesthetic difference)."
+    weight: 0.35
+    description: "FontSubstitution"
+  - type: llm_judge
+    criteria: "Response handles Task 3 — cross-platform color consistency — explains why they might differ (platform-specific rendering: iOS and Android render colors differently due to color profiles, screen technology, and OS-level color management — the same hex value can look different on each platform, OR the difference may be intentional to match platform conventions, OR it may be an accidental inconsistency from separate development teams), recommendation (should they be the same hex? YES — brand consistency requires one source of truth, if one looks 'wrong' on a specific platform it's a rendering/calibration issue not a palette issue, the fix: single hex value in design tokens distributed to both platforms, test on actual devices and calibrated monitors, if slight perceptual difference exists on-device: it's acceptable as long as the hex values are identical), addresses root cause (implement design tokens as single source of truth — color values defined once, consumed by all platforms, prevents drift)."
+    weight: 0.30
+    description: "CrossPlatformColor"

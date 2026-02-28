@@ -1,0 +1,38 @@
+meta:
+  id: cohort-analysis-sql
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Build cohort analysis reports in SQL — track customer retention, revenue by cohort, and behavioral patterns over time using pure SQL"
+  tags: [SQL, cohort-analysis, retention, customer-lifecycle, advanced]
+
+state: {}
+
+trigger: |
+  The growth team needs a cohort retention report:
+  "Group customers by their signup month. For each cohort, show
+  what percentage were still active 1 month later, 2 months later,
+  etc., up to 12 months. This tells us if our retention is improving
+  over time."
+
+  Tables:
+  - customers (customer_id, signup_date)
+  - orders (order_id, customer_id, amount, order_date)
+
+  "Active" means placed at least one order in that month.
+
+  Task: Build the cohort retention matrix in SQL.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly calculates cohort retention percentages — query: 'Cohort retention analysis: WITH customer_cohorts AS (SELECT customer_id, DATE_TRUNC('month', signup_date) AS cohort_month FROM customers), monthly_activity AS (SELECT DISTINCT customer_id, DATE_TRUNC('month', order_date) AS activity_month FROM orders), cohort_activity AS (SELECT cc.cohort_month, ma.activity_month, COUNT(DISTINCT cc.customer_id) AS active_customers, EXTRACT(YEAR FROM AGE(ma.activity_month, cc.cohort_month)) * 12 + EXTRACT(MONTH FROM AGE(ma.activity_month, cc.cohort_month)) AS months_since_signup FROM customer_cohorts cc JOIN monthly_activity ma ON cc.customer_id = ma.customer_id AND ma.activity_month >= cc.cohort_month GROUP BY cc.cohort_month, ma.activity_month), cohort_sizes AS (SELECT cohort_month, COUNT(*) AS cohort_size FROM customer_cohorts GROUP BY cohort_month) SELECT ca.cohort_month, cs.cohort_size, ca.months_since_signup, ca.active_customers, ROUND(ca.active_customers * 100.0 / cs.cohort_size, 1) AS retention_pct FROM cohort_activity ca JOIN cohort_sizes cs ON ca.cohort_month = cs.cohort_month WHERE ca.months_since_signup BETWEEN 0 AND 12 ORDER BY ca.cohort_month, ca.months_since_signup. The key steps: 1. Assign each customer to their signup month cohort. 2. Find which months each customer was active. 3. Calculate months_since_signup for each cohort-activity pair. 4. Count active customers and divide by cohort size. The result is: Jan 2024 cohort had 500 customers, 350 active at month 1 (70%), 280 at month 2 (56%), etc'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Response pivots the retention data into a matrix format — matrix: 'Pivoting into a retention matrix: SELECT cohort_month, cohort_size, MAX(CASE WHEN months_since_signup = 0 THEN retention_pct END) AS m0, MAX(CASE WHEN months_since_signup = 1 THEN retention_pct END) AS m1, MAX(CASE WHEN months_since_signup = 2 THEN retention_pct END) AS m2, MAX(CASE WHEN months_since_signup = 3 THEN retention_pct END) AS m3, MAX(CASE WHEN months_since_signup = 4 THEN retention_pct END) AS m4, MAX(CASE WHEN months_since_signup = 5 THEN retention_pct END) AS m5, MAX(CASE WHEN months_since_signup = 6 THEN retention_pct END) AS m6 FROM (the retention query above) retention GROUP BY cohort_month, cohort_size ORDER BY cohort_month. Result looks like: Cohort | Size | M0   | M1   | M2   | M3. Jan 24 | 500  | 100% | 70%  | 56%  | 48%. Feb 24 | 600  | 100% | 72%  | 60%  | 52%. Mar 24 | 550  | 100% | 75%  | 63%  | 55%. Reading the matrix: diagonally shows improvement over time — if Feb retention at M1 (72%) is higher than Jan at M1 (70%), retention is improving. Vertically shows the retention curve for one cohort. Horizontally shows all cohorts at the same age. Revenue retention variant: replace COUNT(DISTINCT customer_id) with SUM(amount). Revenue retention above 100% means existing customers are spending more over time (net revenue retention — expansion exceeds churn)'"
+    weight: 0.35
+    description: "Matrix"
+  - type: llm_judge
+    criteria: "Analysis provides actionable insights from cohort data — insights: 'Cohort analysis insights: Key patterns to look for: improving retention: if newer cohorts retain better than older ones, product improvements are working. Deteriorating retention: if newer cohorts retain worse, something changed (worse onboarding, lower quality acquisition). Cliff at month N: if all cohorts drop sharply at month 3, something happens at that point (trial expiration, first renewal, feature limitation). Stable floor: most cohorts stabilize around 30% after month 6. The customers who survive to month 6 are long-term. Focus retention efforts on months 1-6. Actionable recommendations: if M0 to M1 drop is larger than 40%: onboarding problem — customers sign up but never activate. Improve first-time experience. If M2 to M3 drop is the steepest: this often aligns with trial expiration or first payment. Optimize the conversion moment. If one cohort retains much better: investigate what was different that month (product launch, acquisition channel change, seasonal effect). Revenue cohort analysis: WITH cohort_revenue AS (SELECT cc.cohort_month, ca.months_since_signup, SUM(o.amount) AS revenue FROM customer_cohorts cc JOIN orders o ON cc.customer_id = o.customer_id CROSS JOIN LATERAL (SELECT EXTRACT(YEAR FROM AGE(DATE_TRUNC('month', o.order_date), cc.cohort_month)) * 12 + EXTRACT(MONTH FROM AGE(DATE_TRUNC('month', o.order_date), cc.cohort_month)) AS months_since_signup) ca GROUP BY cc.cohort_month, ca.months_since_signup) SELECT cohort_month, months_since_signup, revenue, SUM(revenue) OVER (PARTITION BY cohort_month ORDER BY months_since_signup) AS cumulative_revenue FROM cohort_revenue. Cumulative revenue by cohort shows how quickly each cohort pays back its acquisition cost'"
+    weight: 0.30
+    description: "Insights"

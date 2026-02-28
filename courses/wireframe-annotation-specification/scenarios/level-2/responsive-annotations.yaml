@@ -1,0 +1,44 @@
+meta:
+  id: responsive-annotations
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Responsive annotations — specify how screens adapt across breakpoints including layout changes, content reflow, and mobile-specific interactions"
+  tags: [responsive, breakpoints, mobile, adaptive, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I designed a product page
+  at desktop width (1440px). The PM asks 'What about mobile
+  and tablet?' The page has:
+
+  - Hero banner with product image and description side by side
+  - Feature comparison table (5 columns)
+  - Pricing cards (3 cards in a row)
+  - Testimonial carousel
+  - FAQ accordion
+  - CTA section with email input and button side by side
+
+  Some elements work on mobile, others need major changes.
+  The table definitely can't stay as-is. How do I annotate
+  responsive behavior without designing every screen at
+  every breakpoint?"
+
+  Task: Write responsive annotations for the product page
+  covering layout changes, content adaptation, and
+  interaction changes at each breakpoint.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies layout changes at each breakpoint — defines breakpoints (mobile: <768px, tablet: 768-1023px, desktop: 1024px+). Hero: desktop (image left, text right 50/50) → tablet (image top, text below, full width) → mobile (image top at 60% height, text below). Pricing cards: desktop (3 cards in a row) → tablet (3 cards, narrower) → mobile (stacked vertically, one card at a time with swipe or accordion). Feature table: desktop (full 5-column table) → tablet (horizontally scrollable with fixed first column) → mobile (restructured as cards or comparison accordion, not a table). Each element has specific, not vague, breakpoint behavior"
+    weight: 0.35
+    description: "BreakpointLayouts"
+  - type: llm_judge
+    criteria: "Response covers content and interaction adaptation — content changes: hero description truncated on mobile (full text on desktop, 2-line excerpt on mobile with 'Read more'), pricing card details (hide less important features on mobile, show 'See all features' link), FAQ accordion (same on all sizes — naturally responsive). Interaction changes: testimonial carousel (desktop: shows 3 at once with arrows, mobile: shows 1 with swipe gesture), CTA section (desktop: input + button side by side, mobile: input full width, button below it, both full width), and touch-specific interactions (hover states don't exist on mobile — what replaces them?)"
+    weight: 0.35
+    description: "ContentInteractionAdaptation"
+  - type: llm_judge
+    criteria: "Response provides a practical responsive annotation format — annotation approach: annotate the desktop wireframe as the primary spec, add a 'Responsive Behavior' section below each element listing breakpoint-specific changes (no need to wireframe every breakpoint if changes are clearly described), but DO create separate wireframes for elements that change dramatically (the feature table restructuring deserves its own mobile wireframe). Includes sticky/fixed element behavior (does the CTA become a sticky bottom bar on mobile?), and navigation changes (desktop nav → mobile hamburger menu). Uses a consistent notation for breakpoint specs"
+    weight: 0.30
+    description: "ResponsiveFormat"

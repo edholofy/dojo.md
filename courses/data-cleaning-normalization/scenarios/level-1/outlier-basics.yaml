@@ -1,0 +1,37 @@
+meta:
+  id: outlier-basics
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Outlier basics — identify and understand outliers in data and decide when to keep, remove, or transform them"
+  tags: [outliers, detection, treatment, basics]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I'm analyzing customer purchase data and found
+  some extreme values:
+  - Most orders are $50-$200, but one order is $50,000
+  - Average customer age is 35, but one customer's age is listed as 150
+  - Most customers buy 1-5 items per order, but one bought 500
+
+  Are these errors or real data points? How do I decide whether to remove
+  them or keep them? My average and standard deviation change dramatically
+  depending on whether I include them."
+
+  Task: Explain what outliers are, how to identify them, and how to
+  decide whether outliers should be kept, removed, or transformed.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response distinguishes between types of outliers — data entry errors (age of 150 is almost certainly wrong), legitimate extreme values (a $50,000 order could be a real bulk purchase), and measurement/system errors (data collection glitches). Explains that the first step is always to investigate WHY the value is extreme before deciding what to do with it. Not all outliers are errors, and not all errors are outliers"
+    weight: 0.35
+    description: "OutlierTypes"
+  - type: llm_judge
+    criteria: "Response explains basic outlier detection methods — visual methods (box plots, scatter plots, histograms to spot extreme values), statistical methods (z-score: values more than 2-3 standard deviations from the mean, IQR method: values below Q1 - 1.5×IQR or above Q3 + 1.5×IQR), and domain knowledge (values outside of possible/reasonable ranges — age cannot be 150, prices cannot be negative). Shows how each method works with the examples given"
+    weight: 0.35
+    description: "DetectionMethods"
+  - type: llm_judge
+    criteria: "Response explains treatment options and when to use each — removal (appropriate for confirmed errors), capping/winsorizing (replacing extreme values with a threshold value — preserves the data point while limiting its influence), transformation (log transform to reduce the impact of extreme values while keeping them), separate analysis (analyze with and without outliers to understand their impact), and flagging (marking outliers for manual review rather than automatic treatment). Emphasizes documenting all outlier treatment decisions"
+    weight: 0.30
+    description: "TreatmentOptions"

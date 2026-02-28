@@ -1,0 +1,39 @@
+meta:
+  id: multi-step-optimization
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Multi-step funnel optimization — prioritize which funnel steps to improve, estimate impact of changes, and build optimization roadmaps"
+  tags: [optimization, prioritization, impact-estimation, roadmap, intermediate]
+
+state: {}
+
+trigger: |
+  The growth team has this 6-step e-commerce funnel (monthly averages):
+
+  Homepage: 100,000 visitors
+  Category page: 45,000 (45%)
+  Product page: 22,500 (50%)
+  Add to cart: 4,500 (20%)
+  Checkout: 2,700 (60%)
+  Purchase: 1,620 (60%)
+
+  Average order value: $85. The team has engineering bandwidth for
+  2 optimization projects this quarter.
+
+  Task: Prioritize which steps to optimize, estimate the revenue impact
+  of realistic improvements, and build a quarterly optimization roadmap.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides step-by-step impact analysis and prioritization — analysis: 'Impact analysis for each funnel step: for each step, calculate the revenue gain from a realistic 10-20% relative improvement. Step 1→2 (45% → 50%): adds 5,000 more category views. Cascading through the funnel: 5,000 × 50% × 20% × 60% × 60% = 1,800 additional purchases? No — that overstates it. Must cascade correctly: 5,000 × 0.50 × 0.20 × 0.60 × 0.60 = 180 additional purchases × $85 = $15,300/month. Step 2→3 (50% → 55%): 45,000 × 0.05 = 2,250 more product views. 2,250 × 0.20 × 0.60 × 0.60 = 162 additional purchases × $85 = $13,770/month. Step 3→4 (20% → 24%): 22,500 × 0.04 = 900 more add-to-carts. 900 × 0.60 × 0.60 = 324 additional purchases × $85 = $27,540/month. Step 4→5 (60% → 66%): 4,500 × 0.06 = 270 more checkouts. 270 × 0.60 = 162 additional purchases × $85 = $13,770/month. Step 5→6 (60% → 66%): 2,700 × 0.06 = 162 more purchases × $85 = $13,770/month. Ranking by revenue impact: 1. Step 3→4 (product page → add to cart): $27,540/month — highest impact by far. 2. Step 1→2 (homepage → category): $15,300/month. 3. Tie: Steps 2→3, 4→5, 5→6 at approximately $13,770/month each. The product page to add-to-cart step is the clear #1 priority — it has the lowest conversion rate (20%) AND the highest revenue impact'"
+    weight: 0.35
+    description: "Impact analysis"
+  - type: llm_judge
+    criteria: "Response provides specific optimization tactics for the top priorities — tactics: 'Optimization tactics for the top 2 priorities: Priority 1 — Product page to add-to-cart (20% → target 24-26%): root cause investigation: why do 80% of product page visitors NOT add to cart? Common issues: poor product images (single angle, low quality). Price not competitive or unclear. Missing social proof (reviews, ratings). Confusing size/variant selection. Slow page load time. Tactics to test: A/B test larger, better product images with zoom and 360-degree views. Add urgency signals (stock levels, recent purchases). Simplify variant selection (auto-select most popular size). Add trust signals above the fold (free returns, reviews count). Improve mobile product page layout (50%+ traffic is likely mobile). Expected timeline: 2-3 A/B tests over the quarter, each running 2-3 weeks. Priority 2 — Homepage to category page (45% → target 50-52%): root cause investigation: why do 55% of homepage visitors leave? Common issues: unclear value proposition. Too many choices (paradox of choice). Slow load time. Poor navigation. Irrelevant content for the visitor segment. Tactics to test: personalized category recommendations based on traffic source. Simplified navigation with top 5 categories prominent. Hero banner A/B test (aspirational image vs product showcase). Search bar prominence (users who search convert 2-3x higher). Exit-intent popup with popular categories'"
+    weight: 0.35
+    description: "Tactics"
+  - type: llm_judge
+    criteria: "Response provides a quarterly optimization roadmap with measurement plan — roadmap: 'Quarterly optimization roadmap: Month 1 — Foundation and first test: week 1-2: implement enhanced product page tracking (scroll depth, image interactions, time on page). Week 2-3: launch A/B test #1 on product page (improved images + social proof). Week 3-4: analyze results, iterate. Expected outcome: validate whether visual improvements move add-to-cart rate. Month 2 — Scaling wins and second priority: week 5-6: launch A/B test #2 on product page (variant selection simplification or urgency signals). Week 6-7: launch A/B test #1 on homepage (personalized recommendations). Week 7-8: analyze and roll out winners. Expected outcome: product page improvement confirmed, homepage test underway. Month 3 — Compound gains: week 9-10: launch A/B test #3 (whichever step needs more testing). Week 10-11: analyze cumulative impact across all changes. Week 12: prepare quarterly report with actual vs projected impact. Success measurement: primary metric: overall funnel conversion rate (currently 1.62%). Target: 2.0% by end of quarter (a 23% relative improvement). Secondary metrics: add-to-cart rate (20% → 24%+), homepage-to-category rate (45% → 50%+). Revenue target: $15,000-$25,000 additional monthly revenue. Compound impact calculation: if both optimizations succeed: 100,000 × 50% × 50% × 24% × 60% × 60% = 2,160 purchases (vs current 1,620). Additional revenue: 540 × $85 = $45,900/month — a 33% increase. Even partial success (half the improvement) yields $20,000-$25,000/month additional revenue'"
+    weight: 0.30
+    description: "Roadmap"

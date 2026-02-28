@@ -1,0 +1,43 @@
+meta:
+  id: risks-and-mitigations
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Write risks and mitigations — identify what could go wrong with a proposed solution and present concrete mitigation strategies"
+  tags: [RFC, risks, mitigations, planning, failure-modes, beginner]
+
+state: {}
+
+trigger: |
+  You're writing the risks section of an RFC proposing to migrate your
+  application from a self-hosted PostgreSQL database to a managed cloud
+  database service (like AWS RDS or Google Cloud SQL).
+
+  The migration involves:
+  - Moving 500GB of production data
+  - Changing connection strings across 12 microservices
+  - Switching from self-managed backups to provider-managed backups
+  - New network topology (VPC peering instead of local connections)
+
+  Your first draft just lists: "Risk: data loss. Risk: downtime."
+  This isn't helpful — it doesn't tell reviewers HOW LIKELY risks are,
+  HOW SEVERE they'd be, or WHAT YOU'LL DO about them.
+
+  Task: Write a comprehensive risks and mitigations section for this
+  RFC. For each risk, include likelihood, severity, impact, and a
+  concrete mitigation plan. Then write a guide on how to think about
+  risks in technical proposals.
+
+assertions:
+  - type: llm_judge
+    criteria: "Risks are specific with likelihood and severity — not generic 'data loss' but specific: (1) 'Data corruption during migration: rows with special characters or encoding issues may fail transfer. Likelihood: Medium. Severity: High. Mitigation: run migration on a staging copy first, validate row counts and checksums per table, keep source database read-only during final sync.' (2) 'Extended downtime beyond maintenance window: migration of 500GB may exceed the 4-hour window if network throughput is lower than expected. Likelihood: Low. Severity: High. Mitigation: perform dry runs to measure actual transfer rates, have a go/no-go checkpoint at 2 hours, pre-stage data with continuous replication before cutover.' (3) 'Connection string misconfiguration: 12 services need updated connection strings — missing one causes partial outage. Likelihood: Medium. Severity: Medium. Mitigation: use environment variables managed by config service, deploy connection changes before migration, test each service against new endpoint in staging.' (4) 'Increased latency from network topology change: VPC peering adds ~1-2ms per query vs local connections. Likelihood: High. Severity: Low. Mitigation: benchmark critical query paths, implement connection pooling, consider read replicas for latency-sensitive services.' Each risk should feel researched, not speculative"
+    weight: 0.35
+    description: "Specific risks"
+  - type: llm_judge
+    criteria: "Mitigations are actionable, not hand-wavy — each mitigation answers: what specifically will be done, who is responsible, when it happens (before/during/after migration), and what the fallback is if mitigation fails. Includes a rollback plan: 'If critical issues are discovered within 48 hours of migration, we can fail back to the original database. Continuous replication from new to old database will be maintained during the validation period.' Risk acceptance: explicitly acknowledges which risks are accepted ('We accept 1-2ms latency increase as an acceptable trade-off for managed backups and reduced operational burden'). Residual risks: 'Even with mitigations, there is a non-zero chance of brief inconsistency during cutover. This is bounded to a 30-second window and affects only write operations.' No mitigation should be 'we'll be careful' — every mitigation is a concrete action"
+    weight: 0.35
+    description: "Actionable mitigations"
+  - type: llm_judge
+    criteria: "Risk guide provides a framework for thinking about risks — principles: (1) Categorize risks: technical (will it work?), operational (can we run it?), timeline (will it be late?), organizational (do we have the skills?). (2) Use likelihood × severity to prioritize — high likelihood + high severity = must mitigate, low likelihood + low severity = accept and monitor. (3) Every risk needs an owner — 'the team will handle it' means nobody handles it. (4) Distinguish between risks you can prevent and risks you can only detect and respond to. (5) Include rollback criteria — under what conditions do you abort? Make these specific and pre-agreed. (6) Time-bound your risk window — 'risk of data loss exists only during the 4-hour migration window, not before or after.' Anti-patterns: ignoring risks to make the RFC look better, listing risks without mitigations (anxiety without action), mitigating everything (some risks should be accepted), and confusing risks with issues (a risk MIGHT happen, an issue already exists)"
+    weight: 0.30
+    description: "Risk framework guide"

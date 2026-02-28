@@ -1,0 +1,45 @@
+meta:
+  id: deployment-related-alerts
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Respond to deployment-related alerts — investigate alerts that correlate with recent deployments and decide whether to rollback"
+  tags: [monitoring, deployment, rollback, investigation, canary, intermediate]
+
+state: {}
+
+trigger: |
+  At 2:15 PM, a deployment of user-service v3.2.0 completed. At
+  2:22 PM (7 minutes later), you receive two alerts:
+
+  1. WARNING: user-service error rate increased from 0.1% to 1.8%
+  2. WARNING: user-service p95 latency increased from 120ms to 450ms
+
+  You check the deployment notes:
+  - v3.2.0 includes: new user profile caching layer, updated
+    authentication library, bug fix for email validation
+  - The deployment used a rolling update (pods replaced one at a
+    time over 5 minutes)
+  - All pods are running and passing health checks
+
+  The alerts are WARNING, not CRITICAL. The system is degraded but
+  functional. Your team's rollback policy says: "Roll back if errors
+  exceed 5% or if customer reports exceed 10 in 15 minutes."
+
+  Task: Investigate whether this is caused by the deployment, decide
+  whether to rollback, and explain your reasoning. Show the decision
+  framework for deployment-related alerts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Investigation correctly correlates alerts with deployment — correlation assessment: 'Strong evidence this is deployment-related: (1) Timing: alerts appeared 7 minutes after deployment — within the window where deployment effects manifest. (2) Both metrics worsened simultaneously — error rate and latency increasing together suggests a code or infrastructure change, not a random external factor. (3) No other changes: if no other deployments or infrastructure changes occurred, the deployment is the most likely cause.' Investigation steps: '(1) Compare error rates between old and new pods. If old pods (not yet replaced) show normal metrics and new pods show elevated errors, the deployment is confirmed as the cause. (2) Check the error types. Are the new errors related to the changes in v3.2.0? If errors are in the authentication flow, the updated authentication library is suspect. If errors are in profile loading, the new caching layer is suspect. (3) Check the latency distribution. Is latency evenly elevated or is there a bimodal distribution (fast responses from old pods, slow from new)? (4) Check the new caching layer specifically. Cache misses on a cold cache naturally increase latency temporarily. If the latency is improving as the cache warms, this is expected behavior.' What the data tells you: 'Error rate at 1.8% is 18x normal (0.1%). Latency at 450ms is 3.75x normal (120ms). Both are significantly worse. But neither has crossed the rollback threshold (5% errors, or customer reports)'"
+    weight: 0.35
+    description: "Deployment correlation"
+  - type: llm_judge
+    criteria: "Rollback decision framework is well-reasoned — decision framework: 'Do I roll back? Not yet — but I am prepared to. Here is the reasoning: (1) The rollback policy threshold is not met: errors are at 1.8% (threshold: 5%), no customer reports yet. Policy says to continue monitoring. (2) However: the trend matters more than the current number. Check: is the error rate stable at 1.8% or climbing? If climbing, it may cross 5% soon — prepare the rollback command now. If stable, the situation may be a cold cache warming up. (3) Time-box the investigation: give it 15 minutes. If errors are stable or declining at 2:37 PM (15 minutes after alert), the deployment is likely settling. If errors are still climbing, roll back immediately without waiting for the 5% threshold.' When to roll back immediately (override the policy): '(a) If you identify that the errors are causing data corruption or financial loss — do not wait for 5%. (b) If the error rate is climbing rapidly (1.8% → 3% → 4% in 5 minutes). (c) If customer-facing pages are returning 500 errors (not just background API errors). (d) If you cannot diagnose the cause within 15 minutes — when in doubt, roll back.' When NOT to roll back: '(a) If the latency increase is from cache cold-start (expected, temporary). (b) If the error rate is declining (the deployment may have had a transient issue during rollout). (c) If errors are limited to a non-critical endpoint'"
+    weight: 0.35
+    description: "Rollback decision framework"
+  - type: llm_judge
+    criteria: "Response includes the rollback preparation and post-decision actions — rollback preparation: 'While investigating, prepare the rollback so it can be executed in under 2 minutes if needed. Have the command ready: kubectl rollout undo deployment/user-service. Verify that v3.1.0 (the previous version) is still available in the container registry. This preparation means the rollback decision is a 2-minute action, not a 15-minute scramble.' If you DO roll back: '(1) Execute the rollback. (2) Monitor: confirm error rate and latency return to normal within 5 minutes. (3) Communicate: post in the deployment channel that v3.2.0 was rolled back due to elevated errors and latency. (4) Do not redeploy v3.2.0 until the issue is identified and fixed. (5) Document: what the alerts showed, the decision to roll back, and the recovery metrics.' If you DON'T roll back: '(1) Continue monitoring for the next 30 minutes. (2) If errors return to baseline: the deployment was successful with a transient issue (likely cache cold-start). Document the temporary degradation for future reference — similar temporary degradation is expected for future deploys with cache changes. (3) If errors stabilize at a higher-than-normal level (for example, 0.5% instead of 0.1%): this may indicate a real regression that is below the rollback threshold. Create a ticket for investigation and consider rolling back during the next business day if the regression is confirmed.' Key lesson: 'The rollback threshold is a guide, not a ceiling. If your engineering judgment says something is wrong, act on it. It is always better to roll back unnecessarily than to leave a breaking deployment in production because the metrics have not crossed an arbitrary threshold'"
+    weight: 0.30
+    description: "Preparation and post-decision"

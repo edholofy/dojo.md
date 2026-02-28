@@ -1,0 +1,45 @@
+meta:
+  id: api-design-documentation
+  level: 4
+  course: design-system-documentation
+  type: output
+  description: "API design documentation — document component API design principles, naming conventions, and consistency standards across a large component library"
+  tags: [API-design, consistency, naming, principles, advanced]
+
+state: {}
+
+trigger: |
+  You're the design system architect. The component library
+  has 80+ components built by different engineers over 3 years.
+  API inconsistencies have accumulated:
+
+  - Sizing: some use 'size' with sm/md/lg, others use 'size'
+    with small/medium/large, others use separate width/height
+  - Variants: some use 'variant', others 'type', others
+    'appearance', others 'kind'
+  - Events: some use 'onChange', others 'onValueChange',
+    others 'onUpdate'
+  - Boolean props: some use 'disabled', others 'isDisabled',
+    some use 'loading', others 'isLoading'
+  - Children: some use 'children' for content, others use
+    'label', others use 'title', others use 'content'
+
+  Your tech lead says: "We need API design guidelines so all
+  components feel like they belong to the same library."
+
+  Task: Document API design principles and naming conventions
+  that create consistency across the entire component library.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response establishes comprehensive API naming conventions — resolves each inconsistency with a clear standard and rationale: sizing (use 'size' with 'sm'/'md'/'lg' — short values for frequent props, consistent across all components), variants (use 'variant' everywhere — it's the most common industry convention), events (use 'on' + property name: 'onChange', 'onSelect', 'onOpen' — follows React conventions), booleans (no 'is' prefix: 'disabled', 'loading', 'checked' — shorter and cleaner, consistent with HTML attributes), content (use 'children' for primary content, 'label' for accessible text, 'title' for heading text — each has a specific semantic meaning). Each convention includes examples and the reasoning behind the choice"
+    weight: 0.35
+    description: "NamingConventions"
+  - type: llm_judge
+    criteria: "Response creates API design principles — composition over configuration (prefer composable children over dozens of props), consistent defaults (sensible defaults that match the most common use case, 'md' size as default), progressive complexity (simple use case requires minimal props, advanced use case adds props incrementally), predictability (same prop name always behaves the same way across components), and forwards-compatibility (design APIs that can be extended without breaking changes). Each principle includes a do/don't code example"
+    weight: 0.35
+    description: "APIDesignPrinciples"
+  - type: llm_judge
+    criteria: "Response addresses the migration from inconsistent to consistent APIs — migration strategy (can't rename 80 component APIs at once: deprecate old prop names while supporting both, use TypeScript type aliases, provide codemods for automated migration), prioritization (which components to migrate first: most-used components have highest impact), communication plan (announce API standardization initiative, publish the guidelines, provide a timeline for each component's migration), and enforcement (ESLint rules for new components, PR review checklist, component API review before publishing new components)"
+    weight: 0.30
+    description: "APIMigration"

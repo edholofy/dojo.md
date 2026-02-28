@@ -1,0 +1,46 @@
+meta:
+  id: open-questions
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Write open questions — identify unresolved decisions in an RFC and frame them to get useful input from reviewers"
+  tags: [RFC, open-questions, decisions, feedback, collaboration, beginner]
+
+state: {}
+
+trigger: |
+  You're writing the open questions section of an RFC proposing to
+  introduce a message queue (like RabbitMQ, Kafka, or SQS) for
+  asynchronous processing. Currently, your application processes
+  everything synchronously, causing timeouts on heavy operations
+  like report generation, email sending, and image processing.
+
+  You have several unresolved questions:
+  - Which message queue technology to use
+  - Whether to start with one queue or separate queues per task type
+  - How to handle failed messages (retry? dead letter queue?)
+  - Whether to build a custom worker or use an existing framework
+  - What the message format should be (JSON? Protobuf? Avro?)
+  - Who owns the queue infrastructure (your team or platform team?)
+
+  Your first draft just lists these as bullet points. Reviewers
+  respond with "I don't know, what do you think?" because the
+  questions aren't framed to help people give useful answers.
+
+  Task: Write an open questions section that frames each question
+  with context, constraints, options, and your preliminary thinking.
+  Then write a guide on how to use open questions effectively in RFCs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Open questions are well-framed with context and options — each question provides: (1) Why it matters: 'Message queue technology selection affects operational complexity, cost, and future scalability.' (2) Constraints: 'We need at-least-once delivery, message persistence, and support for delayed messages. Budget constraint: under $500/month for expected volume.' (3) Options considered: 'RabbitMQ (familiar to team, good for task queues, self-hosted), SQS (managed, lowest ops burden, AWS-native), Kafka (highest throughput, but overkill for our volume of ~1000 messages/hour).' (4) Preliminary recommendation: 'Leaning toward SQS because managed service reduces operational burden and our volume doesn't justify Kafka's complexity. However, if we anticipate event streaming needs in 6 months, Kafka may be worth the upfront investment.' The reviewer now has enough context to give an informed opinion rather than starting from scratch"
+    weight: 0.35
+    description: "Well-framed questions"
+  - type: llm_judge
+    criteria: "Questions are prioritized and categorized — blocking questions (must resolve before implementation): queue technology choice (affects all other decisions), failure handling strategy (affects message format and retry logic). Non-blocking questions (can decide during implementation): single vs multiple queues (can start with one and split later), message format (can evolve with versioning). Ownership questions (need organizational input): infrastructure ownership (requires manager/platform team input, not a technical decision). For each question: deadline for decision ('queue technology must be decided before Phase 1 starts — targeting end of review period'), who should weigh in ('platform team for infrastructure ownership, backend engineers for technology choice'), and what happens if not decided ('if no consensus on queue tech, we default to SQS as the lowest-risk managed option'). Default decisions prevent open questions from blocking progress indefinitely"
+    weight: 0.35
+    description: "Prioritized questions"
+  - type: llm_judge
+    criteria: "Guide explains how to use open questions effectively — principles: (1) Open questions should be genuine unknowns, not things you're too lazy to decide. If you have enough information to make a decision, make it and state your reasoning — don't punt to reviewers. (2) Frame questions to reduce cognitive load: don't ask 'what should we use?' — ask 'should we use A or B, given these trade-offs?' (3) Include your preliminary thinking: reviewers can critique a proposal faster than generate one from scratch. 'I'm leaning toward X because Y' invites 'have you considered Z?' which is more useful than starting from blank. (4) Set decision deadlines: open questions without timelines stay open forever. 'If no input by Friday, we'll proceed with SQS.' (5) Limit to 3-5 questions: if you have 15 open questions, your RFC isn't ready for review — you need more research. (6) Track resolution: update the RFC as questions are answered. Mark resolved questions so future readers don't re-debate settled decisions. Anti-patterns: rhetorical questions (you already know the answer), questions that should be separate RFCs, questions designed to shift responsibility, and questions so vague that any answer works"
+    weight: 0.30
+    description: "Open questions guide"

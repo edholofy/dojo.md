@@ -1,0 +1,53 @@
+meta:
+  id: sprint-to-development-handoff
+  level: 2
+  course: design-sprint-facilitation
+  type: output
+  description: "Sprint-to-development handoff — translate sprint outcomes into actionable development plans"
+  tags: [handoff, development, implementation, planning, intermediate]
+
+state: {}
+
+trigger: |
+  Your design sprint ended Friday with strong test results.
+  The team validated a new file-sharing experience for
+  your collaboration platform. Now the Head of Engineering
+  says: "Great sprint! But that prototype was made in
+  Figma in one day. How do we turn that into an actual
+  product? And which parts do we actually build?"
+
+  Sprint outcomes:
+  - Validated features: drag-and-drop file sharing (5/5
+    users loved it), real-time collaboration indicator
+    (4/5 found it essential), smart file organization
+    (3/5 found it useful)
+  - Invalidated features: AI-powered file suggestions
+    (4/5 confused by it), social media-style file feed
+    (3/5 said "this isn't social media")
+  - Open questions: how does this work with files over
+    1GB? Does the real-time indicator scale to 50+ users?
+  - Technical concerns raised during sprint: the real-time
+    indicator requires WebSocket infrastructure the team
+    doesn't have yet
+
+  The sprint prototype covered 15 screens, but engineering
+  estimates that building all validated features would
+  take 4 months. The PM wants to ship something in 6
+  weeks.
+
+  Task: Create the sprint-to-development handoff document
+  that prioritizes what to build and in what order.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear handoff document — sprint results translation (translates sprint findings into development language: validated — build these; invalidated — don't build these; open questions — research these before building; each finding includes the evidence from testing — not just 'users liked it' but '5/5 users successfully completed the drag-and-drop task without instruction, average time 8 seconds'; the invalidated features are explicitly called out to prevent them from sneaking into the roadmap later), prioritization framework (helps the PM and engineering team prioritize for the 6-week constraint: tier 1 — must-ship: drag-and-drop file sharing, validated by 5/5 and core to the value proposition; tier 2 — should-ship: real-time collaboration indicator, validated by 4/5 but requires WebSocket infrastructure; tier 3 — can-ship-later: smart file organization, validated by only 3/5 and less critical; the 6-week timeline likely accommodates tier 1 and a basic version of tier 2), what NOT to build (equally important: the AI-powered file suggestions and social media file feed are explicitly cut — the sprint provided clear evidence these don't serve users; saves engineering months of building features that would fail in production; this is the most valuable output of the sprint for the engineering team)."
+    weight: 0.35
+    description: "HandoffDocument"
+  - type: llm_judge
+    criteria: "Response addresses the prototype-to-product gap — prototype vs production differences (identifies where the Figma prototype diverges from production reality: the prototype used fake data — production needs real file handling with size limits, format support, and error states; the prototype had instant responses — production needs loading states, progress bars for large files, and timeout handling; the prototype showed one user — production needs to handle concurrent users, permissions, and sharing conflicts; this gap analysis prevents the team from assuming the prototype IS the spec), open questions for engineering (the sprint raised questions that need engineering answers before building: can the WebSocket infrastructure for real-time indicators be built in 6 weeks or does it need a simpler polling approach first?; what's the maximum file size the drag-and-drop can handle? the sprint didn't test with 1GB+ files; does the real-time indicator scale to teams of 50+ or does it need a different architecture?; these questions should be answered in the first week before detailed development begins), design specifications needed (the Figma prototype is a starting point, not a spec: the designer needs to create detailed specs for edge cases — error states, empty states, permission variations, mobile responsiveness; the prototype covered the happy path for testing but production needs the full path; estimate 1-2 weeks of design spec work running in parallel with early engineering work)."
+    weight: 0.35
+    description: "PrototypeToProductGap"
+  - type: llm_judge
+    criteria: "Response provides a phased development plan — phase 1 weeks 1-3 (build the core validated experience: drag-and-drop file sharing with basic upload, the core interaction that 5/5 users validated; basic file management — upload, rename, delete, share; skip advanced organization for now; this phase delivers the minimum lovable product that captures the sprint's validated value), phase 2 weeks 4-6 (add the collaboration layer: real-time presence indicator — even if simplified — showing who's viewing or editing; basic notifications for file changes; the WebSocket infrastructure question must be answered by week 2 to know if full real-time is feasible or if a polling approach is the v1 solution), post-launch follow-up (what to do after the 6-week launch: monitor analytics against the sprint's goals — is file sharing adoption improving?; plan a follow-up sprint or research cycle for smart file organization if analytics show demand; the sprint is one step in a continuous product development process, not a one-time event), sprint success metrics (define how to measure whether the sprint-informed development was successful: adoption rate of drag-and-drop sharing, task completion rate compared to the old file sharing, user satisfaction scores for the new experience, comparison to sprint test metrics — does production performance match prototype test results?)."
+    weight: 0.30
+    description: "PhasedDevelopmentPlan"

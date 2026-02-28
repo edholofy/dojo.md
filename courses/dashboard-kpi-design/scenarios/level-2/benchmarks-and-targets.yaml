@@ -1,0 +1,33 @@
+meta:
+  id: benchmarks-and-targets
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Add benchmarks and targets to dashboards — show KPIs in context using targets, industry benchmarks, YoY comparisons, and rolling averages"
+  tags: [benchmarks, targets, YoY, comparison, context, intermediate]
+
+state: {}
+
+trigger: |
+  The product team dashboard shows: "DAU: 15,200. Conversion rate:
+  2.4%. Average session duration: 4.2 minutes."
+
+  The product manager asks: "Are these good numbers? I have no idea
+  if 2.4% conversion is amazing or terrible. I need context."
+
+  Task: Add proper benchmarks, targets, and comparisons to give
+  every metric context.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides multiple comparison types for context — comparisons: 'Adding context to metrics: Raw number without context: Conversion rate: 2.4%. This is meaningless — the viewer does not know if it is good or bad. With context: Conversion rate: 2.4% | Target: 3.0% (80% of target — yellow). vs last month: 2.1% (↑0.3pp — improving). vs same month last year: 1.8% (↑0.6pp — strong YoY growth). Industry benchmark: 2.5% (slightly below average — room for improvement). Now the viewer knows: 2.4% is below target but improving. It has grown significantly YoY. It is close to the industry average. The trajectory is positive. Four types of comparison, each serving a different purpose: 1. Versus target: shows whether the team is meeting its goals. Set at the beginning of the quarter and do not change mid-period. Example: Target: 3.0%. Current: 2.4%. Gap: 0.6pp. 2. Versus prior period (MoM, WoW): shows short-term momentum. Is the metric improving or declining? Example: vs last month: ↑0.3pp. The team's recent efforts are working. 3. Versus same period last year (YoY): controls for seasonality. December is always a strong month — comparing December to November is misleading. Compare December 2025 to December 2024. Example: vs same month last year: ↑0.6pp. Real growth, not seasonal. 4. Versus industry benchmark: shows competitive position. Where does the metric rank against peers? Example: industry average: 2.5%. We are slightly below. Finding benchmarks: industry reports (SaaS Benchmarks by OpenView), analyst reports (Gartner, Forrester), peer communities, public company filings'"
+    weight: 0.35
+    description: "Comparisons"
+  - type: llm_judge
+    criteria: "Response covers target setting methodology and rolling averages — targets: 'Target setting methodology: Bad target: picked a round number. Conversion rate target: 5% (sounds good, no basis in reality). Good target: derived from data and business goals. Method 1 — Historical improvement: if conversion rate improved 0.2pp per quarter for the past 4 quarters, set next quarter's target at current + 0.2pp = 2.6%. This is achievable based on the historical trend. Method 2 — Business requirement: if the company needs $10M revenue and average deal value is $10K, we need 1,000 deals. If pipeline generates 50,000 leads, the required conversion rate is 2.0%. The target is set by the business math, not by aspiration. Method 3 — Benchmark-driven: if the industry top quartile achieves 4.0%, and we are at 2.4%, set an 18-month target of 4.0% with quarterly milestones (Q1: 2.8%, Q2: 3.2%, Q3: 3.6%, Q4: 4.0%). Rolling averages as context: daily metrics are noisy. A single bad day can look like a crisis. Show a 7-day or 30-day rolling average alongside the daily value. Example: Today's conversion: 1.8% (looks alarming). 7-day rolling average: 2.3% (normal range). 30-day rolling average: 2.4% (stable). The daily dip is noise — the rolling averages show the trend is stable. Display on the dashboard: the daily value as a thin line, the rolling average as a bold line. The bold line is the trend; the thin line is the noise'"
+    weight: 0.35
+    description: "Targets"
+  - type: llm_judge
+    criteria: "Explanation covers visual encoding of comparisons in dashboards — visual: 'Visual encoding of comparisons: KPI card with full context: Conversion Rate — 2.4% (large bold number). Target: 3.0% — 80% ↓ (small text, yellow because below target). MoM: ↑0.3pp (green arrow — improving). YoY: ↑0.6pp (green arrow — growing). Benchmark: 2.5% — slightly below (gray text — informational). Sparkline: 12-month trend showing upward slope. Visual encoding rules: use color to encode status relative to target (green = above target, yellow = within 10%, red = below 10%). Use arrows (↑ ↓ →) to encode direction of change. Use size to encode importance (current value is large, comparison text is small). Use a reference line on charts to show the target (dashed horizontal line at 3.0% on the conversion trend chart). Use shading to show the gap: shade the area between the actual line and the target line. Green shading above target, red shading below. Comparison formatting rules: always show the direction (↑ or ↓) before the number. Always show the unit (pp for percentage points, % for percentages, $ for currency). Always label what the comparison is against (MoM, YoY, vs target). Place the most important comparison closest to the main number. Secondary comparisons can be in a tooltip or expandable section'"
+    weight: 0.30
+    description: "Visual"

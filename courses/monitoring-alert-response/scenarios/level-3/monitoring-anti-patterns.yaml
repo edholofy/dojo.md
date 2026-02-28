@@ -1,0 +1,43 @@
+meta:
+  id: monitoring-anti-patterns
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Identify monitoring anti-patterns — recognize and fix common monitoring mistakes that reduce alert effectiveness and increase noise"
+  tags: [monitoring, anti-patterns, best-practices, improvement, advanced]
+
+state: {}
+
+trigger: |
+  You're doing a monitoring audit for your platform. You find these
+  patterns across the team's monitoring setup:
+
+  1. "Checkbox monitoring" — every metric has an alert, resulting in
+     800+ active alert rules, most with default thresholds
+  2. Cause-based alerts — alerts on CPU, memory, disk for every host
+     rather than alerting on customer-visible symptoms
+  3. No runbooks — 60% of alerts have no linked runbook
+  4. Alert ownership gap — 200 alerts have no assigned owner (the
+     person who created them left the company)
+  5. Stale alerts — 150 alerts have not fired in over a year (unclear
+     if they are unnecessary or if the threshold is wrong)
+  6. Alert duplication — the same condition is alerted on by 3
+     different monitoring tools
+
+  Task: For each anti-pattern, explain why it is harmful, what to
+  do about it, and propose a monitoring governance process that
+  prevents these anti-patterns from recurring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each anti-pattern is correctly identified as harmful with specific fixes — anti-pattern 1 (checkbox monitoring): 'Harm: 800+ alert rules means no one understands what is important. When everything alerts, nothing is prioritized. Engineers cannot distinguish real problems from noise. Fix: apply the Google SRE question to every alert: does this alert detect an otherwise undetected condition that is urgent, actionable, and actively or imminently user-visible? If the answer to any of these is no, the alert should not page. Reduce 800 rules to the approximately 50-100 that represent real, actionable conditions.' Anti-pattern 2 (cause-based alerting): 'Harm: CPU at 90% is a cause, not a symptom. Users do not experience CPU — they experience slow responses or errors. Alerting on causes generates false positives (high CPU with no user impact) and false negatives (normal CPU but broken application logic). Fix: alert on symptoms (error rates, latency, success rates) as the primary detection. Keep cause metrics on dashboards for diagnosis but do not page on them except for hard resource limits (disk full, connection pool exhausted).' Anti-pattern 3 (no runbooks): 'Harm: an alert without a runbook means the on-call engineer must improvise at 3 AM. This increases MTTR and creates stress. Fix: every paging alert must have a linked runbook. If you cannot write a runbook for an alert, the alert should not page — it should be a log entry or a ticket.' Anti-pattern 4 (ownership gap): 'Harm: 200 orphaned alerts mean no one is responsible for tuning, updating, or responding to them. Fix: assign every alert to a team (not a person). When team members leave, alerts stay with the team.' Anti-pattern 5 (stale alerts): 'Harm: alerts that never fire are either unnecessary (remove them) or broken (fix them). Either way, they add to the cognitive load of the monitoring system without providing value. Fix: audit all alerts that have not fired in 12 months. For each: test it manually or remove it.' Anti-pattern 6 (duplication): 'Harm: the same condition paging from 3 tools means 3 pages for 1 problem. Fix: designate a single source of truth for each alert type. Other tools can monitor the same metric but should not page'"
+    weight: 0.35
+    description: "Anti-pattern analysis and fixes"
+  - type: llm_judge
+    criteria: "Monitoring governance process prevents recurrence — governance process: '(1) Alert lifecycle management: every alert has a lifecycle: created → reviewed → active → tuned → retired. Creation requires: description of what it detects, runbook link, assigned owner team, severity justification. Review: new alerts are reviewed by the SRE team before activation. Active: alert is monitored for effectiveness (actionable rate tracked). Tuned: thresholds adjusted based on data. Retired: alert no longer needed (removed, not just disabled). (2) Quarterly alert audit: every quarter, review: top 10 noisiest alerts (tune or remove), alerts with no fires in 6+ months (test or remove), alerts without runbooks (add runbook or remove alert), orphaned alerts (reassign or remove). (3) Alert budget: each team has a maximum number of paging alerts (for example, 20 per team). To add a new paging alert, one must be removed or downgraded. This forces teams to prioritize what truly needs human attention. (4) Alert ownership registry: every alert has an owner team listed in the alert metadata. When teams reorganize, alert ownership transfers as part of the reorg process. Monthly report shows orphaned alerts for reassignment. (5) Single paging tool: designate one alerting system as the source of paging. Other monitoring tools feed into this system. This eliminates duplication and provides a single view of all active alerts'"
+    weight: 0.35
+    description: "Governance process"
+  - type: llm_judge
+    criteria: "Audit plan is practical and achievable — audit execution plan: 'This is a significant cleanup effort. Do not try to fix everything at once. Week 1-2: inventory and triage. Catalog all 800 alerts. For each: record owner (if known), last fired date, actionable rate (if measurable), whether a runbook exists. Sort into: definitely needed (keep), definitely unnecessary (remove), needs evaluation (investigate). Week 3-4: quick wins. Remove the obviously unnecessary alerts (stale alerts with no fires in 2+ years, duplicate alerts, alerts for decommissioned services). This should reduce the count by 30-40% with minimal risk. Month 2: systematic cleanup. For the needs evaluation group, apply the SRE test: urgent? actionable? user-visible? Remove or downgrade alerts that fail the test. Add runbooks to alerts that pass the test but lack them. Month 3: establish governance. Implement the alert lifecycle and ownership registry. Set up the quarterly audit cadence. Publish the team alert budgets.' Expected outcome: '800 alerts reduced to 150-200 well-maintained, owner-assigned, runbook-linked alerts. Actionable rate improved from estimated 15% to 60%+. On-call experience dramatically improved. This is not a one-time cleanup — the governance process ensures the 800-alert situation never recurs.' Success metric: 'After the audit, every active alert must: have an assigned owner team, have a linked runbook, have fired at least once in the past 6 months (or be scheduled for review), pass the urgent-actionable-user-visible test'"
+    weight: 0.30
+    description: "Practical audit plan"

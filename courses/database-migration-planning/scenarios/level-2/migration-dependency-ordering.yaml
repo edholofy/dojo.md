@@ -1,0 +1,42 @@
+meta:
+  id: migration-dependency-ordering
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Order migrations with dependencies — plan the correct execution sequence when multiple migrations depend on each other"
+  tags: [database, migration, dependencies, ordering, planning, intermediate]
+
+state: {}
+
+trigger: |
+  Your team has 6 migration tasks for the next release. Multiple
+  developers are working in parallel and the migrations have
+  dependencies:
+
+  A: Create "categories" table
+  B: Add "category_id" column to products (FK to categories)
+  C: Create "tags" table
+  D: Create "product_tags" junction table (FK to both products and tags)
+  E: Add "featured" boolean to categories
+  F: Create index on product_tags(product_id, tag_id)
+
+  Some of these must run in a specific order. Others can be
+  independent.
+
+  Task: Determine the correct migration order, identify the
+  dependencies, and explain how to handle multiple developers
+  creating migrations in parallel.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dependencies are correctly identified and ordered — dependency analysis: 'Dependency graph: A (create categories) → B (add category_id FK to products) — B depends on A because the foreign key references categories. A (create categories) → E (add featured to categories) — E depends on A because the column is added to categories. C (create tags) → D (create product_tags) — D depends on C because the foreign key references tags. Products (existing) → D (create product_tags) — D also depends on products table existing (it does). D (create product_tags) → F (create index on product_tags) — F depends on D because you cannot index a table that does not exist. Valid execution orders (there are several): Option 1: A → B → E → C → D → F. Option 2: A → C → B → D → E → F. Option 3: C → A → B → E → D → F. The key constraints: A must run before B and E. C must run before D. D must run before F. A and C are independent of each other (can run in either order). B and E are independent of each other (both depend on A but not on each other). Recommended order: A, C, B, E, D, F. Rationale: create both parent tables first (A, C), then add dependencies (B, E), then create the junction table (D), then index it (F). This groups related changes logically'"
+    weight: 0.35
+    description: "Correct ordering"
+  - type: llm_judge
+    criteria: "Parallel development workflow is addressed — parallel development: 'Problem: developers Alice (working on categories: A, B, E) and Bob (working on tags: C, D, F) are creating migrations simultaneously. If Alice timestamps her migrations at 10:00 AM and Bob at 10:30 AM, the files sort as: 20260227_1000_create_categories (Alice), 20260227_1001_add_category_id (Alice), 20260227_1002_add_featured (Alice), 20260227_1030_create_tags (Bob), 20260227_1031_create_product_tags (Bob), 20260227_1032_index_product_tags (Bob). This happens to be a valid order (Alice's migrations run first, then Bob's). But it could go wrong: if Bob created his migrations at 9:00 AM (before Alice), product_tags would try to reference categories before it exists. Solutions: (1) Communication: Alice and Bob agree on which goes first. If D depends on A, Alice's migrations must have earlier timestamps. (2) Migration review: during code review, verify that the combined set of migrations runs in the correct order. Test by running all migrations from scratch on an empty database. (3) Feature branches with migration ordering: when merging branches, check that the combined migration sequence respects all dependencies. If timestamps conflict, renumber one set. (4) CI/CD validation: add a CI step that runs all migrations from scratch on a clean database. If migrations are out of order, the CI build fails before reaching production'"
+    weight: 0.35
+    description: "Parallel development"
+  - type: llm_judge
+    criteria: "Migration conflicts and resolution strategies are covered — conflict resolution: 'Types of migration conflicts: (1) Ordering conflict: two migrations need to run in a specific order but their timestamps suggest the wrong order. Resolution: renumber one set of migrations during merge. (2) Schema conflict: two migrations modify the same table in incompatible ways (both add a column with the same name). Resolution: one developer revises their migration during code review. (3) Data conflict: two migrations backfill the same column with different logic. Resolution: agree on the correct logic and consolidate. Prevention strategies: (1) Migration manifest: maintain a document listing planned migrations for each release. Developers register their migrations before writing them. Dependencies are identified upfront. (2) Small, frequent merges: merge migration branches frequently rather than accumulating large sets. The longer branches diverge, the harder conflict resolution becomes. (3) Test from scratch: every developer should be able to run all migrations from an empty database and get a valid schema. Add this to the development setup documentation and CI pipeline. (4) Schema snapshots: some teams maintain a schema snapshot (a dump of the expected final schema). After running all migrations, compare the resulting schema against the snapshot. Any difference indicates a problem'"
+    weight: 0.30
+    description: "Conflict resolution"

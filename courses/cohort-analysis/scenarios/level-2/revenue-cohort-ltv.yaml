@@ -1,0 +1,32 @@
+meta:
+  id: revenue-cohort-ltv
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Calculate LTV from revenue cohorts — use cumulative revenue curves, extrapolation techniques, and cohort-based LTV to inform acquisition spending and business planning"
+  tags: [LTV, revenue-cohort, cumulative-revenue, payback, intermediate]
+
+state: {}
+
+trigger: |
+  The CFO says: "Marketing keeps asking for more budget. They say our
+  LTV is $200 but I don't trust that number. It's based on dividing
+  total revenue by total users. Can you build a proper cohort-based
+  LTV calculation so I know what a user is actually worth?"
+
+  Task: Explain how to calculate LTV from revenue cohorts and why
+  the simple average is misleading.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains why simple LTV is wrong and how cohort-based LTV works — method: 'Why the simple LTV calculation is wrong: simple LTV = total lifetime revenue / total users. Problem: this mixes users at different lifecycle stages. A user who signed up yesterday and a user who signed up 2 years ago are averaged together. The 2-year user has generated $400. The yesterday user has generated $0. Average: $200. But the yesterday user's actual LTV is unknown — they could generate $400 or $0. Cohort-based LTV: track cumulative revenue per user for each cohort separately. January cohort (1,000 signups, all-in including churned users): month 0: $8 cumulative/user. Month 1: $20 cumulative/user. Month 2: $34 cumulative/user. Month 3: $49 cumulative/user. Month 6: $85 cumulative/user. Month 12: $130 cumulative/user. April cohort (1,200 signups): month 0: $6 cumulative/user. Month 1: $14 cumulative/user. Month 2: $24 cumulative/user. Month 3: $35 cumulative/user. Month 6: $62 cumulative/user. January users are worth $130 at 12 months. April users are on track for only about $100 at 12 months. The simple average of $200 is neither — it overstates April users and may understate January users. LTV must be calculated per cohort because: acquisition channels change (paid vs organic), product changes affect retention, seasonal effects alter user quality, pricing changes affect ARPU'"
+    weight: 0.35
+    description: "Method"
+  - type: llm_judge
+    criteria: "Response covers LTV extrapolation and curve fitting — extrapolation: 'Extrapolating LTV beyond observed data: the January cohort is 12 months old — we know LTV at 12 months is $130. But the true LTV includes all future revenue. How to estimate long-term LTV: Method 1 — Retention curve extrapolation: fit a mathematical curve to the observed retention data and project forward. Common curve shapes: exponential decay: retention(t) = a × e^(-bt). This assumes a constant churn rate per period. Power law: retention(t) = a × t^(-b). This assumes churn slows over time (more realistic for many products). Shifted beta-geometric: a Bayesian model that accounts for heterogeneous churn rates across users. Using January cohort retention data (100%, 65%, 50%, 42%, 36%, 32%, 28%, 25%, 23%, 22%, 21%, 20%, 19.5%): fit a curve and project months 13-36. Multiply projected retention by projected ARPU per active user. Sum to get projected cumulative revenue. Method 2 — Ratio-based extrapolation: calculate the ratio of month-12 LTV to month-6 LTV for the oldest cohorts. January: $130 / $85 = 1.53x. So LTV roughly grows 53% from month 6 to month 12. If this ratio is stable across cohorts, apply it to newer cohorts: April month-6 LTV ($62) × 1.53 = projected month-12 LTV of $95. Method 3 — Marginal revenue approach: if month-11 to month-12 revenue per user is $1.50 and declining at 10% per month: month 13: $1.35, month 14: $1.22, month 15: $1.09... Sum the geometric series: remaining LTV ≈ $1.50 / 0.10 = $15. Total projected LTV: $130 + $15 = $145. Caution: all extrapolation assumes future behavior resembles past behavior. Discount LTV projections by 20-30% for conservatism. Present a range rather than a single number'"
+    weight: 0.35
+    description: "Extrapolation"
+  - type: llm_judge
+    criteria: "Response covers using cohort LTV for business decisions — decisions: 'Using cohort LTV for business decisions: Decision 1 — Marketing budget allocation: for each acquisition channel, calculate cohort LTV: organic cohorts: 12-month LTV = $150, CAC = $10, LTV:CAC = 15:1. Paid search cohorts: 12-month LTV = $90, CAC = $45, LTV:CAC = 2:1. Paid social cohorts: 12-month LTV = $60, CAC = $55, LTV:CAC = 1.1:1. Organic: highly profitable, but hard to scale. Paid search: healthy ratio, can increase spend. Paid social: barely profitable — reduce spend or improve targeting. The CFO should allocate budget by channel LTV:CAC ratio, not blended LTV. Decision 2 — Payback period by cohort: payback = months until cumulative revenue per user exceeds CAC. Organic: payback in month 0 (CAC is only $10). Paid search: payback in month 3 ($49 cumulative > $45 CAC). Paid social: payback in month 6 ($62 cumulative > $55 CAC) — but 60% of users have already churned by then. A 6-month payback with high churn means many individual users never pay back their CAC. Decision 3 — LTV trending: track 6-month LTV for each monthly cohort: Q1 average: $85. Q2 average: $72. Q3 average: $78. Q4 average: $90. Q2 dip coincided with aggressive paid acquisition — lower-quality users. Q4 improvement from product improvements and holiday spending. For the CFO: the blended $200 LTV is wrong. Actual 12-month LTV ranges from $60 (paid social) to $150 (organic). Recommend: increase paid search budget (healthy LTV:CAC). Reduce paid social (barely profitable). Invest in organic channels (referral program, SEO, content). Present LTV as a range by channel, not a single number'"
+    weight: 0.30
+    description: "Decisions"

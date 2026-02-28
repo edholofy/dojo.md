@@ -1,0 +1,32 @@
+meta:
+  id: cohort-visualization
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Visualize cohort data effectively — choose the right chart type, build heatmaps and retention curve overlays, and communicate cohort insights visually"
+  tags: [visualization, heatmap, retention-chart, communication, beginner]
+
+state: {}
+
+trigger: |
+  The analyst built a retention table in a spreadsheet but the PM
+  says: "I can't make sense of all these numbers. Can you turn this
+  into a visual that tells me the story at a glance? And I need to
+  present this to the executive team next week."
+
+  Task: Explain the main visualization types for cohort data and
+  when to use each one.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers cohort heatmap visualization — heatmap: 'Cohort heatmap (the classic): the most common cohort visualization. Structure: rows = cohorts (signup month). Columns = time periods after signup (month 0, month 1, month 2, ...). Cells = retention percentage. Color gradient: green (high retention) to red (low retention). Example heatmap data: Jan cohort: 100% 42% 30% 25% 22% 20%. Feb cohort: 100% 45% 33% 28% 24%. Mar cohort: 100% 48% 36% 30%. Apr cohort: 100% 50% 38%. May cohort: 100% 52%. Jun cohort: 100%. Reading the heatmap: read horizontally (left to right): how a single cohort retains over time. The January row shows the January cohort losing users each month. Read vertically (top to bottom): how the same time period compares across cohorts. The month 1 column shows 42%, 45%, 48%, 50%, 52%. This upward trend means newer cohorts retain better at month 1 — the product is improving. Read diagonally (top-right to bottom-left): the same calendar month across all cohorts. The diagonal shows what all cohorts are doing right now. Color patterns to look for: dark green diagonal = improving retention over time (good). Dark red in early columns = high initial churn (activation problem). Uniform color across columns = stable retention (neither improving nor degrading). Dark green in bottom rows = newer cohorts retain better (product improvements working)'"
+    weight: 0.35
+    description: "Heatmap"
+  - type: llm_judge
+    criteria: "Response covers retention curve overlay visualization — curves: 'Retention curve overlay: plot multiple cohort retention curves on the same chart. X-axis: time since signup (weeks or months). Y-axis: retention percentage. Each line = one cohort (color-coded). This visualization is best for: comparing the shape of retention across cohorts. Seeing whether newer cohorts are improving. Identifying when the retention curve flattens (retention floor). Example: January line starts at 100% and drops to 20% by month 6. March line starts at 100% and drops to only 30% by month 4. March's curve is above January's at every point — March cohort retains better. If you can see the curves converging: all cohorts are approaching the same retention floor (the product works similarly for everyone once past the initial churn). If curves diverge: something fundamentally different about the cohorts (acquisition quality, product changes, seasonality). When to use curves vs heatmap: heatmap: best for seeing the complete data — every cohort and every time period. Good for detailed analysis and spotting specific anomalies. Curves: best for executive presentations — the story is immediately clear. Easy to see improving vs declining retention. Use both: heatmap for detailed analysis, curves for communication'"
+    weight: 0.35
+    description: "Curves"
+  - type: llm_judge
+    criteria: "Response covers additional chart types and presentation tips — additional: 'Additional cohort visualizations: Stacked area chart (active users by cohort): shows how total active users are composed of different cohorts over time. X-axis: calendar time. Y-axis: number of active users. Each band = one cohort's remaining active users. Insight: if older cohort bands shrink to nothing, the product is entirely dependent on new signups (leaky bucket). If older bands maintain thickness, the product retains its base. Bar chart (retention at a fixed time point): for a quick comparison: X-axis: cohort (Jan, Feb, Mar, ...). Y-axis: month 1 retention. One bar per cohort. Instantly shows if month 1 retention is trending up or down. Presentation tips for executives: 1. Lead with the insight, not the data: do not say here is our retention heatmap. Say our retention has improved from 20% to 30% over the last 6 months — here is the data. 2. Highlight the key comparison: circle or annotate the most important cells or curves. 3. Use consistent colors: green = good (improving retention). Red = bad (declining retention). Gray = not enough data yet. 4. Show the trend: the executive cares about direction more than absolute numbers. Is retention improving month over month? Answer that question visually with an arrow or trend line. 5. Include the so-what: every cohort chart should be paired with a recommendation. Retention improved from 20% to 30% after we launched the new onboarding flow in March. Recommendation: invest further in onboarding optimization. 6. Simplify for the audience: executives: show 2-3 cohort curves with annotations. Product team: show the full heatmap with cell values. Data team: provide the underlying SQL query and raw data'"
+    weight: 0.30
+    description: "Additional"

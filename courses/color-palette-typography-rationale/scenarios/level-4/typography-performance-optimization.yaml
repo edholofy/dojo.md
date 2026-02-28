@@ -1,0 +1,46 @@
+meta:
+  id: typography-performance-optimization
+  level: 4
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography performance optimization — optimize font loading, rendering, and delivery for enterprise-scale applications"
+  tags: [performance, optimization, loading, core-web-vitals, expert]
+
+state: {}
+
+trigger: |
+  A Performance Engineering lead says: "We have a Core
+  Web Vitals problem caused by fonts. Our metrics:
+
+  - LCP: 4.2s (target: <2.5s) — hero text waits for
+    custom font before rendering
+  - CLS: 0.18 (target: <0.1) — layout shifts when fonts
+    swap from fallback to custom
+  - Total font payload: 1.2MB across 14 font files
+  - First Contentful Paint blocked by font preloads
+
+  Our design team uses 3 font families with multiple
+  weights. We serve users globally, including regions
+  with slow connections. The design team says 'typography
+  is core to our brand — we can't use system fonts.'
+
+  We need to dramatically improve font performance
+  without degrading the visual experience."
+
+  Task: Create a comprehensive font performance
+  optimization plan with measurable targets and
+  rationale for each optimization.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses root causes and provides optimization plan — payload reduction (1.2MB across 14 files is excessive: audit which weights are actually used in production — likely 4-6 are unnecessary, convert to variable fonts where available — 3 variable font files could replace 14 static files at ~400KB total, subset fonts to used character ranges — if only Latin, remove CJK/Cyrillic/Greek glyphs for ~40% savings, ensure WOFF2 format for all files — best compression), LCP fix (hero text waits for font: use font-display: optional or swap for hero font, preload ONLY the single font file used by the hero text — <link rel='preload' as='font' type='font/woff2' crossorigin>, consider inline critical font CSS: base64-encode the first font's @font-face in the HTML head for zero-latency — only for the single most critical weight), CLS fix (layout shift from font swap: create matched fallback font using @font-face override descriptors — size-adjust, ascent-override, descent-override, line-gap-override — matches system fallback metrics to custom font metrics, eliminating layout shift when swap occurs)."
+    weight: 0.35
+    description: "PerformanceDiagnosis"
+  - type: llm_judge
+    criteria: "Response provides specific technical implementation — font loading strategy (Priority 1: preload hero/body font Regular weight — renders above-fold content immediately, Priority 2: load body Bold and heading font on DOMContentLoaded — needed for full page but not blocking, Priority 3: load remaining weights asynchronously — italic, light, monospace loaded only when needed via dynamic import or intersection observer), CDN and caching (serve fonts from same origin to avoid DNS lookup overhead vs Google Fonts' separate domain, set Cache-Control: public, max-age=31536000, immutable — fonts don't change, cache forever with versioned filenames, use CDN with edge locations for global users — reduces latency for slow regions), progressive enhancement (fastest connections: full custom font experience, medium connections: reduced weight count — Regular + Bold only, slow connections: font-display: optional — shows system font if custom doesn't load within 100ms, user gets content immediately — implement using Network Information API or server-side detection)."
+    weight: 0.35
+    description: "TechnicalImplementation"
+  - type: llm_judge
+    criteria: "Response provides measurable targets and documentation — performance budget (font payload budget: 300KB maximum for all font files combined — down from 1.2MB, font load time budget: <100ms on fast connections, <500ms on 3G, number of font files: maximum 4 — down from 14, LCP target: <2.5s, CLS target: <0.1), monitoring plan (track font-related Web Vitals continuously: set up RUM monitoring for LCP, CLS, and FCP, create font-specific dashboard showing: font payload size, cache hit rate, font load timing by connection speed, CLS attributed to font swapping, alert if any metric regresses beyond threshold), documentation for design team (performance budget explained: 'within 300KB you can have: 1 variable font for body with all weights, 1 variable font for headings, 1 static font for code — pick the families within this budget', trade-off transparency: 'adding a 4th font family costs X KB and Y ms of load time — is this worth it?', show before/after Core Web Vitals improvement with estimated business impact — faster sites have higher conversion rates)."
+    weight: 0.30
+    description: "TargetsAndDocs"

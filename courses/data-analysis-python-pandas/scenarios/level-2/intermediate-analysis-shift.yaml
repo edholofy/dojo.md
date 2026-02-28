@@ -1,0 +1,38 @@
+meta:
+  id: intermediate-analysis-shift
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Intermediate analysis shift — complete a multi-step business analysis combining merging, groupby, time series, and visualization"
+  tags: [python, pandas, analysis, shift-simulation, business-analysis, intermediate]
+
+state: {}
+
+trigger: |
+  The VP of Sales asks: "Our Q4 revenue is down 15% compared to Q3.
+  I need to understand why. Is it fewer customers? Lower order values?
+  A specific region? A specific product category? Give me the
+  breakdown by end of day."
+
+  You have:
+  - orders.csv (order_id, customer_id, product_id, quantity,
+    order_date, region)
+  - products.csv (product_id, product_name, category, unit_price)
+
+  Both quarters of data (Q3: July-Sep, Q4: Oct-Dec).
+
+  Task: Diagnose the revenue decline and present findings.
+
+assertions:
+  - type: llm_judge
+    criteria: "Analysis systematically decomposes the revenue decline into contributing factors — decomposition: 'Revenue decline decomposition: Step 1 — Load and prepare: orders = pd.read_csv(\"orders.csv\", parse_dates=[\"order_date\"]). products = pd.read_csv(\"products.csv\"). df = orders.merge(products, on=\"product_id\"). df[\"revenue\"] = df[\"quantity\"] * df[\"unit_price\"]. df[\"quarter\"] = df[\"order_date\"].dt.quarter. q3 = df[df[\"quarter\"] == 3]. q4 = df[df[\"quarter\"] == 4]. Step 2 — Confirm the 15% decline: q3_revenue = q3[\"revenue\"].sum(). q4_revenue = q4[\"revenue\"].sum(). change_pct = (q4_revenue - q3_revenue) / q3_revenue * 100. print(f\"Q3 Revenue: ${q3_revenue:,.0f}\"). print(f\"Q4 Revenue: ${q4_revenue:,.0f}\"). print(f\"Change: {change_pct:+.1f}%\"). Step 3 — Decompose: fewer customers or lower order value? q3_customers = q3[\"customer_id\"].nunique(). q4_customers = q4[\"customer_id\"].nunique(). customer_change = (q4_customers - q3_customers) / q3_customers * 100. q3_avg_order = q3[\"revenue\"].mean(). q4_avg_order = q4[\"revenue\"].mean(). aov_change = (q4_avg_order - q3_avg_order) / q3_avg_order * 100. q3_orders = len(q3). q4_orders = len(q4). order_change = (q4_orders - q3_orders) / q3_orders * 100. print(f\"\\nCustomers: Q3={q3_customers}, Q4={q4_customers} ({customer_change:+.1f}%)\"). print(f\"Orders: Q3={q3_orders}, Q4={q4_orders} ({order_change:+.1f}%)\"). print(f\"Avg Order Value: Q3=${q3_avg_order:.2f}, Q4=${q4_avg_order:.2f} ({aov_change:+.1f}%)\"). Revenue = Orders times AOV. If orders dropped 10% and AOV dropped 5%, the combined effect explains the 15% decline. Step 4 — By region: region_comparison = pd.DataFrame({\"Q3\": q3.groupby(\"region\")[\"revenue\"].sum(), \"Q4\": q4.groupby(\"region\")[\"revenue\"].sum()}). region_comparison[\"Change\"] = region_comparison[\"Q4\"] - region_comparison[\"Q3\"]. region_comparison[\"Change %\"] = (region_comparison[\"Change\"] / region_comparison[\"Q3\"] * 100).round(1). region_comparison = region_comparison.sort_values(\"Change\"). This shows which regions drove the decline. If West dropped 30% while others were flat, the decline is a West region problem. Step 5 — By category: category_comparison = pd.DataFrame({\"Q3\": q3.groupby(\"category\")[\"revenue\"].sum(), \"Q4\": q4.groupby(\"category\")[\"revenue\"].sum()}). category_comparison[\"Change\"] = category_comparison[\"Q4\"] - category_comparison[\"Q3\"]. category_comparison[\"Change %\"] = (category_comparison[\"Change\"] / category_comparison[\"Q3\"] * 100).round(1). category_comparison[\"Contribution to decline\"] = (category_comparison[\"Change\"] / region_comparison[\"Change\"].sum() * 100).round(1). The contribution to decline column shows what percentage of the total decline each category is responsible for. Step 6 — Monthly trend: monthly = df.groupby(df[\"order_date\"].dt.to_period(\"M\")).agg(revenue=(\"revenue\", \"sum\"), orders=(\"order_id\", \"count\"), customers=(\"customer_id\", \"nunique\")). fig, axes = plt.subplots(1, 3, figsize=(15, 4)). monthly[\"revenue\"].plot(kind=\"bar\", ax=axes[0], color=\"steelblue\"). axes[0].set_title(\"Monthly Revenue\"). monthly[\"orders\"].plot(kind=\"bar\", ax=axes[1], color=\"steelblue\"). axes[1].set_title(\"Monthly Orders\"). monthly[\"customers\"].plot(kind=\"bar\", ax=axes[2], color=\"steelblue\"). axes[2].set_title(\"Monthly Active Customers\"). plt.tight_layout(). This shows whether the decline was gradual (each month of Q4 slightly lower) or sudden (October dropped off a cliff)'"
+    weight: 0.35
+    description: "Decomposition"
+  - type: llm_judge
+    criteria: "Findings are presented with actionable business insights — findings: 'VP of Sales summary — revenue decline analysis: Finding 1: the decline is primarily driven by fewer orders (down 12%), not lower order values (down 3%). This suggests a customer acquisition or retention problem, not a pricing problem. Finding 2: the West region accounts for 60% of the decline. West revenue dropped 25% while other regions dropped only 5-8%. Investigation needed: was there a sales team change in the West? A lost key account? A competitor entering the market? Finding 3: Electronics category is the biggest contributor (45% of the decline). Electronics revenue dropped 22%. Seasonal pattern: Q3 includes back-to-school (August/September electronics spike). The Q4 decline may partly be a return to baseline after the Q3 seasonal peak. Finding 4: monthly trend shows October was roughly flat with September, but November and December declined sharply. This suggests the holiday season underperformed expectations (for most businesses, Q4 should be stronger than Q3, not weaker). Recommendation: compare to the same period last year (Q4 vs Q4 year-over-year) to separate seasonal effects from a genuine decline. A Q4-vs-Q3 comparison can be misleading if Q3 had a seasonal spike. Actionable next steps: (1) Deep dive into the West region: pull the specific accounts that churned or reduced spending. (2) Analyze customer cohorts: are new customers declining (acquisition problem) or existing customers spending less (retention problem)? (3) Compare to Q4 of the prior year: is this a year-over-year decline or just seasonality?'"
+    weight: 0.35
+    description: "Findings"
+  - type: llm_judge
+    criteria: "Analysis includes cohort and customer-level investigation — customer analysis: 'Customer-level investigation: New vs returning customers: q3_customer_set = set(q3[\"customer_id\"]). q4_customer_set = set(q4[\"customer_id\"]). retained = q3_customer_set & q4_customer_set. new_in_q4 = q4_customer_set - q3_customer_set. churned = q3_customer_set - q4_customer_set. print(f\"Q3 customers: {len(q3_customer_set)}\"). print(f\"Retained in Q4: {len(retained)} ({len(retained)/len(q3_customer_set)*100:.0f}%)\"). print(f\"New in Q4: {len(new_in_q4)}\"). print(f\"Churned (Q3 but not Q4): {len(churned)}\"). Revenue from retained vs new: retained_revenue = q4[q4[\"customer_id\"].isin(retained)][\"revenue\"].sum(). new_revenue = q4[q4[\"customer_id\"].isin(new_in_q4)][\"revenue\"].sum(). print(f\"Revenue from retained: ${retained_revenue:,.0f}\"). print(f\"Revenue from new: ${new_revenue:,.0f}\"). lost_revenue = q3[q3[\"customer_id\"].isin(churned)][\"revenue\"].sum(). print(f\"Revenue lost from churned Q3 customers: ${lost_revenue:,.0f}\"). This breakdown tells the story: if churned customer revenue ($X) exceeds new customer revenue ($Y), the net customer economics explain the decline. Top churned customers: top_churned = (q3[q3[\"customer_id\"].isin(churned)].groupby(\"customer_id\")[\"revenue\"].sum().nlargest(10)). These are the specific accounts the sales team should reach out to — they were active in Q3 but disappeared in Q4'"
+    weight: 0.30
+    description: "Customer analysis"

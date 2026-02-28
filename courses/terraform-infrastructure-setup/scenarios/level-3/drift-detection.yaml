@@ -1,0 +1,66 @@
+meta:
+  id: drift-detection
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Detect and remediate infrastructure drift — diagnose out-of-band changes, implement continuous drift detection, and establish drift prevention workflows"
+  tags: [Terraform, drift, detection, remediation, refresh, advanced]
+
+state: {}
+
+trigger: |
+  Your security team ran an emergency script that modified security
+  groups directly in AWS. Monday morning, terraform plan shows:
+
+  ```
+  Note: Objects have changed outside of Terraform
+
+  Terraform detected the following changes made outside of Terraform:
+
+    # aws_security_group.web has been changed
+    ~ resource "aws_security_group" "web" {
+        ~ ingress = [
+            # New rule added outside Terraform:
+            + {
+                cidr_blocks = ["0.0.0.0/0"]
+                from_port   = 22
+                to_port     = 22
+                protocol    = "tcp"
+              }
+          ]
+      }
+
+    # aws_instance.web has been changed
+    ~ resource "aws_instance" "web" {
+        ~ instance_type = "t3.micro" -> "t3.large"
+      }
+
+    # aws_db_instance.main has been changed
+    ~ resource "aws_db_instance" "main" {
+        ~ backup_retention_period = 7 -> 30
+      }
+
+  Plan: 0 to add, 3 to change, 0 to destroy.
+  ```
+
+  Terraform wants to revert ALL changes. But some changes were
+  intentional (backup retention increase) and others were dangerous
+  (SSH open to 0.0.0.0/0).
+
+  Task: Explain drift detection mechanics, selective drift handling
+  (accept some, revert others), continuous drift detection strategies,
+  and prevention workflows to minimize drift.
+
+assertions:
+  - type: llm_judge
+    criteria: "Drift detection mechanics are explained — Terraform refreshes state before plan/apply by querying cloud APIs. Compares: real infrastructure vs state vs configuration. Drift = real infrastructure differs from state. Plan shows drift as 'Objects have changed outside of Terraform'. Terraform then plans to reconcile real infrastructure with configuration (not state). terraform plan -refresh-only: shows drift without planning changes. terraform apply -refresh-only: updates state to match reality without changing infrastructure. terraform refresh (deprecated): same as apply -refresh-only"
+    weight: 0.35
+    description: "Detection mechanics"
+  - type: llm_judge
+    criteria: "Selective drift handling is covered — to accept some drift and revert others: (1) SSH rule (dangerous): revert by applying — Terraform removes the unauthorized 0.0.0.0/0 SSH rule. (2) Instance type change: if intentional, update .tf file to t3.large, plan shows no changes. (3) Backup retention: if intentional, update .tf to backup_retention_period = 30. Workflow: review each drift item, decide accept or revert, update code for accepted changes, apply to revert rejected changes. ignore_changes lifecycle: for attributes managed externally (not recommended as default — masks problems)"
+    weight: 0.35
+    description: "Selective handling"
+  - type: llm_judge
+    criteria: "Prevention and continuous detection are practical — continuous detection: scheduled terraform plan -detailed-exitcode in CI (exit code 2 = drift detected, alert the team). Terraform Cloud: drift detection feature runs plans automatically. Prevention: (1) all changes through Terraform (enforce via IAM — deny console modifications), (2) SCP policies in AWS Organizations to restrict manual changes, (3) AWS Config rules to detect non-Terraform changes, (4) establish an emergency change process that includes updating Terraform code after. Culture: drift is a process problem, not a tool problem"
+    weight: 0.30
+    description: "Prevention"

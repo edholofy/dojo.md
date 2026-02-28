@@ -1,0 +1,47 @@
+meta:
+  id: intermediate-critique-shift
+  level: 2
+  course: design-feedback-critique-writing
+  type: output
+  description: "Intermediate critique shift — handle multiple intermediate design feedback challenges in a single session"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a senior designer handling critique-related
+  tasks for the day:
+
+  TASK 1 — A design review just ended chaotically. The
+  PM gave feedback about features not in scope, the
+  engineer questioned the entire approach 3 weeks into
+  development, and the designer is now confused about
+  what's actually changing. Write a post-review summary
+  that creates clarity from chaos.
+
+  TASK 2 — An async review on Figma has 47 comments,
+  most of which are variations of the same 3 issues.
+  The designer is overwhelmed. Synthesize the comments
+  into a prioritized action list.
+
+  TASK 3 — A junior designer received feedback: "This
+  looks like a template — there's no personality." They
+  don't know how to respond because the design follows
+  the design system perfectly. Help them craft a
+  response.
+
+  Task: Handle all three critique challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Task 1 — post-review summary from chaos — structured summary document (Review Summary: [design name], Date, Attendees, then: Decisions Made — list any actual decisions agreed upon, Feedback to Address — feedback within scope that the designer should act on with priority levels, Feedback Deferred — PM's out-of-scope feature requests acknowledged and noted for future consideration, not current sprint, Open Questions — engineer's approach concerns need to be resolved via separate technical discussion, not in design review, Next Steps — specific actions with owners and dates), addresses the process issue (flag: out-of-scope feedback and late fundamental challenges indicate a process problem — the PM should have reviewed scope before design review, the engineer should have raised approach concerns during architecture review, not 3 weeks into development — suggest process improvements for future reviews)."
+    weight: 0.35
+    description: "PostReviewSummary"
+  - type: llm_judge
+    criteria: "Response handles Task 2 — synthesizing 47 Figma comments — synthesis approach (group the 47 comments into the 3 core themes: identify what the 3 issues actually are — e.g., Theme 1: navigation is confusing — 18 comments, Theme 2: text is too small on mobile — 15 comments, Theme 3: CTA isn't prominent enough — 14 comments), prioritized action list (for each theme: Summary of the concern, Number of reviewers who raised it, Severity level, Recommended action, Estimated effort — present as a clean 3-item list instead of 47 scattered comments), communication (respond in Figma: 'I've synthesized all 47 comments into 3 themes below. Please confirm this captures your concerns. I'll address them in priority order in the next iteration.' — resolves individual comments by linking them to themes, creates a clear path forward)."
+    weight: 0.35
+    description: "CommentSynthesis"
+  - type: llm_judge
+    criteria: "Response handles Task 3 — responding to 'looks like a template' feedback — validates the designer's confusion (following the design system IS the right thing to do — the design system exists to ensure consistency, so looking 'template-like' is partially by design), helps craft a response ('Thank you for the feedback. I used our design system components to ensure consistency with our other products. Can you help me understand what you mean by personality? Are there specific areas where you'd like to see more custom visual treatment within our brand guidelines? I'd like to find the right balance between consistency and distinctiveness.'), addresses the underlying tension (there's a real tension between design system consistency and product personality — a good design system enables customization through: custom illustrations, photography style, copywriting tone, layout composition, color emphasis within the palette — these create personality without breaking the system, the designer can explore these areas for differentiation)."
+    weight: 0.30
+    description: "TemplateResponse"

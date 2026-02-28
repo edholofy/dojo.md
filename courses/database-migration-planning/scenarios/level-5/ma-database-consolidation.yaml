@@ -1,0 +1,58 @@
+meta:
+  id: ma-database-consolidation
+  level: 5
+  course: database-migration-planning
+  type: output
+  description: "M&A database consolidation — plan database integration after a major acquisition, merging overlapping schemas and data while maintaining both businesses"
+  tags: [database, migration, mergers-acquisitions, consolidation, integration, master]
+
+state: {}
+
+trigger: |
+  Your company (AcmeCorp, 5,000 employees) just acquired a
+  competitor (BetaInc, 2,000 employees) for $500M. Both companies
+  sell project management SaaS. The board wants the products
+  merged within 18 months.
+
+  AcmeCorp databases:
+  - PostgreSQL 15 on AWS Aurora: 2TB, 300 tables
+  - 500K customers, 50M projects, 2B task records
+  - Well-documented schema, modern architecture
+
+  BetaInc databases:
+  - MySQL 8 on GCP Cloud SQL: 800GB, 180 tables
+  - 200K customers, 20M projects, 500M task records
+  - Poorly documented, technical debt, 3 schemas with overlapping
+    data (legacy of their own acquisitions)
+
+  Overlap: 15,000 customers use BOTH products. Their data must be
+  merged without duplication or loss.
+
+  Complicating factors:
+  - BetaInc has a different data model (projects are called
+    "workspaces", tasks are called "items", users are called
+    "members")
+  - BetaInc stores files in the database as BLOBs (200GB of binary
+    data in tables)
+  - Both products have public APIs with thousands of integrations
+  - The 15,000 overlapping customers have different IDs in each
+    system
+
+  The CPO asks: "How do we merge these databases without losing any
+  customer data and without breaking existing integrations?"
+
+  Task: Design the M&A database consolidation plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data mapping and identity resolution strategy is thorough — data mapping: 'Step 1: Schema mapping between AcmeCorp and BetaInc. Create a comprehensive mapping document: AcmeCorp → BetaInc equivalents. users → members (different ID spaces, different attributes). projects → workspaces (different metadata structure). tasks → items (different status enums, different custom fields). comments → notes (similar structure, different threading model). attachments (S3 references) → file_data (BLOBs in database). teams → groups (different permission models). For each mapping: identify columns that map directly (email → email). Identify columns that need transformation (AcmeCorp status: open/in_progress/done → BetaInc status: new/active/completed/archived). Identify columns that exist in one system but not the other. Step 2: Identity resolution for the 15,000 overlapping customers. The core challenge: customer 12345 in AcmeCorp and customer 67890 in BetaInc may be the same company. Matching strategy: (1) Email domain matching: match organizations by email domain (acme.com users in both systems are likely the same company). (2) Organization name fuzzy matching: Acme Corp vs ACME Corporation vs Acme Corp. (use string similarity algorithms). (3) Billing email matching: the billing contact email is often the strongest match. (4) Manual review: for ambiguous matches, create a queue for customer success to review. Output: a mapping table: acme_customer_id, beta_customer_id, confidence_score, match_method, verified (boolean). For the 15,000 overlapping customers: estimate 80% matched automatically with high confidence. 15% matched with medium confidence (requires review). 5% ambiguous (requires manual customer outreach). User-level identity resolution: within each matched customer, match individual users. Primary match: email address (most reliable). Secondary match: name + role (less reliable). Create: acme_user_id, beta_user_id, confidence_score. Conflict resolution: if the same user has different data in each system — AcmeCorp record takes precedence (it is the acquiring company's system of record), unless the BetaInc record is more complete'"
+    weight: 0.35
+    description: "Data mapping"
+  - type: llm_judge
+    criteria: "Phased consolidation plan avoids big-bang risks — consolidation plan: 'Phase 1 (months 1-4): Preparation and BLOB extraction. Extract BetaInc BLOBs from the database: the 200GB of binary data stored in MySQL tables must be extracted to object storage (S3). Process: iterate through all BLOB rows. Upload each file to S3 with a structured key (beta/{table}/{id}/{filename}). Replace the BLOB column with the S3 reference URL. Verify all files are accessible from S3. Drop the BLOB columns. Result: BetaInc database shrinks from 800GB to approximately 600GB. Queries become dramatically faster (no more full table scans hitting BLOBs). Set up the integration database: create a new schema in Aurora PostgreSQL: consolidated. This schema will hold the merged data model. Design the consolidated schema based on the mapping document. The consolidated schema should be a superset of both systems (no data loss). Phase 2 (months 5-10): Data migration with dual-write. Migrate BetaInc data to Aurora PostgreSQL: use AWS DMS to migrate BetaInc MySQL data to Aurora PostgreSQL. During migration: transform BetaInc schema to match the consolidated model. members → users (with beta_original_id preserved). workspaces → projects. items → tasks (with status mapping). Apply identity resolution: for the 15,000 overlapping customers, merge records using the mapping table. Create a consolidated customer record with data from both sources. Preserve both original IDs (acme_id and beta_id) for backwards compatibility. Set up dual-write: both AcmeCorp and BetaInc applications write to their original databases AND the consolidated database. This ensures the consolidated database stays current during the transition. Phase 3 (months 11-15): Application migration. Migrate BetaInc application to read from the consolidated database: update BetaInc API to read from Aurora (consolidated schema). Maintain BetaInc API contract (external integrations must not break). BetaInc API translates between the consolidated schema and BetaInc API format (workspaces, items, members). Migrate AcmeCorp application to read from the consolidated database: AcmeCorp API reads from the consolidated schema. Maintain AcmeCorp API contract. Gradually deprecate the original AcmeCorp and BetaInc schemas. Phase 4 (months 16-18): Unification and cleanup. Merge the BetaInc API into AcmeCorp API: BetaInc API endpoints become aliases for AcmeCorp API endpoints. BetaInc customers receive migration guides for updating their integrations. Deprecation timeline: BetaInc API remains active for 12 months after merge (gives integrators time to migrate). Decommission: drop the original AcmeCorp and BetaInc schemas. Drop the dual-write layer. The consolidated schema is now the single source of truth'"
+    weight: 0.35
+    description: "Consolidation plan"
+  - type: llm_judge
+    criteria: "API compatibility and customer impact are carefully managed — API and customer management: 'API backwards compatibility strategy: both AcmeCorp and BetaInc have public APIs with thousands of integrations. Breaking these APIs would cause customer churn — exactly the opposite of the acquisition's goal. AcmeCorp API: maintain the existing AcmeCorp API contract unchanged. Internally, the API reads from the consolidated database instead of the original schema. No external change — integrations continue to work. New data from BetaInc customers becomes visible through the AcmeCorp API (the 15,000 overlapping customers see merged data). BetaInc API: maintain the BetaInc API contract for 12 months post-merge. Internally, translate between BetaInc API format and the consolidated database. BetaInc API responses continue to use BetaInc terminology (workspaces, items, members). Provide migration documentation: map every BetaInc API endpoint to its AcmeCorp equivalent. Offer a migration SDK that translates BetaInc API calls to AcmeCorp API calls. ID stability: this is critical — external integrations reference records by ID. AcmeCorp IDs: unchanged (AcmeCorp is the surviving system). BetaInc IDs: create a mapping layer. The BetaInc API continues to accept BetaInc IDs and translates them internally. The consolidated database stores both IDs: primary_id (AcmeCorp ID) and beta_id (original BetaInc ID). Customer communication plan: (1) Non-overlapping AcmeCorp customers (485K): minimal impact. They may see new features from BetaInc but their data and workflows are unchanged. Communication: email announcing the acquisition and upcoming improvements. (2) Non-overlapping BetaInc customers (185K): moderate impact. Their product will eventually be migrated to the AcmeCorp platform. Communication: detailed migration timeline, commitment to maintaining BetaInc API for 12 months, dedicated migration support team. (3) Overlapping customers (15K): highest impact. Their data exists in both systems and will be merged. Communication: personal outreach from customer success. Preview of their merged data before it goes live. Ability to flag any merging errors. Dedicated support channel during the merge window'"
+    weight: 0.30
+    description: "API and customer management"

@@ -442,8 +442,8 @@ export function HumanView({ isTouch }) {
           style={{ maxWidth: 'var(--max-w)', margin: '0 auto' }}
         >
           {[
-            { num: '53', label: 'Courses' },
-            { num: '2,200+', label: 'Scenarios' },
+            { num: '92', label: 'Courses' },
+            { num: '4,400+', label: 'Scenarios' },
             { num: '5', label: 'Difficulty Levels' },
             { num: '\u221E', label: 'Models via OpenRouter' },
           ].map(({ num, label }) => (
@@ -504,24 +504,39 @@ export function HumanView({ isTouch }) {
         <div className="course-grid">
           {[
             {
+              name: 'Marketing & Content',
+              desc: 'Google/Meta ads, SEO blog posts, email sequences, social media, landing pages, UGC scripts',
+              count: 18,
+            },
+            {
+              name: 'Engineering & DevOps',
+              desc: 'AWS Lambda, Docker, Kubernetes, CI/CD, database optimization, security, API error handling',
+              count: 17,
+            },
+            {
+              name: 'Writing & Documentation',
+              desc: 'Technical RFCs, incident postmortems, SOPs, status reports, performance reviews, OKRs',
+              count: 16,
+            },
+            {
               name: 'Customer Support',
-              desc: 'Stripe refunds, billing disputes, escalation handling, account recovery',
-              count: 12,
+              desc: 'Stripe refunds, disputes, SaaS tickets, escalation, churn prevention, SLA breaches',
+              count: 14,
             },
             {
-              name: 'Sales & Negotiation',
-              desc: 'Contract terms, pricing strategy, objection handling, deal desk operations',
-              count: 15,
+              name: 'Data & Analytics',
+              desc: 'A/B testing, cohort analysis, customer segmentation, funnel analysis, revenue forecasting',
+              count: 9,
             },
             {
-              name: 'Marketing & Ads',
-              desc: 'Google Ads copy, headline generation, audience targeting, campaign optimization',
-              count: 8,
+              name: 'Sales & Revenue',
+              desc: 'Cold email, discovery calls, proposals, competitive battlecards, lead scoring, upselling',
+              count: 9,
             },
             {
-              name: 'Operations',
-              desc: 'Incident response, triage workflows, infrastructure decisions, compliance checks',
-              count: 12,
+              name: 'Design & UX',
+              desc: 'Accessibility audits, design systems, user personas, journey mapping, wireframe specs',
+              count: 9,
             },
           ].map(({ name, desc, count }) => (
             <div key={name} className="course-card">

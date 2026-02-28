@@ -1,0 +1,48 @@
+meta:
+  id: cognitive-accessibility
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Cognitive accessibility assessment — evaluate and report on cognitive load, reading level, clear language, and supportive design for users with cognitive disabilities"
+  tags: [cognitive, readability, clear-language, COGA, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "A healthcare client wants
+  their patient portal audited for cognitive
+  accessibility. Their users include elderly patients
+  and people with cognitive disabilities.
+
+  Issues I'm seeing:
+  1. Medical jargon throughout with no plain-language
+     alternatives
+  2. Multi-step forms with 15+ fields per step and
+     no progress indicator
+  3. Session timeout after 5 minutes with no warning
+  4. Error messages use technical language: 'Error
+     400: Malformed request payload'
+  5. Navigation uses icons without text labels
+  6. Important actions like 'Cancel appointment' have
+     no confirmation and no undo
+
+  Standard WCAG criteria don't cover all of this.
+  How do I audit for cognitive accessibility?"
+
+  Task: Assess cognitive accessibility using WCAG
+  criteria plus COGA guidance, and write findings
+  with severity and remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes cognitive accessibility findings with WCAG mapping — Medical jargon (WCAG 3.1.5 Reading Level Level AAA + COGA best practice: content should be understandable by users with lower secondary education level, Severity: Major for healthcare portal where comprehension is critical, Fix: provide plain-language versions of medical terms, include a glossary, use tooltips for technical terms: 'Hypertension (high blood pressure)'), Complex forms (WCAG 3.3.2 Labels or Instructions Level A + COGA: multi-step forms need progress indicator, step count ('Step 2 of 4'), logical grouping of related fields, save-and-continue option, Fix: break 15-field steps into 5-field steps, add visible progress bar with step labels), Session timeout (WCAG 2.2.1 Timing Adjustable Level A: users must be warned before timeout and given option to extend — 5 minutes is too short for users who need more time, Severity: Critical, Fix: warn 60 seconds before timeout, allow extension, provide option to turn off timeout for authenticated users)"
+    weight: 0.35
+    description: "CognitiveFindings"
+  - type: llm_judge
+    criteria: "Response covers error messages, navigation, and destructive actions — Technical error messages (WCAG 3.3.1 Error Identification Level A + 3.3.3 Error Suggestion Level AA: error messages must identify the problem in user-understandable language and suggest how to fix it — 'Error 400: Malformed request payload' should be 'Something went wrong. Please try again or contact support at 1-800-XXX-XXXX', Severity: Major, Fix: write error messages in plain language, provide next step or recovery path), Icon-only navigation (WCAG 1.3.3 Sensory Characteristics Level A + COGA: icons without text labels require users to learn icon meanings — cognitively demanding, Severity: Major for healthcare audience, Fix: add text labels below or beside icons, or add persistent tooltips), Destructive actions without confirmation (WCAG 3.3.4 Error Prevention Level AA for legal/financial/data: actions with significant consequences must be reversible, confirmed, or reviewed — canceling a medical appointment is consequential, Severity: Critical, Fix: add confirmation dialog: 'Are you sure you want to cancel your appointment on March 15? This action cannot be undone. Cancel / Confirm Cancellation')"
+    weight: 0.35
+    description: "ErrorNavDestructiveFindings"
+  - type: llm_judge
+    criteria: "Response references COGA guidance and testing approach — COGA (Cognitive and Learning Disabilities Accessibility) task force guidance referenced: clear language patterns, consistent navigation, error prevention, adequate time, chunked content, help availability, predictable behavior. Testing methodology for cognitive accessibility (readability score: test content with Flesch-Kincaid or similar — target 6th-8th grade reading level for public-facing content, task completion testing: time how long common tasks take and identify points of confusion, consistency audit: check that similar actions use the same language and patterns across the site, help availability: verify help is accessible from every page and uses simple language, memory load assessment: count how many pieces of information users must remember across steps). Distinguishes WCAG requirements (legally mandated) from COGA best practices (recommended for this audience), and includes both in the report with clear labeling"
+    weight: 0.30
+    description: "COGAGuidance"

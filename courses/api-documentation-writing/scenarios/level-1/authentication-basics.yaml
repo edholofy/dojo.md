@@ -1,0 +1,46 @@
+meta:
+  id: authentication-basics
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document authentication — write clear instructions for API key, Bearer token, and basic authentication with examples"
+  tags: [API, documentation, authentication, API-key, Bearer, authorization, beginner]
+
+state: {}
+
+trigger: |
+  New developers consistently fail their first API call because they
+  can't figure out authentication. Your current docs say:
+
+  "Authentication: This API uses Bearer tokens. Include your token
+  in the header."
+
+  Developer complaints:
+  - "Where do I get a token?"
+  - "What header exactly? What's the format?"
+  - "My token expired — how do I refresh it?"
+  - "Can I use an API key instead for server-to-server?"
+  - "I keep getting 401 — what's wrong?"
+
+  The API supports:
+  1. Bearer tokens (OAuth 2.0, expires in 1 hour, refresh token flow)
+  2. API keys (for server-to-server, passed in X-API-Key header)
+
+  Task: Write authentication documentation that enables developers
+  to successfully authenticate on their first try. Include: how to
+  get credentials, how to include them in requests, token lifecycle,
+  common authentication errors, and code examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Authentication methods are clearly documented — Bearer token: (1) how to get: POST /oauth/token with client_id, client_secret, grant_type. (2) how to use: Authorization: Bearer <token> header. (3) lifecycle: expires in 3600 seconds, use refresh_token to get new access_token. (4) example curl showing full auth flow. API key: (1) how to get: generate in dashboard Settings → API Keys. (2) how to use: X-API-Key: <key> header. (3) lifecycle: doesn't expire, can be revoked. (4) when to use: server-to-server communication, CI/CD, scripts"
+    weight: 0.35
+    description: "Auth methods"
+  - type: llm_judge
+    criteria: "Examples enable first-try success — step-by-step quickstart: (1) get credentials (curl to /oauth/token or dashboard screenshot). (2) make authenticated request (curl with Authorization header). (3) handle token expiry (curl to refresh). Full curl examples with actual headers. Code examples in at least one language (e.g., JavaScript fetch with headers). Common mistakes: forgetting 'Bearer ' prefix (just the token without 'Bearer'), using expired token, sending API key in wrong header, including token in query string (insecure)"
+    weight: 0.35
+    description: "First-try success"
+  - type: llm_judge
+    criteria: "Troubleshooting is included — 401 Unauthorized: token missing, expired, or malformed. Check: is 'Bearer ' prefix included? Is the token current? Is it the right token type? 403 Forbidden: token is valid but lacks permissions. Check: does the token have the required scope? Common auth errors table: symptom → cause → fix. Security notes: never include tokens in URLs (use headers), never log tokens, rotate API keys periodically, use short-lived tokens for client applications"
+    weight: 0.30
+    description: "Troubleshooting"

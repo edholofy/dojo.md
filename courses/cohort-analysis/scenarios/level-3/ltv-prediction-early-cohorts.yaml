@@ -1,0 +1,32 @@
+meta:
+  id: ltv-prediction-early-cohorts
+  level: 3
+  course: cohort-analysis
+  type: output
+  description: "Predict long-term LTV from early cohort data — use curve fitting, analogous cohort methods, and Bayesian updating to estimate lifetime value before cohorts mature"
+  tags: [LTV-prediction, early-data, curve-fitting, bayesian-updating, advanced]
+
+state: {}
+
+trigger: |
+  The CEO says: "Our newest cohort is only 3 months old but the board
+  wants to know their projected LTV. How can we predict a 2-year LTV
+  from only 3 months of data? And how confident should we be in that
+  prediction?"
+
+  Task: Explain methods for predicting long-term LTV from early
+  cohort data, including confidence intervals and prediction accuracy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains curve fitting and analogous cohort methods — methods: 'Predicting LTV from early cohort data: Method 1 — Curve fitting (parametric extrapolation): fit a mathematical curve to the observed cumulative revenue data and extrapolate. For the 3-month-old cohort with cumulative revenue: M0: $8, M1: $20, M2: $34, M3: $49. Fit a power law: LTV(t) = a × t^b. Using regression: a ≈ 12, b ≈ 0.65. Projection: M6: $72, M12: $114, M24: $180. Fit a logarithmic curve: LTV(t) = a × ln(t+1) + c. Projection: M6: $68, M12: $100, M24: $135. The two curves diverge significantly by M24 ($180 vs $135). With only 3 data points, the functional form matters enormously. Method 2 — Analogous cohort method (ratio-based): use mature cohorts as templates. If the January cohort (now 12 months old) had: M3: $49, M6: $78, M12: $130. The ratio M12/M3 = 2.65. Apply this ratio to the new cohort: projected M12 = $49 × 2.65 = $130. But if product or acquisition changed, this ratio may not hold. Refinement: use the most similar mature cohort (matching channel mix, seasonality, plan distribution). If Q1 cohorts historically have different M12/M3 ratios than Q3 cohorts (seasonal spending patterns), use the seasonal match. Method 3 — Bayesian updating: start with a prior distribution for LTV based on historical cohorts. Prior: LTV at M12 is normally distributed with mean $120, standard deviation $25. As new monthly data arrives, update the posterior. After M1 data ($20 — slightly above average): posterior mean shifts to $125. After M2 data ($34 — on track): posterior mean stays at $124. After M3 data ($49 — above the M3 average of $45): posterior mean shifts to $132. The posterior narrows with each data point — confidence increases. By M6, the 95% credible interval is typically narrow enough for financial planning'"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response covers prediction accuracy and confidence intervals — accuracy: 'Prediction accuracy by data maturity: how much data is enough? Historical analysis of prediction accuracy (comparing predicted M12 LTV to actual M12 LTV across 20 past cohorts): prediction at M1: MAPE = 35%, 95% CI width = ±$45. The prediction is essentially a guess at M1 — the confidence interval includes a 2x range. Prediction at M3: MAPE = 18%, 95% CI width = ±$28. Meaningfully better — the curve shape is beginning to emerge. Prediction at M6: MAPE = 8%, 95% CI width = ±$15. Reliable enough for financial planning and marketing budget decisions. Prediction at M9: MAPE = 4%, 95% CI width = ±$8. Highly accurate — only 3 months of extrapolation needed. Key insight: the first 3 months of data predict M12 LTV with approximately 80% accuracy. The marginal value of each additional month of data decreases (diminishing returns on waiting). Building confidence intervals: for each prediction horizon, construct intervals using: historical prediction errors (empirical bootstrap). Model-based uncertainty (from the curve fit or Bayesian posterior). Present to the CEO: new cohort projected M12 LTV: $130. Optimistic scenario (upper bound): $158. Pessimistic scenario (lower bound): $102. Confidence: 80% likely to fall between $102 and $158 (based on historical prediction accuracy at M3). For the board: present as a range, not a point estimate. Emphasize that M3 predictions historically have 18% average error. Update the projection each month as data arrives (and the range narrows). By M6, the projection will be reliable enough for confident financial commitments'"
+    weight: 0.35
+    description: "Accuracy"
+  - type: llm_judge
+    criteria: "Response covers practical implementation and early warning signals — implementation: 'Implementation and early warning signals: building an automated LTV projection system: 1. For each new cohort, begin tracking cumulative revenue per user monthly. 2. At M1, generate initial projection using the analogous cohort method (safest with minimal data). 3. At M3, switch to curve fitting with Bayesian priors from analogous cohorts. 4. At M6, use the model-based projection and narrow the confidence interval. 5. Publish monthly updates to a dashboard accessible to finance, marketing, and the exec team. Early warning signals from LTV projections: signal 1 — M1 revenue below the 25th percentile of historical cohorts: the new cohort is generating less first-month revenue than 75% of past cohorts. Possible causes: lower willingness to pay, worse product-market fit, more free-tier users. Action: investigate acquisition channel mix and initial conversion rates. Signal 2 — Revenue growth rate decelerating faster than expected: M0-M1 growth was +150%, M1-M2 growth was +70%, M2-M3 growth was +30%. If historical cohorts show M2-M3 growth of 45%, this cohort is decelerating faster. Action: check retention (are more users churning?) and ARPU (are active users spending less?). Signal 3 — Projected LTV falling below CAC: if M3 projection puts M12 LTV at $102 (pessimistic) and CAC is $95, the cohort may not be profitable. Action: flag to marketing immediately — do not wait 12 months to discover unprofitability. Reduce spend on the acquisition channels feeding this cohort. Communication framework for the CEO: monthly LTV projection report: one table showing each cohort's current LTV, projected M12 and M24 LTV, confidence range, and comparison to the previous month's projection. Highlight any cohorts where the projection is trending below target. Use color coding: green (above target), yellow (within range), red (below target or below CAC)'"
+    weight: 0.30
+    description: "Implementation"

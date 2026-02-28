@@ -1,0 +1,58 @@
+meta:
+  id: locals-and-expressions
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Use locals and expressions effectively — simplify complex configurations with local values, for expressions, conditionals, and built-in functions"
+  tags: [Terraform, locals, expressions, functions, conditionals, intermediate]
+
+state: {}
+
+trigger: |
+  Your Terraform configuration has duplicated logic everywhere:
+
+  ```hcl
+  resource "aws_instance" "web" {
+    tags = {
+      Name        = "web-${var.environment}-${var.region}"
+      Environment = var.environment
+      Project     = var.project
+      ManagedBy   = "terraform"
+      CostCenter  = var.environment == "prod" ? "CC-100" : "CC-200"
+    }
+  }
+
+  resource "aws_s3_bucket" "data" {
+    tags = {
+      Name        = "data-${var.environment}-${var.region}"
+      Environment = var.environment
+      Project     = var.project
+      ManagedBy   = "terraform"
+      CostCenter  = var.environment == "prod" ? "CC-100" : "CC-200"
+    }
+  }
+
+  # Same tags repeated on 20 more resources...
+  ```
+
+  You also need to transform a list of subnet CIDRs into a map keyed
+  by availability zone, and conditionally create resources based on
+  environment.
+
+  Task: Explain locals (local values), Terraform expressions (for,
+  conditionals, splat), built-in functions (lookup, merge, concat,
+  flatten, try), and how to use them to simplify configurations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Locals are explained — locals { common_tags = { Environment = var.environment, Project = var.project, ManagedBy = 'terraform', CostCenter = var.environment == 'prod' ? 'CC-100' : 'CC-200' } }. Reference: tags = merge(local.common_tags, { Name = 'web-server' }). Locals compute values once and reuse them. Use for: common tags, computed names, complex expressions used multiple times. Locals vs variables: variables are inputs from outside, locals are computed inside the configuration. Don't overuse locals — if a value is used once, just inline it"
+    weight: 0.35
+    description: "Locals"
+  - type: llm_judge
+    criteria: "Expressions are covered — for expression: [for s in var.subnets : s.cidr] (list), {for s in var.subnets : s.az => s.cidr} (map). Conditional: var.create_vpc ? 1 : 0 with count for conditional resource creation. Splat: aws_instance.web[*].id gets all IDs. Ternary: condition ? true_val : false_val. for with filtering: [for s in var.subnets : s.cidr if s.public]. String templates: 'Hello ${var.name}'. Heredoc: <<-EOT for multi-line strings"
+    weight: 0.35
+    description: "Expressions"
+  - type: llm_judge
+    criteria: "Built-in functions are practical — merge(): combine maps (merge(local.common_tags, local.extra_tags)). lookup(): safe map access with default (lookup(var.amis, var.region, 'ami-default')). concat(): join lists. flatten(): flatten nested lists. try(): return first non-error value (try(var.config.setting, 'default')). coalesce(): first non-null value. keys()/values(): extract from maps. length(): collection size. format/formatlist(): string formatting. cidrsubnet(): calculate subnet CIDRs. templatefile(): render template files. Type conversion: toset(), tomap(), tolist(), tonumber(), tostring()"
+    weight: 0.30
+    description: "Functions"

@@ -1,0 +1,42 @@
+meta:
+  id: basic-screen-annotations
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "Basic screen annotations — write annotations for a simple screen covering labels, content specs, and basic interactions"
+  tags: [screen-annotation, labels, content, basics, beginner]
+
+state: {}
+
+trigger: |
+  A junior designer says: "I need to annotate this user
+  profile screen. It has:
+
+  - Profile photo (circular, 80px)
+  - User's full name (heading)
+  - Email address (text)
+  - Bio (paragraph, max 2 lines visible)
+  - 'Edit Profile' button
+  - 'Log Out' button
+  - List of 3 recent activity items
+
+  I know I need to add annotations but I don't know what
+  level of detail. Can you show me how to annotate this
+  screen properly?"
+
+  Task: Write complete annotations for the user profile
+  screen that a developer could implement from.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes specific, implementable annotations for each element — Profile photo: source (user's uploaded photo or default avatar), fallback (initials on colored background if no photo), size (80px diameter, circular crop), tap behavior (opens full-size photo or photo upload). Name: source (user.displayName from API), max length (50 characters, truncate with ellipsis), typography spec (H2, semibold). Email: source (user.email), format (always shown, not editable on this screen). Bio: source (user.bio), max display (2 lines, 'Read more' link if longer), empty state ('Add a bio to tell people about yourself'). Each annotation is specific enough to implement without guessing"
+    weight: 0.35
+    description: "ElementAnnotations"
+  - type: llm_judge
+    criteria: "Response annotates interactions and navigation — 'Edit Profile' button: navigates to /profile/edit, button style (primary, medium size). 'Log Out' button: shows confirmation dialog ('Are you sure you want to log out?'), on confirm: clears session, redirects to login. Activity list: shows 3 most recent items, each item shows (activity type icon + description + timestamp), tap behavior (navigates to the related item), empty state ('No recent activity'). Loading state for the entire screen (skeleton placeholder). Demonstrates that every interactive element needs a 'what happens when...' annotation"
+    weight: 0.35
+    description: "InteractionAnnotations"
+  - type: llm_judge
+    criteria: "Response uses a clear annotation format — numbered callout system or structured format that maps annotations to specific screen elements, consistent notation for data sources (e.g., [API: user.displayName]), consistent notation for navigation (e.g., → /profile/edit), and consistent notation for conditional display (e.g., IF user.bio IS empty THEN show placeholder). The format is scannable and developers can quickly find the annotation for any element. Includes a note about annotation best practices for beginners"
+    weight: 0.30
+    description: "AnnotationFormat"

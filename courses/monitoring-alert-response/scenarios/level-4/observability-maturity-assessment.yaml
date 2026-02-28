@@ -1,0 +1,61 @@
+meta:
+  id: observability-maturity-assessment
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Assess observability maturity — evaluate an organization's monitoring capabilities across dimensions and create a roadmap to advance maturity"
+  tags: [monitoring, maturity-model, assessment, observability, strategy, expert]
+
+state: {}
+
+trigger: |
+  You've been asked to assess the observability maturity of an
+  organization and create an improvement roadmap. Current state
+  assessment interviews revealed:
+
+  Metrics:
+  - Infrastructure metrics (CPU, memory, disk) for all servers
+  - Application metrics for 40% of services (inconsistent instrumentation)
+  - No business metrics in the monitoring system
+  - Prometheus with 30-day retention, no long-term storage
+
+  Logging:
+  - Centralized logging via ELK for 70% of services
+  - No structured logging standard (mix of text and JSON)
+  - No log-to-trace correlation
+  - Developers search logs manually during incidents
+
+  Tracing:
+  - Distributed tracing deployed for 3 of 40 services
+  - No sampling strategy (the 3 services trace 100%)
+  - No trace-to-metric or trace-to-log correlation
+
+  Alerting:
+  - 800 alert rules, estimated 20% actionable
+  - No SLOs defined
+  - Alert routing is flat (all alerts go to one PagerDuty service)
+  - On-call engineers average 35 pages per week
+
+  Culture:
+  - Monitoring is "the SRE team's job"
+  - Teams add monitoring after incidents, not proactively
+  - No monitoring standards or review processes
+  - New services often launch with zero monitoring
+
+  Task: Create a maturity assessment with scores across dimensions,
+  identify the highest-impact improvements, and build a 6-month
+  roadmap to advance from the current state to the next maturity level.
+
+assertions:
+  - type: llm_judge
+    criteria: "Maturity model defines clear levels with current assessment — maturity dimensions and scoring: 'Dimension 1: Instrumentation Coverage. Level 1 (ad-hoc): some services have some metrics. Level 2 (basic): all services have infrastructure metrics, most have application metrics. Level 3 (standardized): all services instrumented consistently with metrics, logs, and traces following standards. Level 4 (comprehensive): business metrics, customer experience metrics, and technical metrics unified. Level 5 (predictive): instrumentation includes capacity forecasting, anomaly detection baselines. Current score: 1.5 — infrastructure metrics exist, application metrics inconsistent, no business metrics. Dimension 2: Correlation and Context. Level 1: metrics, logs, traces are separate silos. Level 2: some manual correlation possible. Level 3: automated correlation between metrics and logs. Level 4: full metrics-logs-traces correlation with context propagation. Level 5: automated root cause analysis using correlated signals. Current score: 1 — no correlation between any signals. Dimension 3: Alert Quality. Level 1: alerts exist but mostly noise. Level 2: alerts are categorized and routed by team. Level 3: SLO-based alerting for critical services, actionable rate above 50%. Level 4: all services have SLO-based alerts, actionable rate above 80%. Level 5: predictive alerting catches issues before they impact users. Current score: 1.5 — alerts exist but 80% non-actionable, flat routing. Dimension 4: Operational Practice. Level 1: reactive, monitoring added after incidents. Level 2: monitoring checklist for new services. Level 3: monitoring-as-code in CI/CD, regular alert reviews. Level 4: observability is part of service ownership, teams self-serve. Level 5: data-driven reliability culture, observability informs product decisions. Current score: 1 — reactive, SRE-owned, no standards. Overall maturity: 1.25 out of 5 (ad-hoc/reactive)'"
+    weight: 0.35
+    description: "Maturity assessment"
+  - type: llm_judge
+    criteria: "Highest-impact improvements are identified with prioritization rationale — priority improvements: '(1) Structured logging standard (Impact: high, Effort: low). Why first: logging covers 70% of services already, but unstructured logs waste investigation time. Define a JSON logging standard with required fields (timestamp, service, trace_id, level, message). This is a force multiplier — every future improvement builds on consistent structured data. (2) Alert noise reduction (Impact: high, Effort: medium). Why second: 35 pages per week at 20% actionable means 28 wasted pages. This directly causes engineer burnout and erodes trust in monitoring. Triage the 800 alerts: retire stale rules, tune thresholds for the top 20 noisiest alerts, implement team-based routing instead of flat routing. Target: under 15 pages per week at 50%+ actionable within 2 months. (3) SLO definition for top 10 services (Impact: high, Effort: medium). Why third: without SLOs, teams do not know what good looks like. Define availability and latency SLOs for the 10 most critical customer-facing services. Implement burn-rate alerting. This transforms alerting from cause-based (CPU high) to symptom-based (users affected). (4) Tracing expansion with OpenTelemetry (Impact: medium, Effort: high). Why fourth: correlation requires traces. Standardize on OpenTelemetry, instrument the top 20 services, implement trace-to-log correlation via trace_id in structured logs. This unlocks cross-service investigation capability.' Deprioritized: business metrics in monitoring (valuable but depends on instrumentation foundation being solid first), predictive alerting (requires maturity level 3+ as prerequisite), capacity forecasting (requires stable baseline metrics)"
+    weight: 0.35
+    description: "Prioritized improvements"
+  - type: llm_judge
+    criteria: "6-month roadmap is actionable with milestones — roadmap: 'Month 1: Foundation. Deploy structured logging standard. Create logging library/wrapper that enforces required fields. Migrate 5 pilot services to structured logging. Begin alert triage — classify all 800 rules into keep/tune/retire. Milestone: logging standard published, alert triage complete, 30%+ alerts retired. Month 2: Alert quality. Complete alert noise reduction for top 50 noisiest alerts. Implement team-based routing in PagerDuty (each team gets their own service). Define SLOs for the first 5 critical services. Milestone: pages per week under 20, team routing live. Month 3: SLO expansion and tracing pilot. Define SLOs for services 6-10. Deploy OpenTelemetry to 5 pilot services. Implement burn-rate alerting for the first 5 SLOs. Begin log-trace correlation (trace_id in structured logs). Milestone: 10 services with SLOs, 5 services with tracing, correlation working for pilot services. Month 4: Instrumentation standards. Publish monitoring standards document (what every service must have). Create monitoring checklist for new service launches. Expand tracing to 10 more services. Milestone: standards published, no new service launches without monitoring checklist. Month 5: Correlation and dashboards. Expand structured logging to all services. Build correlated dashboards (metrics → logs → traces for the instrumented services). Expand tracing to 20 total services. Milestone: 50% of services fully instrumented with correlation. Month 6: Practice and culture. Launch quarterly alert review process. Conduct first monitoring retrospective (what improved, what gaps remain). Transfer monitoring ownership from SRE to service teams (with SRE providing platform and standards). Milestone: overall maturity score at 2.5+ (up from 1.25), alert actionable rate above 50%, pages per week under 10.' Success metrics: maturity score improvement from 1.25 to 2.5+, alert actionable rate from 20% to 50%+, pages per week from 35 to under 10, services with SLOs from 0 to 10+, services with tracing from 3 to 20+"
+    weight: 0.30
+    description: "Actionable 6-month roadmap"

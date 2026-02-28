@@ -1,0 +1,39 @@
+meta:
+  id: multi-source-analysis
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Analyze data from multiple sources — load, clean, merge, and analyze data from CSV, JSON, and SQL sources"
+  tags: [python, pandas, multi-source, JSON, SQL, data-integration, intermediate]
+
+state: {}
+
+trigger: |
+  Your company's data is spread across multiple sources:
+
+  1. orders.csv — order transactions (order_id, customer_id, amount, date)
+  2. customers.json — customer data from the CRM API (nested JSON
+     with customer details and address sub-objects)
+  3. product_views table in a PostgreSQL database — page view events
+     (customer_id, product_id, timestamp, source)
+
+  Your manager asks: "Combine all three sources and answer: which
+  customers viewed products but never purchased? And for customers
+  who did purchase, how many page views did they average before
+  buying?"
+
+  Task: Load from all three sources, merge, and answer the questions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly loads from all three sources and produces the analysis — code: 'Multi-source data analysis: Source 1 — CSV: orders = pd.read_csv(\"orders.csv\", parse_dates=[\"date\"]). Source 2 — Nested JSON: import json. with open(\"customers.json\") as f: data = json.load(f). customers = pd.json_normalize(data, sep=\"_\"). json_normalize flattens nested JSON. If the JSON has: {\"id\": 1, \"name\": \"John\", \"address\": {\"city\": \"NYC\", \"state\": \"NY\"}}. json_normalize produces columns: id, name, address_city, address_state. For deeply nested structures: customers = pd.json_normalize(data[\"customers\"], record_path=\"orders\", meta=[\"id\", \"name\"], sep=\"_\"). Source 3 — SQL database: from sqlalchemy import create_engine. engine = create_engine(\"postgresql://user:password@host:5432/dbname\"). page_views = pd.read_sql(\"SELECT * FROM product_views WHERE timestamp > '2024-01-01'\", engine). For large tables, use chunksize: chunks = pd.read_sql(\"SELECT * FROM product_views\", engine, chunksize=100000). page_views = pd.concat(chunks). Merge and analyze: Step 1 — Customer page view summary: view_summary = (page_views.groupby(\"customer_id\").agg(total_views=(\"product_id\", \"count\"), unique_products_viewed=(\"product_id\", \"nunique\"), first_view=(\"timestamp\", \"min\"), last_view=(\"timestamp\", \"max\")).reset_index()). Step 2 — Customer order summary: order_summary = (orders.groupby(\"customer_id\").agg(total_orders=(\"order_id\", \"count\"), total_spent=(\"amount\", \"sum\"), first_order=(\"date\", \"min\")).reset_index()). Step 3 — Combine: customer_analysis = (customers.merge(view_summary, left_on=\"id\", right_on=\"customer_id\", how=\"left\").merge(order_summary, left_on=\"id\", right_on=\"customer_id\", how=\"left\")). Answer 1 — Viewed but never purchased: viewers_no_purchase = customer_analysis[(customer_analysis[\"total_views\"] > 0) & (customer_analysis[\"total_orders\"].isna())]. print(f\"Customers who viewed but never purchased: {len(viewers_no_purchase)}\"). print(f\"Average page views for non-purchasers: {viewers_no_purchase['total_views'].mean():.1f}\"). Answer 2 — Page views before purchase: purchasers = customer_analysis[customer_analysis[\"total_orders\"] > 0]. avg_views_before_purchase = purchasers[\"total_views\"].mean(). print(f\"Average page views before purchasing: {avg_views_before_purchase:.1f}\")'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers data integration challenges and best practices — explanation: 'Multi-source data integration challenges: Challenge 1 — Key matching across sources. customer_id in orders.csv might be an integer (12345). id in customers.json might be a string (\"12345\"). customer_id in the database might be a UUID (\"abc-123-def\"). Solution: always check dtypes before merging. Convert to a common type. Challenge 2 — Timezone handling. CSV dates might be timezone-naive. Database timestamps are often UTC. JSON dates might be in the API's local timezone. Solution: standardize all timestamps to UTC before analysis: page_views[\"timestamp\"] = pd.to_datetime(page_views[\"timestamp\"], utc=True). orders[\"date\"] = pd.to_datetime(orders[\"date\"]).dt.tz_localize(\"UTC\"). Challenge 3 — Data freshness. The CSV might be from yesterday's export. The JSON might be from a real-time API call. The database might have data up to the current minute. Solution: document the data freshness of each source and filter to a common date range. Challenge 4 — Handling large SQL queries. Never do SELECT * FROM large_table without a WHERE clause. Always filter at the database level (WHERE, LIMIT) rather than loading everything into pandas. Use chunksize for tables that exceed memory. Best practice — load, validate, then merge: (1) Load each source independently. (2) Validate each source (row counts, date ranges, key uniqueness). (3) Check key overlap before merging (how many customer_ids exist in all three sources?). (4) Merge incrementally (two sources at a time, validating after each merge). (5) Document the final dataset (row count, column descriptions, data freshness)'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers funnel analysis from the merged data — funnel: 'Funnel analysis from merged data: With all three sources combined, build a conversion funnel: Step 1 — Define funnel stages: total_visitors = page_views[\"customer_id\"].nunique(). total_viewers = len(customer_analysis[customer_analysis[\"total_views\"] > 0]). total_purchasers = len(customer_analysis[customer_analysis[\"total_orders\"] > 0]). repeat_purchasers = len(customer_analysis[customer_analysis[\"total_orders\"] > 1]). Step 2 — Calculate conversion rates: funnel = pd.DataFrame({\"stage\": [\"Visited\", \"Viewed Products\", \"Purchased\", \"Repeat Purchase\"], \"count\": [total_visitors, total_viewers, total_purchasers, repeat_purchasers]}). funnel[\"conversion_rate\"] = (funnel[\"count\"] / funnel[\"count\"].iloc[0] * 100).round(1). funnel[\"stage_conversion\"] = (funnel[\"count\"] / funnel[\"count\"].shift(1) * 100).round(1). stage_conversion shows the drop-off at each step (e.g., 40% of visitors view products, 10% of viewers purchase). This tells the business exactly where to focus: if view-to-purchase is low, improve product pages. If visit-to-view is low, improve site navigation. Step 3 — Time to conversion: time_to_purchase = purchasers.apply(lambda row: (row[\"first_order\"] - row[\"first_view\"]).days if pd.notna(row[\"first_view\"]) else None, axis=1). print(f\"Median days from first view to first purchase: {time_to_purchase.median():.0f}\"). This metric helps set expectations for marketing campaigns (if median conversion time is 14 days, do not expect immediate results from a campaign launch)'"
+    weight: 0.30
+    description: "Funnel"

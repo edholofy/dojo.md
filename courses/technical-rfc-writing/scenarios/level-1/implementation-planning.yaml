@@ -1,0 +1,47 @@
+meta:
+  id: implementation-planning
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Write an implementation plan — break a proposed solution into phases with milestones, dependencies, and a realistic timeline"
+  tags: [RFC, implementation, planning, phasing, milestones, beginner]
+
+state: {}
+
+trigger: |
+  You're writing the implementation plan section of an RFC. The proposal:
+  migrate your monolithic Node.js application to a containerized
+  deployment using Docker and Kubernetes.
+
+  Current state:
+  - Single Node.js app running on 3 EC2 instances behind a load balancer
+  - Deployments via SSH + PM2 (manual, error-prone)
+  - No health checks beyond basic ping
+  - Environment config stored in .env files on each server
+
+  Target state:
+  - Dockerized application with CI/CD pipeline
+  - Kubernetes cluster with auto-scaling
+  - Health checks and readiness probes
+  - Config managed via Kubernetes secrets/configmaps
+
+  Your first draft says: "Phase 1: Set up Kubernetes. Phase 2: Migrate.
+  Phase 3: Done." This doesn't help anyone plan their work.
+
+  Task: Write a detailed implementation plan that breaks this migration
+  into realistic phases with clear milestones, dependencies, and a
+  timeline. Then write a guide on how to plan implementations in RFCs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Implementation is broken into clear, sequenced phases — Phase 1 (Weeks 1-2): Containerization — Dockerize the application, create Dockerfile and docker-compose for local development, set up container registry, validate that containerized app passes all existing tests. Milestone: app runs identically in Docker as on bare metal. No infrastructure changes yet. Phase 2 (Weeks 3-4): CI/CD Pipeline — set up automated builds on push, container image scanning, automated testing in containers, deployment to staging Kubernetes cluster. Milestone: every merge to main produces a tested, deployable container image. Phase 3 (Weeks 5-6): Kubernetes Setup — provision production cluster, configure networking and ingress, set up secrets management, implement health checks and readiness probes. Milestone: staging environment runs reliably on Kubernetes for 1 week. Phase 4 (Weeks 7-8): Production Migration — gradual traffic shift (10% → 50% → 100%), monitoring and rollback readiness, decommission old EC2 instances after 2 weeks of stable operation. Milestone: 100% traffic on Kubernetes with no degradation. Each phase is independently valuable and shippable"
+    weight: 0.35
+    description: "Phased implementation"
+  - type: llm_judge
+    criteria: "Dependencies and risks per phase are identified — dependencies between phases are explicit: 'Phase 2 depends on Phase 1 (need Docker images before CI/CD can build them). Phase 4 depends on Phase 3 (need cluster before migration).' External dependencies: 'Kubernetes cluster provisioning requires infrastructure team approval (1 week lead time — start in Phase 1).' Team allocation: 'Phases 1-2 require 2 backend engineers. Phase 3 requires 1 infrastructure engineer + 1 backend engineer. Phase 4 is all-hands for monitoring.' Go/no-go criteria between phases: 'Do not start Phase 4 until Phase 3 staging environment has run without incidents for 5 business days.' Rollback plan per phase: 'At any point before Phase 4 reaches 100%, we can route all traffic back to EC2 instances within 5 minutes.' Parallel work identified: 'CI/CD setup (Phase 2) and Kubernetes provisioning (Phase 3) can overlap in weeks 3-4'"
+    weight: 0.35
+    description: "Dependencies and sequencing"
+  - type: llm_judge
+    criteria: "Planning guide provides reusable principles — principles: (1) Work backwards from the goal: what's the last thing that needs to happen? What must be true before that? Keep going until you reach today. (2) Each phase should be independently valuable: if the project is cancelled after Phase 2, you should still have gained something (containerized app with CI/CD is valuable even without Kubernetes). (3) Front-load risk reduction: tackle the hardest, most uncertain work first — if it fails, you've wasted less time. (4) Include buffer time: estimate honestly then add 20-30% for unknowns. A plan that requires everything to go perfectly is not a plan. (5) Define milestones as verifiable states, not activities: 'app passes load test at 2x current traffic' not 'finish load testing.' (6) Identify the critical path: which tasks, if delayed, delay the entire project? These get the most attention and resources. Anti-patterns: phases that are just calendar months with no milestones, plans with no rollback strategy, big-bang migrations with no gradual rollout, and plans that assume zero dependencies on other teams"
+    weight: 0.30
+    description: "Planning guide"

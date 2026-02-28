@@ -1,0 +1,41 @@
+meta:
+  id: report-automation-scheduling
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Automate report generation and delivery — schedule SQL reports with pg_cron, build report pipelines, manage dependencies, and deliver results via email and Slack"
+  tags: [SQL, automation, scheduling, pg_cron, pipeline, delivery, advanced]
+
+state: {}
+
+trigger: |
+  Finance needs 5 reports automated:
+  1. Daily revenue summary — runs at 7 AM, emailed to finance team
+  2. Weekly KPI dashboard — runs Monday 6 AM, posted to Slack
+  3. Monthly close report — runs 1st of month, depends on data
+     reconciliation completing first
+  4. Quarterly board report — runs after monthly reports for the
+     quarter are all complete
+  5. Ad-hoc on-demand report — triggered by API call
+
+  Current state: an analyst manually runs each query, exports to
+  CSV, and emails it. This takes 2 hours daily and is error-prone.
+
+  Requirements: handle failures gracefully (retry, alert on failure),
+  track report execution history, manage dependencies between reports.
+
+  Task: Design the automated report generation and delivery system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the scheduling infrastructure with dependency management — scheduling: 'Report automation infrastructure: Report registry table: CREATE TABLE report_registry (report_id SERIAL PRIMARY KEY, report_name TEXT UNIQUE NOT NULL, query_text TEXT NOT NULL, schedule TEXT, depends_on INTEGER[], output_format TEXT DEFAULT 'csv', recipients TEXT[], delivery_channel TEXT DEFAULT 'email', is_active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT NOW()). Execution tracking: CREATE TABLE report_executions (execution_id SERIAL PRIMARY KEY, report_id INTEGER REFERENCES report_registry(report_id), started_at TIMESTAMP DEFAULT NOW(), completed_at TIMESTAMP, status TEXT DEFAULT 'running', row_count INTEGER, file_path TEXT, error_message TEXT, retry_count INTEGER DEFAULT 0). Scheduling with pg_cron: SELECT cron.schedule('daily_revenue', '0 7 * * *', $$ SELECT run_report('daily_revenue_summary'); $$). SELECT cron.schedule('weekly_kpi', '0 6 * * 1', $$ SELECT run_report('weekly_kpi_dashboard'); $$). SELECT cron.schedule('monthly_close', '0 5 1 * *', $$ SELECT run_report_with_deps('monthly_close_report'); $$). Dependency management: CREATE OR REPLACE FUNCTION run_report_with_deps(p_report_name TEXT) RETURNS void AS $$ DECLARE v_report RECORD; v_dep_id INTEGER; v_dep_status TEXT; BEGIN SELECT * INTO v_report FROM report_registry WHERE report_name = p_report_name; FOREACH v_dep_id IN ARRAY COALESCE(v_report.depends_on, ARRAY[]::int[]) LOOP SELECT status INTO v_dep_status FROM report_executions WHERE report_id = v_dep_id AND started_at >= DATE_TRUNC('day', NOW()) ORDER BY started_at DESC LIMIT 1; IF v_dep_status IS NULL OR v_dep_status != 'completed' THEN INSERT INTO report_executions (report_id, status, error_message) VALUES (v_report.report_id, 'blocked', 'Waiting on dependency: ' || v_dep_id); PERFORM pg_sleep(300); PERFORM run_report_with_deps(p_report_name); RETURN; END IF; END LOOP; PERFORM run_report(p_report_name); END; $$ LANGUAGE plpgsql'"
+    weight: 0.35
+    description: "Scheduling"
+  - type: llm_judge
+    criteria: "Response includes error handling, retry logic, and alerting — errorhandling: 'Error handling and retry: Report runner with retry logic: CREATE OR REPLACE FUNCTION run_report(p_report_name TEXT) RETURNS void AS $$ DECLARE v_report RECORD; v_exec_id INTEGER; v_result TEXT; v_max_retries INTEGER := 3; v_retry INTEGER := 0; BEGIN SELECT * INTO v_report FROM report_registry WHERE report_name = p_report_name; INSERT INTO report_executions (report_id, status) VALUES (v_report.report_id, 'running') RETURNING execution_id INTO v_exec_id; LOOP BEGIN EXECUTE v_report.query_text; UPDATE report_executions SET status = 'completed', completed_at = NOW() WHERE execution_id = v_exec_id; PERFORM deliver_report(v_exec_id); RETURN; EXCEPTION WHEN OTHERS THEN v_retry := v_retry + 1; IF v_retry >= v_max_retries THEN UPDATE report_executions SET status = 'failed', error_message = SQLERRM, retry_count = v_retry, completed_at = NOW() WHERE execution_id = v_exec_id; PERFORM send_alert('Report failed: ' || p_report_name || ' — ' || SQLERRM); RETURN; END IF; PERFORM pg_sleep(60 * v_retry); END; END LOOP; END; $$ LANGUAGE plpgsql. Alerting function: CREATE OR REPLACE FUNCTION send_alert(p_message TEXT) RETURNS void AS $$ BEGIN INSERT INTO alert_queue (message, channel, created_at) VALUES (p_message, 'slack', NOW()); PERFORM pg_notify('report_alerts', p_message); END; $$ LANGUAGE plpgsql. An external listener (Python script or Lambda function) picks up pg_notify events and sends to Slack or PagerDuty. Monitoring dashboard: SELECT r.report_name, e.status, e.started_at, e.completed_at, EXTRACT(EPOCH FROM e.completed_at - e.started_at) AS duration_seconds, e.retry_count, e.error_message FROM report_executions e JOIN report_registry r ON e.report_id = r.report_id WHERE e.started_at >= CURRENT_DATE ORDER BY e.started_at DESC'"
+    weight: 0.35
+    description: "Errorhandling"
+  - type: llm_judge
+    criteria: "Explanation covers delivery mechanisms and the quarterly dependency chain — delivery: 'Report delivery and complex dependencies: Delivery function: CREATE OR REPLACE FUNCTION deliver_report(p_exec_id INTEGER) RETURNS void AS $$ DECLARE v_report RECORD; v_exec RECORD; BEGIN SELECT r.*, e.file_path INTO v_report, v_exec FROM report_executions e JOIN report_registry r ON e.report_id = r.report_id WHERE e.execution_id = p_exec_id; CASE v_report.delivery_channel WHEN 'email' THEN INSERT INTO email_queue (recipients, subject, attachment_path, queued_at) VALUES (v_report.recipients, v_report.report_name || ' — ' || TO_CHAR(NOW(), 'YYYY-MM-DD'), v_exec.file_path, NOW()); WHEN 'slack' THEN INSERT INTO slack_queue (channel, message, attachment_path, queued_at) VALUES ('#finance-reports', v_report.report_name || ' is ready', v_exec.file_path, NOW()); END CASE; END; $$ LANGUAGE plpgsql. Quarterly board report dependency chain: the quarterly report depends on 3 monthly reports completing first. INSERT INTO report_registry (report_name, depends_on, schedule) VALUES ('q1_board_report', ARRAY[monthly_jan_id, monthly_feb_id, monthly_mar_id], '0 8 1 4,7,10,1 *'). The quarterly report scheduler checks that all 3 monthly dependencies have status=completed before running. If any monthly report failed, the quarterly report is blocked and an alert fires. On-demand API trigger: CREATE OR REPLACE FUNCTION trigger_adhoc_report(p_report_name TEXT, p_params JSONB) RETURNS INTEGER AS $$ BEGIN RETURN run_report(p_report_name); END; $$ LANGUAGE plpgsql. Expose via PostgREST or a thin API layer. Users request reports through a web interface — the API calls the function and returns the execution_id for status tracking'"
+    weight: 0.30
+    description: "Delivery"

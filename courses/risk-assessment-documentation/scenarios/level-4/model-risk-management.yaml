@@ -1,0 +1,81 @@
+meta:
+  id: model-risk-management
+  level: 4
+  course: risk-assessment-documentation
+  type: output
+  description: "Model risk management — design a model risk management framework for a bank using SR 11-7 guidance with AI/ML model validation requirements"
+  tags: [model-risk, sr-11-7, model-validation, ai-ml, expert]
+
+state: {}
+
+trigger: |
+  You're the Head of Model Risk Management at a $40B
+  regional bank (5,500 employees). The OCC has cited
+  "material deficiencies" in your model risk management
+  program, specifically noting that "the bank has deployed
+  12 machine learning models in credit decisioning without
+  adequate validation" and that "the model inventory is
+  incomplete." You need to redesign the MRM program to
+  meet SR 11-7 (Supervisory Guidance on Model Risk
+  Management) requirements.
+
+  Current model inventory (known):
+  | Model | Type | Use | Materiality | Validated? |
+  |-------|------|-----|------------|-----------|
+  | Credit scorecard (consumer) | Logistic regression | Lending | High | Yes (2 years ago) |
+  | Credit scorecard (commercial) | Expert judgment | Lending | High | Yes (3 years ago) |
+  | CECL/ALLL model | Statistical | Accounting | Critical | Yes (annual) |
+  | Interest rate risk | Deterministic | ALM | High | Yes (annual) |
+  | Stress testing (DFAST) | Econometric | Regulatory | Critical | Yes (annual) |
+  | BSA/AML transaction monitoring | Rules + ML | Compliance | Critical | Partial |
+  | Fraud detection (cards) | Random forest | Operations | High | No |
+  | Fraud detection (ACH) | Neural network | Operations | High | No |
+  | Marketing propensity | Gradient boosting | Marketing | Medium | No |
+  | Pricing optimization | Ensemble ML | Pricing | High | No |
+  | CRE valuation | Regression | Appraisal | High | Yes (18 months ago) |
+  | Chatbot intent classifier | NLP/transformer | Customer svc | Medium | No |
+  | Collections scoring | XGBoost | Collections | Medium | No |
+  | 35+ additional models | Various | Various | Unknown | Unknown |
+
+  OCC findings:
+  1. "Model inventory is incomplete — estimated 50+ models
+     not inventoried"
+  2. "ML models lack explainability documentation"
+  3. "No independent validation for 12 ML models"
+  4. "Model performance monitoring is inadequate — no
+     ongoing monitoring for 60% of models"
+  5. "No model risk appetite or tiering framework"
+  6. "Vendor models treated as 'black boxes' with no
+     validation"
+  7. "Board reporting on model risk is perfunctory"
+
+  Additional context:
+  - 6 vendor models (not independently validated)
+  - 3 shadow models (used by business units without MRM
+    knowledge)
+  - Data science team builds models independently of MRM
+  - No challenger model development capability
+  - Model documentation standards vary widely
+
+  Task: Redesign the model risk management program addressing
+  all 7 OCC findings. Include the model inventory
+  methodology, model risk tiering framework, validation
+  standards (with specific requirements for AI/ML models),
+  ongoing monitoring program, vendor model validation
+  approach, and board reporting framework. Address the
+  specific challenges of validating ML models (explainability,
+  bias, concept drift).
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a comprehensive MRM program aligned with SR 11-7 — includes complete model inventory methodology (how to find shadow models and undocumented models); model risk tiering framework with clear classification criteria (critical, high, medium, low); validation standards for each tier; model lifecycle management (development, validation, implementation, monitoring, retirement); addresses all 7 OCC findings with specific remediation actions; the program structure follows SR 11-7 principles of effective challenge."
+    weight: 0.35
+    description: "ComprehensiveSR117AlignedProgram"
+  - type: llm_judge
+    criteria: "Response addresses AI/ML model validation specifically — proposes validation methodology for ML models that goes beyond traditional model validation (explainability testing using SHAP/LIME, bias and fairness testing across protected classes, concept drift monitoring, feature importance stability, out-of-sample performance testing); addresses the 'black box' challenge for neural networks and ensemble models; proposes challenger model requirements for high-risk ML models; the ML validation framework is technically sound and would satisfy OCC expectations for AI/ML governance."
+    weight: 0.35
+    description: "AIMLValidationMethodology"
+  - type: llm_judge
+    criteria: "Response includes practical implementation and governance — proposes realistic remediation timeline (acknowledging you can't validate all models simultaneously); prioritizes by materiality and regulatory severity; addresses the data science team governance gap (bringing model development under MRM oversight without killing innovation); proposes vendor model validation approach; designs board reporting that transforms model risk from perfunctory to meaningful governance; the implementation plan addresses resource requirements (model validators are scarce and expensive)."
+    weight: 0.30
+    description: "PracticalImplementationAndGovernance"

@@ -1,0 +1,42 @@
+meta:
+  id: interactive-api-explorer
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Design interactive API explorer — create documentation for an interactive playground that lets developers test API calls directly from the docs"
+  tags: [API, documentation, interactive, playground, try-it-out, sandbox, advanced]
+
+state: {}
+
+trigger: |
+  Your API documentation is static — developers must switch between
+  reading docs and their terminal to test calls. You want to add an
+  interactive "Try it out" experience directly in the docs:
+
+  Requirements:
+  - Developers can make real API calls from the documentation page
+  - Sandbox environment with test data (pre-populated accounts, payments)
+  - Auto-fill authentication (sandbox API key) for logged-in developers
+  - Show request being constructed as developers fill in parameters
+  - Display formatted response with syntax highlighting
+  - Save and share request/response pairs
+  - Show equivalent curl/SDK code for any request built in the explorer
+
+  Task: Design and document the interactive API explorer experience.
+  Write the developer-facing documentation for using the explorer,
+  the sandbox environment setup guide, and the technical specification
+  for how the explorer generates code examples from interactions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Explorer UX is fully documented — three-panel layout: (1) parameter input form (auto-populated from OpenAPI schema), (2) live request preview (curl command updating as parameters change), (3) response display (formatted JSON, status code, headers, timing). Authentication: sandbox key auto-injected for logged-in users, manual key input for others. Parameter inputs: dropdowns for enums, date pickers for dates, JSON editor for body. Validation: client-side validation before sending (required fields, format checks). History: recent requests saved per developer, shareable via URL. Request builder: clicking 'Send' makes real API call to sandbox, shows loading state, displays response"
+    weight: 0.35
+    description: "Explorer UX"
+  - type: llm_judge
+    criteria: "Sandbox environment is documented — pre-populated test data: 10 test customers, 50 test payments in various states, test webhook endpoint. Test credentials: publishable key (pk_test_...) and secret key (sk_test_...) per developer account. Sandbox limitations: no real charges, no real emails, data resets weekly (or on-demand). Test scenarios: special test values that trigger specific responses (amount 99999 triggers decline, customer_id 'cus_fail' triggers error). Sandbox vs production differences documented. How to create additional test data. Sandbox rate limits (more generous than production)"
+    weight: 0.35
+    description: "Sandbox docs"
+  - type: llm_judge
+    criteria: "Code generation from explorer is documented — after making a request, show equivalent code in: curl, Python, Node.js, Go, Java. Code is copy-paste ready with actual values from the request. 'Copy to clipboard' button for each language. Code includes error handling boilerplate. Option to generate a complete runnable script (with imports, auth setup, API call, response handling). Export options: save as Postman collection, import into Insomnia, generate SDK client code. Technical: code templates are Mustache/Handlebars with OpenAPI schema variables, maintained alongside API spec"
+    weight: 0.30
+    description: "Code generation"

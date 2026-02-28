@@ -1,0 +1,50 @@
+meta:
+  id: expert-migration-shift
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Expert migration shift — lead a multi-team database migration project with governance requirements, compliance constraints, and organizational coordination"
+  tags: [database, migration, shift-simulation, expert, comprehensive, leadership]
+
+state: {}
+
+trigger: |
+  You are the Database Architect leading a Q1 migration program
+  across the organization. Three major migrations are happening
+  simultaneously:
+
+  1. Billing database: Oracle → Aurora PostgreSQL ($800K/year license
+     savings). 200 tables, 500GB, 50 stored procedures. SOC 2
+     compliant. Cannot affect revenue processing.
+
+  2. Analytics platform: single database → sharded across 4 regions
+     for GDPR compliance (EU data in EU, US data in US). 2TB of
+     data, 3 billion rows in the events table.
+
+  3. Legacy CRM: 15-year-old MySQL 5.7 → PostgreSQL 15. 80 tables
+     but heavy use of MySQL-specific features (stored procedures,
+     triggers, ENUM types). Only 2 engineers understand this system.
+
+  Budget: $600K total for all three migrations.
+  Timeline: Q1 (12 weeks).
+  Teams: 4 senior DBAs, 6 migration engineers, plus application
+  teams for each system.
+
+  The CTO asks: "Can we do all three in Q1? What is the plan?"
+
+  Task: Assess feasibility, create the coordinated plan, and
+  identify the critical risks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Feasibility assessment is honest with trade-offs — feasibility: 'Honest assessment: doing all three in Q1 is extremely aggressive. Each migration individually is a 6-12 week project. Running all three simultaneously in 12 weeks is possible but high-risk. Recommendation: prioritize and sequence. Option A (recommended): Complete 2 of 3 in Q1, start the 3rd. Priority 1 — Billing (Oracle → PostgreSQL): highest ROI ($800K/year savings). Start immediately. 12 weeks is tight but feasible for a focused team. Priority 2 — GDPR Analytics Sharding: regulatory deadline-driven (GDPR compliance is not optional). Start in week 3 after the billing team is established. Priority 3 — Legacy CRM: lowest urgency, highest risk (knowledge concentrated in 2 engineers). Start planning in Q1, execute in Q2. This is the most knowledge-dependent migration — rushing it risks the 2 engineers burning out or making mistakes. Option B (CTO prefers all in Q1): possible but requires: all 4 DBAs and 6 migration engineers working in parallel (no slack for issues). Application teams available full-time for their respective migrations (coordinate with product managers). An acceptance that if any migration hits a critical issue, it delays to Q2. Budget allocation: Billing: $250K (tooling: $50K, Oracle → PG consulting: $150K, infrastructure: $50K). Analytics sharding: $200K (infrastructure: $100K, engineering: $80K, tooling: $20K). Legacy CRM: $150K (consulting: $80K, engineering: $50K, infrastructure: $20K). Total: $600K (exactly at budget — no contingency)'"
+    weight: 0.35
+    description: "Feasibility assessment"
+  - type: llm_judge
+    criteria: "Coordinated plan with resource allocation is practical — coordinated plan: 'Week 1-2: Kickoff and planning (all three). All migrations: complete impact analysis, document current state, identify dependencies. Billing team (2 DBAs + 3 engineers): begin Oracle schema conversion using Ora2Pg. Analytics team (1 DBA + 2 engineers): design sharding architecture, select shard keys, set up regional infrastructure. CRM team (1 DBA + 1 engineer + the 2 legacy engineers): document all stored procedures and triggers, assess conversion complexity. Week 3-6: Execution phase 1. Billing: complete schema conversion, begin stored procedure conversion (focus on the 50 PL/SQL → PL/pgSQL rewrites). Start data migration testing in staging. Analytics: set up 4 regional databases. Implement CDC from the single database to regional databases. Begin routing reads to regional databases for testing. CRM: convert schema from MySQL to PostgreSQL. Begin stored procedure and trigger conversion (the manual, labor-intensive work). Week 7-10: Execution phase 2. Billing: complete data migration rehearsal. Fix performance issues. Begin parallel running (both Oracle and PostgreSQL receive traffic). Analytics: begin data cleanup (move EU data to EU shards, US data to US shards). Switch writes to regional databases for pilot applications. CRM: complete stored procedure conversion. Begin data migration testing in staging. Application testing against PostgreSQL. Week 11-12: Cutover and stabilization. Billing: production cutover during maintenance window. 30-day parallel running begins (continues into Q2). Analytics: complete data residency migration. Verify GDPR compliance (EU data only in EU databases). Decommission CDC from original database. CRM: if ahead of schedule: production cutover. If not: defer cutover to Q2 week 1-2 (already planned and tested, just the final switch). Resource sharing and conflicts: weeks 7-10 are the highest risk — all three migrations are in execution. If any migration has issues: borrow engineers from the CRM team (lowest priority) to help. Weekly coordination meeting: all team leads report status, blockers, and resource needs. The Database Architect (you) resolves conflicts and reallocates resources'"
+    weight: 0.35
+    description: "Coordinated plan"
+  - type: llm_judge
+    criteria: "Critical risks and mitigation strategies identified — risks: '(1) Knowledge bus factor on Legacy CRM (likelihood: HIGH). Only 2 engineers understand the system. If one leaves or gets sick: the CRM migration stalls. Mitigation: dedicate the first 2 weeks to knowledge transfer. The 2 legacy engineers document everything: stored procedures, triggers, business logic, data flows. Pair them with the DBA and migration engineer (4 people now understand the system instead of 2). (2) PL/SQL conversion takes longer than estimated (likelihood: HIGH). Oracle stored procedures are notoriously difficult to convert. Estimated: 60-70% automated, 30-40% manual. If manual conversion takes 2x longer: the billing migration timeline slips. Mitigation: hire Oracle-to-PostgreSQL consulting firm for the first 4 weeks ($150K of the budget). They specialize in this conversion and will be faster than the internal team. (3) GDPR data residency violations during migration (likelihood: MEDIUM). During the analytics sharding, EU data temporarily exists in the US database (before it is moved to the EU shard). If audited during this window: potential GDPR issue. Mitigation: document the migration as a time-limited data processing activity with a defined completion date. Consult with legal before starting. (4) Budget overrun (likelihood: HIGH). $600K with no contingency is risky. If any migration requires additional tooling, consulting, or infrastructure: the budget is exceeded. Mitigation: identify $100K that can be deferred (from CRM: if CRM cutover defers to Q2, $50K of CRM infrastructure cost defers too). Discuss with the CTO: the budget has no contingency. If issues arise, we may need an additional $100K or we defer the CRM migration to Q2. (5) Team burnout (likelihood: MEDIUM). Running 3 major migrations simultaneously is intense. 10 people working at full capacity for 12 weeks with no slack. Mitigation: build in buffer weeks (week 12 is explicitly stabilization, not new work). Encourage teams to flag burnout early. Be willing to defer CRM to Q2 if the team is exhausted after billing and analytics'"
+    weight: 0.30
+    description: "Risk mitigation"

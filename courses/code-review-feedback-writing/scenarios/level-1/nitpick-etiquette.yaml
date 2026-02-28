@@ -1,0 +1,44 @@
+meta:
+  id: nitpick-etiquette
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Handle nitpicks properly — learn when to raise minor style issues, how to label them, and when to let them go in favor of automated tools"
+  tags: [code-review, nitpicks, style, etiquette, automation, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR that correctly implements a complex caching
+  layer. The logic is sound, tests are comprehensive, and it solves
+  a real performance problem. But you've noticed 8 minor style issues:
+
+  1. Inconsistent quotes (mix of single and double quotes)
+  2. One function is 32 lines (team guideline is 30 max)
+  3. A variable named "cacheTimeout" when team uses "cache_timeout" style
+  4. Missing JSDoc on one public method
+  5. An import statement that could be shorter with a barrel export
+  6. A comment with a typo ("retrive" instead of "retrieve")
+  7. Extra blank line between two functions
+  8. Using "!= null" instead of "!== null"
+
+  The author spent a week on this feature and is eager to ship it.
+
+  Task: Decide which of these 8 items to raise and which to skip.
+  For items you raise, write the comment with proper "nit:" prefix
+  and make clear it's non-blocking. Explain your decision criteria.
+  Also propose which of these could be automated away.
+
+assertions:
+  - type: llm_judge
+    criteria: "Decisions about what to raise are well-reasoned — raise with nit prefix: naming convention (#3, consistency matters for team), typo (#6, quick fix), strict equality (#8, potential bug source). Skip or mention once: inconsistent quotes (#1, automate with Prettier), 32 vs 30 lines (#2, not worth blocking a complex feature), missing JSDoc (#4, can be follow-up), barrel import (#5, pure preference), blank line (#7, automate with formatter). Key principle: don't bury important feedback under a mountain of nits. If you raise 8 nits, the author sees 8 problems and feels demoralized despite doing great architectural work. Raise 2-3 meaningful nits, skip the rest"
+    weight: 0.35
+    description: "Selective raising"
+  - type: llm_judge
+    criteria: "Nit comments are properly labeled and non-blocking — each nit is prefixed with 'nit:' and explicitly marked non-blocking: 'nit: Our codebase uses snake_case for variables — would you mind renaming cacheTimeout to cache_timeout? Non-blocking, feel free to address in a follow-up.' The review approval is not held up by nits — approve the PR, mention nits as suggestions. Acknowledge the good work FIRST: 'Great implementation of the caching layer — the eviction strategy is really clean. A few minor style nits below, but this is ready to merge.' Nits never use demanding language ('fix this'), always use collaborative language ('would you mind', 'consider changing')"
+    weight: 0.35
+    description: "Non-blocking nits"
+  - type: llm_judge
+    criteria: "Automation recommendations are practical — automate these: quotes consistency (Prettier/ESLint), blank lines (Prettier), strict equality (ESLint strict-equality rule), function length (ESLint max-lines-per-function), import style (ESLint import rules). Cannot automate: naming convention consistency (requires understanding context), JSDoc completeness (tools exist but often noisy), typos (spell checkers for code exist but have false positives). Recommendation: invest 30 minutes setting up ESLint/Prettier to eliminate 5 of these 8 nits forever. Every nit you automate is a nit you never have to write again. The best code review comment is one you never had to make because a tool caught it first"
+    weight: 0.30
+    description: "Automation recommendations"

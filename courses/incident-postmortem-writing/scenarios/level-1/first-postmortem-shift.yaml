@@ -1,0 +1,57 @@
+meta:
+  id: first-postmortem-shift
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "First postmortem shift simulation — write a complete postmortem from incident data combining all fundamentals: summary, timeline, root cause, impact, action items, and blameless tone"
+  tags: [postmortem, shift-simulation, complete-postmortem, synthesis, beginner]
+
+state: {}
+
+trigger: |
+  You need to write your first complete postmortem. Here's the raw
+  incident data:
+
+  Incident: User profile images stopped loading on the website.
+  Date: Tuesday, March 15th.
+  Duration: 1 hour 20 minutes (11:40 AM - 1:00 PM ET).
+
+  What happened:
+  - 11:35 AM: Engineer deployed a CDN configuration update to add
+    a new caching rule for static assets
+  - 11:40 AM: Monitoring alert fires for increased 404 errors on
+    image endpoints
+  - 11:43 AM: On-call engineer (Pat) acknowledges, begins investigating
+  - 11:50 AM: Pat identifies that profile images return 404 but other
+    images load fine
+  - 12:00 PM: Pat escalates to the CDN team
+  - 12:10 PM: CDN team identifies that the new caching rule
+    accidentally excluded the /avatars/ path from the CDN
+  - 12:20 PM: Fix prepared (corrected CDN rule)
+  - 12:30 PM: Fix deployed to CDN staging — verified working
+  - 12:40 PM: Fix deployed to CDN production
+  - 12:50 PM: CDN cache propagation in progress
+  - 1:00 PM: Profile images fully restored, monitoring confirms
+    normal error rates
+
+  Impact: ~30,000 users saw broken profile images. No data loss. No
+  other functionality affected. Customer support received 45 tickets.
+
+  Task: Write the complete postmortem document with all standard
+  sections. Demonstrate all fundamentals: clear summary, accurate
+  timeline, blameless root cause analysis, quantified impact
+  assessment, and specific action items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Postmortem has all standard sections with appropriate content — Summary: 2-3 sentences covering what happened, duration, impact, and resolution. 'A CDN configuration update inadvertently excluded profile images from serving, causing broken avatars for 1 hour 20 minutes for approximately 30,000 users. The issue was resolved by correcting the CDN rule.' Timeline: complete chronological sequence from deployment to resolution with timestamps. Each entry is factual. Phases clearly marked: detection (11:40-11:43), investigation (11:43-12:10), mitigation (12:10-12:40), resolution (12:40-1:00). Root Cause: 'The new CDN caching rule used an overly broad exclusion pattern that matched the /avatars/ path. The rule was tested only against new static asset paths, not validated against existing paths.' Blameless — no mention of who deployed or blame for not testing. Impact: '~30,000 users affected (approximately 15% of DAU). Profile images returned 404. No data loss, no functionality loss beyond cosmetic. 45 customer support tickets.' Action Items: at least 3 specific items with owners and deadlines. What Went Well: detection was fast (5 minutes), escalation was appropriate"
+    weight: 0.35
+    description: "Complete structure"
+  - type: llm_judge
+    criteria: "Root cause analysis goes beyond the trigger — trigger: 'CDN rule excluded /avatars/ path.' Root cause: 'CDN configuration changes have no automated validation against existing paths. The testing process for CDN changes only verified the new rules worked, not that existing rules continued to work (regression testing gap).' Contributing factors: (1) 'CDN configuration is changed via direct config file edit, not infrastructure-as-code with automated testing.' (2) 'No pre-deployment check validates that all existing paths remain accessible.' (3) 'CDN staging environment does not mirror production traffic patterns, so the broken path wasn't hit during staging validation.' The analysis shows that the issue isn't about this specific rule but about the class of problems — any CDN change could break existing paths. Action items address the class, not just the instance"
+    weight: 0.35
+    description: "Root cause depth"
+  - type: llm_judge
+    criteria: "Action items are specific and address prevention, detection, and mitigation — Prevention: 'Implement CDN configuration validation that checks all existing paths still return 200 before deploying changes. Owner: CDN team. Due: 2 weeks.' Detection: 'Add specific monitoring for profile image 404 rate (currently only monitoring aggregate 404 rate — the spike was lost in aggregate noise). Owner: SRE team. Due: 1 week.' Mitigation: 'Create CDN rollback runbook with 1-command rollback capability. Current rollback requires manual config editing. Owner: CDN team. Due: 2 weeks.' Process: 'Add CDN configuration changes to the change management checklist requiring staging validation with production-representative traffic. Owner: Engineering manager. Due: 1 week.' What Went Well section is present: 'Monitoring detected the issue within 5 minutes. Escalation to the correct team happened within 20 minutes. Customer support was responsive. No data was lost or corrupted.' Lessons Learned: 'CDN configuration changes need the same rigor as code deployments — they affect production users just as directly'"
+    weight: 0.30
+    description: "Complete action items"

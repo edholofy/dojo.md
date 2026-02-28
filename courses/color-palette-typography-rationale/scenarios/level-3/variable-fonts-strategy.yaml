@@ -1,0 +1,47 @@
+meta:
+  id: variable-fonts-strategy
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Variable fonts strategy — evaluate and implement variable fonts for design flexibility and performance"
+  tags: [variable-fonts, axes, performance, flexibility, advanced]
+
+state: {}
+
+trigger: |
+  A design technology lead says: "We currently load
+  12 static font files across our web app:
+
+  - Inter: Light (300), Regular (400), Medium (500),
+    SemiBold (600), Bold (700) — 5 files
+  - Inter Italic: Regular (400), Medium (500) — 2 files
+  - Source Serif Pro: Regular (400), SemiBold (600),
+    Bold (700) — 3 files
+  - Fira Code: Regular (400), Bold (700) — 2 files
+
+  Total: ~780KB. I've heard variable fonts can replace
+  multiple files with one. But I need to understand:
+  - How much do we actually save?
+  - What are the design benefits beyond performance?
+  - Are there any gotchas or browser issues?
+  - How do I document this for the design team?
+
+  Should we switch to variable fonts?"
+
+  Task: Evaluate the variable font migration opportunity
+  and create a recommendation document with performance
+  analysis and design rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides performance analysis — current state (12 static files at ~780KB total — each file contains one weight/style), variable font migration (Inter Variable: one file replacing 5 weights + italic axis — typically ~300KB for full variable file, Source Serif Variable: one file replacing 3 weights — typically ~200KB, Fira Code: may or may not have variable version — check availability), estimated savings (3 variable files vs 12 static files — typically 30-50% size reduction, exact savings depend on subsetting and which axes are included, but reduction from ~780KB to ~400-500KB is realistic), loading improvement (fewer HTTP requests — 3 vs 12, better caching — one file covers all weights, no FOUT between weight changes — all weights available immediately), honest caveats (variable font files can be larger than any single static file — only saves when you use 3+ weights, some older browsers may not support variable fonts though modern support is excellent at 95%+)."
+    weight: 0.35
+    description: "PerformanceAnalysis"
+  - type: llm_judge
+    criteria: "Response explains design benefits of variable fonts — continuous weight axis (not limited to predefined weights like 400, 500, 600 — can use weight 450 for subtle differentiation, custom weights for specific UI needs, animate between weights for micro-interactions), custom axes (some variable fonts offer: width axis for condensed to expanded, optical size for size-specific adjustments, grade for weight without layout shift — perfect for hover states), design flexibility (designers can fine-tune weight for specific contexts — data table headers might use 550 instead of choosing between 500 and 600, responsive design can adjust weight slightly at different breakpoints for optical consistency), animation capabilities (smooth weight transitions on hover — font-weight: 400 to 600 with CSS transition, text emphasis animations, loading state pulsing)."
+    weight: 0.35
+    description: "DesignBenefits"
+  - type: llm_judge
+    criteria: "Response provides implementation plan and documentation — migration steps (1. identify variable font availability for each family, 2. subset variable fonts to needed character sets, 3. define @font-face with font-weight range, 4. test rendering across browsers and devices, 5. update CSS to use variable font declarations), CSS implementation (show @font-face declaration with variable font: font-weight: 300 700 for range, font-variation-settings for fine-tuning custom axes), design documentation update (update design system to document: available weight range not just named weights, recommended weights for each UI context, animation guidelines for weight transitions, which axes are available and recommended values), fallback strategy (static font fallback for older browsers using @supports, progressive enhancement approach), and recommendation (clear yes/no with rationale — likely yes given 12 files and significant payload, with phased migration plan)."
+    weight: 0.30
+    description: "ImplementationPlan"

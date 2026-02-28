@@ -1,0 +1,44 @@
+meta:
+  id: advanced-migration-shift
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Advanced migration shift — handle a complex multi-day migration involving cross-database migration, schema changes on large tables, and data verification"
+  tags: [database, migration, shift-simulation, advanced, comprehensive]
+
+state: {}
+
+trigger: |
+  You are leading a major database migration project. The scope:
+
+  1. Migrate the "analytics" schema (15 tables, 500GB) from MySQL
+     to PostgreSQL to consolidate on a single database platform
+  2. The largest analytics table (page_views, 2 billion rows, 300GB)
+     needs to be partitioned by month during the migration
+  3. The migration must complete within a 6-hour maintenance window
+     (Saturday night)
+  4. After migration, both old and new systems must produce identical
+     query results for 30 days (parallel running)
+
+  Constraints:
+  - The analytics pipeline inserts 50,000 rows per minute
+  - The analytics dashboard serves real-time queries
+  - Data retention: 24 months (older data can be archived)
+
+  Task: Create the complete migration plan including pre-migration
+  preparation, the 6-hour execution window, and the 30-day parallel
+  running period.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pre-migration preparation is thorough — preparation: 'Weeks 1-2: Schema conversion and testing. Convert 15 MySQL tables to PostgreSQL schemas. Handle type differences: MySQL DATETIME → PostgreSQL TIMESTAMP, MySQL ENUM → PostgreSQL CHECK constraint or ENUM type, MySQL AUTO_INCREMENT → PostgreSQL SERIAL/IDENTITY. Design the partitioned page_views table: CREATE TABLE page_views (...) PARTITION BY RANGE (created_at); Create 24 monthly partitions (past 24 months) + 3 future months. Test: load a sample of data (1% = 5GB) into PostgreSQL. Run the top 20 analytics queries against both databases and compare results. Fix any SQL syntax differences. Week 3: Rehearsal migration. Perform a full dress rehearsal using a copy of production data. Time every step: MySQL dump for 14 smaller tables (expected: 30-60 minutes for 200GB). pg_restore for the 14 tables (expected: 45-90 minutes). page_views migration with partitioning (expected: 2-4 hours for 300GB). Total time must fit within 6 hours. If it does not: optimize (parallel loading, compression, larger batch sizes). Adjust the plan until the rehearsal fits the window. Week 4: Pre-migration data sync. For the 14 smaller tables: set up CDC from MySQL to PostgreSQL. Keep the PostgreSQL copies in sync with MySQL throughout the week. By Saturday: the PostgreSQL copies are up-to-date with only seconds of lag. This reduces the maintenance window work to: final sync of the 14 tables (seconds, not hours) and migration of page_views (the bulk of the work)'"
+    weight: 0.35
+    description: "Preparation"
+  - type: llm_judge
+    criteria: "6-hour execution window is minute-by-minute — execution: 'Saturday maintenance window (midnight to 6 AM): T+0:00 — Announce maintenance. Stop the analytics pipeline (no new inserts). Put the analytics dashboard in maintenance mode. Take a MySQL backup (belt and suspenders). T+0:15 — Final sync of 14 smaller tables. Stop CDC. Run a final sync to capture any remaining changes. Verify: row counts match between MySQL and PostgreSQL for all 14 tables. Expected: 5-10 minutes. T+0:30 — Begin page_views migration. Export page_views from MySQL in parallel batches: one stream per month (24 parallel streams for 24 months of data). Each stream exports to CSV and imports into the corresponding PostgreSQL partition. This parallelization is key: 300GB / 24 months ≈ 12.5GB per month. At 50MB/s import rate: approximately 250 seconds per month. 24 months in parallel: approximately 250 seconds total (instead of 24 × 250 = 6000 seconds = 100 minutes sequentially). Actual time with overhead: estimate 45-90 minutes for the parallel import. T+2:00 — page_views migration complete. Verify: total row count matches MySQL (2 billion rows). Spot-check: compare 1000 random rows between MySQL and PostgreSQL. Verify: partition sizes are balanced (each month partition has the expected row count). T+2:30 — Create indexes on PostgreSQL partitioned table. Create indexes on each partition in parallel: CREATE INDEX CONCURRENTLY on partition 1, partition 2, ..., partition 24. Parallel index creation: each partition is approximately 50M rows. Index creation per partition: 5-10 minutes. 24 partitions in parallel: 10 minutes total. T+3:00 — Application cutover. Switch the analytics dashboard to read from PostgreSQL. Switch the analytics pipeline to write to PostgreSQL. Start the pipeline (backlog from the 3-hour pause begins processing). T+3:30 — Verify application. Dashboard shows correct data. Pipeline is inserting successfully. New data appears in the correct partitions. Compare: a known query produces the same result on MySQL and PostgreSQL. T+4:00 — Parallel running setup. Configure CDC from PostgreSQL back to MySQL (reverse sync). Both databases now receive all new data. The analytics dashboard reads from PostgreSQL (primary). MySQL is the fallback. T+5:00 — Final verification and monitoring. All systems operational. Dashboard verified. Pipeline verified. Parallel running confirmed. T+5:30 — Maintenance window ends early (30 minutes buffer remaining). Announce: migration complete, services restored'"
+    weight: 0.35
+    description: "Execution window"
+  - type: llm_judge
+    criteria: "30-day parallel running and decommission plan included — parallel running: '30-day parallel verification: Purpose: if PostgreSQL has issues (performance, data integrity, missing features), we can fall back to MySQL. Both databases are kept in sync via CDC from PostgreSQL to MySQL. Verification schedule: daily: run the top 10 analytics queries against both databases. Compare results. Any difference is investigated immediately. Weekly: full row count comparison for all 15 tables. Monthly: comprehensive data integrity audit (checksums on 5 critical tables). Fallback trigger: if PostgreSQL shows incorrect query results: investigate. If the issue cannot be resolved within 4 hours: switch the dashboard back to MySQL. If PostgreSQL performance is significantly worse: investigate query plans, indexes, and configuration. If not resolvable: fall back to MySQL. Exit criteria for parallel running: 30 days with zero data discrepancies. Query performance on PostgreSQL equal to or better than MySQL. No fallback events triggered. Analytics team sign-off that PostgreSQL produces correct results. Decommission: after 30 days of successful parallel running: stop CDC from PostgreSQL to MySQL. Take a final MySQL backup (archived for 90 days). Decommission the MySQL analytics database. Update documentation: analytics is now on PostgreSQL. Total project timeline: 4 weeks preparation + 1 maintenance window + 4 weeks parallel running = approximately 9 weeks'"
+    weight: 0.30
+    description: "Parallel running"

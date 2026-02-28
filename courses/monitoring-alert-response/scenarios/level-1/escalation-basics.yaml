@@ -1,0 +1,42 @@
+meta:
+  id: escalation-basics
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Escalate alerts appropriately — know when, how, and to whom to escalate alerts that exceed your ability or authority to resolve"
+  tags: [monitoring, escalation, communication, on-call, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior engineer on your first solo on-call shift. You
+  receive a CRITICAL alert: "Database connection errors > 100/min
+  on production PostgreSQL cluster."
+
+  You check the basics:
+  - The database is responding to direct connections (you can psql in)
+  - Application logs show "too many connections" errors
+  - Current connections: 495/500 (max_connections = 500)
+  - You don't have permissions to change database configuration
+  - The runbook says "if connection limit is reached, contact DBA
+    on-call"
+
+  Your DBA on-call is listed as "Maria (DBA)" in PagerDuty. It's
+  3:15 AM.
+
+  Task: Write the escalation message you would send and explain
+  your decision-making process for when and how to escalate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Escalation decision is well-reasoned — when to escalate: 'This situation requires escalation because: (1) You have identified the problem (connection pool at 99% capacity) but do not have the permissions to fix it (database configuration changes require DBA privileges). (2) The runbook explicitly says to contact the DBA on-call for this scenario. (3) The issue is actively affecting production — 100+ connection errors per minute means application requests are failing right now. (4) This will get worse, not better, on its own — unless something changes, connections will stay at the limit and errors will continue.' Why not wait: 'Some junior engineers hesitate to escalate at 3 AM because they do not want to wake someone up for a false alarm. This is not a false alarm — you have confirmed the database is at connection limit, applications are failing, and you cannot fix it yourself. The cost of waiting (continued customer impact) outweighs the cost of escalating (waking up the DBA). The DBA on-call signed up for this responsibility — being paged at 3 AM is expected and planned for.' What you tried before escalating: 'You checked: (1) database is responding (not crashed), (2) connections are at limit (root cause identified), (3) your permissions (cannot fix it yourself), (4) runbook guidance (confirms DBA escalation is correct). You are not escalating blindly — you are escalating with a diagnosis and a clear reason you need help'"
+    weight: 0.35
+    description: "Escalation reasoning"
+  - type: llm_judge
+    criteria: "Escalation message is clear, concise, and contains all needed information — escalation message: 'Hi Maria, this is [your name], on-call for engineering. CRITICAL: production PostgreSQL cluster has hit the connection limit. Current state: 495/500 connections in use (max_connections = 500). Application logs showing too many connections errors at 100+/min. Customer impact: application requests that need database connections are failing. What I have checked: database is responsive (psql works), the issue is connection exhaustion not database crash. What I need: someone with DBA permissions to either increase max_connections or help identify and terminate idle connections. Please acknowledge when you see this. I am monitoring and available in #incidents.' Why this message works: '(1) Context: who you are and why you are paging. (2) Severity: CRITICAL, clear urgency signal. (3) Current state: specific numbers (495/500) so the DBA immediately understands the situation. (4) Impact: what customers are experiencing. (5) What you already checked: prevents the DBA from repeating your diagnostic work. (6) What you need: specific ask, not just help. (7) Availability: you are ready to assist and not going back to sleep'"
+    weight: 0.35
+    description: "Message quality"
+  - type: llm_judge
+    criteria: "Response shows understanding of escalation etiquette and follow-through — escalation etiquette: 'Page through the official channel (PagerDuty), not a Slack DM or text message. PagerDuty has escalation policies — if Maria does not respond in 10 minutes, it will page the backup DBA. A Slack DM at 3 AM might not be seen for hours. Also: paging through the official system creates an audit trail of the escalation.' Follow-through: 'After paging: (1) Post in #incidents that you have escalated to the DBA on-call. (2) Continue monitoring — if the situation worsens (connection errors increasing, more services affected), be prepared to escalate further. (3) When the DBA responds, provide any additional context they need. (4) Stay on the incident until the DBA confirms the fix is in place and errors are recovering. (5) After resolution, thank the DBA (they were woken up at 3 AM to help you).' If the DBA does not respond in 10 minutes: 'Let PagerDuty's escalation policy handle it — it will page the backup DBA. If no one responds after 15-20 minutes, escalate to the engineering manager on-call. Do not keep waiting silently while production is impaired.' Key principle: 'Escalation is not failure — it is the correct response when an issue is beyond your authority or expertise. The incident response system is designed for this exact scenario. Use it'"
+    weight: 0.30
+    description: "Etiquette and follow-through"

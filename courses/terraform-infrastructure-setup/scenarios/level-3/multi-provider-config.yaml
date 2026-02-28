@@ -1,0 +1,69 @@
+meta:
+  id: multi-provider-config
+  level: 3
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Configure multi-provider setups — manage multi-region, multi-account, and multi-cloud deployments with provider aliases and assume_role"
+  tags: [Terraform, providers, multi-region, multi-account, cross-account, advanced]
+
+state: {}
+
+trigger: |
+  Your organization needs infrastructure across multiple AWS accounts
+  and regions:
+
+  ```
+  Production Account (111111111111) - us-east-1
+  Staging Account (222222222222) - us-east-1
+  DR Account (111111111111) - us-west-2
+  Shared Services (333333333333) - us-east-1
+  ```
+
+  Your Terraform configuration:
+
+  ```hcl
+  provider "aws" {
+    region = "us-east-1"
+  }
+
+  provider "aws" {
+    alias  = "dr"
+    region = "us-west-2"
+  }
+
+  provider "aws" {
+    alias = "staging"
+    region = "us-east-1"
+    assume_role {
+      role_arn = "arn:aws:iam::222222222222:role/TerraformRole"
+    }
+  }
+  ```
+
+  Error when deploying to staging:
+  ```
+  Error: error configuring Terraform AWS Provider: IAM Role
+  (arn:aws:iam::222222222222:role/TerraformRole) cannot be assumed.
+
+  There are a number of possible causes:
+  - The credentials used do not have permission to assume the role
+  - The role's trust policy does not allow the current identity
+  ```
+
+  Task: Explain multi-provider configuration, assume_role for
+  cross-account access, passing providers to modules, provider
+  configuration best practices, and debugging cross-account issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-provider setup is explained — provider aliases allow multiple configurations of the same provider. Default provider (no alias) used when provider isn't specified on a resource. Aliased providers: specify with provider = aws.dr on each resource. assume_role: Terraform assumes an IAM role in another account. Requirements: (1) trust policy on target role must allow the source account/role, (2) source must have sts:AssumeRole permission, (3) external_id for additional security. The error: trust policy or permissions issue — check both sides"
+    weight: 0.35
+    description: "Multi-provider setup"
+  - type: llm_judge
+    criteria: "Provider passing to modules is covered — modules don't inherit provider aliases automatically. Pass explicitly: module 'dr_vpc' { source = './modules/vpc', providers = { aws = aws.dr } }. Module must declare required providers: terraform { required_providers { aws = { source = 'hashicorp/aws' } } }. For modules needing multiple providers: providers = { aws = aws, aws.secondary = aws.dr }. Anti-pattern: configuring providers inside modules — always configure in root and pass down"
+    weight: 0.35
+    description: "Module providers"
+  - type: llm_judge
+    criteria: "Cross-account debugging is practical — debugging assume_role: (1) verify trust policy on target role allows the source identity, (2) verify source has sts:AssumeRole permission, (3) check for external_id requirement, (4) test manually: aws sts assume-role --role-arn ... (5) enable TF_LOG=DEBUG to see the exact API call. IAM role trust policy must include the specific ARN (account, user, or role). Session duration: default 1 hour, can increase with duration_seconds. MFA: if required, must be handled outside Terraform. Best practice: use separate state files per account for blast radius isolation"
+    weight: 0.30
+    description: "Cross-account debugging"

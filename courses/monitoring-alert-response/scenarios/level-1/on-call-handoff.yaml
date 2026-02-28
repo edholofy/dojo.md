@@ -1,0 +1,45 @@
+meta:
+  id: on-call-handoff
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Perform on-call handoffs — transfer on-call responsibility with proper context so the incoming engineer can respond effectively"
+  tags: [monitoring, on-call, handoff, communication, beginner]
+
+state: {}
+
+trigger: |
+  Your on-call shift ends in 30 minutes and you need to hand off
+  to the next on-call engineer, Alex. During your shift:
+
+  - You dealt with 3 alerts:
+    1. A Redis connection spike that resolved itself after 10 min
+    2. A disk space alert on logs-service that you fixed by rotating
+       logs (but the root cause — excessive debug logging from a new
+       feature — is not yet fixed)
+    3. A WARNING on payment-service latency that is still at the
+       threshold boundary (borderline alert, not yet resolved)
+
+  - There's an ongoing known issue: the search-service is running
+    slow after yesterday's deployment, but a fix is expected to
+    deploy tomorrow morning.
+
+  - A non-urgent infrastructure change is scheduled for tonight:
+    database maintenance window from 2-4 AM.
+
+  Task: Write the handoff message for Alex. Include everything they
+  need to know to start their shift informed and ready.
+
+assertions:
+  - type: llm_judge
+    criteria: "Handoff message covers all active and recent issues — handoff message structure: 'Hey Alex, here is the handoff for your shift. Active/Ongoing Issues: (1) Payment-service latency WARNING: currently hovering at the threshold boundary (p99 around 2.8-3.2 seconds, threshold is 3 seconds). It has been borderline for the past 2 hours. No clear cause identified yet. If it crosses threshold and stays there, check for upstream dependency issues. Dashboard: [link]. (2) Search-service slow after yesterday's deployment: known issue, team is aware. A fix is scheduled to deploy tomorrow morning. No action needed unless it degrades further. JIRA ticket: [link].' Resolved but relevant: '(3) Redis connection spike: resolved itself after 10 minutes. No action taken. If it recurs, check for a traffic spike or connection leak pattern. (4) Logs-service disk space: I rotated logs to free up space. However, the root cause is excessive debug logging from the new feature deployed this week. A ticket is filed to reduce the log level but not yet addressed. If the disk alert fires again, rotating logs will buy another 24-48 hours.' Scheduled activities: 'Database maintenance window tonight from 2-4 AM. This is planned and communicated. You may see brief database connection alerts during the window — these are expected. If alerts persist after 4 AM, that indicates the maintenance did not complete cleanly'"
+    weight: 0.35
+    description: "Comprehensive handoff content"
+  - type: llm_judge
+    criteria: "Handoff includes actionable guidance for the incoming engineer — actionable guidance: 'For the payment-service latency: if it crosses the threshold and stays above 3 seconds for more than 10 minutes, check: (a) the upstream API dependency dashboard — are any dependencies slow? (b) Recent deployments — nothing deployed today but check anyway. (c) Traffic volume — could be a late-night batch process. Escalation: if it becomes a customer-impacting issue, the payment team on-call is listed in PagerDuty.' For the database maintenance: 'Expected behavior during the window: brief connection errors (under 30 seconds), possible increase in query latency. What is NOT expected: connection errors lasting more than 2 minutes, or any errors after 4 AM. If unexpected behavior occurs, contact the DBA on-call (same person running the maintenance).' For the logs-service: 'If the disk alert fires again tonight, run: sudo logrotate -f /etc/logrotate.d/logs-service. This will free approximately 20GB. The underlying fix (reducing debug logging) needs the feature team to deploy a config change, which is tracked in JIRA-4521.' General: 'It has been a relatively quiet shift aside from these items. No ongoing incidents. All services green except the known search-service slowness'"
+    weight: 0.35
+    description: "Actionable guidance"
+  - type: llm_judge
+    criteria: "Handoff demonstrates good on-call communication practices — good practices shown: '(1) Context over raw data: do not just list the alerts — explain what they mean and what to watch for. Alex should not have to re-investigate issues you already diagnosed. (2) Links to relevant resources: include dashboard links, ticket numbers, and runbook references. Do not make Alex search for these. (3) Expected vs unexpected: for the maintenance window, clearly state what is normal (brief connection errors) vs. what requires attention (errors after 4 AM). This prevents the incoming engineer from being alarmed by expected behavior. (4) Escalation contacts: mention who to contact for specific issues. At 3 AM, knowing the right person to page saves critical minutes. (5) Honest status: the payment latency issue is borderline and undiagnosed. Saying I do not know the cause yet is more helpful than guessing.' What a bad handoff looks like: 'A bad handoff is: it was quiet, nothing happening or just a list of alert IDs with no context. This forces the incoming engineer to start from zero for any issue that recurs.' Handoff format: 'Keep it structured and scannable. Use clear sections: active issues, resolved but relevant, scheduled activities, escalation contacts. The incoming engineer should be able to read this in 5 minutes and feel prepared for their shift'"
+    weight: 0.30
+    description: "Communication practices"

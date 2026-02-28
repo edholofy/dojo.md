@@ -1,0 +1,48 @@
+meta:
+  id: cross-org-rfcs
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Write cross-organizational RFCs — propose technical standards and changes that span multiple business units with different tech stacks and priorities"
+  tags: [RFC, cross-organization, standards, multi-BU, alignment, expert]
+
+state: {}
+
+trigger: |
+  You're the CTO of a company formed by 3 acquisitions. Each
+  business unit has its own:
+  - Tech stack (Ruby/Rails, Java/Spring, Node/Express)
+  - Database (PostgreSQL, MySQL, MongoDB)
+  - Cloud provider (AWS, GCP, hybrid)
+  - Deployment process (different CI/CD tools)
+  - API standards (REST, GraphQL, gRPC)
+
+  The board wants "technology synergies" from the acquisitions.
+  Customer support needs a unified customer view. Sales wants
+  cross-product bundles. Finance needs consolidated reporting.
+
+  Each BU's engineering team is protective of their stack and
+  suspicious that "unified" means "rewrite everything to match
+  the parent company." Two previous standardization attempts
+  failed because they were perceived as one BU imposing their
+  technology on others.
+
+  Task: Write an RFC for a technology integration strategy that
+  achieves business goals (unified customer view, cross-product
+  bundles, consolidated reporting) without forcing unnecessary
+  technical homogeneity. Show how to build consensus across
+  acquired teams while respecting their autonomy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Integration strategy separates business needs from tech standardization — key insight: 'The board wants business integration, not technology standardization. A unified customer view does not require a unified tech stack. Cross-product bundles do not require the same programming language. The goal is interoperability, not homogeneity.' Proposed approach: 'Standardize the interfaces, not the implementations. Each BU keeps their stack but agrees on: (1) API contract standards (OpenAPI specification for inter-BU communication), (2) Event schema standards (shared event format for cross-BU data flow), (3) Authentication standards (shared identity provider for SSO), (4) Data standards (canonical customer ID, shared data dictionary for common entities).' What remains BU-autonomous: 'Internal architecture, programming language, database choice, deployment process, internal APIs. These are implementation details that don't affect inter-BU integration.' Business goals mapped to technical requirements: 'Unified customer view → shared customer ID + customer data API from each BU. Cross-product bundles → inter-BU order API + shared product catalog. Consolidated reporting → event stream from each BU to shared data warehouse.'"
+    weight: 0.35
+    description: "Integration strategy"
+  - type: llm_judge
+    criteria: "Consensus-building addresses acquisition politics — trust-building measures: 'Each BU retains full autonomy over their internal systems. The integration layer is additive — nothing is removed or replaced. This is explicitly NOT a rewrite or migration.' Governance: 'Integration standards are governed by a cross-BU technical council with equal representation from each BU (2 engineers each). No BU can impose standards unilaterally. Standards require consensus (all BUs agree) or documented disagreement with escalation to CTO.' Previous failure analysis: 'Two prior attempts failed because they were top-down mandates from the parent BU. This proposal starts from business needs and works backward to minimum necessary technical standards.' BU-specific cost-benefit: 'For each BU: what they contribute (effort), what they gain (access to other BUs data and customers), and what they keep (full autonomy). BU-1 (Ruby): contributes customer API adapter (2 weeks), gains access to BU-2 and BU-3 customer base for cross-selling. BU-2 (Java): contributes event publishing (3 weeks), gains unified reporting that their enterprise customers are requesting. BU-3 (Node): contributes shared auth integration (2 weeks), gains SSO support that reduces customer support tickets by 40%.' Each BU should see clear, specific value — not just 'synergies'"
+    weight: 0.35
+    description: "Consensus building"
+  - type: llm_judge
+    criteria: "Implementation is phased to build trust incrementally — Phase 1 (Months 1-2): 'Unified customer identity only. Lowest effort, highest impact. Each BU maps their customer ID to a shared canonical ID. No other changes. Deliverable: customer support can look up a customer across all products.' Phase 2 (Months 3-4): 'Shared event stream. Each BU publishes key business events to a shared event bus using agreed schema. Deliverable: consolidated business dashboard for finance and executives.' Phase 3 (Months 5-8): 'Cross-product APIs. BUs expose product catalog and order APIs per shared specification. Deliverable: cross-product bundles for sales team.' Phase 4 (Months 9-12): 'Advanced integration: cross-BU recommendations, unified analytics, shared customer communication preferences.' Each phase has a retrospective: 'After Phase 1, all three BUs evaluate: was the effort reasonable? Did the integration work as expected? What would we change? Phase 2 only proceeds with explicit buy-in from all BUs. No BU is forced to continue if Phase 1 didn't deliver value.' Exit ramps: 'Any BU can pause integration at a phase boundary if they believe the cost exceeds the benefit. The integration must earn continued participation, not mandate it'"
+    weight: 0.30
+    description: "Phased trust-building"

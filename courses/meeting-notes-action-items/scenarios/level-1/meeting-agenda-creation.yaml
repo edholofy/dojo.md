@@ -1,0 +1,43 @@
+meta:
+  id: meeting-agenda-creation
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Meeting agenda creation — prepare a structured meeting agenda with time allocations, objectives, and pre-read materials"
+  tags: [agenda, preparation, structure, beginner]
+
+state: {}
+
+trigger: |
+  Your manager asks you to create an agenda for a 60-minute
+  quarterly planning meeting. Here's what she told you:
+
+  "We need to review Q3 results — I'll present those, maybe
+  15 minutes. Then we should discuss Q4 priorities — each
+  team lead should share their top 3 priorities, that's
+  Sarah (Engineering), Mike (Marketing), and Lisa (Sales).
+  Give them 5 minutes each maybe? Then we need to make a
+  decision about whether to hire 2 more engineers or 1
+  engineer and 1 designer — that's been debated for weeks.
+  Oh, and we should leave time for questions. The CFO wants
+  to join for the budget part — she can only attend the
+  first 30 minutes. Attendees are me (Jennifer), the team
+  leads, and the CFO (Patricia). Also remind everyone to
+  review the Q3 results deck before the meeting — I'll
+  send it out on Monday."
+
+  Task: Create the meeting agenda.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a professional meeting agenda — agenda structure (includes all essential elements: meeting title: Quarterly Planning Meeting (or similar); date/time placeholder and duration: 60 minutes; attendees: Jennifer, Sarah, Mike, Lisa, Patricia (CFO); meeting objective: review Q3 results, align on Q4 priorities, and make a hiring decision; pre-read: Q3 results deck (to be distributed Monday); the agenda is formatted professionally — suitable for distribution via email or calendar invite), time-blocked agenda items (allocates time strategically: the CFO can only attend the first 30 minutes, so budget-relevant items must be front-loaded; suggested order: Q3 Results Review — Jennifer presents (15 min); Hiring Decision — requires CFO input on budget (10 min); Q4 Team Priorities — Sarah, Mike, Lisa each 5 min (15 min); Open Questions and Next Steps (5 min); the total adds up to approximately 60 minutes; buffer time is built in or acknowledged; the critical constraint — CFO availability for first 30 minutes — is addressed by sequencing the hiring decision in the first half)."
+    weight: 0.35
+    description: "AgendaStructure"
+  - type: llm_judge
+    criteria: "Response demonstrates thoughtful agenda design — objective clarity (each agenda item has a clear purpose: Q3 Results — inform/review; Q4 Priorities — share/align; Hiring Decision — decide; Questions — discuss; the type of each item helps attendees prepare: they know whether they're receiving information, presenting, or making a decision), preparation instructions (the agenda includes: pre-read requirement — review Q3 results deck before the meeting; preparation for team leads — come with top 3 Q4 priorities prepared; the agenda tells attendees what's expected of them before and during the meeting; includes distribution plan — send agenda with enough lead time for preparation)."
+    weight: 0.35
+    description: "ThoughtfulDesign"
+  - type: llm_judge
+    criteria: "Response handles constraints and logistics — constraint management (the CFO's 30-minute availability is handled: budget-relevant items (hiring decision) are scheduled within the first 30 minutes; the agenda clearly indicates which items Patricia needs to attend; time allocation is realistic — 60 minutes for 4 agenda items with appropriate time for each; the hiring decision item is framed as a decision point, not just a discussion — the agenda should note that a final decision is expected, since it's 'been debated for weeks')."
+    weight: 0.30
+    description: "ConstraintManagement"

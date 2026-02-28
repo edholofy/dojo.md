@@ -1,0 +1,66 @@
+meta:
+  id: first-debugging-shift
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Combined beginner shift — handle multiple Terraform issues during your first on-call including init failures, plan errors, and state problems"
+  tags: [Terraform, troubleshooting, combined, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  It's your first week managing Terraform infrastructure. You face
+  three issues in one day:
+
+  Issue 1 — New engineer can't get started:
+  ```
+  $ terraform init
+
+  Error: Failed to get existing workspaces: S3 bucket
+  "company-tf-state" does not exist.
+  ```
+  The engineer cloned the repo but nobody told them about the
+  backend S3 bucket setup.
+
+  Issue 2 — Staging plan shows unexpected destroy:
+  ```
+  $ terraform plan
+
+  # aws_instance.app[0] will be destroyed
+  # aws_instance.app[1] will be destroyed
+  # aws_instance.app[2] will be destroyed
+  # aws_instance.app["web-1"] will be created
+  # aws_instance.app["web-2"] will be created
+  # aws_instance.app["web-3"] will be created
+
+  Plan: 3 to add, 0 to change, 3 to destroy.
+  ```
+  Someone refactored from count to for_each. The 3 instances will be
+  destroyed and recreated, causing downtime.
+
+  Issue 3 — State lock stuck:
+  ```
+  Error: Error acquiring the state lock
+  Lock Info:
+    ID:        abc-123
+    Who:       jenkins@ci-server
+    Created:   2024-01-15 08:00:00 UTC
+  ```
+  The CI pipeline crashed mid-apply 6 hours ago and the lock is stale.
+
+  Task: Diagnose and fix all three issues. Explain the root causes
+  and preventive measures for each.
+
+assertions:
+  - type: llm_judge
+    criteria: "Issue 1 (init failure) is resolved — the S3 backend bucket must exist before terraform init. Fix: create the bucket manually (or with a separate bootstrap Terraform config), or use terraform init -backend-config=path/to/backend.hcl for flexible backend configuration. Document the bootstrap process in README. Consider: use a Makefile or script that checks prerequisites before init. For new engineers: provide onboarding docs with exact setup steps, or use Terraform Cloud to avoid S3 backend setup entirely"
+    weight: 0.35
+    description: "Init failure"
+  - type: llm_judge
+    criteria: "Issue 2 (count to for_each migration) is resolved — switching from count to for_each changes resource addresses (aws_instance.app[0] → aws_instance.app['web-1']), causing Terraform to see them as different resources. Fix: use terraform state mv to rename resources in state: terraform state mv 'aws_instance.app[0]' 'aws_instance.app[\"web-1\"]' for each instance. This avoids recreation. Alternative: use moved blocks in Terraform 1.1+: moved { from = aws_instance.app[0], to = aws_instance.app[\"web-1\"] }. Always check plan after refactoring"
+    weight: 0.35
+    description: "Count to for_each"
+  - type: llm_judge
+    criteria: "Issue 3 (stuck lock) is resolved — the CI pipeline crashed and didn't release the DynamoDB lock. Verify the lock is stale (6 hours old, CI pipeline is dead). Fix: terraform force-unlock abc-123. This is safe because the original process is dead. Prevention: CI/CD pipeline should have timeout protection, use terraform apply with -lock-timeout=5m to wait for locks, ensure CI cleanup steps release locks on failure. Warning: never force-unlock if the original process might still be running"
+    weight: 0.30
+    description: "Stuck lock"

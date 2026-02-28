@@ -1,0 +1,47 @@
+meta:
+  id: intermediate-funnel-shift
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Intermediate funnel shift — handle complex funnel analysis requests requiring segmentation, A/B test evaluation, and cross-channel optimization in a single day"
+  tags: [shift-simulation, intermediate, multi-request, cross-functional]
+
+state: {}
+
+trigger: |
+  Three complex funnel requests arrive on the same day:
+
+  Request 1 (Head of Growth): "Our mobile app install-to-purchase
+  funnel looks terrible. Here's the data:
+  App install: 100,000 → First open: 72,000 (72%) → Registration:
+  28,800 (40%) → Browse products: 17,280 (60%) → Add to cart: 3,456
+  (20%) → Purchase: 1,382 (40%). Overall: 1.38%.
+  But our web funnel converts at 2.8%. What's wrong with mobile?"
+
+  Request 2 (VP Marketing): "We just ran a 4-week A/B test on our
+  signup page. Results:
+  Control: 25,000 visitors, 1,250 signups (5.0%), 375 activated (30%),
+  75 paid (20%).
+  Variant: 25,000 visitors, 1,750 signups (7.0%), 385 activated (22%),
+  69 paid (17.9%).
+  The variant gets more signups but fewer paid users. What do I do?"
+
+  Request 3 (CFO): "I need to know which marketing channel has the
+  best funnel economics. Give me a framework to compare channels
+  not just by conversion rate but by unit economics."
+
+  Task: Handle all three requests with detailed analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with mobile vs web funnel comparison and diagnosis — mobile: 'Request 1 — Mobile app funnel diagnosis: mobile vs web comparison: step | mobile | web | gap. Install/visit → first open/page: 72% | 90% | 18pp. First open → registration: 40% | 55% | 15pp. Registration → browse: 60% | 70% | 10pp. Browse → add to cart: 20% | 25% | 5pp. Cart → purchase: 40% | 55% | 15pp. Overall: 1.38% | 2.8% | 1.42pp. The gap exists at every step but is largest at: 1. Install → first open (72%, 18pp gap): 28,000 users install but never open the app. Causes: app store impulse downloads (users download but are not truly interested). Push notification permission denied (no way to re-engage). App takes too long to load on first launch. Fixes: optimize first-launch experience (show value in under 5 seconds). Implement deep linking so users who installed from an ad land directly on the relevant product. 2. First open → registration (40%, 15pp gap): 43,200 users open the app but do not register. Causes: mandatory registration before browsing (web allows guest browsing). Complex registration form on mobile. Social login options may not work well. Fixes: allow guest browsing with delayed registration. Implement one-tap social login (Apple, Google, Facebook). Only require registration when the user wants to add to cart. 3. Cart → purchase (40%, 15pp gap): 2,074 users add to cart but do not purchase. Causes: mobile payment friction (typing card numbers on small screen). No mobile wallet integration (Apple Pay, Google Pay). Session interruptions (phone calls, notifications). Fixes: implement Apple Pay and Google Pay. Save payment info for returning users. Send cart recovery push notification within 1 hour. Projected impact: if mobile matched web conversion (2.8%): 100,000 × 2.8% = 2,800 purchases (vs current 1,382). At $65 AOV: additional $92,170/month in revenue'"
+    weight: 0.35
+    description: "Mobile"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with the A/B test quality vs quantity analysis — abtest: 'Request 2 — A/B test quality vs quantity tradeoff: the numbers tell a clear story: metric | control | variant | difference. Signup rate: 5.0% | 7.0% | +2pp (+40% relative) ✓ variant wins. Activation rate: 30% | 22% | -8pp (-27% relative) ✗ control wins. Paid conversion: 20% | 17.9% | -2.1pp ✗ control wins. Total paid users: 75 | 69 | -6 users ✗ control wins on business outcome. The variant is a QUALITY TRAP: it generates more signups but worse signups. Why this happens: the variant likely reduced friction (fewer form fields, less information required, lower commitment). This attracted more users who were less serious about the product. The control's higher friction acted as a quality filter — users who completed the harder signup were more committed. Revenue analysis: control: 75 paid users × $50/month = $3,750 MRR from 25,000 visitors ($0.15 per visitor). Variant: 69 paid users × $50/month = $3,450 MRR from 25,000 visitors ($0.138 per visitor). The control generates 8.7% more revenue per visitor despite having 29% fewer signups. Recommendation: do NOT ship the variant as-is. Options: option A — keep the control (safe, proven). Option B — test a hybrid approach: use the variant's easier signup form but add a qualification step during onboarding. The goal is to get the best of both worlds: high signup volume AND high activation. Option C — reframe success metrics: if the team's goal is top-of-funnel growth (signups), the variant wins. If the goal is revenue, the control wins. Align the team on which metric matters most before deciding. Statistical note: with only 75 vs 69 paid users, the difference in paid conversion (20% vs 17.9%) is NOT statistically significant. The sample size is too small at the bottom of the funnel. Consider running the test longer to get more paid conversions before declaring a winner'"
+    weight: 0.35
+    description: "A/B test"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with a channel economics framework — economics: 'Request 3 — Channel funnel economics framework: the framework should evaluate each channel on 5 dimensions: Dimension 1 — Funnel conversion rate by channel: channel | visitors | signups | activated | paid | overall rate. Organic search: 50,000 | 2,500 (5%) | 875 (35%) | 219 (25%) | 0.44%. Paid search: 30,000 | 1,200 (4%) | 360 (30%) | 90 (25%) | 0.30%. Social ads: 40,000 | 2,800 (7%) | 560 (20%) | 56 (10%) | 0.14%. Email: 20,000 | 1,600 (8%) | 640 (40%) | 192 (30%) | 0.96%. Referral: 10,000 | 800 (8%) | 400 (50%) | 160 (40%) | 1.60%. By conversion rate: referral > email > organic > paid search > social. But conversion rate alone is misleading — it ignores cost and LTV. Dimension 2 — Cost per acquisition (CPA): channel | monthly spend | paid customers | CPA. Organic: $15,000 (content team) | 219 | $68. Paid search: $45,000 | 90 | $500. Social: $60,000 | 56 | $1,071. Email: $5,000 | 192 | $26. Referral: $8,000 (referral program) | 160 | $50. By CPA: email ($26) > referral ($50) > organic ($68) > paid search ($500) > social ($1,071). Dimension 3 — LTV by channel (12-month): channel | avg monthly spend | 12-month retention | 12-month LTV. Organic: $55 | 70% | $462. Paid search: $65 | 60% | $468. Social: $45 | 40% | $216. Email: $60 | 75% | $540. Referral: $70 | 80% | $672. Social has the lowest LTV — users acquired through social ads churn faster and spend less. Dimension 4 — LTV:CPA ratio (the unit economics metric): channel | LTV | CPA | LTV:CPA ratio. Organic: $462 | $68 | 6.8x. Paid search: $468 | $500 | 0.9x ⚠ barely profitable. Social: $216 | $1,071 | 0.2x ✗ unprofitable. Email: $540 | $26 | 20.8x ✓ best economics. Referral: $672 | $50 | 13.4x ✓ excellent. Dimension 5 — Scalability: email and referral have the best economics but limited scale. Organic is excellent but slow to scale (content takes months). Paid search is marginally profitable and can scale. Social is unprofitable at current economics. Recommendation: maximize email and referral (high ROI, limited scale). Maintain organic investment (best long-term channel). Fix or cut social ads (losing money on every customer). Optimize paid search (improve from 0.9x to 2x+ through better landing pages and qualification). Present this as a 2x2 matrix to the CFO: high ROI + high scale = invest aggressively. High ROI + low scale = maximize within constraints. Low ROI + high scale = optimize or cut. Low ROI + low scale = cut immediately'"
+    weight: 0.30
+    description: "Economics"

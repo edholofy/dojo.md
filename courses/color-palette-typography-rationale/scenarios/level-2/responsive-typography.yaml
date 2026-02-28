@@ -1,0 +1,46 @@
+meta:
+  id: responsive-typography
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Responsive typography — design a fluid type system that scales across devices with documented rationale"
+  tags: [responsive, fluid-type, scaling, breakpoints, intermediate]
+
+state: {}
+
+trigger: |
+  A frontend developer says: "Our typography looks great
+  on desktop but terrible on mobile. The H1 is 48px —
+  it wraps to 4 lines on a phone and dominates the
+  screen. But if I just make everything smaller on mobile,
+  the body text becomes too small to read.
+
+  Current desktop sizes:
+  - H1: 48px
+  - H2: 36px
+  - H3: 28px
+  - H4: 22px
+  - Body: 16px
+  - Small: 14px
+  - Caption: 12px
+
+  How do I make typography responsive properly? Should
+  I use breakpoints, fluid type, or both? And how do I
+  document the rationale?"
+
+  Task: Design a responsive typography system with scaling
+  rationale for mobile, tablet, and desktop.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains responsive typography approaches — breakpoint-based scaling (define explicit sizes at each breakpoint — simple but creates jumpy transitions), fluid typography using clamp() (CSS clamp(min, preferred, max) creates smooth scaling — e.g., clamp(1.5rem, 4vw, 3rem), preferred value uses viewport units for continuous scaling, min/max prevent extremes), modular scale per breakpoint (use a smaller ratio on mobile than desktop — mobile 1.2 ratio, desktop 1.333 ratio — headings compress more than body text, which is the key insight: the scale ratio should decrease on smaller screens, not just the base size), the key principle (body text should stay relatively constant 16-18px across devices — it's the headings that need to compress significantly — 48px desktop H1 might become 28-32px on mobile)."
+    weight: 0.35
+    description: "ResponsiveApproaches"
+  - type: llm_judge
+    criteria: "Response provides specific responsive type scale — three breakpoints defined (mobile <768px, tablet 768-1024px, desktop >1024px) with sizes for each: H1: mobile 28-32px / tablet 36-40px / desktop 48px, H2: mobile 24-26px / tablet 28-32px / desktop 36px, H3: mobile 20-22px / tablet 24px / desktop 28px, H4: mobile 18-20px / tablet 20px / desktop 22px, Body: mobile 16px / tablet 16px / desktop 16px (stays constant), Small: mobile 14px / tablet 14px / desktop 14px (stays constant), Caption: mobile 12px / tablet 12px / desktop 12px (stays constant), note the pattern: headings scale dramatically, body and small text stay constant — this is because headings are display elements (visual impact) while body text is for reading (functional minimum), line-height adjustments included (headings may need slightly larger line-height on mobile due to wrapping)."
+    weight: 0.35
+    description: "SpecificTypeScale"
+  - type: llm_judge
+    criteria: "Response includes implementation approach and documentation — CSS implementation (either breakpoint media queries with explicit values or fluid clamp() declarations — provide actual CSS examples), line-length considerations (on mobile the full viewport width may be used but on desktop max-width should constrain line length to 60-75 characters — measure/ch unit explained), documentation format (responsive type scale table showing: style name, mobile size, tablet size, desktop size, line-height per breakpoint, font-weight, CSS implementation — clamp() or media query values), and testing guidance (test on actual devices not just browser resize — iOS renders text differently than Android, check that minimum touch target sizes are met, verify no horizontal scroll caused by large text on small screens, test with user zoom — responsive type should still work when user zooms to 200%)."
+    weight: 0.30
+    description: "ImplementationDocs"

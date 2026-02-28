@@ -1,0 +1,44 @@
+meta:
+  id: systemic-vs-proximate
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Distinguish systemic from proximate causes — identify organizational and process-level factors that enable individual incidents"
+  tags: [postmortem, systemic-causes, proximate-causes, organizational, process, intermediate]
+
+state: {}
+
+trigger: |
+  Your team has had 4 incidents in the past 2 months. Each postmortem
+  identified a different proximate cause:
+
+  Incident 1: Untested config change broke production
+  Incident 2: API rate limit not configured for new endpoint
+  Incident 3: Database migration ran without rollback plan
+  Incident 4: Feature flag accidentally enabled for all users instead
+  of beta group only
+
+  Each postmortem treated these as isolated issues. But you notice a
+  pattern: all 4 involve changes that went to production without
+  adequate validation. The proximate causes are different, but there's
+  a systemic cause underneath.
+
+  Task: Write an analysis that connects these 4 incidents to their
+  shared systemic cause. Show how individual incident postmortems
+  can miss systemic issues. Propose systemic action items that
+  address the root pattern, not just individual symptoms. Then write
+  a guide on identifying systemic causes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pattern across incidents is identified and documented — pattern analysis: 'Four incidents in 2 months with different proximate causes but a shared characteristic: changes reached production without adequate pre-deployment validation.' Incident 1 proximate cause: 'Config change not tested in staging.' Incident 2: 'Rate limit not configured for new endpoint.' Incident 3: 'Migration without rollback plan.' Incident 4: 'Feature flag scoped incorrectly.' Shared systemic cause: 'Our deployment process has no mandatory pre-production checklist. Changes can reach production if the deploying engineer remembers to validate them. When they forget, there is no guardrail. This is a systemic process gap, not 4 individual mistakes.' Evidence it's systemic: 'Different engineers, different systems, different types of changes — same failure mode. If it were individual, the same engineer would keep making the same mistake. When different people make different variants of the same mistake, the system is the problem.' What individual postmortems missed: 'Each postmortem correctly identified its proximate cause but proposed a fix for that specific failure (add staging for configs, add rate limit template, require rollback plan, add feature flag validation). These are 4 separate fixes for 4 symptoms of 1 systemic issue'"
+    weight: 0.35
+    description: "Pattern identification"
+  - type: llm_judge
+    criteria: "Systemic action items address the root pattern — systemic fix: 'Implement a mandatory pre-deployment checklist that blocks production deployments until verified. The checklist adapts to the type of change: code deployments verify test passage, config changes verify staging validation, database migrations verify rollback plan existence, feature flags verify scope configuration.' Why systemic fixes are better: 'Individual fixes address 4 known failure modes. The systemic fix addresses the entire class: any future change type that should be validated before production will be caught by the checklist process, including failure modes we haven't encountered yet.' Implementation: 'The checklist is enforced by the deployment pipeline, not by human memory. A deployment cannot proceed unless checklist items are marked complete. This shifts the burden from remembering to verify to being blocked until you verify.' What the systemic fix does NOT do: 'It does not replace the individual fixes — those are still valuable. Rate limits should still have templates, migrations should still have rollback plans. The systemic fix is a safety net for when specific practices fail.' Tracking: 'After implementing the systemic fix, monitor for new incidents in this class. If incidents continue despite the checklist, the checklist is insufficient and needs iteration'"
+    weight: 0.35
+    description: "Systemic action items"
+  - type: llm_judge
+    criteria: "Guide explains how to identify systemic causes — techniques: (1) 'Look across postmortems, not just within them. A single postmortem shows what happened. Three postmortems show a pattern.' (2) 'Ask: if we fix this proximate cause, could a similar incident still happen via a different path? If yes, there is a systemic cause underneath.' (3) 'Categorize incidents by failure mode (validation gap, monitoring gap, communication gap) rather than by component (API, database, CDN). Patterns emerge from categories, not components.' (4) 'Watch for action items that are variants of the same fix: add test for X, add test for Y, add test for Z suggests the real action item is add testing as a deployment requirement.' (5) 'Ask the organizational question: why was it possible for this change to reach production without validation? The answer is usually a process or tooling gap, not a knowledge gap.' Red flags that suggest systemic causes: 'Different engineers making similar mistakes, same failure mode in different systems, action items from previous postmortems that address symptoms but incidents keep occurring, fixes that require human vigilance rather than automated enforcement.' Systemic cause analysis cadence: 'Quarterly review of all postmortems looking for patterns. This is separate from individual postmortem reviews'"
+    weight: 0.30
+    description: "Systemic cause guide"

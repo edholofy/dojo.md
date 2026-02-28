@@ -1,0 +1,46 @@
+meta:
+  id: table-data-audit
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Table and data display audit — evaluate data tables, sortable columns, responsive tables, and layout tables for accessibility"
+  tags: [tables, data, sortable, responsive, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor is testing a project management
+  application with several data-heavy views:
+
+  1. A data table uses div elements styled to look
+     like a table (no table, tr, td elements)
+  2. Sortable column headers have no indication of
+     sort direction for screen readers
+  3. A responsive table becomes a card layout on
+     mobile but loses column header associations
+  4. A pricing comparison table has complex headers
+     spanning multiple rows and columns
+  5. Row actions (edit, delete buttons) in the last
+     column have no accessible labels — they're
+     just icon buttons
+
+  The auditor asks: "Tables seem simple but there
+  are a lot of ways to get them wrong. How do I
+  audit table accessibility thoroughly?"
+
+  Task: Write audit findings for each table issue
+  and provide a table accessibility testing checklist.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for table structure issues — Div-based table (WCAG 1.3.1 Info and Relationships Level A: data tables must use proper table markup — th, tr, td — or ARIA table roles so screen readers can navigate by row and column, Severity: Critical — screen reader users can't navigate the table structure at all — they hear a flat list of text, Fix: use semantic table elements or add role=table, role=row, role=columnheader, role=cell), Sortable headers without sort indication (WCAG 1.3.1 Level A + 4.1.2 Level A: sortable column headers must communicate sort state — screen readers need to announce 'Name, column header, sorted ascending', Fix: add aria-sort=ascending/descending/none to th elements, update dynamically when sort changes), Icon-only row actions (WCAG 4.1.2 Level A + 1.1.1 Level A: icon buttons without accessible names — screen reader announces 'button' with no indication of action, Severity: Major, Fix: add aria-label='Edit Project Alpha' or aria-label='Delete Project Alpha' — include the row context so users know which row the action applies to)"
+    weight: 0.35
+    description: "TableFindings"
+  - type: llm_judge
+    criteria: "Response covers responsive table and complex header issues — Responsive card layout losing headers (WCAG 1.3.1 Level A: when a table transforms to card layout on mobile, each data value must retain its association with its column header — screen reader users hearing just 'Active' or '$24.99' without context can't understand the data, Severity: Major, Fix: add visible labels to each data point in card layout or use aria-label on each cell maintaining the header association: 'Status: Active', 'Price: $24.99'), Complex multi-row/column headers (WCAG 1.3.1 Level A: complex tables with headers spanning multiple rows or columns must use id and headers attributes to associate data cells with correct headers — or use scope=colgroup/rowgroup, Severity: Major — without proper associations, screen readers announce data without context in complex tables, Fix: provide id on each header cell and headers attribute on each data cell listing all applicable header IDs). Each finding includes what a screen reader user experiences without the fix"
+    weight: 0.35
+    description: "ResponsiveComplexFindings"
+  - type: llm_judge
+    criteria: "Response provides table accessibility testing checklist — structure check (is it a data table or layout table? data tables need proper table markup, layout tables should use role=presentation, does each column have a header? are headers marked with th element? do complex tables have id/headers associations?), screen reader navigation test (can you navigate by cell using Ctrl+Alt+Arrow keys in NVDA/JAWS? does the screen reader announce column header when moving between cells in a row? does the screen reader announce row header when moving between rows in a column?), interactive table features (sortable columns: is sort state announced? is sort triggerable by keyboard? filterable tables: are filter results announced? does focus management work? pagination: is current page announced? can users navigate pages with keyboard?), and responsive behavior (test table at mobile breakpoint: are header associations maintained? can screen reader users still understand data relationships? are interactive elements reachable?). Organized as a step-by-step testing procedure"
+    weight: 0.30
+    description: "TableChecklist"

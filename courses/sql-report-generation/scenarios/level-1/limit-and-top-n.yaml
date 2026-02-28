@@ -1,0 +1,37 @@
+meta:
+  id: limit-and-top-n
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Create Top N reports — use LIMIT, OFFSET, and ranking to find top customers, best products, and highest-performing segments"
+  tags: [SQL, LIMIT, OFFSET, top-N, ranking, beginner]
+
+state: {}
+
+trigger: |
+  The CEO's weekly briefing needs three "Top" lists:
+  1. "Top 10 customers by revenue this quarter"
+  2. "Top 5 products by units sold this month"
+  3. "Bottom 5 regions by order count (underperforming areas)"
+
+  Tables:
+  - orders (order_id, customer_id, product_id, amount, quantity,
+    order_date, region)
+  - customers (customer_id, first_name, last_name, company_name)
+  - products (product_id, product_name, category)
+
+  Task: Write Top N queries for each briefing item.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use LIMIT and ORDER BY for top/bottom N reports — queries: 'Top N queries: Top 10 customers by revenue: SELECT c.company_name, c.first_name || ' ' || c.last_name AS contact, COUNT(o.order_id) AS total_orders, SUM(o.amount) AS total_revenue FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY c.customer_id, c.company_name, c.first_name, c.last_name ORDER BY total_revenue DESC LIMIT 10; Top 5 products by units sold: SELECT p.product_name, p.category, SUM(o.quantity) AS units_sold, SUM(o.amount) AS revenue FROM products p INNER JOIN orders o ON p.product_id = o.product_id WHERE o.order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY p.product_id, p.product_name, p.category ORDER BY units_sold DESC LIMIT 5; Bottom 5 regions (underperforming): SELECT region, COUNT(*) AS order_count, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY region ORDER BY order_count ASC LIMIT 5; For bottom N, use ASC (ascending) instead of DESC. SQL Server uses TOP instead of LIMIT: SELECT TOP 10 ... ORDER BY revenue DESC. Oracle uses FETCH FIRST: ... ORDER BY revenue DESC FETCH FIRST 10 ROWS ONLY'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers OFFSET for pagination and ties handling — explanation: 'OFFSET for pagination: LIMIT 10 OFFSET 0 — rows 1-10 (first page). LIMIT 10 OFFSET 10 — rows 11-20 (second page). LIMIT 10 OFFSET 20 — rows 21-30 (third page). Use case: when a report has too many rows to display at once, paginate it. SELECT * FROM orders ORDER BY order_date DESC LIMIT 20 OFFSET 40 — page 3 of 20 rows each. Performance warning: OFFSET is slow for large values because the database still reads all skipped rows. OFFSET 1000000 reads 1,000,000 rows and discards them. For large datasets, use keyset pagination instead: WHERE order_id < last_seen_id ORDER BY order_id DESC LIMIT 20. Handling ties: if the 10th and 11th customers have the same revenue, LIMIT 10 arbitrarily excludes one. PostgreSQL solution — FETCH WITH TIES: SELECT region, SUM(amount) AS revenue FROM orders GROUP BY region ORDER BY revenue DESC FETCH FIRST 5 ROWS WITH TIES. This returns 5 rows plus any ties for the 5th position. SQL Server: SELECT TOP 5 WITH TIES ... ORDER BY revenue DESC'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response shows how to add context to Top N reports — context: 'Adding context to Top N reports: Add percentage of total: SELECT c.company_name, SUM(o.amount) AS revenue, ROUND(SUM(o.amount) * 100.0 / (SELECT SUM(amount) FROM orders WHERE order_date >= DATE_TRUNC('quarter', CURRENT_DATE)), 1) AS pct_of_total FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY c.customer_id, c.company_name ORDER BY revenue DESC LIMIT 10. This shows: customer X contributed 8.5% of total quarterly revenue. Add comparison with previous period: WITH current_quarter AS (SELECT customer_id, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY customer_id), previous_quarter AS (SELECT customer_id, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('quarter', CURRENT_DATE - INTERVAL '3 months') AND order_date < DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY customer_id) SELECT c.company_name, cq.revenue AS current_revenue, COALESCE(pq.revenue, 0) AS previous_revenue, cq.revenue - COALESCE(pq.revenue, 0) AS change FROM current_quarter cq JOIN customers c ON cq.customer_id = c.customer_id LEFT JOIN previous_quarter pq ON cq.customer_id = pq.customer_id ORDER BY cq.revenue DESC LIMIT 10. This adds context: not just who the top customers are, but whether their spending is increasing or decreasing'"
+    weight: 0.30
+    description: "Context"

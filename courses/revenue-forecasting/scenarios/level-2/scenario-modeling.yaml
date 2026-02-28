@@ -1,0 +1,39 @@
+meta:
+  id: scenario-modeling
+  level: 2
+  course: revenue-forecasting
+  type: output
+  description: "Scenario modeling — learn to build best-case, base-case, and worst-case revenue scenarios with probability-weighted expected values"
+  tags: [scenarios, best-case, worst-case, probability, sensitivity, intermediate]
+
+state: {}
+
+trigger: |
+  A CFO says: "The board wants to see different revenue scenarios for
+  next year, not just one number. Our base assumption is 20% growth
+  from our current $10M ARR. But there are three major uncertainties:
+
+  1. A key enterprise deal ($1.5M ARR) — might close or might not.
+  2. A competitor launched a cheaper product — could increase churn
+     from 5% to 8% annually.
+  3. Our new product line could generate $0 to $2M depending on
+     market reception.
+
+  How do I build proper scenarios that account for these uncertainties?"
+
+  Task: Build a multi-scenario revenue forecast that accounts for
+  the three uncertainties and present probability-weighted outcomes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds three core scenarios — scenarios: 'Building the three core scenarios: base case (most likely outcome): starting point: $10M ARR with 20% growth trajectory. Enterprise deal: 50% chance — include $750K (half-year impact if closes mid-year). Churn: stays at 5% (competitor impact is limited). New product: generates $500K (modest initial traction). Base case calculation: existing business: $10M × 1.20 × (1 - 0.05) = $11.4M. Enterprise deal contribution: $750K × 50% probability = $375K expected value. New product: $500K. Base case total: $12.275M (23% growth). Optimistic case (upside scenario): enterprise deal: closes in Q1 ($1.5M full-year impact). Churn: stays at 5% (actually improves to 4% due to product improvements). New product: exceeds expectations at $1.5M (strong product-market fit). Growth rate: accelerates to 25% (more sales capacity, better conversion). Optimistic calculation: existing business: $10M × 1.25 × (1 - 0.04) = $12.0M. Enterprise deal: $1.5M. New product: $1.5M. Optimistic total: $15.0M (50% growth). Conservative case (downside scenario): enterprise deal: does not close ($0 impact). Churn: increases to 8% (competitor wins some customers). New product: struggles, generates only $100K. Growth rate: slows to 12% (competitive pressure, slower sales cycles). Conservative calculation: existing business: $10M × 1.12 × (1 - 0.08) = $10.304M. Enterprise deal: $0. New product: $100K. Conservative total: $10.404M (4% growth). Stress test case (worst case): everything goes wrong simultaneously. Enterprise deal: lost to competitor. Churn: spikes to 12% (competitor aggressively poaches customers). New product: fails entirely ($0). Growth rate: drops to 5% (market downturn). Stress test: $10M × 1.05 × (1 - 0.12) = $9.24M. The business actually shrinks. This scenario identifies: can the company survive? At what point does the company need to cut costs? Where is the cash runway risk? Scenario summary: optimistic: $15.0M (50% growth). Base: $12.3M (23% growth). Conservative: $10.4M (4% growth). Stress: $9.2M (-8% growth). The range is $9.2M to $15.0M — a $5.8M spread (63% of base case). This range is realistic for a $10M ARR company facing genuine uncertainties'"
+    weight: 0.35
+    description: "Scenarios"
+  - type: llm_judge
+    criteria: "Response covers probability-weighted expected value and sensitivity analysis — probability: 'Probability-weighted expected value: assigning probabilities to scenarios: the board needs a single planning number, not four scenarios. Assign probabilities based on judgment and historical context: optimistic: 20% probability. Base: 50% probability. Conservative: 25% probability. Stress: 5% probability. Total: 100%. Expected value calculation: EV = (20% × $15.0M) + (50% × $12.3M) + (25% × $10.4M) + (5% × $9.2M). EV = $3.0M + $6.15M + $2.6M + $0.46M = $12.21M. The probability-weighted expected value ($12.2M) is close to the base case ($12.3M) because the base case has the highest probability. This $12.2M is the recommended planning number. Sensitivity analysis — which uncertainty matters most: vary each uncertainty independently while holding others at base case values. Sensitivity to enterprise deal: if it closes: $12.3M + $750K = $13.05M. If it does not: $12.3M - $375K = $11.925M. Impact range: $1.125M (9.2% of base). Sensitivity to churn rate: churn at 4%: existing business becomes $11.52M → total $12.4M. Churn at 8%: existing business becomes $11.04M → total $11.9M. Impact range: $500K per percentage point of churn (4.1% of base per point). Sensitivity to new product: new product at $0: total $11.775M. New product at $2M: total $13.775M. Impact range: $2.0M (16.3% of base). Ranking by impact: 1. New product outcome: $2M range (highest uncertainty, highest impact). 2. Enterprise deal: $1.125M range. 3. Churn rate: $500K per point. The new product is the single biggest driver of forecast uncertainty. This tells the CFO where to focus attention: de-risk the new product launch and track its early metrics closely. Tornado diagram: visualize sensitivities as a horizontal bar chart with the most impactful variable at the top. New product: [$11.8M ← base → $13.8M]. Enterprise deal: [$11.9M ← base → $13.1M]. Churn rate: [$11.9M ← base → $12.4M]. The tornado diagram instantly communicates which variables the board should focus on'"
+    weight: 0.35
+    description: "Probability"
+  - type: llm_judge
+    criteria: "Response covers presenting scenarios to the board and updating over time — presentation: 'Presenting scenarios to the board: the scenario dashboard: present one page with four elements. Element 1 — The planning number: next year revenue target: $12.2M (probability-weighted). Confidence range: $10.4M - $15.0M. Element 2 — Scenario table: scenario | revenue | growth | probability | key assumptions. Optimistic: $15.0M | 50% | 20% | deal closes Q1, new product exceeds, churn stable. Base: $12.3M | 23% | 50% | deal closes mid-year, new product modest, churn stable. Conservative: $10.4M | 4% | 25% | deal lost, new product struggles, churn increases. Stress: $9.2M | -8% | 5% | all negatives simultaneously. Element 3 — Key risk factors: ranked by impact. New product performance (±$2M impact). Enterprise deal outcome (±$1.1M impact). Competitive churn pressure (±$500K per point). Element 4 — Decision triggers: if new product reaches $200K in Q1, upgrade to optimistic scenario for new product component. If enterprise deal stalls past March, downgrade to conservative for deal component. If churn exceeds 6% for two consecutive months, shift to conservative churn assumption. Updating scenarios through the year: quarterly scenario refresh process. Q1 review: enterprise deal — did it close? Adjust from expected value to known outcome. Early new product signals — update trajectory based on launch data. Churn trend — first quarter of competitive data. Q2 review: re-weight probabilities based on first-half actuals. If tracking between base and optimistic, increase optimistic probability. Narrow the range as uncertainty resolves. Q3 review: by Q3, most of the year's revenue is known or highly predictable. The scenario range should narrow to ±5-10%. Focus shifts to Q4 execution and next-year planning. The variance tracking report: each month, report: metric | forecast | actual | variance | action. Existing business MRR: $950K | $940K | -1.1% | within tolerance. New customers: 25 | 22 | -12% | investigate pipeline slowdown. Enterprise deal: stage 3 | stage 3 | on track | no action. New product revenue: $40K | $55K | +37.5% | positive signal, may upgrade scenario. Churn: 0.42% | 0.45% | +7% | monitor competitive pressure. This monthly tracking turns static scenarios into a dynamic forecasting system that improves accuracy as the year progresses'"
+    weight: 0.30
+    description: "Presentation"

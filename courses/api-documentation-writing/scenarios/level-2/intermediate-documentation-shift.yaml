@@ -1,0 +1,48 @@
+meta:
+  id: intermediate-documentation-shift
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Combined intermediate shift — write complete OpenAPI spec with authentication, error patterns, and versioning for a payment API"
+  tags: [API, documentation, combined, shift-simulation, OpenAPI, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing the complete documentation for a new payments API
+  launching next month. You need to deliver:
+
+  1. OpenAPI 3.1 spec for 4 endpoints:
+     - POST /payments (create payment)
+     - GET /payments/{id} (get payment)
+     - POST /payments/{id}/refund (refund payment)
+     - GET /payments (list payments, paginated)
+
+  2. Authentication: OAuth 2.0 client credentials
+
+  3. Error response format (consistent across all endpoints)
+
+  4. Rate limits: 100 req/min (standard), 1000 req/min (pro)
+
+  Payment object: id, amount (cents), currency, status
+  (pending/processing/succeeded/failed/refunded), customer_id,
+  payment_method_id, created_at, metadata
+
+  This is v1 launching alongside legacy v0 (deprecated in 6 months).
+
+  Task: Write the complete API documentation package including
+  all of the above, ready for developer consumption.
+
+assertions:
+  - type: llm_judge
+    criteria: "OpenAPI spec is complete for all 4 endpoints — POST /payments: request body schema with required fields, 201 response with payment object, errors (400, 401, 422). GET /payments/{id}: path parameter, 200 response, 404 error. POST /payments/{id}/refund: path parameter, optional amount in body (partial refund), errors (400, 404, 409 for already refunded). GET /payments: query parameters (status filter, customer_id filter, pagination with cursor), 200 response with paginated list. All endpoints: consistent error responses, auth required"
+    weight: 0.35
+    description: "Complete spec"
+  - type: llm_judge
+    criteria: "Auth, errors, and rate limits are documented — OAuth 2.0 client credentials: step-by-step to get token, example curl, token in Authorization header. Error format: consistent { type, code, message, param, documentation_url } across all endpoints. Error codes documented: INVALID_AMOUNT, PAYMENT_NOT_FOUND, ALREADY_REFUNDED, etc. Rate limits: headers documented, per-tier limits, 429 handling with Retry-After. All three cross-cutting concerns documented once and referenced, not repeated per endpoint"
+    weight: 0.35
+    description: "Cross-cutting docs"
+  - type: llm_judge
+    criteria: "Documentation is launch-ready — includes getting started section (5-minute quickstart), realistic examples for each endpoint, deprecation notice for v0 with timeline and migration guide, sandbox environment details (test API keys, test payment methods). A developer could integrate this API using only the documentation. Changelog entry for v1.0.0 launch. Status page link for uptime monitoring"
+    weight: 0.30
+    description: "Launch ready"

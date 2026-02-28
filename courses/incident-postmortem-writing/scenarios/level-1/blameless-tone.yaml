@@ -1,0 +1,46 @@
+meta:
+  id: blameless-tone
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Write with a blameless tone — document incidents focusing on systemic factors rather than individual blame while maintaining accountability"
+  tags: [postmortem, blameless, tone, psychological-safety, accountability, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing a draft postmortem written by a frustrated
+  engineering manager. The incident: a junior engineer pushed a
+  database migration to production without running it in staging
+  first. The migration deleted a column that was still in use,
+  causing 30 minutes of errors.
+
+  The draft contains phrases like:
+  - "The root cause was human error by Engineer X"
+  - "Engineer X failed to follow the deployment procedure"
+  - "This wouldn't have happened if Engineer X had tested properly"
+  - "Engineer X needs additional training"
+  - "We recommend Engineer X be required to get approval for all
+    future migrations"
+
+  This draft will make Engineer X never report an issue again. It
+  will also make every other engineer afraid to admit mistakes.
+
+  Task: Rewrite the root cause and action items sections to be
+  blameless while still being accurate and accountable. Then write
+  a guide on blameless postmortem writing that explains why it
+  matters and how to do it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Blame is removed while facts are preserved — every blaming phrase transformed: 'Human error by Engineer X' → 'A database migration was applied to production without prior staging validation.' 'Failed to follow procedure' → 'The deployment procedure for database migrations was not enforced by the deployment pipeline. The procedure existed in documentation but had no automated checks.' 'Wouldn't have happened if tested properly' → 'The migration tool allows direct production execution without a staging prerequisite. This is a tooling gap, not a training gap.' 'Needs additional training' → 'The team's onboarding process does not include a migration dry-run exercise. All new engineers would benefit from a hands-on migration walkthrough.' 'Require approval for future migrations' → 'All database migrations should require automated staging validation before production execution, regardless of the engineer running them.' The rewrite is equally specific about what happened but focuses on the system, not the person"
+    weight: 0.35
+    description: "Blameless rewrite"
+  - type: llm_judge
+    criteria: "Accountability is maintained without blame — distinction clear: 'Blameless does not mean accountable-less. We hold the SYSTEM accountable: why did our tools allow a migration to run in production without staging? Why did our process not have automated safeguards? Why did our onboarding not include migration practice?' What happened is documented factually: 'A migration removing column X was executed in production at 2:15 PM. The column was still referenced by the user service. 30 minutes of 500 errors on user endpoints.' What we learn: 'The fact that an engineer could accidentally apply an untested migration reveals a system-level vulnerability. If we fix the system (require staging validation), this class of incident becomes impossible regardless of who runs the migration.' Action items target systems: 'Add staging-first requirement to migration tooling (blocks production execution until staging passes). Add column dependency check to migration validation (flags columns still in use). Add migration to onboarding curriculum (practice with reversible staging examples)'"
+    weight: 0.35
+    description: "Accountability preserved"
+  - type: llm_judge
+    criteria: "Blameless writing guide explains the why and the how — why blameless matters: 'If engineers fear being named in postmortems, they hide issues. Hidden issues become larger incidents. The safest organizations are ones where people report problems freely. A study by Google (Project Aristotle) found that psychological safety is the #1 factor in high-performing teams.' How to write blameless: (1) Replace names with roles or actions: 'the on-call engineer' not 'Jamie.' (2) Replace 'failed to' with 'the process/system did not': 'failed to test' becomes 'testing was not enforced.' (3) Ask 'why did the system allow this?' not 'why did the person do this?' (4) Action items should make the wrong thing hard, not punish the person who did it. (5) If the only fix is 'be more careful' — you haven't found the real fix. Careful is not a reliable control. Common blameless mistakes: (1) Passive-aggressive blamelessness: 'the migration was run without testing (we all know who)' — still blaming, just indirectly. (2) Removing all specificity: 'something happened' — too vague. Include what happened, just not who. (3) Confusing blameless with consequence-free: repeated reckless behavior is a management issue, not a postmortem issue. Handle it outside the postmortem"
+    weight: 0.30
+    description: "Blameless guide"

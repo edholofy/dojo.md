@@ -1,0 +1,42 @@
+meta:
+  id: on-call-communication
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Communicate effectively during alert response — write clear status updates for technical and non-technical audiences during an active incident"
+  tags: [monitoring, communication, status-updates, stakeholders, intermediate]
+
+state: {}
+
+trigger: |
+  You're responding to a SEV-2 incident: the search feature on your
+  e-commerce platform is returning incomplete results. You've been
+  investigating for 20 minutes and have identified the cause: an
+  Elasticsearch cluster has lost 2 of its 5 data nodes, causing
+  some index shards to be unassigned.
+
+  You need to communicate to three audiences simultaneously:
+  1. #engineering-incidents (technical team)
+  2. #customer-support (support team helping customers)
+  3. Status page (public-facing, customers read this)
+
+  Each audience needs different information at different detail
+  levels. Customer support is getting calls about search not working.
+
+  Task: Write the status update for each audience. Show how to adapt
+  the same incident information for technical, support, and customer
+  audiences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Technical update for engineering is detailed and actionable — #engineering-incidents update: 'Status: SEV-2 — Search returning incomplete results. Root cause identified. Timeline: 3:00 PM — alert fired: search result count anomaly detected. 3:05 PM — confirmed: search results returning 60% fewer items than expected. 3:20 PM — root cause: Elasticsearch cluster lost 2 of 5 data nodes (es-data-03 and es-data-04). Cause of node loss: investigating — checking node health, disk, and cluster state. Impact: 40% of search index shards are unassigned. Queries return results only from available shards (partial results). Current actions: attempting to recover the lost nodes. If nodes cannot be recovered in 15 minutes, will reassign shards to remaining nodes (will take approximately 20 minutes for rebalancing). Dashboard: [link]. Next update: 15 minutes or sooner if status changes. IC: [your name].' What makes this good: specific technical details (node names, shard status), clear next steps with time estimates, dashboard link for others to monitor, and explicit next update time"
+    weight: 0.35
+    description: "Technical update"
+  - type: llm_judge
+    criteria: "Support update gives actionable customer-facing guidance — #customer-support update: 'Hi support team — here is what you need to know about the current search issue: What customers are experiencing: search is returning fewer results than normal. Some products may not appear in search results. Browsing by category still works normally. What to tell customers: We are aware that search is returning incomplete results. Our engineering team has identified the cause and is working on a fix. In the meantime, you can browse products by category or use direct product links. We expect to have this resolved within 30-45 minutes. What is NOT affected: adding to cart, checkout, account management, order status — all working normally. Escalation: if a customer reports something other than search issues (payments failing, account access problems), please escalate separately — that would be a different issue. I will update you when search is fully restored or if the timeline changes.' What makes this good: tells support what to say to customers, identifies workarounds (browse by category), clarifies what is NOT affected (prevents unnecessary escalation), and gives a realistic timeline"
+    weight: 0.35
+    description: "Support update"
+  - type: llm_judge
+    criteria: "Public status page update is appropriate for customer audience — status page update: 'Title: Search Results — Degraded Performance. Status: Investigating → Identified. Posted: [time]. Body: We have identified an issue affecting our search functionality. Some search queries may return fewer results than expected. Our team has identified the cause and is actively working on a fix. Browsing by category and all other platform features are working normally. We expect to have search fully restored within 30-45 minutes. We will update this page when the issue is resolved. Impact: search functionality only. All other services operating normally.' What makes this good: (1) No technical jargon — customers do not need to know about Elasticsearch nodes or shard assignment. (2) Clear impact description — tells customers exactly what is affected and what is not. (3) Workaround provided — browse by category. (4) Realistic timeline — 30-45 minutes. (5) Status is Identified not just Investigating — this reassures customers that you know the cause and are not guessing. What to avoid: do not say we are experiencing intermittent issues (vague). Do not say a server went down (unnecessary detail that alarms customers). Do not promise an exact fix time you cannot guarantee"
+    weight: 0.30
+    description: "Public status update"

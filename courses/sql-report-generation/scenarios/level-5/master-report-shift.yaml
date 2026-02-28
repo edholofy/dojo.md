@@ -1,0 +1,56 @@
+meta:
+  id: master-report-shift
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Master report shift — handle a CDO's day of simultaneous strategic reporting challenges spanning board preparation, compliance, architecture, and organizational transformation"
+  tags: [SQL, shift-simulation, master, CDO, strategic, board, transformation]
+
+state: {}
+
+trigger: |
+  You are the Chief Data Officer on the most critical day of the year.
+  Five situations demand your attention simultaneously:
+
+  Situation 1 (Board meeting in 4 hours): "The board wants to see
+  our data platform ROI. Show how we went from 347 inconsistent
+  reports to 50 certified ones, what that saved in FTE hours, and
+  project the 3-year ROI of our $2M investment. Include SaaS metrics
+  trending over 12 months."
+
+  Situation 2 (SEC filing deadline tomorrow): "The revenue recognition
+  numbers for the 10-K filing show a $2.3M discrepancy between our
+  system and the auditor's calculation. Find the root cause and
+  reconcile before 5 PM or we miss the filing deadline."
+
+  Situation 3 (Data breach notification): "Security team detected
+  unauthorized access to the customer database last night. We need
+  to determine exactly what data was exposed, which customers are
+  affected, and generate GDPR breach notifications within 72 hours."
+
+  Situation 4 (Acquisition due diligence): "We're acquiring a company.
+  Their data is in MySQL with no documentation. Assess their data
+  quality, estimate integration effort, and determine if their
+  reported revenue figures are accurate."
+
+  Situation 5 (Team crisis): "Three senior data engineers just
+  resigned. The remaining team is demoralized. While handling the
+  above crises, design a knowledge transfer plan so the organization
+  is not dependent on any individual."
+
+  Task: Handle all five situations with master-level leadership and
+  technical solutions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles the board ROI presentation and the SEC revenue discrepancy — board_and_sec: 'Situation 1 — Board ROI presentation: Platform ROI calculation: WITH before_state AS (SELECT 347 AS report_count, 150 AS monthly_adhoc_requests, 3.0 AS avg_hours_per_request, 75 AS hourly_analyst_cost, 10 AS monthly_reconciliation_days, 2 AS people_reconciling), after_state AS (SELECT 50 AS report_count, 28 AS monthly_adhoc_requests, 0.5 AS avg_hours_per_request, 75 AS hourly_analyst_cost, 2 AS monthly_reconciliation_days, 1 AS people_reconciling), savings AS (SELECT (b.monthly_adhoc_requests * b.avg_hours_per_request - a.monthly_adhoc_requests * a.avg_hours_per_request) * b.hourly_analyst_cost * 12 AS annual_adhoc_savings, (b.monthly_reconciliation_days - a.monthly_reconciliation_days) * 8 * b.hourly_analyst_cost * a.people_reconciling * 12 AS annual_reconciliation_savings FROM before_state b, after_state a) SELECT annual_adhoc_savings + annual_reconciliation_savings AS total_annual_savings, 2000000 AS investment, ROUND((annual_adhoc_savings + annual_reconciliation_savings) * 3 / 2000000, 1) AS three_year_roi_multiplier FROM savings. Present to board: annual savings of approximately $500K in analyst time plus $150K in reconciliation time. 3-year ROI: 1.95x on the $2M investment. Additional intangible value: CEO now trusts the numbers, decisions are data-driven, and compliance risk is reduced. SaaS metrics: SELECT month, mrr, arr, net_revenue_retention_pct, gross_churn_pct, ltv_cac_ratio FROM board_metrics_monthly ORDER BY month. Show 12-month trends with sparklines. Situation 2 — SEC revenue discrepancy: Systematic reconciliation: WITH our_numbers AS (SELECT fiscal_quarter, SUM(recognized_revenue) AS our_revenue FROM revenue_recognition_schedule WHERE fiscal_year = 2025 GROUP BY fiscal_quarter), auditor_numbers AS (SELECT fiscal_quarter, amount AS auditor_revenue FROM auditor_adjustments WHERE fiscal_year = 2025) SELECT o.fiscal_quarter, o.our_revenue, a.auditor_revenue, o.our_revenue - a.auditor_revenue AS variance FROM our_numbers o JOIN auditor_numbers a ON o.fiscal_quarter = a.fiscal_quarter. Root cause investigation: SELECT order_id, booking_date, our_recognition_month, auditor_recognition_month, our_amount, auditor_amount, CASE WHEN our_recognition_month != auditor_recognition_month THEN 'TIMING' WHEN our_amount != auditor_amount THEN 'AMOUNT' ELSE 'OTHER' END AS discrepancy_type FROM rev_rec_comparison WHERE our_amount != auditor_amount OR our_recognition_month != auditor_recognition_month ORDER BY ABS(our_amount - auditor_amount) DESC. Expected finding: $2.3M discrepancy is caused by 12 multi-year contracts where we recognized revenue on the booking date but ASC 606 requires recognition over the service period. Fix: adjust the recognition schedule for these 12 contracts and rerun'"
+    weight: 0.35
+    description: "BoardAndSEC"
+  - type: llm_judge
+    criteria: "Response handles the data breach and acquisition due diligence — breach_and_acquisition: 'Situation 3 — Data breach response: Step 1 — Determine scope of exposure: SELECT username, tables_accessed, query_text, executed_at, client_ip FROM audit_query_log WHERE username = 'compromised_account' AND executed_at >= '2026-02-26 00:00:00' ORDER BY executed_at. Step 2 — Identify affected customers: WITH exposed_queries AS (SELECT DISTINCT unnest(tables_accessed) AS table_name FROM audit_query_log WHERE username = 'compromised_account' AND executed_at >= '2026-02-26') SELECT table_name, CASE WHEN table_name = 'customers' THEN (SELECT COUNT(*) FROM customers) WHEN table_name = 'orders' THEN (SELECT COUNT(DISTINCT customer_id) FROM orders) END AS potentially_affected_customers, CASE WHEN table_name = 'customers' THEN 'name, email, phone, address — PII exposed' WHEN table_name = 'orders' THEN 'order amounts, dates — financial data exposed' END AS data_categories FROM exposed_queries. Step 3 — Generate GDPR breach notifications: SELECT c.customer_id, c.email, c.name, CASE WHEN eq.table_name = 'customers' THEN 'Your personal information (name, email, phone, address) may have been accessed' ELSE 'Your order history may have been accessed' END AS notification_text, NOW() AS notification_generated_at FROM customers c CROSS JOIN exposed_queries eq WHERE eq.table_name IN ('customers', 'orders'). GDPR Article 33 requires supervisory authority notification within 72 hours. Article 34 requires individual notification if high risk. Generate both. Situation 4 — Acquisition due diligence: Connect to their MySQL and assess data quality: CREATE EXTENSION mysql_fdw; CREATE SERVER target_co FOREIGN DATA WRAPPER mysql_fdw OPTIONS (host 'target.db', port '3306'). Data quality assessment: SELECT 'null_check' AS test, 'revenue' AS field, COUNT(CASE WHEN revenue IS NULL THEN 1 END) AS issues, COUNT(*) AS total FROM ft_target_orders UNION ALL SELECT 'duplicate_check', 'order_id', COUNT(*) - COUNT(DISTINCT order_id), COUNT(*) FROM ft_target_orders UNION ALL SELECT 'negative_values', 'revenue', COUNT(CASE WHEN revenue < 0 THEN 1 END), COUNT(*) FROM ft_target_orders. Revenue verification: SELECT DATE_FORMAT(order_date, '%Y') AS year, SUM(revenue) AS their_reported, (SELECT reported_revenue FROM target_financials WHERE year = DATE_FORMAT(order_date, '%Y')) AS pitch_deck_number, SUM(revenue) - (SELECT reported_revenue FROM target_financials WHERE year = DATE_FORMAT(order_date, '%Y')) AS discrepancy FROM ft_target_orders GROUP BY 1. If the database shows $8M but their pitch deck says $10M, investigate the $2M gap before the acquisition closes'"
+    weight: 0.35
+    description: "BreachAndAcquisition"
+  - type: llm_judge
+    criteria: "Response addresses the team crisis with knowledge transfer and resilience planning — teamcrisis: 'Situation 5 — Team crisis and knowledge transfer: Immediate knowledge capture (today): SELECT p.proname AS function_name, p.prosrc AS function_body, pg_get_functiondef(p.oid) AS full_definition, d.description AS documentation FROM pg_proc p LEFT JOIN pg_description d ON p.oid = d.objoid WHERE p.pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'reporting') ORDER BY p.proname. Export every stored procedure, view definition, and scheduled job. This captures tribal knowledge before the engineers leave. CREATE TABLE knowledge_base (topic TEXT, documented_by TEXT, sql_artifacts TEXT[], description TEXT, runbook TEXT, last_updated TIMESTAMP DEFAULT NOW()). Require departing engineers to document their top 10 most critical processes before their last day. Pair each departing engineer with a remaining team member for 2-hour knowledge transfer sessions daily for their remaining 2 weeks. Organizational resilience: 1. No single point of failure: every critical pipeline must have at least 2 people who understand it. Create a skills matrix: SELECT pipeline_name, primary_owner, backup_owner, CASE WHEN backup_owner IS NULL THEN 'RISK — single point of failure' ELSE 'OK' END AS status FROM pipeline_registry. 2. Documentation as code: all SQL lives in Git (dbt project). Documentation is generated automatically. New engineers can understand the system by reading the repository. 3. Runbooks for every critical process: CREATE TABLE runbooks (process_name TEXT PRIMARY KEY, trigger_condition TEXT, steps TEXT[], escalation_path TEXT[], last_tested DATE). Monthly fire drill: randomly pick a runbook and have a junior engineer execute it. If they cannot complete it without help, the runbook needs improvement. 4. Hiring and morale: post job listings immediately for 3 senior replacements. Promote 2 mid-level engineers to senior roles. Give retention bonuses to remaining critical staff. 5. Interim coverage: redistribute work among remaining team. Delay non-critical projects. The SEC filing and breach response are priorities 1 and 2. Self-service analytics rollout can pause for 30 days'"
+    weight: 0.30
+    description: "TeamCrisis"

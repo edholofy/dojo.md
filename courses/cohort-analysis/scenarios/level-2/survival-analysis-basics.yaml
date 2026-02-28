@@ -1,0 +1,33 @@
+meta:
+  id: survival-analysis-basics
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Apply survival analysis to cohorts — use Kaplan-Meier curves, hazard rates, and median lifetime to analyze retention with statistical rigor"
+  tags: [survival-analysis, kaplan-meier, hazard-rate, median-lifetime, intermediate]
+
+state: {}
+
+trigger: |
+  The data science lead says: "Our cohort retention tables are useful
+  but they ignore users who are censored — users who signed up recently
+  and we don't know their fate yet. Survival analysis handles this
+  properly. Can you explain how to apply survival analysis to our
+  retention data?"
+
+  Task: Explain survival analysis concepts applied to cohort retention,
+  including Kaplan-Meier curves, hazard rates, and median lifetime.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains Kaplan-Meier estimation for retention — kaplan_meier: 'Kaplan-Meier survival estimation for retention: survival analysis was developed for medical trials (how long do patients survive after treatment?) but applies directly to retention (how long do users survive before churning?). Key concepts: survival function S(t): the probability that a user is still active at time t. S(0) = 100% (everyone starts active). S(t) decreases over time as users churn. Censoring: a user is censored when we lose track of them before observing churn. Most common: right-censoring — the user signed up recently and has not churned yet, but we do not know if they will. Standard retention tables handle censoring poorly — they either exclude censored users (biased) or count them as churned (biased the other way). Kaplan-Meier estimation: properly handles censored observations by adjusting the risk set at each time point. Example: 1,000 users start. Month 1: 350 churn, 0 censored, risk set = 1,000. Survival = (1000-350)/1000 = 0.65 (65%). Month 2: 130 churn, 50 censored (signed up too recently), risk set = 650-50 = 600. Conditional survival = (600-130)/600 = 0.783. Cumulative survival = 0.65 × 0.783 = 0.509 (50.9%). Month 3: 80 churn, 100 censored, risk set = 420-100 = 320. Conditional survival = (320-80)/320 = 0.75. Cumulative survival = 0.509 × 0.75 = 0.382 (38.2%). The Kaplan-Meier estimator gives more accurate retention estimates than naive calculation because it properly accounts for users with incomplete observation periods. When plotted, the KM curve shows step-wise drops at each time point with tick marks indicating censored observations'"
+    weight: 0.35
+    description: "KaplanMeier"
+  - type: llm_judge
+    criteria: "Response covers hazard rates and their interpretation — hazard: 'Hazard rate: the instantaneous risk of churning: the hazard rate h(t) at time t is the probability of churning at time t, given survival up to time t. It answers: of users who are still active at month t, what fraction churn in the next period? Example: month 0→1 hazard: 350/1000 = 35%. Month 1→2 hazard: 130/600 = 21.7%. Month 2→3 hazard: 80/320 = 25%. Interpreting hazard patterns: decreasing hazard (most common): the risk of churn is highest early (users who are not a good fit leave quickly) and decreases over time. Surviving users become increasingly likely to stay. This is the typical pattern for most products. Constant hazard: each period has the same churn risk regardless of tenure. Rare in practice — implies the product provides no increasing value over time. Bathtub curve: high hazard early (bad fit users), low hazard in the middle (engaged users), rising hazard later (fatigue, competition, life changes). Common in subscription businesses with annual contracts. Hazard rate vs retention rate: retention at month 3 (38.2%) tells you the cumulative outcome. Hazard at month 3 (25%) tells you the current risk. A product team should focus on reducing hazard where it is highest: if month-1 hazard is 35%, improving the first-month experience has the largest impact. If month-6 hazard spikes, investigate what happens at the 6-month mark (annual billing cycle? feature fatigue? competitor targeting?). Hazard rate is more actionable than retention rate because it localizes the problem to a specific time period'"
+    weight: 0.35
+    description: "Hazard"
+  - type: llm_judge
+    criteria: "Response covers median lifetime and practical applications — practical: 'Median lifetime and practical applications: median lifetime is the time at which S(t) = 50% — half the users have churned. From the Kaplan-Meier curve: S(2) = 50.9%, S(3) = 38.2%. Median lifetime is approximately 2 months (the curve crosses 50% between month 2 and month 3). Interpolating: approximately 2.1 months. What median lifetime tells you: half of all users churn within 2.1 months. To retain the median user, you need to deliver value within 2 months. If CAC payback requires 3 months, the median user leaves before paying back (problem). Comparing median lifetime across segments: organic users: median lifetime 4.5 months. Paid search: median lifetime 2.8 months. Paid social: median lifetime 1.2 months. This is more intuitive than comparing retention percentages — stakeholders understand that a paid social user stays about 5 weeks while an organic user stays about 4.5 months. Practical applications: 1. Use KM curves to compare retention between user segments with different observation windows. New cohorts have many censored users — KM handles this correctly. 2. Use hazard rates to identify the critical churn periods and focus product interventions. 3. Use median lifetime for executive communication — it translates retention data into intuitive language. 4. Compare KM curves between cohorts to test whether product changes improved survival. A log-rank test provides statistical significance. 5. Use confidence intervals around KM estimates — with small cohorts, the uncertainty can be large. 6. Cox proportional hazards model: a regression version that identifies which user attributes (plan type, activation behavior, acquisition channel) predict survival while controlling for other factors. This connects survival analysis back to behavioral cohort analysis — which behaviors reduce hazard?'"
+    weight: 0.30
+    description: "Practical"

@@ -1,0 +1,38 @@
+meta:
+  id: stakeholder-reporting-automation
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Automate stakeholder reporting — build self-service analytics, automated email reports, and interactive dashboards from pandas DataFrames"
+  tags: [python, pandas, reporting, automation, excel, email, stakeholder, expert]
+
+state: {}
+
+trigger: |
+  The analytics team spends 60% of their time on recurring reports
+  that different stakeholders request. The reports are:
+
+  1. CEO: Weekly KPI dashboard (revenue, users, NPS, burn rate)
+  2. VP Sales: Daily pipeline report with deal progression
+  3. VP Marketing: Weekly channel performance with spend allocation
+  4. Board: Monthly investor update with cohort metrics and runway
+
+  Each report has different formatting, recipients, and delivery
+  requirements. The CEO wants the KPI report before her 8 AM meeting.
+  The board report needs charts and commentary.
+
+  Task: Build an automated multi-stakeholder reporting system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code generates formatted Excel reports with multiple sheets and styling — excel: 'Automated Excel report generation: CEO KPI Dashboard: def generate_ceo_report(data, report_date): output = f\"reports/ceo_kpi_{report_date:%Y%m%d}.xlsx\". with pd.ExcelWriter(output, engine=\"openpyxl\") as writer: kpi_summary = pd.DataFrame({\"Metric\": [\"Weekly Revenue\", \"Active Users\", \"NPS Score\", \"Monthly Burn Rate\", \"Runway (months)\"], \"This Week\": [data[\"revenue_this_week\"], data[\"active_users\"], data[\"nps\"], data[\"burn_rate\"], data[\"runway\"]], \"Last Week\": [data[\"revenue_last_week\"], data[\"active_users_last\"], data[\"nps_last\"], data[\"burn_rate_last\"], data[\"runway_last\"]], \"WoW Change\": [f\"{data['revenue_wow']:+.1f}%\", f\"{data['users_wow']:+.1f}%\", f\"{data['nps_wow']:+.1f}\", f\"{data['burn_wow']:+.1f}%\", f\"{data['runway_wow']:+.1f}\"]}). kpi_summary.to_excel(writer, sheet_name=\"KPIs\", index=False). data[\"revenue_daily\"].to_excel(writer, sheet_name=\"Revenue Detail\"). data[\"top_deals\"].to_excel(writer, sheet_name=\"Top Deals\", index=False). workbook = writer.book. for sheet in workbook.sheetnames: ws = workbook[sheet]. for cell in ws[1]: cell.font = openpyxl.styles.Font(bold=True). cell.fill = openpyxl.styles.PatternFill(\"solid\", fgColor=\"1F4E79\"). cell.font = openpyxl.styles.Font(bold=True, color=\"FFFFFF\"). for col in ws.columns: max_length = max(len(str(cell.value or \"\")) for cell in col). ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 30). return output. Sales pipeline report with conditional formatting: def generate_sales_report(deals_df, report_date): output = f\"reports/sales_pipeline_{report_date:%Y%m%d}.xlsx\". with pd.ExcelWriter(output, engine=\"openpyxl\") as writer: pipeline = deals_df.groupby(\"stage\").agg(deals=(\"deal_id\", \"count\"), total_value=(\"amount\", \"sum\"), avg_deal=(\"amount\", \"mean\"), avg_days_in_stage=(\"days_in_stage\", \"mean\")).round(0). pipeline.to_excel(writer, sheet_name=\"Pipeline Summary\"). deals_df.sort_values(\"amount\", ascending=False).head(20).to_excel(writer, sheet_name=\"Top 20 Deals\", index=False). rep_performance = deals_df.groupby(\"sales_rep\").agg(deals=(\"deal_id\", \"count\"), total_value=(\"amount\", \"sum\"), win_rate=(\"stage\", lambda x: (x == \"closed_won\").mean())).sort_values(\"total_value\", ascending=False). rep_performance.to_excel(writer, sheet_name=\"Rep Performance\"). return output'"
+    weight: 0.35
+    description: "Excel reports"
+  - type: llm_judge
+    criteria: "System includes automated delivery and scheduling — delivery: 'Automated report delivery: Email delivery with attachments: import smtplib. from email.mime.multipart import MIMEMultipart. from email.mime.base import MIMEBase. from email.mime.text import MIMEText. from email import encoders. def send_report(recipients, subject, body_html, attachments): msg = MIMEMultipart(). msg[\"Subject\"] = subject. msg[\"From\"] = \"analytics@company.com\". msg[\"To\"] = \", \".join(recipients). msg.attach(MIMEText(body_html, \"html\")). for filepath in attachments: with open(filepath, \"rb\") as f: part = MIMEBase(\"application\", \"octet-stream\"). part.set_payload(f.read()). encoders.encode_base64(part). part.add_header(\"Content-Disposition\", f\"attachment; filename={Path(filepath).name}\"). msg.attach(part). with smtplib.SMTP(\"smtp.company.com\", 587) as server: server.starttls(). server.login(\"analytics@company.com\", os.environ[\"SMTP_PASSWORD\"]). server.send_message(msg). Report configuration: REPORT_CONFIG = {\"ceo_kpi\": {\"generator\": generate_ceo_report, \"recipients\": [\"ceo@company.com\", \"coo@company.com\"], \"schedule\": \"every monday at 07:30\", \"subject\": \"Weekly KPI Dashboard — {date}\"}, \"sales_pipeline\": {\"generator\": generate_sales_report, \"recipients\": [\"vp.sales@company.com\", \"sales-team@company.com\"], \"schedule\": \"every weekday at 08:00\", \"subject\": \"Daily Pipeline Report — {date}\"}, \"board_update\": {\"generator\": generate_board_report, \"recipients\": [\"board@company.com\"], \"schedule\": \"first monday of month at 09:00\", \"subject\": \"Monthly Board Update — {month}\"}}. Master orchestrator: def run_scheduled_reports(date=None): date = date or datetime.now(). for name, config in REPORT_CONFIG.items(): try: report_path = config[\"generator\"](load_data(name), date). send_report(config[\"recipients\"], config[\"subject\"].format(date=date.strftime(\"%b %d\")), build_email_body(name, date), [report_path]). logger.info(f\"Sent {name} report to {len(config['recipients'])} recipients\"). except Exception as e: logger.error(f\"Failed to generate {name}: {e}\"). send_alert(f\"Report failure: {name} — {e}\")'"
+    weight: 0.35
+    description: "Delivery"
+  - type: llm_judge
+    criteria: "Response covers self-service analytics and reducing ad-hoc report requests — self-service: 'Reducing report burden with self-service: The 60% time problem: most analyst time is spent on slight variations of the same queries. Instead of building 50 custom reports, build parameterized templates that stakeholders can customize. Parameterized report functions: def flexible_report(metric, groupby, date_range, filters=None): df = load_base_data(date_range). if filters: for col, values in filters.items(): df = df[df[col].isin(values)]. result = df.groupby(groupby)[metric].agg([\"sum\", \"mean\", \"count\"]). return result. This one function replaces dozens of ad-hoc requests: flexible_report(\"revenue\", [\"region\"], (\"2024-01-01\", \"2024-03-31\")). flexible_report(\"revenue\", [\"region\", \"category\"], (\"2024-Q1\", \"2024-Q2\"), filters={\"plan\": [\"premium\"]}). Interactive dashboards from pandas: import panel as pn. or: from jupyter_dash import JupyterDash. Build a simple web dashboard that lets stakeholders select date range, metrics, and groupings — then generates the report on demand. This eliminates 80% of ad-hoc requests. Caching for performance: from functools import lru_cache. @lru_cache(maxsize=32). def load_base_data(date_range_key): return pd.read_parquet(f\"data/{date_range_key}.parquet\"). Cache the base data so parameterized queries are fast. Stakeholders get results in seconds instead of waiting for an analyst. Documentation and data catalog: create a simple data dictionary that shows available metrics, dimensions, and filter values. Publish example queries. The goal: analysts should spend 80% of time on novel analysis and 20% on reporting, not the reverse'"
+    weight: 0.30
+    description: "Self-service"

@@ -1,0 +1,45 @@
+meta:
+  id: first-rfc-shift
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "First RFC shift simulation — write a complete RFC from scratch combining all fundamentals: problem statement, solution, alternatives, risks, implementation plan, and success metrics"
+  tags: [RFC, shift-simulation, complete-rfc, synthesis, beginner]
+
+state: {}
+
+trigger: |
+  You've been asked to write your first complete RFC. The situation:
+
+  Your team's deployment process is painful:
+  - Deployments happen manually via SSH by a single senior engineer
+  - Only 2 people know the deployment process (bus factor = 2)
+  - Deployments take 45 minutes and require a "deployment window"
+  - Last month, 3 out of 8 deployments caused incidents requiring rollback
+  - Rollbacks are also manual and take 30 minutes
+  - The team deploys only twice a week because deployments are risky
+  - Feature work is piling up — there's a 3-week backlog of merged PRs
+    waiting to be deployed
+
+  You want to propose implementing a CI/CD pipeline with automated
+  testing, staged rollouts, and automated rollback.
+
+  Task: Write a complete RFC including all standard sections: summary,
+  problem statement (with data), proposed solution, alternatives
+  considered, risks and mitigations, implementation plan (phased),
+  success metrics, and open questions. This is your synthesis exercise
+  — demonstrate everything you've learned about RFC writing.
+
+assertions:
+  - type: llm_judge
+    criteria: "RFC has all standard sections with appropriate depth — Summary: 2-3 sentences capturing the proposal, impact, and timeline. Problem Statement: data-driven (45-min deploys, 37.5% failure rate, 2-person bus factor, 3-week backlog), business impact (delayed features, incident costs, engineer frustration), urgency (getting worse as team grows). Proposed Solution: CI/CD pipeline with specific choices (e.g., GitHub Actions, staged rollouts via feature flags or canary), enough detail to evaluate but not an implementation guide. Alternatives Considered: at least 2 alternatives fairly presented (e.g., documented manual process with checklist, partial automation with deploy scripts), each with honest pros/cons and specific reasons for rejection. Risks: specific risks with mitigations (pipeline reliability, learning curve, migration period where both systems exist). Implementation Plan: phased (automated tests first, then CI builds, then CD to staging, then CD to production), with milestones and timeline. Success Metrics: deployment frequency, failure rate, rollback time, time-to-production. Open Questions: 2-3 genuine unresolved decisions with context and preliminary thinking"
+    weight: 0.35
+    description: "Complete RFC structure"
+  - type: llm_judge
+    criteria: "RFC sections are internally consistent and well-connected — the problem statement's data (37.5% failure rate, 45-minute deploys) is directly referenced in the success metrics ('reduce deployment failure rate to under 5%, reduce deployment time to under 10 minutes'). The proposed solution addresses every problem mentioned (manual process → automated, bus factor → documented pipeline, slow rollbacks → automated rollback). The risks section acknowledges realistic challenges with the proposed solution, not just risks of doing nothing. The implementation plan phases align with the solution description. The alternatives section explains why they don't solve the problems as well. Open questions are genuinely unresolved (not things already decided in the solution section). The reader should feel this is one coherent document, not disconnected sections written independently"
+    weight: 0.35
+    description: "Internal consistency"
+  - type: llm_judge
+    criteria: "RFC demonstrates good writing practices throughout — executive-friendly summary that a VP could read and understand the proposal. Problem statement leads with impact, not technical details. Solution section explains WHY this approach, not just WHAT it is. Alternatives are steel-manned (presented fairly, not as straw men). Risks are honest (doesn't hide difficulties to make the proposal look better). Implementation plan is realistic (includes buffer time, go/no-go criteria between phases). Success metrics have baselines and targets. Open questions show intellectual humility (acknowledges what the author doesn't know). Tone throughout is confident but not arrogant — 'we recommend' not 'we must', acknowledges trade-offs rather than presenting the solution as perfect. The RFC should serve all audiences: an engineer should find enough detail to evaluate feasibility, a manager should find timeline and resources, a VP should find business justification"
+    weight: 0.30
+    description: "Writing quality"

@@ -1,0 +1,36 @@
+meta:
+  id: subqueries-and-ctes
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Use subqueries and CTEs — break complex reports into logical steps using Common Table Expressions and subqueries for readable, maintainable SQL"
+  tags: [SQL, CTE, subquery, WITH-clause, readability, intermediate]
+
+state: {}
+
+trigger: |
+  The analytics team needs a customer segmentation report:
+  "Categorize customers into tiers based on their spending (top 10%
+  are VIP, next 20% are Premium, rest are Standard). Show each
+  tier's total revenue, customer count, and average order value."
+
+  This requires multiple steps: calculate per-customer totals,
+  determine percentile thresholds, assign tiers, then aggregate.
+
+  Tables: customers, orders
+
+  Task: Solve this using both subqueries and CTEs, then compare.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates both subquery and CTE approaches — approaches: 'Subquery approach (nested): SELECT tier, COUNT(*) AS customers, SUM(total_spent) AS tier_revenue, ROUND(AVG(total_spent), 2) AS avg_customer_spend FROM (SELECT c.customer_id, c.name, SUM(o.amount) AS total_spent, CASE WHEN SUM(o.amount) >= (SELECT PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY customer_total) FROM (SELECT SUM(amount) AS customer_total FROM orders GROUP BY customer_id) sub) THEN 'VIP' WHEN SUM(o.amount) >= (SELECT PERCENTILE_CONT(0.7) WITHIN GROUP (ORDER BY customer_total) FROM (SELECT SUM(amount) AS customer_total FROM orders GROUP BY customer_id) sub) THEN 'Premium' ELSE 'Standard' END AS tier FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name) tiered GROUP BY tier ORDER BY tier_revenue DESC. This works but is hard to read — the percentile subquery is duplicated and nested 3 levels deep. CTE approach (readable): WITH customer_spending AS (SELECT customer_id, SUM(amount) AS total_spent FROM orders GROUP BY customer_id), thresholds AS (SELECT PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY total_spent) AS vip_threshold, PERCENTILE_CONT(0.7) WITHIN GROUP (ORDER BY total_spent) AS premium_threshold FROM customer_spending), tiered_customers AS (SELECT cs.customer_id, cs.total_spent, CASE WHEN cs.total_spent >= t.vip_threshold THEN 'VIP' WHEN cs.total_spent >= t.premium_threshold THEN 'Premium' ELSE 'Standard' END AS tier FROM customer_spending cs CROSS JOIN thresholds t) SELECT tier, COUNT(*) AS customers, SUM(total_spent) AS tier_revenue, ROUND(AVG(total_spent), 2) AS avg_spend FROM tiered_customers GROUP BY tier ORDER BY tier_revenue DESC. Same result, but each step is named and readable. CTEs can reference each other (tiered_customers uses both customer_spending and thresholds)'"
+    weight: 0.35
+    description: "Approaches"
+  - type: llm_judge
+    criteria: "Explanation covers CTE benefits, types of subqueries, and when to use each — explanation: 'CTE vs subquery comparison: CTEs win on readability: each CTE is a named, logical step. Complex logic is broken into understandable pieces. CTEs can be referenced multiple times in the main query (subqueries are duplicated). CTEs are easier to debug — comment out later CTEs and test earlier ones. Subqueries win on simplicity: for a single, simple filter, a subquery is fine. WHERE amount > (SELECT AVG(amount) FROM orders) — clear enough without a CTE. Three types of subqueries: 1. Scalar subquery (returns one value): SELECT name, amount, amount - (SELECT AVG(amount) FROM orders) AS diff_from_avg FROM orders. 2. Row subquery (returns one row): WHERE (region, category) = (SELECT region, category FROM top_segment LIMIT 1). 3. Table subquery (returns multiple rows): SELECT * FROM (SELECT customer_id, SUM(amount) AS total FROM orders GROUP BY customer_id) sub WHERE total > 1000. Correlated subqueries — reference the outer query: SELECT c.name, (SELECT MAX(o.amount) FROM orders o WHERE o.customer_id = c.customer_id) AS max_order FROM customers c. This runs the subquery once per customer — can be slow on large tables. Convert to JOIN for better performance: SELECT c.name, max_orders.max_amount FROM customers c LEFT JOIN (SELECT customer_id, MAX(amount) AS max_amount FROM orders GROUP BY customer_id) max_orders ON c.customer_id = max_orders.customer_id'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response shows advanced CTE patterns — advanced: 'Advanced CTE patterns: Multiple CTEs building on each other: WITH monthly_revenue AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue FROM orders GROUP BY 1), revenue_with_growth AS (SELECT month, revenue, LAG(revenue) OVER (ORDER BY month) AS prev_month, ROUND((revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0 / LAG(revenue) OVER (ORDER BY month), 1) AS growth_pct FROM monthly_revenue), categorized AS (SELECT *, CASE WHEN growth_pct > 10 THEN 'Strong Growth' WHEN growth_pct > 0 THEN 'Moderate Growth' WHEN growth_pct IS NULL THEN 'First Month' ELSE 'Decline' END AS trend FROM revenue_with_growth) SELECT * FROM categorized ORDER BY month. Each CTE adds one transformation step. This pattern is the foundation of dbt models — each model is essentially a CTE materialized as a table or view'"
+    weight: 0.30
+    description: "Advanced"

@@ -1,0 +1,76 @@
+meta:
+  id: multi-year-budget-model
+  level: 2
+  course: budget-proposal-writing
+  type: output
+  description: "Multi-year budget model — build a 3-year budget projection with growth assumptions and scenario analysis"
+  tags: [multi-year, financial-model, projections, scenarios, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Director of Finance at a 300-person SaaS
+  company ($18M ARR, growing 35% year-over-year). The
+  CEO is preparing for a Series B fundraise and needs a
+  3-year budget projection that shows the path to
+  profitability. Investors will scrutinize every
+  assumption.
+
+  Current P&L (trailing 12 months):
+  - Revenue: $18M ARR
+  - COGS: $3.6M (20% — hosting, support team)
+  - Gross profit: $14.4M (80% margin)
+  - Sales & Marketing: $7.2M (40% of revenue)
+  - R&D: $5.4M (30% of revenue)
+  - G&A: $3.6M (20% of revenue)
+  - EBITDA: -$1.8M (-10% margin)
+  - Cash on hand: $4.2M
+  - Monthly burn: $150K
+
+  Key metrics:
+  - CAC: $18,000 per customer
+  - LTV: $72,000 (4-year average lifetime, $18K ARPA)
+  - LTV/CAC ratio: 4.0
+  - Net revenue retention: 115%
+  - Gross churn: 8% annually
+  - Customers: 1,000
+  - Average contract value: $18,000/year
+  - Sales team: 12 reps, average $1.5M quota
+
+  CEO's assumptions for the model:
+  - Year 1: 35% revenue growth (to $24.3M)
+  - Year 2: 30% growth (to $31.6M)
+  - Year 3: 25% growth (to $39.5M — profitability target)
+  - Gross margin stays at 80%
+  - S&M as % of revenue decreases: 40% → 35% → 30%
+  - R&D as % of revenue decreases: 30% → 28% → 25%
+  - G&A as % of revenue decreases: 20% → 18% → 15%
+  - Target: EBITDA positive by end of Year 3
+
+  What you need to validate:
+  - Can the sales team produce $24.3M with 12 reps or
+    do you need to hire? (12 × $1.5M = $18M capacity)
+  - What's the hiring plan to support growth?
+  - Are the margin improvement assumptions realistic?
+  - Where does cash run out if we don't raise?
+
+  Task: Build the 3-year budget model with quarterly
+  granularity for Year 1, annual for Years 2-3. Include
+  a base case, optimistic case (40% Y1 growth), and
+  conservative case (25% Y1 growth). Show the cash flow
+  projection and identify when additional funding is
+  needed.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds a comprehensive 3-year model — includes revenue projections with growth rates, COGS, and all operating expense categories; shows quarterly detail for Year 1; calculates EBITDA margins for each year; validates that the numbers are internally consistent (e.g., sales capacity must support revenue assumptions — 12 reps × $1.5M = $18M, need more reps for $24.3M); includes headcount planning tied to revenue assumptions."
+    weight: 0.35
+    description: "Comprehensive3YearModel"
+  - type: llm_judge
+    criteria: "Response includes scenario analysis — presents base, optimistic, and conservative cases with different growth rates; shows how each scenario affects cash flow and runway; identifies the break-even point in each scenario; the scenarios aren't just different top-line numbers — they cascade through the P&L (different growth means different hiring, different S&M spend); sensitivity analysis reveals which assumptions matter most."
+    weight: 0.35
+    description: "ScenarioAnalysis"
+  - type: llm_judge
+    criteria: "Response identifies key risks and validates assumptions — questions whether S&M decreasing from 40% to 30% is realistic while growing 25-35% (usually requires more investment, not less); validates that sales team capacity supports revenue targets; calculates cash runway and when funding is needed; identifies the most sensitive assumptions; an investor reading this would see financial literacy and honest analysis, not just optimistic projections."
+    weight: 0.30
+    description: "AssumptionValidation"

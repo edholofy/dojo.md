@@ -1,0 +1,52 @@
+meta:
+  id: distributed-system-debugging
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Debug distributed system failures — use correlated metrics, logs, and traces to diagnose complex failures spanning multiple services"
+  tags: [monitoring, distributed-systems, debugging, correlation, traces, advanced]
+
+state: {}
+
+trigger: |
+  You are on-call and receive this alert:
+
+  Alert: checkout-service error rate > 5%
+  Severity: P1
+  Started: 14:32 UTC
+  Current error rate: 12%
+  SLO burn rate: 8x (critical)
+
+  Initial investigation reveals a complex distributed failure:
+  - checkout-service returns 500 errors for ~12% of requests
+  - The errors are intermittent (not every request fails)
+  - checkout-service depends on: inventory-service, payment-service,
+    user-service, and pricing-service
+  - All 4 downstream services report healthy (green dashboards, no
+    alerts firing)
+  - No recent deployments to checkout-service or any dependency
+  - checkout-service logs show: "context deadline exceeded" errors
+    when calling downstream services
+  - The same downstream services work fine for other callers
+
+  Your monitoring tools: Grafana (metrics), Loki (logs), Tempo
+  (distributed tracing), all with correlation enabled.
+
+  Task: Walk through the systematic debugging approach using
+  correlated observability data. Explain how you would use metrics,
+  logs, and traces together to identify the root cause of this
+  intermittent distributed failure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Systematic debugging approach uses correlation between metrics, logs, and traces — debugging approach: 'Step 1: Scope the problem with metrics (2 minutes). Start in Grafana with the checkout-service dashboard. Confirm: error rate is 12%, started at 14:32. Check: is the error rate uniform across all checkout-service instances, or concentrated on specific instances? If concentrated: the problem is likely instance-specific (network, resource exhaustion on that host). If uniform: the problem is likely in the request path (a dependency or a specific request pattern). Check latency: are the failing requests slow (timeout) or fast (immediate error)? If the errors are context deadline exceeded, the requests are timing out — they are slow failures. This means checkout-service is waiting for a downstream response that never comes within the timeout period. Key insight: the downstream services report healthy, but checkout-service is timing out when calling them. This suggests the problem is not that the downstream services are down — it is that they are slow for specific requests from checkout-service. Step 2: Trace the failing requests (5 minutes). Open Tempo from the Grafana error panel (click a failing request to see its trace). Find a trace for a failing checkout request. The trace shows: checkout-service → inventory-service (50ms, success). checkout-service → pricing-service (30ms, success). checkout-service → payment-service (5000ms, timeout — context deadline exceeded). checkout-service → user-service (not called — failed before reaching this step). The trace reveals: payment-service is the bottleneck. It is responding in 5 seconds (exceeding the checkout-service 3-second timeout), but only for some requests. Open 5 more failing traces to confirm: all show payment-service timeout. Open 5 successful traces: payment-service responds in 100ms. The intermittent nature suggests: some payment-service requests are slow, but not all. Step 3: Investigate payment-service with correlated logs (5 minutes). From the slow trace, click the payment-service span to jump to correlated logs (using the trace ID). The payment-service log for the slow request shows: 14:32:15 - received request, user_id=12345. 14:32:15 - querying payment_provider_api. 14:32:20 - payment_provider_api responded (5012ms). The payment-service is slow because its external dependency (the payment provider API) is slow. But payment-service dashboards show green because: the payment-service itself is healthy — it is just waiting for its dependency. The payment provider latency is not monitored in payment-service (monitoring gap). Step 4: Identify the root cause (2 minutes). The root cause: the third-party payment provider is experiencing intermittent latency spikes. These spikes cause payment-service to respond slowly, which causes checkout-service to timeout, which causes 500 errors for 12% of checkout requests. Why intermittent: only requests to specific payment provider endpoints or regions are affected (check payment provider status page). Why downstream dashboards are green: payment-service measures its own health (CPU, memory, internal error rate) but does not alert on external dependency latency. Total debugging time: approximately 15 minutes using correlated metrics → traces → logs'"
+    weight: 0.35
+    description: "Systematic debugging approach"
+  - type: llm_judge
+    criteria: "Correlation between signals is explicitly demonstrated — correlation demonstration: 'How correlation accelerated this investigation: (1) Metric to trace (Grafana → Tempo). From the error rate graph in Grafana, click on an error data point. Grafana generates a Tempo query for traces matching: service=checkout-service, status=error, time=14:32-14:33. This is called exemplar-based correlation — metric data points link directly to representative traces. Without correlation: you would need to manually search Tempo for traces, guessing at time ranges and service names. With correlation: one click from the metric to the exact traces. (2) Trace to log (Tempo → Loki). From a slow span in the trace, click to view correlated logs. The trace ID is embedded in both the trace span and the log entries (via structured logging with trace_id field). Loki filters logs to: trace_id=abc123, showing only logs related to this specific request. Without correlation: you would search Loki by time range and service name, getting thousands of log lines and manually filtering to find the relevant ones. With correlation: one click from the trace span to the exact logs for that request. (3) Log to metric (Loki → Grafana). From the payment provider log showing 5012ms response time, you notice this is an external API latency issue. You can check: does the payment provider latency metric exist? If yes: jump from the log context to the metrics dashboard for payment provider latency. If no (our case): this is the monitoring gap — we need to add this metric. The correlation chain: metric anomaly (checkout errors) → trace analysis (payment-service timeout) → log investigation (payment provider API slow) → root cause identified. Each signal contributes uniquely: metrics told us there was a problem and its scope. Traces told us where in the request path the problem occurred. Logs told us why the specific component was slow. No single signal could have identified the root cause alone'"
+    weight: 0.35
+    description: "Correlation demonstration"
+  - type: llm_judge
+    criteria: "Remediation and monitoring gap closure are addressed — remediation and improvements: 'Immediate remediation: (1) Mitigate the customer impact. Options: reduce checkout-service timeout from 3s to 2s and implement a fallback (queue the payment for retry rather than failing the checkout). Or: implement a circuit breaker on the payment-service to payment-provider call. When the provider is slow, fail fast and queue for retry rather than holding connections for 5 seconds. For now: contact the payment provider (check their status page, open a support ticket). If this is a known issue on their side, they may have an ETA. (2) Communicate. Update the incident channel: root cause identified — third-party payment provider latency. Customer impact: 12% of checkout attempts failing. Mitigation in progress. Monitoring gaps to close (postmortem action items): (1) Add payment provider latency monitoring. Create a metric for external payment API latency. Alert when p99 exceeds 1 second (well before the 3-second timeout). This would have detected the problem 5-10 minutes before checkout errors started, because the payment provider likely degraded gradually before hitting the timeout threshold. (2) Add dependency health to service dashboards. Payment-service dashboard should show: internal health AND external dependency health. The fact that payment-service reported green during this incident is a monitoring gap. Services that depend on external APIs must monitor those APIs. (3) Add circuit breaker metrics. When the circuit breaker trips (if implemented), it should be a monitored metric and generate an alert. This provides early warning of dependency issues. (4) Review all services for similar gaps. If payment-service lacks external dependency monitoring, other services probably do too. Audit all services: do they monitor their external dependencies? This is a systemic gap, not just a payment-service gap'"
+    weight: 0.30
+    description: "Remediation and improvements"

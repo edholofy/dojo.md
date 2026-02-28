@@ -1,0 +1,41 @@
+meta:
+  id: multi-table-aggregation
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Aggregate across multiple tables — combine data from 3+ tables with proper join strategies to create comprehensive business summaries"
+  tags: [SQL, multi-table, aggregation, complex-reports, intermediate]
+
+state: {}
+
+trigger: |
+  The CEO wants a comprehensive customer health report combining
+  data from four tables:
+
+  "For each customer, show me: their total orders and revenue,
+  number of support tickets filed, their satisfaction score, and
+  their product usage (number of features activated). Flag customers
+  who have high revenue but low satisfaction as 'at-risk'."
+
+  Tables:
+  - customers (customer_id, name, email, plan_type, signup_date)
+  - orders (order_id, customer_id, amount, order_date)
+  - support_tickets (ticket_id, customer_id, created_date, category,
+    satisfaction_score)
+  - product_usage (customer_id, feature_name, activated_date)
+
+  Task: Build the multi-table customer health report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly aggregates from 4 tables without row inflation — query: 'Multi-table aggregation — the right way: Wrong approach (join all tables then aggregate): SELECT c.customer_id, COUNT(o.order_id) AS orders, SUM(o.amount) AS revenue, COUNT(t.ticket_id) AS tickets FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id LEFT JOIN support_tickets t ON c.customer_id = t.customer_id GROUP BY c.customer_id. This is WRONG: if a customer has 5 orders and 3 tickets, the join creates 15 rows (5 x 3). COUNT(o.order_id) returns 15, not 5. This is the many-to-many join inflation problem. Right approach — aggregate first, then join: WITH order_summary AS (SELECT customer_id, COUNT(*) AS total_orders, SUM(amount) AS total_revenue, MAX(order_date) AS last_order_date FROM orders GROUP BY customer_id), ticket_summary AS (SELECT customer_id, COUNT(*) AS total_tickets, ROUND(AVG(satisfaction_score), 1) AS avg_satisfaction FROM support_tickets GROUP BY customer_id), usage_summary AS (SELECT customer_id, COUNT(DISTINCT feature_name) AS features_activated FROM product_usage GROUP BY customer_id) SELECT c.customer_id, c.name, c.email, c.plan_type, COALESCE(os.total_orders, 0) AS total_orders, COALESCE(os.total_revenue, 0) AS total_revenue, os.last_order_date, COALESCE(ts.total_tickets, 0) AS total_tickets, ts.avg_satisfaction, COALESCE(us.features_activated, 0) AS features_activated, CASE WHEN os.total_revenue > 5000 AND COALESCE(ts.avg_satisfaction, 5) < 3 THEN 'At Risk' WHEN os.total_revenue > 5000 AND COALESCE(ts.avg_satisfaction, 5) >= 4 THEN 'Champion' WHEN COALESCE(os.total_orders, 0) = 0 THEN 'Inactive' ELSE 'Healthy' END AS health_status FROM customers c LEFT JOIN order_summary os ON c.customer_id = os.customer_id LEFT JOIN ticket_summary ts ON c.customer_id = ts.customer_id LEFT JOIN usage_summary us ON c.customer_id = us.customer_id ORDER BY total_revenue DESC. Each CTE aggregates to one row per customer before joining. No row inflation. All counts are accurate'"
+    weight: 0.35
+    description: "Query"
+  - type: llm_judge
+    criteria: "Explanation covers the aggregation-before-join pattern and COALESCE — explanation: 'The aggregate-first pattern: Rule: when joining tables with one-to-many relationships, aggregate each table to the join grain BEFORE joining. The join grain is the level at which you want results (in this case, one row per customer). Steps: 1. Identify the grain (customer_id). 2. Aggregate each source table to that grain (CTEs). 3. Join the pre-aggregated summaries to the base table. 4. Use LEFT JOIN so all base records appear even without matches. 5. Use COALESCE for NULL handling. Why LEFT JOIN everywhere: a customer with no orders gets NULL from order_summary. COALESCE(os.total_revenue, 0) converts this to 0. If you used INNER JOIN, customers without orders would disappear from the report. COALESCE strategy: numeric fields default to 0 — COALESCE(total_orders, 0). Dates default to NULL (do not fabricate dates). Satisfaction defaults to a neutral value or NULL — depends on business logic. In the CASE WHEN: COALESCE(ts.avg_satisfaction, 5) treats customers with no tickets as having perfect satisfaction (score 5). This prevents them from being flagged as at-risk'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers summary statistics from the multi-table report — summary: 'Summary statistics: Executive summary from the health report: SELECT health_status, COUNT(*) AS customers, SUM(total_revenue) AS revenue, ROUND(AVG(total_revenue), 0) AS avg_revenue, ROUND(AVG(avg_satisfaction), 1) AS avg_satisfaction, ROUND(AVG(features_activated), 1) AS avg_features FROM (the full query above) health_report GROUP BY health_status ORDER BY revenue DESC. This tells the CEO: how many customers are in each health category, how much revenue is at risk, and whether low satisfaction correlates with low feature adoption. Cross-dimensional summary: SELECT plan_type, health_status, COUNT(*) AS customers, SUM(total_revenue) AS revenue FROM (the full query) GROUP BY plan_type, health_status ORDER BY plan_type, revenue DESC. This reveals whether at-risk customers are concentrated in a specific plan type — a signal for product or pricing issues. Performance tip: if this report runs daily, consider materializing the CTEs as views or materialized views. The four source tables may have millions of rows, but the aggregated summaries are much smaller and faster to join'"
+    weight: 0.30
+    description: "Summary"

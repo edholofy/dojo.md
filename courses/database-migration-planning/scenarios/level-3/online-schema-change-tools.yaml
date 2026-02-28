@@ -1,0 +1,40 @@
+meta:
+  id: online-schema-change-tools
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Use online schema change tools — apply gh-ost or pt-online-schema-change for zero-downtime schema changes on large MySQL tables"
+  tags: [database, migration, gh-ost, pt-osc, online-schema-change, MySQL, advanced]
+
+state: {}
+
+trigger: |
+  Your MySQL 8.0 database has a "transactions" table with 500 million
+  rows (200GB). You need to add a column and change an index. The
+  table handles 5,000 writes per second and cannot tolerate any
+  downtime.
+
+  MySQL's native online DDL cannot handle this change without
+  significant locking. Your DBA says: "Use gh-ost or
+  pt-online-schema-change."
+
+  Changes needed:
+  1. Add "risk_score" DECIMAL(5,2) column with DEFAULT 0.00
+  2. Add composite index on (merchant_id, created_at, risk_score)
+
+  Task: Compare gh-ost and pt-online-schema-change, recommend one
+  for this scenario, and provide the execution plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tool comparison is accurate and comprehensive — comparison: 'Both tools achieve the same goal (zero-downtime schema change on large tables) through different mechanisms. gh-ost (GitHub Online Schema Migration Tool): mechanism: creates a ghost copy of the table, applies the schema change to the copy, then uses binary log streaming to replay changes from the original table to the ghost table. When the ghost table catches up, it performs an atomic table swap. Key characteristics: triggerless — does not add triggers to the original table. This means zero impact on write performance. Reads the MySQL binary log to capture changes. Requires binary logs in ROW format (not STATEMENT). Provides real-time control: you can pause, throttle, and reconfigure during the migration. Cannot handle tables with foreign keys (the swap breaks FK references). pt-online-schema-change (Percona Toolkit): mechanism: creates a copy of the table, applies the schema change to the copy, adds triggers (AFTER INSERT, UPDATE, DELETE) to the original table that replicate changes to the copy. When the copy catches up, swaps the tables. Key characteristics: trigger-based — adds triggers to the original table. Triggers add overhead to every write (typically 10-30% write latency increase). Supports foreign keys (can update FK references during swap). Simpler to set up and understand. Proven in production for over a decade. For this scenario (500M rows, 5,000 writes/sec): gh-ost is recommended. Rationale: at 5,000 writes/sec, the trigger overhead of pt-osc would add noticeable latency. gh-ost is triggerless and provides better real-time control for a table this large. No foreign keys are mentioned, so gh-ost limitation does not apply'"
+    weight: 0.35
+    description: "Tool comparison"
+  - type: llm_judge
+    criteria: "Execution plan for gh-ost is detailed — execution plan: 'Pre-migration checks: (1) Verify binary log format: SHOW VARIABLES LIKE binlog_format; Must be ROW (not STATEMENT or MIXED). (2) Check disk space: the ghost table will be ~200GB. Need at least 250GB free. (3) Verify no foreign keys: SELECT * FROM information_schema.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME = transactions; Must return empty. (4) Estimate time: for 200GB at conservative throttle, expect 4-12 hours. Execution: gh-ost --host=db-primary --database=mydb --table=transactions --alter=\"ADD COLUMN risk_score DECIMAL(5,2) NOT NULL DEFAULT 0.00, ADD INDEX idx_merchant_created_risk (merchant_id, created_at, risk_score)\" --execute --chunk-size=1000 --max-load=Threads_running=30 --critical-load=Threads_running=50 --throttle-control-replicas=db-replica1 --max-lag-millis=1500 --verbose; Key parameters: chunk-size=1000: process 1,000 rows at a time. Tune based on row width and server capacity. max-load=Threads_running=30: if active threads exceed 30, gh-ost throttles (slows down). This prevents gh-ost from overwhelming the server. critical-load=Threads_running=50: if threads exceed 50, gh-ost pauses completely. This is the safety valve — gh-ost will not continue if the server is overloaded. throttle-control-replicas: monitor replication lag on the replica. If lag exceeds max-lag-millis (1500ms), gh-ost pauses until the replica catches up. This protects read replicas from falling behind. Monitoring during execution: watch gh-ost progress output (shows rows copied, estimated time remaining, and current throttle state). Monitor MySQL performance: query latency, threads running, replication lag. If needed: echo throttle > /tmp/gh-ost.transactions.sock (manually pause gh-ost). Cutover: when the ghost table has caught up: gh-ost performs an atomic table rename swap. Original table becomes _transactions_del (archived). Ghost table becomes transactions. The swap takes milliseconds. Post-migration: verify the column and index exist. Test application queries. Drop the archived table after 24 hours: DROP TABLE _transactions_del;'"
+    weight: 0.35
+    description: "Execution plan"
+  - type: llm_judge
+    criteria: "Risk management and failure recovery covered — risk management: '(1) Disk space exhaustion. Risk: the ghost table plus binary log retention could exhaust disk space. Mitigation: monitor disk space throughout. If disk drops below 15%, pause gh-ost and investigate. Clean up old binary logs if safe. (2) Replication lag. Risk: gh-ost consumes replication bandwidth, causing replicas to fall behind. Mitigation: the throttle-control-replicas parameter monitors this automatically. Set max-lag-millis conservatively (1500ms). gh-ost pauses if lag exceeds the threshold. (3) Long-running queries blocking the cutover. Risk: the final table swap needs a brief metadata lock. Long-running queries on the original table can block the swap. Mitigation: gh-ost has a cut-over-lock-timeout parameter. If it cannot acquire the lock within the timeout, it retries rather than forcing. Identify and terminate any long-running queries (KILL query_id) if they block the cutover. (4) gh-ost failure mid-migration. If gh-ost crashes or is killed: the ghost table exists but is not swapped in. The original table is untouched. Recovery: clean up the ghost table (DROP TABLE _transactions_gho), remove the trigger artifacts, and restart gh-ost from scratch. Data loss: none. The original table was never modified. (5) Application performance degradation. If query latency increases during the migration: increase gh-ost throttle (reduce chunk-size, lower max-load). Or pause gh-ost entirely: echo throttle > /tmp/gh-ost.transactions.sock. Resume when load normalizes: echo no-throttle > /tmp/gh-ost.transactions.sock'"
+    weight: 0.30
+    description: "Risk management"

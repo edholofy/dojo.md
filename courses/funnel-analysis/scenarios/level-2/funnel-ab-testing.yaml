@@ -1,0 +1,36 @@
+meta:
+  id: funnel-ab-testing
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Funnel A/B testing — design experiments to improve specific funnel steps, interpret results correctly, and avoid common testing mistakes"
+  tags: [ab-testing, experimentation, statistical-significance, intermediate]
+
+state: {}
+
+trigger: |
+  The growth PM says: "We redesigned the checkout page and ran an A/B
+  test for 2 weeks. The results:
+
+  Control (old checkout): 5,000 users entered, 2,750 completed (55%).
+  Variant (new checkout): 5,000 users entered, 2,900 completed (58%).
+
+  That's a 3 percentage point improvement! Should we ship it? Also,
+  how should I think about A/B testing funnel steps in general?"
+
+  Task: Evaluate the test result, explain the framework for A/B testing
+  funnel steps, and identify common mistakes to avoid.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response evaluates the specific test result with statistical rigor — evaluation: 'Evaluating the checkout A/B test result: raw numbers: control 55% (2,750/5,000) vs variant 58% (2,900/5,000). Absolute improvement: 3 percentage points. Relative improvement: 5.5%. Statistical significance check: for a two-proportion z-test: pooled proportion: 5,650/10,000 = 56.5%. Standard error: sqrt(0.565 × 0.435 × (1/5,000 + 1/5,000)) = 0.0099. Z-score: (0.58 - 0.55) / 0.0099 = 3.03. P-value: approximately 0.002 (two-tailed). At the standard 95% confidence level (p < 0.05), this result IS statistically significant. The 3pp improvement is unlikely to be due to random chance. However, statistical significance is not the whole story: 1. Practical significance: is a 3pp improvement worth the engineering investment? Revenue impact: 150 additional purchases per 5,000 checkout entries. If AOV is $85: 150 × $85 = $12,750 additional revenue per 5,000 users. Annualized (assuming similar traffic): could be $150,000-$300,000. 2. Confidence interval: the 95% CI for the improvement is approximately 1.1pp to 4.9pp. The true improvement could be as small as 1pp or as large as 5pp. 3. Downstream effects: did the variant affect OTHER metrics? Average order value, return rate, customer satisfaction, page load time. A checkout that is faster but causes more errors downstream is not a win. Recommendation: ship the variant, but monitor downstream metrics for 30 days post-launch'"
+    weight: 0.35
+    description: "Evaluation"
+  - type: llm_judge
+    criteria: "Response provides a framework for A/B testing funnel steps — framework: 'Framework for A/B testing funnel steps: Step 1 — Choose the right funnel step to test: prioritize the step with the highest revenue impact per percentage point improvement (from multi-step impact analysis). Do not test the step that annoys you most — test the step that costs you the most. Step 2 — Define the hypothesis clearly: bad hypothesis: the new checkout will be better. Good hypothesis: reducing the checkout form from 12 fields to 6 will increase checkout completion by 5-10% because form length is the primary source of friction (based on session recordings showing 40% of abandoners stop at field 7+). Step 3 — Calculate required sample size BEFORE running the test: inputs needed: current conversion rate (baseline), minimum detectable effect (MDE) you care about, statistical power (typically 80%), significance level (typically 5%). For the checkout example: baseline 55%, MDE 3pp (to 58%), power 80%, alpha 5%. Required sample size: approximately 4,500 per variant (9,000 total). At 500 checkout entries per day, need 18 days of testing. Step 4 — Run the test correctly: randomize at the user level (not session level) to avoid the same user seeing both variants. Run for complete weeks (to capture day-of-week effects). Do not peek at results early and stop when it looks good (peeking inflates false positive rate). Pre-register your analysis plan. Step 5 — Analyze holistically: check the primary metric (step conversion rate). Check guardrail metrics (revenue per user, error rate, support tickets). Check segment-level results (mobile vs desktop, new vs returning). Look for novelty effects (early variant lift that fades)'"
+    weight: 0.35
+    description: "Framework"
+  - type: llm_judge
+    criteria: "Response covers common A/B testing mistakes in funnel context — mistakes: 'Common A/B testing mistakes in funnel optimization: Mistake 1 — Testing too many changes at once: the variant changed the layout, copy, colors, and form fields simultaneously. If it wins, you do not know which change caused the improvement. If it loses, you might have discarded a good layout change because a bad copy change dragged it down. Fix: test one change per experiment (or use multivariate testing with much larger sample sizes). Mistake 2 — Optimizing one step at the expense of another: the new checkout page might improve checkout completion by removing the order review step. But now customers make more errors and the return rate increases. Net impact could be negative. Fix: always measure the downstream impact on the next funnel step and on business outcomes (revenue, returns, satisfaction). Mistake 3 — Stopping tests too early (peeking): day 3: variant is up 8%! Ship it! Day 14 (full test): variant is up 1.5% (not significant). Early results are noisy and biased upward. Fix: commit to the full test duration before starting. Use sequential testing methods if you need to peek (they adjust for multiple looks). Mistake 4 — Ignoring segment interactions: overall: variant wins by 3pp. But: desktop variant: +5pp (strong win). Mobile variant: -2pp (the variant is WORSE on mobile). Shipping the variant helps desktop but hurts mobile. Fix: always check segment-level results before shipping. Mistake 5 — Testing cosmetic changes instead of structural ones: changing button color from blue to green: typical lift is 0-0.5pp. Reducing form fields from 12 to 6: typical lift is 5-15pp. Cosmetic changes rarely move the needle. Focus on removing friction, reducing steps, and eliminating confusion. The highest-impact funnel tests: removing a step entirely (registration wall, unnecessary confirmation page). Reducing form fields by 50% or more. Adding express payment (Apple Pay, Google Pay). Pre-filling known information (address, payment). Changing the flow structure (single page vs multi-step checkout)'"
+    weight: 0.30
+    description: "Mistakes"

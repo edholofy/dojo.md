@@ -1,0 +1,42 @@
+meta:
+  id: predictive-clv-models
+  level: 3
+  course: customer-segmentation
+  type: output
+  description: "Predictive CLV models — build probabilistic models to predict customer lifetime value using BG/NBD, Pareto/NBD, and Gamma-Gamma models"
+  tags: [CLV, predictive, BG-NBD, Pareto-NBD, Gamma-Gamma, advanced]
+
+state: {}
+
+trigger: |
+  A head of analytics says: "We need to predict customer lifetime value
+  for each of our 100,000 customers so we can segment by future value,
+  not just past spending. Our business is a subscription box service —
+  customers subscribe monthly, some skip months, and some come back
+  after pausing.
+
+  Our data: customer ID, subscription start date, order dates, order
+  amounts, skip dates, cancellation dates (for those who've cancelled).
+  We have 3 years of transaction history.
+
+  I've heard about BG/NBD and Gamma-Gamma models for CLV prediction.
+  How do these work, and how do I use them to segment customers by
+  predicted future value?"
+
+  Task: Explain probabilistic CLV models (BG/NBD, Pareto/NBD, and
+  Gamma-Gamma), how they work, and how to use their predictions for
+  value-based customer segmentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the BG/NBD and Pareto/NBD models — these are 'Buy Till You Die' models that predict two things simultaneously: whether a customer is still alive (active vs churned) and how frequently they will purchase. BG/NBD assumes a customer is either alive or dead (binary), while Pareto/NBD assumes a gradual process. Both use recency and frequency to estimate the probability a customer is still active. Explains the key insight: a customer who purchased 10 times but last purchased 2 years ago is likely dead, while one who purchased 3 times with the last purchase yesterday is likely alive"
+    weight: 0.35
+    description: "ProbabilisticModels"
+  - type: llm_judge
+    criteria: "Response explains the Gamma-Gamma model for monetary value prediction — this model predicts the expected monetary value of future transactions given that a customer is alive. It assumes monetary value varies across customers (gamma distribution) but is relatively constant for an individual customer. Combined with BG/NBD: expected CLV = P(alive) × expected frequency × expected monetary value × customer lifetime. Shows how to combine the two models for full CLV prediction"
+    weight: 0.35
+    description: "GammaGamma"
+  - type: llm_judge
+    criteria: "Response shows how to use predicted CLV for segmentation — creating future-value tiers (high predicted CLV, medium, low, likely churned), identifying specific actionable segments like 'high historical value but likely to churn soon' (urgent retention) and 'low historical value but high predicted future value' (invest in growth), comparing historical vs predicted CLV segments (customers shift between tiers based on predicted trajectory), and how to validate predictions against actual outcomes over time"
+    weight: 0.30
+    description: "CLVSegmentation"

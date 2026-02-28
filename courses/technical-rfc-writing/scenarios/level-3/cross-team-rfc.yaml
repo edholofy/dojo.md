@@ -1,0 +1,45 @@
+meta:
+  id: cross-team-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write cross-team RFCs — coordinate proposals that span multiple teams with different priorities, timelines, and technical contexts"
+  tags: [RFC, cross-team, coordination, alignment, multi-stakeholder, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to implement a unified customer identity
+  system. Currently, three teams maintain separate user systems:
+
+  - Web Team: users table in PostgreSQL, email/password + OAuth
+  - Mobile Team: separate user store in Firebase, phone + biometric auth
+  - Enterprise Team: SAML/SSO integration with AD, separate LDAP directory
+
+  A single customer often has 3 separate accounts. Customer support
+  can't see a unified view. Marketing can't track cross-platform
+  engagement. Enterprise customers can't use SSO on mobile.
+
+  Each team has different priorities:
+  - Web: needs to ship 3 features this quarter, migration is disruptive
+  - Mobile: supports unified identity but won't rewrite Firebase auth
+  - Enterprise: desperately needs this for their biggest renewal
+
+  Task: Write an RFC that serves all three teams. Address each team's
+  concerns, propose a migration path that doesn't block anyone's
+  roadmap, and build consensus for a shared solution. Show how to
+  write an RFC when stakeholders have conflicting priorities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each team's concerns are explicitly addressed with specific accommodations — Web Team: 'Web team ships 3 features this quarter. Our proposal: Web team continues using current user table with a thin adapter layer added in Week 2 (estimated 2 days of engineering). Full migration to unified system happens after Q2 feature commitments are complete. Adapter ensures new user registrations are synchronized to the identity service from day one, eliminating future migration of new users.' Mobile Team: 'Firebase Authentication remains the mobile auth provider. Identity service integrates WITH Firebase, not replaces it. Firebase users are linked to unified identities via email/phone matching. Mobile team effort: add identity service SDK call after Firebase auth (1 API call, estimated 3 days).' Enterprise Team: 'SSO integration moves to the identity service immediately (Phase 1). This unblocks the renewal at risk. Enterprise team owns the SAML/SSO configuration migration. Timeline: 4 weeks to production SSO through unified identity.' Each team should read the RFC and find their specific situation addressed, not a generic 'all teams migrate'"
+    weight: 0.35
+    description: "Team-specific concerns"
+  - type: llm_judge
+    criteria: "Unified architecture respects existing systems — architecture: central Identity Service as source of truth for identity linking, NOT a replacement for all auth systems. 'The identity service manages user identity linking (who is this person across systems), not authentication (how do they prove who they are). Each platform keeps its authentication mechanism. The identity service provides: (1) cross-platform identity resolution (given a Firebase user, find their web and enterprise accounts), (2) unified profile API (single view of customer across platforms), (3) SSO bridge (enterprise SSO tokens accepted on all platforms).' Data model: unified_identities (canonical_id, created_at) with identity_links (canonical_id, provider, provider_user_id, linked_at). Migration strategy: automated matching by email (covers ~80% of accounts), phone number matching for mobile (covers ~10%), manual review queue for ambiguous cases (~10%). Consensus-building: RACI matrix showing each team's responsibilities. Total team effort shown: Web (5 days), Mobile (3 days), Enterprise (15 days), Identity team (40 days)"
+    weight: 0.35
+    description: "Unified architecture"
+  - type: llm_judge
+    criteria: "Conflict resolution and consensus strategies are demonstrated — addresses the inherent tension: 'Web team's concern about disruption is valid. Our phased approach means Web team contributes 2 days in Phase 1 (adapter layer) and schedules full migration for Phase 3 (after Q2). This is the minimum viable ask.' Explicit trade-offs presented: 'Option A: all teams migrate simultaneously (fastest overall but blocks Web's Q2 roadmap). Option B: phased migration per team (slower overall but doesn't block anyone). We recommend Option B because blocking $X in Q2 feature revenue is a higher cost than 4 extra weeks of migration.' Escalation handled: 'If Web team cannot allocate 2 days in Phase 1, the adapter layer can be built by the Identity team with Web team review, at the cost of 1 additional week.' Decision framework: 'For cross-team RFCs, we ask: (1) What's the minimum each team must contribute? (2) What can the proposing team absorb to reduce burden on others? (3) Where does executive sponsorship need to resolve priority conflicts?' The RFC should feel like a negotiation that considered everyone's constraints, not a mandate from one team"
+    weight: 0.30
+    description: "Conflict resolution"

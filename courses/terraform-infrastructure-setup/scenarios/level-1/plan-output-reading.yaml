@@ -1,0 +1,71 @@
+meta:
+  id: plan-output-reading
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Read terraform plan output — interpret change symbols, understand resource actions, identify destructive changes before apply"
+  tags: [Terraform, plan, output, changes, destroy, beginner]
+
+state: {}
+
+trigger: |
+  Your terraform plan shows this output and you need to understand
+  what will happen before approving:
+
+  ```
+  Terraform will perform the following actions:
+
+    # aws_instance.web will be destroyed and re-created
+    # (because ami has changed)
+  -/+ resource "aws_instance" "web" {
+      ~ ami                    = "ami-old123" -> "ami-new456" # forces replacement
+      ~ arn                    = "arn:aws:ec2:..." -> (known after apply)
+      ~ id                     = "i-abc123" -> (known after apply)
+        instance_type          = "t3.micro"
+      ~ public_ip              = "54.1.2.3" -> (known after apply)
+      + secondary_private_ips  = (known after apply)
+      - tags                   = {} -> null
+        # (15 unchanged attributes hidden)
+      }
+
+    # aws_s3_bucket.data will be updated in-place
+    ~ resource "aws_s3_bucket" "data" {
+        id     = "my-data-bucket"
+      ~ tags   = {
+          + "Environment" = "prod"
+          }
+      }
+
+    # aws_security_group.old will be destroyed
+    - resource "aws_security_group" "old" {
+      - id   = "sg-old789" -> null
+      - name = "old-sg" -> null
+      }
+
+    # aws_security_group.new will be created
+    + resource "aws_security_group" "new" {
+      + id   = (known after apply)
+      + name = "new-sg"
+      }
+
+  Plan: 2 to add, 1 to change, 2 to destroy.
+  ```
+
+  Task: Explain how to read terraform plan output, what each symbol
+  means (+, -, ~, -/+), what "forces replacement" means and why it's
+  dangerous, "known after apply" values, and best practices for
+  reviewing plans before apply.
+
+assertions:
+  - type: llm_judge
+    criteria: "Plan symbols are explained — + (create): new resource will be created. - (destroy): existing resource will be deleted. ~ (update in-place): resource will be modified without recreation. -/+ (destroy and recreate): resource must be destroyed and recreated (replacement). +/- (create before destroy): new resource created first, then old destroyed (lifecycle create_before_destroy). Within attributes: + (added), - (removed), ~ (changed). 'forces replacement' means changing that attribute requires destroying and recreating the resource (e.g., changing AMI on EC2 instance). '(known after apply)' means the value will be determined by the cloud provider during creation"
+    weight: 0.35
+    description: "Plan symbols"
+  - type: llm_judge
+    criteria: "Dangerous changes are identified — destroy and recreate (-/+) is dangerous: causes downtime, new IP address, new resource ID. The example: changing AMI forces EC2 instance replacement — means the server goes down, gets a new public IP, loses ephemeral storage. Review all -/+ changes carefully. Mitigation: lifecycle { create_before_destroy = true } creates the new resource before destroying the old one (reduces downtime). Pure destroy (-) is also dangerous: verify you actually want to remove the resource. Summary line 'Plan: 2 to add, 1 to change, 2 to destroy' is the quick check"
+    weight: 0.35
+    description: "Dangerous changes"
+  - type: llm_judge
+    criteria: "Plan review best practices are practical — always run plan before apply. Save plan: terraform plan -out=plan.tfplan, then terraform apply plan.tfplan (prevents drift between plan and apply). In CI/CD: plan on PR, apply on merge. Review checklist: (1) any destroys? expected? (2) any replacements? understand why? (3) count of changes matches expectations? (4) no sensitive data exposed in plan output? Use terraform plan -target=resource to plan specific resources. terraform plan -detailed-exitcode: exit 0 (no changes), exit 1 (error), exit 2 (changes present) — useful in scripts"
+    weight: 0.30
+    description: "Review practices"

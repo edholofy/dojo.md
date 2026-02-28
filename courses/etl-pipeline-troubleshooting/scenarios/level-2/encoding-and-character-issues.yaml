@@ -1,0 +1,49 @@
+meta:
+  id: encoding-and-character-issues
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Encoding and character issues — resolve character encoding mismatches, special character handling, and Unicode normalization in ETL pipelines"
+  tags: [encoding, unicode, UTF-8, special-characters, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "We're integrating customer data from
+  international sources and hitting encoding issues:
+
+  1. Names like 'José García' from our Spanish system appear as
+     'JosÃ© GarcÃ­a' in the warehouse — the accented characters
+     are garbled
+
+  2. A CSV from our Japanese partner contains product names in
+     Kanji but our pipeline reads them as '???' — the file has
+     a BOM (byte order mark) that our parser doesn't handle
+
+  3. We have identical-looking customer names that won't
+     deduplicate: 'Müller' and 'Müller' — one uses the ü
+     character (U+00FC) and the other uses u + combining
+     diaeresis (U+0075 + U+0308)
+
+  4. Emoji in customer feedback fields (⭐👍) are causing
+     'Incorrect string value' errors when loading into MySQL
+     with utf8 charset (not utf8mb4)
+
+  How do I properly handle character encoding in our pipeline?"
+
+  Task: Diagnose each encoding issue, explain the underlying
+  character encoding concepts, and design an encoding strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each issue correctly — garbled accents: the data is UTF-8 but being read as Latin-1/ISO-8859-1 (or vice versa), causing multi-byte UTF-8 sequences to be misinterpreted. BOM issue: the byte order mark (EF BB BF for UTF-8) is being included as data or causing parser confusion. Unicode normalization: NFC (precomposed ü) vs NFD (decomposed u + combining mark) are visually identical but byte-different. MySQL emoji: utf8 in MySQL only supports up to 3-byte sequences, emoji need 4 bytes requiring utf8mb4"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response explains encoding fundamentals — what character encoding is (mapping bytes to characters), ASCII vs Latin-1 vs UTF-8 vs UTF-16, why UTF-8 is the modern standard (variable length, backward compatible with ASCII, supports all Unicode), what Unicode normalization forms are (NFC vs NFD), what a BOM is and when it's used, and why MySQL's 'utf8' is actually a broken 3-byte subset (utf8mb4 is true UTF-8)"
+    weight: 0.35
+    description: "EncodingFundamentals"
+  - type: llm_judge
+    criteria: "Response designs an encoding strategy — standardize on UTF-8 throughout the entire pipeline (source detection → conversion → storage → output), detect source encoding before parsing (chardet library, explicit documentation from data providers), apply Unicode normalization (NFC) consistently to enable proper string comparison and deduplication, handle BOMs explicitly in file parsing, ensure all database columns use utf8mb4 (or equivalent) for full Unicode support, and validate encoding at ingestion time rather than discovering issues downstream"
+    weight: 0.30
+    description: "EncodingStrategy"

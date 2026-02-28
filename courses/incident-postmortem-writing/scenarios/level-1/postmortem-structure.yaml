@@ -1,0 +1,41 @@
+meta:
+  id: postmortem-structure
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Learn postmortem structure — understand the standard sections of an incident postmortem and what each section should contain"
+  tags: [postmortem, structure, template, sections, format, beginner]
+
+state: {}
+
+trigger: |
+  Your team has never written a formal postmortem. After a recent
+  outage, the team lead said "someone write up what happened" and
+  the result was a rambling 3-page Slack message that mixed timeline,
+  root cause, opinions, and action items into one stream of
+  consciousness.
+
+  The team needs a postmortem template and guide. They have questions:
+  - "How long should a postmortem be?"
+  - "What sections do we need?"
+  - "Who writes it? The on-call? The incident commander? Everyone?"
+  - "When do we write it? During the incident? After?"
+  - "Do we need one for every incident?"
+
+  Task: Create a postmortem template with section descriptions and
+  guidance for each section. Answer the team's questions. Include
+  an explanation of when postmortems are required vs optional.
+
+assertions:
+  - type: llm_judge
+    criteria: "Template has all essential sections with clear guidance — sections: (1) Summary: 2-3 sentences capturing what happened, impact, and resolution. Written for executives. (2) Severity and Impact: severity level, user impact, business impact, duration. Quantified. (3) Timeline: chronological events from detection to resolution. Factual, timestamped. (4) Root Cause: what went wrong and why, using Five Whys or similar analysis. Distinguish trigger from underlying cause. (5) Contributing Factors: other conditions that enabled or worsened the incident. (6) What Went Well: things that worked during incident response — detection, communication, teamwork. Important for learning, not just fixing. (7) What Went Wrong: things that didn't work during incident response — slow detection, unclear escalation, missing runbooks. (8) Action Items: specific, assigned, time-bound follow-ups categorized as: prevent, detect, mitigate. (9) Lessons Learned: broader insights beyond specific action items. Each section has a 1-2 sentence description and example prompts"
+    weight: 0.35
+    description: "Complete template"
+  - type: llm_judge
+    criteria: "Team questions are answered practically — length: '1-3 pages for most incidents. The summary + impact + timeline + root cause should fit on 1 page. Action items and lessons learned add another page. If it's longer, the scope might be too broad for one postmortem.' Who writes it: 'The incident commander or primary responder writes the first draft within 48 hours. Others who participated contribute to the timeline and review for accuracy. One person owns the document, multiple people contribute.' When to write: 'Start a rough timeline DURING the incident if possible (timestamped notes in the incident Slack channel). Write the full postmortem within 48 hours while memory is fresh. Review with the team within 1 week.' When required: 'Required for SEV-1 and SEV-2 incidents (customer-facing impact lasting more than 15 minutes). Recommended for SEV-3 incidents that reveal systemic issues. Not required for SEV-4 or incidents with no customer impact.' Who reviews: 'Team reviews for accuracy. Manager reviews for completeness. Blameless tone is everyone's responsibility — anyone can flag language that assigns blame'"
+    weight: 0.35
+    description: "Practical answers"
+  - type: llm_judge
+    criteria: "Template includes what-went-well and lessons-learned sections — what-went-well: 'This is often skipped but is critical. It reinforces good practices: detection was fast (alerting worked), escalation was smooth (right people engaged quickly), communication was clear (status page updated promptly). Examples: Our monitoring detected the issue 2 minutes after it started. The on-call engineer escalated to the right team within 5 minutes. Customer communication was sent within 15 minutes.' Why it matters: 'If we only document what went wrong, we lose sight of what's working. Good practices need reinforcement too. A postmortem that's all negative demoralizes the team.' Lessons learned: 'Broader than action items. Example: We learned that our load balancer config has no automated validation. This is the same class of issue as our DNS config incident last month. Lesson: we should audit all infrastructure configs for automated validation, not just fix this one.' Difference from action items: 'Action items are specific tasks (add alert X). Lessons learned are insights that inform future work (infrastructure configs need automated validation as a general principle). Both are valuable'"
+    weight: 0.30
+    description: "What went well and lessons"

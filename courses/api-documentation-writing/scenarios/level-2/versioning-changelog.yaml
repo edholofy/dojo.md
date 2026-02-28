@@ -1,0 +1,42 @@
+meta:
+  id: versioning-changelog
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document API versioning and changelogs — write version migration guides, changelog entries, and deprecation notices"
+  tags: [API, documentation, versioning, changelog, deprecation, migration, intermediate]
+
+state: {}
+
+trigger: |
+  Your API is releasing v2. Developers on v1 are confused:
+  - "What changed between v1 and v2?"
+  - "Will v1 stop working? When?"
+  - "How do I migrate? What code do I need to change?"
+  - "The changelog just says 'improvements' — that's useless"
+
+  Changes from v1 to v2:
+  - User object: "name" split into "first_name" and "last_name"
+  - Pagination: offset/limit → cursor-based
+  - Auth: API key deprecated → OAuth 2.0 required
+  - New: webhook events for user.created, user.deleted
+  - Removed: GET /api/v1/users/search (merged into GET /users?q=)
+  - Rate limits: increased from 100/min to 1000/min
+
+  Task: Write version documentation including: changelog format,
+  migration guide from v1 to v2, deprecation timeline for v1,
+  and versioning strategy documentation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Changelog is specific and actionable — each entry categorized: Added (new features), Changed (modifications), Deprecated (features being removed), Removed (features removed), Fixed (bug fixes), Security (vulnerability fixes). Each entry is specific: not 'improvements' but 'Split User.name into first_name and last_name for better internationalization support'. Breaking changes clearly flagged with migration instructions. Date and version number for each release"
+    weight: 0.35
+    description: "Changelog format"
+  - type: llm_judge
+    criteria: "Migration guide shows before/after — for each breaking change: what it was in v1, what it is in v2, code example showing the change. Example: 'User name field: v1: { name: \"Jane Cooper\" } → v2: { first_name: \"Jane\", last_name: \"Cooper\" }. Action: split your name handling into first_name and last_name.' Pagination migration: show v1 request and v2 equivalent. Auth migration: step-by-step OAuth setup replacing API key. Each change has estimated effort (5 min, 30 min, 2 hours)"
+    weight: 0.35
+    description: "Migration guide"
+  - type: llm_judge
+    criteria: "Deprecation timeline and versioning strategy are clear — deprecation timeline: (1) today — v2 released, v1 deprecated, (2) 3 months — deprecation warnings in v1 responses (Sunset header), (3) 6 months — v1 read-only, (4) 12 months — v1 shutdown (returns 410 Gone). Versioning strategy: URL-based (/v1/, /v2/), major version = breaking changes only. Header: Sunset: Sat, 01 Mar 2027 00:00:00 GMT. Communication plan: email, dashboard banner, blog post, in-response headers"
+    weight: 0.30
+    description: "Deprecation timeline"

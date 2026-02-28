@@ -1,0 +1,42 @@
+meta:
+  id: api-design-proposal
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Propose API designs in RFCs — present API contracts, versioning strategies, and backward compatibility considerations"
+  tags: [RFC, API-design, contracts, versioning, backward-compatibility, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to add a team management feature to your SaaS
+  platform. Currently users operate individually. The new feature adds:
+  - Organizations (groups of users)
+  - Roles within organizations (owner, admin, member, viewer)
+  - Team-scoped resources (projects, settings, billing)
+  - Invitations and onboarding flow
+
+  This requires significant API changes:
+  - New endpoints for organizations, roles, invitations
+  - Existing endpoints must become organization-aware
+  - Individual user endpoints must continue working (backward compat)
+  - Mobile app (v2.1) must work with old AND new APIs during transition
+
+  Task: Write the API design section of this RFC. Include endpoint
+  design, request/response schemas, backward compatibility strategy,
+  and versioning approach. Show how to present API changes that
+  reviewers can evaluate for completeness and consistency.
+
+assertions:
+  - type: llm_judge
+    criteria: "API endpoints are well-designed with clear contracts — new endpoints follow REST conventions: POST /organizations (create org), GET /organizations/:id (get org), POST /organizations/:id/members (invite), PUT /organizations/:id/members/:userId/role (change role), DELETE /organizations/:id/members/:userId (remove). Request/response schemas shown: 'POST /organizations { name, plan } → 201 { id, name, owner, created_at }'. Existing endpoints extended: 'GET /projects now accepts optional ?organization_id parameter. Without it, returns user's personal projects (backward compatible). With it, returns organization projects (requires membership).' Authentication: 'Organization context derived from API key scope or X-Organization-Id header. Personal API keys continue to work for individual resources.' Error responses for new scenarios: 403 when accessing org resources without membership, 409 when inviting existing member. Pagination, filtering, and sorting patterns consistent with existing API"
+    weight: 0.35
+    description: "API design quality"
+  - type: llm_judge
+    criteria: "Backward compatibility is explicitly addressed — strategy: 'All existing API endpoints continue to function identically for users not in organizations. No breaking changes to v1 API.' Specific compatibility guarantees: (1) 'GET /projects returns same response shape — organization projects are excluded unless organization_id is specified.' (2) 'User authentication tokens continue to work — organization context is additive, not required.' (3) 'Existing webhook payloads are unchanged — new organization fields are added as optional properties.' Transition plan: 'Mobile app v2.1 uses v1 API. Mobile app v2.2 (3 months away) will use organization-aware endpoints. Both must work simultaneously.' Deprecation plan: 'Legacy individual-only endpoints will be maintained for 12 months after organization features launch. Deprecation warnings added to response headers 6 months before removal.' Migration: 'Existing users automatically get a personal organization. Their resources are associated with this personal org, maintaining current behavior'"
+    weight: 0.35
+    description: "Backward compatibility"
+  - type: llm_judge
+    criteria: "Versioning and evolution strategy is practical — versioning approach: 'URL path versioning (/v1/, /v2/) for breaking changes. Header-based feature flags for gradual rollout of organization features.' Why this approach: 'URL versioning is explicit and cacheable. Clients know which version they're using. Header flags allow A/B testing organization features without a full version bump.' What constitutes a breaking change: 'Removing a field, changing a field type, requiring a previously optional parameter. Adding optional fields is NOT breaking.' API review checklist for this RFC: 'All new endpoints have consistent naming, error handling, and pagination. All response schemas are documented. All authorization rules are explicit.' Evolution path: 'v1 API remains stable. Organization features added as v1 extensions (optional parameters, new endpoints). v2 API considered only if organization model requires fundamentally different resource structure, estimated 12+ months away'"
+    weight: 0.30
+    description: "Versioning strategy"

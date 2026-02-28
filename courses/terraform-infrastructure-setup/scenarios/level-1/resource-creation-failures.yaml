@@ -1,0 +1,54 @@
+meta:
+  id: resource-creation-failures
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Debug resource creation failures — diagnose API errors, dependency issues, naming conflicts, and partial apply states"
+  tags: [Terraform, resources, apply, errors, dependencies, beginner]
+
+state: {}
+
+trigger: |
+  You run `terraform apply` and it partially succeeds:
+
+  ```
+  aws_vpc.main: Creating...
+  aws_vpc.main: Creation complete after 3s [id=vpc-0abc123def456]
+  aws_subnet.public: Creating...
+  aws_subnet.public: Creation complete after 1s [id=subnet-0abc789]
+  aws_security_group.web: Creating...
+
+  Error: creating Security Group (web-sg): InvalidGroup.Duplicate:
+  The security group 'web-sg' already exists for VPC 'vpc-0abc123def456'
+
+  aws_instance.web: Creating...
+
+  Error: creating EC2 Instance: UnauthorizedOperation: You are not
+  authorized to perform this operation. Encoded authorization failure
+  message: ...
+  ```
+
+  State after partial apply:
+  - VPC: created ✓
+  - Subnet: created ✓
+  - Security Group: FAILED ✗
+  - EC2 Instance: FAILED ✗
+
+  Task: Explain how terraform apply works (dependency graph, parallel
+  creation, partial state), what happens when apply partially fails,
+  how to recover from partial failures, common resource creation errors
+  (duplicates, permissions, quotas), and terraform plan vs apply workflow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Apply process is explained — terraform builds a dependency graph (DAG) and creates resources in parallel where possible. Resources with dependencies wait for their dependencies. Partial failure: successfully created resources are saved to state. Failed resources are not in state. On next apply, Terraform will try to create the failed resources again (it won't recreate already-created ones). The state file tracks what exists. Recovery: fix the errors and run apply again. terraform plan shows what will happen without making changes"
+    weight: 0.35
+    description: "Apply process"
+  - type: llm_judge
+    criteria: "Common creation errors are diagnosed — (1) Duplicate resource: security group already exists outside Terraform. Fix: import it (terraform import) or use a unique name. (2) UnauthorizedOperation: IAM permissions missing. Decode the message: aws sts decode-authorization-message. Fix: add required IAM permissions. (3) Quota exceeded: AWS service limits. Fix: request limit increase. (4) Invalid parameter: wrong AMI for region, invalid CIDR block. (5) Timeout: resource takes too long to create (increase timeouts in resource block)"
+    weight: 0.35
+    description: "Common errors"
+  - type: llm_judge
+    criteria: "Plan vs apply workflow is practical — terraform plan: preview changes without modifying infrastructure. Shows: resources to add (+), change (~), destroy (-). Save plan: terraform plan -out=tfplan, then terraform apply tfplan (ensures exactly the planned changes are applied). Always review plan before apply in production. terraform apply -auto-approve: skips confirmation (only for CI/CD, not manual runs). terraform destroy: removes all managed resources. Partial state: use terraform state list to see what's managed, terraform show for current state"
+    weight: 0.30
+    description: "Plan vs apply"

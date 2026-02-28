@@ -1,0 +1,48 @@
+meta:
+  id: design-metrics-feedback
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Design metrics feedback — use quantitative metrics and analytics to ground design critique in measurable outcomes"
+  tags: [metrics, analytics, data-driven, quantitative, advanced]
+
+state: {}
+
+trigger: |
+  A designer presents a redesigned checkout flow and says:
+  "I simplified the checkout — it looks much cleaner now."
+
+  Available analytics data from the current (old) design:
+  - Cart-to-purchase conversion: 68%
+  - Average checkout completion time: 4 min 12 sec
+  - Error rate on payment step: 12%
+  - Mobile checkout conversion: 41% (vs 68% desktop)
+  - Form field error rate: 23% on address fields
+  - Support tickets about checkout: 45/month
+
+  The new design:
+  1. Removed the order summary sidebar (says "users already
+     know what they're buying")
+  2. Combined shipping and billing address into one form
+  3. Removed the guest checkout option ("most users should
+     create accounts for better experience")
+  4. Changed from a multi-step to single-page checkout
+  5. Removed inline validation ("too cluttered")
+  6. Added a new "recommended products" section mid-checkout
+
+  Task: Write metrics-informed feedback that evaluates the
+  redesign against the existing data and identifies risks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response evaluates each design change against metrics — order summary removal (risky: order summary reassures users during payment — removing it may increase cart abandonment, especially at the payment step where 12% already error out, users who can't verify their order may hesitate to complete payment — recommend A/B testing removal before full rollout), combined address form (potentially good: could reduce the 23% address field error rate IF done well — auto-copy shipping to billing with a checkbox is the standard, but forcing combined entry may confuse users with different addresses), guest checkout removal (high risk: guest checkout typically accounts for 30-40% of e-commerce purchases, removing it will likely decrease the 68% conversion rate significantly — this change should be data-validated before implementation, the 41% mobile conversion is already low and forcing account creation on mobile will make it worse), single-page checkout (mixed: can work but may overwhelm users — the current 4:12 completion time suggests the multi-step isn't too slow, single-page works for few items but can be intimidating for complex orders), removed inline validation (dangerous: inline validation reduces errors — the current 23% address error rate will likely increase without it, this directly contradicts the data showing form errors are a problem), recommended products mid-checkout (risky: adding friction during checkout is counterproductive — the goal is completion, not upselling, this could increase the 4:12 completion time and decrease conversion)."
+    weight: 0.35
+    description: "MetricsBasedEvaluation"
+  - type: llm_judge
+    criteria: "Response teaches metrics-driven critique methodology — how to use metrics in feedback (don't just say 'I don't like it' — say 'this change risks increasing the 12% payment error rate because...', every design change should have a hypothesis: 'we expect this change to improve X metric by Y%', if a change can't articulate which metric it improves, question its purpose), metrics hierarchy for checkout (primary: conversion rate — cart-to-purchase, secondary: completion time, error rate, support tickets, segmented: mobile vs desktop, new vs returning users — the 41% mobile conversion gap suggests mobile-specific issues that a single redesign may not address), risk assessment framework (for each proposed change: what metric does this aim to improve? what metrics might this negatively impact? what's the blast radius if this change fails? can we test this incrementally rather than all at once?)."
+    weight: 0.35
+    description: "MetricsCritiqueMethodology"
+  - type: llm_judge
+    criteria: "Response provides an actionable path forward — prioritized recommendations (keep: combined address form with auto-copy checkbox — likely reduces errors; revert: guest checkout removal — too risky without data; revert: inline validation removal — contradicts error rate data; test: single-page vs multi-step via A/B test; test: order summary presence vs absence via A/B test; remove: mid-checkout product recommendations — adds friction at worst possible moment), measurement plan (before launching any change: define success metrics and targets, set up A/B testing infrastructure, measure for at least 2 weeks with statistical significance, segment results by device type given the mobile gap), and framing for the designer ('the visual simplification goal is good — cleaner interfaces generally perform better. But some of the removed elements were serving functional purposes that the metrics show are important. Let's keep the simplification direction but restore the elements that are measurably helping users complete checkout.')."
+    weight: 0.30
+    description: "ActionablePath"

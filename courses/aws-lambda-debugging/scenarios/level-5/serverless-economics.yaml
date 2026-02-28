@@ -1,0 +1,65 @@
+meta:
+  id: serverless-economics
+  level: 5
+  course: aws-lambda-debugging
+  type: output
+  description: "Analyze serverless economics — evaluate total cost of ownership, break-even analysis, and financial models for Lambda vs containers vs EC2"
+  tags: [AWS, Lambda, economics, TCO, break-even, serverless-vs-containers, master]
+
+state: {}
+
+trigger: |
+  The CFO requests a comprehensive comparison: "Lambda vs containers
+  vs EC2 — which is actually cheaper?" The answer depends on workload
+  characteristics.
+
+  Workload profiles analyzed:
+
+  Workload A — Spiky API (e-commerce):
+  Traffic: 0 at night, 1000 req/s during day, 5000 req/s during sales
+  Average duration: 200ms, Memory: 512MB
+
+  Lambda: ~$12,000/month (pay per invocation, scales to zero)
+  ECS Fargate: ~$8,000/month (must keep minimum containers running)
+  EC2: ~$5,000/month (cheapest compute but 24/7 running + ops cost)
+  + Ops cost: EC2 needs $15K/month in ops engineering time
+
+  Total: Lambda $12K, Fargate $8K, EC2 $20K (including ops)
+
+  Workload B — Steady-state API (SaaS):
+  Traffic: constant 500 req/s, 24/7
+  Average duration: 500ms, Memory: 1GB
+
+  Lambda: ~$45,000/month (expensive at constant high volume)
+  ECS Fargate: ~$6,000/month (right-sized containers)
+  EC2 Reserved: ~$3,000/month (1-year reserved instances)
+  + Ops cost: distributed across many services
+
+  Total: Lambda $45K, Fargate $6K, EC2 $8K
+
+  Workload C — Event processing (IoT):
+  Volume: 10M events/day, sporadic timing
+  Average duration: 50ms, Memory: 256MB
+
+  Lambda: ~$800/month (low duration, low memory, efficient)
+  ECS Fargate: ~$2,500/month (needs containers running for events)
+  EC2: ~$1,500/month (over-provisioned for sporadic workload)
+
+  Task: Analyze serverless economics. Write: the cost model for
+  each compute option, break-even analysis (when Lambda becomes
+  more expensive), hidden costs (CloudWatch, API Gateway, data
+  transfer, engineering time), and strategic decision framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Cost models are comprehensive — Lambda: per-invocation ($0.20/million) + per-GB-second ($0.0000166667) + API Gateway ($3.50/million REST, $1.00/million HTTP). No cost at zero traffic. ECS Fargate: per-vCPU-hour ($0.04048) + per-GB-hour ($0.004445). Minimum: 1 task always running. EC2: per-hour pricing, reserved instances 30-60% cheaper. Hidden costs: CloudWatch Logs ($0.50/GB), data transfer ($0.09/GB), NAT Gateway ($0.045/GB), VPC endpoints. Lambda break-even: typically at 1-10M invocations/month steady-state, Lambda becomes more expensive than right-sized containers"
+    weight: 0.35
+    description: "Cost models"
+  - type: llm_judge
+    criteria: "Break-even and decision factors are covered — Lambda is cheaper when: traffic is spiky (scales to zero), volume is low-medium, functions are short duration (< 1s). Containers are cheaper when: traffic is steady, volume is high, long-running processes. EC2 is cheaper when: compute is constant, can use reserved instances, need specialized hardware (GPU). Decision factors beyond cost: operational complexity (Lambda < Fargate < EC2), time to market (Lambda fastest), team skills, vendor lock-in, compliance requirements. Total cost includes: engineering time (Lambda needs less ops), opportunity cost (faster deployment = faster revenue)"
+    weight: 0.35
+    description: "Break-even analysis"
+  - type: llm_judge
+    criteria: "Strategic framework is practical — hybrid approach: Lambda for APIs + event processing + glue, Fargate for steady workloads + long-running jobs, EC2 for specialized compute. Evaluate per-workload, not per-organization. Present to CFO in business terms: cost per transaction, cost per user, infrastructure cost as % of revenue. Compare trends: Lambda getting cheaper (price reductions), containers getting easier (Fargate). Savings Plans: apply to Lambda AND Fargate (17% additional savings). Track and report: monthly cost per service, cost anomaly detection, cost per business metric (cost per order processed)"
+    weight: 0.30
+    description: "Strategic framework"

@@ -1,0 +1,76 @@
+meta:
+  id: cold-start-optimization
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Optimize Lambda cold starts — implement provisioned concurrency, SnapStart, and package optimization to reduce initialization latency"
+  tags: [AWS, Lambda, cold-start, provisioned-concurrency, SnapStart, optimization, intermediate]
+
+state: {}
+
+trigger: |
+  Your Java Lambda function has cold starts of 8-12 seconds. Users
+  hitting the API after an idle period wait 10+ seconds for the first
+  response. This is unacceptable for a user-facing API.
+
+  CloudWatch REPORT for cold start:
+  REPORT RequestId: abc-123 Duration: 450.00 ms
+  Billed Duration: 8950 ms Memory Size: 1024 MB
+  Max Memory Used: 256 MB Init Duration: 8500.00 ms
+
+  Init Duration: 8.5 seconds! The handler only takes 450ms.
+
+  Breakdown of cold start time:
+  - Download code package: 500ms (50MB jar)
+  - Start JVM: 3,000ms
+  - Class loading & dependency injection: 4,500ms
+  - First database connection: 500ms
+
+  Optimization approaches:
+
+  1. SnapStart (Java 11+, .NET 8):
+     Lambda snapshots the initialized function after the first init.
+     Subsequent cold starts restore from snapshot instead of
+     re-initializing. Reduces cold start from 8.5s to ~200ms.
+     $ aws lambda update-function-configuration \
+       --function-name my-func \
+       --snap-start ApplyOn=PublishedVersions
+     Caveat: must use published versions (not $LATEST).
+
+  2. Provisioned Concurrency:
+     Pre-initialize N execution environments. Zero cold starts
+     for up to N concurrent requests.
+     $ aws lambda put-provisioned-concurrency-config \
+       --function-name my-func --qualifier prod \
+       --provisioned-concurrent-executions 10
+     Cost: ~$15/month per provisioned environment (always running).
+
+  3. Package optimization:
+     Reduce jar from 50MB to 15MB (remove unused dependencies).
+     Use GraalVM native image for sub-second JVM start.
+     Use lighter frameworks (Micronaut/Quarkus instead of Spring).
+
+  4. Warm-up pings:
+     CloudWatch Events rule invokes function every 5 minutes.
+     Keeps one environment warm but doesn't prevent cold starts
+     during scaling.
+
+  Task: Explain cold start optimization. Write: SnapStart (how it
+  works, requirements, limitations), provisioned concurrency (cost,
+  auto-scaling, when to use), package optimization techniques,
+  runtime-specific advice (Java vs Node.js vs Python), and how to
+  measure cold start impact on users.
+
+assertions:
+  - type: llm_judge
+    criteria: "SnapStart and provisioned concurrency are explained — SnapStart: snapshots initialized function at publish time, restores on cold start (~200ms instead of seconds). Works with Java 11+ (Corretto), .NET 8. Must publish versions. Cannot combine with provisioned concurrency. Limitations: uniqueness (random/UUID generated during init may be duplicated). Provisioned concurrency: pre-initializes environments, eliminates cold starts entirely for configured capacity. Cost: hourly charge per provisioned unit. Auto-scaling provisioned concurrency via Application Auto Scaling for variable traffic"
+    weight: 0.35
+    description: "SnapStart and provisioned"
+  - type: llm_judge
+    criteria: "Package and runtime optimization are covered — reduce package size: remove unused dependencies, use tree shaking/bundlers. Java: use Micronaut/Quarkus (designed for Lambda), GraalVM native image (sub-100ms starts), avoid Spring Boot (heavy reflection/classpath scanning). Node.js: bundle with esbuild, lazy-load heavy modules. Python: avoid large packages (pandas, numpy) unless needed, use Lambda-optimized versions. General: initialize SDK clients and DB connections outside handler (reused on warm starts). Measure Init Duration in REPORT line"
+    weight: 0.35
+    description: "Package and runtime"
+  - type: llm_judge
+    criteria: "Measurement and decision-making are practical — measure cold start impact: percentage of invocations that are cold starts (check Init Duration presence in CloudWatch Logs Insights). Query: filter @type = 'REPORT' | stats count() as total, sum(@initDuration > 0) as coldStarts. Calculate: if 5% of requests are cold starts with 5s delay, average latency impact is 250ms. Decision: if cold starts affect p99 latency for user-facing APIs → use SnapStart or provisioned concurrency. If async processing (SQS, events) → cold starts usually don't matter. Cost-benefit: provisioned concurrency costs $15/month per unit — compare to user impact of cold starts"
+    weight: 0.30
+    description: "Measurement"

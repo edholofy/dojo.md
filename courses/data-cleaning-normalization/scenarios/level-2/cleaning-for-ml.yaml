@@ -1,0 +1,43 @@
+meta:
+  id: cleaning-for-ml
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Data cleaning for machine learning — prepare data specifically for ML models with feature scaling, encoding, and data leakage prevention"
+  tags: [machine-learning, feature-engineering, data-leakage, preparation, intermediate]
+
+state: {}
+
+trigger: |
+  A junior ML engineer says: "I'm preparing a dataset for a classification
+  model (predicting customer churn). I've done basic cleaning but my
+  senior colleague says my preprocessing has data leakage issues. She
+  also says I need to handle feature scaling, encoding, and missing data
+  differently for ML than for regular analysis.
+
+  My current process:
+  1. Fill missing values with column means (on entire dataset)
+  2. Normalize all features with min-max scaling (on entire dataset)
+  3. One-hot encode all categoricals
+  4. Split into train/test
+  5. Train model
+
+  What am I doing wrong?"
+
+  Task: Identify data leakage issues in the ML preprocessing pipeline,
+  explain the correct order of operations, and design a leakage-free
+  preprocessing pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies the data leakage — computing means and scaling parameters on the entire dataset BEFORE splitting means that test set information leaks into the training process. The mean used for imputation includes test set values. The min and max used for scaling include test set values. This inflates model performance in testing because the model has indirectly 'seen' test data. The correct order: split first, then fit preprocessing on training data only, then apply the same transformations to test data"
+    weight: 0.35
+    description: "LeakageIdentification"
+  - type: llm_judge
+    criteria: "Response designs the correct preprocessing pipeline — correct order: (1) Split data into train/test first, (2) fit imputer on training data (learn means from train), transform both train and test, (3) fit scaler on training data (learn min/max from train), transform both train and test, (4) fit encoder on training data (learn categories from train), transform both train and test. Explains how to use sklearn Pipeline and ColumnTransformer to encapsulate preprocessing with the model, ensuring no leakage even during cross-validation"
+    weight: 0.35
+    description: "CorrectPipeline"
+  - type: llm_judge
+    criteria: "Response covers ML-specific cleaning considerations — handling unseen categories at inference (categories in production that weren't in training), choosing imputation that works with the model type (mean imputation may not be appropriate for tree models — consider indicator variables for missingness), feature scaling requirements by model type (needed for SVM, KNN, neural nets, logistic regression; not needed for tree-based models), and the concept of preprocessing as part of the model (preprocessing steps must be saved and applied identically during training and inference)"
+    weight: 0.30
+    description: "MLSpecific"

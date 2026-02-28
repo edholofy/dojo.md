@@ -1,0 +1,42 @@
+meta:
+  id: suggesting-alternatives
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Suggest alternatives with code — provide concrete code suggestions in reviews showing before/after transformations with trade-off analysis"
+  tags: [code-review, alternatives, code-suggestions, before-after, trade-offs, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing code and find several places where a different
+  approach would be better. Rather than vaguely saying "consider
+  another approach," you want to show the alternative with code.
+
+  Current code patterns you've found:
+
+  1. A 15-line if/else chain checking user.role for 6 different values
+  2. A Promise chain 8 levels deep (.then().then().then()...)
+  3. Manual array filtering with a for loop and push
+  4. Try/catch with identical error handling in 5 different functions
+  5. A function that takes 7 positional parameters
+
+  Task: For each pattern, write a review comment that shows the
+  current approach and the suggested alternative as code snippets.
+  Include: what's wrong with the current approach, the alternative
+  code, and an honest assessment of trade-offs (the alternative
+  isn't always strictly better).
+
+assertions:
+  - type: llm_judge
+    criteria: "Code suggestions are concrete and complete — (1) if/else chain → object literal lookup or switch statement or Map: show `const handlers = { admin: handleAdmin, user: handleUser, ... }; handlers[user.role]?.()`. (2) Promise chain → async/await: show the before (nested .then) and after (linear await statements). (3) Manual loop → array methods: show `const active = users.filter(u => u.isActive).map(u => u.name)`. (4) Duplicate error handling → higher-order function or error middleware: show `const withErrorHandling = (fn) => async (...args) => { try { return await fn(...args); } catch(e) { handleError(e); } }`. (5) 7 parameters → options object: show `function createUser({ name, email, role, ...opts })` with destructuring. Each suggestion is copy-pasteable with minimal modification"
+    weight: 0.35
+    description: "Concrete code"
+  - type: llm_judge
+    criteria: "Trade-offs are honestly assessed — (1) Object lookup: cleaner but loses TypeScript exhaustiveness checking (switch with default gives compile-time safety). (2) Async/await: more readable but error handling requires try/catch wrapping (or .catch on the promise). (3) Array methods: more declarative but creates intermediate arrays (for large datasets, a single loop is more memory-efficient). (4) Higher-order function: reduces duplication but adds indirection (debugging is harder when error handling is abstracted). (5) Options object: flexible but loses positional argument auto-complete in some IDEs, and you must destructure carefully. Each trade-off is honest — the reviewer acknowledges when the current approach has legitimate advantages. 'I prefer this approach, but I understand if you want to keep the current one because of [specific advantage]'"
+    weight: 0.35
+    description: "Honest trade-offs"
+  - type: llm_judge
+    criteria: "Comments frame suggestions as proposals, not mandates — language: 'Here's an alternative approach — let me know what you think' not 'Change this to...'. When the alternative is clearly better: 'I think this would improve readability significantly — the nested .then chain is hard to follow at 8 levels.' When it's a preference: 'This is a style preference — the object lookup is more concise but your switch statement works well too. Up to you.' When the suggestion is complex: 'This is a bigger refactor — could be a follow-up PR if you agree with the direction.' GitHub suggestion format used where applicable (```suggestion blocks). Each comment acknowledges the effort in the current code — 'The logic here is correct, I'm just suggesting a structural alternative'"
+    weight: 0.30
+    description: "Proposal framing"

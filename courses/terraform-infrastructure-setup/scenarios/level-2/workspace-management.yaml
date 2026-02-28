@@ -1,0 +1,51 @@
+meta:
+  id: workspace-management
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Manage Terraform workspaces — understand workspace isolation, limitations, and when to use workspaces vs directory-based environments"
+  tags: [Terraform, workspaces, environments, isolation, multi-env, intermediate]
+
+state: {}
+
+trigger: |
+  Your team uses workspaces for environment separation:
+
+  ```
+  $ terraform workspace list
+    default
+    dev
+    staging
+  * prod
+
+  $ terraform workspace select staging
+  Switched to workspace "staging".
+
+  $ terraform plan
+  # Accidentally planning against staging with prod-sized resources
+  # because terraform.tfvars has prod values!
+  ```
+
+  A developer selected the wrong workspace and applied prod-sized
+  (expensive) resources to staging. Monthly bill spiked by $5K.
+
+  Another issue: you can't use different provider versions for dev
+  vs prod because all workspaces share the same root module.
+
+  Task: Explain Terraform workspaces, their proper use cases,
+  limitations, the terraform.workspace variable, and compare
+  workspaces vs directory-based environment separation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Workspaces are explained — workspaces create separate state files within the same backend. terraform workspace new dev creates a new workspace. State stored at: env:/dev/terraform.tfstate. terraform.workspace variable returns current workspace name — use for conditional logic: locals { instance_type = terraform.workspace == 'prod' ? 't3.large' : 't3.micro' }. Workspaces share the same code, providers, and backend config. The accident: wrong workspace selected, wrong tfvars applied because workspaces don't enforce which tfvars to use"
+    weight: 0.35
+    description: "Workspaces explained"
+  - type: llm_judge
+    criteria: "Limitations are clearly stated — workspaces are NOT ideal for environment separation because: (1) same code for all environments (can't have different provider versions), (2) easy to apply to wrong workspace (no guardrails), (3) shared backend makes cross-environment blast radius larger, (4) terraform.workspace checks scattered through code make it hard to read. Proper use cases: testing infrastructure changes (ephemeral workspaces), feature branch environments, temporary environments for demos. NOT for: long-lived dev/staging/prod separation"
+    weight: 0.35
+    description: "Limitations"
+  - type: llm_judge
+    criteria: "Directory-based alternative is recommended — separate directories per environment: environments/dev/, environments/staging/, environments/prod/. Each has its own backend config, tfvars, and can pin different module/provider versions. Benefits: complete isolation, clear boundaries, can't accidentally apply to wrong environment, independent state. Shared logic through modules: environments call common modules with environment-specific variables. Terraform Cloud workspaces are different from CLI workspaces — they provide true isolation with separate runs, variables, and permissions"
+    weight: 0.30
+    description: "Directory alternative"

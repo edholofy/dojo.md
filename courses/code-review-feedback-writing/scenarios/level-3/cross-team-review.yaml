@@ -1,0 +1,45 @@
+meta:
+  id: cross-team-review
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review cross-team code — navigate reviewing code from teams with different conventions, priorities, and domain knowledge while providing valuable feedback"
+  tags: [code-review, cross-team, collaboration, domain-knowledge, conventions, advanced]
+
+state: {}
+
+trigger: |
+  You're on the payments team. The platform team asks you to review
+  their PR that adds a new event bus system. Challenges:
+
+  - You don't know their codebase well
+  - They use a different testing framework (they use Playwright,
+    you use Jest)
+  - Their coding conventions differ (they use classes, your team
+    uses functional)
+  - The PR impacts your team (your services will need to emit events)
+  - You're not sure which of your concerns are "that's how they do
+    things" vs "that's actually wrong"
+
+  The PR adds: EventBus class, EventEmitter, EventSubscriber pattern,
+  retry mechanism for failed deliveries, dead letter queue.
+
+  Task: Write a cross-team review that provides value without
+  overstepping. Show how to: ask about unfamiliar conventions before
+  criticizing, focus on the interface your team will use, flag
+  concerns from your domain expertise (payments), and distinguish
+  between "different" and "wrong."
+
+assertions:
+  - type: llm_judge
+    criteria: "Review distinguishes different from wrong — explicitly separate: 'These are questions about conventions I'm not familiar with (may be intentional)' vs 'These are concerns from my payments domain expertise (likely valid regardless of team conventions).' Convention questions: 'I noticed you use class-based patterns throughout — is that your team's standard? Our team uses functions but I want to respect your conventions.' Domain concerns: 'The retry mechanism retries on all errors — for payment events, retrying a charge event could result in double-charging. Payment events should only be retried if they're idempotent.' The reviewer shows humility about what they don't know while being firm about what they do know"
+    weight: 0.35
+    description: "Different vs wrong"
+  - type: llm_judge
+    criteria: "Interface concerns are highlighted as the primary review focus — 'Since my team will be the primary consumer of this event bus, I focused my review on the producer API.' Specific interface feedback: event schema documentation (what fields are required?), error handling contract (what happens when the bus is down?), delivery guarantees (at-least-once vs exactly-once — critical for payments), event ordering guarantees (payment.created must arrive before payment.succeeded). API ergonomics: 'The current API requires 5 lines of boilerplate to emit one event — could we add a helper like eventBus.emit(type, payload)?' Backward compatibility: 'If the event schema changes, how will consumers know? Suggest versioning events from the start.'"
+    weight: 0.35
+    description: "Interface focus"
+  - type: llm_judge
+    criteria: "Cross-team communication is respectful and collaborative — opening: 'Thanks for the review request — excited to see the event bus taking shape. I focused primarily on the producer API since the payments team will be a heavy consumer.' Questions before assumptions: 'I have some questions about design decisions that may reflect conventions I'm not familiar with — happy to discuss async.' Expertise sharing: 'From our experience with payment events, here are patterns that have burned us...' Collaboration offer: 'Would it be helpful if I put together a list of payment events we'd want to emit? That could help validate the event schema design.' Close: 'Overall this looks solid for the use cases I can evaluate. I'd recommend getting a review from the data team too since they'll be heavy consumers of analytics events.'"
+    weight: 0.30
+    description: "Collaborative communication"

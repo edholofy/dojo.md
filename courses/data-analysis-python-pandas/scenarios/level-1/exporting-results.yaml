@@ -1,0 +1,36 @@
+meta:
+  id: exporting-results
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Export analysis results — save DataFrames to CSV, Excel, and formatted reports for stakeholders"
+  tags: [python, pandas, export, CSV, Excel, to_csv, to_excel, beginner]
+
+state: {}
+
+trigger: |
+  You have completed your sales analysis and created a summary
+  DataFrame:
+
+  region_summary = DataFrame with columns: region, total_revenue,
+  avg_order_value, num_orders, top_product
+
+  Your manager asks: "Save this as a CSV for the data warehouse,
+  an Excel file for the finance team (they want formatting), and
+  print a nice summary to the terminal."
+
+  Task: Export the results in all three formats.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly exports to CSV and Excel with appropriate options — code: 'Exporting analysis results: Export 1 — CSV for the data warehouse: region_summary.to_csv(\"region_summary.csv\", index=False). index=False prevents writing the DataFrame index as a column (the data warehouse does not need row numbers). Other useful parameters: region_summary.to_csv(\"region_summary.csv\", index=False, encoding=\"utf-8-sig\") — utf-8-sig adds a BOM (byte order mark) that helps Excel open the CSV correctly with special characters. region_summary.to_csv(\"region_summary.csv\", index=False, float_format=\"%.2f\") — limits floats to 2 decimal places. region_summary.to_csv(\"region_summary.csv\", index=False, columns=[\"region\", \"total_revenue\"]) — exports only specific columns. Export 2 — Excel for the finance team: with pd.ExcelWriter(\"region_report.xlsx\", engine=\"openpyxl\") as writer: region_summary.to_excel(writer, sheet_name=\"Regional Summary\", index=False, startrow=1). worksheet = writer.sheets[\"Regional Summary\"]. worksheet.cell(row=1, column=1, value=\"Sales Report — Regional Summary\"). for col in worksheet.columns: max_length = max(len(str(cell.value or \"\")) for cell in col). worksheet.column_dimensions[col[0].column_letter].width = max_length + 2. This creates a formatted Excel file with: a title row, auto-sized column widths, and a named sheet tab. Multiple sheets in one file: with pd.ExcelWriter(\"full_report.xlsx\") as writer: region_summary.to_excel(writer, sheet_name=\"By Region\", index=False). product_summary.to_excel(writer, sheet_name=\"By Product\", index=False). monthly_summary.to_excel(writer, sheet_name=\"By Month\", index=False). Export 3 — Terminal display: print(region_summary.to_string(index=False)). For formatted output: print(region_summary.to_markdown(index=False)) — requires tabulate package. Produces a clean markdown table that looks good in terminals and documentation'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers format selection and common export issues — explanation: 'When to use each format: CSV: universal format, works with every tool. Use for: data warehouse imports, sharing with technical teams, automated pipelines. Limitations: no formatting, no multiple sheets, no formulas. Excel: rich formatting, multiple sheets, formulas. Use for: finance teams, management reports, anyone who works in Excel. Limitations: row limit (1,048,576 rows), larger file size, requires openpyxl package. JSON: nested data structures, web APIs. Use for: sending data to web applications, API responses. df.to_json(\"output.json\", orient=\"records\", indent=2). Parquet: compressed, columnar format. Use for: large datasets, data pipelines, machine learning workflows. df.to_parquet(\"output.parquet\") — 5-10x smaller than CSV, 10x faster to read. Common export issues: Issue 1 — Encoding errors. If product names contain special characters (accents, symbols): use encoding=\"utf-8\" (default) or encoding=\"utf-8-sig\" for Excel compatibility. Issue 2 — Large files. For DataFrames with millions of rows: CSV export can be slow. Consider: compression: df.to_csv(\"output.csv.gz\", compression=\"gzip\"). Parquet: df.to_parquet(\"output.parquet\") is much faster and smaller. Chunked export: for extremely large files, write in chunks. Issue 3 — Index confusion. By default, to_csv and to_excel include the index. This adds an unwanted column (0, 1, 2, ...) to the output. Almost always use index=False unless the index has meaningful information (like dates in a time series)'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers creating presentation-ready summaries — summaries: 'Creating presentation-ready summaries: Formatted summary string: summary = f\"\"\"Sales Analysis Summary. Total Revenue: ${df[\"revenue\"].sum():,.2f}. Total Orders: {len(df):,}. Average Order Value: ${df[\"revenue\"].mean():,.2f}. Regions: {df[\"region\"].nunique()}. Products: {df[\"product_name\"].nunique()}. Date Range: {df[\"date\"].min().strftime(\"%b %d, %Y\")} to {df[\"date\"].max().strftime(\"%b %d, %Y\")}\"\"\". print(summary). Styled DataFrame in Jupyter: styled = (region_summary.style.format({\"total_revenue\": \"${:,.0f}\", \"avg_order_value\": \"${:,.2f}\", \"num_orders\": \"{:,}\"}).bar(subset=[\"total_revenue\"], color=\"steelblue\").set_caption(\"Regional Sales Summary\")). This creates a visually formatted table in Jupyter notebooks with data bars (like a mini chart inside the table). Clipboard export (for pasting into slides): region_summary.to_clipboard(index=False). This copies the DataFrame to the system clipboard — you can paste it directly into PowerPoint, Google Slides, or an email'"
+    weight: 0.30
+    description: "Summaries"

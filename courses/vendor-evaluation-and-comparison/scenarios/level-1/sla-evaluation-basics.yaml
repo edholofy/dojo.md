@@ -1,0 +1,92 @@
+meta:
+  id: sla-evaluation-basics
+  level: 1
+  course: vendor-evaluation-and-comparison
+  type: output
+  description: "SLA evaluation basics — analyze and compare service level agreements from competing vendors"
+  tags: [sla, service-level, uptime, response-time, comparison, beginner]
+
+state: {}
+
+trigger: |
+  You're a Customer Support Manager at a 90-person online
+  education company. You're selecting a help desk platform
+  and need to compare the SLAs from 3 vendors. Your CEO
+  keeps saying "just pick the one with the best uptime" but
+  you know SLAs are more nuanced than a single number.
+
+  Your company's requirements:
+  - Support hours: 8am-10pm EST, 7 days/week
+  - Average ticket volume: 200/day, peak: 500/day (course
+    launch weeks, ~8 weeks/year)
+  - Critical function: students must be able to submit
+    assignments and access course materials
+  - Current pain: your existing tool goes down during peak
+    times, causing student complaints
+
+  Vendor A — HelpDesk Pro:
+  SLA highlights:
+  - Uptime: 99.9% measured monthly
+  - Planned maintenance: Excluded from uptime calculation,
+    performed "during off-peak hours" (not defined)
+  - Response time: P1 (system down): 4 hours, P2 (major
+    feature unavailable): 8 hours, P3 (minor issue): 24
+    hours, P4 (cosmetic/question): 48 hours
+  - Resolution time: "Commercially reasonable efforts"
+  - Credit: 5% of monthly fee per 0.1% below SLA, capped
+    at 25% of monthly fee
+  - Credit process: Customer must request credits within
+    10 business days; vendor determines if downtime qualifies
+  - Measurement: Vendor's own monitoring dashboard
+  - Exclusions: Force majeure, customer's network issues,
+    third-party integrations, "scheduled or emergency
+    maintenance"
+
+  Vendor B — SupportFlow:
+  SLA highlights:
+  - Uptime: 99.95% measured monthly
+  - Planned maintenance: Included in uptime calculation,
+    max 4 hours/month with 48 hours notice
+  - Response time: P1: 1 hour, P2: 4 hours, P3: 8 hours,
+    P4: 24 hours
+  - Resolution time: P1: 4 hours, P2: 12 hours, P3: 48
+    hours, P4: 5 business days
+  - Credit: 10% of monthly fee per 0.1% below SLA, capped
+    at 100% of monthly fee
+  - Credit process: Automatic credits applied to next
+    invoice; published status page with third-party
+    monitoring
+  - Measurement: Third-party monitoring (Pingdom)
+  - Exclusions: Force majeure, customer's network issues
+
+  Vendor C — QuickSupport:
+  SLA highlights:
+  - Uptime: 99.99% measured quarterly
+  - Planned maintenance: Not mentioned in SLA
+  - Response time: "Priority support with fast response
+    times" (no specific commitments)
+  - Resolution time: Not specified
+  - Credit: "Service credits available upon request"
+  - Credit process: Not specified
+  - Measurement: Not specified
+  - Exclusions: Not specified
+
+  Task: Analyze each vendor's SLA, identify strengths and
+  weaknesses, explain the significance of each SLA element,
+  and recommend which SLA best protects your company. Help
+  your CEO understand why uptime percentage alone doesn't
+  tell the full story.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response analyzes SLA elements beyond uptime — explains why measurement period matters (monthly vs quarterly — quarterly hides bad months); why planned maintenance exclusions matter (could mean unlimited downtime during 'maintenance'); why response time vs resolution time are different; why credit caps and claim processes matter (25% cap vs 100% cap, manual vs automatic); why third-party vs self-monitored measurement matters; the analysis educates about what makes an SLA meaningful."
+    weight: 0.35
+    description: "SLAElementAnalysis"
+  - type: llm_judge
+    criteria: "Response identifies specific red flags — QuickSupport's SLA is essentially meaningless (no specific commitments, quarterly measurement, vague credits); HelpDesk Pro excludes 'emergency maintenance' from uptime (loophole), vendor self-measures (conflict of interest), customer must claim credits (many won't); SupportFlow has the most protective SLA (auto credits, third-party monitoring, maintenance included in uptime); the analysis would help avoid vendor SLA theater."
+    weight: 0.35
+    description: "RedFlagIdentification"
+  - type: llm_judge
+    criteria: "Response connects SLA terms to business impact — explains what 99.9% vs 99.95% means in actual downtime minutes per month; connects P1 response times to the company's peak-period risk (course launches); explains why resolution time commitments matter more than response time for actual service recovery; the recommendation considers the education company's specific needs (student access during peak enrollment)."
+    weight: 0.30
+    description: "BusinessImpactConnection"

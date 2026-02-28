@@ -1,0 +1,35 @@
+meta:
+  id: creating-new-columns
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Create and transform columns — add calculated columns, apply functions, and use conditional logic to derive new data"
+  tags: [python, pandas, columns, apply, map, transform, beginner]
+
+state: {}
+
+trigger: |
+  Your manager wants additional columns in the sales data for
+  the quarterly report:
+
+  1. "Add a revenue column (quantity * unit_price)."
+  2. "Add a price_tier column: 'Budget' if unit_price < 25,
+     'Standard' if 25-100, 'Premium' if over 100."
+  3. "Add a month_name column from the date (January, February, etc)."
+
+  Task: Write the pandas code for each new column and explain the
+  different approaches for creating columns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly creates all three columns using appropriate methods — code: 'Creating new columns: Column 1 — Revenue (arithmetic operation): df[\"revenue\"] = df[\"quantity\"] * df[\"unit_price\"]. This is vectorized — pandas multiplies every row at once without a loop. You can use any arithmetic: +, -, *, /, **, //. Column 2 — Price tier (conditional logic): Method 1 using np.select (recommended for multiple conditions): import numpy as np. conditions = [df[\"unit_price\"] < 25, df[\"unit_price\"].between(25, 100), df[\"unit_price\"] > 100]. choices = [\"Budget\", \"Standard\", \"Premium\"]. df[\"price_tier\"] = np.select(conditions, choices, default=\"Unknown\"). Method 2 using pd.cut (for numeric bins): df[\"price_tier\"] = pd.cut(df[\"unit_price\"], bins=[0, 25, 100, float(\"inf\")], labels=[\"Budget\", \"Standard\", \"Premium\"]). pd.cut is cleaner for simple numeric thresholds. It automatically handles the boundaries. Method 3 using apply (flexible but slower): def classify_price(price): if price < 25: return \"Budget\". elif price <= 100: return \"Standard\". else: return \"Premium\". df[\"price_tier\"] = df[\"unit_price\"].apply(classify_price). apply runs a Python function on each value. It is flexible but 10-100x slower than vectorized methods for large DataFrames. Column 3 — Month name (datetime accessor): df[\"month_name\"] = df[\"date\"].dt.month_name(). Other useful datetime extractions: df[\"year\"] = df[\"date\"].dt.year. df[\"quarter\"] = df[\"date\"].dt.quarter. df[\"is_weekend\"] = df[\"date\"].dt.dayofweek >= 5'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers vectorized operations vs apply and performance implications — explanation: 'Vectorized vs apply — performance matters: Vectorized operations (use these first): arithmetic: df[\"a\"] * df[\"b\"]. String methods: df[\"name\"].str.upper(), df[\"name\"].str.contains(\"x\"). Datetime methods: df[\"date\"].dt.year, df[\"date\"].dt.month_name(). Conditional: np.where(condition, true_value, false_value). np.select for multiple conditions. These operate on entire columns at once using optimized C code. They are 10-100x faster than apply. The apply method (use as last resort): df[\"col\"].apply(func) runs a Python function on each value one at a time. Use apply only when: the logic is too complex for vectorized operations (multiple lookups, external API calls, complex string parsing). Performance is not a concern (small DataFrame, one-time operation). Performance comparison on 1 million rows: vectorized: df[\"a\"] * df[\"b\"] takes approximately 5ms. np.select with conditions takes approximately 15ms. apply with a function takes approximately 500ms-2s. For 10,000 rows, the difference is negligible. For 1 million+ rows, always use vectorized operations. The map method: df[\"region_code\"] = df[\"region\"].map({\"West\": \"W\", \"East\": \"E\", \"South\": \"S\", \"North\": \"N\"}). map is useful for dictionary-based lookups. It is faster than apply because the lookup is optimized. Use map for simple value replacement, apply for complex logic'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers common column creation patterns and pitfalls — patterns: 'Common column creation patterns: Pattern 1 — Conditional flag: df[\"high_value\"] = (df[\"revenue\"] > 500).astype(int). Creates a 0/1 flag. Useful for filtering and aggregation (df[\"high_value\"].sum() counts high-value orders). Pattern 2 — String extraction: df[\"first_word\"] = df[\"product_name\"].str.split().str[0]. Extracts the first word from product names. Pattern 3 — Cumulative calculations: df[\"cumulative_revenue\"] = df.sort_values(\"date\")[\"revenue\"].cumsum(). Running total of revenue over time. Pattern 4 — Percentage of total: df[\"revenue_pct\"] = (df[\"revenue\"] / df[\"revenue\"].sum() * 100).round(2). Each order as a percentage of total revenue. Pitfall — Modifying a column in place vs creating a copy: df[\"unit_price\"] = df[\"unit_price\"] * 1.1 modifies the column permanently. If you need the original value later, create a new column: df[\"adjusted_price\"] = df[\"unit_price\"] * 1.1. Pitfall — Chained assignment: df[df[\"region\"] == \"West\"][\"bonus\"] = 100 may not work (SettingWithCopyWarning). Use: df.loc[df[\"region\"] == \"West\", \"bonus\"] = 100'"
+    weight: 0.30
+    description: "Patterns"

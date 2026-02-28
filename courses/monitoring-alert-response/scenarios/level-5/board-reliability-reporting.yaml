@@ -1,0 +1,50 @@
+meta:
+  id: board-reliability-reporting
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Create board-level reliability reporting — translate monitoring metrics into business language for board of directors and executive stakeholders"
+  tags: [monitoring, board-reporting, executive-communication, business-metrics, master]
+
+state: {}
+
+trigger: |
+  You are the CTO of a publicly traded SaaS company ($500M ARR).
+  The board of directors has added "operational reliability" as a
+  standing agenda item after two quarters of customer-impacting
+  outages. The board includes:
+
+  - A former Fortune 500 CEO (business-focused, no technical background)
+  - A venture capital partner (metrics-driven, understands tech at high level)
+  - An independent director with a cybersecurity background
+  - The company's CEO and CFO
+
+  The board wants a quarterly reliability report. They have explicitly
+  said: "Do not give us technical metrics. Tell us about business risk."
+
+  Last quarter's incidents:
+  - 3 P1 outages (45 minutes, 22 minutes, 78 minutes of customer impact)
+  - SLA credits issued: $800K
+  - One Fortune 100 customer escalated to their CEO, threatening to
+    churn ($15M ARR account)
+  - 2 incidents were caused by monitoring gaps (detected by customers,
+    not by internal systems)
+  - NPS dropped 8 points among enterprise customers
+
+  Task: Write the quarterly board reliability report and design the
+  ongoing reporting framework. Make it business-language, risk-focused,
+  and actionable at the board level.
+
+assertions:
+  - type: llm_judge
+    criteria: "Board report translates technical reliability into business risk — quarterly report: 'Executive summary: Q[X] saw three customer-impacting incidents totaling 145 minutes of degraded service, resulting in $800K in SLA credits, an 8-point NPS decline among enterprise customers, and an escalation from a $15M ARR account. Two of three incidents were detected by customers before our systems — this is the highest-priority gap we are closing. Business impact: (1) Revenue risk. SLA credits: $800K (up from $200K last quarter). At-risk ARR: $15M (Fortune 100 account escalation) + estimated $8M in other enterprise accounts where satisfaction declined. Churn probability assessment: the $15M account has a 20% churn risk at renewal (6 months out). If reliability does not improve, this could increase to 40%. Total revenue exposure: $3-6M in expected churn-related revenue impact. (2) Customer trust. Enterprise NPS: dropped from 62 to 54 (industry benchmark: 45). Customer-detected incidents: 2 of 3 (67%) — this means customers found our problems before we did in two-thirds of major incidents. This is the most damaging metric because it erodes confidence in our operational capability. Target: 100% of incidents detected internally before customer impact. (3) Competitive risk. In enterprise sales cycles, prospects ask about reliability. Two deals ($3M combined ARR) specifically asked about our incident history and SLA performance. Reliability is becoming a competitive factor — our largest competitor recently published a 99.99% availability report. Our trailing 12-month availability: 99.95%. (4) Regulatory risk. As we expand into healthcare and financial services, reliability incidents may trigger regulatory scrutiny. HIPAA and SOX have specific requirements for system availability and incident reporting. Current reliability does not meet the bar for these regulated industries.' Root cause summary (non-technical): 'Why did customers find our outages before we did? Two of the three incidents were in areas where our monitoring watches the engine (servers, databases) but not the road (customer experience). Imagine a car dashboard that shows engine temperature and oil pressure but not the speedometer — you know the engine is running but not whether you are actually moving. We are investing in customer-experience monitoring that watches what customers actually experience, not just whether our servers are running'"
+    weight: 0.35
+    description: "Business-language board report"
+  - type: llm_judge
+    criteria: "Reporting framework defines ongoing metrics and cadence — reporting framework: 'Board reliability dashboard (4 metrics, updated quarterly): (1) Customer availability: percentage of time all customer-facing features were fully operational. Current: 99.95%. Target: 99.99%. Why this metric: it directly maps to our contractual SLAs and customer experience. The board does not need to know about individual server uptime — they need to know if customers could use the product. (2) Revenue at risk from reliability: dollar value of ARR at elevated churn risk due to reliability issues. Current: $23M at risk. Target: under $5M. How calculated: accounts that experienced incidents × their ARR × increased churn probability. This translates reliability into the language the CFO understands. (3) Incident detection rate: percentage of incidents detected by our systems before any customer reports the issue. Current: 33%. Target: 95%+. Why this metric: it measures operational maturity. World-class operations detect and begin resolving issues before customers notice. Being at 33% means we are reactive, not proactive. (4) Mean time to customer recovery: average time from first customer impact to full service restoration. Current: 48 minutes. Target: under 15 minutes. Why this metric: it measures how quickly we fix problems that affect customers. Faster recovery means less customer impact, fewer SLA credits, and less brand damage. Reporting cadence: quarterly board report (comprehensive, this document), monthly executive summary (CTO to CEO, 1 page: 4 metrics + any notable incidents), weekly operational review (VP Engineering, detailed technical metrics that feed the board metrics). The board should not receive: alert counts, server CPU utilization, number of deployments, or any metric that requires technical interpretation. Every board metric should be understandable by a non-technical board member and directly connected to business outcomes'"
+    weight: 0.35
+    description: "Reporting framework"
+  - type: llm_judge
+    criteria: "Investment request and forward-looking risk assessment included — investment and risk: 'Investment request: to close the monitoring gap and achieve 99.99% availability, we are requesting: Q[X+1] incremental investment: $1.2M. Breakdown: $600K for customer-experience monitoring platform (synthetic monitoring, real user monitoring, SLO infrastructure). $400K for on-call and incident response improvements (tooling, training, process redesign). $200K for automated remediation of the 5 most common incident types. Expected return: reduce SLA credits from $800K/quarter to under $100K/quarter ($2.8M annual savings). Reduce at-risk ARR from $23M to under $5M. Enable enterprise sales into regulated industries ($50M+ addressable market). ROI: the $1.2M investment is expected to pay for itself within 2 quarters through reduced SLA credits alone. Risk register (board level): (1) Scaling risk (likelihood: high, impact: high). Our monitoring infrastructure was designed for 100 services. We now have 200+ and are adding 5-10 per month. Without investment, monitoring quality degrades as we scale, increasing incident frequency and severity. Mitigation: the requested investment includes platform scaling. (2) Talent risk (likelihood: medium, impact: high). Three senior SREs have indicated burnout concerns. Losing SRE talent would directly impact our ability to maintain and improve reliability. Mitigation: on-call improvements, additional hiring (2 SRE positions in the requested budget). (3) Regulatory risk (likelihood: medium, impact: very high). Healthcare expansion requires HIPAA-compliant monitoring with audit trails. Current monitoring infrastructure does not meet these requirements. Without compliance-grade monitoring, healthcare deals cannot close. Mitigation: compliance monitoring features included in Year 1 roadmap. (4) Competitive risk (likelihood: high, impact: medium). Competitors are publishing reliability reports and offering stronger SLAs. Enterprise buyers increasingly evaluate reliability during procurement. Mitigation: achieving 99.99% and publishing our own reliability report turns this from a risk into a differentiator. Commitment to the board: we will provide monthly progress updates against these targets and deliver a comprehensive year-end reliability review at the Q4 board meeting'"
+    weight: 0.30
+    description: "Investment and risk"

@@ -1,0 +1,34 @@
+meta:
+  id: advanced-retention-modeling
+  level: 3
+  course: cohort-analysis
+  type: output
+  description: "Model retention with statistical rigor — apply BG/NBD, Pareto/NBD, and shifted beta-geometric models to predict future retention and customer lifetime"
+  tags: [retention-modeling, BG-NBD, Pareto-NBD, statistical-models, advanced]
+
+state: {}
+
+trigger: |
+  The Head of Data Science says: "Our retention projections are just
+  straight-line extrapolations. The CFO uses them for financial planning
+  but they're often wrong. I want proper statistical retention models
+  that account for heterogeneous churn rates. What models should we
+  use?"
+
+  Task: Explain advanced retention modeling approaches including
+  BG/NBD, Pareto/NBD, and shifted beta-geometric models for
+  predicting future cohort behavior.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains BG/NBD and Pareto/NBD models — models: 'Probabilistic retention models: why simple extrapolation fails: a straight-line retention projection assumes all users churn at the same rate. In reality, user populations are heterogeneous — some users are highly loyal (low churn probability) and others are casual (high churn probability). Simple models underpredict early churn and overpredict late churn. BG/NBD (Beta-Geometric/Negative Binomial Distribution) model: assumption: each user has a latent churn probability p, drawn from a Beta distribution across the population. Users with high p churn quickly. Users with low p persist. The aggregate retention curve is a mixture of individual churn rates. Key parameters: alpha, beta (shape of the Beta distribution of churn probabilities). The model estimates these from observed retention data. Prediction: given observed retention at months 1-6, predict months 7-12, 7-24, etc. The model captures the natural flattening of retention curves (as high-churn users leave, the remaining population has lower average churn, so the curve flattens). Example: observed January cohort: M1: 65%, M2: 50%, M3: 42%, M4: 37%, M5: 34%, M6: 32%. Simple linear projection for M12: approximately 18%. BG/NBD projection for M12: approximately 24%. Actual M12: 23%. The BG/NBD model is more accurate because it accounts for the flattening effect. Pareto/NBD model: similar to BG/NBD but handles continuous time (not just discrete periods). Users can churn at any point, not just at period boundaries. More realistic but computationally more complex. Better for high-frequency products where users may churn mid-week. Both models assume: users are independent, churn rates do not change over time for individual users (but vary across users), and there are no reactivations after churn'"
+    weight: 0.35
+    description: "Models"
+  - type: llm_judge
+    criteria: "Response covers shifted beta-geometric model and model selection — selection: 'Shifted beta-geometric (sBG) model: specifically designed for subscription/contractual settings where churn happens at renewal points (monthly, annually). Assumption: each user has a renewal probability that stays constant over their lifetime. Across users, renewal probabilities follow a Beta(alpha, beta) distribution. Fitting the model: use observed retention rates at each period. Estimate alpha and beta via maximum likelihood. Example fit for a monthly subscription: observed: M1: 80%, M2: 68%, M3: 60%, M4: 55%, M5: 52%, M6: 50%. sBG model fit: alpha = 0.7, beta = 3.5. Predicted M12: 38%. Predicted M24: 30%. The model predicts a long tail — some users will remain for years. Model selection guide: contractual setting (subscription with explicit cancel): use sBG (churn observed at renewal). Non-contractual setting (users simply stop showing up): use BG/NBD or Pareto/NBD (churn is latent — you infer it from inactivity). High-frequency usage data (daily active users): use Pareto/NBD (continuous time). Low-frequency or periodic data (monthly logins): use BG/NBD (discrete time). Model validation: split data — fit on months 1-6, predict months 7-12, compare to actual. Metrics: mean absolute percentage error (MAPE) on predicted retention rates. A well-fitted model should achieve MAPE under 5% on held-out periods. Practical tip: start with BG/NBD (simplest, works for most cases). Move to Pareto/NBD only if BG/NBD residuals show systematic bias. Use sBG only for true subscription businesses. Libraries: Python lifetimes package implements all three models with straightforward fit-and-predict APIs'"
+    weight: 0.35
+    description: "Selection"
+  - type: llm_judge
+    criteria: "Response covers practical application and integration with financial planning — practical: 'Integrating retention models into financial planning: Step 1 — Fit models for each cohort separately: different cohorts may have different churn distributions (due to acquisition channel changes, product improvements, etc.). January cohort: alpha=0.8, beta=3.2 (higher churn heterogeneity). April cohort: alpha=0.6, beta=3.8 (lower churn, more homogeneous). Newer cohorts have lower churn parameters — confirming product improvements. Step 2 — Generate retention forecasts: for each cohort, project retention at months 12, 18, 24, 36. Use confidence intervals (not just point estimates). January M12 forecast: 23% (95% CI: 20-26%). April M12 forecast: 28% (95% CI: 25-31%). Present ranges to the CFO — single-point projections create false precision. Step 3 — Convert to revenue projections: projected retention × ARPU per active user × cohort size = projected revenue. January cohort M12: 23% × 1,000 users × $15 ARPU = $3,450/month from this cohort. Sum across all cohorts for total projected revenue. Step 4 — Scenario analysis: optimistic scenario: use upper confidence bounds. Pessimistic scenario: use lower confidence bounds. Base case: use point estimates. This gives the CFO a revenue range for financial planning. Step 5 — Model monitoring and updating: each month, compare actual retention to model predictions. If actual consistently beats the model, refit with the new data (the product is improving faster than the model predicted). If actual underperforms, investigate and refit. Refit models quarterly with the latest data. For the Head of Data Science: replace straight-line projections with BG/NBD or sBG. Present confidence intervals alongside point estimates. Refit quarterly and monitor prediction error. The CFO will have much more reliable revenue projections'"
+    weight: 0.30
+    description: "Practical"

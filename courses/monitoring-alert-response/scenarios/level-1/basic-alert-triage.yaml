@@ -1,0 +1,42 @@
+meta:
+  id: basic-alert-triage
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Triage alerts by severity and urgency — prioritize multiple simultaneous alerts to focus on the most impactful issue first"
+  tags: [monitoring, triage, prioritization, severity, beginner]
+
+state: {}
+
+trigger: |
+  You come online for your on-call shift and find 5 unacknowledged
+  alerts that fired in the last 30 minutes:
+
+  1. CRITICAL: disk usage > 95% on logs-service-prod-1
+     (fired 28 minutes ago)
+  2. WARNING: memory usage > 80% on search-service-prod-2
+     (fired 22 minutes ago)
+  3. CRITICAL: health check failing on checkout-service-prod-1
+     (fired 5 minutes ago)
+  4. INFO: SSL certificate expires in 14 days for api.example.com
+     (fired 30 minutes ago)
+  5. WARNING: database replication lag > 10 seconds on replica-3
+     (fired 15 minutes ago)
+
+  Task: Triage these alerts. Rank them in priority order, explain
+  your reasoning for each ranking, and describe what you would do
+  about each one.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority ranking is correct with sound reasoning — priority 1: checkout-service health check failing (alert 3). 'This is the highest priority because: (a) checkout is directly revenue-impacting — if checkout is down, customers cannot complete purchases. (b) Health check failing means the service may be completely down, not just degraded. (c) It fired 5 minutes ago — this is actively happening right now and needs immediate attention. (d) Even though the disk alert is also CRITICAL, checkout service impact on customers is more immediate.' Priority 2: database replication lag (alert 5). 'Replication lag of 10+ seconds can indicate: the replica is falling behind (which could lead to stale reads), the primary database is under heavy load, or a larger database issue is developing. If the replica serves read traffic, customers may be seeing stale data. This is urgent because it could be a symptom of a worsening database problem.' Priority 3: disk usage on logs-service (alert 1). 'Disk at 95% is critical but the impact is on the logging service, not directly customer-facing. Risk: if the disk fills to 100%, the logging service will stop writing logs, which means you lose observability during an incident. However, you likely have 30-60 minutes before it hits 100%. Mitigation: this can often be resolved quickly by rotating or clearing old logs.' Priority 4: memory usage on search-service (alert 2). 'Memory at 80% is a warning, not critical. Search service memory may climb gradually. This needs monitoring but does not require immediate action — watch whether it continues to climb.' Priority 5: SSL certificate expiration (alert 4). 'This is an informational alert with a 14-day window. Important but not urgent. Schedule the renewal during business hours'"
+    weight: 0.35
+    description: "Correct priority ranking"
+  - type: llm_judge
+    criteria: "Action plan for each alert is appropriate to its severity — alert 3 (checkout health check, highest priority): 'Acknowledge immediately. Check: is the service actually down or is the health check itself broken? Look at the service logs, check if other instances are healthy, verify customer-facing impact. If the service is down: follow the runbook for checkout service recovery. If one instance is down but others are serving traffic: verify load balancer has removed the unhealthy instance, then investigate why the instance failed.' Alert 5 (database replication lag): 'Acknowledge. Check: is the lag increasing, stable, or recovering? Check primary database load — is there an unusual query or write pattern? If lag is increasing: this could lead to failover issues and stale reads. Notify the DBA on-call if available.' Alert 1 (disk usage): 'Acknowledge. Quick fix: identify and remove or compress old log files. Check if log rotation is configured and working. Longer term: investigate why logs are growing faster than expected — is there an application logging excessively?' Alert 2 (memory warning): 'Acknowledge. Monitor the trend. If memory is climbing steadily, it may indicate a memory leak. If it is stable around 80%, it may just be normal working set. Set a reminder to check in 30 minutes.' Alert 4 (SSL certificate): 'Acknowledge. Create a ticket for certificate renewal. This should be done during business hours. No immediate action required'"
+    weight: 0.35
+    description: "Appropriate action plans"
+  - type: llm_judge
+    criteria: "Triage demonstrates understanding of customer impact as the primary factor — customer impact reasoning: 'The primary triage factor is customer impact, not alert severity label. Alert 3 (checkout down) is prioritized over alert 1 (disk full) even though both are labeled CRITICAL because: checkout being down means customers cannot buy things right now. Disk being full on the logs service means we might lose logging data, which is bad for operations but not directly affecting customers.' Second factor is escalation risk: 'The database replication lag (alert 5) is ranked high even though it is only a WARNING because: if replication lag continues to grow, it could lead to a database failover issue or stale read data for customers. Catching this early prevents a potential escalation to a SEV-1 database incident.' Third factor is time sensitivity: 'The SSL certificate alert (alert 4) is lowest priority not because it is unimportant, but because there is a 14-day window to address it. The checkout health check has a window of minutes. Triage prioritizes what must be addressed now over what must be addressed soon.' Meta-principle: 'When multiple alerts fire simultaneously, do not try to fix them all at once. Focus on the highest-impact issue first, stabilize it, then move to the next. Trying to multitask across 5 alerts simultaneously leads to none of them being handled well'"
+    weight: 0.30
+    description: "Customer impact reasoning"

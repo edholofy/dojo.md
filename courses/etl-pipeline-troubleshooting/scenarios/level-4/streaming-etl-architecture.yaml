@@ -1,0 +1,52 @@
+meta:
+  id: streaming-etl-architecture
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Streaming ETL architecture — design and troubleshoot real-time data pipelines with Kafka, exactly-once semantics, and late-arriving data handling"
+  tags: [streaming, kafka, flink, real-time, exactly-once, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "We're building a real-time
+  analytics pipeline that needs to process 50,000 events/second
+  from our e-commerce platform. The architecture:
+
+  Website → Kafka → Flink/Spark Structured Streaming → Warehouse
+
+  We're facing several challenges:
+
+  1. Exactly-once semantics: We need each transaction to be counted
+     exactly once in the warehouse, but we're seeing duplicates when
+     the Flink job restarts from a checkpoint after a failure.
+
+  2. Late-arriving data: Mobile app events arrive up to 30 minutes
+     late due to connectivity issues. Our 5-minute processing window
+     has already closed and emitted results by then.
+
+  3. Backpressure: During flash sales (10x normal traffic), the
+     consumer can't keep up with Kafka. Messages accumulate in the
+     topic and consumer lag grows to millions of messages.
+
+  4. Event ordering: Events for the same user sometimes arrive out
+     of order (add-to-cart arrives after purchase event).
+
+  How do we design a production-grade streaming ETL system?"
+
+  Task: Design solutions for each streaming challenge and architect
+  a production-ready streaming ETL pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses exactly-once semantics — explains the challenge (at-least-once + idempotent sink = effectively exactly-once), Flink checkpointing with barrier alignment, idempotent writes to the warehouse (using transaction IDs or upserts), two-phase commit for transactional sinks, and why exactly-once is particularly hard across system boundaries (Kafka → Flink is manageable, but Flink → external warehouse requires careful sink design). Addresses the checkpoint restart duplicate issue specifically"
+    weight: 0.35
+    description: "ExactlyOnce"
+  - type: llm_judge
+    criteria: "Response addresses late data and event ordering — watermark strategies for handling late-arriving data (set allowed lateness of 30+ minutes, emit early results and update with late data), side outputs for extremely late events, the trade-off between latency and completeness (shorter windows = faster results but more incomplete, longer windows = more complete but higher latency). For ordering: use event timestamps (not processing timestamps), implement per-key ordering with buffering and watermark-based emission, and design downstream consumers to handle out-of-order updates"
+    weight: 0.35
+    description: "LateDataAndOrdering"
+  - type: llm_judge
+    criteria: "Response addresses backpressure and production operations — backpressure handling: increase consumer parallelism (add partitions and consumers), implement adaptive batch sizing, use Kafka consumer rate limiting, auto-scaling during traffic spikes. Production operations: monitoring lag per consumer group, alerting on processing delay, graceful shutdown with checkpoint, handling schema evolution in streaming (Avro + Schema Registry), and the lambda/kappa architecture decision (maintain a batch pipeline as a fallback for reprocessing?)"
+    weight: 0.30
+    description: "BackpressureAndOps"

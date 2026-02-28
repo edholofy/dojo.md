@@ -1,0 +1,36 @@
+meta:
+  id: recursive-ctes
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Use recursive CTEs — traverse hierarchical data structures like org charts, category trees, and bill of materials for hierarchical reports"
+  tags: [SQL, recursive-CTE, hierarchy, org-chart, tree-traversal, advanced]
+
+state: {}
+
+trigger: |
+  The HR team needs an organizational hierarchy report:
+  1. "Show the full org chart — each employee with their manager,
+     their manager's manager, all the way up to the CEO"
+  2. "Calculate the total headcount under each manager (including
+     indirect reports)"
+  3. "Find the management chain for a specific employee"
+
+  Table: employees (employee_id, name, title, manager_id, department,
+  salary). The CEO has manager_id = NULL.
+
+  Task: Build hierarchical reports using recursive CTEs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use recursive CTEs for hierarchy traversal — queries: 'Recursive CTEs for hierarchical data: Query 1 — Full org chart with depth: WITH RECURSIVE org_chart AS (SELECT employee_id, name, title, manager_id, 0 AS depth, name AS management_chain FROM employees WHERE manager_id IS NULL UNION ALL SELECT e.employee_id, e.name, e.title, e.manager_id, oc.depth + 1, oc.management_chain || ' > ' || e.name FROM employees e INNER JOIN org_chart oc ON e.manager_id = oc.employee_id) SELECT REPEAT('  ', depth) || name AS org_tree, title, depth, management_chain FROM org_chart ORDER BY management_chain. The recursive CTE has two parts: Anchor: SELECT ... WHERE manager_id IS NULL — starts with the CEO (depth 0). Recursive: JOIN employees to org_chart — finds direct reports of previously found employees. Each iteration adds one level of depth. The recursion stops when no new rows are found. Query 2 — Headcount under each manager: WITH RECURSIVE all_reports AS (SELECT employee_id, manager_id, employee_id AS report_id FROM employees UNION ALL SELECT ar.employee_id, ar.manager_id, e.employee_id FROM all_reports ar JOIN employees e ON e.manager_id = ar.report_id) SELECT m.name, m.title, COUNT(DISTINCT ar.report_id) - 1 AS total_reports FROM all_reports ar JOIN employees m ON ar.employee_id = m.employee_id GROUP BY m.employee_id, m.name, m.title HAVING COUNT(DISTINCT ar.report_id) > 1 ORDER BY total_reports DESC. The -1 excludes counting themselves. This counts both direct and indirect reports. Query 3 — Management chain for a specific employee: WITH RECURSIVE chain AS (SELECT employee_id, name, title, manager_id, 0 AS level FROM employees WHERE employee_id = 12345 UNION ALL SELECT e.employee_id, e.name, e.title, e.manager_id, c.level + 1 FROM employees e JOIN chain c ON e.employee_id = c.manager_id) SELECT level, name, title FROM chain ORDER BY level DESC'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers recursive CTE mechanics and safety — mechanics: 'Recursive CTE mechanics: How recursion works step by step: Iteration 0 (anchor): find the CEO. Returns 1 row. Iteration 1: find employees whose manager_id matches the CEO. Returns direct reports. Iteration 2: find employees whose manager_id matches the direct reports. Returns their reports. Continues until no new rows are matched. The database maintains a working table that grows with each iteration. Safety — preventing infinite recursion: if the data has circular references (employee A reports to B who reports to A), the recursion never stops. PostgreSQL: default limit is 100 iterations. Override: SET max_recursive_iterations = 50. SQL Server: OPTION (MAXRECURSION 100). MySQL: SET cte_max_recursion_depth = 100. Detecting cycles: WITH RECURSIVE org_chart AS (SELECT employee_id, name, manager_id, ARRAY[employee_id] AS path, false AS is_cycle FROM employees WHERE manager_id IS NULL UNION ALL SELECT e.employee_id, e.name, e.manager_id, oc.path || e.employee_id, e.employee_id = ANY(oc.path) FROM employees e JOIN org_chart oc ON e.manager_id = oc.employee_id WHERE NOT oc.is_cycle). The path array tracks visited nodes. is_cycle becomes true if we revisit a node'"
+    weight: 0.35
+    description: "Mechanics"
+  - type: llm_judge
+    criteria: "Response covers other recursive CTE use cases beyond org charts — use-cases: 'Other recursive CTE applications: Category tree (e-commerce): WITH RECURSIVE category_tree AS (SELECT category_id, name, parent_id, name AS full_path FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.category_id, c.name, c.parent_id, ct.full_path || ' > ' || c.name FROM categories c JOIN category_tree ct ON c.parent_id = ct.category_id) SELECT * FROM category_tree. Electronics > Computers > Laptops > Gaming Laptops. Date series generation: WITH RECURSIVE dates AS (SELECT '2024-01-01'::date AS date UNION ALL SELECT date + INTERVAL '1 day' FROM dates WHERE date < '2024-12-31') SELECT date FROM dates. Generates every date in 2024. Useful for creating a date spine to LEFT JOIN with sparse data. Bill of materials (manufacturing): WITH RECURSIVE bom AS (SELECT component_id, part_name, quantity, 1 AS level FROM components WHERE parent_id IS NULL UNION ALL SELECT c.component_id, c.part_name, c.quantity * b.quantity AS total_quantity, b.level + 1 FROM components c JOIN bom b ON c.parent_id = b.component_id) SELECT REPEAT('  ', level) || part_name, total_quantity FROM bom. This expands a product into all its sub-components with correct quantities. Performance note: recursive CTEs can be slow on deep hierarchies with millions of nodes. For frequently accessed hierarchies, consider materialized path (store the full path as a string) or nested set model as alternatives'"
+    weight: 0.30
+    description: "Use cases"

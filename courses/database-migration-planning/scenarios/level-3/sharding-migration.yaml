@@ -1,0 +1,38 @@
+meta:
+  id: sharding-migration
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Plan a database sharding migration — split a single database into multiple shards to handle scale beyond single-server capacity"
+  tags: [database, migration, sharding, horizontal-scaling, distributed, advanced]
+
+state: {}
+
+trigger: |
+  Your single PostgreSQL database is reaching its limits:
+  - 2TB of data, growing 100GB/month
+  - 30,000 queries per second at peak
+  - p99 query latency increased from 50ms to 200ms in 6 months
+  - Largest table (events): 800 million rows
+  - Second largest (user_data): 200 million rows
+  - Write throughput limited by single-server I/O
+
+  Vertical scaling is maxed out (already on the largest instance
+  type). The team has decided to shard the database.
+
+  Task: Plan the sharding migration. Include: shard key selection,
+  sharding strategy, data migration plan, and application changes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Shard key selection is justified with trade-offs — shard key selection: 'The shard key determines how data is distributed across shards. It is the most critical decision in sharding and is very difficult to change later. For the events table (800M rows): Candidate shard key: user_id. Why: most queries filter by user_id (show me events for user X). Sharding by user_id means all events for a single user are on the same shard. Queries for a specific user only hit one shard. Distribution: if user IDs are well-distributed (no single user has vastly more events than others), the data spreads evenly. Risk: hot spots if some users generate disproportionately more events (power users). Mitigation: monitor shard sizes and rebalance if needed. Alternative: created_at (time-based sharding). Advantage: natural partitioning, easy to add new shards for future data. Disadvantage: recent data is on one shard (hot shard), historical data on cold shards. All queries for recent data hit the same shard. Not recommended for the primary shard key (but useful as a secondary partition within each shard). For the user_data table (200M rows): Shard key: user_id. Same rationale: most queries are per-user. Co-locating user_data on the same shard as the user events enables single-shard joins. Shard key anti-patterns: random UUID: distributes data evenly but every query requires scatter-gather across all shards (no query routing possible). Auto-increment ID: creates a hot shard (new inserts always go to the highest shard). Email or name: poor distribution (many users in the A-C range), and these change (user changes email)'"
+    weight: 0.35
+    description: "Shard key selection"
+  - type: llm_judge
+    criteria: "Sharding strategy and migration plan are practical — strategy and migration: 'Sharding strategy: hash-based sharding. shard_number = hash(user_id) % num_shards. Start with 4 shards (each handles approximately 500GB and 7,500 QPS). The hash function provides even distribution across shards. Use consistent hashing to minimize data movement when adding shards later. Migration plan — phased approach: Phase 1 (weeks 1-2): Read replicas as proto-shards. Create 4 PostgreSQL instances (shards). Replicate the full database to all 4 shards using logical replication. Each shard has all the data (temporarily). Application routes reads to the shard that will own the data (based on hash of user_id). Writes still go to the original primary. Validation: verify that reads from shards return the same results as reads from the primary. Phase 2 (weeks 3-4): Write routing. Application starts writing to the correct shard based on user_id hash. Each shard receives only writes for its users. Dual-write to the original primary as a safety net. Validation: compare data between shards and primary. Verify write distribution is even across shards. Phase 3 (weeks 5-6): Data cleanup. Each shard contains data for all users (from the initial replication). Delete data that does not belong to each shard: DELETE FROM events WHERE hash(user_id) % 4 != this_shard_number; Run in batches to avoid long-running transactions. After cleanup: each shard contains only its assigned users data, approximately 25% of the original 2TB. Phase 4 (week 7): Decommission. Stop dual-writing to the original primary. Stop replication from primary to shards. Decommission the original primary (or repurpose it). The original primary is no longer needed — each shard is now authoritative for its users'"
+    weight: 0.35
+    description: "Strategy and migration"
+  - type: llm_judge
+    criteria: "Application changes and cross-shard queries addressed — application changes: 'Application-level changes: (1) Shard routing layer. Every database query must be routed to the correct shard. Implementation: a shard router (middleware or library) that: accepts a query and a user_id, computes the shard number (hash(user_id) % 4), routes the query to the correct shard connection. For queries without user_id: requires scatter-gather (query all shards, merge results). Minimize these — they are expensive. (2) Cross-shard queries. Some queries span multiple users (admin dashboards, analytics, reports). These cannot be routed to a single shard. Solutions: scatter-gather: send the query to all shards, collect results, merge in the application. Acceptable for low-frequency queries (admin reports). Not acceptable for high-frequency user-facing queries. Analytics replica: maintain a separate non-sharded database for analytics. Replicate from all shards to the analytics database using CDC. Analytics queries run against this unified database, not against shards. (3) Cross-shard transactions. If an operation involves data on multiple shards: do NOT use distributed transactions (two-phase commit). They are slow and fragile. Use eventual consistency: perform operations on each shard independently, with saga-based compensation if one fails. Design the data model to minimize cross-shard operations. (4) Schema migrations post-sharding. Every schema migration must run on ALL shards. Migration tooling must iterate over all shards and apply the migration. If a migration fails on one shard: the shards are now at different schema versions. This is the most dangerous failure mode in a sharded system. Mitigation: test migrations on one shard first, then roll out to remaining shards sequentially'"
+    weight: 0.30
+    description: "Application changes"

@@ -1,0 +1,46 @@
+meta:
+  id: investor-grade-segmentation
+  level: 5
+  course: customer-segmentation
+  type: output
+  description: "Investor-grade segmentation — build and present customer segmentation that meets the rigor required by PE/VC investors, bankers, and board-level due diligence"
+  tags: [investor, due-diligence, PE, VC, IPO, master]
+
+state: {}
+
+trigger: |
+  A PE firm conducting due diligence on a potential $500M acquisition
+  target asks: "We need investor-grade customer segmentation analysis
+  for this B2B SaaS company before we make our bid. The target has:
+
+  - 12,000 customers, $150M ARR
+  - Claims NRR of 118% and churn of 8%
+  - 3 products with different customer profiles
+  - Management says their 'enterprise segment is growing fastest'
+  - They provide basic segment-level data but we need to verify
+
+  We want independent segmentation analysis that:
+  1. Verifies their segment-level metrics (are they calculating correctly?)
+  2. Identifies hidden risks in their customer base composition
+  3. Predicts future revenue trajectory by segment
+  4. Determines if the $500M valuation is justified by segment quality
+
+  Build the investor-grade analysis."
+
+  Task: Conduct an investor-grade customer segmentation analysis for
+  PE due diligence, verifying segment metrics, identifying hidden risks,
+  and informing the acquisition valuation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a rigorous verification methodology — how to independently recalculate segment-level metrics (NRR, churn, growth by segment — do the numbers match management's claims?), common ways management segments can obscure reality (grouping a few fast-growing enterprise accounts with a declining mass of mid-market to show overall growth, using gross NRR vs net, excluding specific customer types from churn calculations), red flags to look for (customer concentration risk — what if the top 10 accounts leave? is enterprise growth from a few large wins or broad-based? is churn accelerating or decelerating within segments?), and how to build an independent bottom-up revenue model by segment"
+    weight: 0.35
+    description: "Verification"
+  - type: llm_judge
+    criteria: "Response identifies hidden risks through segmentation — customer concentration risk by segment (how much revenue depends on a small number of accounts), segment health trajectory (growing vs declining segments, is the growth segment sustainable?), cohort quality trends (are newer customer cohorts worse than older ones — degrading product-market fit?), logo vs revenue churn analysis by segment (losing many small customers may mask losing a few important ones), and white-space analysis (how much growth potential remains in each segment given market size). Provides specific analyses that would change the $500M valuation up or down"
+    weight: 0.35
+    description: "HiddenRisks"
+  - type: llm_judge
+    criteria: "Response connects segmentation to valuation — how segment quality affects the multiple (high NRR enterprise segments command higher multiples than high-churn SMB segments), building segment-level revenue forecasts for the PE investment horizon (typically 5-7 years), scenario modeling by segment (bull case: enterprise growth accelerates; bear case: mid-market churn increases), and the final valuation recommendation — is $500M justified given the segment analysis, or should the PE firm bid higher/lower? Provides specific valuation adjustments based on segment findings"
+    weight: 0.30
+    description: "ValuationImpact"

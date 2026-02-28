@@ -1,0 +1,45 @@
+meta:
+  id: screen-reader-testing
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Screen reader testing — conduct and document screen reader testing across NVDA, JAWS, and VoiceOver for audit reports"
+  tags: [screen-reader, NVDA, JAWS, VoiceOver, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor says: "I've been doing automated
+  and keyboard testing, but my lead says I need to
+  include screen reader testing in my audits. I've
+  installed NVDA but I'm not sure:
+
+  - What should I be listening for?
+  - How do I navigate with a screen reader?
+  - What makes a 'pass' vs 'fail' for screen reader
+    testing?
+  - How do I document screen reader findings — do I
+    write what the screen reader actually says?
+  - Should I test with multiple screen readers?
+
+  I tested a product page and the screen reader said
+  'button button add to cart' and on another element
+  it said nothing at all. Are these issues?"
+
+  Task: Explain screen reader testing methodology
+  and demonstrate how to document screen reader
+  findings in an audit report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains screen reader testing methodology — navigation modes (browse/virtual mode: arrow keys read through content linearly, focus/forms mode: Tab between interactive elements, landmark navigation: jump between page regions, heading navigation: H key jumps to next heading), what to check on each page (does the page title make sense when announced? does the reading order match the visual order? are all interactive elements announced with correct role and name? are state changes announced — expanded/collapsed, selected, checked? are dynamic content changes announced via live regions? is decorative content properly hidden?), screen reader commands to know (NVDA: Insert+F7 for elements list, H for headings, Tab for form controls, D for landmarks; VoiceOver: VO+U for rotor, VO+Right to move through elements; JAWS: Insert+F6 for headings, Insert+F7 for links), and which screen readers to test (minimum: NVDA with Chrome on Windows OR VoiceOver with Safari on Mac, ideal: test with both plus VoiceOver on iOS for mobile — each has different behaviors)"
+    weight: 0.35
+    description: "TestingMethodology"
+  - type: llm_judge
+    criteria: "Response shows how to document screen reader findings — finding format (include verbatim screen reader output: 'Screen reader announces: button button add to cart' — Expected: 'Add to cart, button' — Issue: duplicate role announcement suggests nested button elements or redundant ARIA, WCAG: 4.1.2 Name Role Value Level A), finding for silent element ('Screen reader announces: nothing — element is skipped entirely' — Expected: element should announce its name and role — Issue: element is not in the accessibility tree, likely a div/span without proper ARIA or a focusable element with aria-hidden=true, WCAG: 4.1.2 Level A), and documentation best practices (always record: the screen reader used and version, the browser used and version, the exact announcement text in quotes, the expected announcement, the difference between actual and expected, screenshot of the element being tested, and the WCAG criterion violated)"
+    weight: 0.35
+    description: "DocumentingFindings"
+  - type: llm_judge
+    criteria: "Response covers common screen reader issues and cross-reader differences — common issues to catch (redundant announcements: 'link link home' or 'button button submit' — nested interactive elements, missing announcements: custom widgets not in accessibility tree, wrong role announced: link announced as 'text' because it's a span with onclick instead of an anchor, state not announced: accordion doesn't say 'expanded' or 'collapsed', reading order wrong: screen reader reads sidebar before main content because of DOM order), cross-reader differences (some issues only appear in specific screen readers — NVDA may announce ARIA differently than VoiceOver, JAWS has unique behaviors with certain ARIA patterns, document which screen reader found each issue), and reporting guidance (when reporting screen reader findings, include the full announcement chain for the interaction — not just the element in isolation but the context: 'Navigate to shopping cart, screen reader announces: link, graphic, 3 — no indication this is a cart or what 3 means')"
+    weight: 0.30
+    description: "CommonIssues"

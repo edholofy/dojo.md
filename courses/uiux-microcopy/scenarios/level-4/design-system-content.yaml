@@ -1,0 +1,46 @@
+meta:
+  id: design-system-content
+  level: 4
+  course: uiux-microcopy
+  type: output
+  description: "Design system content — build the content layer of a design system including content tokens, writing APIs, and automated content quality checks"
+  tags: [design-system, content-tokens, automation, quality, expert]
+
+state: {}
+
+trigger: |
+  You're the content design lead working with the design systems
+  team. Your company's design system (used by 200+ designers and
+  engineers across 8 product teams) has mature visual components
+  but zero content infrastructure.
+
+  Current problems:
+  1. Same component, different copy: a confirmation modal says
+     "Are you sure?" in one product and "Confirm deletion of
+     all project data and associated files?" in another
+  2. Placeholder text ships to production: engineers use
+     "Button" and "Label" as placeholder text and forget to
+     update it
+  3. No way to enforce content guidelines programmatically:
+     the style guide exists as a Google Doc nobody reads
+  4. Translations are inconsistent: each team sends different
+     versions of the same component copy to translators
+  5. Content changes require code deploys: updating a single
+     error message requires an engineer, PR review, and deploy
+
+  Task: Design the content layer of the design system that
+  makes good copy the path of least resistance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs content tokens and component-level copy specs — content tokens (like design tokens but for copy): predefined strings for common patterns (action verbs, status labels, common phrases) that are consumed by components. Component content API: each design system component has a content spec defining required copy fields, character limits, allowed formats, and default copy. Example: Button component requires 'label' (2-4 words, verb-first, max 25 chars) with defaults per variant (primary: 'Save changes', destructive: 'Delete [item]', secondary: 'Cancel'). Shows how this integrates with Figma/Storybook"
+    weight: 0.35
+    description: "ContentTokensAndSpecs"
+  - type: llm_judge
+    criteria: "Response creates automated content quality infrastructure — linting rules that catch content issues at build time (empty strings, placeholder text like 'TODO' or 'Lorem ipsum', strings exceeding character limits, non-localized hardcoded strings), content review in CI/CD pipeline (flag new or changed strings for review), CMS-backed content so copy updates don't require code deploys (content lives in a CMS, components fetch copy at runtime or build time), and string management system for translations (single source of truth for translatable strings). Addresses how to migrate existing hardcoded copy to the new system"
+    weight: 0.35
+    description: "AutomatedContentQuality"
+  - type: llm_judge
+    criteria: "Response addresses adoption and governance at scale — rollout strategy for 200+ designers and 8 product teams (phased adoption, migration guides, deprecation timeline for old patterns), contribution model (how teams propose new content patterns, review process, approval workflow), documentation strategy (content guidelines live alongside component documentation, not in a separate Google Doc), and maintenance plan (who owns content tokens, how are they updated, versioning strategy). Includes metrics for measuring adoption and content quality improvement"
+    weight: 0.30
+    description: "AdoptionAndGovernance"

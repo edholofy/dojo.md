@@ -1,0 +1,45 @@
+meta:
+  id: iac-organization-strategy
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design IaC organization strategy — choose between mono-repo and multi-repo, design state architecture, and establish team ownership boundaries"
+  tags: [Terraform, organization, mono-repo, multi-repo, strategy, expert]
+
+state: {}
+
+trigger: |
+  You're the infrastructure architect for a company with 80 engineers
+  across 8 teams. Current state:
+  - 3 separate Terraform repositories with inconsistent patterns
+  - 15 state files with no naming convention
+  - No shared modules — each team copy-pastes configurations
+  - Teams frequently conflict when deploying overlapping resources
+  - No visibility into who owns what infrastructure
+
+  You need to design the Terraform organization strategy for the
+  company. Leadership wants:
+  - Clear team ownership boundaries
+  - Reusable modules (stop copy-paste)
+  - Safe deployment workflows
+  - Audit trail for all changes
+  - Cost visibility per team
+
+  Task: Design the IaC organization strategy covering: repository
+  structure (mono-repo vs multi-repo trade-offs), state architecture
+  (how to partition state files), module library design, team
+  ownership model, and governance policies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Repository and state architecture are designed — mono-repo: single repo with directories per team/service. Benefits: unified modules, single PR workflow, easy cross-team visibility. Challenges: large repo, team coupling, complex CI/CD. Multi-repo: separate repos per team or service domain. Benefits: team autonomy, independent versioning, isolated CI/CD. Challenges: module sharing harder, cross-repo coordination. Recommended for 8 teams: hybrid — shared modules repo + per-team repos. State architecture: partition by (1) environment (dev/staging/prod), (2) team/service domain, (3) blast radius. Naming: s3://state/<team>/<env>/<service>.tfstate"
+    weight: 0.35
+    description: "Repo and state"
+  - type: llm_judge
+    criteria: "Module library and team ownership are designed — internal module registry: centralized repo with versioned, tested modules (VPC, EKS, RDS, S3). Module standards: README, input/output documentation, examples, tests (terraform test or Terratest). Publishing: git tags for versioning, semantic versioning (major.minor.patch). Team ownership: CODEOWNERS file mapping directories to teams. Platform team owns shared modules and foundation infrastructure. Service teams own their application infrastructure. Tagging strategy: mandatory tags for team, cost-center, environment on all resources"
+    weight: 0.35
+    description: "Modules and ownership"
+  - type: llm_judge
+    criteria: "Governance and deployment are practical — deployment workflow: feature branch → PR → automated plan → code review → merge → automated apply. Policy enforcement: pre-commit hooks (fmt, validate), CI checks (tflint, tfsec, checkov), Sentinel/OPA policies in Terraform Cloud. Cost visibility: Infracost in PR comments, AWS Cost Explorer tags. Audit: Terraform Cloud audit logs or CloudTrail for API calls. Change management: production changes require 2 approvals, blast radius classification (high-risk changes need additional review). Onboarding: documentation, module catalog, self-service templates"
+    weight: 0.30
+    description: "Governance"

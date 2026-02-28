@@ -1,0 +1,69 @@
+meta:
+  id: software-deployment-sop
+  level: 2
+  course: process-documentation-sops
+  type: output
+  description: "Write a software deployment and release management SOP for a mid-size SaaS company covering CI/CD pipeline, rollback procedures, and incident response"
+  tags: [software, deployment, devops, release-management, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Engineering Manager at a 100-person SaaS
+  company (B2B project management tool, 2,000+ customers).
+  After two production incidents in the past month — one
+  caused by a deployment that bypassed staging, another
+  by a database migration that corrupted data for 50
+  customers — the CTO has mandated formal deployment SOPs.
+
+  Current deployment approach:
+  - Developers merge to main branch and deploy "when
+    ready" (no release schedule)
+  - CI pipeline runs tests but developers can override
+    failures with "force merge"
+  - No formal staging environment testing checklist
+  - Database migrations run automatically on deploy (no
+    pre-review)
+  - Rollback procedure: "figure it out" (each developer
+    has their own approach)
+  - No deployment communication to customer success or
+    support teams
+  - Feature flags used inconsistently
+  - Monitoring alerts go to a Slack channel that nobody
+    watches on weekends
+
+  Tech stack:
+  - Next.js frontend, Node.js backend
+  - PostgreSQL database
+  - AWS (ECS, RDS, S3, CloudFront)
+  - GitHub for source control
+  - GitHub Actions for CI/CD
+  - Datadog for monitoring
+  - LaunchDarkly for feature flags
+  - PagerDuty for alerting (recently set up, not
+    configured properly)
+
+  Team: 35 engineers across 4 squads
+  Deploy frequency target: Daily (currently chaotic)
+
+  Task: Write a comprehensive deployment and release
+  management SOP covering pre-deployment checklist,
+  deployment procedure, post-deployment verification,
+  rollback procedures, database migration protocol,
+  hotfix procedure, incident response, and communication
+  requirements. Include guidelines for feature flag usage
+  and on-call responsibilities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response produces a comprehensive deployment SOP — covers pre-deployment (checklist, staging verification, code review requirements), deployment procedure (step-by-step), post-deployment verification (smoke tests, monitoring checks), and rollback procedures; addresses database migration protocol specifically (pre-review, reversibility, backup before migration); prevents both incidents described (bypassing staging, unreviewed migrations); the SOP enables daily deployments safely."
+    weight: 0.35
+    description: "ComprehensiveDeploymentSOP"
+  - type: llm_judge
+    criteria: "Response addresses operational practices — includes feature flag usage guidelines (when to use, naming conventions, cleanup); defines on-call responsibilities and escalation; addresses deployment communication to non-engineering teams; configures PagerDuty alerting properly; addresses weekend coverage; includes incident response procedures tied to deployment failures; the SOP references actual tools (GitHub Actions, Datadog, LaunchDarkly, PagerDuty)."
+    weight: 0.35
+    description: "OperationalPractices"
+  - type: llm_judge
+    criteria: "Response balances safety with velocity — doesn't create so much process that daily deployments become impractical; distinguishes between regular deployments and high-risk changes (database migrations, infrastructure changes); addresses the 'force merge' problem without eliminating developer autonomy; the SOP would be accepted by a 35-engineer team (not overly bureaucratic); includes clear hotfix procedure for urgent production issues."
+    weight: 0.30
+    description: "SafetyVelocityBalance"

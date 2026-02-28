@@ -1,0 +1,36 @@
+meta:
+  id: kpi-decomposition-trees
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Build KPI decomposition trees — break high-level metrics into component drivers to identify root causes and leverage points for improvement"
+  tags: [decomposition, metric-trees, driver-analysis, root-cause, advanced]
+
+state: {}
+
+trigger: |
+  The CEO asks: "Revenue grew 12% but profit dropped 5%. I need to
+  understand why. Can you decompose these metrics so I can see which
+  specific drivers are causing the divergence?"
+
+  The CFO adds: "Every quarter we have this same conversation. I want
+  a dashboard that permanently shows how our top-line metrics break
+  down into their component parts so we can spot problems before they
+  become crises."
+
+  Task: Build KPI decomposition trees for revenue and profit, and
+  design a dashboard that visualizes the driver relationships.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds revenue and profit decomposition trees — trees: 'KPI decomposition trees: Revenue decomposition: Revenue = Number of Customers × Average Revenue Per Customer (ARPC). Break down further: Number of Customers = Existing Customers + New Customers - Churned Customers. Existing Customers = Prior period customers × (1 - Churn Rate). New Customers = Leads × Conversion Rate. Churned Customers = Prior customers × Churn Rate. ARPC = Total Revenue / Number of Customers. ARPC can also decompose into: ARPC = Average Price Per Unit × Units Per Customer. Or for SaaS: ARPC = Base Plan Price + Add-on Revenue + Usage Revenue. Applying actual numbers: Revenue: $4.2M (↑12% YoY). Customers: 1,240 (↑18% YoY — growing faster than revenue). New customers: 380 (↑25% YoY — acquisition is strong). Churned customers: 95 (↑40% YoY — churn accelerating). ARPC: $3,387 (↓5% YoY — declining because new customers buy smaller plans). Finding: revenue is growing because customer count is growing fast, but ARPC is declining and churn is accelerating. Growth is masking underlying problems. Profit decomposition: Profit = Revenue - Total Costs. Total Costs = COGS + Operating Expenses. COGS = Infrastructure + Support + Onboarding. Operating Expenses = Sales + Marketing + R&D + G&A. Actual numbers: Revenue $4.2M ↑12%. COGS $1.3M ↑28% (infrastructure costs grew with customer count). Sales & Marketing $1.8M ↑35% (heavy spend to acquire 380 new customers). R&D $0.8M ↑5% (stable). G&A $0.5M ↑3% (stable). Profit: -$0.2M (↓from +$0.15M last year). Finding: profit dropped because customer acquisition cost is too high. We spent 35% more on S&M to get 25% more customers. CAC is increasing while ARPC is decreasing — unsustainable'"
+    weight: 0.35
+    description: "Trees"
+  - type: llm_judge
+    criteria: "Response designs a dashboard that visualizes the decomposition — dashboard: 'Decomposition dashboard design: Layout — tree visualization: Top row: the two parent KPIs side by side. Revenue: $4.2M ↑12% YoY (green). Profit: -$0.2M ↓from +$0.15M (red). Below each parent, show the tree branches as connected cards: Revenue tree: Revenue $4.2M branches into Customers 1,240 (↑18%) and ARPC $3,387 (↓5%). Customers branches into New 380 (↑25% green), Churned 95 (↑40% red), Net +285. ARPC branches into Base plan $2,800 (flat) and Add-ons $587 (↓15% red). Visual connection lines show the parent-child relationships. Color coding: green for improving drivers, red for declining drivers. The viewer traces the tree from revenue (green) down to the red nodes to find the problems: churn and add-on revenue. Profit tree: Profit -$0.2M branches into Revenue $4.2M (↑12%) and Costs $4.4M (↑22%). Costs branches into COGS $1.3M (↑28% red), S&M $1.8M (↑35% red), R&D $0.8M (↑5% green), G&A $0.5M (↑3% green). The viewer sees that S&M and COGS are growing much faster than revenue. Waterfall chart below each tree: shows the contribution of each driver to the total change. Revenue waterfall: Start $3.75M → +$630K new customers → +$95K expansion → -$275K churn → End $4.2M. Profit waterfall: Start +$150K → +$450K revenue growth → -$280K COGS increase → -$470K S&M increase → -$50K other → End -$200K'"
+    weight: 0.35
+    description: "Dashboard"
+  - type: llm_judge
+    criteria: "Explanation covers identifying leverage points and sensitivity analysis — leverage: 'Identifying leverage points: A decomposition tree reveals which drivers have the most impact on the parent metric. Sensitivity analysis: if we improve each driver by 10%, which one moves the needle most? Reduce churn by 10% (from 95 to 86 customers): saves 9 customers × $3,387 ARPC = $30K additional revenue. Increase ARPC by 10% (from $3,387 to $3,726): 1,240 customers × $339 = $420K additional revenue. Increase new customers by 10% (from 380 to 418): 38 additional customers × $3,387 = $129K additional revenue. Reduce S&M by 10% (from $1.8M to $1.62M): $180K direct profit improvement. Ranking by impact: ARPC improvement ($420K) > S&M reduction ($180K) > New customer growth ($129K) > Churn reduction ($30K). The highest leverage point is ARPC — increasing the average revenue per customer has 14x more impact than reducing churn. Dashboard element: a sensitivity table showing each driver, the effect of a 10% improvement, and the resulting impact on revenue and profit. This helps the leadership team prioritize: instead of focusing on churn (which feels urgent), they should focus on ARPC (which has more impact). The decomposition tree makes this visible. Without it, teams often optimize the wrong lever'"
+    weight: 0.30
+    description: "Leverage"

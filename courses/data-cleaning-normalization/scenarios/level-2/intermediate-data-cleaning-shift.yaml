@@ -1,0 +1,49 @@
+meta:
+  id: intermediate-data-cleaning-shift
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Intermediate data cleaning shift — apply multiple cleaning techniques to a complex multi-source dataset"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You are a data engineer merging customer data from 3 systems after
+  a company acquisition. The combined dataset will be the source of
+  truth for the merged entity.
+
+  System A (your CRM): 80,000 customers, well-structured, few quality
+  issues. Fields: name, email, phone, address, plan, revenue.
+
+  System B (acquired CRM): 45,000 customers, moderate quality. Fields:
+  full_name (combined), contact_email, mobile, street, city, state,
+  plan_name, monthly_value. Different schema, different naming.
+
+  System C (billing system): 100,000 records (includes both companies).
+  Fields: customer_id, billing_email, amount, currency, billing_address.
+
+  Known issues:
+  - ~8,000 customers exist in both A and B (overlap from the acquisition)
+  - System B has 20% missing phone numbers and inconsistent address formats
+  - System C has a different ID system than A or B
+  - Currency is mixed (USD, EUR, GBP) in System C without consistent tagging
+  - Plan names differ between A and B for equivalent tiers
+
+  Task: Design a comprehensive data cleaning and merging plan that
+  produces a single clean, deduplicated customer dataset from the three
+  source systems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a systematic merging approach — schema mapping first (map System B fields to System A schema: full_name → parse into first_name + last_name, contact_email → email, etc.), then field standardization (normalize all text fields, standardize address formats, normalize phone formats), then identity resolution across systems (match System A to System B using email as primary key, name + address as secondary, to identify the ~8,000 overlapping customers), then merge System C by matching billing_email to the unified customer email"
+    weight: 0.35
+    description: "MergingApproach"
+  - type: llm_judge
+    criteria: "Response addresses the specific quality issues — missing phones in System B (accept as null, don't impute), inconsistent addresses (parse and standardize using address parsing libraries), different ID systems (create a new unified customer_id, maintain a mapping table to original IDs from each system), currency normalization (convert all to a single base currency using historical rates, or standardize tagging), and plan name mapping (create a plan equivalency mapping between System A and B plan names)"
+    weight: 0.35
+    description: "QualityIssues"
+  - type: llm_judge
+    criteria: "Response addresses the deduplication strategy for overlapping customers — how to handle conflicts when the 8,000 overlapping customers have different data in Systems A and B (survivorship rules: which system's data takes priority for each field?), how to merge customer history (combine interaction history from both systems under the unified record), validation after merging (total customer count should be ~117,000 not 125,000, total revenue should reconcile with both source systems), and a rollback plan if the merge introduces errors"
+    weight: 0.30
+    description: "Deduplication"

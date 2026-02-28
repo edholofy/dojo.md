@@ -1,0 +1,36 @@
+meta:
+  id: filtering-and-selecting
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Filter and select data — use pandas indexing, boolean filtering, and column selection to extract specific subsets of data"
+  tags: [python, pandas, filtering, indexing, loc, iloc, beginner]
+
+state: {}
+
+trigger: |
+  Using the sales_data DataFrame (columns: date, product_name,
+  category, quantity, unit_price, region, customer_id), your manager
+  asks three questions:
+
+  1. "Show me all sales in the West region with quantity over 50."
+  2. "What are the unique product categories?"
+  3. "Give me just the product name, quantity, and unit price columns
+     for the first 20 rows."
+
+  Task: Write the pandas code for each question and explain the
+  different selection methods.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code uses correct filtering and selection syntax — code: 'Filtering and selecting data: Question 1 — Boolean filtering: west_high_qty = df[(df[\"region\"] == \"West\") & (df[\"quantity\"] > 50)]. Explanation: df[\"region\"] == \"West\" creates a boolean Series (True/False for each row). df[\"quantity\"] > 50 creates another boolean Series. The & operator combines them (both conditions must be True). Important: use & (not \"and\") for combining conditions in pandas. Each condition must be wrapped in parentheses. Other operators: | for OR, ~ for NOT. Question 2 — Unique values: df[\"category\"].unique() returns an array of unique category values. df[\"category\"].nunique() returns the count of unique categories. df[\"category\"].value_counts() returns each category with its count, sorted by frequency (most common first). Question 3 — Column selection and row slicing: Method 1 using column list: df[[\"product_name\", \"quantity\", \"unit_price\"]].head(20). Method 2 using loc (label-based): df.loc[:19, [\"product_name\", \"quantity\", \"unit_price\"]]. Note: loc uses inclusive slicing, so :19 gives rows 0 through 19 (20 rows). Method 3 using iloc (position-based): df.iloc[:20, [1, 3, 4]]. Note: iloc uses exclusive end, so :20 gives rows 0 through 19. Column positions 1, 3, 4 correspond to product_name, quantity, unit_price (0-indexed)'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation clarifies loc vs iloc and common filtering patterns — explanation: 'Understanding loc vs iloc: loc selects by labels (column names and index labels). Use when you know the column names. Example: df.loc[0:5, \"product_name\":\"quantity\"] selects rows 0-5 and columns from product_name through quantity. iloc selects by integer position (like array indexing). Use when you know the position numbers. Example: df.iloc[0:5, 1:4] selects the first 5 rows and columns at positions 1, 2, 3. Key difference: loc includes the endpoint (0:5 gives 6 rows). iloc excludes the endpoint (0:5 gives 5 rows). When to use which: use df[\"column\"] or df[[\"col1\", \"col2\"]] for simple column selection (most common). Use loc when filtering by labels and selecting columns by name simultaneously. Use iloc when working with column positions (rare — prefer names for readability). Use boolean filtering (df[condition]) for most row filtering tasks. Common filtering patterns: multiple values: df[df[\"region\"].isin([\"West\", \"East\"])]. String contains: df[df[\"product_name\"].str.contains(\"Premium\", case=False)]. Not null: df[df[\"unit_price\"].notna()]. Between: df[df[\"quantity\"].between(10, 50)]. Common mistake — SettingWithCopyWarning: filtered = df[df[\"region\"] == \"West\"]. filtered[\"quantity\"] = filtered[\"quantity\"] * 2 — this may not modify df. Use filtered = df[df[\"region\"] == \"West\"].copy() if you intend to modify the filtered DataFrame independently. Or use df.loc[df[\"region\"] == \"West\", \"quantity\"] *= 2 to modify df directly'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers query method and method chaining as alternative approaches — alternatives: 'Alternative approaches: the query method — a cleaner syntax for filtering: instead of: df[(df[\"region\"] == \"West\") & (df[\"quantity\"] > 50)]. Use: df.query(\"region == 'West' and quantity > 50\"). The query method is more readable for complex filters: df.query(\"region in ['West', 'East'] and quantity > 50 and unit_price < 100\"). Method chaining — pandas encourages chaining operations: result = (df.query(\"region == 'West'\").filter([\"product_name\", \"quantity\", \"unit_price\"]).sort_values(\"quantity\", ascending=False).head(20)). This reads as: start with df, filter to West region, select three columns, sort by quantity descending, take the top 20. Method chaining makes the analysis pipeline clear and avoids intermediate variables'"
+    weight: 0.30
+    description: "Alternatives"

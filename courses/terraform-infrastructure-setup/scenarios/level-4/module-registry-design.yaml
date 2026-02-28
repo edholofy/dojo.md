@@ -1,0 +1,45 @@
+meta:
+  id: module-registry-design
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design a private module registry — create versioned, tested, documented modules with governance for enterprise consumption"
+  tags: [Terraform, modules, registry, versioning, governance, enterprise, expert]
+
+state: {}
+
+trigger: |
+  Your organization has 200+ Terraform modules scattered across 15
+  repositories with no versioning, testing, or documentation standards.
+  Teams duplicate effort building similar modules. There's no way to
+  know which modules are safe, maintained, or compliant.
+
+  A recent incident: a team used an outdated VPC module that created
+  security groups without logging — violating SOC2 controls. The module
+  had been "fixed" months ago but the team was using an old copy.
+
+  You need to design a private module registry that:
+  - Provides a catalog of approved, tested modules
+  - Enforces versioning and deprecation
+  - Includes compliance-checked modules
+  - Has clear ownership and support model
+  - Prevents use of unapproved or outdated modules
+
+  Task: Design the private module registry covering: registry platform
+  choice, module lifecycle (create, review, publish, deprecate),
+  versioning strategy, testing requirements, documentation standards,
+  and consumption governance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Registry platform and module lifecycle are designed — platform options: Terraform Cloud private registry (built-in, easy), self-hosted registry (terraform-registry-address), Git-based with tags (simple, no separate infrastructure). Module lifecycle: (1) proposal: RFC for new module, (2) development: follow template structure, (3) review: platform team reviews for compliance and quality, (4) testing: automated tests must pass (terraform test, checkov), (5) publish: tagged release with changelog, (6) maintenance: active, deprecated, archived states. Module maturity levels: experimental, supported, certified"
+    weight: 0.35
+    description: "Registry and lifecycle"
+  - type: llm_judge
+    criteria: "Versioning and testing are enforced — semantic versioning: MAJOR (breaking changes), MINOR (new features, backward compatible), PATCH (bug fixes). Version constraints: consumers use ~> 2.0 (allows 2.x, not 3.0). Breaking change policy: major version bump, migration guide, deprecation notice 2 releases before removal. Testing requirements before publish: (1) terraform fmt -check passes, (2) terraform validate passes, (3) checkov scan clean, (4) terraform test plan-level tests pass, (5) integration tests pass (for certified modules). CI pipeline: on tag creation, run all tests, publish to registry if passing"
+    weight: 0.35
+    description: "Versioning and testing"
+  - type: llm_judge
+    criteria: "Documentation and consumption governance are practical — documentation requirements: README with description, usage examples, inputs table, outputs table, requirements (provider versions). Generated with terraform-docs. Examples directory with working configurations. Consumption governance: Sentinel policy requiring modules from approved registry sources only. Module pinning: all consumers must use version constraints (not latest). Upgrade process: platform team announces new versions, teams have 90 days to upgrade deprecated versions. Metrics: module adoption rate, version currency (% on latest), support ticket volume per module"
+    weight: 0.30
+    description: "Docs and governance"

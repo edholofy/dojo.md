@@ -1,0 +1,47 @@
+meta:
+  id: bad-join-debugging
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Bad join debugging — diagnose and fix incorrect join conditions that produce wrong row counts, duplicates, or missing data"
+  tags: [joins, cartesian-product, duplicates, transform, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our customer revenue report is showing
+  wildly wrong numbers. The pipeline joins three tables:
+
+  - customers (50,000 rows)
+  - orders (200,000 rows)
+  - order_items (800,000 rows)
+
+  Expected output: ~50,000 rows (one per customer with total revenue)
+  Actual output: 3,200,000 rows
+
+  The SQL in the transform step is:
+  SELECT c.customer_id, c.name, SUM(oi.price * oi.quantity) as revenue
+  FROM customers c
+  JOIN orders o ON c.customer_id = o.customer_id
+  JOIN order_items oi ON o.order_date = oi.created_date
+  GROUP BY c.customer_id, c.name
+
+  Some customers show $500,000+ in revenue when they should be
+  around $500. What's going wrong?"
+
+  Task: Diagnose the join issue, explain why the row count exploded,
+  fix the query, and provide strategies for preventing bad joins.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response correctly diagnoses the cartesian product — the join between orders and order_items uses order_date = created_date instead of order_id, which creates a many-to-many join where every order on a given date joins with every order_item created on that date. This multiplies rows dramatically. The fix is to join on the correct key: o.order_id = oi.order_id. Explains how to verify: check the join key cardinality (order_date has far fewer distinct values than order_id, causing fan-out)"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response explains join debugging techniques — check row counts at each join stage (customers × orders should produce ~200K rows if 1:many, not more), verify join key uniqueness (if both sides of a join have duplicates on the key, rows multiply), use EXPLAIN to see the query plan and estimated row counts, test joins on a small sample first, and add assertions that verify expected row counts after each join"
+    weight: 0.35
+    description: "DebuggingTechniques"
+  - type: llm_judge
+    criteria: "Response provides prevention strategies — always verify join keys match the intended relationship (1:1, 1:many, many:many), add row count checks in the pipeline that fail if output exceeds expected bounds, review SQL changes in code review with join correctness as a checklist item, use dbt tests (relationships, unique) to validate referential integrity, and be especially careful with date-based joins which are a common source of unintended cartesian products"
+    weight: 0.30
+    description: "Prevention"

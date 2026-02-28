@@ -1,0 +1,47 @@
+meta:
+  id: navigation-and-wayfinding-audit
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Navigation and wayfinding audit — evaluate site navigation, breadcrumbs, skip links, search, and orientation for accessibility"
+  tags: [navigation, wayfinding, breadcrumbs, skip-links, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor is testing a large e-commerce
+  website with complex navigation:
+
+  1. The main navigation has mega-menus that open on
+     hover but not on keyboard focus
+  2. Breadcrumbs exist but aren't marked up as a
+     navigation landmark
+  3. The "Skip to main content" link works but is
+     also visible to all users even when not focused
+     (should only appear on focus)
+  4. The site has 3 levels of navigation but no
+     indication of which page is currently active
+  5. The search function returns results but there's
+     no way to know how many results were found
+
+  Additionally, the footer has 40+ links with no
+  grouping or headings to organize them.
+
+  Task: Write audit findings for each navigation
+  accessibility issue and demonstrate how navigation
+  impacts the overall user experience for people
+  with disabilities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for navigation and mega-menu issues — Hover-only mega-menu (WCAG 2.1.1 Keyboard Level A: mega-menus must be operable with keyboard — open on Enter/Space or arrow down from parent item, navigate sub-items with arrow keys, close with Escape, Severity: Critical — keyboard users can't access sub-navigation, Fix: add keyboard event handlers matching hover behavior, ensure focus is managed into and out of mega-menu), Breadcrumbs not marked as landmark (WCAG 1.3.1 Level A: breadcrumbs should be wrapped in nav element with aria-label='Breadcrumb' for screen reader landmark navigation, use ol for the breadcrumb list, mark current page with aria-current=page on the last breadcrumb, Severity: Minor, Fix: wrap in nav with aria-label), Skip link always visible (not a WCAG failure but a design best practice: skip links should be visually hidden until focused — use CSS to position off-screen and bring on-screen on :focus, Severity: Best Practice — current implementation actually exceeds minimum requirement since it's always available, but conventionally skip links are hidden until needed)"
+    weight: 0.35
+    description: "NavigationFindings"
+  - type: llm_judge
+    criteria: "Response covers active page indicator and search result issues — No active page indicator (WCAG 2.4.8 Location Level AAA + best practice: users should be able to identify their current location within the site — critical for orientation, use aria-current=page on the active navigation link so screen readers announce 'Home, current page, link' vs just 'Home, link', Severity: Major — screen reader users can't determine where they are in the site, Fix: add aria-current=page to active nav item, also visually distinguish active item from other links), Search results without count (WCAG 4.1.3 Status Messages Level AA: search result count is a status message that should be announced — '24 results for running shoes' helps users understand scope, Severity: Major, Fix: add results count in an aria-live=polite region above results list, announce: '24 products found for running shoes'), Footer without grouping (WCAG 2.4.1 Bypass Blocks Level A + 1.3.1: 40+ unorganized links is a navigation barrier — group related links under headings, Severity: Major for screen reader users who must traverse all links linearly, Fix: add heading elements to group footer links by category)"
+    weight: 0.35
+    description: "ActiveSearchFooterFindings"
+  - type: llm_judge
+    criteria: "Response explains navigation's role in accessibility — why navigation matters most (navigation is the gateway to all content — if navigation is inaccessible, the entire site is inaccessible even if individual pages are well-coded, screen reader users rely heavily on navigation patterns: headings, landmarks, links, skip links — test navigation first because it affects every page), navigation testing priority order (1. skip navigation to main content, 2. main navigation keyboard operability, 3. landmark regions identified, 4. current page indicated, 5. search functionality accessible, 6. breadcrumbs properly marked up, 7. footer navigation organized), and impact on audit report organization (consider a 'Navigation & Wayfinding' section in the audit report that groups all navigation-related findings together — since these issues affect every page, they deserve prominent placement in the report, not buried among individual page findings)"
+    weight: 0.30
+    description: "NavigationImportance"

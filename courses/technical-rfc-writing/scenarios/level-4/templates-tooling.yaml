@@ -1,0 +1,41 @@
+meta:
+  id: templates-tooling
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Design RFC templates and tooling — create templates, automation, and tooling that make RFC writing efficient and consistent at scale"
+  tags: [RFC, templates, tooling, automation, efficiency, expert]
+
+state: {}
+
+trigger: |
+  Your 300-person engineering organization writes ~30 RFCs per month.
+  Current state of tooling:
+  - Template is a Google Doc that everyone copies (often an outdated
+    version)
+  - No tracking of RFC status (draft, review, approved, implemented)
+  - No way to search past decisions ("didn't we decide this already?")
+  - Review comments scattered across Google Docs, Slack, and email
+  - No connection between RFC decisions and implementation (code)
+  - Expired RFCs never cleaned up — 200+ "approved" RFCs, only 60%
+    ever implemented
+
+  Task: Design an RFC tooling ecosystem including: template system
+  (multiple templates for different RFC types), lifecycle management
+  (status tracking, expiration), search and discovery, review
+  workflow integration, and connection to implementation. Show how
+  tooling makes the RFC process better without adding complexity.
+
+assertions:
+  - type: llm_judge
+    criteria: "Template system is contextual and reduces friction — multiple templates by RFC type: (1) Architecture RFC: full template with system design, data model, API design sections. (2) Process RFC: lighter template focused on workflow, roles, metrics. (3) Technology Adoption RFC: template with evaluation criteria, comparison matrix, migration plan. (4) Deprecation RFC: template with impact analysis, migration timeline, communication plan. Template features: 'Each template has guided prompts: instead of a blank Problem Statement section, the template asks 3 specific questions (What is the problem? Who is affected? What is the cost of inaction?). Sections marked as required vs optional. Context-sensitive: selecting the type pre-fills relevant sections.' Template versioning: 'Templates stored in Git. Changes to templates are themselves reviewed (meta-RFC). Old RFCs display the template version they used.' Authoring experience: 'CLI tool: dojo-rfc create --type architecture generates a markdown file with template, assigns RFC number, creates branch. IDE integration for VS Code with RFC preview and section validation'"
+    weight: 0.35
+    description: "Template system"
+  - type: llm_judge
+    criteria: "Lifecycle management prevents stale RFCs — RFC states: Draft → In Review → Approved → Implementing → Implemented → Archived. Also: Rejected, Superseded, Expired. Automation: 'RFC moves to In Review when PR is opened. Reviewers auto-assigned based on affected teams (detected from labels). Reminder sent after 3 business days if reviewers haven't responded. Auto-escalation to reviewer's manager after 5 days.' Expiration: 'Approved RFCs not moved to Implementing within 60 days trigger a notification to the author. At 90 days: RFC status set to Expired with option to renew (re-confirm relevance) or close. This prevents the current 200+ stale RFC backlog.' Implementation tracking: 'Approved RFCs are linked to implementation epics/tickets. RFC status automatically updates to Implementing when linked tickets are created, and Implemented when all tickets are resolved.' Dashboard: 'RFC dashboard showing: total by status, average time in each state, RFCs nearing expiration, review SLA compliance. Engineering leadership reviews monthly.' Superseding: 'New RFC can reference and supersede an older RFC. Superseded RFCs are cross-referenced so readers of the old decision find the new one'"
+    weight: 0.35
+    description: "Lifecycle management"
+  - type: llm_judge
+    criteria: "Search, discovery, and institutional memory are solved — search: 'Full-text search across all RFCs (current and archived). Search by: author, team, status, date range, tags, affected systems. Common query: has someone already proposed X? Search surfaces related past decisions before a new RFC is created.' Discovery: 'RFC feed in engineering Slack channel. Weekly digest: new RFCs in review, recently approved, recently implemented. Tag-based subscriptions: engineers follow topics they care about.' Knowledge graph: 'RFCs reference related RFCs (depends on, supersedes, related to). This creates a navigable decision history. When reading an RFC about microservice architecture, links show the previous database migration RFC it depends on.' Integration with codebase: 'Architecture Decision Records (ADRs) generated from approved RFCs and stored in the relevant code repository. Engineers see the decision context alongside the code. ADR links back to the full RFC.' Anti-patterns addressed: 'Duplicate proposals detected before submission — when creating a new RFC, system surfaces similar past RFCs. Contradictory decisions flagged — if a new RFC conflicts with an existing approved RFC, reviewer is alerted.' Tooling principles: 'Every tool must reduce friction, not add it. If a tool requires more than 2 clicks to do the most common operation, it needs redesign. Quarterly tooling satisfaction survey'"
+    weight: 0.30
+    description: "Search and discovery"

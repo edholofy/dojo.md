@@ -1,0 +1,45 @@
+meta:
+  id: data-types-formats
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document data types and formats — describe JSON types, date formats, currency handling, enums, and nested objects clearly"
+  tags: [API, documentation, data-types, JSON, formats, schemas, beginner]
+
+state: {}
+
+trigger: |
+  Developers keep sending incorrectly formatted data to your API.
+  Common errors:
+  - Dates sent as "01/15/2024" instead of ISO 8601 "2024-01-15T00:00:00Z"
+  - Prices sent as "$19.99" instead of integer cents (1999)
+  - Booleans sent as "true" (string) instead of true (boolean)
+  - Phone numbers without country code
+  - UUIDs in wrong format
+
+  Your API accepts these field types:
+  - Strings: name, email, phone, URL, UUID
+  - Numbers: integer (count, cents), float (latitude, longitude)
+  - Booleans: is_active, is_verified
+  - Dates: created_at, due_date, expires_at
+  - Enums: status, role, priority
+  - Arrays: tags, permissions
+  - Nested objects: address, metadata
+
+  Task: Write data type documentation that prevents formatting errors.
+  For each type: specify the format, show valid/invalid examples,
+  and explain the rationale (e.g., why prices are in cents).
+
+assertions:
+  - type: llm_judge
+    criteria: "Each data type is precisely documented — strings: max length, format constraints (email: RFC 5322, phone: E.164 format +1234567890, UUID: v4 format). Numbers: integer for counts and money (in cents to avoid floating point issues), float for coordinates. Dates: ISO 8601 format (2024-01-15T10:30:00Z), always UTC, timezone specified. Booleans: JSON true/false (not strings). Enums: list all valid values with descriptions. Arrays: element type specified. Nested objects: full schema documented. Each type shows valid AND invalid examples"
+    weight: 0.35
+    description: "Precise types"
+  - type: llm_judge
+    criteria: "Format rationale is explained — money in cents: avoids floating point precision issues (19.99 * 100 can give 1998.9999... in floating point). Dates in ISO 8601 UTC: unambiguous, sortable, timezone-safe. Phone in E.164: international standard, parseable. UUID v4: globally unique, no sequential information leaked. These explanations help developers understand WHY and reduce questions. Show conversion examples: 'To convert $19.99 to API format: 19.99 * 100 = 1999'"
+    weight: 0.35
+    description: "Format rationale"
+  - type: llm_judge
+    criteria: "Null and optional handling are addressed — document: which fields can be null, what null means vs omitted (null = explicitly clear the value, omitted = don't change), empty string vs null (are they treated differently?). Required vs optional fields clearly marked. Default values documented: 'if is_active is omitted, defaults to true'. Array fields: can they be empty? What's the max length? Metadata object: is it schemaless? What are the limits (max keys, max value size)?"
+    weight: 0.30
+    description: "Null and optional"

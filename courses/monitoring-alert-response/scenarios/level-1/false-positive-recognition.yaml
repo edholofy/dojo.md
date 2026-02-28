@@ -1,0 +1,39 @@
+meta:
+  id: false-positive-recognition
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Recognize false positive alerts — identify when an alert fires but does not indicate a real problem, and respond appropriately"
+  tags: [monitoring, false-positive, alert-noise, judgment, beginner]
+
+state: {}
+
+trigger: |
+  You receive a WARNING alert: "Memory usage > 80% on
+  cache-service-prod-2." You check the dashboard and see:
+
+  - Memory usage: 82% (threshold: 80%)
+  - This host has been between 78-84% for the past 3 months
+  - Cache hit rate: 99.2% (normal)
+  - Request latency: 2ms (normal)
+  - No errors in application logs
+  - This exact alert has fired 12 times in the past month and was
+    resolved without action each time
+
+  Task: Is this alert a false positive? Explain your reasoning,
+  what you should do right now, and what you should do long-term
+  about this alert.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert is correctly identified as a false positive with clear reasoning — assessment: 'This is a false positive — an alert firing that does not indicate a real problem. Evidence: (1) The memory usage of 82% is within the normal operating range for this host (78-84% for 3 months). The cache service is designed to use available memory to store cached data — high memory usage is expected and desirable for a cache. (2) All health indicators are normal: cache hit rate is excellent (99.2%), latency is low (2ms), and there are no errors. (3) This alert has fired 12 times in the past month with no action needed — this is a pattern of false alarms, not a pattern of real problems.' Why this is a false positive specifically: 'The threshold (80%) is wrong for this service. A cache service intentionally uses most of its available memory to maximize cache capacity. An 80% memory threshold makes sense for an application server (where high memory might indicate a leak) but not for a cache (where high memory means the cache is working well). The alert threshold does not match the service's expected behavior'"
+    weight: 0.35
+    description: "False positive identification"
+  - type: llm_judge
+    criteria: "Immediate response and long-term fix are both addressed — immediate response: 'Acknowledge the alert. Post a brief note that this is a known false positive: cache-service memory alert is a known false positive — cache operating normally, hit rate 99.2%. No action needed. This documents your assessment for anyone else who might see the alert.' What NOT to do: '(1) Do not ignore it silently — even though you are confident it is a false positive, acknowledge it so the team knows someone reviewed it. (2) Do not restart the service to reduce memory — this would flush the cache and actually hurt performance. (3) Do not snooze or suppress the alert indefinitely without fixing the underlying threshold — suppression hides the symptom but does not fix the problem.' Long-term fix: 'This alert needs to be tuned. Options: (1) Raise the threshold to 95% for cache services. Memory at 95% on a cache is still expected behavior; only above 95% might indicate the cache is under-provisioned. (2) Change the alert to measure a metric that actually indicates a problem, such as cache eviction rate (if the cache is evicting entries frequently, it needs more memory) or cache hit rate declining (which indicates the cache is not performing well). (3) If this is the only host triggering the alert, create a host-specific exception. Preferred option: alert on cache eviction rate instead of raw memory usage. This measures cache health rather than resource usage'"
+    weight: 0.35
+    description: "Immediate and long-term response"
+  - type: llm_judge
+    criteria: "Response addresses the broader impact of false positives — alert fatigue explanation: 'This one false positive may seem harmless, but it fires 12 times a month. Across all your services, false positives like this accumulate. If an on-call engineer receives 5 false positive alerts per shift, they start to distrust all alerts. When a real CRITICAL alert fires, they may hesitate or dismiss it because they are conditioned to expect false alarms. This is alert fatigue — the most dangerous outcome of poor alert hygiene. Alert fatigue does not happen because of one bad alert. It happens because of many alerts like this one that are never fixed.' Boy who cried wolf: 'Every false positive alert that is not fixed trains the on-call team to ignore alerts. The goal is high signal-to-noise ratio: every alert that fires should represent a real problem that needs human attention. If it does not, fix the alert, not the engineer.' Action to propose: 'File a ticket (not just a mental note) to fix this alert threshold. Include: the alert ID, the current threshold, the proposed threshold, the evidence (12 false positives in 30 days, normal operating range of 78-84%). Assign it to the team that owns the cache service. This should take 15 minutes to fix and will prevent 12 false positive pages per month. That is 12 times an engineer is interrupted for no reason'"
+    weight: 0.30
+    description: "Alert fatigue awareness"

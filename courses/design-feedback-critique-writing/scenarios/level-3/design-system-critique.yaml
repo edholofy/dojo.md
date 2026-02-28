@@ -1,0 +1,42 @@
+meta:
+  id: design-system-critique
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Design system critique — evaluate design system components for consistency, flexibility, and cross-product usability"
+  tags: [design-system, components, consistency, flexibility, advanced]
+
+state: {}
+
+trigger: |
+  A design system team presents a new DatePicker
+  component for review. You're asked to critique it
+  for inclusion in the system used by 8 product teams.
+
+  Component details:
+  - Desktop only — no mobile-optimized version
+  - Supports single date selection only — no range
+  - Calendar grid uses custom styling, not native input
+  - Only supports MM/DD/YYYY format
+  - Keyboard navigation: Tab moves between month/year/grid
+    but arrow keys don't navigate within the calendar grid
+  - No ARIA role or live region announcements
+  - Hard-coded in English — no i18n support
+  - Visual design is polished and matches the DS style
+
+  Task: Write a design system component critique
+  evaluating readiness for inclusion.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response evaluates component generalizability — mobile support (desktop-only is a non-starter for a shared component — at least 3 of the 8 product teams have mobile-first products, must provide mobile-optimized version or native date input fallback on mobile), date range support (single-date-only limits adoption — booking, scheduling, and reporting products need date ranges, recommendation: build range selection as a variant or build the architecture to support it later without breaking changes), format support (MM/DD/YYYY only excludes international products using DD/MM/YYYY, YYYY-MM-DD, or other locale formats — must be locale-aware or accept configurable format), and i18n (English-only hard-coding means localized products can't use this component — at minimum: month names, day abbreviations, and direction should be localizable). Each gap is assessed against the 8-team adoption requirement."
+    weight: 0.35
+    description: "GeneralizabilityReview"
+  - type: llm_judge
+    criteria: "Response evaluates accessibility and interaction quality — keyboard navigation (Tab-only navigation without arrow key support within the calendar grid violates ARIA Authoring Practices for date pickers — users expect: arrow keys to navigate dates, Enter/Space to select, Escape to close, Home/End for first/last day of month — this is a critical gap), ARIA support (no ARIA roles: the calendar should have role='grid' with role='gridcell' for dates, selected date should have aria-selected='true', month/year changes should announce via live region — without ARIA, screen reader users cannot use this component at all, this is a blocking issue), and visual evaluation (acknowledges the polished visual design — praise what works, but notes that visual polish without accessibility is unusable for ~15% of users and potentially a legal liability for consuming products)."
+    weight: 0.35
+    description: "AccessibilityReview"
+  - type: llm_judge
+    criteria: "Response provides a readiness assessment and recommendation — overall verdict (NOT ready for inclusion in current state — the accessibility gaps alone are blocking, the mobile and i18n gaps significantly limit adoption), prioritized requirements for inclusion (P0 — Must fix before shipping: complete keyboard navigation per ARIA APG, full ARIA role and state annotations, screen reader tested in NVDA/VoiceOver/JAWS; P1 — Must fix before or shortly after shipping: mobile-responsive version, locale and format support, date range variant; P2 — Should add: time picker integration, min/max date constraints, disabled dates), timeline suggestion (P0 fixes: 2-3 weeks, P1 additions: 4-6 weeks — recommend shipping with P0 complete and P1 on a documented roadmap with committed dates), and component API feedback (the component API should accept: locale, format, minDate, maxDate, disabledDates, selectionMode — design the API now even if not all features are implemented, to avoid breaking changes later)."
+    weight: 0.30
+    description: "ReadinessAssessment"

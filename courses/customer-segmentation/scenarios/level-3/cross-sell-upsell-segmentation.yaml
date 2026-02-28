@@ -1,0 +1,44 @@
+meta:
+  id: cross-sell-upsell-segmentation
+  level: 3
+  course: customer-segmentation
+  type: output
+  description: "Cross-sell and upsell segmentation — identify expansion opportunities by segmenting customers based on propensity to buy additional products or upgrade"
+  tags: [cross-sell, upsell, expansion, propensity, advanced]
+
+state: {}
+
+trigger: |
+  A revenue operations leader says: "We sell a suite of 5 products:
+  CRM ($50/user/mo), Marketing ($40/user/mo), Support ($30/user/mo),
+  Analytics ($25/user/mo), and Commerce ($60/user/mo). Most customers
+  start with CRM and we want to expand them into additional products.
+
+  Currently, 60% of customers have 1 product, 25% have 2, 10% have 3,
+  and 5% have 4+. Our expansion revenue is $8M annually but the CEO
+  wants $15M.
+
+  We have 8,000 accounts with data on: current products owned, usage
+  depth per product, company industry, company size, feature requests,
+  support tickets mentioning other products, and web page visits on
+  product pages they don't own.
+
+  How do I segment customers by expansion potential?"
+
+  Task: Build an expansion segmentation that identifies which customers
+  are most likely to buy additional products or upgrade, using behavioral
+  signals and propensity modeling.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies cross-sell and upsell signals — intent signals (visiting pricing pages of products they don't own, submitting feature requests for capabilities in other products, support tickets mentioning needs served by other products), readiness signals (high usage and satisfaction with current products, growing company/team, approaching plan limits), and natural product adjacencies (CRM → Marketing is a natural path, CRM → Support is another). Creates a signal-based scoring model for expansion propensity"
+    weight: 0.35
+    description: "ExpansionSignals"
+  - type: llm_judge
+    criteria: "Response creates expansion segments with prioritized actions — segments like: 'Active Explorers' (high intent signals, visiting other product pages — nurture with trials and demos), 'Satisfied and Growing' (high usage, growing team, no intent signals yet — proactively introduce adjacent products), 'Product Champions' (deeply embedded with 2+ products, strong advocates — multi-product bundle offers), 'Underutilizers' (low usage of current product — fix adoption before attempting expansion), and 'Natural Next Step' (usage patterns match typical pre-expansion profiles based on historical data)"
+    weight: 0.35
+    description: "ExpansionSegments"
+  - type: llm_judge
+    criteria: "Response addresses the product adjacency map and sequencing — which products are most commonly bought together (affinity analysis), the typical product adoption sequence (CRM first, then Marketing or Support, then Analytics), which product combinations have the highest retention rates, and how to recommend the RIGHT next product for each customer based on their usage patterns and industry. Quantifies the expected revenue impact per segment to build toward the $15M target"
+    weight: 0.30
+    description: "ProductAdjacency"

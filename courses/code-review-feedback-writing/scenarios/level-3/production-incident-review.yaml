@@ -1,0 +1,42 @@
+meta:
+  id: production-incident-review
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review incident fix PRs — evaluate hotfix code for correctness, root cause coverage, regression prevention, and appropriate urgency without cutting corners"
+  tags: [code-review, incident, hotfix, production, root-cause, regression, advanced]
+
+state: {}
+
+trigger: |
+  There's an active production incident. A developer submits a PR
+  tagged "HOTFIX" to resolve it. The incident: users intermittently
+  see another user's order history when clicking "My Orders."
+
+  The PR (45 lines):
+  - Adds a user ID filter to the orders query that was missing
+  - The fix is in the caching layer — orders were cached by page
+    URL without including the user ID in the cache key
+  - The author also "cleaned up" some unrelated code in the same file
+  - No tests added ("we need to ship this fast")
+  - The fix handles the cache key but doesn't invalidate existing
+    incorrect cache entries
+
+  Task: Review this hotfix balancing urgency with safety. Write your
+  review addressing: is the fix correct, does it fully resolve the
+  issue, what's the risk of shipping vs not shipping, and what
+  follow-up work is needed. This is a time-sensitive review.
+
+assertions:
+  - type: llm_judge
+    criteria: "Fix correctness is evaluated against the root cause — 'The cache key fix is correct — cache_key = /orders?page=1 should be cache_key = /orders?page=1&user_id=123. This prevents NEW incorrect entries. However, EXISTING cached entries still contain mixed user data. Risk: users continue seeing wrong data until those cache entries expire.' Critical missing piece: 'We need to either (1) flush the orders cache entirely, or (2) add cache invalidation for affected keys. Without this, the fix only prevents future occurrences — existing cached wrong data persists for [TTL duration].' Assessment: 'The fix is 80% correct — it prevents the vulnerability from recurring but doesn't clean up existing corrupted cache entries.'"
+    weight: 0.35
+    description: "Fix correctness"
+  - type: llm_judge
+    criteria: "Review balances urgency with necessary safety — decision framework: 'Ship immediately with cache flush' not 'Wait for perfect fix.' Specific recommendation: (1) Remove the unrelated code cleanup — hotfix PRs should ONLY contain the fix (reduces risk, simplifies rollback). (2) Add cache flush/invalidation — without this, the data leak continues from cache. (3) Tests can be a fast follow-up PR — but must be done today, not 'later.' (4) Approve once: unrelated changes removed AND cache invalidation added. Urgency acknowledgment: 'This is a data privacy incident — users seeing other users' data. Speed matters. But shipping a partial fix that still leaks cached data isn't actually faster — it's a second incident.'"
+    weight: 0.35
+    description: "Urgency balance"
+  - type: llm_judge
+    criteria: "Follow-up work is clearly scoped — immediate (ship with hotfix): cache key fix + cache flush + remove unrelated changes. Today: add regression test that verifies cache keys include user ID. This week: (1) audit all other cache keys for similar user-scoping issues, (2) add cache key logging/monitoring to detect future issues, (3) consider cache key builder utility that enforces user scoping by default. Post-incident: (1) retrospective to understand why the original code didn't include user ID (was it a refactor regression? was it never there?), (2) review process improvement — how did the original PR pass review without user scoping? (3) postmortem document. Frame follow-up as learning: 'The cache key pattern should be documented as a team standard — this is how bugs become institutional knowledge.'"
+    weight: 0.30
+    description: "Follow-up scoping"

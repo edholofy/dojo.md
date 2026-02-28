@@ -1,0 +1,51 @@
+meta:
+  id: blast-radius-management
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Manage Terraform blast radius — design state boundaries, implement approval workflows, and prevent large-scale outages from single changes"
+  tags: [Terraform, blast-radius, state-separation, approvals, risk, expert]
+
+state: {}
+
+trigger: |
+  A single terraform apply destroyed your production database, two
+  load balancers, and a VPN connection. Root cause: all 300 resources
+  were in one state file. The engineer intended to modify a CloudWatch
+  alarm but a provider upgrade changed the behavior of unrelated
+  resources.
+
+  Impact:
+  - 4 hours of downtime
+  - Database restored from backup (30 minutes of data loss)
+  - Post-mortem found: blast radius = 300 resources per apply
+  - Board asked: "How do we prevent this from happening again?"
+
+  Current state architecture:
+  ```
+  Single state: 300 resources
+  - VPC, subnets, NAT gateways
+  - RDS, ElastiCache
+  - ECS services, ALBs
+  - CloudWatch, SNS, SQS
+  - IAM roles, policies
+  - S3 buckets, CloudFront
+  ```
+
+  Task: Design the blast radius management strategy covering: state
+  file boundaries, change classification (risk levels), approval
+  workflows, provider upgrade safety, and recovery procedures.
+
+assertions:
+  - type: llm_judge
+    criteria: "State boundaries reduce blast radius — split 300 resources into isolated state files: foundation (VPC, subnets, NAT — rarely changes, ~20 resources), database (RDS, ElastiCache — critical, ~10 resources), compute (ECS, ALB — frequently changes, ~50 resources), messaging (SQS, SNS — moderate, ~30 resources), monitoring (CloudWatch, alarms — frequent, ~40 resources), IAM (roles, policies — sensitive, ~30 resources), CDN (CloudFront, S3 — moderate, ~20 resources). Each state file limits the blast radius. Maximum 50-80 resources per state. Cross-state references via terraform_remote_state"
+    weight: 0.35
+    description: "State boundaries"
+  - type: llm_judge
+    criteria: "Change classification and approvals are defined — risk levels: Low (monitoring, tags, non-destructive updates — auto-approve in CI), Medium (security group changes, scaling modifications — 1 approval), High (database changes, network topology, IAM — 2 approvals + change window), Critical (provider upgrades, state operations, foundation changes — team lead + SRE approval). Implement via: Terraform Cloud workspace-level permissions, GitHub environment protection rules, or Atlantis apply requirements. Provider upgrades: pin exact versions, upgrade in dev first, review changelog for breaking changes, upgrade one state file at a time"
+    weight: 0.35
+    description: "Classification and approvals"
+  - type: llm_judge
+    criteria: "Recovery procedures are practical — immediate response: (1) don't run terraform apply again, (2) assess damage scope from state and CloudTrail, (3) restore from backups (RDS snapshots, S3 versioning). Recovery: (1) if resources destroyed but state intact: terraform apply recreates, (2) if state corrupted: restore from S3 versioned state backup. Prevention: prevent_destroy on databases and critical resources, separate state files limit collateral damage, terraform plan -detailed-exitcode in CI catches unexpected destroys, plan output review required before apply. Provider upgrades: test in isolated environment first, upgrade one service domain at a time, maintain rollback plan (pin to previous version)"
+    weight: 0.30
+    description: "Recovery"

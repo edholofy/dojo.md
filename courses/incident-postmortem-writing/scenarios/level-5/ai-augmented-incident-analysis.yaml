@@ -1,0 +1,45 @@
+meta:
+  id: ai-augmented-incident-analysis
+  level: 5
+  course: incident-postmortem-writing
+  type: output
+  description: "Design AI-augmented incident analysis — leverage AI for pattern detection, postmortem assistance, and predictive incident prevention while maintaining human judgment"
+  tags: [postmortem, AI, machine-learning, pattern-detection, prediction, master]
+
+state: {}
+
+trigger: |
+  Your organization has 3 years of incident data: 200+ postmortems,
+  800+ action items, and detailed timelines. Your VP of Engineering
+  wants to explore how AI could improve the incident management
+  process. Specifically:
+
+  1. Can AI help detect patterns across postmortems that humans miss?
+  2. Can AI assist in writing postmortems (especially the tedious
+     timeline reconstruction)?
+  3. Can AI predict incidents before they happen based on historical
+     patterns?
+  4. What are the risks of AI in incident management?
+
+  You're also aware of emerging tools: AI-assisted incident triage,
+  automated runbook suggestion, and LLM-based postmortem drafting.
+
+  Task: Write a strategy document for AI-augmented incident
+  management. Evaluate each use case, identify where AI adds value
+  vs. where it introduces risk, and propose a phased adoption plan.
+  This should be a thoughtful analysis, not hype — acknowledge
+  limitations honestly.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each AI use case is evaluated honestly with both value and limitations — use case 1, pattern detection across postmortems: 'Value: HIGH. Humans struggle to identify patterns across 200+ documents spanning 3 years. AI can analyze all postmortems simultaneously and surface: recurring root cause categories that are growing, contributing factor clusters that appear together, services or components that appear disproportionately in incidents, seasonal or temporal patterns in incident frequency. Example: AI might detect that incidents involving the payment service cluster around the 1st and 15th of each month (billing cycle dates) — a pattern that is invisible to individual teams writing individual postmortems. Limitations: pattern detection requires clean, consistent data. Our postmortem quality varies. AI may find spurious correlations (incidents correlate with Tuesday deployments simply because we deploy most frequently on Tuesdays). Human judgment is required to distinguish meaningful patterns from noise.' Use case 2, postmortem writing assistance: 'Value: MEDIUM-HIGH. The most time-consuming postmortem section (timeline reconstruction) is also the most amenable to automation. AI can: aggregate timestamps from monitoring, deployment, and communication systems into a chronological timeline, draft the initial timeline section from automated data sources, suggest root cause categories based on similar past incidents. Limitations: AI should draft, not finalize. The postmortem's value comes from human analysis of why things happened, not just what happened. AI-generated root cause analysis risks being plausible but shallow — it might identify the proximate cause but miss the systemic factors that a skilled postmortem facilitator would surface.' Use case 3, incident prediction: 'Value: LOW-MEDIUM currently. Predictive incident prevention is the most appealing and least mature use case. What AI can realistically do: identify leading indicators (deployment frequency spikes, monitoring alert increases, error rate trends) that historically preceded incidents. What AI cannot reliably do: predict specific incidents with actionable precision. The false positive rate for incident prediction is currently too high for production use — alerting on every potential incident creates alert fatigue. Honest assessment: incident prediction is a research investment, not a near-term operational tool'"
+    weight: 0.35
+    description: "Honest use case evaluation"
+  - type: llm_judge
+    criteria: "Risks of AI in incident management are clearly articulated — risk 1, automation complacency: 'If AI drafts postmortems, engineers may accept the draft without adding the critical human analysis. The result: postmortems that look complete but lack depth. The AI can tell you what happened; it cannot tell you why the organization allowed it to happen. Mitigation: AI-generated sections are clearly marked as drafts. The quality review process explicitly checks for human analysis beyond the AI draft.' Risk 2, pattern hallucination: 'AI pattern detection may identify correlations that appear meaningful but are coincidental. If the organization acts on false patterns, it wastes engineering investment on non-issues. Mitigation: all AI-identified patterns are reviewed by a senior engineer before being acted upon. Patterns are validated against domain knowledge and, where possible, tested with controlled experiments.' Risk 3, bias amplification: 'If historical postmortems contain blame-oriented language or systematically undercount certain types of incidents, AI trained on that data will replicate those biases. Example: if past postmortems disproportionately attribute root causes to the on-call team rather than systemic factors, AI will learn that pattern. Mitigation: audit AI outputs for bias. Train on postmortems that meet quality standards, not the full historical dataset.' Risk 4, skill atrophy: 'If AI handles timeline reconstruction and pattern detection, engineers may lose the skills to do these tasks manually. This matters during novel incidents that do not match historical patterns — exactly when human judgment is most needed. Mitigation: maintain manual capability through quarterly exercises where postmortems are conducted without AI assistance.' Risk 5, confidentiality: 'Postmortem data contains sensitive information about system vulnerabilities, customer impact, and organizational weaknesses. Sending this to external AI services creates data exposure risk. Mitigation: use self-hosted or private AI models for incident data analysis. Never send postmortem content to public API endpoints'"
+    weight: 0.35
+    description: "Risk articulation"
+  - type: llm_judge
+    criteria: "Phased adoption plan starts with low-risk, high-value applications — phase 1 (months 1-3, low risk, high value): 'Automated timeline generation. AI aggregates data from monitoring, deployment, and communication systems into a draft timeline. This is the lowest-risk application because: the output is factual (timestamps and events, not analysis), it replaces the most tedious part of postmortem writing, and errors are easily detected by humans reviewing the timeline. Implementation: integrate with existing monitoring and deployment APIs. Output a draft timeline in the postmortem template. Human reviews and annotates. Expected impact: reduce timeline reconstruction from 2-3 hours to 30 minutes per postmortem.' Phase 2 (months 3-6, medium risk, high value): 'Cross-postmortem pattern analysis. AI analyzes the full postmortem corpus and generates quarterly pattern reports. Surfaces: recurring root cause categories, services with increasing incident frequency, contributing factor clusters. Implementation: use NLP to extract structured data from postmortem text. Build a pattern detection pipeline with human review. Expected impact: identify 2-3 patterns per quarter that were not visible to individual teams.' Phase 3 (months 6-12, medium risk, medium value): 'Postmortem draft assistance. AI suggests root cause categories, similar past incidents, and relevant action items from previous postmortems. The postmortem author sees: this incident is similar to [3 past incidents]. Common root causes in similar incidents were [X, Y, Z]. Action items from similar incidents included [A, B, C]. This accelerates postmortem writing and improves consistency. Implementation: similarity search across postmortem corpus. Requires clean, well-tagged postmortem data from phases 1-2. Expected impact: improve postmortem consistency and reduce writing time by 30%.' Phase 4 (months 12+, higher risk, experimental): 'Predictive indicators. Explore whether historical data can identify leading indicators of incidents. Start with narrow scope: can we predict capacity incidents based on traffic growth patterns? This is explicitly experimental — measure prediction accuracy before relying on it operationally. Do not alert humans on AI predictions until false positive rate is below 20%. Expected impact: uncertain, which is why it is phase 4.' Success criteria for the program: 'Phases 1-3 are justified by efficiency gains (measurable time savings in postmortem process). Phase 4 is justified only if prediction accuracy meets thresholds. At no point does AI replace human judgment in root cause analysis or action item definition — it augments'"
+    weight: 0.30
+    description: "Phased adoption"

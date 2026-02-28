@@ -1,0 +1,42 @@
+meta:
+  id: technical-design-detail
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Write detailed technical designs — create architecture diagrams, data models, and API specifications within an RFC at the right level of detail"
+  tags: [RFC, technical-design, architecture, data-model, API, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing the technical design section of an RFC proposing a
+  notification system. The system needs to:
+  - Send notifications via email, SMS, and push notifications
+  - Support user notification preferences (opt-in/out per channel)
+  - Handle templating for different notification types
+  - Queue notifications for reliability and rate limiting
+  - Track delivery status (sent, delivered, failed, read)
+
+  Your challenge: engineers want detailed technical design, but
+  managers keep asking "do I need to read all this?" You need to
+  provide enough detail for engineers to evaluate feasibility and
+  identify issues, without making the RFC impenetrable.
+
+  Task: Write the technical design section including: system
+  architecture (with component descriptions), data model, API
+  design, and sequence diagrams (in text/mermaid format). Show how
+  to provide technical depth while keeping the section navigable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture is clearly described with components and interactions — components: (1) Notification Service API (receives notification requests, validates, queues). (2) Message Queue (decouples sending from requesting, enables retry). (3) Channel Dispatchers (email via SendGrid/SES, SMS via Twilio, push via FCM/APNS — each as separate workers). (4) Preference Service (reads user notification preferences, filters channels). (5) Template Engine (renders notification content from templates + variables). (6) Delivery Tracker (records status updates, provides read receipts). Data flow described: 'Service A calls Notification API with (user_id, notification_type, payload) → API checks preferences → renders templates → enqueues per channel → dispatchers process and report delivery status.' Component interactions are explicit — which component calls which, synchronous vs asynchronous boundaries clearly marked"
+    weight: 0.35
+    description: "Architecture clarity"
+  - type: llm_judge
+    criteria: "Data model and API design are specific enough to evaluate — data model includes key tables/schemas: notifications (id, user_id, type, status, created_at, channels), notification_preferences (user_id, channel, notification_type, enabled), notification_templates (type, channel, subject_template, body_template), delivery_log (notification_id, channel, status, provider_response, attempted_at). API endpoints defined: POST /notifications (send), GET /notifications/:id (status), PUT /preferences (update user prefs), with request/response shapes shown. Sequence diagram (text or mermaid) for the happy path: caller → API → preference check → template render → queue → dispatcher → provider → delivery callback. The design should be specific enough that an engineer could identify gaps ('what about batch notifications?') but not so detailed that it's pseudocode"
+    weight: 0.35
+    description: "Data model and API"
+  - type: llm_judge
+    criteria: "Technical depth is balanced — navigable structure: overview paragraph (3 sentences summarizing the architecture for skimmers), then detailed subsections with clear headings (Architecture Overview, Data Model, API Design, Sequence Flows). Each subsection starts with a one-sentence summary. Diagrams complement text rather than replacing it. Design decisions are called out: 'We use a message queue between the API and dispatchers because: synchronous sending would block the caller, retries are handled by the queue infrastructure, and we can add rate limiting per channel at the queue level.' Trade-offs acknowledged: 'Separate dispatcher workers per channel add operational complexity but allow independent scaling and deployment — email spikes (marketing campaigns) don't affect SMS delivery.' Non-obvious choices explained: why this queue technology, why these API patterns, why this data model structure. The section answers 'is this feasible?' and 'are there design flaws?' without being an implementation guide"
+    weight: 0.30
+    description: "Balanced depth"

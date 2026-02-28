@@ -1,0 +1,49 @@
+meta:
+  id: third-party-component-audit
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Third-party component audit — evaluate accessibility of third-party widgets, embedded content, and vendor components"
+  tags: [third-party, vendor, embedded, widgets, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "A client's website uses
+  several third-party components that have accessibility
+  issues:
+
+  1. A chatbot widget from a vendor — not keyboard
+     accessible, no ARIA labels
+  2. An embedded Google Maps iframe with no accessible
+     alternative
+  3. A cookie consent banner from a CMP vendor —
+     keyboard trap, low contrast text
+  4. A social media feed embed that auto-loads content
+     and takes focus
+  5. A third-party payment form in an iframe that
+     we can't inspect or modify
+
+  The client says: 'We didn't build these — can we
+  still be held responsible? Can I fail these in my
+  audit if we can't fix them?'
+
+  How do I handle third-party accessibility in an
+  audit report?"
+
+  Task: Audit third-party components and address
+  ownership, responsibility, and remediation options.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits third-party issues and clarifies responsibility — legal responsibility (the site owner is responsible for ALL content on their site including third-party components — WCAG conformance applies to the entire page, embedding an inaccessible widget makes the page non-conformant, courts have consistently held site owners responsible regardless of who built the component), finding classification (report third-party issues the same way as first-party issues — same WCAG criteria, same severity classification, but add a 'Ownership' field: 'Third-party: [vendor name]' and 'Remediation path' field noting whether the fix requires vendor action), chatbot finding (WCAG 2.1.1 Keyboard + 4.1.2 Name Role Value: keyboard-inaccessible and unlabeled controls, Severity: Major, Remediation: contact vendor for accessible version, request VPAT/accessibility statement, if vendor can't remediate — evaluate alternative vendors with accessibility as a requirement), cookie consent finding (WCAG 2.1.2 No Keyboard Trap + 1.4.3 Contrast: keyboard trap is Critical — users literally cannot proceed past the banner, Fix: contact CMP vendor for accessible configuration, most major CMPs have accessibility settings)"
+    weight: 0.35
+    description: "ThirdPartyFindings"
+  - type: llm_judge
+    criteria: "Response covers embedded maps, social feeds, and payment iframes — Google Maps embed (WCAG 1.1.1 + 4.1.2: embedded maps are not fully accessible to screen readers — map content is not conveyed textually, Severity: Major, Fix: don't remove the map — add accessible alternative: text description of the location with address, directions from major landmarks, link to Google Maps for turn-by-turn directions accessible via Google's own accessibility features), Social media feed (WCAG 2.2.2 Pause Stop Hide + 2.4.3 Focus Order: auto-loading content that takes focus is disorienting, Severity: Major, Fix: load social feed statically or on user request, don't auto-focus the embed, add heading above embed so screen reader users can skip past it), Payment form iframe (WCAG scope: you can't audit code inside a cross-origin iframe — document what you can assess: does the iframe have an accessible title? can keyboard users reach and leave the iframe? are there known vendor accessibility commitments? — note in report: 'Payment form iframe content could not be fully audited — recommend requesting vendor's VPAT and conducting user testing with screen reader users to verify the payment flow')"
+    weight: 0.35
+    description: "MapsSocialPayment"
+  - type: llm_judge
+    criteria: "Response provides third-party management framework — procurement process (include accessibility requirements in vendor selection: request VPAT/ACR before procurement, include accessibility SLA in contract: vendor must remediate accessibility issues within 30 days of notification, include right to audit: permission to test vendor components for accessibility), vendor communication template (how to report accessibility issues to vendors: describe the issue with WCAG reference, provide test results with screen reader output, request timeline for fix, escalate with legal implications if vendor is unresponsive), alternative strategies (if vendor won't fix: evaluate competitor products with accessibility, build the component in-house with proper accessibility, create accessible wrapper around inaccessible component where possible — e.g., add keyboard handling around a widget), and audit report section (create a 'Third-Party Components' section in the audit report listing each vendor component, its accessibility status, owner, remediation path, and recommended action — gives the client a clear picture of their third-party accessibility risk)"
+    weight: 0.30
+    description: "ManagementFramework"

@@ -1,0 +1,47 @@
+meta:
+  id: expert-cohort-shift
+  level: 4
+  course: cohort-analysis
+  type: output
+  description: "Expert cohort shift — handle complex organizational cohort challenges requiring infrastructure design, marketplace analysis, pricing strategy, and automated monitoring"
+  tags: [shift-simulation, expert, multi-request, organizational]
+
+state: {}
+
+trigger: |
+  Five cohort analysis challenges arrive from executive leadership:
+
+  Request 1 (CTO): "Our cohort queries take 45 minutes and the data
+  is always stale. We need real-time cohort visibility. Design the
+  architecture."
+
+  Request 2 (COO — marketplace): "We're a two-sided marketplace.
+  Seller churn spiked last month and now buyers are complaining about
+  selection. Show me how the seller churn is affecting buyer cohorts."
+
+  Request 3 (VP Finance — SaaS): "Our NRR dropped from 110% to 95%
+  this quarter. I need a cohort-level decomposition — is it churn,
+  downgrades, or weak expansion?"
+
+  Request 4 (CPO): "We're raising prices 20% next month. Which
+  cohorts will be most affected? Build me a risk model."
+
+  Request 5 (Head of Analytics): "Every analyst gives different
+  retention numbers. Standardize our cohort definitions and build
+  a single source of truth."
+
+  Task: Handle all five requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Requests 1 and 2 — infrastructure and marketplace analysis — infra_marketplace: 'Request 1 — Real-time cohort architecture: design a three-tier system: hot tier: streaming pipeline (Kafka → Flink → Redis) for real-time engagement signals. Compute hourly cohort activity proxies (active users per cohort in the last 1/4/24 hours). Update every 5 minutes. Dashboard shows live retention proxies with deployment markers. Cost: approximately $2K/month additional infrastructure. Warm tier: hourly micro-batch pipeline (warehouse → OLAP engine) for near-real-time cohort metrics. Refresh every hour instead of daily. Supports filtered cohort queries in under 5 seconds. Cold tier: daily batch pipeline (existing) for certified, audited metrics. This is the system of record for reporting and board decks. Deployment impact detection: auto-create markers at each deploy. Alert if hourly active users drop 15%+ below baseline within 2 hours post-deploy. Include rollback recommendation in the alert. Estimated improvement: detection time from 48 hours to 2-4 hours. Request 2 — Marketplace seller churn impact on buyers: seller churn analysis: seller cohort retention dropped from 35% M6 to 22% M6 for the latest cohort. This means 13% fewer sellers are active at month 6. Supply impact: categories with the worst seller churn: electronics (-30% active sellers), home goods (-25%). Categories stable: clothing (-5%), food (-8%). Buyer cohort impact: buyer cohorts in electronics category: M3 retention dropped from 22% to 14% (−8pp) when seller count dropped below 200. Buyer time-to-purchase increased from 2 days to 6 days. Cart abandonment rate increased from 30% to 48%. Cross-side correlation: for every 10% decline in active sellers, buyer M3 retention drops approximately 3pp. The relationship is non-linear — below a critical seller threshold (approximately 150 in a category), buyer retention collapses. Recommendation: emergency seller retention program for electronics and home goods. Recruit 50+ new sellers in affected categories within 30 days. Notify buyers about alternative categories to prevent churn while supply recovers'"
+    weight: 0.35
+    description: "InfraMarketplace"
+  - type: llm_judge
+    criteria: "Response handles Requests 3 and 4 — NRR decomposition and pricing risk — nrr_pricing: 'Request 3 — NRR decomposition by cohort: overall NRR dropped from 110% to 95% (−15pp). Decomposing the drop: component | last quarter | this quarter | change. Gross retention (GRR): 88% | 82% | −6pp (more churn). Downgrades: −3% | −5% | −2pp (more downgrades). Expansion: +25% | +18% | −7pp (less expansion). Total NRR: 110% | 95% | −15pp. By cohort: 2022 cohorts: NRR 95% → 90% (long-tenured customers downsizing). 2023 cohorts: NRR 115% → 100% (expansion stalled — these customers already upgraded). 2024 cohorts: NRR 112% → 92% (higher early churn — product-market fit concern). The biggest NRR driver is the 2024 cohort churn spike (−20pp NRR swing). Root cause: 2024 cohorts were acquired through an aggressive paid campaign. Lower intent, lower activation rates, higher churn at months 3-6. Recommendation: tighten paid acquisition targeting (quality over quantity). Implement customer success touches at month 2-3 for 2024 cohorts. Invest in expansion plays for 2023 cohorts (new features, higher tiers). Request 4 — Pricing risk model by cohort: price sensitivity analysis: 2022 cohorts (800 customers, paying $10-14): elasticity: −2.5. Predicted churn from 20% increase: 18-22%. Revenue impact: +$1,200/month from increase vs −$1,600/month from churn = −$400/month net. Risk level: HIGH. 2023 cohorts (1,200 customers, paying $15-17): elasticity: −1.2. Predicted churn: 8-12%. Revenue impact: +$3,000/month vs −$2,400/month = +$600/month net. Risk level: MODERATE. 2024 cohorts (2,000 customers, paying $20-21): elasticity: −0.6. Predicted churn: 3-5%. Revenue impact: +$8,000/month vs −$2,000/month = +$6,000/month net. Risk level: LOW. Recommendation: grandfather 2022 cohorts at current prices (negative ROI to increase). Apply 10% increase to 2023 cohorts (moderate risk, positive ROI). Apply 20% increase to 2024 cohorts and new signups (low risk, high ROI). Total net impact: approximately $6,200/month incremental revenue with minimal churn risk'"
+    weight: 0.35
+    description: "NRRPricing"
+  - type: llm_judge
+    criteria: "Response handles Request 5 — standardizing cohort definitions — standardization: 'Request 5 — Cohort definition standardization: audit of current inconsistencies: analyst A: active = any event, cohort = UTC month, retention = calendar month. Analyst B: active = core action, cohort = user local timezone month, retention = lifecycle month. Analyst C: active = login, cohort = UTC month, retention = calendar week. These three analysts will produce three different retention numbers for the same cohort. Standardized definitions (to be documented and enforced): cohort assignment: users assigned to monthly cohorts based on signup_date_utc truncated to the first of the month. Standard. No exceptions. Active user: primary definition: any server-side event (broadest, used for DAU/MAU). Secondary: core action (used for product-specific analysis, must be labeled). Must always specify which definition is used. Retention period: lifecycle-based: the N-th 30-day window after the individual user's signup date. Calendar-month-based: available as alternative for investor reporting. Must specify which method is used. Churn: 30 consecutive days of zero activity. Reactivation: any activity after churn date. Exclusions: test users (flagged in dim_user), internal users, bot accounts. Always excluded. No manual filtering needed (built into the pipeline). Implementation: 1. Document all definitions in a data dictionary (versioned, accessible). 2. Build the definitions into the ETL pipeline (analysts use pre-computed tables, not raw queries). 3. Create a cohort metric library with certified metrics. 4. Add a data quality check: if an analyst runs a custom query that produces numbers more than 5% different from the certified metric, flag it for review. 5. Training: 2-hour workshop for all analysts on the new standards. 6. Governance: any definition change requires an RFC, review, recalculation, and communication. Expected outcome: all analysts produce consistent numbers. Dashboard metrics match ad-hoc analysis. Board-level trust in cohort data improves'"
+    weight: 0.30
+    description: "Standardization"

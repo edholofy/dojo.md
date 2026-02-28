@@ -1,0 +1,32 @@
+meta:
+  id: reading-retention-curves
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Read and interpret retention curves — understand the shape of retention curves, identify healthy vs unhealthy patterns, and extract actionable insights"
+  tags: [retention-curve, interpretation, patterns, visualization, beginner]
+
+state: {}
+
+trigger: |
+  The product manager shows the analyst a retention curve chart:
+  "Here's our retention data. Week 0 is 100%, then it drops to 40%
+  by week 1, 25% by week 4, and 15% by week 12. Is this good or bad?
+  What should I be looking for in this chart?"
+
+  Task: Explain how to read retention curves, identify healthy and
+  unhealthy patterns, and extract insights.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains retention curve anatomy and patterns — anatomy: 'Retention curve anatomy: the retention curve plots the percentage of a cohort that remains active over time. X-axis: time since signup (weeks, months, or days). Y-axis: percentage of cohort still active. Week 0 always starts at 100% (all users are active on their signup day). The curve shape tells a story: Healthy retention (flattening curve): sharp initial drop (week 0 to week 1): normal — many users try the product once and leave. This is called the activation cliff. Gradual decline (week 1 to week 4): users who did not find value continue to leave. Flattening (week 4+): the curve levels off. The users who remain are the core engaged users. The flattening point is the retention floor — the percentage of users who become long-term users. PM's curve: 100% → 40% → 25% → 15%. The drop from 100% to 40% in week 1 means 60% of users do not return after their first session. This is the biggest opportunity — improving first-session experience could recover many of these users. The curve appears to be flattening around 15% by week 12 — this is the retention floor. 15% of users become long-term users. Unhealthy retention (continuously declining): the curve never flattens — it keeps declining toward 0%. Week 1: 40%. Week 4: 20%. Week 8: 10%. Week 12: 5%. Week 24: 1%. This product has no core retained users — eventually everyone leaves. This requires fundamental product changes, not just optimization'"
+    weight: 0.35
+    description: "Anatomy"
+  - type: llm_judge
+    criteria: "Response covers benchmarks and comparative reading — benchmarks: 'Retention benchmarks by product type: the PM asks is 15% at week 12 good or bad? It depends on the product category. Social/communication apps: day 1: 40-60%. Day 30: 20-30%. Day 90: 15-25%. The PM's 15% at week 12 (approximately day 84) is at the low end for social apps. E-commerce: day 1: 15-25%. Day 30: 5-10%. Day 90: 3-8%. 15% at week 12 would be excellent for e-commerce. SaaS/productivity: week 1: 50-70%. Month 1: 30-50%. Month 3: 20-35%. 15% at week 12 is below average for SaaS. Mobile games: day 1: 30-40%. Day 7: 15-20%. Day 30: 5-10%. 15% at week 12 would be very strong for a mobile game. Comparative reading — comparing cohorts: the most valuable use of retention curves is comparing them. Overlay multiple cohort curves on the same chart: January cohort: 15% at week 12. February cohort: 18% at week 12. March cohort: 22% at week 12. Each successive cohort retains better — the product is improving. If newer cohorts retain WORSE, something is degrading (perhaps a bad product change, worsening acquisition quality, or increased competition). Comparing segments: organic users: 25% at week 12. Paid users: 8% at week 12. Organic users retain 3x better — paid acquisition is bringing lower-quality users. This insight is invisible in aggregate retention but obvious in cohort comparison'"
+    weight: 0.35
+    description: "Benchmarks"
+  - type: llm_judge
+    criteria: "Response covers actionable insights from retention curves — insights: 'Extracting actionable insights: Insight 1 — The activation cliff (week 0 to week 1 drop): the PM's curve drops from 100% to 40% — 60% of users never return. This is the activation problem. Questions to investigate: are users completing onboarding? What percentage activate (perform the core action) in their first session? Where do first-time users drop off? Action: improve the first-time user experience. Guide users to the aha moment faster. Insight 2 — The retention floor (where the curve flattens): the 15% floor tells you the current percentage of users who find lasting value. If you can identify what these 15% have in common (they completed onboarding, they connected with 5 friends, they created 3 projects), you can design the product to help more users reach that state. This is the activation metric — the behavior that predicts long-term retention. Insight 3 — Early vs late churn: week 1-4 churn (40% → 25%) = users who tried but did not find value. This is a product/onboarding problem. Week 4-12 churn (25% → 15%) = users who found some value but not enough to stay. This may be a habit-formation or engagement depth problem. Different churn phases require different solutions: early churn → better onboarding. Mid-term churn → deeper engagement features. Late churn → renewal incentives, loyalty programs. Insight 4 — Smile curve (rare but powerful): some products show a retention curve that initially drops then rises back up: week 1: 40%. Week 4: 25%. Week 8: 28%. Week 12: 32%. Users who left are coming back. This is called a smile curve and is a very strong signal — the product creates enough value that churned users return. Common in seasonal products (tax software, holiday shopping) and products with network effects (users return when more friends join)'"
+    weight: 0.30
+    description: "Insights"

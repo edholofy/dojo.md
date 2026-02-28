@@ -1,0 +1,35 @@
+meta:
+  id: multiple-testing-correction
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Apply multiple testing corrections — understand and prevent the inflated false positive risk when analyzing multiple metrics, segments, or variants in a single experiment"
+  tags: [multiple-testing, Bonferroni, FDR, family-wise-error, intermediate]
+
+state: {}
+
+trigger: |
+  The growth team presents A/B test results to the VP: "We tested
+  the new homepage and measured 15 metrics. Three are statistically
+  significant — bounce rate improved, scroll depth improved, and
+  newsletter signups improved. The homepage redesign works!"
+
+  The data scientist raises a concern: "With 15 metrics at α = 0.05,
+  you'd expect 0.75 false positives by chance alone. At least one
+  of your three 'wins' is probably a false positive."
+
+  Task: Explain the multiple testing problem and how to correct for it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the multiple testing problem — problem: 'The multiple testing problem: When you test one hypothesis at α = 0.05, you have a 5% chance of a false positive. When you test 15 hypotheses at α = 0.05 each, the probability of AT LEAST ONE false positive is: 1 - (0.95)^15 = 1 - 0.463 = 53.7%. You have a better-than-coin-flip chance of finding at least one significant result even if the treatment has NO real effect on any metric. Expected number of false positives: 15 × 0.05 = 0.75. Out of the 3 significant results, approximately 0.75 are expected to be false positives. It is plausible that 1 of the 3 is fake. More practically: if you measure enough things, something will appear significant by chance. This is why pre-registering a primary metric is essential — you commit to one metric BEFORE seeing the results. The 14 other metrics are secondary, exploratory, and should be interpreted with appropriate skepticism. The problem extends beyond multiple metrics: Multiple variants: testing A vs B vs C vs D = 6 pairwise comparisons. Multiple segments: analyzing men, women, age 18-25, age 25-35, mobile, desktop = 6 segments × 1 metric = 6 tests. Multiple time periods: checking results daily for 14 days = 14 looks. Every additional comparison inflates the false positive rate'"
+    weight: 0.35
+    description: "Problem"
+  - type: llm_judge
+    criteria: "Response covers correction methods (Bonferroni, BH/FDR) — corrections: 'Correction methods: Method 1 — Bonferroni correction (most conservative): adjusted alpha = α / number of tests. For 15 metrics at α = 0.05: adjusted alpha = 0.05 / 15 = 0.0033. A metric must achieve p < 0.0033 to be significant. Applying to the 3 significant results: bounce rate: p = 0.008. Not significant at 0.0033 (was significant at 0.05). Scroll depth: p = 0.012. Not significant at 0.0033. Newsletter signups: p = 0.001. Still significant at 0.0033. After Bonferroni correction: only newsletter signups survives. The other two were likely false positives. Pros: simple, controls the family-wise error rate (FWER) — probability of ANY false positive stays at 5%. Cons: very conservative — many real effects will be missed (high false negative rate). Method 2 — Benjamini-Hochberg (BH) procedure (less conservative): controls the False Discovery Rate (FDR) — the expected proportion of false positives among all discoveries. Steps: 1. Rank all p-values from smallest to largest. 2. For each rank k, compare p-value to k/m × α. 3. The largest k where p(k) ≤ k/m × α defines the threshold. Ranked p-values from 15 metrics: Rank 1: newsletter signups p = 0.001. Threshold: 1/15 × 0.05 = 0.0033. 0.001 < 0.0033 ✓. Rank 2: bounce rate p = 0.008. Threshold: 2/15 × 0.05 = 0.0067. 0.008 > 0.0067 ✗. All remaining p-values also fail. BH result: only newsletter signups is significant (same as Bonferroni in this case). But in scenarios with more true effects, BH is less conservative and preserves more statistical power. When to use which: Bonferroni: when any false positive is costly (pricing decisions, medical trials). BH: when you can tolerate some false positives among many discoveries (exploratory analysis, feature flags)'"
+    weight: 0.35
+    description: "Corrections"
+  - type: llm_judge
+    criteria: "Response covers practical approaches to handling multiple metrics — practical: 'Practical approaches: Approach 1 — Pre-specify primary and secondary metrics: designate ONE primary metric before the test. This metric is tested at α = 0.05 with no correction needed. Secondary metrics (2-3) are tested at Bonferroni-corrected α = 0.05/3 = 0.017. All other metrics are exploratory — report the results but do not claim significance. This hierarchy avoids correcting across all 15 metrics while maintaining rigor on the decision metric. Approach 2 — Overall Evaluation Criterion (OEC): combine multiple metrics into a single composite score. Example: OEC = 0.5 × (conversion rate lift) + 0.3 × (revenue per visitor lift) + 0.2 × (retention lift). Test the OEC as the single primary metric. No multiple testing correction needed because there is only one test. The weights reflect business priorities (conversion is most important). Approach 3 — Segment analysis discipline: pre-specify which segments to analyze (e.g., mobile vs desktop, new vs returning). Limit to 2-3 segments. Apply Bonferroni correction across segments. Post-hoc segments (discovered by looking at the data) are hypotheses for future tests, not conclusions from this test. If you find that the treatment works only for users in Montana who use Firefox, that is a hypothesis to test separately — not a proven result. Approach 4 — Replicate surprising results: if a secondary metric shows a surprising significant result (e.g., the button color change increased newsletter signups), run a focused follow-up test with newsletter signups as the primary metric. Replication is the gold standard — if the effect is real, it will show up again'"
+    weight: 0.30
+    description: "Practical"

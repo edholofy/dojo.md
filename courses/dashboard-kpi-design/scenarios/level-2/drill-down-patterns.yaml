@@ -1,0 +1,37 @@
+meta:
+  id: drill-down-patterns
+  level: 2
+  course: dashboard-kpi-design
+  type: output
+  description: "Design drill-down patterns — build overview-to-detail navigation that lets users investigate anomalies from summary to root cause in 3 clicks or fewer"
+  tags: [drill-down, overview-detail, navigation, interactivity, intermediate]
+
+state: {}
+
+trigger: |
+  The VP of Sales sees a revenue dip on the executive dashboard:
+  "$800K this month vs $1.1M last month — a 27% drop."
+
+  She wants to investigate: which region dropped? Which product?
+  Which sales rep? Was it one big deal that fell through?
+
+  Currently, she has to ask the data team each question individually
+  and wait 2 hours per answer. She wants to self-serve this
+  investigation in under 5 minutes.
+
+  Task: Design a drill-down navigation pattern that enables this
+  investigation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a 3-level drill-down path — drilldown: 'Drill-down investigation path: Level 1 — Executive overview (where the VP starts): KPI card: Revenue $800K ↓27% MoM. Red status. Bar chart: revenue by region. All bars show current month vs last month side by side. The VP immediately sees: West region dropped from $400K to $200K. Other regions are flat. She clicks the West bar. Level 2 — Regional detail (one click): Header: West Region Revenue — $200K (↓50% MoM). Bar chart: revenue by product category in the West. The VP sees: Enterprise Software category dropped from $350K to $150K. Other categories are stable. She clicks the Enterprise Software bar. Level 3 — Root cause detail (two clicks): Header: West Region > Enterprise Software — $150K (↓57% MoM). Table: individual deals this month vs last month. Last month had a $200K deal (Acme Corp renewal) that did not recur this month. The $200K deal was a one-time annual renewal — it artificially inflated last month's numbers. This month is actually normal. The VP now knows: the 27% drop is not a crisis. It is one large annual renewal that happened last month. The underlying business is healthy. She went from alarm to understanding in 3 clicks and 2 minutes. Drill-down breadcrumb: All Regions > West > Enterprise Software. The VP can click any breadcrumb to navigate back up the hierarchy'"
+    weight: 0.35
+    description: "Drilldown"
+  - type: llm_judge
+    criteria: "Response covers drill-down design principles and anti-patterns — principles: 'Drill-down design principles: 1. Every click should answer a question and raise a new one. Level 1 answers: which region dropped? Raises: what product category in that region? Level 2 answers: which category? Raises: which deals? Level 3 answers: which specific deal? Investigation complete. 2. Preserve context during navigation: when the VP drills into West, the date range, comparison period, and other filters should persist. She should not have to re-select the current month at each level. 3. Show breadcrumbs: All > West > Enterprise Software. The user always knows where they are in the hierarchy and can navigate back to any level. 4. Limit drill-down depth to 3-4 levels: deeper than 4 levels means the user is lost. If investigation requires 6 levels, the dashboard hierarchy needs redesign. 5. Highlight the anomaly at each level: at Level 1, highlight the West bar in red. At Level 2, highlight Enterprise Software in red. The user's eye is guided to the problem without reading every bar. Anti-patterns: drill-down that opens in a new page (user loses context). Drill-down that resets filters (user has to reconfigure). Drill-down that goes too deep (5+ levels — user is lost). Drill-down with no way back (no breadcrumbs, no back button). Drill-down that changes the chart type at each level (confusing — keep consistent visualizations)'"
+    weight: 0.35
+    description: "Principles"
+  - type: llm_judge
+    criteria: "Explanation includes the overview-detail pattern as an alternative — overviewdetail: 'Overview-detail as an alternative to drill-down: Instead of navigating to a new page, the overview-detail pattern shows detail alongside the summary. Implementation: the dashboard is split into two panels. Left panel (40% width): the summary view — bar chart of revenue by region. Always visible. Right panel (60% width): the detail view — changes based on what the user selects in the left panel. When the VP clicks West in the left panel, the right panel shows the West region breakdown without leaving the page. Both panels are visible simultaneously, so the user maintains context. Advantages over pure drill-down: no page navigation — everything is on one screen. The user can quickly click between regions without losing the overview. Comparison is easier: click West, see the detail; click East, instantly see that detail. Disadvantage: requires more screen space. Does not work well on mobile. When to use overview-detail: when the user needs to compare multiple selections quickly (clicking between regions). When the detail is short enough to fit in a panel (a few charts or a table). When to use drill-down: when each level has enough complexity to fill a full page. When mobile users need the same investigation capability. When the hierarchy has 3+ levels (overview-detail works best for 2 levels)'"
+    weight: 0.30
+    description: "OverviewDetail"

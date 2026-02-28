@@ -1,0 +1,64 @@
+meta:
+  id: confidential-meeting-handling
+  level: 3
+  course: meeting-notes-action-items
+  type: output
+  description: "Confidential meeting handling — document meetings involving sensitive topics like personnel decisions, legal matters, and M&A discussions with proper information classification"
+  tags: [confidential, sensitive, legal, classification, advanced]
+
+state: {}
+
+trigger: |
+  You attended three meetings today that all involve sensitive
+  or confidential information. You need to create appropriate
+  documentation for each:
+
+  Meeting 1 - HR Investigation Review (with HR Director and
+  Legal Counsel):
+  - An employee (position: Senior Engineer) has been accused
+    of harassment by two colleagues
+  - HR has completed the initial investigation
+  - Legal counsel recommends placing the employee on paid
+    administrative leave while the investigation continues
+  - A decision was made to engage an external investigator
+  - Timeline: external investigation to be completed within
+    30 days
+  - The accusers' identities must be protected
+
+  Meeting 2 - M&A Discussion (with CEO, CFO, and external
+  advisors from Goldman Sachs):
+  - The company is considering acquiring a competitor
+    (code name: "Project Sapphire")
+  - Target company valuation: $45-60M range
+  - Due diligence team needs to be assembled
+  - The acquisition is material and non-public information
+    — insider trading rules apply
+  - The CEO emphasized: "Absolutely no one outside this room
+    can know about this"
+
+  Meeting 3 - Performance Improvement Discussion (with a
+  direct report's manager):
+  - An employee is being placed on a Performance Improvement
+    Plan (PIP)
+  - Specific performance issues documented
+  - 60-day PIP timeline with weekly check-ins
+  - Manager has been advised by HR on documentation
+    requirements
+  - The employee will be informed next Monday
+
+  Task: Create appropriate documentation for all three
+  meetings with proper confidentiality controls.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates properly classified documentation — information classification (each meeting's notes are classified appropriately: HR investigation — classified as 'Confidential — HR/Legal Privileged'; restricted to HR, Legal, and designated investigators; stored in HR's secure document system, not the general meeting notes repository; M&A discussion — classified as 'Strictly Confidential — Material Non-Public Information'; restricted to named participants only; subject to insider trading regulations; stored separately from all other company documents; PIP discussion — classified as 'Confidential — HR'; restricted to the manager, HR, and the employee (once informed); part of the employee's personnel file), access controls (each document specifies who can access it: explicit list of authorized readers; the M&A notes specifically note insider trading compliance; the HR investigation notes protect the identities of the accusers; the PIP notes are not shared with anyone outside the direct management chain and HR; the documentation addresses what happens if someone unauthorized requests access)."
+    weight: 0.35
+    description: "InformationClassification"
+  - type: llm_judge
+    criteria: "Response documents content appropriately for each context — HR investigation notes (documented carefully for legal purposes: records the factual findings of the initial investigation without editorializing; records the decision to engage an external investigator; records the legal counsel's recommendation for administrative leave; does NOT include the names of the accusers — uses anonymous identifiers; does NOT include speculation about guilt or innocence; the documentation could be reviewed by a court — it must be factual, neutral, and complete; timeline and next steps are clear), M&A notes (minimal but essential documentation: uses the code name 'Project Sapphire' — never the actual target company name in the document title or metadata; records key discussion points: valuation range, due diligence requirements, timeline; notes which external advisors were present; explicitly records the CEO's confidentiality directive; the notes are minimal by design — in M&A, less documentation reduces leak risk while maintaining enough record to track decisions and commitments), PIP documentation (follows HR documentation standards: records the specific performance issues factually; records the PIP terms: 60-day duration, weekly check-ins, success criteria; records that HR has advised the manager on documentation requirements; notes the Monday notification date; the PIP documentation is part of a legal process — it must be thorough enough to defend the company if the situation escalates to a legal dispute)."
+    weight: 0.35
+    description: "ContextAppropriateContent"
+  - type: llm_judge
+    criteria: "Response addresses storage, retention, and legal considerations — document management (addresses practical storage and handling: each document has specific storage requirements: HR investigation — HR's secure system with audit trail; M&A — CEO's secure repository or deal room; PIP — employee's personnel file in HR system; retention policies — how long each type of document must be kept; HR investigation records may need to be retained for years; M&A documents have specific retention requirements; the documents should not be stored in the general meeting notes system where they could be accidentally discovered), legal and compliance considerations (addresses the legal dimensions: the HR investigation notes are potentially discoverable in litigation — they must be factual and neutral; the M&A discussion involves material non-public information — document handling must comply with SEC regulations; everyone who accessed the M&A notes should be tracked on an insider list; the PIP documentation creates a paper trail that must be complete and fair; general counsel should review the documentation standards for each type; the response recognizes that meeting notes for these types of meetings serve a fundamentally different purpose than regular meeting notes — they are legal and compliance documents first, communication tools second)."
+    weight: 0.30
+    description: "StorageAndLegal"

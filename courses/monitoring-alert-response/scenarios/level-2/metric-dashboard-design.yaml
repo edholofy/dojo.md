@@ -1,0 +1,46 @@
+meta:
+  id: metric-dashboard-design
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Design effective metric dashboards — create dashboards that help on-call engineers quickly understand system health and investigate alerts"
+  tags: [monitoring, dashboards, metrics, visualization, investigation, intermediate]
+
+state: {}
+
+trigger: |
+  You are on-call and responding to alerts frequently. You notice
+  that investigation always follows the same pattern: you get an
+  alert, open a dashboard, cannot find the relevant metric, spend
+  5 minutes navigating between dashboards, and finally find what
+  you need.
+
+  Your team's current dashboards:
+  - "Service Overview" — 47 panels showing every metric collected
+    (most are never looked at)
+  - "Infra Dashboard" — CPU, memory, disk for all 30 servers on a
+    single page (takes 15 seconds to load)
+  - "Custom Graphs" — one engineer's personal dashboard with
+    unlabeled graphs
+
+  Your manager asks you to redesign the team's dashboards to support
+  faster incident investigation. You have 15 services to monitor.
+
+  Task: Design a dashboard hierarchy for your team's services.
+  Include: what metrics to show on each dashboard, how dashboards
+  support the investigation workflow, and the layout principles
+  that make dashboards effective during incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Dashboard hierarchy follows a logical investigation flow — hierarchy design: 'Three-level dashboard hierarchy that mirrors how on-call engineers investigate. Level 1: Team overview dashboard (the first thing you look at). Purpose: answer in under 10 seconds: is anything broken right now? Content: one row per service (15 services = 15 rows). Each row shows: service name, current request rate, error rate (with color coding: green < 0.1%, yellow < 1%, red > 1%), p50 and p99 latency, SLO burn rate (if SLOs are defined). This is a single dashboard with 15 rows. No scrolling for the critical information. Color coding means your eye immediately goes to the red row — you know which service needs attention. What this replaces: the 47-panel service overview that showed everything but highlighted nothing. Level 2: Service dashboard (one per service, 15 total). Purpose: understand what is happening in a specific service. Opened when: the team overview shows a service is unhealthy, or an alert fires for a specific service. Content follows the RED method (Rate, Errors, Duration): request rate (total and by endpoint), error rate (total and by error code: 4xx vs 5xx), latency (p50, p95, p99 — not just average), plus: active connections, dependency health (are downstream services responding?), recent deployments (vertical annotation lines on all graphs). Time range default: last 1 hour (most relevant for active investigation). What this replaces: the unlabeled custom graphs and the need to navigate between multiple dashboards. Level 3: Investigation dashboards (specialized, opened when digging deeper). Purpose: deep-dive into specific subsystems when the service dashboard points to a problem area. Examples: database dashboard (query latency, connection pool, slow queries), cache dashboard (hit rate, eviction rate, memory usage), queue dashboard (queue depth, processing latency, dead letters). These are opened when the service dashboard shows the problem is in a specific dependency'"
+    weight: 0.35
+    description: "Dashboard hierarchy"
+  - type: llm_judge
+    criteria: "Layout principles support incident investigation — layout principles: '(1) The 5-second rule: the most important information must be visible within 5 seconds of opening the dashboard. This means: the critical metrics (error rate, latency, availability) are at the top of the dashboard, not below the fold. Graphs use color coding so anomalies are visually obvious — you should not need to read numbers to see that something is wrong. Avoid visual clutter: every panel must earn its space. If a metric is never looked at during an incident, remove it from the incident dashboard (it can live in a separate analytics dashboard for capacity planning). (2) Consistent time alignment: all graphs on a dashboard share the same time range. When you zoom in on one graph, all graphs zoom together. This allows you to see correlations: did the latency spike happen at the same time as the deployment? Consistent time alignment is a setting in Grafana — enforce it for all dashboards. (3) Annotations for context: overlay deployment events, alert firing times, and configuration changes on all graphs. When investigating, the question is often: what changed? Deployment annotations answer this instantly. (4) Links between dashboards: the team overview dashboard links to each service dashboard (click the service name). Each service dashboard links to relevant investigation dashboards (click the database panel to open the database dashboard). Alert notifications include a direct link to the relevant service dashboard. This creates a navigation flow: alert → service dashboard → investigation dashboard, with zero time spent searching for the right dashboard. (5) Mobile-friendly overview: the team overview dashboard (Level 1) should be readable on a phone screen. On-call engineers often check alerts on their phone first. If the overview dashboard requires a desktop to read, it fails when the engineer is away from their desk'"
+    weight: 0.35
+    description: "Layout principles"
+  - type: llm_judge
+    criteria: "Dashboard supports the investigation workflow with practical examples — investigation workflow: 'Example investigation using the dashboard hierarchy: 09:15 — alert fires: payment-service error rate > 1%. Step 1: open team overview dashboard (5 seconds). See: payment-service row is red (error rate 2.3%). All other services are green. This means the problem is isolated to payment-service, not a platform-wide issue. Step 2: click payment-service to open the service dashboard (10 seconds). See: error rate spiked at 09:12. Errors are all 5xx (server errors, not client errors). Latency increased from 200ms to 1.5s at the same time. A deployment annotation shows a deploy at 09:10. Diagnosis: the deployment at 09:10 likely caused the error spike. Step 3: check the dependency section of the service dashboard (15 seconds). See: the payment gateway dependency shows increased latency (from 100ms to 800ms). Other dependencies are healthy. Refined diagnosis: the deployment changed something related to the payment gateway integration. Step 4: if needed, open the payment gateway investigation dashboard for more detail. Total investigation time: under 2 minutes from alert to probable cause. Without the dashboard hierarchy: the engineer would spend 5 minutes searching for the right dashboard, another 5 minutes finding the relevant metric, and might miss the deployment annotation entirely. Dashboard maintenance practices: (1) Quarterly review: are all panels still relevant? Remove panels that were not looked at during any incident in the last quarter. (2) Post-incident update: after every incident, ask: did the dashboard show us what we needed? If not, add the missing metric or panel. (3) Ownership: each service dashboard is owned by the team that owns the service. They are responsible for keeping it current when the service changes'"
+    weight: 0.30
+    description: "Investigation workflow"

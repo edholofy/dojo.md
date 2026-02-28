@@ -1,0 +1,32 @@
+meta:
+  id: cohort-customer-segmentation
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Use cohorts for customer segmentation — combine time-based and behavioral dimensions to create actionable user segments for product and marketing teams"
+  tags: [customer-segmentation, RFM, lifecycle, personas, intermediate]
+
+state: {}
+
+trigger: |
+  The Head of CRM says: "We send the same emails to everyone. I know
+  different users need different treatment based on how long they've
+  been around and how engaged they are. Can you use cohort analysis to
+  help me build customer segments I can actually use for targeting?"
+
+  Task: Explain how to combine cohort analysis with segmentation to
+  create actionable user segments for lifecycle marketing.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains combining cohort tenure with engagement for segmentation — segmentation: 'Cohort-based customer segmentation: segment users on two dimensions: tenure (how long since signup) and engagement (how active they are). Building the segment matrix: Tenure buckets: new (0-30 days since signup). Established (1-6 months). Mature (6-12 months). Veteran (12+ months). Engagement buckets (based on activity in the last 30 days): highly active: 15+ sessions. Active: 5-14 sessions. Low activity: 1-4 sessions. Inactive: 0 sessions. The 4x4 matrix creates 16 segments. Key segments: new + highly active: power adopters. 8% of users. Month-3 retention: 78%. Action: fast-track to advanced features, request referrals. New + inactive: failed activation. 25% of users. Month-3 retention: 2%. Action: re-engagement sequence targeting activation behaviors. Established + active: engaged core. 20% of users. Month-3 retention: 65%. Action: introduce premium features, request feedback. Established + inactive: at-risk churn. 12% of users. Month-3 retention: 5%. Action: win-back campaign within 7 days of going inactive. Mature + highly active: champions. 10% of users. Month-3 retention: 85%. Action: loyalty program, beta features, ambassador program. Veteran + low activity: fading veterans. 8% of users. Month-3 retention: 35%. Action: re-engagement with new feature announcements. Not all 16 segments need separate treatment — group similar segments into 5-7 actionable personas'"
+    weight: 0.35
+    description: "Segmentation"
+  - type: llm_judge
+    criteria: "Response covers RFM analysis applied to cohorts — rfm: 'RFM analysis layered on cohorts: RFM (Recency, Frequency, Monetary) scoring provides a complementary segmentation to cohort tenure. Recency: days since last activity. Score 5: active today. Score 1: inactive 60+ days. Frequency: sessions in the last 30 days. Score 5: 20+ sessions. Score 1: 0-1 sessions. Monetary: revenue in the last 90 days. Score 5: top 20% spenders. Score 1: $0 revenue. Combined RFM score: each user gets a 3-digit score (e.g., 5-5-5 = best user). Cohort-level RFM: instead of scoring individuals, calculate average RFM for each cohort: January cohort (12 months old): avg recency 3.2, avg frequency 2.8, avg monetary 3.5. April cohort (9 months old): avg recency 3.5, avg frequency 3.0, avg monetary 3.0. July cohort (6 months old): avg recency 4.0, avg frequency 3.5, avg monetary 2.5. October cohort (3 months old): avg recency 4.5, avg frequency 4.0, avg monetary 1.8. Pattern: newer cohorts have higher recency and frequency (expected — they are newer and more recently active). But older cohorts have higher monetary scores (they have had more time to spend). The RFM × cohort view reveals: which cohorts are aging well (high RFM scores despite being old). Which cohorts degraded quickly (low RFM scores despite being young). How the RFM profile evolves over the user lifecycle. For the CRM team: use RFM scores to prioritize within each cohort tenure segment. Target high-RFM users in each tenure bucket with upsell and retention campaigns. Target low-RFM users with re-engagement or sunset campaigns'"
+    weight: 0.35
+    description: "RFM"
+  - type: llm_judge
+    criteria: "Response covers actionable lifecycle campaigns based on segments — campaigns: 'Lifecycle campaigns built on cohort segments: Campaign 1 — Activation sequence (new + low engagement): trigger: user is 3 days post-signup with fewer than 2 sessions. Goal: guide them to the activation behavior (e.g., complete first project). Sequence: Day 3: email with quick-start guide. Day 5: push notification highlighting the key feature. Day 7: email from founder asking what is blocking them. Measurement: compare activation rate for users who received the sequence vs a holdout group. Track by cohort — does the sequence improve month-1 retention for the cohort? Campaign 2 — Upgrade nudge (established + active): trigger: user has been active for 2+ months and uses the product 10+ times per month. Goal: convert to paid or upgrade plan. Sequence: in-app message showing premium features relevant to their usage. Email with case study from similar users who upgraded. Limited-time trial of premium features. Measurement: conversion rate by cohort. Do later cohorts convert more readily? (Indicates product-market fit improving.) Campaign 3 — Churn prevention (any tenure + declining engagement): trigger: user's activity declined 50%+ compared to their 30-day average. Goal: prevent churn before it happens. Sequence: personalized email: we noticed you have been less active — here is what you missed. In-app notification with relevant content or updates. After 14 days of continued decline: direct outreach from customer success. Measurement: compare churn rate for users who received intervention vs those who did not (holdout group). Track reactivation rate by cohort. Campaign 4 — Champion program (mature + highly active): trigger: user has been active for 6+ months with consistently high engagement. Goal: turn into advocates. Actions: invite to beta program, send exclusive content, request product reviews. Measurement: referral rate, NPS score, and retention impact on the broader cohort'"
+    weight: 0.30
+    description: "Campaigns"

@@ -1,0 +1,50 @@
+meta:
+  id: post-launch-design-review
+  level: 4
+  course: design-feedback-critique-writing
+  type: output
+  description: "Post-launch design review — conduct retrospective analysis of shipped designs using real user data and production metrics"
+  tags: [post-launch, retrospective, production-data, shipped, expert]
+
+state: {}
+
+trigger: |
+  A major feature shipped 30 days ago. You're conducting
+  the post-launch design review. The data:
+
+  Pre-launch predictions:
+  - Expected: 25% increase in user engagement
+  - Expected: 15% reduction in support tickets
+  - Expected: positive user sentiment
+
+  Actual results (30 days):
+  - Engagement: +8% (below 25% target)
+  - Support tickets: +20% increase (opposite of expected)
+  - App store reviews: 2.8 stars for the update (was 4.1)
+  - Session recordings show users struggling with the new
+    navigation pattern
+  - Heatmaps show 60% of users never discover the new
+    core feature
+  - Power users created a forum thread titled "Bring back
+    the old design" with 500+ replies
+  - New user onboarding completion dropped from 72% to 58%
+  - However: users who DO discover the new feature use it
+    3x more than the old version
+
+  Task: Write a post-launch design review that honestly
+  assesses what went wrong, identifies design learnings,
+  and recommends next steps.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides honest assessment without blame — what worked (the core feature itself is strong: users who find it engage 3x more — the design solution was good, the discoverability and transition were not, this distinction matters: it's not a bad design, it's a bad rollout), what went wrong (discoverability failure: 60% never finding the core feature means the information architecture or onboarding failed to guide users to the new value — heatmap analysis should identify where users look instead, navigation change disruption: session recordings show struggle — users had learned the old pattern, the new pattern wasn't introduced gradually or explained, onboarding regression: 72% to 58% completion drop means the new onboarding flow is more confusing, not less — likely the new navigation adds cognitive load during an already high-load moment), framing (this is a design learning not a design failure — frame the review as: what did we learn that makes us better designers? not: whose fault is this? post-launch reviews should be psychologically safe or teams will avoid honest assessment)."
+    weight: 0.35
+    description: "HonestAssessment"
+  - type: llm_judge
+    criteria: "Response identifies specific design learnings — discoverability lessons (the 60%/3x paradox — great feature nobody finds — is a classic design problem: progressive disclosure of new features needs explicit attention, the feature needed: in-context discovery prompts, 'what's new' walkthrough, visual signposting that draws attention without disrupting, learn: for future major feature launches, plan a discovery strategy alongside the feature design), transition management lessons (changing navigation on existing users is high-risk: users don't read changelogs or notices, they rely on muscle memory — when you change patterns, you break their learned behavior, learn: for future navigation changes, consider: gradual transition with old and new available temporarily, opt-in preview before forced migration, feature flags for progressive rollout to catch issues at 10% before hitting 100%), prediction accuracy (predicted +25%, got +8% — the gap suggests pre-launch validation was insufficient: were usability tests done? were they done with realistic conditions or idealized scenarios? were they done with existing users who had habits or only new users?, learn: pre-launch testing must include existing users who have ingrained patterns, not just new users who have no expectations)."
+    weight: 0.35
+    description: "DesignLearnings"
+  - type: llm_judge
+    criteria: "Response provides actionable next steps — immediate actions (week 1-2: add discovery prompts for the new feature — guided tour, tooltip highlights, 'have you tried the new X?' contextual suggestions; fix the highest-friction navigation points identified in session recordings; restore onboarding completion rate — simplify the onboarding flow for the new navigation), short-term actions (month 2-3: A/B test navigation variations based on session recording insights — iterate toward a pattern that works for both new and existing users, address the power user revolt: acknowledge the feedback, explain the rationale, share the 3x engagement data to show the feature's value, give power users a voice in the iteration process), process improvements (for future launches: add 'discoverability plan' as a required section in design specs, conduct pre-launch testing with existing users not just new users, establish post-launch review as standard practice — this review should happen for every major feature at 7 and 30 days, create a post-launch design review template that teams can reuse), the 500-reply forum thread (don't ignore it or dismiss it — the thread contains valuable signal about what users miss and why, but also recognize that vocal power users are not representative of all users — the 8% engagement increase suggests the majority of users who adapted are using the product more)."
+    weight: 0.30
+    description: "ActionableNextSteps"

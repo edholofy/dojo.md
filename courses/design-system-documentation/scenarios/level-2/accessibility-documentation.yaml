@@ -1,0 +1,43 @@
+meta:
+  id: accessibility-documentation
+  level: 2
+  course: design-system-documentation
+  type: output
+  description: "Accessibility documentation — write accessibility specifications for design system components including keyboard, screen reader, and ARIA requirements"
+  tags: [accessibility, WCAG, ARIA, keyboard, screen-reader, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "Our design system has no
+  accessibility documentation. We just passed an accessibility
+  audit and received 47 findings. Many are about components:
+
+  - Tab panels have no keyboard navigation
+  - Modals don't trap focus
+  - Custom checkboxes aren't announced by screen readers
+  - Error messages aren't associated with their form fields
+  - Loading states don't announce to assistive technology
+  - Color contrast fails on our disabled state styling
+
+  My lead says: 'Add accessibility specs to every component
+  in the design system so developers implement it correctly
+  from the start.' How do I write accessibility documentation
+  for components?"
+
+  Task: Write accessibility documentation for key design system
+  components that prevents these common accessibility failures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates component-level accessibility specs — for each of the mentioned components: Tab panel (keyboard: arrow keys switch tabs, Tab/Shift+Tab move focus in/out, ARIA: role=tablist/tab/tabpanel, aria-selected, aria-controls), Modal (focus trap: Tab cycles within modal, Escape closes, focus returns to trigger on close, ARIA: role=dialog, aria-modal=true, aria-labelledby), Custom checkbox (ARIA: role=checkbox, aria-checked, keyboard: Space toggles, visible focus indicator), Form errors (aria-describedby linking error to input, aria-invalid=true, live region for dynamic errors), Loading states (aria-live=polite for loading announcements, aria-busy=true on updating region)"
+    weight: 0.35
+    description: "ComponentAccessibilitySpecs"
+  - type: llm_judge
+    criteria: "Response establishes an accessibility documentation template — standardized format for every component: Keyboard interaction table (key → action mapping), ARIA attributes table (attribute → value → purpose), screen reader announcement text (what assistive tech should say in each state), color contrast requirements (specific ratios for each state including disabled), focus management rules (where focus goes on open/close/error), and testing checklist (steps to verify accessibility). Template is reusable across all 60+ components"
+    weight: 0.35
+    description: "AccessibilityTemplate"
+  - type: llm_judge
+    criteria: "Response addresses the disabled state contrast issue and testing — explains the WCAG contrast requirements (disabled elements are exempt from 4.5:1 ratio but should still be perceivable, recommends 3:1 minimum for usability), provides guidance on how to test accessibility documentation (manual keyboard testing steps, screen reader testing with VoiceOver/NVDA, automated testing tools like axe-core), and explains how to write accessibility docs that developers can implement (specific ARIA attributes with code examples, not just 'make it accessible'). Includes prioritization: which components to document first based on the audit findings"
+    weight: 0.30
+    description: "TestingAndContrast"

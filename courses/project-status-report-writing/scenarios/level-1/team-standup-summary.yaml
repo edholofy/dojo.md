@@ -1,0 +1,85 @@
+meta:
+  id: team-standup-summary
+  level: 1
+  course: project-status-report-writing
+  type: output
+  description: "Team standup summary — create a written summary of a daily standup meeting for team members who couldn't attend"
+  tags: [standup, daily, agile, summary, beginner]
+
+state: {}
+
+trigger: |
+  You're leading a 6-person development team. Your daily
+  standup happened at 9:15 AM but two team members were
+  absent (Maya is in a different timezone and joined late,
+  and Jordan is out sick). You need to write a quick summary.
+
+  Standup Date: Tuesday, March 4, 2026
+  Sprint: Sprint 9 (Day 4 of 10)
+  Present: You, Alice, Ben, Chris, Dana
+  Absent: Maya (timezone — will read async), Jordan (sick)
+
+  Updates:
+
+  Alice (Frontend):
+  - Yesterday: Finished the search results page UI.
+    Submitted PR #247.
+  - Today: Starting the filter sidebar component. Waiting
+    for Chris's API endpoint for filter options.
+  - Blocker: Needs Chris's filter API to test against.
+    Can mock it but would rather use the real endpoint.
+
+  Ben (Backend):
+  - Yesterday: Deployed the user notification service to
+    staging. Found and fixed a race condition in the
+    notification queue.
+  - Today: Working on notification preferences API. Should
+    be done by end of day.
+  - Blocker: None.
+
+  Chris (Backend):
+  - Yesterday: Was debugging the search indexing — found
+    that the Elasticsearch mapping was incorrect for
+    product categories. Fixed it, re-indexed. Search
+    results are now accurate.
+  - Today: Building the filter options API endpoint.
+    Should have it ready for Alice by 2 PM.
+  - Blocker: None. Will coordinate with Alice on API format.
+
+  Dana (QA):
+  - Yesterday: Wrote test cases for the notification
+    service. Found 2 bugs (logged as PROJ-445 and PROJ-446).
+  - Today: Testing the search results page once Alice's PR
+    is merged. Also will regression test the Elasticsearch
+    fix.
+  - Blocker: Waiting on PR #247 to be reviewed and merged.
+    Needs a reviewer.
+
+  Your update:
+  - Yesterday: Sprint planning adjustments — moved 2 stories
+    from "nice to have" to next sprint to reduce overcommit
+    risk. Updated the board.
+  - Today: Reviewing PR #247, meeting with product owner
+    about Sprint 10 priorities at 2 PM.
+  - Blocker: None.
+
+  Quick discussion: You asked if anyone can help Jordan's
+  work item (user profile settings page). Alice said she can
+  pick it up Thursday if Jordan is still out. Ben volunteered
+  to review PR #247 this morning so Dana can start testing.
+
+  Task: Write the standup summary for Maya and Jordan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a concise, actionable standup summary — includes the date, sprint context, and who was present/absent; each team member's update is summarized with yesterday's accomplishment, today's plan, and any blockers; captures the key dependencies (Alice waiting on Chris's API by 2 PM, Dana waiting on PR #247 review); is short enough to read in 2-3 minutes — this is a summary, not a transcript; uses consistent format for each person's update."
+    weight: 0.35
+    description: "StandupFormat"
+  - type: llm_judge
+    criteria: "Response captures dependencies and blockers clearly — highlights the Alice-Chris dependency (filter API needed, Chris targeting 2 PM delivery); notes Dana's PR review blocker and the resolution (Ben volunteering to review this morning); captures the Jordan coverage plan (Alice picking up Thursday if needed); flags these in a way that Maya and Jordan can quickly see what affects them; if Jordan has action items or dependencies that others need to be aware of, those are noted."
+    weight: 0.35
+    description: "DependenciesAndBlockers"
+  - type: llm_judge
+    criteria: "Response is appropriate for async consumption — written for people reading it later (Maya in a different timezone, Jordan while sick); includes enough context that readers understand the situation without having been in the room; highlights anything that specifically affects Maya or Jordan (Jordan's work item being covered, any items Maya needs to know); is friendly and professional in tone; doesn't require further questions to understand the current state."
+    weight: 0.30
+    description: "AsyncFriendly"

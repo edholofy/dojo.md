@@ -1,0 +1,39 @@
+meta:
+  id: staging-migration-testing
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Test migrations in staging effectively — build a staging environment and testing process that catches migration issues before production"
+  tags: [database, migration, staging, testing, pre-production, intermediate]
+
+state: {}
+
+trigger: |
+  A migration passed in development but failed in production because:
+  - Development had 100 rows in the affected table; production had
+    50 million
+  - The migration took 0.1 seconds locally but would have taken
+    45 minutes in production (locking the table)
+  - A unique constraint in the migration violated existing data that
+    only existed in production
+
+  Your team lead says: "We need a proper staging testing process for
+  migrations. This can never happen again."
+
+  Task: Design the staging migration testing process. Include: how
+  to set up the staging database, what to test, and the approval
+  workflow before production.
+
+assertions:
+  - type: llm_judge
+    criteria: "Staging database setup mirrors production — staging setup: 'The staging database must mirror production in the ways that matter for migration testing. Data volume: staging should have production-scale data (or a representative sample). Options: (1) Full production copy: restore a recent production backup to staging. Advantages: exact data, catches all constraint violations. Disadvantages: takes time for large databases, requires data masking for PII. (2) Scaled sample: take a percentage of production data (10-20%) that preserves data distributions. Use: pg_dump with --rows-per-insert or a sampling script. Advantages: faster to set up, smaller size. Disadvantages: may miss edge cases in the excluded data. (3) Synthetic data generator: generate fake data matching production volume and patterns. Advantages: no PII concerns, reproducible. Disadvantages: may not match real-world data patterns. Recommendation: full production copy with PII masking is the gold standard. Mask sensitive columns (emails, names, addresses) using tools like PostgreSQL Anonymizer or custom UPDATE scripts. Schema parity: staging must have the same PostgreSQL version, extensions, configuration (work_mem, shared_buffers), and indexes as production. Different configurations can cause different query plans and different migration behavior. Refresh cadence: refresh staging data at least monthly. Stale staging data diverges from production and misses new data patterns'"
+    weight: 0.35
+    description: "Staging setup"
+  - type: llm_judge
+    criteria: "Testing checklist is comprehensive — testing checklist: 'For every migration, test the following in staging: (1) Migration succeeds: run the migration. Does it complete without errors? Record the execution time. (2) Timing: how long did the migration take? For tables with millions of rows, extrapolate to production volume. If staging has 20% of production data and the migration took 5 minutes: expect 25+ minutes in production. (3) Lock analysis: during the migration, check for blocked queries. Run a concurrent workload that mimics production (read and write queries against the affected table). If queries are blocked during the migration: the migration needs a different approach (CONCURRENTLY, NOT VALID, expand-and-contract). (4) Rollback succeeds: run the down migration. Does it complete without errors? Verify the schema is restored to its pre-migration state. (5) Data integrity: after the migration, verify: row counts are unchanged (unless the migration intentionally adds/removes rows), existing data is not corrupted (spot-check 100 random rows), new constraints are satisfied (SELECT COUNT(*) WHERE constraint is violated). (6) Application compatibility: deploy the new application code against the migrated staging database. Run the test suite. Verify API endpoints return correct responses. Manually test critical user flows (login, checkout, search). (7) Performance: run key queries after the migration. Compare p99 latency before and after. If the migration changed indexes or constraints, some queries may be faster or slower'"
+    weight: 0.35
+    description: "Testing checklist"
+  - type: llm_judge
+    criteria: "Approval workflow gates production migrations — approval workflow: 'Migration production approval workflow: Step 1: Developer creates migration PR. PR includes: migration SQL, down migration SQL, testing notes from local. Step 2: Code review. Reviewer checks: correctness, safety (locking, data loss risk), rollback feasibility. Step 3: Staging validation. Developer runs migration in staging and documents: execution time, any blocked queries observed, data integrity verification results, rollback test results. Step 4: Staging sign-off. Reviewer or DBA reviews staging results and approves. For high-risk migrations (large tables, type changes, constraint additions): require DBA sign-off. For low-risk migrations (adding nullable columns, creating new tables): team lead sign-off is sufficient. Step 5: Production scheduling. Schedule the migration for a low-traffic window. Notify the on-call team: a migration is scheduled for [time], affecting [table]. If issues arise, contact [migration author]. Step 6: Production execution. Run the migration. Monitor: execution time, lock wait events, application error rates. Step 7: Post-migration verification. Run the same verification queries used in staging. Confirm application health. Document results. Automation: encode as much of this workflow as possible in CI/CD. CI can automatically run migrations in a test database, check for common issues (missing CONCURRENTLY, missing down migration), and block merges that fail migration tests'"
+    weight: 0.30
+    description: "Approval workflow"

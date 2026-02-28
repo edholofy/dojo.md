@@ -1,0 +1,41 @@
+meta:
+  id: first-migration-shift
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "First migration shift — handle a series of beginner migration tasks including planning, writing, testing, and deploying basic schema changes"
+  tags: [database, migration, shift-simulation, beginner, comprehensive]
+
+state: {}
+
+trigger: |
+  It is your first week on a new team and you have been given 4
+  migration tasks to complete this sprint:
+
+  1. Add a "last_login_at" timestamp column to the users table
+     (nullable, no default)
+  2. Create a "user_preferences" table with: user_id (FK to users),
+     theme (varchar, default 'light'), language (varchar, default
+     'en'), notifications_enabled (boolean, default true)
+  3. Rename the "products.desc" column to "products.description"
+     (the team decided "desc" is a reserved word in SQL)
+  4. Remove the unused "legacy_code" column from the orders table
+
+  The team uses Knex migrations with PostgreSQL.
+
+  Task: Plan and write all 4 migrations in the correct order.
+  Explain your ordering decisions and flag any risks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migrations are correctly ordered with rationale — ordering: 'Migration order matters. These 4 changes are independent (none depends on another), but there are still ordering considerations. Recommended order: (1) Add last_login_at to users — safest, additive change. (2) Create user_preferences table — depends on users table existing (it does), additive change. (3) Rename products.desc to products.description — riskier because application code must change simultaneously. (4) Remove legacy_code from orders — destructive change, should go last. Rationale: additive changes (adding columns, creating tables) go first because they are low-risk and easy to roll back. Renaming is moderate risk (application code must match). Removing columns is highest risk (data is lost). If any migration fails, you want the destructive one to fail before it runs, not after. Each migration is a separate file: 20260227_001_add_last_login_to_users, 20260227_002_create_user_preferences, 20260227_003_rename_products_desc, 20260227_004_remove_legacy_code_from_orders'"
+    weight: 0.35
+    description: "Correct ordering"
+  - type: llm_judge
+    criteria: "All 4 migrations are correct with up and down — migrations: 'Migration 1: add last_login_at. Up: ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP; Down: ALTER TABLE users DROP COLUMN last_login_at; Notes: nullable with no default is intentional — existing users have never logged in under the new tracking, so NULL means not yet recorded. Migration 2: create user_preferences. Up: CREATE TABLE user_preferences (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE, theme VARCHAR(20) NOT NULL DEFAULT light, language VARCHAR(10) NOT NULL DEFAULT en, notifications_enabled BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMP NOT NULL DEFAULT NOW(), updated_at TIMESTAMP NOT NULL DEFAULT NOW()); Notes: user_id is UNIQUE because each user has one preferences row (one-to-one relationship). ON DELETE CASCADE means preferences are deleted when the user is deleted. Down: DROP TABLE user_preferences; Migration 3: rename desc to description. Up: ALTER TABLE products RENAME COLUMN desc TO description; Down: ALTER TABLE products RENAME COLUMN description TO desc; Notes: renaming is a metadata change in PostgreSQL — it is instant and does not rewrite the table. But all application code referencing products.desc must change to products.description at the same time. Migration 4: remove legacy_code. Up: ALTER TABLE orders DROP COLUMN legacy_code; Down: ALTER TABLE orders ADD COLUMN legacy_code VARCHAR(50); Warning: the down migration recreates the column but CANNOT restore the data. Once dropped, the data in legacy_code is gone. Before running this migration: verify with the team that legacy_code is truly unused. Check the application code for any references. Consider: has anyone queried this column in the last 90 days? (Check query logs if available)'"
+    weight: 0.35
+    description: "All 4 migrations"
+  - type: llm_judge
+    criteria: "Risks are flagged for each migration — risks: 'Migration 1 (add column): Low risk. Adding a nullable column with no default is an online operation in PostgreSQL — it does not rewrite the table or lock it. Safe for large tables. Migration 2 (create table): Low risk. Creating a new table affects nothing existing. The only risk is if the table name conflicts with something else (check first). Migration 3 (rename column): Medium risk. Risk: if the application code is not updated simultaneously, queries referencing desc will fail with column not found errors. Mitigation: deploy the application code change and migration together. In a zero-downtime deployment, this is tricky — you may need the expand-and-contract pattern (add description as a new column, copy data, update code, then remove desc in a future migration). For a small team or with a maintenance window, renaming directly is acceptable. Additional risk: desc is a SQL reserved word. Some queries may have used quoted identifiers (\"desc\") or may have worked coincidentally. After renaming, these queries work without quoting. Migration 4 (drop column): High risk. Risk: data loss is permanent. If legacy_code contains data that someone needs later, it is unrecoverable after the migration (without a backup). Mitigation: before running, take a backup of the column data: CREATE TABLE legacy_code_backup AS SELECT id, legacy_code FROM orders WHERE legacy_code IS NOT NULL; Keep this backup table for 90 days, then drop it. This provides a safety net without keeping the column in the active schema'"
+    weight: 0.30
+    description: "Risk assessment"

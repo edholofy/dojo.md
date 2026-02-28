@@ -1,0 +1,34 @@
+meta:
+  id: materialized-views
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Use materialized views — pre-compute expensive report queries, manage refresh strategies, and balance freshness with performance"
+  tags: [SQL, materialized-views, caching, performance, refresh-strategy, advanced]
+
+state: {}
+
+trigger: |
+  The executive dashboard queries take 2-3 minutes to load because
+  they aggregate across 50 million order rows, 5 million customer
+  records, and multiple dimension tables. The CEO complains: "I
+  can't wait 3 minutes every time I open the dashboard."
+
+  The queries are: monthly revenue by region and category, customer
+  retention cohorts, product usage metrics, and sales pipeline summary.
+
+  Task: Implement materialized views to make the dashboard instant.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code creates materialized views with proper refresh strategies — matviews: 'Materialized views for dashboard performance: PostgreSQL materialized views: CREATE MATERIALIZED VIEW mv_monthly_revenue AS SELECT DATE_TRUNC('month', o.order_date) AS month, o.region, p.category, COUNT(*) AS order_count, SUM(o.amount) AS revenue, ROUND(AVG(o.amount), 2) AS avg_order_value, COUNT(DISTINCT o.customer_id) AS unique_customers FROM orders o JOIN products p ON o.product_id = p.product_id WHERE o.status = 'completed' GROUP BY 1, 2, 3 WITH DATA. CREATE UNIQUE INDEX idx_mv_monthly_revenue ON mv_monthly_revenue(month, region, category). The dashboard now queries mv_monthly_revenue (thousands of rows) instead of joining orders with products (50M rows). Response time drops from 3 minutes to under 1 second. Refresh strategies: Full refresh (simple, safe): REFRESH MATERIALIZED VIEW mv_monthly_revenue. Rebuilds the entire view. For 50M rows, takes 2-3 minutes. Run during off-peak hours. Concurrent refresh (no read lock): REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_revenue. Requires a unique index. Users can query the old data while refresh is running. Slower than full refresh but no downtime. Scheduled refresh: Use pg_cron or an external scheduler. SELECT cron.schedule('refresh_mv', '0 6 * * *', 'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_revenue'). Refreshes every day at 6 AM — dashboard has data current as of yesterday. SQL Server indexed views (equivalent): CREATE VIEW v_monthly_revenue WITH SCHEMABINDING AS SELECT ...; CREATE UNIQUE CLUSTERED INDEX idx_v_monthly ON v_monthly_revenue(month, region, category). SQL Server indexed views are automatically maintained (updated with each INSERT/UPDATE). No manual refresh needed, but they slow down writes'"
+    weight: 0.35
+    description: "Matviews"
+  - type: llm_judge
+    criteria: "Response covers incremental refresh and freshness management — incremental: 'Incremental refresh pattern: Full refresh is fine for small materialized views. For large ones, only process new data. Manual incremental refresh: CREATE TABLE mv_monthly_revenue_last_refresh (refreshed_at TIMESTAMP). CREATE OR REPLACE FUNCTION refresh_mv_incremental() RETURNS void AS $$ DECLARE last_refresh TIMESTAMP; BEGIN SELECT refreshed_at INTO last_refresh FROM mv_monthly_revenue_last_refresh; DELETE FROM mv_monthly_revenue WHERE month >= DATE_TRUNC('month', last_refresh); INSERT INTO mv_monthly_revenue SELECT DATE_TRUNC('month', o.order_date) AS month, o.region, p.category, COUNT(*), SUM(o.amount), ROUND(AVG(o.amount), 2), COUNT(DISTINCT o.customer_id) FROM orders o JOIN products p ON o.product_id = p.product_id WHERE o.status = 'completed' AND o.order_date >= DATE_TRUNC('month', last_refresh) GROUP BY 1, 2, 3; UPDATE mv_monthly_revenue_last_refresh SET refreshed_at = NOW(); END; $$ LANGUAGE plpgsql. Only reprocesses the current month (about 4M rows instead of 50M). Refresh time drops from 3 minutes to 15 seconds. Freshness management: show users when data was last updated. CREATE VIEW v_dashboard_freshness AS SELECT mv_name, last_refresh, EXTRACT(HOURS FROM NOW() - last_refresh) AS hours_stale, CASE WHEN NOW() - last_refresh > INTERVAL '24 hours' THEN 'STALE' WHEN NOW() - last_refresh > INTERVAL '12 hours' THEN 'WARNING' ELSE 'FRESH' END AS status FROM (SELECT 'mv_monthly_revenue' AS mv_name, refreshed_at AS last_refresh FROM mv_monthly_revenue_last_refresh) refreshes. Display this on the dashboard: Data as of: Oct 15, 2024 6:00 AM. The CEO knows the numbers are from this morning, not real-time'"
+    weight: 0.35
+    description: "Incremental"
+  - type: llm_judge
+    criteria: "Explanation covers when to materialize and when not to — tradeoffs: 'Materialized view decision framework: Materialize when: the query takes more than 10 seconds and is run more than 10 times per day. The underlying data changes infrequently (hourly or daily). Slight staleness is acceptable (the CEO does not need real-time revenue). Multiple dashboards or users query the same aggregation. Do NOT materialize when: the data changes every minute and users need real-time results. The query is fast enough already (under 2 seconds). Storage is a concern (materialized views consume disk space). The aggregation has many dimensions producing millions of rows (the materialized view is almost as large as the source). Layered materialization strategy for complex dashboards: Layer 1 — Base aggregations (refresh hourly): mv_daily_orders: daily order counts and revenue by region and category. mv_customer_activity: daily active users by segment. Layer 2 — Period summaries (refresh daily): mv_monthly_revenue: monthly rollups from mv_daily_orders. mv_retention_cohorts: cohort calculations from mv_customer_activity. Layer 3 — Dashboard views (real-time from Layer 2): v_executive_dashboard: reads from Layer 2 materialized views. Queries complete in milliseconds because Layer 2 has only thousands of rows. Each layer depends on the one below. Refresh from bottom up. If Layer 1 fails to refresh, Layer 2 still shows yesterday's data (stale but not broken)'"
+    weight: 0.30
+    description: "Tradeoffs"

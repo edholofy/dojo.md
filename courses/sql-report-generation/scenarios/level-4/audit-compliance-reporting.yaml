@@ -1,0 +1,39 @@
+meta:
+  id: audit-compliance-reporting
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Build audit and compliance reports — track data access, generate SOX/SOC2 evidence, implement row-level security, and create tamper-evident audit trails"
+  tags: [SQL, audit, compliance, SOX, SOC2, RLS, audit-trail, advanced]
+
+state: {}
+
+trigger: |
+  The company is preparing for SOC 2 Type II certification. The
+  auditors need:
+
+  1. Data access audit trail — who queried what sensitive data, when
+  2. Change tracking — every INSERT, UPDATE, DELETE on financial tables
+     must be logged with before/after values
+  3. Row-level security — sales reps can only see their own region's
+     data in reports
+  4. Report execution evidence — proof that monthly financial reports
+     were generated, reviewed, and approved
+  5. Segregation of duties — the person who generates a report cannot
+     be the person who approves it
+
+  Task: Build the audit and compliance reporting infrastructure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response implements comprehensive audit trail with change tracking — audit: 'Audit and compliance reporting infrastructure: Data access audit trail: CREATE TABLE audit_query_log (log_id BIGSERIAL PRIMARY KEY, username TEXT DEFAULT current_user, query_text TEXT, tables_accessed TEXT[], sensitive_columns_accessed TEXT[], client_ip INET DEFAULT inet_client_addr(), session_id TEXT DEFAULT pg_backend_pid()::text, executed_at TIMESTAMP DEFAULT NOW()). Track queries via pg_audit extension: CREATE EXTENSION pgaudit; SET pgaudit.log = 'read, write'; SET pgaudit.log_catalog = off. Or use a custom function wrapper: CREATE OR REPLACE FUNCTION audited_query(p_sql TEXT) RETURNS SETOF RECORD AS $$ BEGIN INSERT INTO audit_query_log (query_text, tables_accessed) VALUES (p_sql, regexp_matches(p_sql, 'FROM\\s+(\\w+)', 'gi')); RETURN QUERY EXECUTE p_sql; END; $$ LANGUAGE plpgsql. Change tracking with before/after values: CREATE TABLE audit_change_log (change_id BIGSERIAL PRIMARY KEY, table_name TEXT NOT NULL, operation TEXT NOT NULL, row_id TEXT, old_values JSONB, new_values JSONB, changed_by TEXT DEFAULT current_user, changed_at TIMESTAMP DEFAULT NOW()). Trigger for automatic change capture: CREATE OR REPLACE FUNCTION audit_trigger() RETURNS TRIGGER AS $$ BEGIN IF TG_OP = 'INSERT' THEN INSERT INTO audit_change_log (table_name, operation, row_id, new_values) VALUES (TG_TABLE_NAME, 'INSERT', NEW.order_id::text, to_jsonb(NEW)); ELSIF TG_OP = 'UPDATE' THEN INSERT INTO audit_change_log (table_name, operation, row_id, old_values, new_values) VALUES (TG_TABLE_NAME, 'UPDATE', NEW.order_id::text, to_jsonb(OLD), to_jsonb(NEW)); ELSIF TG_OP = 'DELETE' THEN INSERT INTO audit_change_log (table_name, operation, row_id, old_values) VALUES (TG_TABLE_NAME, 'DELETE', OLD.order_id::text, to_jsonb(OLD)); END IF; RETURN COALESCE(NEW, OLD); END; $$ LANGUAGE plpgsql. CREATE TRIGGER trg_orders_audit AFTER INSERT OR UPDATE OR DELETE ON orders FOR EACH ROW EXECUTE FUNCTION audit_trigger(). Every change to orders is now captured with full before/after state'"
+    weight: 0.35
+    description: "Audit"
+  - type: llm_judge
+    criteria: "Response covers row-level security and segregation of duties — rls: 'Row-level security for report access control: PostgreSQL RLS: ALTER TABLE orders ENABLE ROW LEVEL SECURITY. CREATE POLICY sales_region_policy ON orders FOR SELECT TO sales_role USING (region = current_setting('app.user_region')). When a sales rep runs a report, they only see their region's data: SET app.user_region = 'West'; SELECT region, SUM(amount) FROM orders GROUP BY region. Returns only West region data — other regions are invisible. Policy for managers who see all regions: CREATE POLICY manager_all_regions ON orders FOR SELECT TO manager_role USING (true). Report-level access control: CREATE TABLE report_permissions (report_id INTEGER REFERENCES report_catalog(report_id), role_name TEXT, can_view BOOLEAN DEFAULT false, can_export BOOLEAN DEFAULT false, can_modify BOOLEAN DEFAULT false, granted_by TEXT, granted_at TIMESTAMP DEFAULT NOW()). Check before generating: SELECT CASE WHEN EXISTS (SELECT 1 FROM report_permissions WHERE report_id = 5 AND role_name = current_user AND can_view = true) THEN 'AUTHORIZED' ELSE 'DENIED' END AS access_status. Segregation of duties: CREATE TABLE report_approvals (approval_id SERIAL PRIMARY KEY, report_execution_id INTEGER, generated_by TEXT NOT NULL, approved_by TEXT, approved_at TIMESTAMP, status TEXT DEFAULT 'pending', CONSTRAINT different_users CHECK (generated_by != approved_by)). The CHECK constraint enforces that the generator and approver are different people. Report workflow: INSERT INTO report_approvals (report_execution_id, generated_by) VALUES (101, 'analyst_jane'). UPDATE report_approvals SET approved_by = 'manager_bob', approved_at = NOW(), status = 'approved' WHERE approval_id = 1. If analyst_jane tries to approve her own report: the CHECK constraint blocks it'"
+    weight: 0.35
+    description: "RLS"
+  - type: llm_judge
+    criteria: "Explanation includes SOC 2 evidence generation and compliance reporting — compliance: 'SOC 2 evidence generation: Auditors need evidence reports. Generate them automatically: Access review report: SELECT username, COUNT(*) AS queries_run, COUNT(DISTINCT tables_accessed) AS tables_touched, MAX(executed_at) AS last_activity, BOOL_OR(sensitive_columns_accessed IS NOT NULL) AS accessed_sensitive FROM audit_query_log WHERE executed_at >= DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY username ORDER BY queries_run DESC. Change volume report: SELECT DATE_TRUNC('week', changed_at) AS week, table_name, operation, COUNT(*) AS changes FROM audit_change_log WHERE changed_at >= CURRENT_DATE - INTERVAL '90 days' GROUP BY 1, 2, 3 ORDER BY 1 DESC, 4 DESC. Unusual access detection: WITH user_baseline AS (SELECT username, AVG(daily_queries) AS avg_queries, STDDEV(daily_queries) AS stddev_queries FROM (SELECT username, DATE(executed_at) AS day, COUNT(*) AS daily_queries FROM audit_query_log GROUP BY 1, 2) daily GROUP BY username) SELECT al.username, DATE(al.executed_at), COUNT(*) AS queries_today, ub.avg_queries, CASE WHEN COUNT(*) > ub.avg_queries + 3 * ub.stddev_queries THEN 'ANOMALY' ELSE 'NORMAL' END AS status FROM audit_query_log al JOIN user_baseline ub ON al.username = ub.username WHERE al.executed_at >= CURRENT_DATE GROUP BY al.username, DATE(al.executed_at), ub.avg_queries, ub.stddev_queries. If a user who normally runs 10 queries per day suddenly runs 500, flag it as an anomaly. Report approval evidence for auditors: SELECT ra.report_execution_id, rc.report_name, ra.generated_by, ra.approved_by, ra.approved_at, ra.status, EXTRACT(HOURS FROM ra.approved_at - re.completed_at) AS hours_to_approve FROM report_approvals ra JOIN report_executions re ON ra.report_execution_id = re.execution_id JOIN report_catalog rc ON re.report_id = rc.report_id WHERE ra.approved_at >= DATE_TRUNC('quarter', CURRENT_DATE) ORDER BY ra.approved_at. This shows auditors every report that was generated and who approved it, with timestamps proving segregation of duties'"
+    weight: 0.30
+    description: "Compliance"

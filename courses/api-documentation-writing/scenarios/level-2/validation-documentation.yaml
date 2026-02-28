@@ -1,0 +1,47 @@
+meta:
+  id: validation-documentation
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document validation rules — write clear field validation documentation with constraints, enums, patterns, and conditional requirements"
+  tags: [API, documentation, validation, constraints, enums, patterns, intermediate]
+
+state: {}
+
+trigger: |
+  Your API has complex validation rules that aren't documented.
+  Developers discover them only when they hit 422 errors:
+
+  - "Why was my phone number rejected? I sent +1-555-0123"
+  - "The docs say 'name' is a string but my 300-char name was rejected"
+  - "Why do I need 'state' for US addresses but not UK addresses?"
+  - "What date formats are accepted? I tried MM/DD/YYYY"
+
+  Field validations:
+  - email: RFC 5322, max 254 chars, unique per account
+  - phone: E.164 format (+15550123456, no dashes/spaces)
+  - name: 1-100 chars, Unicode allowed
+  - url: HTTPS required, max 2048 chars
+  - country: ISO 3166-1 alpha-2 (US, GB, DE)
+  - state: required when country = US or CA, ISO 3166-2
+  - amount: integer, min 50 (cents), max 99999999
+  - date_of_birth: ISO 8601 (YYYY-MM-DD), must be 13+ years ago
+
+  Task: Document all validation rules clearly so developers can
+  validate client-side before sending requests. Include: format
+  specifications, constraints, conditional requirements, and
+  validation error examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each field's validation is precisely documented — for each field: format (with regex pattern if applicable), min/max length, allowed characters, example of valid value, example of invalid value with specific rejection reason. Phone: E.164 format means digits only with + prefix, 7-15 digits (valid: +15550123456, invalid: +1-555-0123 — no dashes allowed). Date: ISO 8601 date only YYYY-MM-DD (valid: 1990-05-15, invalid: 05/15/1990). Each constraint has the exact error message the API returns when violated"
+    weight: 0.35
+    description: "Precise validation"
+  - type: llm_judge
+    criteria: "Conditional rules are clearly explained — state required when country is US or CA: document this as a conditional requirement with clear language: 'Required when country is US or CA. Must be a valid ISO 3166-2 subdivision code (e.g., US-CA for California).' Table showing which fields are required based on other field values. Business rules: amount minimum 50 means minimum charge is $0.50 — explain the business reason. age restriction: date_of_birth must be at least 13 years before current date (COPPA compliance)"
+    weight: 0.35
+    description: "Conditional rules"
+  - type: llm_judge
+    criteria: "Client-side validation guidance is provided — provide regex patterns developers can copy for client-side validation. JSON Schema fragments they can use for validation libraries. Example validation error response for each type of failure. Recommendation: validate client-side first to avoid unnecessary API calls, but don't rely solely on client-side validation (server is authoritative). Note which validations are format-only (can validate locally) vs business-rule (must check server, like email uniqueness)"
+    weight: 0.30
+    description: "Client-side guidance"

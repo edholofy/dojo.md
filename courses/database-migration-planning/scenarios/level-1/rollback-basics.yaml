@@ -1,0 +1,39 @@
+meta:
+  id: rollback-basics
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Understand migration rollbacks — learn when and how to roll back a database migration and the limitations of rollbacks"
+  tags: [database, migration, rollback, safety, beginner]
+
+state: {}
+
+trigger: |
+  You just ran a migration in staging that added a new "status"
+  column to the "orders" table with a NOT NULL constraint and a
+  default value. After running it, you discover:
+
+  1. The column name should have been "order_status" (not "status")
+     because "status" conflicts with a column in another table that
+     joins with orders
+  2. The default value should have been 'pending' not 'active'
+
+  Your migration tool shows:
+  - Migration 20260227_001_add_status_to_orders: APPLIED
+
+  Task: Explain how to roll back this migration, write the rollback,
+  and discuss when rollbacks work well and when they do not.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rollback process is explained clearly — rollback process: 'A rollback reverses a migration by running its down function. When you run the rollback: (1) The migration tool reads the down migration for the most recently applied migration. (2) It executes the down SQL against the database. (3) It removes the migration from the tracking table, marking it as unapplied. For this migration: the down migration undoes the column addition: ALTER TABLE orders DROP COLUMN status; After rolling back, write a new corrected migration: ALTER TABLE orders ADD COLUMN order_status VARCHAR(20) NOT NULL DEFAULT pending; How to run the rollback depends on your tool: Knex: npx knex migrate:rollback (rolls back the last batch). Prisma: prisma migrate resolve --rolled-back 20260227_001_add_status_to_orders. Flyway: flyway undo (requires Flyway Teams edition) or manually run the down SQL. After rollback: verify the orders table no longer has the status column. Then apply the corrected migration with the correct column name and default value'"
+    weight: 0.35
+    description: "Rollback process"
+  - type: llm_judge
+    criteria: "Limitations of rollbacks are honestly discussed — limitations: 'Rollbacks work well when: (1) The migration only changed schema (added/removed columns, changed types). Schema rollbacks are usually clean — you can reverse them exactly. (2) The migration was just applied (no new data has been written to the changed schema). Rolling back immediately after applying is the simplest case. (3) You are in staging or development (not production). Rollbacks in non-production environments carry no data loss risk. Rollbacks are difficult or impossible when: (1) Data was written after the migration. If the migration added a column and users have already stored data in that column, rolling back (dropping the column) destroys that data. In production, even a few minutes of data can be valuable. (2) The migration was destructive. If the migration dropped a column or table, the down migration cannot recreate the lost data — only the schema. You can recreate the column structure, but the data is gone. This is why destructive migrations require backups. (3) Other migrations depend on it. If migration 002 references the column created by migration 001, you cannot roll back 001 without first rolling back 002. Migration dependencies create a chain. (4) The down migration has a bug. If you never tested the down migration (common), it may fail when you actually need it. Always test rollbacks in staging before relying on them in production. Key lesson: rollbacks are a first line of defense, not a guarantee. Backups are the ultimate safety net. Plan migrations assuming the rollback might not work'"
+    weight: 0.35
+    description: "Rollback limitations"
+  - type: llm_judge
+    criteria: "Corrective approach is recommended — corrective approach: 'For this specific situation (wrong column name and default in staging): Best approach: roll back and rewrite. Since this is staging (not production) and the migration was just applied (no real user data), a clean rollback and rewrite is the correct approach. Steps: (1) Roll back the migration. (2) Fix the migration file: change status to order_status, change default from active to pending. (3) Reapply the corrected migration. (4) Verify the column is correct. Important: do not edit an already-applied migration in production. In production, the correct approach is a forward migration — write a new migration that renames the column and changes the default. ALTER TABLE orders RENAME COLUMN status TO order_status; ALTER TABLE orders ALTER COLUMN order_status SET DEFAULT pending; This preserves any data already written and creates a clear audit trail of changes. In staging, rollback-and-rewrite is fine because there is no real data to preserve. In production, always migrate forward'"
+    weight: 0.30
+    description: "Corrective approach"

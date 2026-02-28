@@ -1,0 +1,71 @@
+meta:
+  id: api-gateway-integration
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda and API Gateway integration — diagnose response format errors, CORS issues, and proxy integration mismatches"
+  tags: [AWS, Lambda, API-Gateway, CORS, proxy-integration, response-format, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function works when invoked directly but returns 502
+  Bad Gateway when called through API Gateway:
+
+  $ curl https://api.example.com/orders
+  {"message": "Internal server error"}
+
+  API Gateway CloudWatch Logs show:
+  Execution failed due to configuration error:
+  Malformed Lambda proxy response
+
+  The Lambda function returns:
+  return { "statusCode": 200, "body": orders }
+
+  But API Gateway Lambda Proxy Integration requires a specific format:
+  {
+    "statusCode": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"orders\": [...]}"  // body MUST be a string!
+  }
+
+  The body must be a JSON string, not an object. And headers must
+  be included.
+
+  After fixing the response format, a CORS error appears:
+  Access to XMLHttpRequest at 'https://api.example.com/orders'
+  from origin 'https://myapp.com' has been blocked by CORS policy:
+  No 'Access-Control-Allow-Origin' header is present.
+
+  CORS headers must be returned by the Lambda function (not just
+  configured in API Gateway for proxy integration):
+  {
+    "statusCode": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "https://myapp.com",
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type,Authorization"
+    },
+    "body": JSON.stringify({ orders: [...] })
+  }
+
+  Task: Explain API Gateway + Lambda debugging. Write: the proxy
+  integration response format requirement, common response format
+  errors and fixes, CORS with Lambda proxy, API Gateway error codes
+  (502 = malformed response, 504 = Lambda timeout, 403 = auth),
+  and how to test API Gateway integrations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response format is explained — Lambda proxy integration requires: statusCode (integer), headers (object, optional but recommended), body (string — must JSON.stringify objects!), isBase64Encoded (boolean, for binary). Missing statusCode or non-string body = 502 Malformed Lambda proxy response. Common mistake: returning a raw object instead of JSON.stringify for body. Non-proxy integration allows mapping templates but is more complex to configure"
+    weight: 0.35
+    description: "Response format"
+  - type: llm_judge
+    criteria: "CORS and error codes are covered — CORS with proxy integration: Lambda must return Access-Control-Allow-Origin, Access-Control-Allow-Methods, Access-Control-Allow-Headers in response headers. API Gateway CORS configuration only handles the OPTIONS preflight — actual response headers come from Lambda. Error codes: 502 = malformed Lambda response or Lambda error, 504 = Lambda timeout (API GW has 29s hard limit), 403 = missing/invalid API key or authorizer rejection, 429 = throttled. Check API Gateway execution logs (enable in stage settings) for details"
+    weight: 0.35
+    description: "CORS and errors"
+  - type: llm_judge
+    criteria: "Testing approach is practical — test Lambda independently first: aws lambda invoke. Then test via API Gateway: use the API Gateway console's test feature (shows request/response transformation). Use curl -v to see full HTTP response headers. Enable API Gateway execution logging (detailed) for debugging. Check both Lambda CloudWatch Logs and API Gateway CloudWatch Logs. Use AWS SAM CLI (sam local start-api) for local testing of the full API Gateway → Lambda integration. Postman or httpie for systematic API testing"
+    weight: 0.30
+    description: "Testing approach"

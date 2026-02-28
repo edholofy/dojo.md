@@ -1,0 +1,46 @@
+meta:
+  id: customer-incident-communication
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Write customer-facing incident communications — craft transparent, trust-building post-incident reports for customers and the public"
+  tags: [postmortem, customer-communication, public, transparency, trust, intermediate]
+
+state: {}
+
+trigger: |
+  Your SaaS platform had a 2-hour data processing delay that affected
+  financial reports for enterprise customers. The data wasn't lost —
+  it was delayed. But for customers who rely on real-time financial
+  data, a 2-hour delay during market hours is significant.
+
+  You need to write three external communications:
+  1. Status page post-incident report (public)
+  2. Email to affected enterprise customers (direct)
+  3. Blog post for your engineering blog explaining what happened
+     and what you're doing about it (public, technical audience)
+
+  Your CEO wants transparency. Your legal team wants careful language.
+  Your customers want honesty and assurance it won't happen again.
+
+  Previous incident communications from your company were criticized
+  as "corporate non-apologies" that said "we take reliability
+  seriously" without explaining what actually happened.
+
+  Task: Write all three communications. Balance transparency with
+  appropriate information boundaries. Show how the same incident
+  is communicated differently to different external audiences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Status page report is clear and customer-focused — structure: 'Incident Summary: On [date], data processing for financial reports experienced a 2-hour delay between [time] and [time] UTC. Impact: Financial reports generated during this window reflected data that was up to 2 hours behind real-time. No data was lost — all transactions were processed and reports are now accurate. Affected Users: Enterprise customers using real-time financial reporting. Root Cause: A database maintenance operation took longer than expected and temporarily blocked the data ingestion pipeline. Resolution: We resolved the processing delay and verified all data is now current. We have implemented changes to prevent this type of delay in future.' No jargon. No internal system names. Focused on what customers experienced and that it's resolved. Includes: what happened, who was affected, what was done, that it's resolved. Does NOT include: blame, excessive technical detail, or promises that are hard to keep"
+    weight: 0.35
+    description: "Status page report"
+  - type: llm_judge
+    criteria: "Enterprise email is personal, specific, and includes next steps — tone: direct and accountable, not corporate. Opening: 'I'm writing to follow up on the data processing delay that affected your financial reports on [date]. I want to explain what happened, what we've done to fix it, and what we're doing to prevent it from happening again.' Specifics for enterprise: 'Your account was affected between [time] and [time]. During this window, financial reports reflected data that was up to 2 hours stale. All data has been reprocessed and your reports are now accurate as of [verification time].' Accountability: 'This fell short of the service level we committed to in our agreement. We are issuing an SLA credit of $X to your account, which will appear on your next invoice.' Prevention: '3 specific changes we're making: (1) database maintenance now runs during off-peak hours only, (2) data pipeline has a bypass route for when the primary path is blocked, (3) we've added alerting that detects processing delays within 5 minutes.' Relationship: 'Your account manager [name] is available to discuss any concerns. I take full accountability for this incident.' Signed by a real person (VP of Engineering or CTO), not a generic 'The Team'"
+    weight: 0.35
+    description: "Enterprise email"
+  - type: llm_judge
+    criteria: "Engineering blog post is transparent and technically credible — technical depth appropriate for engineering audience: 'Our data processing pipeline ingests transactions from partner systems and makes them available in customer reports within 30 seconds. The pipeline uses a streaming architecture with PostgreSQL as the primary data store.' Root cause explained honestly: 'A scheduled database vacuum operation on the transactions table acquired a lock that blocked the ingestion pipeline. The vacuum was necessary for database health but was incorrectly scheduled during peak hours. The lock was held for 2 hours because the table had accumulated more dead tuples than anticipated.' What we learned: 'We had tested vacuum operations on smaller datasets where they completed in minutes. At our current scale, the operation took hours — a non-linear scaling behavior we hadn't anticipated.' What we're changing: specific technical changes with reasoning. Transparency about what went wrong in the incident response too: 'Our alerting detected the delay 15 minutes after it started. We should have customer-facing alerts that fire within 5 minutes.' Blog post builds trust by being honest about both the failure and the response gaps. Avoids: 'we take reliability seriously' platitudes. Instead shows reliability through specific actions"
+    weight: 0.30
+    description: "Engineering blog post"

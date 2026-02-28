@@ -1,0 +1,47 @@
+meta:
+  id: reviewing-documentation
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Review documentation changes — evaluate documentation PRs for accuracy, completeness, clarity, and alignment with code changes"
+  tags: [code-review, documentation, accuracy, completeness, clarity, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing PRs that include documentation changes alongside
+  code changes. Common problems you've seen:
+
+  PR #1: New feature added (webhook retry configuration) but the
+  README wasn't updated. The author says "I'll document it later."
+
+  PR #2: Documentation was updated to describe a new API parameter,
+  but the example code in the docs doesn't include the new parameter.
+
+  PR #3: A refactor changed the method signature from
+  `sendEmail(to, subject, body)` to `sendEmail(options)` but the
+  JSDoc comments still show the old signature.
+
+  PR #4: The CHANGELOG entry says "Fixed bug" with no description
+  of what bug was fixed or what changed.
+
+  PR #5: A new environment variable is required (REDIS_URL) but it's
+  not added to .env.example, the README, or the deployment docs.
+
+  Task: Write review comments for each situation. Explain why
+  documentation accuracy matters, what specifically needs to change,
+  and how to prevent these issues in the future.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each documentation gap is identified with impact — PR #1: 'Documentation debt compounds — webhook retry config will be discoverable only by reading source code. Developers will file support tickets. Could we add a section to docs/webhooks.md before merging?' PR #2: 'The example on line 34 still shows the old API call without the new timeout parameter. A developer copy-pasting this example will get unexpected behavior. Please update the example to include timeout.' PR #3: 'The JSDoc at line 12 shows sendEmail(to, subject, body) but the function now takes an options object — this will confuse anyone relying on IDE tooltips.' PR #4: 'A changelog entry of just Fixed bug makes our changelog useless. What broke? What was the fix? Who does this affect? Suggest: Fixed: Order total calculation failed when discount code exceeded subtotal.' PR #5: 'Missing REDIS_URL from .env.example means every developer and every deployment environment will fail on first try.'"
+    weight: 0.35
+    description: "Gap identification"
+  - type: llm_judge
+    criteria: "Comments connect documentation to developer experience — documentation isn't bureaucracy, it's user experience: 'The .env.example file is the first thing a new developer touches when setting up the project. Missing REDIS_URL means their first experience is a cryptic connection error.' 'JSDoc is how developers discover your API — when it's wrong, they write code based on lies.' 'The changelog is how developers decide whether to upgrade — vague entries mean they can't assess risk.' 'Example code in docs is the most copied content in your entire system — if it's wrong, bugs are multiplied across every integration.' Each comment frames documentation as essential infrastructure, not optional polish"
+    weight: 0.35
+    description: "DX connection"
+  - type: llm_judge
+    criteria: "Prevention strategies are practical — (1) PR template: add 'Documentation updated?' checkbox, (2) CI check: detect API signature changes without corresponding JSDoc updates, (3) .env.example: add a CI check that all env vars in code exist in .env.example, (4) Changelog: require structured changelog format in PR template (What changed? Why? Who's affected?), (5) Examples: add documentation example testing to CI (run code examples to verify they work). Team agreement: 'Code without documentation is not done — add documentation to your team's Definition of Done.' Gradual adoption: 'We don't need to fix all existing gaps, but new code should ship with docs. Suggest adding a docs requirement to the PR template this sprint.'"
+    weight: 0.30
+    description: "Prevention strategies"

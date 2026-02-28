@@ -1,0 +1,47 @@
+meta:
+  id: security-privacy-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write security and privacy-focused RFCs — address data protection, compliance requirements, and security architecture in technical proposals"
+  tags: [RFC, security, privacy, GDPR, compliance, data-protection, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to add an analytics and user behavior tracking
+  system. The product team wants to track:
+  - Page views and navigation patterns
+  - Feature usage (which buttons clicked, which features used)
+  - User session recordings (mouse movements, scrolling)
+  - A/B test participation and results
+  - Error encounters and recovery paths
+  - Search queries and result interactions
+
+  Your application operates in the EU (GDPR), California (CCPA), and
+  Canada (PIPEDA). You have 500,000 users, of which 200,000 are in
+  the EU.
+
+  The privacy team has flagged concerns. The legal team wants to
+  review. Engineers are excited about the data possibilities but
+  haven't thought about consent, data minimization, or retention.
+
+  Task: Write an RFC that addresses both the technical implementation
+  and the privacy/compliance requirements. Show how to balance
+  product analytics needs with user privacy obligations. Include
+  data classification, consent mechanisms, and privacy-by-design
+  principles.
+
+assertions:
+  - type: llm_judge
+    criteria: "Data classification and privacy-by-design are foundational — data classified by sensitivity: Tier 1 (anonymous, no consent needed): aggregate page view counts, feature usage statistics (no user association), error rates by page. Tier 2 (pseudonymous, consent required): user navigation patterns with pseudonymous ID, feature usage per user cohort, A/B test results by segment. Tier 3 (personal, explicit consent required): session recordings, individual search queries, personalized behavior patterns. Privacy-by-design principles applied: (1) Data minimization: 'Collect the minimum data needed for each analytics goal. Session recordings: only track viewport, not form inputs or text fields.' (2) Purpose limitation: 'Each data point has a declared purpose. Data collected for UX improvement cannot be used for targeted advertising without separate consent.' (3) Pseudonymization by default: 'Analytics IDs are separate from user IDs. Linking is possible but requires explicit justification and audit logging.' (4) Retention limits: 'Tier 1: retained indefinitely (aggregated). Tier 2: 12 months. Tier 3: 30 days unless user opts into longer retention.'"
+    weight: 0.35
+    description: "Privacy by design"
+  - type: llm_judge
+    criteria: "Consent mechanisms and compliance are specifically addressed — GDPR compliance: 'Consent banner with granular options: (1) essential analytics only (Tier 1, no consent needed under legitimate interest), (2) usage analytics (Tier 2, opt-in required), (3) session recording (Tier 3, explicit opt-in with clear explanation). Consent is specific, informed, and freely given. Rejecting analytics does not degrade product functionality.' Technical implementation: 'Analytics SDK loads conditionally based on consent state. No tracking code executes before consent is given. Consent preferences stored in user profile and synchronized across devices.' CCPA compliance: 'Do Not Sell My Personal Information link. Opt-out of Tier 2 and 3 data collection. Data deletion request handling within 45 days.' Data subject rights: 'Right to access: user can download their analytics profile. Right to erasure: user can delete all analytics data. Right to portability: analytics data exportable in JSON format. Implementation: automated self-service for access and deletion, with manual review for complex cases.' Cross-border data transfer: 'Analytics processing in EU for EU users. No EU user data processed in US facilities without Standard Contractual Clauses.'"
+    weight: 0.35
+    description: "Compliance specifics"
+  - type: llm_judge
+    criteria: "Technical architecture supports privacy requirements — architecture reflects privacy needs: 'Analytics pipeline has consent-checking middleware at the ingestion point. Events without valid consent are dropped before storage, not after. This is a critical architectural decision — data that's never stored can't be leaked or misused.' Session recordings: 'Recording library configured to mask: (1) all form inputs, (2) any element with data-sensitive attribute, (3) elements containing email patterns or phone numbers (regex-based automatic masking). Recordings stored encrypted, accessible only to UX research team with audit log.' Data architecture: 'Separate analytics database from production database. No joins between analytics and PII. Pseudonymous ID mapping stored in a separate, access-controlled service.' Vendor assessment: 'If using third-party analytics (Mixpanel, Amplitude): data processing agreement required, EU data residency confirmed, subprocessor list reviewed, compliance certifications verified (SOC 2, ISO 27001).' Incident response: 'If analytics data is breached: notification within 72 hours (GDPR requirement), scope assessment, user notification if personal data was exposed.' The RFC should demonstrate that privacy was a design constraint, not an afterthought checkbox"
+    weight: 0.30
+    description: "Privacy architecture"

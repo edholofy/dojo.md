@@ -1,0 +1,53 @@
+meta:
+  id: etl-for-ml-pipelines
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "ETL for ML pipelines — troubleshoot data pipelines that feed ML models, including feature stores, training data versioning, and training-serving skew"
+  tags: [ML, feature-store, training-data, data-drift, expert]
+
+state: {}
+
+trigger: |
+  A principal ML engineer says: "Our ML model performance is
+  degrading and we think it's a data pipeline problem, not a model
+  problem. Issues we're seeing:
+
+  1. Training-serving skew: The features computed for model training
+     (batch pipeline) don't match the features computed for real-time
+     inference (streaming pipeline). Training uses a 30-day rolling
+     average but the serving pipeline uses a 7-day window due to
+     infrastructure constraints.
+
+  2. Data drift: The model was trained on data from 6 months ago.
+     Customer behavior has shifted (post-pandemic), but our pipeline
+     doesn't detect or alert on distribution changes in the input
+     features.
+
+  3. Feature freshness: Some features depend on pipelines that run
+     at different frequencies. 'Last purchase amount' updates hourly
+     but 'customer lifetime value' updates weekly. During the gap,
+     the model uses stale CLV data.
+
+  4. Reproducibility: We can't recreate the exact training dataset
+     from 3 months ago because the source data has been updated
+     in place and we don't version our training data.
+
+  How do we fix our ML data pipelines?"
+
+  Task: Diagnose each ML data pipeline issue and design a robust
+  data infrastructure for ML model training and serving.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses training-serving skew — explains why feature computation must be identical between training and serving (different computation = different feature distributions = model performs differently), recommends a feature store (Feast, Tecton, Hopsworks) that computes features once and serves them to both training and inference, or at minimum extracts shared feature computation logic into a single library used by both pipelines. Specifically addresses the 30-day vs 7-day window discrepancy"
+    weight: 0.35
+    description: "TrainingServingSkew"
+  - type: llm_judge
+    criteria: "Response addresses data drift and feature freshness — data drift detection: monitor input feature distributions over time (PSI — Population Stability Index, KS test, KL divergence), alert when distributions shift significantly from training data, implement automatic model retraining triggers. Feature freshness: design a feature freshness SLA per feature, alert when features are staler than acceptable, consider the impact of stale features on model accuracy, and design the feature computation pipeline to align update frequencies with model sensitivity"
+    weight: 0.35
+    description: "DriftAndFreshness"
+  - type: llm_judge
+    criteria: "Response addresses reproducibility — data versioning approaches (DVC, Delta Lake time travel, Iceberg snapshots, or simply snapshot training datasets to object storage with metadata), point-in-time feature retrieval (ability to reconstruct the feature values as they were at a specific historical moment, critical for avoiding data leakage), metadata tracking (which data version, feature computation version, and model version are linked), and pipeline lineage from raw data through features to model output"
+    weight: 0.30
+    description: "Reproducibility"

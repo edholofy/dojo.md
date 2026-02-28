@@ -1,0 +1,47 @@
+meta:
+  id: self-healing-pipelines
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Self-healing pipelines — design ETL pipelines that automatically detect, diagnose, and recover from common failure modes without human intervention"
+  tags: [self-healing, automation, circuit-breaker, recovery, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "Our team spends 40% of their
+  time on pipeline maintenance — fixing failures, re-running
+  backfills, and responding to alerts. Most failures fall into
+  predictable categories:
+
+  - 30% are transient (API timeouts, temporary network issues)
+  - 25% are source data quality issues (unexpected nulls, format
+    changes, out-of-range values)
+  - 20% are resource exhaustion (memory, disk, connection pools)
+  - 15% are upstream dependency delays
+  - 10% are genuinely novel issues requiring investigation
+
+  The first 90% follow patterns we've seen before and have
+  documented runbooks for. Can we automate the response to these
+  known failure modes and build 'self-healing' pipelines?
+
+  What does self-healing look like in practice, and what are the
+  limits of automation?"
+
+  Task: Design a self-healing pipeline architecture that automates
+  recovery for known failure patterns while maintaining safety
+  guardrails for novel issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs self-healing patterns for each failure category — transient failures: exponential backoff retry with jitter, automatic circuit breaker that pauses after N consecutive failures. Data quality issues: quarantine bad records automatically, apply default values for known-safe transformations, auto-scale data validation thresholds based on historical patterns. Resource exhaustion: auto-scaling compute resources, automatic batch size reduction when memory pressure is detected, connection pool auto-recovery. Dependency delays: dynamic wait with timeout, automatic SLA adjustment for downstream pipelines, graceful degradation (process available data, fill in missing data later)"
+    weight: 0.35
+    description: "SelfHealingPatterns"
+  - type: llm_judge
+    criteria: "Response designs the circuit breaker and safety guardrail architecture — circuit breaker pattern: after N failures or quality threshold breaches, stop processing and alert (prevent bad data from propagating), automatic reset after the issue clears. Blast radius limitation: self-healing actions are scoped to prevent cascading auto-corrections that make things worse. Human escalation triggers: when should the system stop trying to self-heal and page a human (novel error patterns, data quality degradation beyond acceptable bounds, potential data loss scenarios). Explains the danger of over-automation (a self-healing system that silently drops data is worse than a system that fails loudly)"
+    weight: 0.35
+    description: "SafetyGuardrails"
+  - type: llm_judge
+    criteria: "Response addresses practical implementation and limits — how to build a remediation engine (classify failures using error patterns, match to runbook actions, execute automatically), how to build confidence in self-healing (start with dry-run mode that recommends actions but waits for human approval, graduate to full automation for proven patterns), observability for self-healing (log every automated action, track self-healing success rates, alert on actions that required more than standard remediation), and honest assessment of what can't be automated (novel failures, business logic errors, issues requiring cross-team coordination)"
+    weight: 0.30
+    description: "ImplementationAndLimits"

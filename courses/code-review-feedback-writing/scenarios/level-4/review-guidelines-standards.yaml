@@ -1,0 +1,45 @@
+meta:
+  id: review-guidelines-standards
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Create review guidelines — write comprehensive code review standards that define expectations for both authors and reviewers across the organization"
+  tags: [code-review, guidelines, standards, expectations, organization, expert]
+
+state: {}
+
+trigger: |
+  Your growing engineering organization (60 developers, 8 teams) needs
+  written code review guidelines. Currently, review expectations are
+  tribal knowledge — each team has different unwritten rules.
+
+  Inconsistencies across teams:
+  - Team A requires 2 approvals, Team B requires 1
+  - Team C blocks on any style issue, Team D auto-formats
+  - Some teams review architecture before coding, others review
+    only the final PR
+  - Test requirements: Team E requires 80% coverage, Team F has
+    no coverage requirement
+  - Some teams use PR templates, others have no structure
+
+  You need org-wide guidelines that are flexible enough for team
+  autonomy but consistent enough for cross-team collaboration.
+
+  Task: Write the organization's code review guidelines document.
+  Include: universal requirements (all teams must follow), recommended
+  practices (teams should customize), author responsibilities, reviewer
+  responsibilities, review scope by PR type, and escalation procedures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Universal requirements establish a quality floor — non-negotiable (all teams): (1) every production code change must be reviewed by at least 1 person who didn't write it, (2) security-sensitive code (auth, payments, PII handling) requires review by security-trained engineer, (3) database migrations require DBA or data team review, (4) review comments must use severity labels (blocking/suggestion/nit), (5) first review within 24 business hours, (6) no self-merging except for emergencies (documented with incident link), (7) reviews must verify: correctness, test coverage for new behavior, no security regressions. Each requirement has a clear rationale explaining WHY it's non-negotiable. Exceptions process: how to request a waiver for legitimate reasons (hotfix, trivial change)"
+    weight: 0.35
+    description: "Universal requirements"
+  - type: llm_judge
+    criteria: "Author and reviewer responsibilities are explicit — author responsibilities: (1) self-review before requesting review (read your own diff), (2) write meaningful PR description (what, why, how to test), (3) keep PRs focused (one concern per PR), (4) respond to comments within 24 hours, (5) don't merge with unresolved blocking comments. Reviewer responsibilities: (1) review within 24 hours, (2) review the entire PR (don't review half and approve), (3) label comment severity, (4) provide actionable feedback (problem + suggestion), (5) approve or request changes (don't leave in liminal state), (6) re-review within 4 hours after author addresses feedback. PR templates: suggested sections — description, motivation, testing instructions, screenshots (for UI), checklist (tests added, docs updated, no secrets). Teams can customize but must include at minimum: description and testing instructions"
+    weight: 0.35
+    description: "Responsibilities"
+  - type: llm_judge
+    criteria: "Flexibility and escalation balance consistency with autonomy — team-customizable: number of required approvals (minimum 1, teams can require 2+), coverage thresholds (each team sets their own, but must have one), style/formatting rules (team choice but must be automated), PR size limits (recommended < 200 lines, teams set their own). Review scope by PR type: hotfix (correctness only — ship fast), feature (full review — architecture, tests, docs), refactor (focus on behavior preservation), dependency update (check changelog + CI). Escalation: (1) reviewer disagrees with author → discussion in comments, (2) can't resolve → bring in a third reviewer, (3) still can't resolve → team lead decides, (4) cross-team disagreement → engineering manager. Document versioning: guidelines reviewed quarterly, teams can propose changes via PR to the guidelines doc itself"
+    weight: 0.30
+    description: "Flexibility and escalation"

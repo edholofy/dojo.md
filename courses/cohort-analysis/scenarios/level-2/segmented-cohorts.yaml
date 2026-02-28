@@ -1,0 +1,33 @@
+meta:
+  id: segmented-cohorts
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Build segmented cohorts — slice cohorts by acquisition channel, geography, plan type, and other dimensions to uncover hidden retention patterns"
+  tags: [segmentation, acquisition-channel, geography, plan-type, intermediate]
+
+state: {}
+
+trigger: |
+  The Growth Lead says: "Our overall retention is flat at 30% month-1.
+  But I suspect it's hiding something — maybe some channels are
+  improving while others are getting worse. Can you break our cohorts
+  down by acquisition channel, geography, and plan type?"
+
+  Task: Explain how to build segmented cohorts and demonstrate what
+  hidden patterns emerge when you slice cohort data by multiple
+  dimensions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains segmented cohort construction and channel analysis — channels: 'Segmented cohort analysis by acquisition channel: instead of one retention table for all users, build separate tables for each segment. Channel segmentation — January cohort broken down: organic (400 signups): month 1: 45%, month 3: 32%, month 6: 25%. Paid search (300 signups): month 1: 35%, month 3: 22%, month 6: 15%. Paid social (200 signups): month 1: 18%, month 3: 8%, month 6: 3%. Referral (100 signups): month 1: 55%, month 3: 42%, month 6: 35%. Blended (1,000 signups): month 1: 37%, month 3: 24%, month 6: 17%. The blended 37% month-1 retention hides massive variation: referral users retain at 55% month 1 — 3x better than paid social at 18%. Paid social users almost entirely churn by month 6 (3%). Simpson's paradox in action: overall retention can appear flat even while individual segments are changing. If paid social grows from 20% to 40% of signups (while retaining poorly), it drags down the blended rate even though every other channel is improving. Organic month-1: improving from 42% to 48%. Paid search month-1: improving from 32% to 38%. Paid social month-1: stable at 18%. But overall month-1: flat at 30% because paid social's share is growing. The Growth Lead's intuition is correct — blended metrics are hiding segment-level trends'"
+    weight: 0.35
+    description: "Channels"
+  - type: llm_judge
+    criteria: "Response covers geography and plan segmentation — dimensions: 'Geography segmentation: US (600 signups): month 1: 40%, month 3: 28%, month 6: 20%. Europe (250 signups): month 1: 35%, month 3: 25%, month 6: 18%. Asia-Pacific (100 signups): month 1: 28%, month 3: 15%, month 6: 8%. Latin America (50 signups): month 1: 22%, month 3: 10%, month 6: 4%. Insights: US and Europe retain similarly — the product resonates with these markets. APAC and LATAM retain poorly — possible causes: language/localization issues, feature gaps for those markets, timezone-dependent features (e.g., live support unavailable), payment friction. Plan type segmentation: free plan (700 signups): month 1: 28%, month 3: 15%, month 6: 8%. Trial-to-paid (200 signups): month 1: 55%, month 3: 40%, month 6: 32%. Direct paid (100 signups): month 1: 65%, month 3: 52%, month 6: 45%. Paying users retain dramatically better — this is expected (financial commitment filters for intent). But the gap between trial-to-paid and direct paid suggests: users who convert after a trial are less committed than those who pay upfront. Trial users may be comparison-shopping and less invested. Multi-dimensional segmentation: combine channel + plan: organic free users: 30% month-1 retention. Organic paid users: 60% month-1 retention. Paid social free users: 12% month-1 retention. Paid social paid users: 40% month-1 retention. Paying always improves retention, but organic paid users are the highest-value segment'"
+    weight: 0.35
+    description: "Dimensions"
+  - type: llm_judge
+    criteria: "Response covers practical recommendations and analysis framework — framework: 'Practical framework for segmented cohort analysis: Step 1 — Choose dimensions to segment by: start with high-impact dimensions: acquisition channel (how users found the product). Plan or pricing tier (free, trial, paid, enterprise). Geography or language. Device or platform (web, iOS, Android). Company size (for B2B). Do not segment by too many dimensions at once — cohort sizes become too small for reliable analysis. Rule of thumb: each segment-cohort cell should have at least 50-100 users. Step 2 — Build the matrix: for each segment × cohort combination, calculate retention at standard intervals (month 1, 3, 6, 12). Create a summary table showing all segments side by side. Step 3 — Identify the highest-value segments: rank segments by month-6 retention (or LTV if available). Referral paid users: 45% month-6 retention (best). Organic paid users: 35% month-6 retention. Paid search paid users: 25% month-6 retention. Paid social free users: 3% month-6 retention (worst). Step 4 — Act on segment insights: invest more in high-retention segments: grow referral program, increase organic content investment. Fix low-retention segments or stop acquiring them: if paid social free users never retain, stop spending on that combination. Set segment-specific retention goals: do not hold paid social to the same retention bar as organic referral. Step 5 — Monitor segment mix: track what percentage of new signups come from each segment. If the mix shifts toward low-retention segments, blended metrics will decline even if each segment improves. Report retention both blended and by segment to avoid misleading stakeholders'"
+    weight: 0.30
+    description: "Framework"

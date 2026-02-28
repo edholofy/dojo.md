@@ -1,0 +1,33 @@
+meta:
+  id: bayesian-ab-testing
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Apply Bayesian A/B testing — use Bayesian methods to calculate the probability that a treatment is better, incorporate prior beliefs, and enable continuous monitoring"
+  tags: [Bayesian, posterior, prior, probability-to-beat, intermediate]
+
+state: {}
+
+trigger: |
+  The Head of Growth says: "Our frequentist A/B tests force us to
+  wait 2-3 weeks before looking at results. The business moves fast
+  — I need to check results daily and make decisions sooner. I've
+  heard Bayesian testing lets you peek at results without inflating
+  false positives. Is that true?"
+
+  Task: Explain Bayesian A/B testing, compare it to frequentist
+  methods, and show when each approach is appropriate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains Bayesian A/B testing with practical examples — bayesian: 'Bayesian A/B testing explained: Instead of asking is the difference statistically significant? (frequentist), Bayesian asks what is the probability that B is better than A? Frequentist answer: p = 0.04, statistically significant at α = 0.05. Bayesian answer: there is a 96% probability that B is better than A. The expected lift is 0.5pp with a 95% credible interval of [0.05pp, 0.95pp]. The Bayesian answer is more intuitive for business stakeholders — they can directly interpret a 96% probability that B is better. How it works: 1. Start with a prior: our belief about the conversion rate before seeing any data. For conversion rate, a common uninformative prior is Beta(1,1) — we assume any conversion rate is equally likely. If we have historical data (e.g., conversion has been around 5% for months), we can use an informative prior: Beta(50, 950) — centered on 5%. 2. Collect data: as test data arrives, update the prior into a posterior. Control: 1,050 conversions out of 25,000 → posterior: Beta(1051, 23951). Treatment: 1,150 conversions out of 25,000 → posterior: Beta(1151, 23851). 3. Compare posteriors: sample from both posterior distributions thousands of times. Count how often treatment > control. If treatment > control in 96% of samples: probability to beat = 96%. Expected lift: mean(treatment posterior) - mean(control posterior) = 4.60% - 4.20% = 0.40pp. 95% credible interval: the middle 95% of the difference distribution = [0.04pp, 0.96pp]. The credible interval is directly interpretable: there is a 95% probability the true effect is between 0.04pp and 0.96pp'"
+    weight: 0.35
+    description: "Bayesian"
+  - type: llm_judge
+    criteria: "Response compares Bayesian to frequentist and covers continuous monitoring — comparison: 'Bayesian vs frequentist comparison: Peeking (continuous monitoring): Frequentist: checking results before the pre-determined sample size inflates false positives. You must not peek. Bayesian: you can check the posterior probability at any time. The probability to beat updates continuously as data arrives. Peeking does not inflate error rates because the Bayesian framework does not depend on the sampling plan. Day 1 (1,000 per group): probability B is better = 62%. Not enough to decide. Day 3 (5,000 per group): probability B is better = 78%. Getting stronger but not conclusive. Day 7 (12,000 per group): probability B is better = 92%. Strong evidence. Day 10 (18,000 per group): probability B is better = 96%. Very strong — ready to decide. Decision rule: ship when probability to beat exceeds 95% (or whatever threshold the team sets). When to use frequentist: regulatory or academic contexts that require p-values. When you need to pre-calculate an exact sample size. When stakeholders understand frequentist language. When running large-scale tests with plenty of data. When to use Bayesian: when you need to monitor results continuously. When the business requires fast decisions. When you want intuitive probability statements (96% chance B wins). When you have strong prior information to incorporate. When sample sizes are small (priors help stabilize estimates). Practical guidance: most product teams benefit from Bayesian methods because: business stakeholders understand probability to beat better than p-values. Continuous monitoring is a natural workflow (teams check dashboards). Faster decisions mean faster iteration'"
+    weight: 0.35
+    description: "Comparison"
+  - type: llm_judge
+    criteria: "Response covers decision thresholds and loss functions in Bayesian testing — thresholds: 'Bayesian decision thresholds: Setting the threshold: the probability-to-beat threshold depends on the cost of a wrong decision. High-risk decisions (pricing, core product changes): use 99% probability threshold. You want near-certainty before changing pricing. Medium-risk decisions (feature changes, UI updates): use 95% probability threshold. Standard for most product tests. Low-risk decisions (copy changes, minor optimizations): use 90% probability threshold. Easy to revert if wrong. Expected loss approach: instead of just asking is B better?, calculate the expected loss of each decision: Ship treatment B: if B is actually worse (4% probability), the expected loss is 4% × estimated negative impact. Example: 4% × -$50K = -$2K expected loss. Keep control A: if B is actually better (96% probability), the expected loss is 96% × estimated missed opportunity. Example: 96% × +$120K = $115.2K expected loss. The decision that minimizes expected loss: ship B (losing $2K on average vs $115.2K). This framework naturally handles asymmetric costs — if shipping a bad treatment causes customer churn (high cost), the threshold should be higher to minimize that specific risk. Practical implementation: many experimentation platforms (Statsig, VWO, Optimizely) offer Bayesian analysis alongside frequentist. The analyst should: run the test with both methods. If both agree (both say significant or both say not significant), the decision is clear. If they disagree, investigate why (often the test is borderline and more data would resolve it)'"
+    weight: 0.30
+    description: "Thresholds"

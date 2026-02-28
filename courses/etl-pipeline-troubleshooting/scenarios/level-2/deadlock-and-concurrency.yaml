@@ -1,0 +1,47 @@
+meta:
+  id: deadlock-and-concurrency
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Deadlock and concurrency — troubleshoot database deadlocks, lock contention, and concurrent pipeline conflicts during the load phase"
+  tags: [deadlock, concurrency, locking, transactions, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our load phase is failing intermittently
+  with deadlock and lock errors:
+
+  1. 'ERROR: deadlock detected' — two pipelines updating the same
+     customer table simultaneously: one updating addresses, another
+     updating purchase totals. They lock different rows first, then
+     try to lock each other's rows.
+
+  2. 'Lock wait timeout exceeded' — our large batch insert of
+     500,000 order records takes 30 minutes and blocks all read
+     queries on the orders table during that time.
+
+  3. Our parallel pipeline loads data into a staging table then
+     does INSERT INTO target SELECT FROM staging, but multiple
+     pipeline instances are running the same INSERT and creating
+     duplicates.
+
+  These issues only happen in production where multiple pipelines
+  run concurrently. How do I resolve these?"
+
+  Task: Diagnose each concurrency issue, explain locking concepts,
+  and provide strategies for safe concurrent pipeline execution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each issue — deadlock: two transactions acquire locks in different orders (A locks row 1 then needs row 2, B locks row 2 then needs row 1 — neither can proceed). Lock timeout: long-running transaction holds locks for 30 minutes, blocking other queries. Concurrent duplicates: no coordination between pipeline instances means both read the same staging data and insert it. Explains basic locking concepts: shared locks (reads) vs exclusive locks (writes), row-level vs table-level locks, transaction isolation levels"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides solutions — for deadlocks: ensure consistent lock ordering (both pipelines should process records in the same order, e.g., by customer_id), or serialize the conflicting updates. For lock timeout: break the 500K batch into smaller chunks (10K at a time) with commits between batches, use COPY or bulk insert methods that minimize lock duration, or use a staging table swap pattern (load into staging, then rename). For concurrent duplicates: use database advisory locks or pipeline-level locks to prevent concurrent execution, or use MERGE/UPSERT instead of plain INSERT"
+    weight: 0.35
+    description: "Solutions"
+  - type: llm_judge
+    criteria: "Response provides concurrency best practices — keep transactions short (lock for the minimum time necessary), use appropriate batch sizes for bulk operations, implement pipeline-level coordination (Airflow pools, max_active_runs, or mutex patterns), use staging tables to minimize time holding locks on production tables, monitor for lock contention (query pg_stat_activity or equivalent), and design pipelines to avoid conflicting concurrent writes to the same tables"
+    weight: 0.30
+    description: "BestPractices"

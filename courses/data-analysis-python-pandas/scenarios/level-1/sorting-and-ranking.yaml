@@ -1,0 +1,35 @@
+meta:
+  id: sorting-and-ranking
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Sort and rank data — use sort_values, nlargest, nsmallest, and rank to order and rank data for reporting"
+  tags: [python, pandas, sorting, ranking, nlargest, nsmallest, beginner]
+
+state: {}
+
+trigger: |
+  Your manager needs reports that require sorted and ranked data:
+
+  1. "Show me the 10 highest-revenue transactions."
+  2. "Rank all regions by total sales, best to worst."
+  3. "For each category, what is the highest-priced product?"
+
+  Using the sales DataFrame (columns: date, product_name, category,
+  quantity, unit_price, region, customer_id, revenue).
+
+  Task: Write the pandas code and explain sorting vs ranking.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly implements sorting and ranking for all three requests — code: 'Sorting and ranking data: Question 1 — Top 10 highest-revenue transactions: top_10 = df.nlargest(10, \"revenue\"). This returns the 10 rows with the highest revenue values. Equivalent to: df.sort_values(\"revenue\", ascending=False).head(10). nlargest is preferred because it is more efficient for large DataFrames (it does not sort the entire DataFrame, just finds the top N). For the bottom 10: df.nsmallest(10, \"revenue\"). Question 2 — Rank regions by total sales: region_sales = (df.groupby(\"region\")[\"revenue\"].sum().sort_values(ascending=False).reset_index()). region_sales[\"rank\"] = region_sales[\"revenue\"].rank(ascending=False, method=\"min\").astype(int). Adding the rank column makes the ordering explicit: Rank 1 = West ($1.25M), Rank 2 = East ($980K), etc. The method=\"min\" parameter handles ties: if two regions have equal revenue, they both get the same rank. Question 3 — Highest-priced product per category: Method 1 using sort + drop_duplicates: highest_priced = (df.sort_values(\"unit_price\", ascending=False).drop_duplicates(subset=\"category\", keep=\"first\")[[\"category\", \"product_name\", \"unit_price\"]]). This sorts by price (highest first), then keeps only the first row per category (which is the highest-priced product). Method 2 using groupby + idxmax: idx = df.groupby(\"category\")[\"unit_price\"].idxmax(). highest_priced = df.loc[idx, [\"category\", \"product_name\", \"unit_price\"]]. idxmax() returns the index of the maximum value in each group. df.loc[idx] retrieves the full rows at those indices. Method 2 is more explicit and handles edge cases better'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation distinguishes sorting from ranking and covers multi-column sorting — explanation: 'Sorting vs ranking: sorting reorders the entire DataFrame. The original index is preserved (unless you use reset_index). Use sort_values for display and reporting. Ranking assigns a rank number to each row without reordering. The DataFrame stays in its original order, but each row gets a rank. Use rank for adding a rank column to existing data. Multi-column sorting: df.sort_values([\"category\", \"revenue\"], ascending=[True, False]). This sorts by category alphabetically first, then within each category, sorts by revenue descending. This is useful for reports: all Electronics together (sorted by revenue), then all Furniture together (sorted by revenue), etc. Sorting stability: pandas sort is stable by default (sort_values has kind=\"mergesort\"). This means if two rows have the same sort key, they maintain their original relative order. Rank methods: df[\"rank\"] = df[\"revenue\"].rank(method=\"min\") — ties get the minimum rank (1, 2, 2, 4). df[\"rank\"] = df[\"revenue\"].rank(method=\"average\") — ties get the average rank (1, 2.5, 2.5, 4). Default. df[\"rank\"] = df[\"revenue\"].rank(method=\"dense\") — ties get the same rank, no gaps (1, 2, 2, 3). df[\"rank\"] = df[\"revenue\"].rank(method=\"first\") — ties broken by position (1, 2, 3, 4). Choose based on your use case: min for competition-style ranking (gold, silver, silver, no bronze). dense for sequential numbering with ties'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers practical reporting patterns with sorted data — reporting: 'Practical reporting patterns: Pattern 1 — Top N per group: top_3_per_region = (df.sort_values(\"revenue\", ascending=False).groupby(\"region\").head(3)). This gives the top 3 highest-revenue transactions for each region. Pattern 2 — Percentage of total: region_pct = df.groupby(\"region\")[\"revenue\"].sum(). region_pct = (region_pct / region_pct.sum() * 100).round(1). region_pct = region_pct.sort_values(ascending=False). Result: West 33.2%, East 26.1%, South 23.3%, North 17.4%. Pattern 3 — Cumulative ranking: region_summary = (df.groupby(\"region\")[\"revenue\"].sum().sort_values(ascending=False).reset_index()). region_summary[\"cumulative_pct\"] = (region_summary[\"revenue\"].cumsum() / region_summary[\"revenue\"].sum() * 100).round(1). This shows how much of total revenue each region contributes cumulatively (useful for Pareto analysis — do 20% of regions drive 80% of revenue?)'"
+    weight: 0.30
+    description: "Reporting patterns"

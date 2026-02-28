@@ -1,0 +1,87 @@
+meta:
+  id: ai-risk-assessment
+  level: 3
+  course: risk-assessment-documentation
+  type: output
+  description: "AI risk assessment — assess and document risks of deploying AI systems in a regulated industry with bias, transparency, and liability considerations"
+  tags: [ai-risk, bias, transparency, eu-ai-act, advanced]
+
+state: {}
+
+trigger: |
+  You're the Chief AI Ethics Officer at a 900-person
+  insurance company ($800M premium). The company is
+  deploying AI across 5 critical business functions, and
+  the board has mandated a comprehensive AI risk assessment
+  before any new AI deployment. State regulators (following
+  the NAIC Model Bulletin on AI) are also requesting
+  documentation of your AI governance.
+
+  AI deployments (current and planned):
+  1. Underwriting risk scoring (deployed, 18 months):
+     - ML model predicts risk using 400+ variables
+     - Processes 85% of personal lines applications
+     - Concern: Model uses zip code as a feature — potential
+       proxy for race/ethnicity
+     - Accuracy: 94% vs 88% for previous actuarial model
+
+  2. Claims fraud detection (deployed, 6 months):
+     - Flags suspicious claims for investigation
+     - Current false positive rate: 35%
+     - 12% of flagged claims involve non-English speakers
+       (vs 6% of total claims) — potential disparate impact
+     - SIU investigators have become over-reliant on AI flags
+
+  3. Customer service chatbot (deployed, 3 months):
+     - Handles 60% of tier-1 inquiries
+     - Customer satisfaction: 72% (vs 85% for human agents)
+     - 3 instances of chatbot providing incorrect coverage
+       information
+     - One instance generated language that a customer
+       interpreted as a coverage denial
+
+  4. Pricing optimization (planned, launching in 4 months):
+     - Dynamic pricing using competitive intelligence + risk
+       data
+     - Concern: Could result in unfairly discriminatory
+       pricing
+     - Regulatory sensitivity: Some states prohibit certain
+       pricing factors
+     - Potential for "price optimization" to violate state
+       insurance laws
+
+  5. Document processing (planned, launching in 6 months):
+     - OCR + NLP for automated policy document review
+     - Lower risk profile but handles sensitive customer data
+     - Concern: Accuracy on non-standard documents (78%)
+
+  Regulatory landscape:
+  - NAIC Model Bulletin: Requires insurers to manage AI risk,
+    prevent unfair discrimination, maintain human oversight
+  - Colorado SB21-169: Requires bias testing of AI in
+    insurance
+  - EU AI Act: Classifies insurance AI as "high-risk"
+  - State unfair discrimination laws: 50 different standards
+  - Connecticut AI transparency law (2023)
+  - NYDFS guidance on AI use in underwriting
+
+  Task: Conduct the comprehensive AI risk assessment covering
+  all 5 AI deployments. For each, assess bias risk,
+  transparency/explainability, accuracy/reliability,
+  regulatory compliance, data privacy, and liability risks.
+  Include the AI governance framework, testing requirements,
+  and the board reporting structure for AI risk.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response assesses each AI deployment with appropriate depth — for each of the 5 AI systems: identifies specific risks (bias, accuracy, transparency, regulatory, liability); rates risk severity considering the regulatory environment; addresses the specific concerns raised (zip code proxy discrimination, disparate impact in fraud detection, chatbot incorrect information); the assessment demonstrates understanding of AI-specific risks beyond generic technology risk; differentiates between deployed systems (remediation needed) and planned systems (design requirements)."
+    weight: 0.35
+    description: "DepthPerAIDeployment"
+  - type: llm_judge
+    criteria: "Response addresses AI bias and fairness rigorously — proposes specific bias testing methodology for each system (disparate impact analysis, proxy variable assessment, protected class outcome comparison); addresses the zip code proxy discrimination concern in underwriting with specific remediation; evaluates the fraud detection disparate impact on non-English speakers; proposes fairness metrics and thresholds; the bias assessment aligns with Colorado SB21-169, NAIC Model Bulletin, and EU AI Act requirements."
+    weight: 0.35
+    description: "AIBiasAndFairness"
+  - type: llm_judge
+    criteria: "Response includes an AI governance framework — proposes governance structure (AI ethics committee, model risk management, human oversight requirements); establishes testing and validation requirements for each risk level; addresses model monitoring and drift detection; proposes documentation standards (model cards, impact assessments); designs board reporting framework for AI risk; the governance framework is proportionate to risk level (more oversight for underwriting and pricing than document processing) and would satisfy both the NAIC and EU AI Act requirements."
+    weight: 0.30
+    description: "AIGovernanceFramework"

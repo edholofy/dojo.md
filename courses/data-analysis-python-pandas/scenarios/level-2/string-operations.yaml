@@ -1,0 +1,37 @@
+meta:
+  id: string-operations
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Work with string data — use pandas string methods to clean, extract, and transform text data"
+  tags: [python, pandas, string, text, regex, str-accessor, intermediate]
+
+state: {}
+
+trigger: |
+  You receive a customer DataFrame with messy string data:
+
+  - full_name: "  John Smith ", "JANE DOE", "bob jones", "Mary-Jane O'Brien"
+  - email: "john@GMAIL.com", "jane@yahoo.COM", "invalid-email", ""
+  - phone: "(555) 123-4567", "555.123.4567", "5551234567", "+1-555-123-4567"
+  - address: "123 Main St, Apt 4B, New York, NY 10001"
+
+  Your manager says: "Standardize the names, validate the emails,
+  extract just the digits from phone numbers, and split the address
+  into separate columns."
+
+  Task: Write the string cleaning and extraction code.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly cleans and transforms all string columns — code: 'String operations with the .str accessor: Name standardization: df[\"full_name\"] = df[\"full_name\"].str.strip().str.title(). strip() removes leading and trailing whitespace. title() capitalizes the first letter of each word. Result: John Smith, Jane Doe, Bob Jones, Mary-Jane O Brien. For names with apostrophes (O Brien should be O'Brien): df[\"full_name\"] = df[\"full_name\"].str.strip().str.title(). This handles most cases. For edge cases: def fix_name(name): parts = name.split(\"'\"). return \"'\".join(p.capitalize() if len(p) > 1 else p for p in parts). Split into first and last name: df[[\"first_name\", \"last_name\"]] = df[\"full_name\"].str.split(n=1, expand=True). n=1 limits the split to 2 parts (handles names with spaces like Mary Jane). Email validation and normalization: df[\"email\"] = df[\"email\"].str.lower().str.strip(). email_pattern = r\"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$\". df[\"email_valid\"] = df[\"email\"].str.match(email_pattern). df.loc[~df[\"email_valid\"], \"email\"] = None. This lowercases all emails, validates the format with regex, and sets invalid emails to None. Extract domain: df[\"email_domain\"] = df[\"email\"].str.split(\"@\").str[1]. Phone number extraction: df[\"phone_clean\"] = df[\"phone\"].str.replace(r\"\\D\", \"\", regex=True). \\D matches any non-digit character. This strips everything except digits. Result: all phone numbers become 5551234567 or 15551234567. Standardize to 10 digits: df[\"phone_clean\"] = df[\"phone_clean\"].str[-10:]. Takes the last 10 characters (strips the leading 1 country code if present). Address splitting: df[[\"street\", \"apt\", \"city\", \"state_zip\"]] = df[\"address\"].str.split(\",\", expand=True). df[\"street\"] = df[\"street\"].str.strip(). df[\"apt\"] = df[\"apt\"].str.strip(). df[\"city\"] = df[\"city\"].str.strip(). df[[\"state\", \"zip_code\"]] = df[\"state_zip\"].str.strip().str.split(n=1, expand=True). Note: this assumes a consistent comma-separated format. Real-world addresses are much messier — consider using a library like usaddress for production parsing'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers the most useful string methods and regex patterns — explanation: 'Essential .str methods for data cleaning: Text cleaning: str.strip() — remove whitespace from both sides. str.lstrip(), str.rstrip() — remove from left or right only. str.lower(), str.upper(), str.title() — case conversion. str.replace(old, new) — replace substrings. str.replace(regex_pattern, replacement, regex=True) — regex replacement. Text searching: str.contains(pattern) — returns True/False for each row (like SQL LIKE). str.startswith(prefix) — check if string starts with a value. str.endswith(suffix) — check if string ends with a value. str.match(pattern) — match regex at the start of the string. str.findall(pattern) — find all regex matches. Text extraction: str.extract(regex_with_groups) — extract regex capture groups. str.split(delimiter) — split into a list. str.split(delimiter, expand=True) — split into separate columns. str[0:5] — string slicing (first 5 characters). str.len() — length of each string. Regex crash course for pandas: . matches any character. \\d matches a digit (0-9). \\w matches a word character (letter, digit, underscore). + means one or more. * means zero or more. () creates a capture group for extract(). [] defines a character class. Example: extract area code from phone: df[\"area_code\"] = df[\"phone\"].str.extract(r\"(\\d{3})\"). This captures the first 3 consecutive digits. Common mistake: forgetting regex=True when using regex in str.replace(). Without it, pandas treats the pattern as a literal string'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers performance considerations and the StringDtype — performance: 'Performance with string data: The object dtype problem: by default, pandas stores strings as Python objects, which is slow and memory-intensive. The StringDtype (pandas 1.0+): df[\"name\"] = df[\"name\"].astype(\"string\"). Benefits: explicit string type (str operations do not accidentally work on non-string columns), missing values are pd.NA instead of NaN (cleaner semantics), with the pyarrow backend, significantly faster and more memory-efficient. PyArrow string backend: df[\"name\"] = df[\"name\"].astype(\"string[pyarrow]\"). This uses Apache Arrow's string representation, which is 2-5x faster for string operations and uses 50% less memory. Enable globally: pd.options.mode.string_storage = \"pyarrow\". Vectorized vs apply for string operations: vectorized (fast): df[\"name\"].str.upper() — uses optimized C code. apply (slow): df[\"name\"].apply(str.upper) — runs Python on each row. Always prefer .str methods over apply for string operations. The difference is 10-100x on large DataFrames. When to use apply for strings: when the transformation is too complex for a single .str method. Example: parsing a complex, inconsistent date format requires custom logic that .str methods cannot express'"
+    weight: 0.30
+    description: "Performance"

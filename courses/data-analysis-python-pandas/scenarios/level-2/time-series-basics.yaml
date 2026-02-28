@@ -1,0 +1,35 @@
+meta:
+  id: time-series-basics
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Analyze time series data — use datetime indexing, resampling, and rolling windows to analyze temporal patterns"
+  tags: [python, pandas, time-series, resample, rolling, datetime, intermediate]
+
+state: {}
+
+trigger: |
+  You have a DataFrame of daily website metrics (365 days):
+  date, page_views, unique_visitors, signups, revenue
+
+  Your manager asks:
+  1. "Show me the weekly trend — daily data is too noisy."
+  2. "What is the 30-day moving average of revenue?"
+  3. "Compare this month's performance to the same month last year."
+  4. "Which day of the week gets the most traffic?"
+
+  Task: Write the time series analysis code for each question.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly implements resampling, rolling windows, and temporal analysis — code: 'Time series analysis with pandas: Setup — set the date as index: df[\"date\"] = pd.to_datetime(df[\"date\"]). df = df.set_index(\"date\"). df = df.sort_index(). Setting the date as the index unlocks pandas time series methods (resample, rolling, shift). Question 1 — Weekly trend (resampling): weekly = df.resample(\"W\").agg({\"page_views\": \"sum\", \"unique_visitors\": \"sum\", \"signups\": \"sum\", \"revenue\": \"sum\"}). Resample frequency strings: D=daily, W=weekly, M=monthly (end of month), MS=monthly (start of month), Q=quarterly, Y=yearly, H=hourly. For averages instead of totals: weekly_avg = df.resample(\"W\").mean(). For multiple aggregations: weekly_detail = df.resample(\"W\").agg({\"page_views\": [\"sum\", \"mean\", \"max\"], \"revenue\": [\"sum\", \"mean\"]}). Question 2 — 30-day moving average: df[\"revenue_30d_avg\"] = df[\"revenue\"].rolling(window=30).mean(). The rolling window calculates the mean of the current row and the previous 29 rows. The first 29 rows will be NaN (not enough data for a full 30-day window). Use min_periods to get partial windows: df[\"revenue_30d_avg\"] = df[\"revenue\"].rolling(window=30, min_periods=7).mean(). This starts calculating the average after 7 days instead of waiting for 30. Other rolling functions: rolling(30).sum(), rolling(30).std(), rolling(30).min(), rolling(30).max(). Plotting: fig, ax = plt.subplots(figsize=(12, 5)). df[\"revenue\"].plot(ax=ax, alpha=0.3, label=\"Daily\"). df[\"revenue_30d_avg\"].plot(ax=ax, linewidth=2, label=\"30-day MA\"). ax.legend(). ax.set_title(\"Revenue: Daily vs 30-Day Moving Average\"). Question 3 — Month-over-month comparison (same month last year): current_month = df[\"2024-06\"]. same_month_last_year = df[\"2023-06\"]. comparison = pd.DataFrame({\"This Year\": current_month.sum(), \"Last Year\": same_month_last_year.sum()}). comparison[\"Change %\"] = ((comparison[\"This Year\"] - comparison[\"Last Year\"]) / comparison[\"Last Year\"] * 100).round(1). Date slicing with a DatetimeIndex: df[\"2024\"] — all of 2024. df[\"2024-06\"] — June 2024. df[\"2024-01\":\"2024-03\"] — Q1 2024. This string-based slicing only works when the date is the index. Question 4 — Day of week analysis: df[\"day_of_week\"] = df.index.day_name(). dow_traffic = (df.groupby(\"day_of_week\")[\"page_views\"].mean().reindex([\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\", \"Sunday\"])). reindex ensures days appear in calendar order (not alphabetical). dow_traffic.plot(kind=\"bar\", color=\"steelblue\"). plt.title(\"Average Daily Page Views by Day of Week\"). plt.xticks(rotation=45)'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers resampling vs rolling and when to use each — explanation: 'Resampling vs rolling — different purposes: Resampling changes the frequency of the data. Daily data becomes weekly, monthly, etc. Each output row represents a fixed time period. Use for: reporting at a specific cadence (weekly reports, monthly summaries). Output has fewer rows than the input. Rolling calculates a statistic over a sliding window. Each output row represents the window ending at that row. The output has the same number of rows as the input (minus the warmup period). Use for: smoothing noisy data to reveal trends. The moving average line on a stock chart is a rolling mean. Key difference: resampling is like summarizing a book chapter by chapter. Rolling is like reading the book with a magnifying glass that shows 30 pages at a time, sliding one page at a time. Expanding window — the cumulative version: df[\"cumulative_revenue\"] = df[\"revenue\"].expanding().sum(). The expanding window grows from the first row — it calculates the cumulative sum (or mean, or max) from the start to the current row. Use for: year-to-date totals, cumulative metrics. Shift — comparing to previous periods: df[\"revenue_yesterday\"] = df[\"revenue\"].shift(1). df[\"revenue_change\"] = df[\"revenue\"] - df[\"revenue\"].shift(1). df[\"revenue_pct_change\"] = df[\"revenue\"].pct_change(). shift(1) moves data down by 1 row (yesterday's value). shift(-1) moves data up by 1 row (tomorrow's value). pct_change() is a shortcut for (current - previous) / previous'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers time series visualization and seasonality detection — visualization: 'Time series visualization patterns: Pattern 1 — Trend with confidence band: weekly_rev = df[\"revenue\"].resample(\"W\").sum(). rolling_mean = weekly_rev.rolling(4).mean(). rolling_std = weekly_rev.rolling(4).std(). fig, ax = plt.subplots(figsize=(12, 5)). ax.plot(weekly_rev.index, rolling_mean, color=\"steelblue\"). ax.fill_between(weekly_rev.index, rolling_mean - rolling_std, rolling_mean + rolling_std, alpha=0.2). The shaded area shows variability — a widening band means increasing volatility. Pattern 2 — Seasonality detection: monthly = df.resample(\"M\").sum(). monthly.index = monthly.index.month_name(). monthly.plot(kind=\"bar\"). Or decompose the time series: from statsmodels.tsa.seasonal import seasonal_decompose. result = seasonal_decompose(df[\"revenue\"], period=7). result.plot(). This separates the data into: trend (long-term direction), seasonal (repeating pattern), and residual (noise). Common time series pitfalls: (1) Not sorting by date: resample and rolling require a sorted DatetimeIndex. Always call df.sort_index() after setting the date index. (2) Missing dates: if some days have no data, resampling may produce unexpected results. Use df.asfreq(\"D\") to fill in missing dates (with NaN values), then handle the gaps. (3) Timezone issues: if data comes from multiple timezones, localize first: df.index = df.index.tz_localize(\"UTC\").tz_convert(\"US/Eastern\")'"
+    weight: 0.30
+    description: "Visualization"

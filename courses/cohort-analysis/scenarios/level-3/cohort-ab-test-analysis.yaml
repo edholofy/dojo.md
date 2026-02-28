@@ -1,0 +1,33 @@
+meta:
+  id: cohort-ab-test-analysis
+  level: 3
+  course: cohort-analysis
+  type: output
+  description: "Analyze A/B tests with cohort lenses — use cohort analysis to detect novelty effects, long-term impacts, and segment-specific responses in experiments"
+  tags: [ab-testing, cohort-experiments, novelty-effects, long-term-impact, advanced]
+
+state: {}
+
+trigger: |
+  The Experimentation Lead says: "We ran an A/B test on the new
+  checkout flow. It won on day-7 conversion, but the PM wants to
+  know if the lift persists at month 1 and month 3. And does the
+  test effect different for users who signed up recently vs long ago?
+  Can you analyze this experiment through a cohort lens?"
+
+  Task: Explain how to use cohort analysis to evaluate A/B test
+  results over time and across user segments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains temporal cohort analysis of A/B test results — temporal: 'Temporal cohort analysis of A/B test results: standard A/B test analysis measures impact at a single point (e.g., day 7). Cohort-based A/B test analysis tracks the impact over the user lifecycle. Step 1 — Cohort the test participants by enrollment date: week 1 enrollees (1,000 per group). Week 2 enrollees (1,200 per group). Week 3 enrollees (1,100 per group). Week 4 enrollees (900 per group). Step 2 — Track the metric over time for each enrollment cohort: week 1 enrollees — conversion rate over time: day 7: control 12%, treatment 15% (+3pp lift). Day 14: control 14%, treatment 16.5% (+2.5pp lift). Day 30: control 15%, treatment 17% (+2pp lift). Day 60: control 15.5%, treatment 17% (+1.5pp lift). Day 90: control 16%, treatment 17% (+1pp lift). The lift is decaying from +3pp at day 7 to +1pp at day 90. This is a novelty effect — users initially respond to the new checkout flow but the advantage fades as both groups settle into behavior patterns. Repeat for each enrollment cohort: week 1 enrollees day-30 lift: +2pp. Week 2 enrollees day-30 lift: +2.2pp. Week 3 enrollees day-30 lift: +1.8pp. Week 4 enrollees day-30 lift: +2pp. The lift is consistent across enrollment cohorts at the same maturity (±0.2pp) — the effect is stable across time, even if it decays within each cohort. Diagnosis: there IS a real effect (consistent +2pp at day 30 across all enrollment cohorts), but it is smaller than the day-7 result suggested (+3pp). The day-7 result overstated the long-term impact by 50% due to novelty'"
+    weight: 0.35
+    description: "Temporal"
+  - type: llm_judge
+    criteria: "Response covers segment-specific treatment effects using cohorts — segments: 'Segment-specific treatment effects: do new vs existing users respond differently to the checkout change? Tenure-based segmentation of treatment effect: new users (signed up in the last 30 days): day-7 lift: +5pp (control 8%, treatment 13%). Day-30 lift: +4pp (control 10%, treatment 14%). Day-90 lift: +3.5pp (persists well). Established users (1-6 months tenure): day-7 lift: +2pp (control 15%, treatment 17%). Day-30 lift: +1.5pp. Day-90 lift: +0.5pp (nearly gone). Veteran users (6+ months tenure): day-7 lift: +1pp (control 18%, treatment 19%). Day-30 lift: +0.5pp. Day-90 lift: 0pp (no lasting effect). Key finding: the new checkout works best for new users (+3.5pp sustained lift) and barely affects veterans (0pp). Explanation: new users have no habituated behavior — they adopt the new flow naturally. Veterans have muscle memory with the old flow — the new flow briefly disrupts them (small novelty lift) but they revert to their established patterns. Implication: roll out the new checkout for new users only (maximum impact). For veterans, the old flow works equally well — the transition cost is not worth the minimal gain. This is a heterogeneous treatment effect — the average lift (+2pp) masks wildly different effects by tenure. Channel-based segmentation: organic users: +3pp sustained lift. Paid users: +1pp lift, decays to 0pp by day 60. Organic users benefit more — possibly because they have higher intent and the improved checkout removes a real friction point. Paid users may not be converting regardless of checkout design (their barrier is interest, not friction)'"
+    weight: 0.35
+    description: "Segments"
+  - type: llm_judge
+    criteria: "Response covers practical framework for cohort-based experimentation — framework: 'Practical framework for cohort-based A/B test analysis: when to use cohort analysis for experiments: 1. When the metric is cumulative or time-dependent (retention, LTV, revenue). 2. When you suspect novelty or primacy effects. 3. When the user base has diverse tenure (new + established + veteran). 4. When you need to report sustained impact, not just initial lift. The cohort experimentation workflow: Step 1 — Pre-analysis plan: define primary metric at both short-term (day 7) and long-term (day 30, day 90) horizons. Pre-specify segments for heterogeneous treatment effect analysis (tenure, channel, plan). Set minimum detectable effect for each horizon. Step 2 — Run the experiment: randomize at the user level (not session level, to enable longitudinal tracking). Tag each user with enrollment date for cohort analysis. Step 3 — Analyze in waves: day-7 analysis: initial result for quick decision-making. Day-30 analysis: novelty/primacy check — has the lift persisted? Day-90 analysis: long-term impact for LTV calculations. At each wave, report: overall lift and confidence interval. Lift by enrollment cohort (is it consistent?). Lift by user segment (is it heterogeneous?). Lift trend over time (is it stable, growing, or decaying?). Step 4 — Decision framework: if lift is consistent across cohorts AND segments AND persists over time: ship to all users. If lift decays significantly: the improvement is temporary — may not be worth the implementation cost. If lift varies by segment: consider targeted rollout (new users only, specific channels only). If lift varies by enrollment cohort: something external is moderating the effect — investigate before shipping. For the Experimentation Lead: the checkout test has a real but moderate effect (+2pp at day 30, not +3pp as day-7 suggested). Recommend: ship for new users (sustained +3.5pp lift). Optional: ship for established users (moderate lift). Skip for veterans (no lasting effect). Report the day-30 cohort-adjusted lift to stakeholders, not the inflated day-7 number'"
+    weight: 0.30
+    description: "Framework"

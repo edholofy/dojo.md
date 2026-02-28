@@ -1,0 +1,78 @@
+meta:
+  id: variable-and-output-errors
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Debug variable and output errors — fix type mismatches, missing required variables, default values, and output reference issues"
+  tags: [Terraform, variables, outputs, types, validation, beginner]
+
+state: {}
+
+trigger: |
+  You run `terraform plan` and hit these errors:
+
+  ```
+  Error: No value for required variable
+
+    on variables.tf line 1:
+     1: variable "environment" {
+
+  The root module input variable "environment" is not set, and has
+  no default value.
+
+  Error: Invalid value for variable
+
+    on variables.tf line 7:
+     7: variable "instance_count" {
+
+  This variable does not accept the value "three". Expected type number.
+
+  Error: Unsupported attribute
+
+    on outputs.tf line 3:
+     3:   value = aws_instance.web.public_dns
+  ```
+
+  Your files:
+
+  variables.tf:
+  ```hcl
+  variable "environment" {
+    type        = string
+    description = "Deployment environment"
+  }
+
+  variable "instance_count" {
+    type    = number
+    default = 1
+  }
+
+  variable "allowed_cidrs" {
+    type    = list(string)
+    default = ["0.0.0.0/0"]
+  }
+  ```
+
+  terraform.tfvars:
+  ```hcl
+  instance_count = "three"
+  ```
+
+  Task: Explain Terraform variables (types, defaults, validation),
+  how to pass values (tfvars, CLI, env vars, auto.tfvars), output
+  values and their uses, type system (string, number, bool, list,
+  map, object, tuple), and common variable/output errors.
+
+assertions:
+  - type: llm_judge
+    criteria: "Variable system is explained — types: string, number, bool (primitives), list(type), set(type), map(type), object({key=type}), tuple([types]) (complex). Required vs optional: variables without default are required. Validation blocks: variable 'env' { validation { condition = contains(['dev','prod'], var.env), error_message = '...' } }. Sensitive = true: hides value in plan output. Nullable = false: disallows null values. The errors: (1) environment has no default and no value provided, (2) instance_count expects number but got string 'three', (3) public_dns might not exist if count = 0 or resource uses for_each"
+    weight: 0.35
+    description: "Variable system"
+  - type: llm_judge
+    criteria: "Value passing methods are covered in precedence order — (1) -var flag on CLI: terraform plan -var='environment=prod'. (2) -var-file flag: terraform plan -var-file=prod.tfvars. (3) terraform.tfvars or terraform.tfvars.json (auto-loaded). (4) *.auto.tfvars files (auto-loaded, alphabetical order). (5) TF_VAR_name environment variables: TF_VAR_environment=prod. Later sources override earlier ones. Best practice: use terraform.tfvars for defaults, environment-specific .tfvars files for overrides, never commit secrets in tfvars"
+    weight: 0.35
+    description: "Value passing"
+  - type: llm_judge
+    criteria: "Outputs are explained — output blocks export values after apply. Uses: display information, pass data between modules (module.vpc.vpc_id), feed into other tools. Attributes: value (required), description, sensitive, depends_on. terraform output command to retrieve values. terraform output -json for machine-readable format. Common errors: referencing attribute that doesn't exist on resource type, referencing resource with count/for_each without index (aws_instance.web[0].public_dns or aws_instance.web[*].public_dns)"
+    weight: 0.30
+    description: "Outputs"

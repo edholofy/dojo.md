@@ -1,0 +1,40 @@
+meta:
+  id: migration-rollback-strategy
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Design comprehensive rollback strategies — plan for migration failure recovery across different migration types and scales"
+  tags: [database, migration, rollback, disaster-recovery, safety, expert]
+
+state: {}
+
+trigger: |
+  Your team is preparing for a series of high-risk migrations.
+  Each migration type needs a different rollback strategy. The CTO
+  says: "For every migration, I want to know: what happens if it
+  fails? How do we get back to the previous state? How long does
+  the rollback take?"
+
+  Migrations planned:
+  1. Schema change on a 100M row table (add column, backfill, index)
+  2. Cross-database migration (MySQL to PostgreSQL for one service)
+  3. Database sharding (splitting one database into 4)
+  4. Data migration with transformation (restructuring 50 tables)
+
+  Task: Design the rollback strategy for each migration type.
+  Include: the rollback mechanism, time estimate, and data loss
+  implications.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rollback strategies differ by migration type — per-type strategies: 'Migration 1: Schema change on 100M row table. Rollback mechanism: down migration (reverse the schema change). For ADD COLUMN: DROP COLUMN (instant, no data loss from the original data — loses the new column data). For backfill: no rollback needed (backfill is additive). For CREATE INDEX: DROP INDEX (instant). Time estimate: seconds to minutes. Data loss: only data written to the new column is lost. Rollback safety: HIGH — schema changes are easily reversible if the application handles both states. Migration 2: Cross-database migration (MySQL → PostgreSQL). Rollback mechanism: switch application back to MySQL. Prerequisite: keep MySQL running during the parallel running period. Rollback steps: update application connection strings to MySQL, stop writing to PostgreSQL, verify MySQL has all data (it was the source and should be current if parallel running maintained sync). Time estimate: 5-15 minutes (connection string change + deployment). Data loss: data written only to PostgreSQL during the failed cutover period. If parallel writing was active: no data loss. If MySQL was stopped: data written to PostgreSQL after MySQL stopped is lost. Rollback safety: HIGH during parallel running. LOW after MySQL is decommissioned. Critical: do not decommission MySQL until the PostgreSQL migration is verified for 30 days. Migration 3: Database sharding. Rollback mechanism: redirect all traffic back to the original single database. Prerequisite: keep the original database running and synced during the migration. Rollback steps: switch application to use the single database connection (remove shard routing). Verify the original database has all data (it should if dual-write was maintained). Time estimate: 15-30 minutes (configuration change + deployment). Data loss: depends on the migration phase. During dual-write phase: no data loss (both databases have all data). After stopping writes to the original: data written only to shards since the stop is lost. Rollback safety: HIGH during dual-write phase. VERY LOW after the original database is decommissioned. Critical: maintain the original database through the entire migration and for 30 days after. Migration 4: Data migration with transformation (50 tables restructured). Rollback mechanism: restore from backup or use compatibility views. This is the hardest to rollback because the transformation changes data structure. Rollback steps: if using expand-and-contract: switch application back to old tables (they still exist during expand phase). If old tables were dropped: restore from pre-migration backup. Time estimate: from expand phase: minutes (feature flag flip). From backup: 1-4 hours depending on database size. Data loss: from expand phase: no data loss (old tables are current). From backup: all data since the backup was taken. Rollback safety: HIGH during expand phase. LOW after contract phase'"
+    weight: 0.35
+    description: "Per-type strategies"
+  - type: llm_judge
+    criteria: "Rollback decision framework helps teams decide when to rollback — decision framework: 'When to rollback vs. fix forward: Rollback when: (1) The migration caused a production outage and the fix is not obvious. Rollback immediately to restore service, then investigate. (2) Data integrity is compromised (data loss or corruption). Rollback to the last known good state before more data is affected. (3) The migration created a state that cannot be resolved within the acceptable downtime window. Fix forward when: (1) The migration partially succeeded and the partial state is stable. For example: 70% of rows were backfilled successfully. Fix forward by completing the remaining 30% rather than rolling back all 70%. (2) Rolling back would cause data loss that is worse than the current problem. If the migration was live for 2 days and users wrote data to the new schema, rolling back loses 2 days of data. Fix forward to preserve it. (3) The root cause is identified and the fix is small. A missing index or incorrect threshold is faster to fix than rolling back and re-running the entire migration. Decision tree: Is the application currently broken? Yes → is the rollback tested and fast (under 15 minutes)? Yes → rollback now, investigate later. No → attempt to fix the immediate issue. If fix takes more than 30 minutes, escalate. No → is data being corrupted? Yes → rollback to stop the corruption. No → fix forward (the situation is stable enough to investigate)'"
+    weight: 0.35
+    description: "Decision framework"
+  - type: llm_judge
+    criteria: "Rollback testing and documentation requirements defined — testing and documentation: 'Rollback testing requirements: (1) Every migration must have a tested rollback. The rollback (down migration) is tested in staging before the production migration. Testing includes: apply the migration, write some test data to the new schema, run the rollback, verify the database is in the pre-migration state, verify the application works with the rolled-back schema. (2) Time the rollback in staging. Record how long the rollback takes with production-like data. Report this time to the CTO: migration X rollback takes approximately Y minutes in staging. For production: expect 1.5-2x the staging time (more data, more contention). (3) Periodic rollback drills. Quarterly: select a recent migration and practice rolling it back in a production clone. This verifies that the rollback procedures still work and the team knows how to execute them. Rollback documentation per migration: every production migration includes a rollback document: rollback command (exact command to execute the rollback), estimated rollback time, data loss assessment (what data is lost if rolled back now?), application impact (does the application need to be reverted too?), who can authorize the rollback (on-call engineer for P1, engineering manager for P2+), post-rollback verification (how to confirm the rollback succeeded). This document is reviewed as part of the migration PR. It is stored in the runbook alongside the migration documentation. During an incident: the on-call engineer can execute the rollback without needing to think — just follow the documented procedure'"
+    weight: 0.30
+    description: "Testing and documentation"

@@ -1,0 +1,49 @@
+meta:
+  id: persona-frustrations-painpoints
+  level: 1
+  course: user-persona-creation
+  type: output
+  description: "Persona frustrations and pain points — identify, categorize, and prioritize user frustrations for persona development"
+  tags: [frustrations, pain-points, problems, prioritization, beginner]
+
+state: {}
+
+trigger: |
+  You're building a persona for a healthcare patient portal.
+  User research uncovered many frustrations. Your task is
+  to organize them into a useful persona pain point section.
+
+  Raw frustration data from 10 patient interviews:
+  1. "I can never remember my login credentials"
+  2. "I can't understand my lab results — what does any of
+     this mean?"
+  3. "I scheduled an appointment online but the office
+     didn't have the appointment when I arrived"
+  4. "My doctor's notes are full of medical jargon"
+  5. "The portal looks different on my phone — half the
+     buttons don't work"
+  6. "I can't message my doctor directly — I have to call"
+  7. "I got a bill I didn't expect and there's no
+     explanation"
+  8. "My spouse can't access my records even though I want
+     them to"
+  9. "I have to re-enter my medications every visit even
+     though they haven't changed"
+  10. "I don't trust the portal with my health information"
+
+  Task: Create a persona pain point section that organizes,
+  categorizes, and prioritizes these frustrations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response categorizes frustrations meaningfully — categories (group the 10 frustrations into logical categories rather than listing them randomly: Access and Authentication: login issues #1, shared access #8, trust #10; Comprehension: lab results #2, medical jargon #4, unexpected billing #7; Reliability: appointment sync failure #3, mobile responsiveness #5; Communication: no direct messaging #6; Efficiency: redundant data entry #9), each category should have a label that describes the theme and an explanation of why these frustrations group together, the categories should reveal patterns: 'comprehension' issues suggest the portal is designed for clinical staff not patients, 'reliability' issues suggest technical debt or integration failures."
+    weight: 0.35
+    description: "FrustrationCategorization"
+  - type: llm_judge
+    criteria: "Response prioritizes frustrations with rationale — prioritization framework (prioritize by: frequency — how many users mentioned this?, severity — how much does this frustration impact the user's health or wellbeing?, workaround availability — can users solve this another way?; P1 Critical: appointment sync failure #3 — affects physical health outcomes, no workaround, trust-destroying; lab result comprehension #2 — affects health literacy and decision-making; P2 High: unexpected billing #7 — financial impact, stress, trust; no direct messaging #6 — delays health communication; mobile issues #5 — excludes mobile-only users; P3 Medium: medical jargon #4, shared access #8, redundant data entry #9; P4 Lower: login credentials #1 — solvable with password manager), explain why appointment sync failure is P1: a patient showing up to an appointment that doesn't exist has real health consequences — this is a system failure not just an inconvenience."
+    weight: 0.35
+    description: "FrustrationPrioritization"
+  - type: llm_judge
+    criteria: "Response integrates frustrations into a persona narrative — persona pain point section (don't just list frustrations — weave them into the persona's story: 'When [persona name] tries to use the patient portal, she faces a cascade of friction: first, she struggles to log in. When she finally accesses her records, the lab results read like a foreign language. She wants to ask her doctor what the numbers mean, but there's no way to message directly — she'd have to call during business hours when she's at work. Last month, she scheduled an appointment online, drove 30 minutes to the clinic, and was told they had no record of her appointment. She hasn't trusted the portal since.'), emotional impact (connect each frustration to how it makes the persona feel: confused, frustrated, distrustful, anxious, helpless), behavioral consequence (what the persona does as a result: avoids the portal, calls the office instead, worries unnecessarily about lab results, brings a family member to appointments to help understand), and design opportunity summary (each pain point category represents a design opportunity: comprehension → plain language and visual explanations, reliability → real-time sync and confirmation, communication → secure messaging, trust → transparency and reliability)."
+    weight: 0.30
+    description: "NarrativeIntegration"

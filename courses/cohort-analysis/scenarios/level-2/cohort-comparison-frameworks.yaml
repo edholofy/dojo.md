@@ -1,0 +1,32 @@
+meta:
+  id: cohort-comparison-frameworks
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Compare cohorts systematically — use indexing, delta analysis, and benchmarking frameworks to determine whether product changes are actually improving retention"
+  tags: [comparison, indexing, delta-analysis, benchmarking, intermediate]
+
+state: {}
+
+trigger: |
+  The PM says: "We shipped 3 major features in the last 6 months.
+  I want to know which ones actually moved retention. But every cohort
+  is different — different sizes, different channels, different seasons.
+  How do I compare cohorts fairly?"
+
+  Task: Explain frameworks for comparing cohorts systematically,
+  controlling for confounding factors.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response covers cohort indexing and baseline comparison — indexing: 'Cohort indexing: normalizing to a baseline: raw retention numbers are hard to compare because cohorts differ in size, channel mix, and seasonality. Solution: index each cohort to a baseline cohort or benchmark. Method 1 — Index to a reference cohort: choose a stable reference cohort (e.g., January). For each subsequent cohort, calculate the index: index = (cohort retention / January retention) × 100. January (baseline): month 1: 35% (index 100), month 3: 22% (index 100). February: month 1: 37% (index 106), month 3: 24% (index 109). March: month 1: 33% (index 94), month 3: 20% (index 91). April: month 1: 40% (index 114), month 3: 28% (index 127). Reading the index: February is 6% better than January at month 1 and 9% better at month 3. March is 6% worse than January — something degraded. April is 14% better at month 1 and 27% better at month 3 — a significant improvement. Method 2 — Index to rolling average: instead of a single reference, use the trailing 3-month average as the baseline. This smooths out seasonal effects. Rolling baseline for April = average of Jan, Feb, Mar month-1 retention = (35% + 37% + 33%) / 3 = 35%. April index = 40% / 35% = 114. This is more robust than a single reference month. Method 3 — Percentage point delta: simply subtract: April month-1 (40%) minus January month-1 (35%) = +5pp. Easier to communicate but does not normalize for magnitude (a 5pp improvement on a 10% base is more significant than on a 50% base)'"
+    weight: 0.35
+    description: "Indexing"
+  - type: llm_judge
+    criteria: "Response covers controlling for confounding factors — confounders: 'Controlling for confounders when comparing cohorts: the PM shipped 3 features: Feature A in February (new onboarding). Feature B in March (push notifications). Feature C in May (social features). But other things also changed: February: 30% more paid social spend. March: product outage mid-month. April: seasonal uptick (spring). May: pricing change. How to isolate feature impact: Approach 1 — Same-channel comparison: compare only organic users across cohorts. This removes acquisition channel as a confounder. Organic users only: January: 42% month-1. February: 48% month-1 (new onboarding launched). March: 45% month-1 (outage). April: 50% month-1 (seasonal + onboarding). May: 52% month-1 (social features). The organic-only view shows a clear step-up in February (when onboarding launched) from 42% to 48% — a +6pp improvement. Approach 2 — Pre/post analysis with matched cohorts: match cohorts by channel mix, geography, and size. Compare matched pre-feature cohort to post-feature cohort. If January and April have similar channel mixes: January organic: 42%, paid: 28%, blended: 35%. April organic: 50%, paid: 35%, blended: 40%. Both segments improved — suggests the improvement is not channel-mix driven. Approach 3 — Difference-in-differences: if the feature only affects a subset of users (e.g., mobile-only push notifications): pre-feature mobile retention vs post-feature mobile retention (treatment). Pre-feature desktop retention vs post-feature desktop retention (control). Feature impact = (mobile post - mobile pre) - (desktop post - desktop pre). This removes time-based confounders that affect both groups'"
+    weight: 0.35
+    description: "Confounders"
+  - type: llm_judge
+    criteria: "Response covers benchmarking and attributing impact to features — benchmarking: 'Benchmarking and feature attribution: Building a cohort scorecard: for each cohort, score retention at standard intervals and note what was different: Cohort | M1 Ret | M3 Ret | Index | Key Changes. Jan: 35% | 22% | 100 | baseline. Feb: 37% | 24% | 106 | new onboarding (Feature A). Mar: 33% | 20% | 91 | outage mid-month. Apr: 40% | 28% | 114 | seasonal + onboarding settled. May: 42% | 30% | 120 | social features (Feature C). Jun: 41% | 29% | 117 | stable. Attribution: Feature A (onboarding) — February showed +2pp but was muddied by paid social increase. When controlling for channel mix, the improvement is +6pp for organic users. This is sustained in subsequent months. Estimated impact: +5-6pp on month-1 retention. Feature B (push notifications, March) — March showed a dip due to the outage. Push notification impact is unclear from cohort data alone. Need A/B test data or within-cohort comparison (users who received pushes vs those who did not). Feature C (social features, May) — May showed +2pp over April, sustained in June. When controlling for seasonality (compare to same period last year), the improvement holds. Estimated impact: +2-3pp on month-1 retention. Framework for the PM: 1. Always compare at the same retention period (month 1 to month 1). 2. Control for at least: channel mix, cohort size, and seasonality. 3. Use indexing to normalize and make trends visible. 4. When possible, supplement cohort analysis with A/B test data for causal claims. 5. Present a range of estimated impact rather than a precise number. 6. Track the cumulative impact: onboarding (+5pp) + social (+2pp) = +7pp total improvement from January to June'"
+    weight: 0.30
+    description: "Benchmarking"

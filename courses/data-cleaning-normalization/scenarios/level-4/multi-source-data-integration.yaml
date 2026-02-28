@@ -1,0 +1,52 @@
+meta:
+  id: multi-source-data-integration
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Multi-source data integration quality — manage data quality across complex ETL/ELT pipelines integrating dozens of heterogeneous sources with conflicting schemas, semantics, and quality levels"
+  tags: [integration, multi-source, ETL, schema, reconciliation, expert]
+
+state: {}
+
+trigger: |
+  A principal data engineer says: "We're building a unified customer
+  360 platform that integrates data from 35 source systems:
+
+  - 4 CRM systems (Salesforce, HubSpot, custom legacy, acquired company)
+  - 6 transactional databases (3 product lines + 3 regional systems)
+  - 5 marketing platforms (email, social, web analytics, ad platforms, CDP)
+  - 8 customer service systems (tickets, chat, phone, in-store, etc.)
+  - 5 financial systems (billing, payments, collections, accounting, ERP)
+  - 7 third-party data enrichment sources (credit, firmographic, intent, etc.)
+
+  Every system has its own customer identifier, its own schema, its
+  own update frequency (real-time to monthly batch), and its own
+  quality profile. Some systems are authoritative for certain fields
+  (billing system for payment info, CRM for contact details) but
+  there's overlap and conflict everywhere.
+
+  When two systems disagree about a customer's address, which one
+  wins? When a third-party enrichment source adds data that conflicts
+  with our internal records, how do we resolve it? How do we maintain
+  quality as sources change their schemas without notice?
+
+  Design the data quality architecture for this integration."
+
+  Task: Design a data quality architecture for integrating 35
+  heterogeneous sources into a unified customer platform, addressing
+  source authority, conflict resolution, schema evolution, and
+  quality management at scale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a source authority and conflict resolution framework — establishes a source-of-truth hierarchy for each data attribute (billing system is authoritative for payment methods, CRM for contact info, etc.), defines conflict resolution rules (most-recent-wins, most-authoritative-wins, consensus-based, or escalate-to-manual-review depending on the attribute and confidence), handles the case where authoritative sources disagree or are missing (fallback chains), and addresses temporal conflicts (address was updated in CRM yesterday but billing still has the old one — which is current?). Creates a survivorship rules engine that can be configured per attribute"
+    weight: 0.35
+    description: "ConflictResolution"
+  - type: llm_judge
+    criteria: "Response addresses schema and quality management across 35 sources — how to handle schema evolution (sources changing column names, data types, or semantics without notice), source quality profiling (ongoing measurement of each source's quality by dimension), quality-weighted integration (higher-quality sources get priority, low-quality sources trigger alerts), schema mapping and semantic reconciliation (same concept represented differently across systems: 'customer_status' in one vs 'account_state' in another), and monitoring for source degradation (detecting when a previously reliable source starts producing lower quality data)"
+    weight: 0.35
+    description: "SchemaAndQuality"
+  - type: llm_judge
+    criteria: "Response provides a practical integration architecture — identity resolution strategy for matching customers across 35 different ID systems (deterministic matching on shared keys, probabilistic matching on attributes, graph-based resolution for complex relationships), pipeline design that handles real-time through monthly batch frequencies, quality checkpoints at each integration stage (source extraction, staging, matching, merging, publishing), rollback and recovery mechanisms when integration introduces errors, and scalability considerations for processing updates across 35 sources continuously"
+    weight: 0.30
+    description: "IntegrationArchitecture"

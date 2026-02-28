@@ -1,0 +1,47 @@
+meta:
+  id: impact-assessment
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Assess incident impact — quantify the customer, business, and technical impact of an incident for the postmortem document"
+  tags: [postmortem, impact, assessment, metrics, quantification, beginner]
+
+state: {}
+
+trigger: |
+  Your company's user authentication service was down for 90 minutes
+  during business hours (10:00-11:30 AM ET, a Tuesday). You need to
+  write the impact assessment for the postmortem.
+
+  Data available:
+  - 100% of login attempts failed during the outage
+  - 45,000 users attempted to log in and couldn't
+  - 12,000 users were already logged in (sessions valid, unaffected)
+  - 3 enterprise customers have SLA agreements (99.9% uptime)
+  - The outage lasted 90 minutes = 1.5 hours
+  - Customer support received 850 tickets and 200 phone calls
+  - Social media: 15 tweets mentioning the outage
+  - Revenue impact: estimated $30K in lost transactions during window
+  - 2 enterprise customers with SLA breaches (monthly uptime fell
+    below 99.9%)
+
+  Your first draft says "the auth service was down." This doesn't
+  convey the real impact to stakeholders reading the postmortem.
+
+  Task: Write a comprehensive impact assessment that quantifies all
+  dimensions of impact. Then write a guide on how to assess incident
+  impact for postmortems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Impact is quantified across multiple dimensions — customer impact: '45,000 users unable to log in (approximately 25% of daily active users). 12,000 active sessions unaffected. Customer support volume: 850 tickets + 200 calls (10x normal volume for this window). Social media mentions: 15 public complaints. No data loss or security compromise.' Business impact: 'Revenue: estimated $30,000 in lost transactions (based on average hourly transaction volume for Tuesday 10-11:30 AM). SLA breach: 2 enterprise customers fell below 99.9% monthly uptime commitment. SLA credit liability: estimated $X based on contract terms. Potential churn risk: 2 SLA-breached customers represent $Y ARR.' Technical impact: 'Service availability: 0% for authentication, 100% for already-authenticated users. No cascading failures to other services (auth failure returned 503, did not cascade). No data corruption. Recovery was clean — no post-incident data repair needed.' Operational impact: '5 engineers engaged in incident response for 90 minutes (7.5 engineer-hours). Customer support team at 10x capacity for 3 hours (including backlog after resolution).'"
+    weight: 0.35
+    description: "Multi-dimensional impact"
+  - type: llm_judge
+    criteria: "Impact is contextualized with severity classification — severity assessed: 'SEV-1 (Critical): complete loss of a core service affecting more than 10% of users during business hours. This is our highest severity level.' Context provided: 'This is the first SEV-1 authentication outage in 8 months. Previous auth incidents were SEV-3 (partial degradation, under 5% of users affected).' SLA context: 'Two enterprise customers breached 99.9% SLA. Monthly error budget consumed: Customer A used 100% of remaining monthly error budget. Customer B used 85%. Both have contractual SLA credits that will need to be issued.' What was NOT impacted (important for scope): 'Data integrity: no user data was lost or corrupted. Security: no unauthorized access occurred. Already-authenticated users continued to function normally. Mobile app users with cached sessions were unaffected. API consumers using API keys (not session-based auth) were unaffected.' Impact duration: 'User-facing impact: 90 minutes. Customer support impact: approximately 4 hours (including ticket backlog). SLA impact: calculated across the full billing month'"
+    weight: 0.35
+    description: "Contextualized severity"
+  - type: llm_judge
+    criteria: "Impact assessment guide provides reusable framework — framework: (1) Customer impact: how many users affected? What percentage of total? What couldn't they do? Was there data loss? Were they notified? (2) Business impact: revenue lost or at risk? SLA breaches? Contractual penalties? Churn risk? Reputational damage (social media, press)? (3) Technical impact: services affected? Duration? Data integrity? Cascading failures? Recovery complexity? (4) Operational impact: engineer-hours spent? Support volume? Post-incident cleanup needed? How to quantify: 'Use actual data, not estimates, wherever possible. Pull from monitoring (error rates, affected user count), customer support (ticket count), revenue systems (transaction volume during window), and SLA tracking.' Common mistakes: (1) Understating impact to minimize blame — this undermines the postmortem's value. (2) Only counting direct impact — the 850 support tickets represent hidden costs (customer trust erosion, support team burnout). (3) Forgetting SLA implications — even brief outages can breach monthly commitments. (4) Not tracking what WASN'T impacted — stakeholders need to know the blast radius was contained. (5) Conflating impacted users with affected users — 45K couldn't log in, but 12K were fine. Precision matters"
+    weight: 0.30
+    description: "Impact guide"

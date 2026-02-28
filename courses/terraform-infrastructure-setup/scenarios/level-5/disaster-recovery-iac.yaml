@@ -1,0 +1,47 @@
+meta:
+  id: disaster-recovery-iac
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design disaster recovery with Terraform — implement multi-region failover, state backup, infrastructure rebuilding, and DR testing strategies"
+  tags: [Terraform, disaster-recovery, multi-region, failover, backup, master]
+
+state: {}
+
+trigger: |
+  Your client's us-east-1 region experienced a 4-hour outage affecting
+  their production environment. Post-mortem revealed:
+  - No multi-region deployment (single region)
+  - Terraform state stored only in us-east-1 S3 bucket (inaccessible
+    during outage)
+  - No runbook for rebuilding infrastructure from scratch
+  - RTO target: 1 hour. Actual recovery: 4 hours
+  - RPO target: 15 minutes. Actual data loss: 2 hours
+
+  The CEO demands a DR strategy that meets:
+  - RTO: < 30 minutes for critical services
+  - RPO: < 5 minutes for transactional data
+  - Annual DR testing: full failover drill
+  - Cost: additional spend < 30% of current infrastructure cost
+
+  Current infrastructure: $200K/month
+  DR budget: up to $60K/month additional
+
+  Task: Design the DR strategy using Terraform covering: multi-region
+  architecture, state backup strategy, infrastructure-as-code for
+  rapid rebuilding, DR testing automation, and cost optimization
+  for standby infrastructure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-region architecture meets RTO/RPO — active-passive architecture: primary (us-east-1) handles all traffic, secondary (us-west-2) has warm standby. Critical tier (RTO < 30 min): multi-AZ RDS with cross-region read replica (RPO: seconds), S3 cross-region replication, Route53 health checks with automated failover. Important tier (RTO < 2 hours): AMI/container image replication, Terraform can provision compute in 15 minutes. Non-critical tier (RTO < 8 hours): rebuild from Terraform on demand, no standby resources. Terraform manages all regions: provider aliases for us-east-1 and us-west-2, shared modules deployed to both"
+    weight: 0.35
+    description: "Multi-region architecture"
+  - type: llm_judge
+    criteria: "State backup and rebuilding strategy are robust — state backup: S3 bucket with versioning + cross-region replication to us-west-2 bucket. DynamoDB global table for lock table (accessible in both regions). If primary S3 inaccessible: terraform init with backend pointing to replicated bucket. Infrastructure rebuilding: Terraform code can recreate all infrastructure from scratch. Test this quarterly — run terraform plan in a clean account to verify. Runbook: step-by-step DR activation (1) activate Route53 failover, (2) promote RDS read replica, (3) terraform apply in DR region for compute, (4) verify application health. Automated: Lambda triggered by CloudWatch alarm runs DR activation script"
+    weight: 0.35
+    description: "State and rebuilding"
+  - type: llm_judge
+    criteria: "DR testing and cost optimization are practical — DR testing: quarterly full failover drill using Terraform. Automation: (1) terraform workspace for DR drill, (2) apply creates full DR infrastructure, (3) automated tests verify failover works, (4) terraform destroy after drill. GameDay approach: simulate failures (kill primary, verify automatic failover). Document: recovery time achieved, data loss measured, issues found. Cost optimization: warm standby only for critical tier (RDS replica: ~$3K/month, S3 replication: minimal, Route53 health checks: minimal). Compute on-demand in DR region (no standby instances — provision with Terraform during failover, 10-15 min). Estimated DR cost: $15-20K/month (10% of infrastructure), well within $60K budget"
+    weight: 0.30
+    description: "Testing and cost"

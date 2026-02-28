@@ -1,0 +1,45 @@
+meta:
+  id: first-data-cleaning-shift
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "First data cleaning shift — apply multiple cleaning techniques to a messy real-world dataset"
+  tags: [shift, combined, assessment, basics]
+
+state: {}
+
+trigger: |
+  You are a data analyst who just received a customer orders dataset
+  for quarterly reporting. The dataset has 25,000 rows and these issues:
+
+  1. Missing data: customer_email (8% missing), order_total (3% missing),
+     shipping_address (15% missing for digital products)
+  2. Duplicates: ~500 orders appear twice (same order_id, different
+     timestamps — likely system re-processing)
+  3. Format issues: dates in 3 different formats, prices with and
+     without dollar signs, state codes mixed with full state names
+  4. Outliers: some order totals are negative (returns mixed in?),
+     some are over $100,000 (enterprise orders or errors?)
+  5. Encoding: some customer names have garbled special characters
+
+  Your manager needs clean data by end of day for a board report.
+  The report will show: total revenue, order count, average order
+  value, revenue by state, and customer count.
+
+  Task: Create a prioritized data cleaning plan that addresses all
+  five issues in the right order, explaining what to fix first and
+  why, with specific approaches for each issue.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a logical cleaning order — should recommend: first fix duplicates (they affect every metric — double-counted revenue, inflated order counts), then fix data types and formatting (need clean numerics for calculations, clean dates for date ranges, clean states for geographic breakdown), then handle missing data (approach depends on which metrics are affected), then address outliers (negative values need investigation — are they returns that should be excluded from revenue?), then fix encoding (cosmetic for the board report). Explains why this order matters"
+    weight: 0.35
+    description: "CleaningOrder"
+  - type: llm_judge
+    criteria: "Response provides specific approaches for each issue — duplicates: identify by order_id, keep the earliest timestamp. Formats: parse all dates to ISO format, strip $ and commas from prices, create a state mapping dictionary. Missing data: shipping_address missing for digital products is expected (not an error), order_total missing needs investigation, email missing can be excluded from customer count. Outliers: negative totals may be returns (confirm then exclude from revenue), $100K+ orders need manual verification. Encoding: detect and fix UTF-8 issues"
+    weight: 0.35
+    description: "SpecificApproaches"
+  - type: llm_judge
+    criteria: "Response considers the business context and reporting needs — the cleaning strategy is informed by what the board report needs (total revenue, order count, AOV, revenue by state, customer count). Cleaning decisions should optimize for report accuracy: deduplication directly affects order count and revenue, state standardization is essential for the geographic breakdown, customer email quality affects customer count. Includes a validation step: after cleaning, verify that totals are reasonable compared to prior quarters"
+    weight: 0.30
+    description: "BusinessContext"

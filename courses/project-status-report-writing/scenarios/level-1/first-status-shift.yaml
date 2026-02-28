@@ -1,0 +1,79 @@
+meta:
+  id: first-status-shift
+  level: 1
+  course: project-status-report-writing
+  type: output
+  description: "First status shift — handle a project that's going off track and write the status report that honestly communicates the situation without causing panic"
+  tags: [shift, off-track, honesty, communication, beginner]
+
+state: {}
+
+trigger: |
+  You're a project manager and your project just hit trouble.
+  Your weekly status report is due tomorrow morning and you
+  need to change the status from GREEN to AMBER. Your boss
+  (VP of Engineering) is on vacation and will read this
+  report from a beach in Hawaii. You need to be honest about
+  the problems without causing unnecessary alarm.
+
+  Project: Payment Gateway Integration
+  Timeline: 8-week project, currently end of Week 5
+  Previous status: GREEN for 4 weeks straight
+  Budget: $120K (spent $68K — roughly on track)
+
+  What happened this week:
+  1. Your lead developer (Sarah) gave 2 weeks notice on
+     Monday. She's the only person on the team who understands
+     the payment provider's API deeply. She's willing to do
+     knowledge transfer but only has 10 business days left.
+
+  2. During integration testing, you discovered that the
+     payment provider's sandbox environment doesn't match
+     their production environment. Three API endpoints
+     behave differently in production. The payment provider
+     acknowledged this is a known issue and said they'll
+     "fix it soon" but gave no timeline.
+
+  3. The security team completed their review and identified
+     2 findings:
+     a) The API token rotation interval needs to be shortened
+        from 24 hours to 1 hour. This requires code changes
+        (estimated 2 days).
+     b) PCI compliance requires an additional encryption
+        layer on stored card tokens. This was not in the
+        original scope and is estimated at 1 week of work.
+
+  4. The good news: the core payment flow (charge, refund,
+     void) is working perfectly in the sandbox. Merchant
+     onboarding is complete. The team morale is high despite
+     the challenges.
+
+  What's still on track:
+  - Core payment processing logic is done
+  - Merchant portal is complete
+  - Documentation is 80% done
+  - Budget is approximately on track
+
+  What's at risk:
+  - Knowledge transfer before Sarah leaves (10 days)
+  - Sandbox/production API discrepancy (no timeline for fix)
+  - PCI compliance encryption work (1 week, not in scope)
+  - Overall timeline: the combination of these issues likely
+    pushes the project 1-2 weeks past the original deadline
+
+  Task: Write the status report that changes from GREEN to
+  AMBER.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response changes status from GREEN to AMBER with clear justification — leads with the status change and briefly explains why; presents the three main issues (key person departure, API discrepancy, PCI compliance finding) clearly and factually; doesn't hide the bad news but also doesn't dramatize it; acknowledges what's still going well (core functionality working, budget on track, team morale); provides a balanced picture that a VP reading from vacation can understand in 3-5 minutes without feeling the need to cut their trip short."
+    weight: 0.35
+    description: "HonestStatusChange"
+  - type: llm_judge
+    criteria: "Response includes mitigation actions for each issue — for Sarah's departure: knowledge transfer plan for the next 10 days, who will take over, what documentation is needed; for API discrepancy: what the team can do in the meantime, whether testing can proceed differently, escalation plan with the payment provider; for PCI compliance: treat as a scope addition, estimate the impact, request guidance on timeline extension vs scope cut elsewhere; each issue has a recommended action, not just a description of the problem."
+    weight: 0.35
+    description: "MitigationActions"
+  - type: llm_judge
+    criteria: "Response is appropriately toned for the audience — written for a VP who is on vacation and reading remotely; honest and transparent (GREEN to AMBER is a significant change — own it); professional and calm (these are manageable challenges, not a crisis); clearly states the timeline impact (1-2 weeks delay likely); identifies what decisions need to be made when the VP returns (PCI scope addition approval, timeline extension); doesn't require the VP to respond immediately — provides enough information for her to understand the situation and the PM's proposed approach."
+    weight: 0.30
+    description: "AppropriateTone"

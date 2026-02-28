@@ -1,0 +1,50 @@
+meta:
+  id: cicd-pipeline-design
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Design CI/CD pipelines for Terraform — implement GitOps workflows with Atlantis, GitHub Actions, or Terraform Cloud for safe infrastructure deployment"
+  tags: [Terraform, CI/CD, GitOps, Atlantis, GitHub-Actions, expert]
+
+state: {}
+
+trigger: |
+  Your team deploys Terraform from individual laptops. Last month:
+  - An engineer applied to production instead of staging (wrong workspace)
+  - Two engineers ran apply simultaneously, causing state corruption
+  - An apply failed halfway but no one noticed for 3 hours
+  - No record of who deployed what or when
+
+  You need to design a CI/CD pipeline for Terraform that prevents
+  all of these issues. Options on the table:
+
+  1. GitHub Actions with custom workflow
+  2. Atlantis (pull request automation)
+  3. Terraform Cloud/Enterprise
+  4. Spacelift
+
+  Requirements:
+  - Plan on every PR
+  - Apply only after approval and merge
+  - Environment protection (can't accidentally apply to prod)
+  - Cost estimation before apply
+  - Security scanning (tfsec/checkov)
+  - Slack notifications for plan/apply results
+
+  Task: Design the CI/CD pipeline for Terraform, compare the tool
+  options, show a complete workflow from code change to production
+  deployment, and address security considerations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Complete pipeline workflow is designed — code change → PR opened → automated pipeline: (1) terraform fmt -check (formatting), (2) terraform validate (syntax), (3) tfsec/checkov scan (security), (4) terraform plan (preview changes), (5) Infracost estimate (cost), (6) post results as PR comment. On merge to main: (7) terraform plan again (detect drift since PR), (8) approval gate (manual for prod), (9) terraform apply, (10) post-apply verification, (11) Slack notification. Environment promotion: dev auto-apply, staging auto-apply, prod manual approval"
+    weight: 0.35
+    description: "Pipeline workflow"
+  - type: llm_judge
+    criteria: "Tool comparison is practical — Atlantis: open-source, PR automation, self-hosted, lightweight. Best for: teams wanting simple PR-based workflow. GitHub Actions: flexible, native GitHub integration, custom workflows. Best for: teams already on GitHub wanting full control. Terraform Cloud: managed service, built-in Sentinel, cost estimation, team management. Best for: organizations wanting managed solution. Spacelift: multi-tool support, advanced policies, drift detection. Best for: enterprises with complex requirements. Recommendation depends on: team size, budget, compliance needs, multi-tool requirements"
+    weight: 0.35
+    description: "Tool comparison"
+  - type: llm_judge
+    criteria: "Security considerations are covered — credentials: use OIDC for cloud authentication (no static keys in CI). GitHub Actions: aws-actions/configure-aws-credentials with OIDC. State access: CI role has minimal permissions (plan role vs apply role). Secrets: never echo credentials, use GitHub encrypted secrets or Terraform Cloud variables. Branch protection: require PR reviews, no direct pushes to main. Environment protection: GitHub environments with required reviewers for prod. Audit: log all plan/apply with outputs. Network: CI runner in private network if accessing private resources"
+    weight: 0.30
+    description: "Security"

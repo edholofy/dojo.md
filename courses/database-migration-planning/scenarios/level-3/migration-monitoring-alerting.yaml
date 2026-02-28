@@ -1,0 +1,39 @@
+meta:
+  id: migration-monitoring-alerting
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Monitor database migrations — set up monitoring and alerting to detect migration problems before they cause outages"
+  tags: [database, migration, monitoring, alerting, observability, advanced]
+
+state: {}
+
+trigger: |
+  Your team runs database migrations as part of every deployment
+  (CI/CD pipeline applies pending migrations before starting the new
+  application version). Recent incidents:
+
+  1. A migration ran for 45 minutes (expected: 30 seconds), causing
+     the deployment to timeout and roll back
+  2. A migration locked a table, causing a cascade of connection
+     timeouts across the application
+  3. A migration succeeded but consumed all available disk space
+     with temporary files, crashing the database 2 hours later
+
+  Task: Design monitoring and alerting for database migrations.
+  Include: what to monitor during migrations, alert thresholds,
+  and automated safeguards.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration-specific monitoring metrics are defined — monitoring metrics: '(1) Migration execution time. Monitor: how long each migration takes. Alert: if a migration exceeds 5 minutes (configurable per migration). Why: the 45-minute migration incident would have been caught in 5 minutes instead of waiting for the 45-minute timeout. Implementation: wrap migration execution in timing code. Log: migration_name, start_time, end_time, duration. If duration exceeds threshold: alert and optionally kill the migration. (2) Lock wait monitoring. Monitor: queries waiting for locks during migration. Query: SELECT pid, query, wait_event_type, wait_event, now() - query_start AS duration FROM pg_stat_activity WHERE wait_event_type = Lock AND state = active; Alert: if any application query waits for a lock for more than 10 seconds. Why: the table lock incident would have been detected in 10 seconds instead of cascading to connection timeouts. Implementation: poll pg_stat_activity every 5 seconds during migrations. If lock waits are detected: alert immediately and consider killing the migration. (3) Connection pool saturation. Monitor: active and idle connections in the connection pool. Alert: if active connections exceed 80% of pool size during migration. Why: when a migration locks a table, application queries queue up, consuming all pool connections. Monitoring connection saturation provides early warning before total failure. (4) Disk space. Monitor: available disk space on the database volume. Alert: if free disk drops below 20% during migration (or 10% at any time). Why: the disk space incident would have been caught before the database crashed. Some migrations (table rewrites, index builds) create temporary files that consume disk space. (5) Replication lag. Monitor: lag between primary and replicas. Alert: if lag exceeds 30 seconds during migration. Why: heavy migrations can cause replicas to fall behind. If the application reads from replicas, stale data can cause bugs'"
+    weight: 0.35
+    description: "Monitoring metrics"
+  - type: llm_judge
+    criteria: "Automated safeguards prevent migration-caused outages — safeguards: '(1) Statement timeout. Set a statement timeout for migration connections: SET statement_timeout = 300000; -- 5 minutes. If any single SQL statement takes longer than 5 minutes, PostgreSQL kills it automatically. This prevents runaway migrations from blocking the database indefinitely. Configure per-migration: simple migrations (ADD COLUMN) get 30 seconds. Complex migrations (backfill) get longer timeouts or are excluded from the timeout. (2) Lock timeout. SET lock_timeout = 5000; -- 5 seconds. If the migration cannot acquire a lock within 5 seconds, it fails immediately instead of waiting indefinitely. This prevents the cascade: migration waits for lock → application queries queue behind migration → connection pool exhausted → outage. If the lock timeout fires: the migration fails cleanly. Retry during a less busy period or investigate what is holding the lock. (3) Pre-migration disk space check. Before running any migration: check available disk space. If free disk is below 30%: refuse to run the migration. This prevents the disk exhaustion scenario. Implementation: a pre-migration hook in the CI/CD pipeline that queries disk space and gates the migration. (4) Migration dry-run. Before executing a migration in production, run EXPLAIN (not EXPLAIN ANALYZE) on the migration SQL. If the explain plan shows a sequential scan on a large table or a table rewrite: flag for manual review before execution. (5) Automatic rollback on failure. If a migration fails: immediately run the down migration. If the down migration also fails: alert the on-call team. If the migration is wrapped in a transaction (PostgreSQL supports transactional DDL): the failure automatically rolls back. The CI/CD pipeline should check the migration exit code and only proceed with the deployment if migration succeeded'"
+    weight: 0.35
+    description: "Automated safeguards"
+  - type: llm_judge
+    criteria: "Post-migration health checks are defined — health checks: 'After every migration, run automated health checks before proceeding with the deployment: (1) Schema validation: query information_schema to verify the expected columns, tables, and constraints exist. Compare against a schema manifest (a file listing expected schema elements). If any expected element is missing: the migration failed silently — halt deployment. (2) Application health check: after the migration and before routing traffic to new instances, run a health check endpoint that queries the database. If the health check fails: the migration may have broken something — halt deployment. (3) Query performance baseline: run 5-10 representative queries and compare execution time to baseline. If any query is more than 3x slower: the migration may have affected performance (dropped an index, changed a query plan). Alert for investigation. (4) Connection test: verify the application can connect to the database and execute a simple query (SELECT 1). This catches: migration killed the database, migration exhausted connections, migration changed authentication. Dashboard: build a migration monitoring dashboard showing: migration execution history (name, duration, success/failure), lock wait events during migrations, disk space trends, replication lag during migrations, failed migration count and recovery time. This dashboard provides visibility into migration health over time and helps identify trends (are migrations getting slower? Are failures increasing?)'"
+    weight: 0.30
+    description: "Health checks"

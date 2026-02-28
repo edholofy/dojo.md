@@ -1,0 +1,62 @@
+meta:
+  id: provider-configuration
+  level: 1
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Configure Terraform providers — set up AWS credentials, handle authentication errors, manage provider aliases for multi-region deployments"
+  tags: [Terraform, providers, AWS, authentication, credentials, beginner]
+
+state: {}
+
+trigger: |
+  You run `terraform plan` and get this error:
+
+  ```
+  Error: No valid credential sources found
+
+    with provider["registry.terraform.io/hashicorp/aws"],
+    on main.tf line 5, in provider "aws":
+     5: provider "aws" {
+
+  Please see https://registry.terraform.io/providers/hashicorp/aws
+  for more information about providing credentials.
+  ```
+
+  Your configuration:
+
+  ```hcl
+  provider "aws" {
+    region = "us-east-1"
+  }
+
+  resource "aws_s3_bucket" "data" {
+    bucket = "my-data-bucket-12345"
+  }
+
+  resource "aws_s3_bucket" "logs" {
+    provider = aws.west
+    bucket   = "my-logs-bucket-12345"
+  }
+  ```
+
+  You have AWS CLI installed with a profile named "dev" but haven't
+  configured any credentials for Terraform.
+
+  Task: Explain Terraform provider configuration, AWS credential
+  chain (how Terraform finds credentials), provider aliases for
+  multi-region, common authentication errors and fixes, and best
+  practices for credential management (never hardcode keys).
+
+assertions:
+  - type: llm_judge
+    criteria: "AWS credential chain is explained — Terraform AWS provider checks credentials in order: (1) provider block (access_key/secret_key — NEVER do this), (2) environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN), (3) shared credentials file (~/.aws/credentials), (4) shared config file (~/.aws/config with profile), (5) EC2 instance metadata / ECS task role / Lambda execution role. Fix: export AWS_PROFILE=dev or set profile in provider block. For CI/CD: use environment variables or OIDC federation (GitHub Actions → AWS IAM role)"
+    weight: 0.35
+    description: "Credential chain"
+  - type: llm_judge
+    criteria: "Provider aliases are explained — to use multiple regions, define provider aliases: provider 'aws' { region = 'us-east-1' } and provider 'aws' { alias = 'west', region = 'us-west-2' }. Reference alias: provider = aws.west in resource block. Without the alias provider block defined, the aws.west reference will fail. Default provider (no alias) is used when provider isn't specified. Each alias can have different credentials, regions, or assume_role configurations"
+    weight: 0.35
+    description: "Provider aliases"
+  - type: llm_judge
+    criteria: "Security best practices are covered — NEVER hardcode credentials in .tf files (they end up in version control and state files). Use: environment variables, AWS profiles, IAM roles (instance profiles, task roles), or OIDC federation. For assume_role: provider block supports assume_role {} for cross-account access. State files contain provider config — ensure state is encrypted and access-controlled. Use terraform plan output to verify no credentials are exposed. Add *.tfvars with secrets to .gitignore"
+    weight: 0.30
+    description: "Security practices"

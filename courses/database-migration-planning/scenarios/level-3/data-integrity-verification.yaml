@@ -1,0 +1,38 @@
+meta:
+  id: data-integrity-verification
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Verify data integrity after migration — design comprehensive validation to ensure no data was lost, corrupted, or incorrectly transformed during migration"
+  tags: [database, migration, data-integrity, verification, validation, advanced]
+
+state: {}
+
+trigger: |
+  You just completed a major database migration: moved 200GB across
+  150 tables from an on-premises PostgreSQL to AWS Aurora PostgreSQL.
+  The migration ran overnight using pg_dump/pg_restore with logical
+  replication for the final sync.
+
+  Before you can certify the migration as complete, you need to
+  verify that every row in every table migrated correctly. The
+  business team says: "We need proof that no data was lost or
+  corrupted."
+
+  Task: Design the data integrity verification plan. Include:
+  row-level verification, constraint validation, application-level
+  testing, and how to handle discrepancies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-level verification approach is comprehensive — verification levels: 'Level 1: Row count verification (quick, catches obvious problems). For every table: SELECT COUNT(*) FROM source_table; vs SELECT COUNT(*) FROM target_table; Counts must match within tolerance. Tolerance: for tables with ongoing inserts during migration, counts may differ by the number of rows inserted during the final sync window. For static tables: counts must match exactly. Automation: write a script that queries both databases and reports any table with mismatched counts. Expected runtime: minutes. Level 2: Aggregate verification (catches systematic data issues). For numeric columns: SELECT SUM(amount), AVG(amount), MIN(amount), MAX(amount) FROM orders; Compare source and target. Any difference indicates data corruption or truncation during the migration. For string columns: SELECT COUNT(DISTINCT status) FROM orders; Verify the same distinct values exist in both databases. Level 3: Row-level checksum verification (catches individual row corruption). For critical tables (users, orders, payments): compute a hash of each row and compare. SELECT id, MD5(ROW(id, email, name, created_at)::TEXT) AS row_hash FROM users ORDER BY id; Compare hashes between source and target. If all hashes match: the data is identical. If some differ: investigate which columns changed. For 150 tables at 200GB: full row-level checksumming takes hours. Prioritize: run row-level checks on the 20 most critical tables. Run count and aggregate checks on all 150 tables. Level 4: Constraint and relationship verification. Verify all constraints exist and are valid in the target: SELECT conname, contype FROM pg_constraint WHERE conrelid = table_name::regclass; Verify foreign key integrity: SELECT o.id FROM orders o LEFT JOIN customers c ON o.customer_id = c.id WHERE c.id IS NULL; (should return 0 rows for every FK relationship). Verify indexes exist: compare pg_indexes between source and target. Verify sequences: SELECT last_value FROM table_id_seq; Compare — target sequences must be at or above source values to prevent ID collisions'"
+    weight: 0.35
+    description: "Verification approach"
+  - type: llm_judge
+    criteria: "Application-level verification is included — application testing: '(1) Critical path testing. Do not just verify data — verify that the application works correctly with the migrated data. Run the full test suite against the target database. Manually test critical user flows: user login (verifies user data and auth), place an order (verifies orders, products, inventory), process a payment (verifies payment data and state transitions), generate a report (verifies aggregation queries produce correct results). (2) Query performance comparison. Run the top 50 most frequent queries (from query logs) against both source and target. Compare: execution time (target should be equal or faster), query plan (EXPLAIN ANALYZE — same indexes should be used), result sets (must be identical). Any query that is significantly slower on the target indicates a missing index, different statistics, or different configuration. Run ANALYZE on all tables in the target to update query planner statistics. (3) Sampling verification. For each table, select 100 random rows and display them side by side from source and target. Have a domain expert review: does this data look correct? This catches subtle issues that automated checks miss: character encoding problems (special characters displayed incorrectly), timezone shifts (timestamps off by hours), numeric precision changes (decimal places truncated)'"
+    weight: 0.35
+    description: "Application testing"
+  - type: llm_judge
+    criteria: "Discrepancy handling and sign-off process defined — discrepancy handling: 'When verification finds differences: (1) Classify the discrepancy. Category A (data loss): rows exist in source but not in target. Severity: critical. Action: investigate immediately. Was the row inserted after the migration cutoff? Was it filtered out by the migration tool? Rerun migration for the affected table or manually insert the missing rows. Category B (data corruption): rows exist in both but values differ. Severity: critical. Action: investigate which column differs and why. Common causes: character encoding conversion, numeric precision loss, timezone conversion. Fix: update the target rows with the correct values from the source. Category C (count mismatch from timing): target has more rows than source (rows inserted after migration started). Severity: low. Expected for tables with ongoing writes during migration. Action: verify the extra rows are legitimate new inserts, not duplicates. (2) Certification sign-off. After all verification passes, produce a migration verification report: table-by-table row counts (source vs target), aggregate checksums for critical tables, foreign key integrity results, application test results, performance comparison summary, list of any discrepancies found and how they were resolved. This report is signed off by: engineering lead (technical correctness), business owner (data completeness for business operations), DBA (database health and configuration). The report is archived as part of the migration documentation — it may be needed for audits or if issues are discovered later'"
+    weight: 0.30
+    description: "Discrepancy handling"

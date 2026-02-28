@@ -1,0 +1,43 @@
+meta:
+  id: migration-code-review
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Review database migrations — identify common mistakes and risks in migration code during code review"
+  tags: [database, migration, code-review, safety, best-practices, intermediate]
+
+state: {}
+
+trigger: |
+  You are reviewing a pull request that contains 3 database migrations.
+  Find the problems in each:
+
+  Migration 1:
+  ALTER TABLE users ADD COLUMN age INTEGER NOT NULL;
+
+  Migration 2:
+  CREATE INDEX idx_orders_status ON orders(status);
+
+  Migration 3:
+  ALTER TABLE products ALTER COLUMN price TYPE BIGINT;
+
+  Context: the users table has 3 million rows, orders has 20 million
+  rows, products has 500,000 rows. The application serves production
+  traffic 24/7.
+
+  Task: Review each migration, identify the problems, and suggest
+  fixes.
+
+assertions:
+  - type: llm_judge
+    criteria: "All three migration problems are correctly identified — problems: 'Migration 1: ALTER TABLE users ADD COLUMN age INTEGER NOT NULL. Problem: NOT NULL without a DEFAULT on a table with 3 million existing rows. What happens: PostgreSQL needs to verify that every existing row satisfies the NOT NULL constraint. Since no DEFAULT is specified, existing rows would have NULL — violating the constraint. The migration FAILS with: column age of relation users contains null values. Fix: ADD COLUMN age INTEGER NOT NULL DEFAULT 0; or better: add the column as nullable first, backfill the data, then add the NOT NULL constraint. ALTER TABLE users ADD COLUMN age INTEGER; (then backfill, then:) ALTER TABLE users ALTER COLUMN age SET NOT NULL; This separates the schema change from the data requirement. Migration 2: CREATE INDEX idx_orders_status ON orders(status). Problem: regular CREATE INDEX on a 20 million row table acquires a SHARE lock, blocking all writes during index creation. This could take 5-15 minutes on a table this size. Fix: CREATE INDEX CONCURRENTLY idx_orders_status ON orders(status); And ensure the migration is not wrapped in a transaction (since CONCURRENTLY cannot run inside a transaction). Migration 3: ALTER TABLE products ALTER COLUMN price TYPE BIGINT. Problem: changing column type from (presumably INTEGER) to BIGINT requires a full table rewrite. For 500,000 rows: this might take 30-60 seconds with the table locked for writes. Additionally: are there indexes on price? They will be rebuilt during the type change, adding time. Is application code compatible with BIGINT? In most languages, integer and bigint are handled the same, but verify. Is the rollback possible? Changing from BIGINT back to INTEGER could lose data if values exceed INTEGER range. Fix: for 500,000 rows, the lock duration may be acceptable during a low-traffic window. If zero-downtime is required: use the expand-and-contract pattern (add a new BIGINT column, backfill, switch application, drop old column)'"
+    weight: 0.35
+    description: "Problems identified"
+  - type: llm_judge
+    criteria: "Migration code review checklist is provided — review checklist: 'When reviewing database migrations, check for: (1) Safety: does this migration lock any table? For how long? If it locks a table with millions of rows: use CONCURRENTLY for indexes, use NOT VALID for constraints, use expand-and-contract for type changes. (2) Rollback: does the PR include a down migration? Is the rollback correct? Does the rollback lose data? If yes, is that acceptable and documented? (3) Data compatibility: does the migration break existing data? NOT NULL on columns with existing NULL values, CHECK constraints on columns with existing violations, foreign keys when orphaned references exist. (4) Application compatibility: does old application code work with the new schema? Does new application code work with the old schema (during rolling deployment)? Is a dual-write or expand-and-contract needed? (5) Performance: will this migration be slow on production data volumes? Has it been tested with production-like data in staging? Is there a backfill that should be batched? (6) Idempotency: is the migration safe to run twice (IF NOT EXISTS, IF EXISTS)? What happens if the migration partially fails? (7) Missing changes: does the migration need indexes that are not included? Does it need constraint changes that are not included? Are there related migrations in other PRs that must be coordinated?'"
+    weight: 0.35
+    description: "Review checklist"
+  - type: llm_judge
+    criteria: "Review process recommendations are given — process: 'Who should review migration PRs: (1) At minimum: another developer on the team (standard code review). (2) For large tables (millions of rows): include a DBA or senior engineer with database expertise. (3) For production-critical tables (users, orders, payments): require explicit sign-off from the on-call engineer. How to test during review: (1) Ask the author: what is the row count of the affected table in production? (2) Ask: has this been run in staging? How long did it take? (3) Ask: what is the rollback plan? (4) Check: does CI run migrations from scratch successfully? Review culture: rejecting a migration PR is not a failure — it is preventing a production incident. Common review feedback: this is a great change, but let me suggest CONCURRENTLY for the index. This is safer and prevents an outage. Frame feedback as collaboration, not criticism'"
+    weight: 0.30
+    description: "Review process"

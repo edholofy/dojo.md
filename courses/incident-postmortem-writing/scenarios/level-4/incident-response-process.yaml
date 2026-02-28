@@ -1,0 +1,45 @@
+meta:
+  id: incident-response-process
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Design incident response processes — create structured incident management frameworks including roles, escalation paths, and communication protocols"
+  tags: [postmortem, incident-response, process-design, roles, escalation, expert]
+
+state: {}
+
+trigger: |
+  Your engineering organization has grown from 30 to 150 engineers in
+  18 months. The informal "everyone jumps on the call" incident
+  response process that worked at 30 people is now chaotic. Recent
+  incidents have had 40+ people in the war room, unclear ownership,
+  duplicate work, and slow resolution.
+
+  Problems observed:
+  - No clear incident commander role — multiple people give conflicting
+    directions
+  - Engineers from unaffected teams join to "help" but add noise
+  - Status updates are sporadic — executives find out about incidents
+    from Twitter before internal channels
+  - Postmortems are inconsistent — some teams write detailed ones,
+    some write nothing
+  - On-call handoffs during long incidents are informal
+
+  Task: Design and document a formal incident response framework that
+  scales. Include: role definitions, severity-based escalation paths,
+  communication protocols, and how postmortems integrate into the
+  process. This should be a document that can be adopted org-wide.
+
+assertions:
+  - type: llm_judge
+    criteria: "Incident roles are clearly defined with responsibilities — roles defined: 'Incident Commander (IC): single point of authority during an incident. Responsibilities: declares incident severity, assigns roles, makes decisions when consensus is not reached, controls who is in the war room, ensures regular status updates. Does NOT debug — focuses on coordination. Rotation: any senior engineer or SRE can serve as IC.' 'Technical Lead (TL): leads the technical investigation and resolution. Responsibilities: diagnoses the issue, directs debugging efforts, proposes and implements fixes, advises IC on severity changes and estimated time to resolution. The TL is the person closest to the affected system.' 'Communications Lead: manages all internal and external communications. Responsibilities: posts regular status updates (every 15 minutes for SEV-1, every 30 minutes for SEV-2), updates status page, drafts customer communications, briefs executives. Uses pre-approved templates.' 'Scribe: documents everything happening during the incident. Responsibilities: maintains the incident timeline in real-time, records decisions and their rationale, captures action items, produces the raw material for the postmortem.' Who is NOT in the war room: 'Only assigned roles plus directly needed subject matter experts. Observers and executives receive updates through the Communications Lead. War room participation is invitation-only after roles are assigned'"
+    weight: 0.35
+    description: "Role definitions"
+  - type: llm_judge
+    criteria: "Escalation paths and communication protocols are severity-based — severity definitions: 'SEV-1 (Critical): complete service outage or data loss affecting all customers. Response time: 5 minutes. IC required: senior IC. Communication: every 15 minutes internal, status page updated, executive notification within 15 minutes. Postmortem: required within 48 hours. SEV-2 (Major): significant degradation or partial outage affecting many customers. Response time: 15 minutes. Communication: every 30 minutes internal, status page if customer-visible. Postmortem: required within 1 week. SEV-3 (Minor): limited impact, workaround available. Response time: 1 hour. Communication: team channel updates. Postmortem: optional, team decides. SEV-4 (Informational): no customer impact, internal tooling issues. Response time: next business day. No external communication. No postmortem required.' Escalation triggers: 'Auto-escalate from SEV-2 to SEV-1 if: impact duration exceeds 30 minutes, customer data integrity is in question, or revenue-generating services are fully down. Auto-escalate from SEV-3 to SEV-2 if: impact duration exceeds 2 hours or scope expands to multiple services.' Communication protocol: 'Internal: dedicated incident Slack channel created automatically with standardized naming (#incident-YYYY-MM-DD-brief-description). Status updates posted there and cross-posted to #engineering-incidents. External: Communications Lead uses pre-approved templates. Any customer-facing message requires IC approval before posting'"
+    weight: 0.35
+    description: "Escalation and communication"
+  - type: llm_judge
+    criteria: "Postmortem integration and process sustainability are addressed — postmortem integration: 'Postmortem workflow starts during the incident: the Scribe captures the timeline in real-time, reducing post-incident reconstruction effort by 80%. Within 24 hours: IC schedules the postmortem review meeting and assigns the postmortem author (typically the TL). Within 48 hours (SEV-1) or 1 week (SEV-2): postmortem document completed using the standard template. Template includes: summary, impact, timeline, root cause, contributing factors, action items with owners and due dates. Postmortem review meeting: 30-60 minutes, attended by incident participants plus affected team leads. Focus: validate the timeline, agree on root causes, commit to action items. Not a blame session — the IC sets this tone explicitly at the start.' Action item tracking: 'All postmortem action items entered into the engineering tracking system within 24 hours of the review meeting. Action items have: owner, due date, priority, and link back to the postmortem. Monthly review: SRE team reviews all open postmortem action items. Items overdue by more than 2 weeks are escalated to engineering management.' Process sustainability: 'Quarterly retrospective on the incident response process itself. Metrics tracked: time to assemble war room, time to first status update, MTTR by severity, postmortem completion rate, action item completion rate. IC training: quarterly tabletop exercises for all IC-eligible engineers. New engineers shadow 2 real incidents before being eligible for any incident role. Annual review: update severity definitions, escalation paths, and role descriptions based on organizational changes'"
+    weight: 0.30
+    description: "Postmortem integration"

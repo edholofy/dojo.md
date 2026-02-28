@@ -1,0 +1,68 @@
+meta:
+  id: iac-deployment-debugging
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda IaC deployments — diagnose SAM, CDK, and CloudFormation deployment failures, rollbacks, and configuration drift"
+  tags: [AWS, Lambda, SAM, CDK, CloudFormation, IaC, deployment, advanced]
+
+state: {}
+
+trigger: |
+  Your SAM deployment fails during CloudFormation stack update:
+
+  $ sam deploy --stack-name order-api --guided
+  CloudFormation events:
+  CREATE_IN_PROGRESS  AWS::Lambda::Function  OrderFunction
+  CREATE_FAILED       AWS::Lambda::Function  OrderFunction
+    "Resource handler returned message: 'Lambda function
+    order-api-OrderFunction-abc123 could not be found'
+    (Service: Lambda, Status Code: 404)"
+  ROLLBACK_IN_PROGRESS
+
+  The stack is now in ROLLBACK_IN_PROGRESS. Investigation:
+
+  1. The function code was uploaded to S3 (CodeUri) but the S3
+     bucket was in a different region than the stack. Lambda and
+     the code bucket must be in the same region.
+
+  2. After fixing the region, deployment succeeds but the function
+     uses the old code. SAM didn't detect code changes because the
+     zip file hash didn't change (build artifacts weren't cleaned):
+     $ sam build --no-cached  # Force rebuild
+
+  3. CDK deployment fails differently:
+     $ cdk deploy
+     "UPDATE_ROLLBACK_COMPLETE" — stack rolled back successfully
+     but the next deploy fails because CloudFormation is stuck:
+     Need to wait for rollback to complete, or fix the issue and
+     redeploy.
+
+  4. Configuration drift: someone manually changed the Lambda
+     function's memory via console from 256MB to 512MB. The next
+     SAM deploy reverts it to 256MB (as defined in template.yaml).
+     The team is confused: "Who changed the memory back?"
+
+  5. CloudFormation stack stuck in DELETE_FAILED because the Lambda
+     function has a resource-based policy referencing a deleted
+     resource. Manual intervention needed.
+
+  Task: Explain IaC deployment debugging for Lambda. Write: common
+  SAM/CDK deployment errors, CloudFormation stack states (and how
+  to recover from each), configuration drift detection, rollback
+  strategies, blue-green deployments with SAM/CDK, and IaC best
+  practices for serverless applications.
+
+assertions:
+  - type: llm_judge
+    criteria: "Deployment errors are explained — common SAM errors: S3 bucket region mismatch, stale build artifacts (use sam build --no-cached), template validation errors (sam validate). CDK errors: synthesis failures (TypeScript errors), asset upload failures, stack update conflicts. CloudFormation: CREATE_FAILED (resource creation error), UPDATE_ROLLBACK_COMPLETE (update failed and rolled back), DELETE_FAILED (can't delete dependent resources). Always check CloudFormation events for the specific error message — it's usually very descriptive"
+    weight: 0.35
+    description: "Deployment errors"
+  - type: llm_judge
+    criteria: "Stack states and recovery are covered — ROLLBACK_IN_PROGRESS: wait for completion, then fix and redeploy. UPDATE_ROLLBACK_COMPLETE: stack is stable at previous version, safe to deploy again. DELETE_FAILED: manually delete problematic resources, then retry delete. ROLLBACK_FAILED: most dangerous — may need AWS support or manual resource cleanup. Configuration drift: use CloudFormation drift detection (aws cloudformation detect-stack-drift). Prevent: use IaC for all changes, restrict console access for production, use AWS Config rules to detect manual changes"
+    weight: 0.35
+    description: "Stack recovery"
+  - type: llm_judge
+    criteria: "Best practices are practical — use sam deploy --no-fail-on-empty-changeset for CI/CD (no error if nothing changed). SAM safe deployments: AutoPublishAlias + DeploymentPreference (Canary, Linear) for gradual rollouts with automatic rollback on CloudWatch alarm. CDK: use cdk diff before deploy to review changes. Pin dependency versions in requirements.txt/package-lock.json for reproducible builds. Use parameterized templates for multi-environment deployment. Never manually modify resources managed by CloudFormation. Use CloudFormation change sets to preview changes before applying"
+    weight: 0.30
+    description: "Best practices"

@@ -1,0 +1,47 @@
+meta:
+  id: rfc-process-design
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Design an RFC process — create a comprehensive RFC workflow including templates, review processes, approval criteria, and tooling for an engineering organization"
+  tags: [RFC, process-design, workflow, governance, templates, expert]
+
+state: {}
+
+trigger: |
+  You're the Director of Engineering at a 200-person engineering
+  organization. The CEO has asked you to formalize technical
+  decision-making after several costly architectural mistakes made
+  without proper review. You need to design an RFC process from
+  scratch.
+
+  Constraints:
+  - 200 engineers across 20 teams in 4 time zones
+  - Mix of senior architects and junior engineers
+  - Some teams move fast (consumer product), others are risk-averse
+    (payments, compliance)
+  - Previous attempt at a design doc process failed because it was
+    "too bureaucratic" — engineers stopped writing docs and made
+    decisions in Slack instead
+  - Must work for both small decisions (new library adoption) and
+    large ones (platform migrations)
+
+  Task: Design a complete RFC process including: lightweight and
+  heavyweight RFC tracks, template design, review and approval
+  workflow, tooling recommendations, and metrics for process health.
+  Address why the previous process failed and how this one avoids
+  the same fate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Two-track RFC process balances rigor with velocity — lightweight track (Mini-RFC): for decisions affecting 1-2 teams, reversible within 2 weeks, under 4 weeks effort. Template: 1 page max — problem, recommendation, alternatives (1 sentence each), risks. Review: 2 required reviewers from affected teams, 2 business day review period, approval by any 2 reviewers. Examples: new library adoption, internal API change, feature flag strategy. Heavyweight track (Full RFC): for decisions affecting 3+ teams, hard to reverse, over 4 weeks effort, or involving security/compliance. Template: 3-8 pages — all standard sections with depth. Review: minimum 5 business day review period, required reviewers from each affected team + architecture team, approval requires consensus (no blocking objections). Examples: new service architecture, database migration, breaking API changes. Escalation: if a Mini-RFC reviewer believes it should be a Full RFC, it's upgraded. Better to over-classify than under-classify. Decision tree or flowchart for which track to use"
+    weight: 0.35
+    description: "Two-track process"
+  - type: llm_judge
+    criteria: "Previous failure is analyzed and specific countermeasures are built in — diagnosis: 'The previous process failed because: (1) one-size-fits-all template was too heavy for small decisions, (2) review period was 2 weeks with no fast-track, (3) no tooling — docs lived in Google Docs with no discoverability, (4) no incentive to participate — reviewing wasn't counted as work.' Countermeasures: (1) 'Two-track system means small decisions get a proportional process.' (2) 'Defined review periods with auto-approval if no objections (5 days for full RFC, 2 days for mini). This prevents indefinite blocking.' (3) 'RFCs in GitHub repo with PR-based review. Searchable, versionable, integrated with existing workflow.' (4) 'RFC participation tracked in engineering metrics. Reviewing is explicitly part of senior engineer expectations. Writing an RFC counts toward promotion criteria.' (5) 'Quarterly process retrospective: if engineers are bypassing the process, the process needs to change, not the engineers.' Guardrails against bureaucracy: 'If the average time from RFC submission to decision exceeds 7 business days, the process is too slow and must be streamlined. Monthly metrics reviewed by engineering leadership'"
+    weight: 0.35
+    description: "Failure analysis"
+  - type: llm_judge
+    criteria: "Process health metrics and continuous improvement are defined — metrics: (1) Submission volume: 'Healthy range: 3-8 full RFCs per month, 10-20 mini-RFCs per month for a 200-person org. Below range suggests decisions are being made without documentation. Above range suggests the threshold is too low.' (2) Time to decision: 'Target: 2 business days for mini-RFCs, 7 business days for full RFCs. Track median and p90. If p90 exceeds 2x target, investigate bottlenecks.' (3) Review participation: 'Target: 80% of requested reviewers respond within review period. Low participation suggests reviewer fatigue or irrelevant review assignments.' (4) Post-decision satisfaction: 'Quarterly survey: do engineers feel the RFC process improves decision quality? Target: 70% positive.' (5) Incident correlation: 'Track whether production incidents correlate with decisions that bypassed the RFC process.' Process evolution: 'RFC process is itself subject to RFCs. Any engineer can propose process changes via mini-RFC. The process should evolve based on data, not opinions.' Role definitions: RFC author (writes), RFC shepherd (ensures process is followed, not a reviewer), required reviewers (must respond), optional reviewers (may respond), decision maker (final call if no consensus)"
+    weight: 0.30
+    description: "Process health"

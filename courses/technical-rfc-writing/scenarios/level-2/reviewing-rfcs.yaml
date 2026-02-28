@@ -1,0 +1,42 @@
+meta:
+  id: reviewing-rfcs
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Review and comment on RFCs — provide constructive feedback that improves proposals without derailing them"
+  tags: [RFC, review, feedback, comments, constructive-criticism, intermediate]
+
+state: {}
+
+trigger: |
+  A colleague has written an RFC proposing to replace your REST API
+  with GraphQL. You've been asked to review it. The RFC has several
+  issues:
+
+  1. The problem statement focuses on "REST is outdated" rather than
+     specific problems the team faces
+  2. The solution section is enthusiastic about GraphQL but doesn't
+     address N+1 query problems or caching complexity
+  3. Alternatives section dismisses REST improvements in one sentence
+  4. No migration plan — assumes a complete rewrite
+  5. Success metrics are "developer happiness" with no measurement plan
+  6. The author clearly spent a lot of time on this and is passionate
+
+  Task: Write review comments for this RFC that are constructive,
+  specific, and actionable. Address the issues without demoralizing
+  the author. Then write a guide on how to review RFCs effectively,
+  including what to look for and how to frame feedback.
+
+assertions:
+  - type: llm_judge
+    criteria: "Review comments are specific and actionable — each comment identifies the issue, explains why it matters, and suggests improvement. Problem statement: 'The motivation focuses on GraphQL advantages but I'd like to see the specific pain points our team faces with REST. Which endpoints require multiple round trips? Which clients are over-fetching? Concrete examples would strengthen the case. For instance: the mobile dashboard currently makes 7 API calls to load — if this is the kind of problem driving the proposal, stating it explicitly makes the justification stronger.' N+1 concern: 'The design should address how we handle nested queries. A query like { users { posts { comments } } } could generate 1 + N + N*M database queries. What's the dataloader or batching strategy? This is the most common GraphQL performance issue and reviewers will ask about it.' Each comment asks a question or suggests a direction rather than just pointing out flaws"
+    weight: 0.35
+    description: "Specific actionable feedback"
+  - type: llm_judge
+    criteria: "Tone is constructive and respects the author's effort — opens with genuine appreciation: 'This is a thorough exploration of GraphQL's capabilities. The schema design section in particular shows deep understanding of our domain model.' Frames issues as collaborative improvement: 'I think we can strengthen the alternatives section' not 'the alternatives section is weak.' Uses questions to surface gaps: 'Have you considered how this affects our CDN caching strategy? REST responses are easily cached by URL, but GraphQL POST requests need a different approach' rather than 'you forgot about caching.' Separates blocking concerns from suggestions: 'I have two concerns I'd want addressed before approving: (1) migration plan and (2) N+1 query strategy. I also have some suggestions that would strengthen but don't block: success metrics refinement and caching analysis.' Acknowledges the author's expertise: 'Your schema design handles the authorization model well — I hadn't considered using GraphQL directives for that'"
+    weight: 0.35
+    description: "Constructive tone"
+  - type: llm_judge
+    criteria: "Review guide covers what to look for and how to frame feedback — what to review: (1) Problem validation: does the problem actually exist and is it significant? (2) Solution completeness: does it address the problem without creating new ones? (3) Alternatives fairness: were other options genuinely evaluated? (4) Feasibility: can this actually be built with available resources and timeline? (5) Risks: are risks acknowledged honestly, not hidden? (6) Internal consistency: do success metrics match the problem statement? How to frame feedback: (1) Lead with what's strong — the author needs to know what to keep. (2) Ask questions before making assertions — maybe you're missing context. (3) Distinguish 'blocking' from 'nice to have' — not every suggestion needs to be addressed. (4) Propose alternatives, don't just criticize — 'have you considered X?' is better than 'Y is wrong.' (5) Focus on the proposal, not the person. Anti-patterns: bike-shedding (arguing about naming while ignoring architecture), scope-adding ('while you're at it'), and review-by-rewrite (proposing a completely different solution)"
+    weight: 0.30
+    description: "Review guide"

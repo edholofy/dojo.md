@@ -1,0 +1,50 @@
+meta:
+  id: organizational-factors
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Identify organizational factors — analyze how understaffing, knowledge gaps, process failures, and organizational structure contributed to incidents"
+  tags: [postmortem, organizational-factors, process, staffing, knowledge-gaps, advanced]
+
+state: {}
+
+trigger: |
+  Your team had a major incident on a Sunday night. Investigation
+  reveals that the technical failure (a database failover that
+  didn't work) was only part of the story. Organizational factors
+  made it much worse:
+
+  - The on-call engineer was a junior developer on their second
+    week of on-call. They didn't know how to trigger the database
+    failover manually.
+  - The runbook for database failover was last updated 18 months
+    ago and referenced infrastructure that no longer exists.
+  - The senior database engineer who could have helped was unreachable
+    (on vacation, phone off, no backup designated).
+  - The escalation path documented in the wiki said to contact the
+    "Database Team" — but that team was reorganized 6 months ago
+    and no one updated the escalation contacts.
+  - The incident response Slack channel wasn't created because the
+    junior engineer didn't know the incident response process.
+
+  The technical fix (repair database failover) is straightforward.
+  But the organizational failures are what turned a 15-minute issue
+  into a 3-hour outage.
+
+  Task: Write the organizational factors section of the postmortem.
+  Address each organizational failure without blaming individuals.
+  Propose both technical and organizational action items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Organizational factors are identified as systemic issues, not individual failures — each factor reframed: Junior on-call: 'Our on-call onboarding process does not include hands-on practice with critical procedures (database failover, service restarts). The junior engineer was certified for on-call after completing a checklist, not after demonstrating capability with emergency procedures.' Stale runbook: 'Runbooks are treated as write-once documents. No process exists to review and update runbooks after infrastructure changes. The database runbook was invalidated by 3 infrastructure changes in 18 months, none of which triggered a runbook update.' Unreachable expert: 'On-call coverage assumes a single person is sufficient. No secondary on-call or escalation buddy is designated. When the primary expert is unavailable, there is no fallback.' Stale escalation contacts: 'Organizational changes (team restructuring) do not trigger updates to operational documentation. The wiki still references a team that no longer exists because no one owns the wiki's accuracy.' Missing incident process: 'The incident response process exists in documentation but is not practiced. The junior engineer had read the docs but never executed the process. Reading about incident response is not the same as practicing it.'"
+    weight: 0.35
+    description: "Systemic organizational factors"
+  - type: llm_judge
+    criteria: "Organizational action items are as specific as technical ones — on-call readiness: 'On-call onboarding includes shadowing a real incident AND performing 3 critical procedures in a staging environment (database failover, service restart, DNS failover) before being certified for solo on-call. Owner: Engineering manager. Due: implement for next on-call rotation.' Runbook maintenance: 'Every infrastructure change PR requires checking whether it invalidates any runbook. Infrastructure team adds runbook-impact label to PRs. Runbooks have a review-by date — if not reviewed within 6 months, they're flagged as potentially stale. Owner: SRE team. Due: 3 weeks for process, 6 weeks to review all existing runbooks.' Backup coverage: 'Every on-call rotation has a primary and a secondary. Secondary is reachable but not actively monitoring — available for escalation. Vacation policy: on-call engineers must hand off on-call before going on vacation. No exceptions. Owner: Engineering management. Due: next rotation.' Escalation accuracy: 'Organizational changes automatically trigger a review of escalation contacts by the affected teams. Engineering ops maintains a service-to-team mapping that is updated as part of team restructuring. Owner: Engineering ops. Due: 4 weeks.' Incident response practice: 'Quarterly incident simulation (tabletop or live) for all on-call engineers. Focus on process execution, not technical troubleshooting. Owner: SRE team. Due: first simulation within 6 weeks.'"
+    weight: 0.35
+    description: "Organizational action items"
+  - type: llm_judge
+    criteria: "Analysis distinguishes between technical failure and organizational amplification — framing: 'The technical failure (database failover not working) would have been a 15-minute incident with an experienced engineer and current runbooks. The organizational factors amplified this to a 3-hour outage. Technical failure: 15 minutes (if the failover had worked or been manually triggered). Time added by organizational factors: 165 minutes (2 hours 45 minutes). Breakdown: 30 minutes — junior engineer attempting to follow stale runbook. 45 minutes — searching for help, trying to reach unreachable expert. 30 minutes — finding someone who knew the current database infrastructure. 60 minutes — that person getting context, diagnosing, and fixing.' This breakdown shows that organizational improvements would have a 10x greater impact on incident duration than the technical fix alone. Priority recommendation: 'The technical fix (repair auto-failover) is important but addresses only the trigger. The organizational fixes (on-call readiness, runbook currency, backup coverage) address the amplification that turned a minor issue into a major outage. Both are needed, but organizational fixes have higher ROI.'"
+    weight: 0.30
+    description: "Technical vs organizational"

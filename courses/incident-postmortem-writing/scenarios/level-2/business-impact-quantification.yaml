@@ -1,0 +1,51 @@
+meta:
+  id: business-impact-quantification
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Quantify business impact — translate technical incidents into financial, reputational, and operational costs for business stakeholders"
+  tags: [postmortem, business-impact, financial, quantification, cost, intermediate]
+
+state: {}
+
+trigger: |
+  Your SaaS platform experienced a 4-hour outage on a Wednesday
+  during business hours. Leadership wants to know the "real cost"
+  of the incident. You need to calculate the total cost beyond just
+  the obvious revenue loss.
+
+  Available data:
+  - Platform processes $500K in transactions per hour during business
+    hours (not all were lost — some customers retried later)
+  - Estimated 60% of transactions during the window were permanently
+    lost (customers went to competitors)
+  - 8 engineers worked on the incident for 4 hours (average loaded
+    cost: $100/hour)
+  - Customer support handled 1,200 tickets over 2 days (average
+    resolution time: 15 minutes each, support cost: $35/hour)
+  - 3 enterprise customers triggered SLA credits (contractual 10x
+    credit for downtime)
+  - Their combined monthly spend: $150K
+  - Social media: 45 negative mentions, 2 tech publication articles
+  - Estimated 5% of affected customers at risk of churning
+  - Affected customers represent $2M ARR
+  - Post-incident engineering: 3 engineers for 2 weeks on remediation
+
+  Task: Calculate the total incident cost across all dimensions.
+  Present it in a format that makes business leaders understand
+  the true cost of reliability failures. Then write a guide on
+  incident cost quantification.
+
+assertions:
+  - type: llm_judge
+    criteria: "Total cost includes all direct and indirect costs — direct costs: 'Revenue lost during outage: $500K/hour × 4 hours × 60% permanently lost = $1.2M. SLA credits: $150K monthly × (4 hours / 720 hours in month) × 10x multiplier = approximately $8,333. Incident response engineering: 8 engineers × 4 hours × $100/hour = $3,200. Customer support: 1,200 tickets × 15 min × ($35/60) = $10,500. Remediation engineering: 3 engineers × 80 hours × $100/hour = $24,000. Total direct costs: approximately $1,246,033.' Indirect costs: 'Churn risk: 5% of $2M ARR = $100K annual revenue at risk. Customer trust erosion: difficult to quantify but real — enterprise sales cycles may lengthen for 2-3 months. Reputational damage: 45 social media mentions + 2 tech articles reduce inbound leads (estimated 10% reduction for 1 month = $X based on average lead value).' Total incident cost: direct + estimated indirect = $X. Cost per minute of outage: total / 240 minutes = $Y/minute. This contextualizes future reliability investments"
+    weight: 0.35
+    description: "Comprehensive cost calculation"
+  - type: llm_judge
+    criteria: "Costs are categorized and presented for business decision-making — cost categories: (1) Immediate revenue impact ($1.2M): 'Revenue permanently lost during the outage window. This is money that will never be recovered.' (2) Contractual obligations ($8,333): 'SLA credits owed to enterprise customers. These are cash costs.' (3) Operational costs ($37,700): 'Engineering time for response and remediation. This is opportunity cost — these engineers aren't building features.' (4) Customer relationship risk ($100K ARR): 'Potential churn from affected customers. This represents 12 months of recurring revenue at risk.' (5) Brand and reputation (estimated): 'Harder to quantify but affects: enterprise sales pipeline, customer retention, employer brand.' Total with ranges: 'Conservative estimate (direct costs only): $1.25M. Full estimate (including churn risk): $1.35M. Worst case (including reputation impact): $1.5M+.' Comparison framing: 'This single 4-hour incident cost more than our entire Q1 reliability improvement budget of $200K. Investment in reliability prevention has a clear ROI'"
+    weight: 0.35
+    description: "Business presentation"
+  - type: llm_judge
+    criteria: "Cost quantification guide is reusable — framework: (1) Revenue impact: hourly revenue × outage hours × percentage permanently lost (not all customers try competitors). Be honest about what's permanent vs recoverable. (2) Contractual costs: SLA credits, contractual penalties, legal liability. Pull from actual contracts. (3) Operational costs: engineer-hours × loaded cost for response + remediation. Include support costs. (4) Customer risk: at-risk ARR based on affected customer segment and historical churn data. (5) Reputation: hardest to quantify — use proxies like lead volume changes, sales cycle changes, NPS impact. When uncertain: 'Use ranges (conservative, expected, worst-case). Decision-makers prefer honest ranges over false precision.' Connecting cost to investment: 'The purpose of cost quantification is not to assign blame but to justify investment. If incidents cost $1.35M/year and reliability improvements cost $200K, the ROI is clear.' What NOT to do: inflate costs to get budget (destroys credibility), ignore indirect costs (understates the real impact), blame costs on individuals (drives hiding rather than transparency)"
+    weight: 0.30
+    description: "Cost guide"

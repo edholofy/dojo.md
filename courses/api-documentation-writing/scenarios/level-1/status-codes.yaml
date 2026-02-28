@@ -1,0 +1,45 @@
+meta:
+  id: status-codes
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document HTTP status codes — write clear descriptions for success, client error, and server error responses with example bodies"
+  tags: [API, documentation, status-codes, errors, HTTP, beginner]
+
+state: {}
+
+trigger: |
+  Your API returns various status codes but the documentation just
+  lists "200 OK" and "400 Bad Request" with no details. Developers
+  keep asking support questions like:
+
+  - "What's the difference between 401 and 403?"
+  - "Why am I getting a 409? What does it mean?"
+  - "The API returned 422 — what field is wrong?"
+  - "I got a 429 — when can I retry?"
+  - "What does the error response body look like?"
+
+  The API uses these status codes:
+  200 (OK), 201 (Created), 204 (No Content), 400 (Bad Request),
+  401 (Unauthorized), 403 (Forbidden), 404 (Not Found),
+  409 (Conflict), 422 (Unprocessable Entity), 429 (Too Many Requests),
+  500 (Internal Server Error), 503 (Service Unavailable)
+
+  Task: Write comprehensive status code documentation for this API.
+  For each code: explain when it's returned, show an example response
+  body, and provide guidance on how developers should handle it.
+  Also document the standard error response format.
+
+assertions:
+  - type: llm_judge
+    criteria: "Status codes are accurately documented — each code has: when it's returned (specific scenario), example response body, developer guidance. Key distinctions: 401 (authentication failed — invalid/missing token) vs 403 (authorized but not permitted — lacks required role/permission). 400 (malformed request, wrong types) vs 422 (valid JSON but business logic validation failed — e.g., invalid email format). 409 (resource conflict — e.g., duplicate email). 429 (rate limited — include Retry-After header guidance). 204 for successful DELETE (no body). 201 for successful POST (returns created resource)"
+    weight: 0.35
+    description: "Accurate codes"
+  - type: llm_judge
+    criteria: "Error response format is standardized — consistent error response structure documented: { 'error': { 'code': 'VALIDATION_ERROR', 'message': 'Human-readable description', 'details': [{ 'field': 'email', 'message': 'Invalid email format' }] } }. Machine-readable error codes (not just HTTP status) enable programmatic error handling. The details array helps developers identify which specific field(s) failed validation. Document that 5xx errors use the same format but with less detail (don't expose internals)"
+    weight: 0.35
+    description: "Error format"
+  - type: llm_judge
+    criteria: "Developer guidance is actionable — for each error: what to do. 401: check token is valid, not expired, included in Authorization header. 403: check user has required permissions/role. 404: verify resource ID exists. 409: handle conflict (e.g., show 'email already taken' to user). 422: parse details array to show field-level errors. 429: respect Retry-After header, implement exponential backoff. 500: retry with backoff, report to API provider if persistent. 503: service temporarily unavailable, retry after delay"
+    weight: 0.30
+    description: "Developer guidance"

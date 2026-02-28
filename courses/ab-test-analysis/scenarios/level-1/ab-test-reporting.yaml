@@ -1,0 +1,41 @@
+meta:
+  id: ab-test-reporting
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "Write A/B test reports — create clear, actionable reports that summarize test setup, results, and recommendations for both technical and non-technical audiences"
+  tags: [reporting, documentation, summary, stakeholders, beginner]
+
+state: {}
+
+trigger: |
+  An A/B test on the onboarding flow has completed with a clear
+  winner. The data analyst needs to write a report that will be
+  read by: (1) the product manager who needs to decide whether to
+  ship, (2) the VP of Product who needs a quick summary, and (3)
+  the data team who wants the statistical details.
+
+  Test results:
+  - Control (current onboarding): 42% completion rate
+  - Treatment (simplified 3-step onboarding): 48% completion rate
+  - p-value: 0.003
+  - 95% CI: [2.1pp, 9.9pp]
+  - Sample: 8,400 users per group
+  - Duration: 21 days
+  - Guardrails: no degradation in 7-day retention or support tickets
+
+  Task: Write the A/B test report for all three audiences.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates an executive summary for the VP — executive: 'Executive summary (for the VP of Product): Test: Simplified onboarding flow (3 steps instead of 7). Result: the simplified onboarding increased completion by 14% (from 42% to 48%). This is statistically significant with high confidence (p = 0.003). Impact: an estimated 504 additional users per month complete onboarding. At current conversion rates, this translates to approximately 75 additional paying customers per month ($45K additional MRR). Guardrails: 7-day retention was unchanged — users who completed the simplified onboarding retained at the same rate as users who completed the original flow. No increase in support tickets. Recommendation: ship the simplified onboarding to 100% of new users. This section takes 30 seconds to read. The VP knows: what was tested, whether it worked, the business impact, and the recommendation'"
+    weight: 0.35
+    description: "Executive"
+  - type: llm_judge
+    criteria: "Response creates a detailed report for the product manager — detailed: 'Detailed report (for the product manager): Test overview: Hypothesis: simplifying the onboarding from 7 steps to 3 steps will increase onboarding completion rate by at least 4 percentage points because user research showed users abandon the current flow at step 4 (profile photo upload) and step 6 (preferences survey). Test design: control: current 7-step onboarding (profile → photo → company → role → preferences → integrations → welcome). Treatment: simplified 3-step onboarding (profile → integrations → welcome). Traffic split: 50/50 random assignment. Duration: 21 days (3 full weeks). Sample size: 8,400 users per group (16,800 total). Results: Primary metric: onboarding completion rate. Control: 42.0% (3,528 / 8,400). Treatment: 48.0% (4,032 / 8,400). Absolute lift: +6.0 percentage points. Relative lift: +14.3%. Statistical significance: p = 0.003. 95% CI: [+2.1pp, +9.9pp]. Secondary metrics: time to complete onboarding: control 4.2 minutes, treatment 2.1 minutes (↓50%). Profile completeness at day 7: control 78%, treatment 71% (↓7pp — expected since some steps were removed). Feature discovery at day 7: control 45%, treatment 42% (↓3pp — minor, not significant). Guardrail metrics: 7-day retention: control 35.2%, treatment 35.8% (no significant difference). Support tickets in first 7 days: control 2.1%, treatment 1.8% (no significant difference). Revenue per user at day 30: control $12.40, treatment $12.80 (no significant difference). Segment analysis: mobile users: +8.2pp lift (larger effect — mobile onboarding was especially painful). Desktop users: +4.1pp lift. New users from paid ads: +7.5pp lift. Organic users: +5.2pp lift. Decision: ship to 100%. The removed steps (photo, company, role, preferences) can be prompted later in the user journey, recapturing profile completeness without blocking onboarding'"
+    weight: 0.35
+    description: "Detailed"
+  - type: llm_judge
+    criteria: "Response includes a technical appendix for the data team — technical: 'Technical appendix (for the data team): Statistical methodology: test type: two-proportion z-test (two-tailed). Significance level: α = 0.05. Power: 80%. Minimum detectable effect: 4 percentage points. Required sample size: 7,200 per group (achieved: 8,400 per group — overpowered). Test statistic: z = 2.96. P-value: 0.003. Effect size (Cohen's h): 0.12 (small effect). 95% confidence interval for the difference in proportions: [0.021, 0.099]. Validation checks: Sample Ratio Mismatch (SRM) test: chi-square = 0.12, p = 0.73. No SRM detected. Assignment balance: control 8,400, treatment 8,400. Perfect. Pre-experiment covariate balance: device type (mobile/desktop), traffic source, and geography were balanced between groups (chi-square tests, all p > 0.3). AA test (pre-period): checked the 7 days before the test. No pre-existing difference between groups on the primary metric (p = 0.85). Data quality: no missing data in the primary metric. 12 users (0.07%) had incomplete tracking data in secondary metrics — excluded from secondary analysis. Sensitivity analysis: Bayesian analysis (Beta-Binomial model with uniform prior): posterior probability that treatment > control: 99.7%. Expected lift: 6.0pp. 95% credible interval: [2.3pp, 9.7pp]. Consistent with the frequentist result. Winsorized analysis (capping outliers at 99th percentile): no change — metric is binary, so no outlier effect. Raw data and analysis code available in the experiment repository for reproducibility'"
+    weight: 0.30
+    description: "Technical"

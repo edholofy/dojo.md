@@ -1,0 +1,42 @@
+meta:
+  id: list-and-table-specs
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "List and table specifications — write specifications for data lists and tables including sorting, filtering, pagination, and empty states"
+  tags: [lists, tables, pagination, sorting, filtering, beginner]
+
+state: {}
+
+trigger: |
+  A junior designer says: "I designed a contacts list page.
+  My wireframe shows:
+
+  - Search bar at the top
+  - Filter chips (All, Favorites, Recent)
+  - Contact list with avatar, name, email, and role
+  - 'Add Contact' button
+
+  My developer says: 'Your wireframe shows 8 contacts. What
+  about sorting? Pagination? What if search returns nothing?
+  What columns can they sort by? What if they have 10,000
+  contacts?'
+
+  I only designed what you see. How do I specify list behavior?"
+
+  Task: Write specifications for the contacts list covering
+  sorting, filtering, search, pagination, and all states.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies search, filter, and sort behavior — Search: searches across name and email fields, debounce 300ms after typing stops, minimum 2 characters, results update inline (no separate search page), clear button (X) resets search, preserves active filter. Filters: All (default, shows all contacts), Favorites (contacts marked as favorites), Recent (contacted in last 30 days), only one filter active at a time, filter + search work together. Sorting: default sort (alphabetical by last name), sortable columns (name, email, role, date added), sort direction toggle (ascending/descending), visual indicator on sorted column (arrow icon)"
+    weight: 0.35
+    description: "SearchFilterSort"
+  - type: llm_judge
+    criteria: "Response specifies pagination and performance — pagination approach (options: numbered pages showing 25 per page, or infinite scroll loading 25 at a time), recommends one with rationale for the contacts use case. Page size selection (if paginated: 25/50/100 options). Total count display ('247 contacts' or 'Showing 1-25 of 247'). Loading behavior (skeleton rows while loading next page, loading spinner for infinite scroll). Performance consideration for 10,000 contacts (virtual scrolling or pagination required, not render all). URL state (search query and filters reflected in URL for bookmarking/sharing)"
+    weight: 0.35
+    description: "PaginationPerformance"
+  - type: llm_judge
+    criteria: "Response covers all list states — empty states: no contacts at all ('Add your first contact' + 'Add Contact' button), no search results ('No contacts matching \"xyz\". Try a different search.'), no contacts in filter ('No favorite contacts yet. Star contacts to add them here.'). Loading state for initial load and subsequent filter/search changes. Error state if contacts fail to load. Selected state (if contacts can be selected for bulk actions: checkbox, selected count bar, bulk delete/export). Each empty state has a specific, helpful message with an actionable next step"
+    weight: 0.30
+    description: "ListStates"

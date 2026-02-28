@@ -1,0 +1,62 @@
+meta:
+  id: expert-debugging-shift
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Combined expert debugging shift — diagnose and design solutions for an enterprise serverless platform with architecture, security, cost, and operational challenges"
+  tags: [AWS, Lambda, troubleshooting, combined, shift-simulation, expert]
+
+state: {}
+
+trigger: |
+  You're hired as the serverless platform architect for a fintech
+  company. The existing Lambda-based platform has grown organically
+  over 3 years and has significant technical debt.
+
+  Assessment findings:
+
+  Architecture:
+  - 200+ Lambda functions across 3 AWS accounts (dev, staging, prod)
+  - No naming convention — functions named randomly
+  - 40 functions with inline code (console editor, not IaC!)
+  - Step Functions workflows with 20+ states and no error handling
+  - Mixed deployment methods: SAM, Serverless Framework, CDK, console
+
+  Security:
+  - 30% of functions share a single IAM role with AdministratorAccess
+  - API Gateway endpoints with no authentication
+  - Secrets stored as plain-text environment variables
+  - No dependency scanning — last audit found 85 CRITICAL CVEs
+  - Docker socket pattern found in 5 CI/CD Lambda functions
+
+  Operations:
+  - No structured logging — console.log everywhere
+  - CloudWatch Logs retention: unlimited (costing $3K/month alone)
+  - No X-Ray tracing enabled
+  - On-call rotation: 2 people who "know how it works"
+  - MTTR: 4+ hours average
+
+  Cost:
+  - Monthly bill: $65K (Lambda $28K, CloudWatch $8K, API GW $12K,
+    DynamoDB $10K, other $7K)
+  - 50% of functions over-provisioned (1GB memory, using 100MB)
+  - 15 functions with provisioned concurrency never utilizing it
+
+  Task: Design the 6-month platform improvement plan. Write: the
+  priority ranking (security first!), IaC standardization approach,
+  security remediation, observability implementation, cost optimization
+  targets, and the team structure needed to sustain the platform.
+
+assertions:
+  - type: llm_judge
+    criteria: "Priority ranking is justified — Month 1: Security remediation (replace AdministratorAccess roles, add API authentication, move secrets to Secrets Manager, scan dependencies). Month 2: IaC migration (move inline functions to SAM/CDK, standardize on one IaC tool). Month 3: Observability (Powertools Logger + X-Ray + custom metrics, set log retention). Month 4: Cost optimization (right-size memory, remove unused provisioned concurrency, ARM migration). Month 5-6: Architecture improvements (error handling in Step Functions, standardize deployment, documentation)"
+    weight: 0.35
+    description: "Priority ranking"
+  - type: llm_judge
+    criteria: "Security and IaC remediation are covered — security: per-function IAM roles with least privilege (automated with IAM Access Analyzer), Cognito or Lambda authorizers on all APIs, Secrets Manager with automatic rotation, dependency scanning in CI (block on CRITICAL). IaC: standardize on CDK or SAM (pick one), migrate inline functions to IaC (start with critical functions), use infrastructure review in PR process. Naming convention: {service}-{function}-{env}. Tag all resources: team, service, environment, cost-center"
+    weight: 0.35
+    description: "Security and IaC"
+  - type: llm_judge
+    criteria: "Cost and team structure are practical — cost optimization: right-size memory (target: $10K Lambda reduction), set log retention to 30 days ($6K CloudWatch savings), remove unused provisioned concurrency ($2K savings), switch to HTTP API where possible ($4K API GW savings). Total target: $22K/month savings (34%). Team: minimum 3-person platform team (1 security-focused, 1 observability, 1 developer experience). On-call: expand rotation to 5+ engineers with runbooks. Success metrics: MTTR < 30 min, security findings < 5, IaC coverage > 95%, cost trend decreasing quarter over quarter"
+    weight: 0.30
+    description: "Cost and team"

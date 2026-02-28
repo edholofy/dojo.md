@@ -1,0 +1,52 @@
+meta:
+  id: quantitative-persona-segmentation
+  level: 2
+  course: user-persona-creation
+  type: output
+  description: "Quantitative persona segmentation — use behavioral data and analytics to identify distinct user segments for persona development"
+  tags: [quantitative, segmentation, analytics, behavioral-data, intermediate]
+
+state: {}
+
+trigger: |
+  You have behavioral analytics from a project management
+  SaaS tool (N=10,000 active users, 6 months of data):
+
+  Cluster A (35% of users):
+  - Log in daily, avg 4.2 hours/day in the tool
+  - Use 80%+ of features including advanced views
+  - Create avg 12 tasks/day, modify settings frequently
+  - Team size: 8-15 people
+
+  Cluster B (40% of users):
+  - Log in 3-4 times/week, avg 45 min/session
+  - Use mainly task lists and basic board view
+  - Create avg 3 tasks/day, rarely change settings
+  - Team size: 3-5 people
+
+  Cluster C (25% of users):
+  - Log in 1-2 times/week, avg 15 min/session
+  - Use only the dashboard overview and notifications
+  - Create 0-1 tasks/day, never change settings
+  - Team size: varies (they're usually team members,
+    not managers)
+
+  Revenue data: Cluster A = 55% of revenue, Cluster B =
+  30%, Cluster C = 15%.
+
+  Task: Create behavioral personas for each cluster and
+  recommend a persona prioritization strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates 3 distinct behavioral personas — Cluster A persona (the power user/project manager: name this persona, give them a role like 'senior PM managing a complex engineering team', their behavior reflects deep tool dependence — 4.2 hours/day means this IS their work environment, they've customized the tool extensively, they'd be vocal about changes, they represent 55% of revenue — they're the economic engine), Cluster B persona (the practical manager: name and role — perhaps a team lead or department manager with a smaller team, uses the tool functionally but doesn't live in it — 45 min sessions 3-4x/week suggests task management not project orchestration, creates tasks but doesn't configure — they want simplicity not power), Cluster C persona (the passive participant: name and role — likely a team member who receives tasks, checks status, and moves on, 15 min/week suggests this person is told to use the tool rather than choosing to, they're consumers of information not creators — their primary interface is the dashboard and notifications, lowest engagement but still 25% of the user base)."
+    weight: 0.35
+    description: "BehavioralPersonas"
+  - type: llm_judge
+    criteria: "Response provides persona prioritization strategy — prioritization framework (consider multiple factors: revenue contribution — A is 55%, user volume — B is 40%, growth potential — which cluster has room to grow?, churn risk — which cluster is most likely to leave?, strategic alignment — which cluster represents the company's future?), recommended prioritization (primary persona: Cluster A — they drive majority revenue, use the product deeply, and would churn to a competitor with better features — losing them is catastrophic; secondary persona: Cluster B — largest segment by volume, growth opportunity to expand usage, may convert some to Cluster A behavior with the right features; awareness persona: Cluster C — important for retention but designing for them shouldn't compromise the core experience for A and B), anti-persona consideration (Cluster C users who never engage beyond dashboard may not be true users — they're assigned accounts, investigate whether activating them is possible or if they're permanently passive, designing for disengaged users can dilute the product for engaged ones)."
+    weight: 0.35
+    description: "PrioritizationStrategy"
+  - type: llm_judge
+    criteria: "Response identifies research gaps and next steps — what quantitative data reveals and what it doesn't (reveals: behavioral patterns, feature usage, engagement levels, segment sizes; doesn't reveal: WHY Cluster B doesn't use advanced features — is it awareness, complexity, or irrelevance?, WHY Cluster C barely engages — is it job role, tool value, or usability?, what would make Cluster B users engage more like Cluster A?), recommended qualitative research (interview 4-6 users from each cluster focusing on: role and workflow context, why they use the features they use and ignore others, what frustrations they have that the data doesn't show, what would change their behavior — this enriches the quantitative clusters with motivational depth), persona evolution plan (these are v1 personas based on analytics alone — they'll be enriched by qualitative research, plan to update personas quarterly as behavioral data accumulates, track: are cluster proportions shifting? are behaviors within clusters changing? are new clusters emerging?)."
+    weight: 0.30
+    description: "ResearchGaps"

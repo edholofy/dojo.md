@@ -1,0 +1,34 @@
+meta:
+  id: date-functions-periods
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Master date functions for period comparisons — calculate month-over-month, year-over-year, and custom fiscal period reports"
+  tags: [SQL, dates, period-comparison, MoM, YoY, fiscal-year, intermediate]
+
+state: {}
+
+trigger: |
+  The finance team needs several period comparison reports:
+  1. "Monthly revenue with month-over-month growth percentage"
+  2. "This quarter vs same quarter last year (YoY comparison)"
+  3. "Revenue by fiscal quarter (our fiscal year starts April 1)"
+  4. "Rolling 12-month revenue total for each month"
+
+  Table: orders (order_id, customer_id, amount, order_date, status)
+
+  Task: Write all four date-based reports.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly calculate period-over-period comparisons — queries: 'Period comparison reports: Report 1 — Month-over-month growth: WITH monthly AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY DATE_TRUNC('month', order_date)) SELECT month, revenue, LAG(revenue) OVER (ORDER BY month) AS prev_month_revenue, revenue - LAG(revenue) OVER (ORDER BY month) AS absolute_change, ROUND((revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0 / LAG(revenue) OVER (ORDER BY month), 1) AS mom_growth_pct FROM monthly ORDER BY month. LAG(revenue) gets the previous month's revenue. First month shows NULL for previous (no prior data). Report 2 — Year-over-year by quarter: WITH quarterly AS (SELECT DATE_TRUNC('quarter', order_date) AS quarter, SUM(amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY DATE_TRUNC('quarter', order_date)) SELECT q1.quarter, q1.revenue AS current_revenue, q2.revenue AS prior_year_revenue, ROUND((q1.revenue - q2.revenue) * 100.0 / q2.revenue, 1) AS yoy_growth_pct FROM quarterly q1 LEFT JOIN quarterly q2 ON q1.quarter = q2.quarter + INTERVAL '1 year' WHERE q1.quarter >= DATE_TRUNC('year', CURRENT_DATE) ORDER BY q1.quarter. Self-join: each quarter joins to the same quarter one year earlier. Report 3 — Fiscal year quarters (April start): SELECT CASE WHEN EXTRACT(MONTH FROM order_date) >= 4 THEN EXTRACT(YEAR FROM order_date) ELSE EXTRACT(YEAR FROM order_date) - 1 END AS fiscal_year, CASE WHEN EXTRACT(MONTH FROM order_date) BETWEEN 4 AND 6 THEN 'FQ1' WHEN EXTRACT(MONTH FROM order_date) BETWEEN 7 AND 9 THEN 'FQ2' WHEN EXTRACT(MONTH FROM order_date) BETWEEN 10 AND 12 THEN 'FQ3' ELSE 'FQ4' END AS fiscal_quarter, SUM(amount) AS revenue FROM orders GROUP BY 1, 2 ORDER BY 1, 2. Report 4 — Rolling 12-month total: WITH monthly AS (SELECT DATE_TRUNC('month', order_date) AS month, SUM(amount) AS revenue FROM orders GROUP BY 1) SELECT month, revenue, SUM(revenue) OVER (ORDER BY month ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS rolling_12m FROM monthly ORDER BY month'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers date function differences across dialects — dialects: 'Date functions by dialect: Month extraction: PostgreSQL: EXTRACT(MONTH FROM order_date) or DATE_PART('month', order_date). MySQL: MONTH(order_date). SQL Server: DATEPART(MONTH, order_date) or MONTH(order_date). Date truncation to period start: PostgreSQL: DATE_TRUNC('month', order_date) — returns first day of month. MySQL: DATE_FORMAT(order_date, '%Y-%m-01') or LAST_DAY(order_date) - INTERVAL (DAY(LAST_DAY(order_date)) - 1) DAY. SQL Server: DATETRUNC(MONTH, order_date) (2022+) or DATEADD(MONTH, DATEDIFF(MONTH, 0, order_date), 0). Date arithmetic: PostgreSQL: order_date + INTERVAL '1 month', order_date - INTERVAL '7 days'. MySQL: DATE_ADD(order_date, INTERVAL 1 MONTH), DATE_SUB(order_date, INTERVAL 7 DAY). SQL Server: DATEADD(MONTH, 1, order_date), DATEADD(DAY, -7, order_date). Date difference: PostgreSQL: order_date - signup_date (returns interval), EXTRACT(DAY FROM order_date - signup_date). MySQL: DATEDIFF(order_date, signup_date) (returns days). SQL Server: DATEDIFF(DAY, signup_date, order_date). Tip: when writing cross-dialect SQL, wrap date functions in CTEs so the dialect-specific code is in one place'"
+    weight: 0.35
+    description: "Dialects"
+  - type: llm_judge
+    criteria: "Response covers calendar tables and date spine patterns — calendar: 'Calendar tables for complete date coverage: Problem: if there are no orders on a holiday, that date is missing from GROUP BY results. The report shows a gap instead of zero. Solution — date spine: WITH date_spine AS (SELECT generate_series('2024-01-01'::date, '2024-12-31'::date, '1 day'::interval)::date AS date) SELECT ds.date, COALESCE(COUNT(o.order_id), 0) AS orders, COALESCE(SUM(o.amount), 0) AS revenue FROM date_spine ds LEFT JOIN orders o ON ds.date = o.order_date::date GROUP BY ds.date ORDER BY ds.date. generate_series creates every date in the range. LEFT JOIN ensures dates with no orders still appear with 0. MySQL alternative: create a permanent calendar table with a row for every date. Calendar tables can include: day_of_week, is_weekend, is_holiday, fiscal_quarter, fiscal_year. This makes fiscal period reports trivial: JOIN calendar_table ON order_date = calendar_date, then GROUP BY fiscal_quarter'"
+    weight: 0.30
+    description: "Calendar"

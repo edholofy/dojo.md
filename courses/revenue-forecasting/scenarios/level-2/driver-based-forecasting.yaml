@@ -1,0 +1,43 @@
+meta:
+  id: driver-based-forecasting
+  level: 2
+  course: revenue-forecasting
+  type: output
+  description: "Driver-based forecasting — learn to build revenue forecasts from business drivers like traffic, conversion, pricing, and retention rather than extrapolating totals"
+  tags: [driver-based, assumptions, levers, modeling, intermediate]
+
+state: {}
+
+trigger: |
+  A head of FP&A says: "I'm tired of forecasting revenue as a single
+  number that grows by some percentage. I want to model the actual
+  business drivers. Our B2B SaaS company has these key metrics:
+
+  Website visitors: 50,000/month (growing 8%/month from SEO investment).
+  Visitor-to-trial conversion: 3%.
+  Trial-to-paid conversion: 25%.
+  Average contract value: $15,000/year.
+  Sales cycle: 45 days average.
+  Monthly logo churn: 2%.
+  Net revenue retention: 108%.
+  Current customers: 400.
+
+  Build me a driver-based forecast for the next 12 months."
+
+  Task: Build a driver-based revenue forecast model, show how each
+  driver contributes to revenue, and demonstrate sensitivity to
+  driver changes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds the driver-based model step by step — model: 'Building the driver-based revenue forecast: the driver chain: visitors → trials → paid customers → revenue. This is the acquisition funnel expressed as a forecasting model. Step 1 — Model the acquisition funnel: monthly visitors: 50,000 (growing 8% month-over-month). Month 1: 50,000 visitors. Month 3: 50,000 × 1.08² = 58,320. Month 6: 50,000 × 1.08⁵ = 73,466. Month 12: 50,000 × 1.08¹¹ = 116,524. Trials generated: visitors × 3% trial conversion. Month 1: 50,000 × 3% = 1,500 trials. Month 6: 73,466 × 3% = 2,204 trials. Month 12: 116,524 × 3% = 3,496 trials. New paid customers: trials × 25% paid conversion (with 45-day lag). Month 1 trials convert in month 2.5 (split across months 2 and 3). Month 1: 0 new customers (pipeline filling). Month 2: approximately 188 new customers (half of month 1 conversions). Month 3: approximately 188 + 196 = 384 cumulative new customers through month 3. Simplified monthly new customers (after ramp): month 3: 375 × 25% ÷ 1 = approximately 400 new per month by month 3. Month 6: 551 × 25% = approximately 550. Month 12: 874 × 25% = approximately 874 new per month. Step 2 — Model the customer base: existing customers: 400. Monthly churn: 2% (lose 2% of customers each month). Net new customers each month = new acquisitions - churned customers. Month 1: 400 - (400 × 2%) + 375 = 400 - 8 + 375 = 767. Month 3: approximately 1,100 customers. Month 6: approximately 1,800 customers. Month 12: approximately 3,400 customers. The customer ceiling with constant acquisition and churn: ceiling = new customers per month ÷ churn rate. At month 12 acquisition rate: 874 ÷ 0.02 = 43,700. We are far from the ceiling, so growth continues strongly. Step 3 — Model the revenue: monthly revenue = customers × (ACV ÷ 12) × NRR adjustment. ACV: $15,000/year = $1,250/month per customer. NRR: 108% means existing customers' revenue grows 0.67%/month on average. Month 1 MRR: 767 × $1,250 = $958,750. Month 6 MRR: 1,800 × $1,250 × (1.0067)⁵ = approximately $2,326,000. Month 12 MRR: 3,400 × $1,250 × (1.0067)¹¹ = approximately $4,572,000. Annual revenue (sum of 12 months MRR): approximately $30.5M. Current ARR: 400 × $15,000 = $6.0M. Projected year-end ARR: approximately $54.9M (month 12 MRR × 12). Growth: approximately 815% year-over-year (extraordinarily high — driven by the compounding visitor growth at 8%/month)'"
+    weight: 0.35
+    description: "Model"
+  - type: llm_judge
+    criteria: "Response demonstrates sensitivity analysis on drivers — sensitivity: 'Sensitivity analysis — which drivers matter most: changing each driver by ±20% while holding others constant reveals which drivers have the biggest impact on revenue. Driver 1 — Visitor growth rate (8% → 6.4% or 9.6%): at 6.4% monthly growth: month 12 visitors = 95,000 (vs 116,500). Year-end ARR: approximately $45M (vs $55M). Revenue impact: -$10M ARR (-18%). At 9.6% monthly growth: month 12 visitors = 142,000. Year-end ARR: approximately $67M. Revenue impact: +$12M ARR (+22%). High sensitivity — visitor growth rate compounds aggressively. Driver 2 — Trial conversion (3% → 2.4% or 3.6%): at 2.4%: 20% fewer trials → 20% fewer customers → approximately $44M year-end ARR. Revenue impact: -$11M ARR (-20%). At 3.6%: +20% more customers → approximately $66M year-end ARR. Revenue impact: +$11M ARR (+20%). Direct linear relationship — 1% conversion change = proportional revenue change. Driver 3 — Paid conversion (25% → 20% or 30%): at 20%: 20% fewer paid conversions → approximately $44M. Revenue impact: -$11M ARR (-20%). Same proportional impact as trial conversion. Driver 4 — ACV ($15K → $12K or $18K): at $12K: revenue per customer drops 20% → approximately $44M. At $18K: revenue per customer increases 20% → approximately $66M. Direct proportional impact — but ACV is usually the hardest driver to change. Driver 5 — Churn rate (2% → 1.6% or 2.4%): at 1.6%: retain more customers → approximately $58M (+5.5%). At 2.4%: lose more customers → approximately $51M (-7.3%). Moderate sensitivity — churn matters more at scale. Sensitivity ranking (by ARR impact of ±20% change): 1. Visitor growth rate: ±$10-12M (highest — compounds over time). 2. Trial conversion: ±$11M (direct proportional). 3. Paid conversion: ±$11M (direct proportional). 4. ACV: ±$11M (direct proportional). 5. Churn rate: ±$3-4M (lower — partially offset by new acquisition). 6. NRR: ±$2-3M (moderate — builds over time). The key insight: visitor growth rate has the highest leverage because it compounds monthly. Improving visitor growth from 8% to 10% monthly is worth more than any other single improvement. This should inform resource allocation — invest heavily in SEO and content marketing'"
+    weight: 0.35
+    description: "Sensitivity"
+  - type: llm_judge
+    criteria: "Response covers practical driver-based forecasting implementation — implementation: 'Practical driver-based forecasting implementation: reality-checking the model: the model projects 815% growth — is this realistic? Red flags to check: visitor growth at 8% monthly (96% annually) from SEO — is this sustainable? SEO traffic growth typically decelerates after initial gains. Trial conversion at 3% — is this stable or declining as traffic quality changes? Higher volume often means lower quality visitors. Sales capacity — can the team handle 874 new customers per month by month 12? This requires significant sales team scaling. Operational capacity — can the product and support team handle 3,400 customers? Adding constraints to the model: constraint 1 — visitor growth deceleration: instead of constant 8% monthly growth, model it as decelerating. Months 1-4: 8% monthly growth. Months 5-8: 5% monthly growth. Months 9-12: 3% monthly growth. Revised month 12 visitors: approximately 82,000 (vs 116,500). This is more realistic. Constraint 2 — conversion rate degradation: as traffic volume increases, conversion rates typically decrease (broader audience = less targeted). Trial conversion: starts at 3%, drops to 2.5% by month 12. Paid conversion: starts at 25%, drops to 22% by month 12. Constraint 3 — sales capacity: maximum new customers the sales team can onboard per month: current team: 50 deals/month. Planned hiring: add 5 reps by month 6, 5 more by month 12. Ramp time: 3 months per new rep. Realistic capacity: month 1-3: 50/month. Month 6: 75/month. Month 12: 100/month. If the funnel generates 874 qualified leads but sales can only close 100, 89% of qualified leads are wasted. Constrained forecast: applying all three constraints: month 12 MRR: approximately $1.8M (vs $4.6M unconstrained). Year-end ARR: approximately $21.6M (vs $54.9M). Annual revenue: approximately $15M (vs $30.5M). The constrained forecast is 50-60% lower but far more credible. Building the driver dashboard: track each driver monthly and compare to plan: driver | plan | actual | variance | impact on forecast. Visitors: 54,000 | 52,000 | -3.7% | -$30K MRR at month-end. Trial CVR: 3.0% | 3.2% | +6.7% | +$25K MRR offset. Paid CVR: 25% | 23% | -8.0% | -$60K MRR. New customers: 405 | 382 | -5.7% | -$29K MRR. Churn: 2.0% | 2.3% | +15% | -$35K MRR. Net impact: -$129K MRR below plan. This dashboard is the operating system for revenue forecasting — it connects daily operational metrics to the revenue outcome'"
+    weight: 0.30
+    description: "Implementation"

@@ -1,0 +1,38 @@
+meta:
+  id: time-series-forecasting
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build time series forecasting models — decompose seasonal patterns, implement ARIMA and Prophet models, and evaluate forecast accuracy using pandas"
+  tags: [python, pandas, time-series, forecasting, ARIMA, seasonality, expert]
+
+state: {}
+
+trigger: |
+  The finance team needs to forecast monthly revenue for the next 12
+  months for budget planning. They have 4 years of monthly revenue
+  data (48 data points) with clear seasonal patterns (Q4 holiday
+  spike, Q1 dip). They also want to forecast weekly demand for
+  inventory planning (208 weeks of data).
+
+  The CFO says: "Last year we used a simple linear trend and missed
+  the Q4 spike by 30%. I need something that captures seasonality."
+
+  Data: monthly_revenue.csv (date, revenue, marketing_spend, new_customers)
+  and weekly_demand.csv (week, units_sold, price, promotion_flag).
+
+  Task: Build and evaluate forecasting models.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code performs time series decomposition and implements forecasting models — models: 'Time series forecasting with pandas: Step 1 — Time series decomposition: from statsmodels.tsa.seasonal import seasonal_decompose. monthly = pd.read_csv(\"monthly_revenue.csv\", parse_dates=[\"date\"], index_col=\"date\"). result = seasonal_decompose(monthly[\"revenue\"], model=\"multiplicative\", period=12). trend = result.trend. seasonal = result.seasonal. residual = result.resid. Multiplicative decomposition: Revenue = Trend x Seasonal x Residual. Use multiplicative when seasonal variation grows with the level (Q4 spike is larger when revenue is higher). Use additive when seasonal variation is constant. Step 2 — ARIMA/SARIMA model: from statsmodels.tsa.statespace.sarimax import SARIMAX. Determine parameters using ACF and PACF: from statsmodels.graphics.tsaplots import plot_acf, plot_pacf. from statsmodels.tsa.stattools import adfuller. adf_result = adfuller(monthly[\"revenue\"]). print(f\"ADF statistic: {adf_result[0]:.4f}, p-value: {adf_result[1]:.4f}\"). If p-value > 0.05, the series is non-stationary — needs differencing (d=1). model = SARIMAX(monthly[\"revenue\"], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12), enforce_stationarity=False). fitted = model.fit(disp=False). forecast = fitted.get_forecast(steps=12). forecast_mean = forecast.predicted_mean. forecast_ci = forecast.conf_int(alpha=0.05). SARIMA(1,1,1)(1,1,1,12) means: p=1 AR term, d=1 differencing, q=1 MA term, and seasonal versions with period=12. Step 3 — Prophet for automatic seasonality: from prophet import Prophet. prophet_df = monthly.reset_index().rename(columns={\"date\": \"ds\", \"revenue\": \"y\"}). prophet_model = Prophet(yearly_seasonality=True, weekly_seasonality=False, changepoint_prior_scale=0.05). prophet_model.fit(prophet_df). future = prophet_model.make_future_dataframe(periods=12, freq=\"MS\"). prophet_forecast = prophet_model.predict(future). Prophet automatically detects seasonality and trend changepoints. changepoint_prior_scale controls how flexible the trend is (lower = smoother). Step 4 — Simple baseline for comparison: monthly[\"naive_forecast\"] = monthly[\"revenue\"].shift(12). Same month last year — this is surprisingly hard to beat for seasonal data'"
+    weight: 0.35
+    description: "Models"
+  - type: llm_judge
+    criteria: "Response includes proper model evaluation and forecast accuracy metrics — evaluation: 'Forecast evaluation: Train-test split for time series — NEVER random split: train = monthly[\"revenue\"][:36]. test = monthly[\"revenue\"][36:]. Use the first 3 years to train, last year to test. Random splitting would leak future information into training. Accuracy metrics: def forecast_accuracy(actual, predicted): mae = np.mean(np.abs(actual - predicted)). mape = np.mean(np.abs((actual - predicted) / actual)) * 100. rmse = np.sqrt(np.mean((actual - predicted) ** 2)). mase = mae / np.mean(np.abs(np.diff(actual))). return {\"MAE\": mae, \"MAPE\": f\"{mape:.1f}%\", \"RMSE\": rmse, \"MASE\": mase}. MAE: average absolute error in dollars — easy to interpret. MAPE: percentage error — allows comparison across different scales. RMSE: penalizes large errors more — useful when big misses are costly. MASE: compares to naive forecast — below 1.0 means better than naive. Model comparison: models = {\"SARIMA\": sarima_predictions, \"Prophet\": prophet_predictions, \"Naive (last year)\": naive_predictions, \"Linear trend\": trend_predictions}. comparison = pd.DataFrame({name: forecast_accuracy(test, pred) for name, pred in models.items()}).T. Cross-validation for time series (expanding window): from sklearn.model_selection import TimeSeriesSplit. tscv = TimeSeriesSplit(n_splits=4). for train_idx, test_idx in tscv.split(monthly): train_fold = monthly.iloc[train_idx]. test_fold = monthly.iloc[test_idx]. This trains on progressively larger windows and tests on the next period. Average accuracy across folds is more robust than a single split. Prediction intervals matter as much as point forecasts: the CFO needs to know the forecast is 5M plus or minus 500K — not just 5M. Always report confidence intervals'"
+    weight: 0.35
+    description: "Evaluation"
+  - type: llm_judge
+    criteria: "Explanation covers practical forecasting considerations for business planning — practical: 'Practical forecasting for business: Incorporating external variables (regressors): model_with_regressors = SARIMAX(monthly[\"revenue\"], exog=monthly[[\"marketing_spend\", \"new_customers\"]], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12)). For the 12-month forecast, you need future values of marketing_spend and new_customers. Use the planned marketing budget and projected customer acquisition. This makes the forecast conditional: if we spend X on marketing, we expect Y revenue. Scenario planning: scenarios = {\"base\": {\"marketing_spend\": current_budget, \"growth\": 0}, \"optimistic\": {\"marketing_spend\": current_budget * 1.2, \"growth\": 0.1}, \"pessimistic\": {\"marketing_spend\": current_budget * 0.8, \"growth\": -0.1}}. Generate forecasts for each scenario and present ranges to the CFO. Forecast degradation: forecasts become less accurate further out. Month 1 forecast might have 5% MAPE. Month 12 forecast might have 20% MAPE. Recommendation: re-forecast monthly using the latest data. The 12-month forecast is for annual planning. Monthly re-forecasts adjust as reality unfolds. Communicating uncertainty to the CFO: do not present a single number. Present: best estimate (point forecast), likely range (80% prediction interval), worst case (lower bound of 95% interval). For budget planning, use the conservative estimate (lower bound) for revenue and the optimistic estimate (upper bound) for costs. This builds in a buffer without being overly pessimistic. Common failure modes: regime changes (COVID, new competitor, pricing change) break all historical models. Monitor forecast errors monthly — if errors suddenly spike, the model needs retraining or the business environment has changed fundamentally'"
+    weight: 0.30
+    description: "Practical"

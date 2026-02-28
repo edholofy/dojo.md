@@ -1,0 +1,62 @@
+meta:
+  id: industry-serverless-patterns
+  level: 5
+  course: aws-lambda-debugging
+  type: output
+  description: "Analyze industry serverless patterns — evaluate serverless adoption across fintech, healthcare, e-commerce, and IoT with maturity models and benchmarks"
+  tags: [AWS, Lambda, industry, patterns, maturity, benchmarks, master]
+
+state: {}
+
+trigger: |
+  You're writing a whitepaper: "Serverless in Production: Patterns
+  Across Industries." Research from 200+ serverless deployments reveals:
+
+  Industry-specific patterns:
+
+  Fintech:
+  - Lambda for transaction processing (payment events, fraud detection)
+  - Step Functions for compliance workflows (KYC, AML checks)
+  - Challenge: strict latency requirements (p99 < 100ms for payment APIs)
+  - Solution: provisioned concurrency for payment endpoints
+  - Regulatory: audit trail via CloudTrail, data encryption mandatory
+
+  Healthcare:
+  - Lambda for HL7/FHIR message processing
+  - S3 → Lambda for medical image analysis (with Bedrock/SageMaker)
+  - Challenge: HIPAA compliance (BAA, encryption, access control)
+  - Solution: VPC Lambda with private endpoints, no PII in logs
+  - Data residency: region-locked deployments
+
+  E-commerce:
+  - Lambda for product catalog APIs, recommendation engines
+  - EventBridge for order events across microservices
+  - Challenge: 10-100x traffic spikes during sales (Black Friday)
+  - Solution: pre-scaled provisioned concurrency, DynamoDB on-demand
+  - Cost: Lambda is cheaper than EC2 for spiky traffic patterns
+
+  IoT:
+  - Lambda for device event processing (millions of events/day)
+  - Kinesis → Lambda for real-time telemetry
+  - Challenge: high volume at low cost per event
+  - Solution: batch processing (Kinesis batch window), ARM architecture
+  - Edge: Greengrass Lambda for on-device processing
+
+  Task: Analyze industry serverless patterns. Write: industry-specific
+  use cases and constraints, maturity model for serverless adoption,
+  common pitfalls by industry, performance benchmarks, and strategic
+  guidance for each vertical.
+
+assertions:
+  - type: llm_judge
+    criteria: "Industry patterns are specific — fintech: Lambda ideal for event-driven payment processing, Step Functions for multi-step compliance. Key requirement: sub-100ms latency for synchronous APIs, complete audit trail. Healthcare: HIPAA compliance drives architecture (encryption, access logging, data residency). Lambda for processing, not for storing PHI. E-commerce: spiky traffic patterns make Lambda cost-effective (scales to zero between events). IoT: massive volume at low cost — optimize for efficiency (batch, ARM, minimal memory). Each industry has unique regulatory and performance constraints that shape the Lambda architecture"
+    weight: 0.35
+    description: "Industry patterns"
+  - type: llm_judge
+    criteria: "Maturity model is actionable — Stage 1 (Experiment): single Lambda function, manual deployment, basic logging. Stage 2 (Foundation): IaC, CI/CD, structured logging, event-driven design. Stage 3 (Scale): multi-function architectures, Step Functions, cross-account, observability platform. Stage 4 (Optimize): cost optimization, security hardening, multi-region, automated remediation. Stage 5 (Transform): serverless-first organization, platform team, self-service, industry-leading practices. Most organizations are at Stage 2-3. Advancing requires investment in people and process, not just technology"
+    weight: 0.35
+    description: "Maturity model"
+  - type: llm_judge
+    criteria: "Benchmarks and guidance are data-driven — performance benchmarks: median cold start across industries (Node.js: 200ms, Python: 300ms, Java: 3s, Java+SnapStart: 200ms). Cost benchmarks: $0.001-0.01 per transaction is typical for well-optimized Lambda. Availability: 99.95% with single-region, 99.99% with multi-region. Common pitfalls by industry: fintech (ignoring cold starts for payment APIs), healthcare (PII in CloudWatch Logs), e-commerce (not pre-scaling for known events), IoT (not batching events). Strategic guidance: start with event-driven use cases, expand to APIs, consider containers for steady-state compute"
+    weight: 0.30
+    description: "Benchmarks and guidance"

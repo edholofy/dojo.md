@@ -1,0 +1,40 @@
+meta:
+  id: data-quality-observability
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Data quality observability — build comprehensive monitoring and alerting systems that detect data quality issues proactively across the entire data stack"
+  tags: [observability, monitoring, alerting, anomaly-detection, expert]
+
+state: {}
+
+trigger: |
+  A data reliability engineer says: "We have 300 data pipelines feeding
+  100+ dashboards and 20 ML models. When something goes wrong, we
+  usually find out from a business user saying 'this dashboard looks
+  wrong' — that's hours or days after the issue started.
+
+  I want data observability: automatic, proactive detection of data
+  quality issues before anyone notices. Like application monitoring
+  (Datadog, PagerDuty) but for data quality.
+
+  Our data stack: Snowflake warehouse, dbt transformations, Airflow
+  orchestration, Looker dashboards, feature stores for ML models."
+
+  Task: Design a data quality observability platform that provides
+  proactive monitoring, intelligent alerting, and root cause analysis
+  across the entire data stack.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the monitoring layer — what to monitor: data freshness (is the pipeline running on time?), data volume (row counts within expected ranges), schema changes (new columns, changed types, dropped columns), distribution anomalies (statistical distribution of key columns shifting beyond expected bounds), null rate changes (sudden increase in nulls), uniqueness violations (duplicate primary keys), and cross-table consistency (foreign key relationships, aggregate reconciliation). Covers both pipeline-level and table-level monitoring"
+    weight: 0.35
+    description: "MonitoringLayer"
+  - type: llm_judge
+    criteria: "Response designs intelligent alerting — avoiding alert fatigue (smart thresholds that adapt to normal variation, not fixed thresholds that fire on every weekend dip), alert routing (pipeline owners get pipeline alerts, data stewards get quality alerts, on-call gets critical alerts), alert grouping (correlate multiple alerts that share a root cause — if a source table is delayed, don't alert on every downstream table individually), severity classification (critical: production dashboard broken, warning: quality degraded but within SLA, info: unusual but not actionable), and integration with existing incident management tools"
+    weight: 0.35
+    description: "IntelligentAlerting"
+  - type: llm_judge
+    criteria: "Response covers root cause analysis and remediation — automated lineage tracing (when a dashboard shows bad data, trace back through dbt models to find which source table or transformation caused it), impact analysis (when a pipeline fails, immediately show which dashboards and ML models are affected), historical baselines (compare current quality metrics to historical patterns to distinguish anomalies from normal variation), and runbook integration (link common quality issues to documented remediation procedures)"
+    weight: 0.30
+    description: "RootCauseAnalysis"

@@ -1,0 +1,48 @@
+meta:
+  id: approve-vs-request-changes
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Make review decisions — learn when to approve, approve with comments, request changes, or block a PR based on the issues found"
+  tags: [code-review, approval, request-changes, decision, blocking, beginner]
+
+state: {}
+
+trigger: |
+  You need to make a review decision for 5 different PRs. For each,
+  decide: Approve, Approve with Comments, Request Changes, or Block.
+
+  PR #1: Feature works correctly, has tests, but variable names could
+  be more descriptive. No bugs found.
+
+  PR #2: Adds a new API endpoint. Logic is correct but there's no
+  input validation — any string is accepted for the email field.
+
+  PR #3: Fixes a critical production bug (users seeing other users'
+  data). The fix is correct but the code style is inconsistent with
+  the rest of the file.
+
+  PR #4: Implements a payment flow. You notice the Stripe API key is
+  hardcoded in the source file instead of using environment variables.
+
+  PR #5: Large refactor that changes the authentication middleware.
+  You don't understand the approach and you're not sure if it handles
+  edge cases. No tests were updated.
+
+  Task: For each PR, state your decision and write the review comment
+  explaining it. Then write a general decision framework that other
+  reviewers can follow.
+
+assertions:
+  - type: llm_judge
+    criteria: "Decisions match the severity of issues — PR #1: Approve with comments (naming is a nit, not a blocker — 'Approved! Consider renaming x to orderTotal for clarity, but not blocking on this.'). PR #2: Request changes (missing input validation is a real bug — email validation is a security/data integrity concern). PR #3: Approve (critical production fix shouldn't be blocked by style — 'Approving to unblock the fix. Let's follow up with a style cleanup in a separate PR.'). PR #4: Request changes or Block (hardcoded API key is a security incident waiting to happen — this MUST be fixed before merge). PR #5: Request changes (lack of tests for auth middleware is risky, and the reviewer's uncertainty means the PR needs more explanation or a walkthrough). Each decision is calibrated to risk, not personal preference"
+    weight: 0.35
+    description: "Calibrated decisions"
+  - type: llm_judge
+    criteria: "Review comments explain the reasoning — each comment: states the decision upfront, explains what was reviewed, highlights what's good, explains what needs to change and why. PR #3 comment acknowledges urgency: 'I see this fixes the data leak issue — approving to get this out ASAP. The style inconsistency is minor and can be cleaned up separately.' PR #4 comment explains severity: 'The Stripe API key on line 42 would be committed to Git history. Even if we change it later, the key is permanently exposed. This needs to use process.env.STRIPE_SECRET_KEY instead.' PR #5 comment admits uncertainty: 'I'm not confident I understand the new auth flow — could you add tests for the edge cases or walk me through it?'"
+    weight: 0.35
+    description: "Explained reasoning"
+  - type: llm_judge
+    criteria: "Decision framework provides clear criteria — framework: Approve: no bugs, no security issues, any remaining comments are optional. Approve with Comments: no blocking issues, comments are suggestions/nits that won't cause problems if ignored. Request Changes: bugs that must be fixed, missing validation, missing tests for critical paths, security vulnerabilities. Block (rare): critical security issue (exposed secrets, auth bypass), data loss risk, fundamentally wrong approach requiring redesign. Rules: never block on style alone, never approve known security issues, urgency can shift the threshold (critical fix > style consistency), admit uncertainty rather than blindly approving. Anti-patterns: approving everything to be 'nice' (unsafe), blocking everything to be 'thorough' (slows team down)"
+    weight: 0.30
+    description: "Decision framework"

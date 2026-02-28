@@ -1,0 +1,42 @@
+meta:
+  id: governance-approval
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Design governance and approval workflows — create decision-making frameworks for technical proposals at enterprise scale"
+  tags: [RFC, governance, approval, decision-making, enterprise, expert]
+
+state: {}
+
+trigger: |
+  You're the VP of Architecture at a 1,000-engineer company. The RFC
+  process exists but approvals are a bottleneck:
+
+  - The architecture review board (ARB) meets bi-weekly and has a
+    6-week backlog of RFCs
+  - 3 of 5 ARB members must approve, but they often disagree
+  - Teams wait weeks for approval, then start building anyway
+  - Some approved RFCs are never implemented because requirements
+    changed during the approval wait
+  - Critical security RFCs get stuck behind feature RFCs
+  - Junior engineers are afraid to submit RFCs because the ARB
+    process feels like a tribunal
+
+  Task: Redesign the governance and approval workflow. Create a
+  tiered approval system that scales, handles urgency, encourages
+  participation, and maintains architectural quality without
+  becoming a bottleneck. Address the specific dysfunctions described.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tiered approval system eliminates the bottleneck — tiers based on impact, not seniority of author: Tier 1 (Team-level): affects single team, reversible. Approval: tech lead of affected team. No ARB involvement. SLA: 3 business days. Tier 2 (Domain-level): affects 2-3 teams within same domain. Approval: domain architect (one of 8 domain architects, not the full ARB). SLA: 5 business days. Tier 3 (Cross-domain): affects multiple domains or company-wide infrastructure. Approval: 2 domain architects from affected domains + 1 ARB member (rotating). SLA: 10 business days. Tier 4 (Strategic): major platform changes, technology bets, or significant cost. Approval: full ARB review. SLA: 15 business days. Distribution estimate: '70% of RFCs are Tier 1-2 (handled without ARB). 25% are Tier 3 (1 ARB member, not full board). 5% are Tier 4 (full ARB). This reduces ARB workload by 95%, eliminating the 6-week backlog.' Urgency track: security and incident-related RFCs get expedited review (48-hour SLA regardless of tier)"
+    weight: 0.35
+    description: "Tiered approval"
+  - type: llm_judge
+    criteria: "Each dysfunction is specifically addressed — 6-week backlog: 'Tiered system routes 95% of RFCs away from full ARB. Remaining 5% reviewed in dedicated weekly 1-hour slot.' Disagreements: 'Approval requires no blocking objections (not unanimous agreement). If 2+ reviewers disagree, a structured 30-minute resolution meeting is scheduled within 3 business days. If still unresolved, VP of Architecture makes final call. Disagreement is healthy; deadlock is not.' Teams building without approval: 'If approval SLA is breached, RFC is auto-approved with advisory comments. The process must not be slower than the team's ability to build. Post-hoc review for auto-approved RFCs catches issues before production.' Stale RFCs: 'RFCs expire after 90 days if not implemented. Authors are notified at 60 days to confirm or withdraw. No zombie RFCs blocking the queue.' Security priority: 'Security and compliance RFCs enter a fast lane: 48-hour review SLA, security-focused reviewer always available.' Junior engineer intimidation: 'RFC reviews are written, asynchronous feedback (not live tribunal). RFC office hours where juniors can get pre-submission feedback from senior engineers. Anonymous submission option for first-time authors (author revealed after initial feedback round)'"
+    weight: 0.35
+    description: "Dysfunction fixes"
+  - type: llm_judge
+    criteria: "Governance scales with organizational growth — domain architect role: '8 domain architects (one per engineering domain) serve as distributed decision-makers. They review Tier 2-3 RFCs in their domain, reducing centralized bottleneck. Domain architects meet monthly to align on cross-cutting standards.' ARB composition evolves: 'ARB shifts from reviewing individual RFCs to setting architectural standards and guardrails. Monthly: ARB publishes architectural guidelines. Quarterly: ARB reviews patterns emerging from approved RFCs. Annually: ARB updates technology radar and strategic technical direction.' Delegation framework: 'As the org grows to 2,000+ engineers, add a second layer: team leads approve Tier 1, domain architects approve Tier 2, and a rotating panel of domain architects handles Tier 3. ARB focuses exclusively on strategic direction.' Quality without gatekeeping: 'Architectural guidelines published as living documents. Engineers reference guidelines when writing RFCs. Reviewers check alignment with guidelines rather than applying personal preferences. This shifts quality control from individual reviewers to shared standards.' Metrics: 'Approval SLA compliance (target: 90% within SLA). Author satisfaction (post-approval survey). Implementation rate (% of approved RFCs that reach production within 6 months)'"
+    weight: 0.30
+    description: "Scalable governance"

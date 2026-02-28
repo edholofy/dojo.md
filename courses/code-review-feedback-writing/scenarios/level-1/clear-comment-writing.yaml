@@ -1,0 +1,45 @@
+meta:
+  id: clear-comment-writing
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Write clear review comments — craft code review comments that are specific, actionable, and easy to understand"
+  tags: [code-review, comments, clarity, actionable, feedback, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing a teammate's pull request. You've found several
+  issues but your comments need to be clear. Here are examples of
+  unclear comments you've seen from other reviewers:
+
+  - "This looks wrong" (what looks wrong? why?)
+  - "Fix this" (fix what? how?)
+  - "I don't like this approach" (why? what's the alternative?)
+  - "Hmm" (what does that even mean?)
+  - "nit" (with no explanation)
+
+  You've found these issues in the PR:
+  1. A variable named "d" that holds a date value
+  2. A function that's 80 lines long doing three distinct things
+  3. A SQL query built with string concatenation (injection risk)
+  4. A missing null check before accessing user.address.city
+  5. A TODO comment with no ticket reference
+
+  Task: Write a clear, specific, actionable review comment for each
+  of the 5 issues. Each comment should tell the author exactly what
+  the problem is, why it matters, and what to do about it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each comment identifies the specific problem — not vague statements like 'this could be better' but specific: (1) 'd' is ambiguous — suggest 'createdDate' or 'expirationDate' with reasoning (readability, searchability). (2) Function does X, Y, and Z — suggest extracting into three functions with proposed names. (3) String concatenation in SQL is a security vulnerability (SQL injection) — suggest parameterized queries with example. (4) If user.address is null, accessing .city throws TypeError — suggest optional chaining or null check. (5) TODO without context becomes permanent dead code — link to a ticket or remove. Each comment references the specific line/code, not just a general observation"
+    weight: 0.35
+    description: "Specific problems"
+  - type: llm_judge
+    criteria: "Comments explain WHY, not just WHAT — variable naming: 'd' is hard to search for and requires reading surrounding code to understand. Long function: harder to test, harder to reuse, higher cognitive load. SQL injection: attacker could drop tables or exfiltrate data, this is OWASP top 10. Null check: production crash when user hasn't entered address (real user scenario). Each comment includes the impact of not fixing the issue — what bad thing happens? Comments prioritize severity: SQL injection is blocking (must fix), variable naming is a nit (nice to fix). The reviewer demonstrates they understand the code's context and purpose"
+    weight: 0.35
+    description: "Explains why"
+  - type: llm_judge
+    criteria: "Comments suggest specific solutions — not just 'fix this' but concrete suggestions: rename 'd' to 'orderDate' (or whatever the context suggests). Extract validation logic into validateOrder(), extraction logic into extractItems(), notification logic into notifyCustomer(). Replace string concatenation with parameterized query (show the corrected code snippet). Add 'user?.address?.city' or 'if (user.address) { ... }'. Either link the TODO to JIRA-1234 or remove it if the task is done. Each suggestion is implementable — the author could make the change based solely on the comment. Where multiple solutions exist, briefly mention alternatives"
+    weight: 0.30
+    description: "Suggests solutions"

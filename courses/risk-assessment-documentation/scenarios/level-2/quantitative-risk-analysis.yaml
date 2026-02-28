@@ -1,0 +1,95 @@
+meta:
+  id: quantitative-risk-analysis
+  level: 2
+  course: risk-assessment-documentation
+  type: output
+  description: "Quantitative risk analysis — apply FAIR methodology to quantify cyber risk in financial terms for executive decision-making"
+  tags: [quantitative, fair-model, cyber-risk, financial-quantification, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Risk Analyst at a 250-person financial services
+  company ($200M AUM). The CISO has been trying to get
+  budget approval for several security investments but keeps
+  getting rejected because "the board doesn't understand
+  why we need to spend $800K on security when we've never
+  had a breach." She wants you to quantify the top 3 cyber
+  risks in dollar terms using the FAIR (Factor Analysis of
+  Information Risk) model.
+
+  Security investments needing justification:
+  1. Data Loss Prevention (DLP) solution: $280K
+  2. Privileged Access Management (PAM): $220K
+  3. 24/7 SOC monitoring (managed service): $300K
+  Total ask: $800K
+
+  Risk scenarios to quantify:
+  
+  Scenario A — Insider Data Theft:
+  - Threat: Departing employee copies client financial data
+  - Vulnerability: No DLP, USB ports enabled, cloud storage
+    unrestricted
+  - Asset at risk: 12,000 client records (PII + financial)
+  - Historical data: 2 incidents of suspected data
+    exfiltration in past 3 years (unconfirmed)
+  - Industry benchmark: Financial services insider threat
+    frequency ~15% annually
+  - Controls: Background checks, NDAs, access reviews
+    (quarterly)
+
+  Scenario B — Privileged Account Compromise:
+  - Threat: Attacker compromises admin credentials via
+    phishing, gains access to systems
+  - Vulnerability: No PAM, shared admin accounts, 12 people
+    with domain admin rights
+  - Asset at risk: All client data, trading systems,
+    financial records
+  - Historical data: 3 phishing attempts targeting admins
+    in past year (all caught by users)
+  - Industry benchmark: Privileged account attacks affect
+    ~8% of financial firms annually
+  - Controls: MFA on email, annual security training
+
+  Scenario C — Ransomware Attack:
+  - Threat: Ransomware encrypts critical systems, demands
+    payment
+  - Vulnerability: No 24/7 monitoring, 14-hour detection gap
+    (nights/weekends), aging backup infrastructure
+  - Asset at risk: All business operations (3-day RTO target,
+    actual likely 5-7 days)
+  - Historical data: Competitor hit by ransomware last year
+    (2-week outage, estimated $3M cost)
+  - Industry benchmark: Ransomware affects ~12% of financial
+    firms annually
+  - Controls: Endpoint protection, email filtering, daily
+    backups (not immutable)
+
+  CISO's request:
+  - "Use FAIR to calculate the Annual Loss Expectancy for
+    each scenario"
+  - "Show the risk reduction from the proposed investments"
+  - "Present this so the board sees it as a financial
+    decision, not a technical one"
+  - "Include confidence ranges, not just point estimates"
+
+  Task: Conduct the FAIR analysis for all 3 risk scenarios.
+  Calculate the Loss Event Frequency (LEF) and Loss
+  Magnitude (LM) for each, produce Annual Loss Expectancy
+  (ALE) with confidence ranges, show the risk reduction
+  from proposed investments, and create the executive
+  summary for the board.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response applies FAIR methodology correctly — decomposes each risk into Threat Event Frequency (TEF), Vulnerability, Loss Event Frequency (LEF), and Loss Magnitude (primary loss + secondary loss); uses the provided data points (industry benchmarks, historical incidents) to estimate frequencies; calculates loss magnitude including direct costs (investigation, remediation), indirect costs (business interruption, regulatory fines), and secondary losses (reputation, client attrition); the FAIR decomposition is methodologically sound."
+    weight: 0.35
+    description: "CorrectFAIRApplication"
+  - type: llm_judge
+    criteria: "Response quantifies risk in financial terms with ranges — produces Annual Loss Expectancy for each scenario with confidence intervals (not just single point estimates); shows the calculation methodology transparently; the numbers are reasonable for a $200M AUM financial services firm; includes both the current risk exposure and the residual risk after proposed investments; the risk reduction justifies the $800K investment (or explains if it doesn't); the board can compare risk cost vs investment cost."
+    weight: 0.35
+    description: "FinancialQuantificationWithRanges"
+  - type: llm_judge
+    criteria: "Response creates a compelling executive summary — presents the analysis as a business decision (investment vs risk cost); shows ROI of the security investments; avoids technical jargon; uses clear visualizations or tables comparing current exposure vs post-investment exposure; frames the $800K ask against the quantified annual risk exposure; the presentation would change the board's mind from 'we've never had a breach' to 'the expected annual cost of not investing is $X.'"
+    weight: 0.30
+    description: "CompellingExecutiveSummary"

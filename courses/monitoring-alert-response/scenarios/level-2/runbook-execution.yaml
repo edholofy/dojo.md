@@ -1,0 +1,58 @@
+meta:
+  id: runbook-execution
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Execute complex runbooks — follow multi-step diagnostic and remediation procedures, making judgment calls at decision points"
+  tags: [monitoring, runbook, execution, diagnosis, remediation, intermediate]
+
+state: {}
+
+trigger: |
+  You receive a CRITICAL alert: "Message queue depth > 100,000 on
+  order-processing queue." The runbook says:
+
+  ## High Queue Depth Runbook
+
+  Step 1: Check consumer health
+  - Are consumers running? `kubectl get pods -l app=order-processor`
+  - Are consumers processing? Check consumer lag metric in Grafana
+
+  Step 2: If consumers are running but not processing:
+  - Check for poison messages: `kafkacat -C -t orders -o -1 -c 1`
+  - If poison message found: skip the message and monitor
+  - If no poison message: check consumer logs for errors
+
+  Step 3: If consumers are NOT running:
+  - Check recent deployments (possible crash loop)
+  - Check cluster resources (possible resource exhaustion)
+  - Restart consumers: `kubectl rollout restart deployment/order-processor`
+
+  Step 4: If consumers are running and processing but queue is
+  still growing:
+  - Check producer rate vs. consumer rate
+  - If producer rate spike: scale consumers `kubectl scale deployment/order-processor --replicas=10`
+  - If consumer rate dropped: investigate consumer slowness
+
+  Step 5: Escalate to platform team if not resolved in 20 minutes
+
+  You follow the runbook. Consumers are running (8 pods). They ARE
+  processing — but slowly (current rate: 50 messages/sec, normal
+  rate: 500 messages/sec). Queue depth is growing at 200 messages/sec.
+
+  Task: Explain your diagnosis, what the runbook tells you to do
+  next, and what additional investigation you would perform.
+
+assertions:
+  - type: llm_judge
+    criteria: "Runbook navigation is correct and the diagnosis is sound — runbook path: 'Step 1: consumers are running (8 pods, confirmed) and are processing (50 msg/sec, not zero). So the consumers are running but slow — this is Step 4 territory: consumers are running and processing but queue is still growing. Step 4 says to compare producer and consumer rates. Producer rate: implied at 250 msg/sec (queue growing by 200/sec, consumers processing 50/sec, so input is approximately 250/sec). Consumer rate: 50 msg/sec (10% of normal 500 msg/sec). The consumer rate dropped dramatically — the runbook says to investigate consumer slowness.' Diagnosis: 'This is NOT a producer spike problem — 250 msg/sec is within normal range. This IS a consumer slowness problem — consumers are processing at 10% of their normal rate. Something is causing each message to take 10x longer to process than normal. Possible causes: (1) a downstream dependency that consumers call is slow (database, external API), (2) consumers are stuck in retry loops on failing messages, (3) consumers have a resource constraint (CPU, memory, network), (4) a recent deployment changed consumer behavior'"
+    weight: 0.35
+    description: "Runbook navigation and diagnosis"
+  - type: llm_judge
+    criteria: "Additional investigation beyond the runbook is appropriate — investigation steps: '(1) Check consumer logs: look for errors, warnings, or slow operation traces. Are consumers logging timeouts on downstream calls? (2) Check downstream dependencies: order processing typically calls inventory-service, payment-service, and writes to the database. Is any of these slow? Check their latency dashboards. (3) Check recent deployments: was a new version of order-processor deployed recently? If so, the code change might be causing the slowness (new feature, accidental regression, new dependency). (4) Check consumer resource usage: are the pods CPU or memory constrained? Throttled CPUs can cause processing slowness. (5) Check per-message processing time: if the average time went from 2ms to 20ms, something changed. What changed?' Mitigation while investigating: 'The queue is growing at 200 messages/sec. At this rate, it will continue growing until either the backlog causes secondary issues (memory, disk) or consumers catch up. Immediate mitigation: scale consumers to 20 or more pods (Step 4 says to scale). Even at 50 msg/sec per 8 pods, scaling to 40 pods should get close to 250 msg/sec throughput, matching the producer rate and stopping the queue growth. This buys time for investigation without losing messages'"
+    weight: 0.35
+    description: "Additional investigation"
+  - type: llm_judge
+    criteria: "Response balances mitigation and root cause investigation — balance: 'The runbook gives a mitigation action (scale up). Scaling is the right immediate step — it stops the bleeding. But scaling is not a resolution; it is a band-aid. If consumers are processing at 10% of normal rate, scaling to 10x replicas returns throughput to normal but at 10x resource cost. The root cause of the consumer slowness must be identified.' Parallel execution: 'Scale up consumers NOW (mitigation). Investigate consumer slowness IN PARALLEL (root cause). This is a common pattern: mitigate the customer impact first, then find and fix the root cause while the mitigation holds.' Escalation judgment: 'The runbook says to escalate after 20 minutes if not resolved. If scaling resolves the queue growth but you have not found the root cause of the slowness, this is still an open issue. Consider escalating to the platform team or the team that owns order-processor for root cause investigation, even if the immediate queue growth is controlled. Communication: post in #incidents that the queue is growing, you have scaled consumers to control it, and you are investigating why consumers are slow. Include the key data point: consumer processing rate is 10% of normal. This helps anyone who joins the investigation get up to speed quickly'"
+    weight: 0.30
+    description: "Mitigation-investigation balance"

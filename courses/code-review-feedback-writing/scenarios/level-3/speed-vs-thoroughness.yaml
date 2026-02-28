@@ -1,0 +1,46 @@
+meta:
+  id: speed-vs-thoroughness
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Balance review speed and thoroughness — develop strategies for providing timely reviews without sacrificing quality for different types of PRs"
+  tags: [code-review, speed, thoroughness, triage, time-management, advanced]
+
+state: {}
+
+trigger: |
+  You have 6 PRs in your review queue, all assigned to you. Your
+  team's SLA is 24 hours for first review. It's 4pm and these came
+  in today:
+
+  1. Hotfix: Production bug — users seeing 500 errors on checkout
+     (15 lines, high urgency)
+  2. Feature: New dashboard analytics (350 lines, normal priority,
+     sprint deadline Friday)
+  3. Dependency update: Bump React from 18.2 to 18.3 (5 files changed,
+     low priority)
+  4. Refactor: Extract common validation logic into shared module
+     (200 lines, medium priority)
+  5. Junior dev's PR: First feature implementation, they're blocked
+     waiting for review (100 lines, medium urgency due to person)
+  6. Tech debt: Remove deprecated API endpoints (150 lines, low priority)
+
+  You have 2 hours of review time today.
+
+  Task: Create a review strategy for all 6 PRs. Show how to triage,
+  what depth of review each gets, write example reviews at different
+  thoroughness levels, and explain your prioritization reasoning.
+
+assertions:
+  - type: llm_judge
+    criteria: "Triage ordering is well-reasoned — priority: (1) Hotfix — production impact, review in next 15 minutes. (2) Junior dev's PR — person is blocked, reviewing unblocks them (invest 30 minutes). (3) Feature — sprint deadline pressure (invest 45 minutes). (4) Refactor — medium priority, affects shared code quality (invest 20 minutes). (5) Dependency update — low risk if CI passes, quick scan (10 minutes). (6) Tech debt — no deadline, can slip to tomorrow (skip or quick scan). Reasoning: combine urgency (production > blocked person > deadline) with risk (shared code > isolated change > dependency bump). The junior dev is prioritized higher than strict urgency would suggest because blocking people is more costly than blocking code"
+    weight: 0.35
+    description: "Triage ordering"
+  - type: llm_judge
+    criteria: "Review depth varies appropriately per PR — Hotfix (15 min): verify the fix addresses the error, check for regression risk, don't nit on style — approve fast with 'LGTM, fix looks correct. Let's clean up styling in a follow-up.' Feature (45 min): full review — architecture, security, tests, performance. This is the big one that justifies thorough review. Junior PR (30 min): mentor-focused review — teach patterns, be encouraging, unblock quickly even if follow-up work is needed. Refactor (20 min): focus on interface changes and backward compatibility — internal implementation can be reviewed more lightly. Dependency (10 min): check CI passes, scan changelog for breaking changes, verify no deprecated API usage. Tech debt (5 min or skip): quick scan for accidental behavior changes, or leave comment 'I'll review this first thing tomorrow.' Each depth level is explicitly justified"
+    weight: 0.35
+    description: "Varying depth"
+  - type: llm_judge
+    criteria: "Example reviews demonstrate different thoroughness levels — quick review (hotfix): 'Verified: the fix adds null check for user.cart before accessing .items. This matches the error in Sentry (TypeError: Cannot read property items of null). CI passes. Approved — ship it.' Medium review (refactor): summary of approach, 2-3 specific comments on interface design, one question about edge case, approve with suggestions. Deep review (feature): structured thematic review, 8-10 comments across architecture/security/testing, request changes on 2 blocking items. Honest scoping: when you do a lighter review, say so: 'I did a quick review focused on the API interface — I'd recommend someone else gives the internal logic a deeper look.' Better to do a timeboxed review and disclose the scope than to skim everything and pretend it was thorough"
+    weight: 0.30
+    description: "Depth examples"

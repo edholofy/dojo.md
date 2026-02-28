@@ -1,0 +1,48 @@
+meta:
+  id: first-critique-shift
+  level: 1
+  course: design-feedback-critique-writing
+  type: output
+  description: "First critique shift — handle multiple beginner design feedback tasks in a single session"
+  tags: [shift, combined, assessment, beginner]
+
+state: {}
+
+trigger: |
+  You're a mid-level designer helping your team improve
+  their critique skills. Your morning tasks:
+
+  TASK 1 — A junior designer asks you to review their
+  sign-up form. Issues: the form has no field labels
+  (only placeholder text), the password requirements
+  aren't shown until after the user fails validation,
+  and the Submit button says "Submit" instead of
+  something specific. Write 3 pieces of feedback.
+
+  TASK 2 — After a design review, a designer received
+  this feedback: "The whole thing feels off. It's not
+  quite right. Can you try again?" They ask you: "What
+  am I supposed to do with this?" Help them respond.
+
+  TASK 3 — You need to leave written async feedback on
+  a mobile app notification settings screen. The screen
+  works well but you notice the toggle switches have no
+  labels for screen readers, and there's no way to
+  preview what a notification looks like. Write your
+  async feedback.
+
+  Task: Handle all three feedback tasks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Task 1 — sign-up form feedback — 3 specific pieces of feedback: (1) Placeholder-only labels disappear when user starts typing — user forgets what field they're filling in, replace with persistent labels above or beside each field; (2) Password requirements shown only after failure is punishing — show requirements upfront or dynamically as user types, with checkmarks as each requirement is met — error prevention is better than error correction; (3) 'Submit' is generic and doesn't tell the user what happens next — change to 'Create Account' or 'Sign Up' — button text should describe the action's outcome. Each piece of feedback is specific, explains why, and suggests a fix."
+    weight: 0.35
+    description: "FormFeedback"
+  - type: llm_judge
+    criteria: "Response handles Task 2 — dealing with vague feedback — acknowledges the frustration ('feels off' and 'not quite right' is genuinely unhelpful feedback — the designer is right to be frustrated), provides a response strategy (go back to the reviewer and ask clarifying questions: 'Can you help me understand what specifically feels off? Is it the layout, the color palette, the typography, the content, or the overall direction?' and 'Can you show me an example of something that does feel right to you?' and 'What were you expecting to see that's different from what I presented?'), reframes the situation (vague feedback often means the person has an intuitive reaction but can't articulate it — your questions help them articulate, this is a skill: learning to extract useful information from unhelpful feedback, suggest: propose this in the next critique session as a ground rule — 'feedback must reference specific elements and explain the concern')."
+    weight: 0.35
+    description: "VagueFeedbackResponse"
+  - type: llm_judge
+    criteria: "Response handles Task 3 — async written feedback on notification settings — follows a structured format (overall: 'The notification settings screen is well-organized and intuitive — nice work on the category grouping'), specific feedback items (Must Fix: toggle switches need accessible labels — screen readers announce the toggle state but not what setting it controls, add aria-label or visible text label associated with each toggle, this is an accessibility blocker; Consider: add a notification preview option — 'What will this notification look like?' preview helps users understand what they're enabling, especially for unfamiliar notification types — reduces support requests from users surprised by notification format), written in clear async-friendly format with screen references, priority levels, and actionable suggestions."
+    weight: 0.30
+    description: "AsyncFeedback"

@@ -1,0 +1,52 @@
+meta:
+  id: cross-team-pipeline-dependencies
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Cross-team pipeline dependencies — manage complex inter-team data pipeline dependencies, ownership boundaries, and coordination at enterprise scale"
+  tags: [cross-team, dependencies, ownership, coordination, enterprise, expert]
+
+state: {}
+
+trigger: |
+  A head of data platform says: "We have 5 data teams that build
+  and maintain pipelines:
+
+  - Core Data: Raw data ingestion (50 connectors, 200 staging tables)
+  - Finance Data: Financial reporting pipelines (30 models)
+  - Product Analytics: User behavior and product metrics (80 models)
+  - ML Platform: Feature engineering and model serving (40 pipelines)
+  - Marketing Data: Campaign analytics and attribution (25 models)
+
+  The dependency graph is a nightmare. Finance depends on Core Data
+  and Product Analytics. ML Platform depends on Core Data, Finance,
+  and Product Analytics. Marketing depends on everything.
+
+  Problems:
+  1. Core Data changed a column name and broke 15 downstream
+     pipelines across 3 teams without knowing
+  2. Product Analytics delayed their pipeline by 2 hours, causing
+     Finance's end-of-day report to miss the SLA
+  3. Two teams independently built nearly identical customer
+     segmentation tables, wasting effort and creating confusion
+  4. Nobody knows who owns the intermediate tables that sit between
+     team boundaries
+
+  How do we govern cross-team pipeline dependencies?"
+
+  Task: Design a cross-team data pipeline governance framework
+  that manages dependencies, ownership, and coordination.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a dependency management framework — data contracts between producer and consumer teams (defining schema, SLAs, quality guarantees, and change notification requirements), a central data catalog that documents ownership and dependencies for every table (who produces it, who consumes it, what SLAs apply), change management process for breaking changes (notify consumers, provide migration period, version the interface), and automated impact analysis tools that show which downstream pipelines are affected before a change is made"
+    weight: 0.35
+    description: "DependencyManagement"
+  - type: llm_judge
+    criteria: "Response addresses ownership and coordination — clear ownership model (every table/pipeline has a single team owner, tracked in the data catalog), interface boundaries (teams expose 'published' datasets with contracts, internal datasets are private and can change freely), SLA cascading (if Finance needs data by 6 AM, Product Analytics must complete by 4 AM, Core Data by 2 AM — SLAs propagate upstream), and a data governance council or working group that resolves cross-team disputes and approves shared standards"
+    weight: 0.35
+    description: "OwnershipAndCoordination"
+  - type: llm_judge
+    criteria: "Response addresses duplication and efficiency — data mesh principles (domain-oriented ownership with federated governance), a process for discovering existing datasets before building new ones (central catalog with search and documentation), shared data products (curated, well-documented datasets that multiple teams can consume), and how to handle the cultural challenge (teams prefer building their own because they don't trust or understand other teams' data — solve with documentation, quality guarantees, and organizational incentives)"
+    weight: 0.30
+    description: "DuplicationAndEfficiency"

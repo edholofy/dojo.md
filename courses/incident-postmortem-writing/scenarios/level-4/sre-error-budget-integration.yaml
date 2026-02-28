@@ -1,0 +1,48 @@
+meta:
+  id: sre-error-budget-integration
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Integrate postmortems with SRE practices — connect incident analysis to SLOs, error budgets, and reliability investment decisions"
+  tags: [postmortem, SRE, error-budget, SLO, reliability-investment, expert]
+
+state: {}
+
+trigger: |
+  Your platform has SLOs defined but they're not connected to your
+  postmortem process. Leadership asks "why do we keep having incidents?"
+  but there's no framework for translating incident patterns into
+  reliability investment decisions.
+
+  Current state:
+  - SLO: 99.9% availability (43.8 minutes/month error budget)
+  - Last quarter: used 180 minutes of error budget (4x over budget)
+  - 4 SEV-1 incidents consumed the budget:
+    - Payment processing outage: 65 minutes (config change)
+    - API gateway failure: 45 minutes (capacity)
+    - Database failover: 40 minutes (infrastructure)
+    - Auth service crash: 30 minutes (code bug)
+  - Each postmortem had good action items, but there's no
+    prioritization framework connecting incident impact to
+    engineering investment
+  - Product team wants new features. SRE team wants reliability work.
+    Neither has a shared language for making trade-offs.
+
+  Task: Write a framework document that connects postmortem findings
+  to SLO/error budget management. Show how to use error budget data
+  to prioritize reliability investments, and how to create shared
+  language between product and engineering for reliability trade-offs.
+
+assertions:
+  - type: llm_judge
+    criteria: "Error budget analysis connects incidents to investment priorities — current state analysis: 'Our 99.9% SLO allows 43.8 minutes of downtime per month (131.4 minutes per quarter). Last quarter, we consumed 180 minutes — 37% over budget. This is not a minor overage; we are fundamentally not meeting our reliability commitments.' Error budget consumption breakdown: 'Payment processing: 65 minutes (36% of consumed budget). Root cause: configuration change. API gateway: 45 minutes (25%). Root cause: capacity. Database failover: 40 minutes (22%). Root cause: infrastructure. Auth service: 30 minutes (17%). Root cause: code bug. The single largest consumer (payment processing config change) consumed more error budget than our entire quarterly allowance provides for in a single month.' Investment prioritization framework: 'Rank reliability investments by error budget minutes saved per engineering week invested. Config change safety (addresses 36% of budget consumption): estimated 3 weeks to implement canary deployments and automated rollback. Expected: reduce config-related incidents by 80%, saving approximately 52 minutes/quarter. ROI: 17 minutes saved per engineering week. Capacity auto-scaling (addresses 25%): estimated 4 weeks. Expected: reduce capacity incidents by 70%, saving 31 minutes/quarter. ROI: 8 minutes saved per engineering week. Infrastructure redundancy (addresses 22%): estimated 6 weeks. Expected: reduce infrastructure incidents by 60%, saving 24 minutes/quarter. ROI: 4 minutes saved per engineering week.' Priority order based on ROI: config safety, then capacity, then infrastructure"
+    weight: 0.35
+    description: "Error budget analysis"
+  - type: llm_judge
+    criteria: "Shared language framework enables product-engineering trade-offs — error budget as shared currency: 'The error budget is the shared language between product velocity and reliability. When the error budget is healthy (under 50% consumed): product velocity takes priority. Teams ship features, experiment, and accept some reliability risk. When the error budget is stressed (50-100% consumed): balanced approach. New features continue but with additional testing and staged rollouts. When the error budget is exhausted (over 100% consumed): reliability takes priority. Feature development pauses until reliability investments restore the error budget. This is where we are now.' Practical implications: 'Last quarter, we were 37% over budget. Under this framework, the current quarter should prioritize reliability until we demonstrate we can stay within budget. Specifically: the first 4 weeks of the quarter should focus on config change safety (highest ROI investment). This is projected to bring us within budget by the end of the quarter.' For product stakeholders: 'Think of the error budget like a financial budget. Each incident withdraws from the account. Reliability investments are deposits. When the account is overdrawn, we must invest before spending more. The postmortem action items are not engineering wish lists — they are specific investments that restore our ability to ship features safely.' Error budget policy document: 'When error budget is exhausted: (1) All postmortem action items are promoted to P1 priority. (2) New feature deployments require IC-level risk assessment. (3) Weekly error budget review with product and engineering leadership. (4) Policy remains in effect until error budget consumption returns to sustainable levels for 2 consecutive months'"
+    weight: 0.35
+    description: "Shared trade-off language"
+  - type: llm_judge
+    criteria: "Postmortem-to-SRE feedback loop is documented as ongoing process — feedback loop design: 'Step 1: Every postmortem quantifies error budget impact. Add to postmortem template: Error budget consumed by this incident: X minutes (Y% of monthly budget). This makes incident cost concrete and comparable.' Step 2: Monthly error budget review. 'Monthly meeting (30 minutes): SRE lead presents error budget dashboard. For each incident: minutes consumed, root cause category, status of prevention action items. Running total: are we tracking to stay within budget this quarter? Attendees: engineering leadership + product leadership.' Step 3: Quarterly reliability investment planning. 'Quarterly meeting: review incident trends from all postmortems. Rank reliability investments by error budget ROI (minutes saved per engineering week invested). Allocate engineering capacity to top-ranked investments. This is where postmortem action items become engineering roadmap items.' Step 4: Annual SLO review. 'Annually: review whether the SLO target is correct. If we consistently miss 99.9%, options are: (a) invest more in reliability to meet the target, (b) adjust the target to reflect reality and communicate the change, or (c) accept the cost of SLA credits and customer impact. This is a business decision informed by postmortem data.' Metrics dashboard: 'Error budget remaining (real-time). Error budget consumption by category (monthly). Postmortem action item completion rate. Projected quarter-end error budget based on current trajectory. Feature velocity vs. reliability investment ratio'"
+    weight: 0.30
+    description: "SRE feedback loop"

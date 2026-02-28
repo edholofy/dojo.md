@@ -1,0 +1,46 @@
+meta:
+  id: terraform-vs-alternatives
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Evaluate IaC tools — compare Terraform vs Pulumi vs CDK vs CloudFormation vs OpenTofu for enterprise technology selection"
+  tags: [Terraform, Pulumi, CDK, CloudFormation, OpenTofu, evaluation, master]
+
+state: {}
+
+trigger: |
+  Your client's CTO asks you to evaluate IaC tools for their
+  organization. Context:
+  - 200 engineers (60% TypeScript/Python, 40% Go/Java)
+  - Multi-cloud: 80% AWS, 15% GCP, 5% Azure
+  - Current: CloudFormation for AWS, ad-hoc scripts for GCP
+  - Concern about Terraform's BSL license change (HashiCorp 2023)
+  - Some teams interested in Pulumi (programmatic approach)
+  - Compliance requirement: tools must be enterprise-supported
+
+  The CTO's evaluation criteria:
+  1. Multi-cloud support (must manage AWS + GCP)
+  2. Developer experience (80% of engineers aren't DevOps)
+  3. Enterprise support and longevity
+  4. Ecosystem and community
+  5. Learning curve for existing team
+  6. Compliance and governance capabilities
+
+  Task: Provide the comprehensive IaC tool evaluation covering:
+  Terraform, Pulumi, AWS CDK, CloudFormation, and OpenTofu. Include
+  recommendation with justification, migration path from current
+  state, and risk assessment for each option.
+
+assertions:
+  - type: llm_judge
+    criteria: "Tool comparison is thorough and balanced — Terraform: mature, largest provider ecosystem, HCL (DSL — learning curve for developers), strong multi-cloud, BSL license concern but still dominant. Pulumi: full programming languages (TypeScript, Python, Go), great developer experience, strong multi-cloud, newer ecosystem, enterprise support available. CDK: AWS-native, TypeScript/Python, generates CloudFormation, no multi-cloud, excellent for AWS-only. CloudFormation: AWS-native, no additional tooling, limited to AWS, verbose YAML/JSON. OpenTofu: Terraform fork, Apache 2.0 license, compatible with Terraform, community-governed, growing but less enterprise support currently"
+    weight: 0.35
+    description: "Tool comparison"
+  - type: llm_judge
+    criteria: "Recommendation is justified with migration path — for this client (multi-cloud, TypeScript-heavy, compliance-focused): primary recommendation is Terraform with OpenTofu as contingency plan. Rationale: (1) multi-cloud requirement eliminates CDK/CloudFormation, (2) largest ecosystem and community support, (3) Terraform Cloud provides enterprise governance, (4) OpenTofu provides license risk mitigation (code-compatible, can switch if needed). Alternative: Pulumi for developer-heavy teams (TypeScript advantage), but smaller ecosystem and less operational tooling. Migration path: keep existing CloudFormation running, gradually adopt Terraform for new infrastructure, write shared modules for AWS+GCP, migrate existing CF to Terraform over 12 months using terraform import"
+    weight: 0.35
+    description: "Recommendation"
+  - type: llm_judge
+    criteria: "Risk assessment is practical — Terraform risks: BSL license limits commercial hosting (not client use), HashiCorp pricing changes, HCL learning curve. Mitigation: OpenTofu as backup, Terraform Cloud pricing is predictable. Pulumi risks: smaller community, fewer providers, company viability concern (VC-funded startup). Mitigation: open-source core, growing adoption. OpenTofu risks: still maturing, fewer enterprise customers, community maintenance depends on sustained interest. Mitigation: Linux Foundation backing, strong corporate sponsors. CDK/CF risks: AWS lock-in, can't manage GCP. No mitigation for multi-cloud requirement. Decision framework: evaluate every 18 months, maintain code-compatible options, avoid lock-in to any single IaC vendor's proprietary features"
+    weight: 0.30
+    description: "Risk assessment"

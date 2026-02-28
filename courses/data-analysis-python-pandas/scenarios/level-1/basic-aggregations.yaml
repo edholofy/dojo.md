@@ -1,0 +1,35 @@
+meta:
+  id: basic-aggregations
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Perform basic aggregations — use groupby, sum, mean, and count to answer business questions with pandas"
+  tags: [python, pandas, groupby, aggregation, sum, mean, beginner]
+
+state: {}
+
+trigger: |
+  Your manager asks three business questions about the sales data
+  (columns: date, product_name, category, quantity, unit_price,
+  region, customer_id):
+
+  1. "What is the total revenue by region?" (revenue = quantity * unit_price)
+  2. "What are the top 5 products by total quantity sold?"
+  3. "What is the average order value per category?"
+
+  Task: Write the pandas code for each question and explain the
+  groupby concept.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code produces correct aggregations for all three questions — code: 'Answering business questions with groupby: Setup — create the revenue column: df[\"revenue\"] = df[\"quantity\"] * df[\"unit_price\"]. This creates a new column by multiplying two existing columns element-wise. Pandas automatically aligns the operation across all 10,000 rows. Question 1 — Total revenue by region: revenue_by_region = df.groupby(\"region\")[\"revenue\"].sum().sort_values(ascending=False). How this works: groupby(\"region\") splits the DataFrame into groups (one group per unique region). [\"revenue\"] selects only the revenue column from each group. .sum() calculates the total revenue within each group. .sort_values(ascending=False) sorts from highest to lowest. Result example: region — West: $1,250,000, East: $980,000, South: $875,000, North: $645,000. To format as currency: revenue_by_region.map(\"${:,.2f}\".format). Question 2 — Top 5 products by quantity sold: top_products = df.groupby(\"product_name\")[\"quantity\"].sum().nlargest(5). nlargest(5) is a shortcut for sort_values(ascending=False).head(5). Alternative with more detail: top_products = (df.groupby(\"product_name\").agg(total_qty=(\"quantity\", \"sum\"), num_orders=(\"quantity\", \"count\"), avg_qty_per_order=(\"quantity\", \"mean\")).nlargest(5, \"total_qty\")). This gives total quantity, number of orders, and average quantity per order for the top 5 products. Question 3 — Average order value per category: avg_by_category = df.groupby(\"category\")[\"revenue\"].mean().sort_values(ascending=False). This gives the average revenue per transaction for each category. For a more complete picture: category_summary = df.groupby(\"category\").agg(avg_order_value=(\"revenue\", \"mean\"), total_revenue=(\"revenue\", \"sum\"), num_orders=(\"revenue\", \"count\"), median_order_value=(\"revenue\", \"median\")). Using both mean and median reveals if the average is skewed by outliers (a few very large orders pulling the mean up)'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation teaches the groupby split-apply-combine concept — explanation: 'Understanding groupby — the split-apply-combine pattern: groupby works in three steps: (1) Split: divide the DataFrame into groups based on the groupby column. df.groupby(\"region\") creates groups: all West rows, all East rows, etc. (2) Apply: apply a function to each group (sum, mean, count, etc.). (3) Combine: combine the results into a new DataFrame or Series. Visualizing it: imagine physically sorting a spreadsheet by region, calculating the sum for each section, then writing the results in a summary table. That is exactly what groupby does, but automatically. The agg method — multiple aggregations at once: category_stats = df.groupby(\"category\").agg(total_revenue=(\"revenue\", \"sum\"), avg_price=(\"unit_price\", \"mean\"), num_products=(\"product_name\", \"nunique\"), total_orders=(\"quantity\", \"count\")). Named aggregation syntax: (column_name, function) — this produces clean column names in the result. Functions you can use with agg: sum, mean, median, min, max, count, nunique (unique count), std (standard deviation), first, last. Multiple groupby columns: region_category = df.groupby([\"region\", \"category\"])[\"revenue\"].sum(). This creates a multi-level result — revenue for each region-category combination. Use .unstack() to pivot it into a table: region_category.unstack() creates a table with regions as rows and categories as columns'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers common groupby pitfalls and reset_index — pitfalls: 'Common groupby pitfalls: Pitfall 1 — Forgetting reset_index(): after groupby, the groupby column becomes the index. result = df.groupby(\"region\")[\"revenue\"].sum(). result is a Series with region as the index (not a regular column). To get a regular DataFrame: result = df.groupby(\"region\")[\"revenue\"].sum().reset_index(). Now result has two columns: region and revenue. Or use as_index=False: result = df.groupby(\"region\", as_index=False)[\"revenue\"].sum(). Pitfall 2 — Groupby drops NaN by default. If region has missing values, those rows are excluded from the groupby result. To include NaN as a group: df.groupby(\"region\", dropna=False)[\"revenue\"].sum(). Pitfall 3 — Confusing count() and size(). df.groupby(\"region\")[\"product_name\"].count() counts non-null values. df.groupby(\"region\").size() counts all rows (including those with NaN). If there are no missing values, they produce the same result. But with missing values, count() gives a lower number. Pitfall 4 — Using mean() when median() is more appropriate. If the data has outliers (a few very large orders), mean() is misleading. Always check both: compare = df.groupby(\"category\").agg(mean_rev=(\"revenue\", \"mean\"), median_rev=(\"revenue\", \"median\")). If the mean is much higher than the median, there are high-value outliers skewing the average'"
+    weight: 0.30
+    description: "Pitfalls"

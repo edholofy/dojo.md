@@ -1,0 +1,42 @@
+meta:
+  id: basic-meeting-notes
+  level: 1
+  course: meeting-notes-action-items
+  type: output
+  description: "Basic meeting notes — capture key discussion points, decisions, and action items from a straightforward team meeting"
+  tags: [basic, notes, capture, beginner]
+
+state: {}
+
+trigger: |
+  You attended a 30-minute weekly team standup meeting. Here
+  are the raw notes you jotted down during the meeting:
+
+  "sarah talked about the homepage redesign, says its 80%
+  done, needs design review from jake by friday. mike
+  mentioned the API is having timeout issues, been
+  happening since tuesday, he's looking into it. lisa
+  said the Q3 marketing report is ready for review, wants
+  everyone to read it before next weeks meeting. manager
+  (tom) said the company all-hands is moved to thursday
+  2pm. also tom asked everyone to update their OKRs in
+  the tracking tool by end of week. oh and sarah needs
+  the new brand colors from the design team before she
+  can finish the homepage."
+
+  Task: Transform these raw notes into properly formatted
+  meeting notes with clear action items.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates well-structured meeting notes — meeting header (includes essential metadata: meeting name/type: Weekly Team Standup; date and time; attendees: Sarah, Mike, Lisa, Tom; the header immediately tells anyone reading the notes who was there and when), organized discussion summary (structures the raw notes into clear sections: each person's update is a separate section or bullet with their name; Sarah's update: homepage redesign at 80% completion, needs design review and brand colors; Mike's update: API timeout issues since Tuesday, investigating; Lisa's update: Q3 marketing report ready for review; Tom's announcements: all-hands moved to Thursday 2pm, OKR updates due end of week; the raw informal notes are transformed into clear, professional language while preserving all the information), clear action items (extracts and formats all action items: each action item has: who is responsible, what they need to do, and when it's due; Jake — complete design review of homepage redesign by Friday; Everyone — read Q3 marketing report before next week's meeting; Everyone — update OKRs in tracking tool by end of week; Sarah — needs brand colors from design team to complete homepage; Mike — investigate and resolve API timeout issues; the action items are specific, assigned, and have deadlines where mentioned)."
+    weight: 0.35
+    description: "StructuredNotes"
+  - type: llm_judge
+    criteria: "Response demonstrates good note-taking practices — professional formatting (the notes are clean and scannable: uses consistent formatting — headers, bullet points, or numbered lists; action items are visually distinct from discussion notes — bold, separate section, or checklist format; language is concise and professional — removes filler words and casual language from the raw notes while keeping meaning; the notes should be understandable to someone who wasn't at the meeting), completeness and accuracy (captures everything from the raw notes without adding information that wasn't there: doesn't invent details or add assumptions; preserves important specifics — '80% done', 'since Tuesday', 'Thursday 2pm', 'by Friday'; identifies implicit action items — Sarah needs brand colors implies someone on the design team needs to provide them; the notes serve as a reliable record of what was discussed and decided)."
+    weight: 0.35
+    description: "NoteTakingPractices"
+  - type: llm_judge
+    criteria: "Response is ready for distribution — distribution readiness (the notes are ready to share with the team: the format is appropriate for email, Slack, or a shared document; someone who missed the meeting could read these notes and be fully informed; the action items are clear enough that responsible parties know exactly what to do; no ambiguity in the assignments or deadlines; if a deadline was mentioned in the raw notes, it's preserved; if no deadline was mentioned, the action item notes this gap or uses the implicit deadline from context)."
+    weight: 0.30
+    description: "DistributionReady"

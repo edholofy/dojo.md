@@ -1,0 +1,46 @@
+meta:
+  id: request-parameters
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document request parameters — differentiate and document path parameters, query parameters, headers, and request body fields"
+  tags: [API, documentation, parameters, query, path, headers, beginner]
+
+state: {}
+
+trigger: |
+  A developer is confused by your API because parameter documentation
+  is unclear. They're trying to call this endpoint:
+
+  GET /api/v1/projects/{project_id}/tasks?status=active&sort=due_date&limit=20
+
+  Headers:
+  Authorization: Bearer <token>
+  Accept: application/json
+  X-Request-ID: <uuid>
+
+  Their questions:
+  - "Do I put project_id in the URL or as a query parameter?"
+  - "Is 'status' a path param or query param?"
+  - "What values can 'sort' accept?"
+  - "Is limit required? What's the default?"
+  - "What headers do I need?"
+
+  Task: Write clear parameter documentation that distinguishes between
+  path parameters, query parameters, and headers. Include: parameter
+  name, location (path/query/header), type, required/optional, default
+  value, description, valid values, and examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Parameter types are clearly distinguished — path parameters: project_id (in URL path, required, string/UUID, identifies the project). Query parameters: status (optional, string, enum: active/completed/archived, default: all), sort (optional, string, enum: due_date/created_at/priority, default: created_at), limit (optional, integer, range: 1-100, default: 20), offset or page for pagination. Headers: Authorization (required, Bearer token), Accept (optional, default: application/json), X-Request-ID (optional, UUID for request tracing). Each parameter location is explicitly labeled"
+    weight: 0.35
+    description: "Parameter types"
+  - type: llm_judge
+    criteria: "Documentation format is scannable — table or structured list format with columns: name, location, type, required, default, description. Each parameter has constraints documented (enum values, min/max, format). Example full URL shown: GET /api/v1/projects/550e8400-e29b-41d4-a716-446655440000/tasks?status=active&sort=due_date&limit=20. Curl example with all parameters including headers. Response shows how parameters affect the result (filtered by status, sorted by due_date, limited to 20)"
+    weight: 0.35
+    description: "Scannable format"
+  - type: llm_judge
+    criteria: "Common parameter patterns are explained — path parameters: identify specific resources (always required, part of the URL). Query parameters: filter, sort, paginate collections (usually optional with defaults). Headers: authentication, content negotiation, request tracking. Body parameters: create/update data (POST, PUT, PATCH only). Never mix: don't send the same data as both query parameter and body field. Document default behavior when optional params are omitted. Document parameter encoding (URL encoding for special characters in query params)"
+    weight: 0.30
+    description: "Parameter patterns"

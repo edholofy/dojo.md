@@ -1,0 +1,40 @@
+meta:
+  id: missing-data-basics
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Missing data basics — identify, understand, and handle missing values in datasets"
+  tags: [missing-data, null-values, imputation, deletion, basics]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I have a customer dataset with 10,000 rows and
+  15 columns. Several columns have missing values:
+  - Email: 5% missing
+  - Phone number: 30% missing
+  - Age: 12% missing
+  - Purchase amount: 2% missing
+  - Last login date: 8% missing
+
+  My manager wants me to 'handle the missing data.' What are my options?
+  When should I delete rows with missing data vs fill in values? And
+  how do I decide which approach to use for each column?"
+
+  Task: Explain the different approaches to handling missing data,
+  when to use each approach, and how to choose the right strategy
+  for different columns and situations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the main approaches to handling missing data — deletion approaches: listwise deletion (remove entire rows with any missing value — simple but loses data), pairwise deletion (use available data for each analysis), and column deletion (drop columns with too much missing data). Imputation approaches: mean/median/mode imputation (simple but can distort distributions), forward/backward fill (for time series), constant value replacement (e.g., 'Unknown' for categorical), and when to leave data as missing (some analyses handle nulls natively)"
+    weight: 0.35
+    description: "Approaches"
+  - type: llm_judge
+    criteria: "Response provides guidance on choosing the right approach for each column — email (5% missing): likely safe to delete rows or impute with 'unknown' depending on use case. Phone (30% missing): too much to delete — either accept as optional field or drop column if not needed. Age (12% missing): median imputation or keep as null depending on analysis. Purchase amount (2% missing): careful — financial data should not be arbitrarily imputed, investigate why it's missing. Last login (8% missing): may indicate never logged in vs data collection issue — investigate before deciding. Emphasizes that the right approach depends on WHY the data is missing"
+    weight: 0.35
+    description: "ColumnGuidance"
+  - type: llm_judge
+    criteria: "Response introduces the concept of missing data mechanisms — MCAR (Missing Completely at Random: missingness has no pattern, safe to delete), MAR (Missing at Random: missingness relates to other observed variables, imputation is appropriate), MNAR (Missing Not at Random: missingness relates to the missing value itself, most problematic — e.g., high-income people refuse to report income). Explains at a beginner-friendly level why understanding WHY data is missing matters for choosing the handling approach"
+    weight: 0.30
+    description: "MissingMechanisms"

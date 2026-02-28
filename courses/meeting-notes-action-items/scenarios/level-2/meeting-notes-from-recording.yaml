@@ -1,0 +1,153 @@
+meta:
+  id: meeting-notes-from-recording
+  level: 2
+  course: meeting-notes-action-items
+  type: output
+  description: "Meeting notes from recording — create structured meeting notes from a raw, unedited meeting transcript with verbal fillers, interruptions, and tangents"
+  tags: [transcript, recording, cleanup, structure, synthesis]
+
+state: {}
+
+trigger: |
+  You have a raw transcript from a 30-minute team meeting
+  that was auto-recorded and transcribed by an AI tool. The
+  transcription has errors, verbal fillers, and the meeting
+  went off on several tangents. Create clean, professional
+  meeting notes from this transcript.
+
+  Meeting: Weekly Product Sync
+  Attendees: Maya (PM), Chris (Eng Lead), Dana (Designer),
+  Ravi (Data Analyst)
+
+  Raw Transcript:
+  ---
+  Maya: OK so, um, let's get started. I think everyone's here
+  right? Chris, Dana, Ravi? OK cool. So first thing, uh, the
+  dashboard redesign. Chris, where are we on that?
+
+  Chris: Yeah so, um, we finished the backend APIs last week
+  and, um, the front end is maybe like 60% done? The charting
+  library we chose — what was it called, ReCharts? — anyway
+  it's been, uh, kind of problematic. The real-time updates
+  are causing memory leaks. We might need to switch to, um,
+  D3 or something. Which would be like, I don't know, maybe
+  a week of rework?
+
+  Dana: Wait what? A week? We promised the stakeholders a
+  demo on the 28th. That's in 10 days.
+
+  Chris: I know, I know. But the memory leaks are real. Like,
+  after 30 minutes the page is using 2 gigs of RAM. We can't
+  demo that.
+
+  Maya: OK let's... can we scope this differently? Like, what
+  if we do the demo with static data instead of real-time?
+
+  Chris: Yeah, yeah that could work actually. The static
+  charts are fine. It's only the real-time streaming that's
+  the problem.
+
+  Maya: OK so let's do that. Demo with static data on the
+  28th, fix the real-time charts after. Chris, can you
+  estimate the D3 migration?
+
+  Chris: Sure, let me look at it this week. Oh also — totally
+  unrelated — did anyone see the email about the parking
+  garage? They're closing level 3 for the whole month. Such
+  a pain.
+
+  Ravi: Oh man, I didn't see that. Where am I supposed to
+  park? Anyway, uh, speaking of dashboards — Maya, I pulled
+  the usage data on the current dashboard. So here's what's
+  interesting. Only 23% of users actually use the real-time
+  view. Most people — like 71% — use the daily summary view.
+  So maybe the real-time thing isn't even as critical as we
+  thought?
+
+  Maya: Wait, really? That's super interesting. So 71% daily
+  summary, 23% real-time, and what's the other 6%?
+
+  Ravi: Uh, weekly rollup. But the sample size on that is
+  small. Oh, and the other thing — the export feature? Usage
+  went up 340% last month after we added CSV export. Dana, I
+  think that redesign you did on the export button really
+  helped.
+
+  Dana: Oh nice! Yeah, I moved it from the settings menu to
+  the main toolbar. Such a simple change but I guess—
+
+  Chris: [interrupting] Oh Dana, speaking of that, can we
+  talk about the filter panel? I saw your new mockups and I
+  have some concerns about the, um, the interaction pattern
+  for the date range picker. The way it works right now, users
+  have to click three times to set a range, and I think we
+  can get it down to two clicks with a different component.
+
+  Dana: Yeah, I'm not married to it. Let's look at it
+  together after this meeting? I have a few options.
+
+  Chris: Works for me.
+
+  Maya: OK can we get back to the dashboard timeline? So the
+  plan is: static data demo on the 28th. Chris estimates D3
+  migration this week. Ravi, can you put together a
+  recommendation on whether we should even prioritize
+  real-time given the usage data?
+
+  Ravi: Totally. I can have that by Thursday.
+
+  Maya: Perfect. Next topic — the mobile app crash reports.
+  We're seeing a spike. Ravi, you looked at this?
+
+  Ravi: Yeah, so crash rate went from 0.8% to 2.3% after the
+  last release. It's mostly on Android 12 devices. Chris,
+  your team pushed that update to the WebView component
+  right? I think that's related.
+
+  Chris: Ugh, probably. Let me check with Amir on that. He
+  was the one who did the WebView update. I'll have him look
+  into it today. Can we get this below 1% by end of week?
+
+  Maya: That needs to be the priority. The crash rate is a
+  P0. Chris, make sure Amir knows this is top priority.
+
+  Chris: Got it, P0. I'll talk to him right after this.
+
+  Maya: OK last thing. The customer feedback review. We got
+  the NPS results. Dana?
+
+  Dana: So, NPS is 42. Down from 47 last quarter. The main
+  complaints are... let me find it... OK, "slow loading
+  times" was number 1, "confusing navigation" was number 2,
+  and "missing export options" — which is ironic because we
+  just fixed that — was number 3.
+
+  Maya: The loading time thing — Chris, is that related to
+  the memory leak issues?
+
+  Chris: Could be, yeah. The dashboard is definitely the
+  slowest part of the app. Once we fix the charting library
+  it should help.
+
+  Maya: OK. I think we need to do a dedicated performance
+  sprint after the demo. Let me talk to the stakeholders
+  about prioritizing that. OK, I think we're done? Same time
+  next week? Cool, thanks everyone.
+  ---
+
+  Task: Create clean, structured meeting notes from this
+  raw transcript.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates clean, organized meeting notes from the messy transcript — removes all verbal fillers (um, uh, like, you know), tangents (parking garage discussion), and interruptions; organizes the content by topic rather than chronologically rambling: dashboard redesign, mobile app crashes, NPS/customer feedback; extracts the key data points accurately (60% frontend complete, 2GB RAM after 30 min, 23% real-time usage, 71% daily summary, 340% export usage increase, crash rate 0.8% to 2.3%, NPS 42 down from 47); presents information in a professional format with proper headers and structure."
+    weight: 0.35
+    description: "TranscriptCleanup"
+  - type: llm_judge
+    criteria: "Response extracts all decisions and action items accurately — captures decisions: demo on the 28th will use static data (not real-time), date range picker to be redesigned (Chris and Dana to collaborate), Android crash fix is P0 priority; captures all action items with owners: Chris to estimate D3 migration timeline (this week), Ravi to prepare real-time priority recommendation (by Thursday), Chris/Amir to investigate and fix Android 12 crash rate to below 1% (by end of week), Dana and Chris to review filter panel date range picker (after meeting), Maya to discuss performance sprint with stakeholders; does not miss action items buried in tangential conversation."
+    weight: 0.35
+    description: "DecisionsAndActions"
+  - type: llm_judge
+    criteria: "Response captures valuable insights without the noise — includes Ravi's usage data insight (71% daily vs 23% real-time) as it has strategic implications for prioritization; includes the export button redesign success story (340% increase) as a positive data point; captures the NPS trend and top complaints; connects related items (loading time complaints may relate to dashboard memory leaks); separates the meaningful discussion from social chatter; the notes would be useful to someone who missed the meeting and needs to understand what was discussed, decided, and assigned."
+    weight: 0.30
+    description: "InsightExtraction"

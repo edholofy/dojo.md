@@ -1,0 +1,54 @@
+meta:
+  id: pain-point-mapping
+  level: 1
+  course: user-journey-mapping
+  type: output
+  description: "Pain point mapping — identify, categorize, and prioritize user pain points across a journey"
+  tags: [pain-points, friction, problems, prioritization, beginner]
+
+state: {}
+
+trigger: |
+  You're a UX researcher at an online grocery delivery
+  service. Customer churn is increasing and you've been
+  asked to map pain points across the shopping journey.
+
+  From 30 customer interviews, you've collected these
+  complaints (with frequency):
+
+  Discovery: "I can never find what I'm looking for" (22/30),
+  "The search doesn't understand what I type" (18/30),
+  "Categories don't match how I think about groceries" (15/30)
+
+  Selection: "I can't tell if produce is fresh" (25/30),
+  "Substitution options are random" (20/30), "No way to
+  specify ripeness preference" (12/30)
+
+  Checkout: "Delivery slots are always taken" (26/30),
+  "Minimum order keeps changing" (14/30), "Promo codes
+  never work" (11/30)
+
+  Delivery: "Delivery windows are too wide — 2 hours" (23/30),
+  "Substituted items I didn't approve" (19/30), "Missing
+  items with no notification" (17/30), "Bags left in sun"
+  (8/30)
+
+  Post-delivery: "Refund process is confusing" (21/30),
+  "Can't easily reorder past orders" (16/30)
+
+  Task: Create a pain point map that categorizes and
+  prioritizes these issues across the journey.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response maps pain points to journey stages with proper categorization — stage mapping (organizes all pain points under their correct journey stage: discovery, selection, checkout, delivery, post-delivery — maintaining the structure from the research), categorization (groups pain points by type: usability issues — search doesn't understand input, confusing refund process, can't reorder easily; trust issues — can't verify produce freshness, unapproved substitutions, missing items; availability issues — delivery slots taken, minimum order changes; communication issues — missing item notifications absent, substitution without approval; quality issues — bags left in sun, produce freshness concerns), frequency data preserved (includes the interview frequency counts as quantitative evidence: 25/30 for freshness concern, 26/30 for delivery slot availability — these numbers drive prioritization, not just listing)."
+    weight: 0.35
+    description: "PainPointMapping"
+  - type: llm_judge
+    criteria: "Response prioritizes pain points with a clear framework — prioritization criteria (uses a framework considering: frequency — how many customers experience this, severity — how much it affects the experience, stage criticality — pain points in checkout and delivery directly cause churn; not just frequency alone), top priority pain points (the highest-priority issues should include: delivery slot unavailability 26/30 — blocks the transaction entirely; produce freshness uncertainty 25/30 — undermines trust in the core value proposition; delivery window too wide 23/30 — causes scheduling frustration; search quality 22/30 — makes the fundamental task of finding groceries difficult; unapproved substitutions 19/30 and refund confusion 21/30 — erode trust post-purchase), lower priority but noted (bags left in sun 8/30, promo codes 11/30, ripeness preference 12/30 — these affect fewer customers but some may have high severity when they occur)."
+    weight: 0.35
+    description: "Prioritization"
+  - type: llm_judge
+    criteria: "Response provides actionable insights from the pain point map — pattern recognition (identifies cross-cutting themes: control — customers feel they lack control over freshness, substitutions, delivery timing, and refund process; trust — the service makes promises about quality and timing that it doesn't reliably keep; communication — many pain points stem from insufficient information flow between service and customer), churn connection (links pain points to churn: the combination of delivery slot scarcity, produce quality uncertainty, and unapproved substitutions creates a trust deficit that drives customers back to in-store shopping), journey stage risk (identifies which stages pose the highest churn risk: checkout is a hard blocker — if no delivery slots are available, the journey ends; delivery is the trust-defining moment — substitutions and missing items determine whether customers return)."
+    weight: 0.30
+    description: "ActionableInsights"

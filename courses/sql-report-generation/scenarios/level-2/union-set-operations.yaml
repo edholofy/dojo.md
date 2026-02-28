@@ -1,0 +1,38 @@
+meta:
+  id: union-set-operations
+  level: 2
+  course: sql-report-generation
+  type: output
+  description: "Combine result sets — use UNION, UNION ALL, INTERSECT, and EXCEPT to merge, compare, and contrast data from different queries and tables"
+  tags: [SQL, UNION, INTERSECT, EXCEPT, set-operations, intermediate]
+
+state: {}
+
+trigger: |
+  The analytics team needs reports that combine data from different
+  sources or compare different sets:
+
+  1. "Combine online and in-store sales into a unified sales report"
+  2. "Find customers who placed orders in BOTH Q3 and Q4" (loyal)
+  3. "Find customers who ordered in Q3 but NOT in Q4" (churned)
+  4. "Show a comparison report: this month vs last month side by side"
+
+  Tables: online_orders (order_id, customer_id, amount, order_date),
+  store_orders (order_id, customer_id, amount, order_date, store_id),
+  customers (customer_id, name, email)
+
+  Task: Use set operations for each report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use UNION, INTERSECT, and EXCEPT — queries: 'Set operations: Query 1 — UNION ALL for combining sources: SELECT order_id, customer_id, amount, order_date, 'online' AS channel FROM online_orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) UNION ALL SELECT order_id, customer_id, amount, order_date, 'store' AS channel FROM store_orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) ORDER BY order_date DESC. UNION ALL keeps all rows including duplicates. UNION removes duplicates (slower because it sorts and deduplicates). Use UNION ALL unless you specifically need deduplication — it is faster. Both queries must have the same number of columns with compatible types. The added channel column distinguishes the source. Query 2 — INTERSECT for loyal customers: SELECT customer_id FROM orders WHERE order_date BETWEEN '2024-07-01' AND '2024-09-30' INTERSECT SELECT customer_id FROM orders WHERE order_date BETWEEN '2024-10-01' AND '2024-12-31'. Returns customer_ids that appear in BOTH result sets. These customers ordered in both Q3 and Q4. Query 3 — EXCEPT for churned customers: SELECT customer_id FROM orders WHERE order_date BETWEEN '2024-07-01' AND '2024-09-30' EXCEPT SELECT customer_id FROM orders WHERE order_date BETWEEN '2024-10-01' AND '2024-12-31'. Returns customer_ids that appear in Q3 but NOT in Q4. These customers stopped ordering — potential churn. MySQL does not support EXCEPT directly. Alternative: SELECT DISTINCT q3.customer_id FROM orders q3 LEFT JOIN orders q4 ON q3.customer_id = q4.customer_id AND q4.order_date BETWEEN '2024-10-01' AND '2024-12-31' WHERE q3.order_date BETWEEN '2024-07-01' AND '2024-09-30' AND q4.customer_id IS NULL'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers UNION rules and practical comparison reports — explanation: 'UNION rules and comparison reports: UNION rules: same number of columns in both queries. Column types must be compatible (cannot UNION an integer with a text column). Column names come from the first query. ORDER BY applies to the final combined result (put it at the end). Query 4 — Side-by-side period comparison: WITH this_month AS (SELECT product_category, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY product_category), last_month AS (SELECT product_category, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND order_date < DATE_TRUNC('month', CURRENT_DATE) GROUP BY product_category) SELECT COALESCE(tm.product_category, lm.product_category) AS category, COALESCE(lm.orders, 0) AS last_month_orders, COALESCE(tm.orders, 0) AS this_month_orders, COALESCE(lm.revenue, 0) AS last_month_revenue, COALESCE(tm.revenue, 0) AS this_month_revenue, ROUND((COALESCE(tm.revenue, 0) - COALESCE(lm.revenue, 0)) * 100.0 / NULLIF(lm.revenue, 0), 1) AS revenue_change_pct FROM this_month tm FULL OUTER JOIN last_month lm ON tm.product_category = lm.product_category ORDER BY this_month_revenue DESC. FULL OUTER JOIN ensures categories that exist in only one period still appear. NULLIF prevents division by zero when last month's revenue is 0'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers performance considerations and alternatives — performance: 'Performance and alternatives: UNION vs UNION ALL performance: UNION must sort and deduplicate all rows — O(n log n). UNION ALL simply appends — O(n). On large datasets, UNION ALL can be 10x faster. Only use UNION when duplicates actually matter. INTERSECT and EXCEPT alternatives for MySQL: INTERSECT alternative: SELECT DISTINCT a.customer_id FROM query_a a INNER JOIN query_b b ON a.customer_id = b.customer_id. EXCEPT alternative: SELECT DISTINCT a.customer_id FROM query_a a LEFT JOIN query_b b ON a.customer_id = b.customer_id WHERE b.customer_id IS NULL. Or using NOT EXISTS: SELECT DISTINCT customer_id FROM orders q3 WHERE order_date BETWEEN '2024-07-01' AND '2024-09-30' AND NOT EXISTS (SELECT 1 FROM orders q4 WHERE q4.customer_id = q3.customer_id AND q4.order_date BETWEEN '2024-10-01' AND '2024-12-31'). NOT EXISTS often performs best because it can short-circuit after finding the first match'"
+    weight: 0.30
+    description: "Performance"

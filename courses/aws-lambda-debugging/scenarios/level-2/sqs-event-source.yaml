@@ -1,0 +1,72 @@
+meta:
+  id: sqs-event-source
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda SQS event source mapping — diagnose message processing failures, batch errors, visibility timeout issues, and dead-letter queue configuration"
+  tags: [AWS, Lambda, SQS, event-source-mapping, DLQ, batch, intermediate]
+
+state: {}
+
+trigger: |
+  Your Lambda function processes SQS messages but messages keep
+  reappearing in the queue and eventually go to the DLQ:
+
+  $ aws sqs get-queue-attributes --queue-url $QUEUE_URL \
+    --attribute-names ApproximateNumberOfMessages \
+    ApproximateNumberOfMessagesNotVisible
+  {
+    "ApproximateNumberOfMessages": "0",
+    "ApproximateNumberOfMessagesNotVisible": "150"
+  }
+
+  150 messages are "in flight" (not visible) — they're being
+  processed but not being deleted.
+
+  CloudWatch Logs:
+  Processing batch of 10 messages...
+  Error processing message 7: Invalid JSON in message body
+  ERROR: Unhandled exception
+
+  The problem: when ANY message in a batch fails, Lambda reports the
+  entire batch as failed. All 10 messages return to the queue, even
+  the 9 that processed successfully. This causes:
+  - Successfully processed messages are processed again (duplicates!)
+  - The bad message keeps failing, blocking the batch
+  - After maxReceiveCount (e.g., 3), ALL messages go to DLQ
+
+  Fix — Partial batch failure reporting:
+  Return failed message IDs in the response:
+  {
+    "batchItemFailures": [
+      { "itemIdentifier": "message-id-7" }
+    ]
+  }
+
+  Enable ReportBatchItemFailures in the event source mapping.
+  Now only message 7 retries; messages 1-6 and 8-10 are deleted.
+
+  Another issue — visibility timeout:
+  If Lambda takes longer to process than the queue's visibility
+  timeout (default 30s), the message becomes visible again and
+  another Lambda instance picks it up → duplicate processing.
+  Rule: visibility timeout should be 6x the Lambda timeout.
+
+  Task: Explain SQS + Lambda debugging. Write: how event source
+  mapping works (polling, batching), batch failure handling (partial
+  vs full), visibility timeout tuning, DLQ configuration, message
+  deduplication, and common SQS + Lambda anti-patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Event source mapping mechanics are explained — Lambda polls SQS queue automatically (long polling). Messages delivered in batches (configurable: 1-10 for standard, 1-10000 for FIFO). Lambda deletes messages automatically on successful processing. If function fails or times out, messages return to queue after visibility timeout. Batch window: collect messages for up to 5 minutes before invoking. FIFO queues: messages processed in order within message group, concurrency limited by number of active message groups"
+    weight: 0.35
+    description: "Event source mapping"
+  - type: llm_judge
+    criteria: "Batch failure and DLQ are covered — default: entire batch fails if function returns error. With ReportBatchItemFailures: return batchItemFailures array with failed message IDs — only those retry. Without this, one bad message blocks entire batch. DLQ: messages exceeding maxReceiveCount sent to DLQ. Configure DLQ on the source queue (not the Lambda). DLQ inspection: replay messages after fix. Lambda Destinations: alternative to DLQ, provides more context (function response, error details). Idempotency: design functions to handle duplicate processing safely"
+    weight: 0.35
+    description: "Batch failure and DLQ"
+  - type: llm_judge
+    criteria: "Visibility timeout and anti-patterns are practical — set visibility timeout to at least 6x Lambda function timeout. If Lambda timeout = 60s, visibility timeout ≥ 360s. Otherwise: message reappears while still being processed → duplicate processing. Anti-patterns: not handling partial failures (entire batch retries), not implementing idempotency (duplicate processing causes bugs), processing too long for visibility timeout, no DLQ (messages retry forever), not monitoring ApproximateAgeOfOldestMessage (indicates processing lag)"
+    weight: 0.30
+    description: "Timeout and anti-patterns"

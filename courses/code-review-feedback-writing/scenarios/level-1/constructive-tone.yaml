@@ -1,0 +1,43 @@
+meta:
+  id: constructive-tone
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Use constructive tone — rewrite harsh or demanding code review comments into collaborative, respectful feedback that still communicates the issue clearly"
+  tags: [code-review, tone, constructive, collaborative, respect, beginner]
+
+state: {}
+
+trigger: |
+  A senior engineer on your team leaves harsh code review comments.
+  The team is frustrated and some are avoiding submitting PRs. Here
+  are real comments from recent reviews:
+
+  1. "Why would you ever do it this way? This is terrible."
+  2. "You clearly don't understand how async works."
+  3. "This code is spaghetti. Rewrite the whole thing."
+  4. "Did you even test this? It obviously doesn't work."
+  5. "I already told you not to use var. Do you not read my comments?"
+  6. "This is a junior mistake. Use a Map instead of nested loops."
+
+  Each comment has a valid technical point buried under the harsh tone.
+
+  Task: Rewrite all 6 comments to maintain the technical feedback
+  while using a constructive, respectful tone. For each, show the
+  original, explain what's wrong with the tone, and provide the
+  rewritten version. Then write a brief guide on code review tone
+  best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rewrites preserve the technical point — every rewrite still communicates the actual issue: (1) the approach has problems → suggest the better approach with reasoning. (2) async usage is incorrect → explain the specific async issue and how to fix it. (3) code needs restructuring → identify specific tangled parts and suggest refactoring steps. (4) there's a bug → describe the expected vs actual behavior. (5) var should be const/let → explain why with example. (6) Map is more efficient than nested loops → explain time complexity difference. Technical substance is not diluted — the feedback is still direct and clear, just not hostile"
+    weight: 0.35
+    description: "Preserves technical point"
+  - type: llm_judge
+    criteria: "Tone shifts from attacking person to discussing code — patterns used: question instead of accuse ('Have you considered using X?' vs 'You should use X'), focus on code not person ('This function could be simplified' vs 'You wrote confusing code'), assume positive intent ('I think the intent here is X — would Y achieve that more cleanly?'), offer help ('Happy to pair on this if it would help'), use 'we' language ('We generally prefer const/let in our codebase'). No sarcasm, no condescension, no 'obviously' or 'clearly' or 'just'. Each rewrite explains what was wrong with the original tone — personal attack, assumption of incompetence, frustration directed at person"
+    weight: 0.35
+    description: "Respectful tone"
+  - type: llm_judge
+    criteria: "Tone guide provides actionable principles — principles: (1) critique code, not people (say 'this function' not 'you'), (2) ask questions before assuming mistakes ('Is there a reason this uses var?' allows for intentional choices), (3) phrase suggestions not demands ('Consider using...' vs 'Use...'), (4) acknowledge good work alongside critique, (5) be explicit about severity (prefix with 'nit:' for style, 'blocking:' for must-fix), (6) remember there's a human reading your comment (re-read before posting). Anti-patterns to avoid: 'obviously', 'just', 'simply' (implies it should be easy), exclamation marks on criticism, ALL CAPS. Real impact: harsh reviews slow teams down — developers delay PRs, avoid asking for review, or leave the team"
+    weight: 0.30
+    description: "Tone guide"

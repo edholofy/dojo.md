@@ -1,0 +1,47 @@
+meta:
+  id: color-contrast-deep-dive
+  level: 2
+  course: accessibility-audit-reporting
+  type: output
+  description: "Color contrast deep dive — evaluate complex contrast scenarios including gradients, images with text, focus indicators, and non-text contrast"
+  tags: [contrast, non-text, gradients, focus-indicators, intermediate]
+
+state: {}
+
+trigger: |
+  A mid-level auditor says: "I understand basic text
+  contrast testing but I'm encountering complex
+  scenarios:
+
+  1. Text overlaid on a photograph (hero banner) —
+     contrast varies across the image
+  2. A gradient button where text contrast passes at
+     one end but fails at the other
+  3. Custom focus indicators that are styled as a
+     thin blue line — do these need to meet contrast?
+  4. Icon buttons (no text) — the icon itself has low
+     contrast against the button background
+  5. Placeholder text in light gray that disappears
+     when the field is focused
+
+  Basic contrast checkers don't handle these edge
+  cases. How do I test and report on complex contrast
+  scenarios?"
+
+  Task: Audit each complex contrast scenario with
+  proper WCAG criteria, measurement methodology,
+  and remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses text-on-image and gradient contrast — Text on photograph (WCAG 1.4.3: measure contrast at the lowest-contrast point — where text overlaps the lightest area of the image, if any text area fails 4.5:1 the entire element fails, Severity: Major, Fix options: add semi-transparent dark overlay behind text — rgba(0,0,0,0.6) ensures contrast regardless of image content, or use solid color band behind text, or ensure image is consistently dark enough in the text area), Gradient button (WCAG 1.4.3: measure contrast at the weakest point of the gradient — if white text on a gradient from dark blue to light blue, test the light blue end, if the light end fails the button fails even though the dark end passes, Severity: Major, Fix: ensure the entire gradient range maintains 4.5:1 with the text color, or use a text shadow for additional contrast)"
+    weight: 0.35
+    description: "ComplexContrastFindings"
+  - type: llm_judge
+    criteria: "Response covers non-text contrast and focus indicators — Focus indicator contrast (WCAG 2.4.11 Focus Not Obscured + 1.4.11 Non-text Contrast Level AA: the focus indicator itself must have 3:1 contrast against adjacent colors — a thin blue (#0066CC) line on a white (#FFFFFF) background = 5.26:1 passes, but the same blue on a dark blue background may fail, WCAG 2.4.13 Focus Appearance Level AAA adds minimum area and contrast requirements, Severity: Major if indicator doesn't meet 3:1), Icon contrast (WCAG 1.4.11 Non-text Contrast Level AA: graphical objects needed to understand content — icons that convey meaning must have 3:1 contrast against their background, this includes icon buttons, status indicators, chart elements, form field borders, Severity: Major, Fix: darken icon color or lighten button background to achieve 3:1), Placeholder text (WCAG 1.4.3 for text that conveys information: if placeholder is the only hint about field format, it must meet 4.5:1 — many designers use light gray placeholders that fail, Fix: add visible label or help text that meets contrast, don't rely solely on placeholder)"
+    weight: 0.35
+    description: "NonTextContrastFindings"
+  - type: llm_judge
+    criteria: "Response provides contrast testing methodology for edge cases — measurement tools for complex scenarios (for text on images: sample multiple points using a color picker on a screenshot, use the worst-case color pair for the contrast calculation, for gradients: test at both ends and at the midpoint, for animations: test at every state including hover/focus/active), automated vs manual for contrast (automated tools catch solid-color text contrast well, but miss: text on images, gradient issues, non-text contrast on icons, state-dependent contrast like hover states — these require manual measurement), reporting format for contrast findings (include: foreground color hex, background color hex, measured ratio, required ratio, visual screenshot showing the specific area measured, recommendation with specific color values that would pass — don't just say 'improve contrast' — say 'Change icon color from #CCCCCC to #767676 for 4.54:1 contrast ratio')"
+    weight: 0.30
+    description: "ContrastMethodology"

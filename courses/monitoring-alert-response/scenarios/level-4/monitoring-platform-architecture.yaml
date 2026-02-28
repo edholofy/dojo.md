@@ -1,0 +1,54 @@
+meta:
+  id: monitoring-platform-architecture
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Design monitoring platform architecture — select and integrate monitoring tools for a multi-service environment with observability requirements"
+  tags: [monitoring, architecture, platform, observability, tooling, expert]
+
+state: {}
+
+trigger: |
+  Your company is consolidating from 6 monitoring tools to a
+  coherent observability platform. Current tools:
+
+  1. Nagios (legacy infrastructure checks, 5+ years old)
+  2. Prometheus + Grafana (metrics for newer services)
+  3. ELK stack (centralized logging)
+  4. Datadog (APM for 3 services, added by one team)
+  5. PagerDuty (alerting and on-call)
+  6. Custom health check scripts (shell scripts running on cron)
+
+  Problems:
+  - No single pane of glass — diagnosing an incident requires
+    checking 4+ tools
+  - Metrics in Prometheus, logs in ELK, and traces in Datadog
+    cannot be correlated
+  - Alert rules are split across Nagios, Prometheus, and Datadog
+  - New engineers take 2 weeks just to learn all the monitoring tools
+  - Total monitoring spend: $180K/year across all tools
+
+  Requirements:
+  - Support 50 microservices across 3 environments (dev, staging, prod)
+  - Metrics, logs, and traces must be correlated
+  - SLO-based alerting capability
+  - Budget: $200K/year (slight increase for better tooling)
+  - Migration must be gradual (cannot rip-and-replace overnight)
+
+  Task: Design the target monitoring architecture and migration plan.
+  Include tool selection rationale, integration architecture, and the
+  phased migration strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture addresses the correlation problem with justified tool choices — target architecture: 'The core problem is tool fragmentation preventing correlation. The target architecture centralizes on the three pillars of observability (metrics, logs, traces) with correlation between them. Option A (recommended): Grafana-based open source stack. Metrics: Prometheus (keep, already in use for newer services). Migrate Nagios checks to Prometheus exporters. Logs: Loki (replaces ELK). Same query patterns as Prometheus, native Grafana integration. Traces: Tempo (replaces Datadog APM). Native Grafana integration. Visualization and alerting: Grafana (keep, already in use). Unified dashboards with metrics-logs-traces correlation. On-call: PagerDuty (keep). Single alert routing destination. Rationale: Grafana+Prometheus+Loki+Tempo provide native correlation: from a metric alert, jump to related logs and traces in the same interface. Open-source tools reduce licensing costs. The team already knows Prometheus and Grafana, reducing training burden.' Option B (alternative): Datadog all-in-one. Consolidate everything into Datadog. Advantage: single vendor, built-in correlation, minimal integration work. Disadvantage: significantly higher cost at scale ($300K+ for 50 services), vendor lock-in, and exceeds budget. 'Recommendation: Option A. The Grafana ecosystem provides the correlation we need within budget, leverages existing Prometheus and Grafana investment, and avoids vendor lock-in.' Architecture diagram: 'Services → OpenTelemetry SDK/agents → collector → Prometheus (metrics), Loki (logs), Tempo (traces) → Grafana (visualization, alerting) → PagerDuty (on-call routing)'"
+    weight: 0.35
+    description: "Architecture and tool selection"
+  - type: llm_judge
+    criteria: "Migration plan is phased and minimizes risk — migration phases: 'Phase 1 (month 1-2): establish the target platform. Deploy Loki and Tempo alongside existing tools. Configure OpenTelemetry collectors on 5 pilot services. Set up Grafana dashboards that show metrics (Prometheus), logs (Loki), and traces (Tempo) correlated for the pilot services. Goal: prove the correlation works on real services before migrating everything.' Phase 2 (month 3-4): migrate logging. Move services from ELK to Loki in batches of 10 services per week. Keep ELK running in parallel until all services are on Loki and the team is confident. Decommission ELK after 2 weeks with no usage. Estimated savings: ELK licensing and infrastructure. Phase 3 (month 5-6): migrate infrastructure monitoring. Replace Nagios checks with Prometheus exporters and Grafana alerting. For each Nagios check: create equivalent Prometheus metric and Grafana alert, verify both fire for the same conditions, disable Nagios check. Decommission Nagios after all checks are migrated. Phase 4 (month 7-8): migrate APM. Move the 3 Datadog APM services to Tempo. Add tracing to remaining services using OpenTelemetry. Decommission Datadog. Phase 5 (month 9): consolidate alerting. All alert rules in Grafana, routed through PagerDuty. Remove custom cron health check scripts (replace with Grafana synthetic monitoring or Prometheus blackbox exporter). Phase 6 (month 10-12): optimization. Fine-tune retention policies, data sampling, and cost optimization.' Risk mitigation: 'Every phase runs new and old tools in parallel for at least 2 weeks. No tool is decommissioned until the replacement has been verified by the owning team. Rollback plan for each phase: if the new tool has critical issues, fall back to the old tool'"
+    weight: 0.35
+    description: "Phased migration"
+  - type: llm_judge
+    criteria: "Cost analysis and team enablement are addressed — cost analysis: 'Current spend: $180K/year (Nagios: $10K infrastructure, ELK: $60K infrastructure + licensing, Datadog: $48K licensing, Prometheus/Grafana: $30K infrastructure, PagerDuty: $24K licensing, Custom scripts: $8K infrastructure). Target spend: estimated $150-170K/year (Prometheus: $35K infrastructure (scaled for all services), Loki: $30K infrastructure (replacing ELK), Tempo: $20K infrastructure, Grafana: $15K infrastructure + $0 licensing (open source), PagerDuty: $24K licensing (unchanged), OpenTelemetry: $25K infrastructure (collectors and agents)). Net savings: $10-30K/year plus significant operational efficiency from tool consolidation. Hidden savings: engineer time saved. Currently, diagnosing an incident across 4 tools takes 2-3x longer than a unified platform. If average investigation time decreases by 30%, that is approximately 200 engineering hours/year recovered.' Team enablement: 'Training plan: (1) Grafana/Prometheus (most teams already familiar): 2-hour refresher focused on new dashboards and alert configuration. (2) Loki and LogQL: 4-hour workshop. LogQL syntax is similar to PromQL, so Prometheus users will learn quickly. (3) Tempo and tracing: 4-hour workshop on distributed tracing concepts and Tempo query patterns. (4) OpenTelemetry instrumentation: team-specific sessions on adding traces and structured logs to their services. (5) Documentation: comprehensive internal guide covering: how to add monitoring to a new service, how to create alerts, how to investigate incidents using the unified platform. New engineer onboarding: 1 tool to learn instead of 6. Estimated onboarding reduction: from 2 weeks to 3 days'"
+    weight: 0.30
+    description: "Cost and enablement"

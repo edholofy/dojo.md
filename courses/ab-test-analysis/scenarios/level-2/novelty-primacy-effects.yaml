@@ -1,0 +1,34 @@
+meta:
+  id: novelty-primacy-effects
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Identify and account for novelty and primacy effects — recognize temporal biases that inflate or deflate early A/B test results and design tests to mitigate them"
+  tags: [novelty-effect, primacy-effect, temporal-bias, test-duration, intermediate]
+
+state: {}
+
+trigger: |
+  The growth team launched a redesigned navigation menu. After 3 days
+  the test shows a massive 25% increase in engagement. After 2 weeks
+  the lift has shrunk to 5%. After 4 weeks it's at 3%.
+
+  The PM is confused: "Did the redesign stop working? The results keep
+  getting worse every week. Should we stop the test?"
+
+  Task: Explain novelty and primacy effects, how they distort A/B test
+  results over time, and how to design tests that account for them.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains novelty and primacy effects — effects: 'Novelty and primacy effects: Novelty effect: users engage more with something new simply because it is new. The redesigned navigation is unfamiliar, so users click around to explore it. This exploration behavior inflates engagement metrics. As users become accustomed to the new design, the novelty fades and engagement settles to its true level. Timeline: Day 1-3: 25% lift (heavy novelty — users exploring the new nav). Day 7: 12% lift (novelty wearing off). Day 14: 5% lift (approaching true effect). Day 28: 3% lift (true steady-state effect). The 25% early lift was never real — it was a combination of the true 3% effect plus 22% of novelty-driven exploration. Primacy effect (the opposite): users prefer what they are familiar with and initially resist changes. A new checkout flow might show WORSE performance in the first week because returning users are confused by the changed process. As users learn the new flow, performance improves. Timeline for primacy: Day 1-3: -10% conversion (users confused by new flow). Day 7: -3% (users adapting). Day 14: +2% (users learned the new flow, which is genuinely better). Day 28: +5% (true steady-state — the new flow is superior once learned). A test stopped after 3 days would incorrectly conclude the new checkout is terrible. Both effects distort early results: novelty makes early results too optimistic. Primacy makes early results too pessimistic. Neither reflects the true long-term treatment effect'"
+    weight: 0.35
+    description: "Effects"
+  - type: llm_judge
+    criteria: "Response covers detection and diagnosis methods — detection: 'Detecting novelty and primacy effects: Method 1 — Time-series analysis of the treatment effect: plot the daily or weekly treatment effect over the test duration. Novelty: the effect starts high and declines, eventually plateauing. Primacy: the effect starts negative and improves, eventually plateauing. Neither: the effect is roughly constant over time (minor fluctuation around the true mean). For the navigation redesign: Week 1 lift: 25%. Week 2 lift: 8%. Week 3 lift: 4%. Week 4 lift: 3%. Clear declining pattern → novelty effect confirmed. Method 2 — New vs returning user analysis: split users into those who have never seen the treatment (new to the test) and those who have been exposed before (returning). If new users consistently show a 25% lift but returning users (who have had time to adjust) show only 3%, the gap is the novelty effect. New users: 25% lift (always seeing it for the first time). Returning users week 1: 20% lift (still exploring). Returning users week 4: 3% lift (novelty worn off). The returning user metric converges to the true effect. Method 3 — Cohort analysis by first exposure date: group users by the date they first entered the test. Cohort 1 (entered day 1): 25% lift in their first 3 days, 3% lift after 2 weeks. Cohort 2 (entered day 8): 25% lift in their first 3 days, 3% lift after 2 weeks. If every cohort shows the same decay pattern from their entry date (not the calendar date), this confirms the novelty effect is per-user, not a time trend'"
+    weight: 0.35
+    description: "Detection"
+  - type: llm_judge
+    criteria: "Response covers mitigation strategies and test design — mitigation: 'Mitigating novelty and primacy effects: Strategy 1 — Run tests long enough: the minimum test duration should capture at least 2-3 full user cycles (the typical time between repeat visits). If users visit weekly: minimum 3-4 weeks. If users visit daily: minimum 2-3 weeks. If users visit monthly: minimum 2-3 months. The navigation test was correct to run for 4 weeks — the 3% lift at week 4 is the reliable estimate. The PM should not have relied on the 3-day result. Strategy 2 — Analyze only users past the novelty window: exclude the first N days of each user's exposure from the analysis. If novelty typically fades within 7 days, analyze only the behavior from day 8 onward for each user. This gives the true steady-state effect earlier, without waiting for the overall novelty to wash out. Strategy 3 — Use burn-in periods: after randomizing users into control and treatment, wait 1-2 weeks before starting to measure the primary metric. The burn-in period lets users adjust to the change. Start collecting data for analysis only after the burn-in. Strategy 4 — Restrict to new users only: new users have no expectation of the old design, so neither novelty nor primacy apply. Run the test only on users who have never visited the site before. Limitation: this may take longer (smaller sample) and does not measure the impact on existing users. Strategy 5 — Long-term holdout groups: after shipping the treatment, keep 5-10% of users in a holdout (control) group for 3-6 months. Compare the treatment group to the holdout monthly. If the lift erodes over time (novelty fading in the treatment group), the long-term holdout will reveal it. For the PM: the navigation redesign does work, but the true effect is approximately 3%, not 25%. Ship it based on the 3% steady-state lift. Use the confidence interval around 3% for revenue projections, not the inflated early numbers'"
+    weight: 0.30
+    description: "Mitigation"

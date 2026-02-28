@@ -1,0 +1,51 @@
+meta:
+  id: etl-incident-postmortem
+  level: 5
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "ETL incident postmortem and organizational learning — lead postmortems for major data incidents, drive systemic improvements, and build a learning culture"
+  tags: [postmortem, incident, organizational-learning, culture, master]
+
+state: {}
+
+trigger: |
+  A VP of Data Engineering says: "We had a major data incident last
+  month that exposed systemic problems:
+
+  The incident: A seemingly minor dbt model change (adding a WHERE
+  clause for a new business requirement) accidentally filtered out
+  15% of transactions from the revenue model. This went undetected
+  for 11 days because:
+  - The change passed code review (reviewer didn't realize the
+    filter's impact on row count)
+  - No data quality test caught the 15% revenue drop
+  - The daily revenue dashboard showed a gradual decline that people
+    attributed to seasonal trends
+  - It was only caught when the CFO compared quarter-to-date revenue
+    against forecast and found a $4.2M gap
+
+  The incident affected: quarterly revenue reporting ($4.2M
+  understated for 11 days), sales compensation calculations (some
+  reps underpaid), and customer health scores (15% of transactions
+  missing from CLV calculations).
+
+  I need to run a postmortem that goes beyond 'add more tests' and
+  drives real systemic change."
+
+  Task: Design and lead a comprehensive postmortem that identifies
+  systemic root causes, produces actionable improvements, and builds
+  organizational learning capabilities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a thorough postmortem process — blameless postmortem structure (timeline reconstruction, contributing factors identification, impact assessment, action item generation), systemic root cause analysis that goes beyond the immediate cause (the WHERE clause was the trigger, but the root causes are: no automated validation for row count changes, no reconciliation between pipeline output and business systems, code review process doesn't check data impact, monitoring focused on pipeline success not data correctness), and 5-whys or fault tree analysis to identify the deepest contributing factors"
+    weight: 0.35
+    description: "PostmortemProcess"
+  - type: llm_judge
+    criteria: "Response produces actionable, systemic improvements — categorizes action items by type: detection improvements (add row count change alerts, daily revenue reconciliation against accounting systems, anomaly detection on key business metrics), prevention improvements (dbt model changes require data impact analysis, automated row count regression tests, pre-merge validation that runs the changed model and compares output statistics), and process improvements (code review checklist for data pipeline changes, quarterly data quality audits, cross-functional review for models that feed financial reporting). Each action item has an owner and deadline"
+    weight: 0.35
+    description: "SystemicImprovements"
+  - type: llm_judge
+    criteria: "Response addresses organizational learning — how to share postmortem learnings across the organization (postmortem review meetings, published postmortem documents, pattern library of common failure modes), how to track action item completion (postmortem action tracking dashboard, monthly review of open items, escalation for overdue items), how to measure whether postmortems are working (reduction in incident recurrence rate, reduction in time to detect, improvement in pipeline reliability metrics), and how to build a culture where people report near-misses and data anomalies proactively rather than waiting for business users to complain"
+    weight: 0.30
+    description: "OrganizationalLearning"

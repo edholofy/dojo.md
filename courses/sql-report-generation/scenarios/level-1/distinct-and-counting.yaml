@@ -1,0 +1,36 @@
+meta:
+  id: distinct-and-counting
+  level: 1
+  course: sql-report-generation
+  type: output
+  description: "Count unique values — use DISTINCT and COUNT DISTINCT to answer questions about unique customers, products, and categories in reports"
+  tags: [SQL, DISTINCT, COUNT-DISTINCT, unique-values, beginner]
+
+state: {}
+
+trigger: |
+  The product team asks several questions about unique counts:
+  1. "How many unique customers ordered this month?"
+  2. "What are the distinct product categories we sell?"
+  3. "How many unique products does each customer buy on average?"
+  4. "Which regions have the most diverse product mix?"
+
+  Tables:
+  - orders (order_id, customer_id, product_id, amount, order_date, region)
+  - products (product_id, product_name, category)
+
+  Task: Write queries using DISTINCT and COUNT(DISTINCT ...).
+
+assertions:
+  - type: llm_judge
+    criteria: "Queries correctly use DISTINCT and COUNT DISTINCT — queries: 'DISTINCT and COUNT DISTINCT: Query 1 — Unique customers this month: SELECT COUNT(DISTINCT customer_id) AS unique_customers FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE). COUNT(DISTINCT customer_id) counts each customer once, regardless of how many orders they placed. COUNT(*) would count total orders (much higher). COUNT(customer_id) would count all non-NULL customer_ids (same as COUNT(*) usually). Query 2 — Distinct product categories: SELECT DISTINCT category FROM products ORDER BY category. DISTINCT in SELECT removes duplicate rows from the result. This returns each category name exactly once. Query 3 — Average unique products per customer: SELECT ROUND(AVG(unique_products), 1) AS avg_products_per_customer FROM (SELECT customer_id, COUNT(DISTINCT product_id) AS unique_products FROM orders WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY customer_id) AS customer_counts. This uses a subquery: first count unique products per customer, then average those counts. Query 4 — Regions by product diversity: SELECT o.region, COUNT(DISTINCT p.category) AS unique_categories, COUNT(DISTINCT o.product_id) AS unique_products, COUNT(*) AS total_orders FROM orders o JOIN products p ON o.product_id = p.product_id WHERE o.order_date >= DATE_TRUNC('month', CURRENT_DATE) GROUP BY o.region ORDER BY unique_categories DESC'"
+    weight: 0.35
+    description: "Queries"
+  - type: llm_judge
+    criteria: "Explanation covers DISTINCT behavior and performance implications — explanation: 'DISTINCT behavior: DISTINCT applies to the entire row: SELECT DISTINCT first_name, last_name returns unique name combinations. If two John Smiths exist, you get one row. If John Smith and John Doe exist, you get both. Multiple COUNT DISTINCT in one query: SELECT COUNT(DISTINCT customer_id) AS unique_customers, COUNT(DISTINCT product_id) AS unique_products, COUNT(DISTINCT region) AS unique_regions, COUNT(*) AS total_orders FROM orders. Each COUNT DISTINCT operates independently — they can all appear in the same SELECT. DISTINCT vs GROUP BY: SELECT DISTINCT region FROM orders — gives unique regions. SELECT region FROM orders GROUP BY region — also gives unique regions. They produce the same result for this case. Use GROUP BY when you also need aggregates: SELECT region, COUNT(*) FROM orders GROUP BY region. Performance: COUNT(DISTINCT column) is slower than COUNT(*) because the database must track unique values. On very large tables (100M+ rows), consider approximate count: PostgreSQL: SELECT COUNT(DISTINCT customer_id) — exact but slow. Alternative: use HyperLogLog extensions for approximate unique counts when exact precision is not needed'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response shows practical reporting patterns with distinct counts — patterns: 'Practical DISTINCT patterns for reports: Unique customer retention report: SELECT DATE_TRUNC('month', order_date) AS month, COUNT(DISTINCT customer_id) AS active_customers FROM orders GROUP BY DATE_TRUNC('month', order_date) ORDER BY month. This shows how many unique customers ordered each month — a key retention metric. New vs returning customer breakdown: WITH monthly_first_order AS (SELECT customer_id, MIN(order_date) AS first_order_date FROM orders GROUP BY customer_id) SELECT DATE_TRUNC('month', o.order_date) AS month, COUNT(DISTINCT CASE WHEN DATE_TRUNC('month', o.order_date) = DATE_TRUNC('month', mfo.first_order_date) THEN o.customer_id END) AS new_customers, COUNT(DISTINCT CASE WHEN DATE_TRUNC('month', o.order_date) != DATE_TRUNC('month', mfo.first_order_date) THEN o.customer_id END) AS returning_customers FROM orders o JOIN monthly_first_order mfo ON o.customer_id = mfo.customer_id GROUP BY DATE_TRUNC('month', o.order_date) ORDER BY month. This combines COUNT DISTINCT with CASE WHEN to split customers into new and returning — a critical business metric'"
+    weight: 0.30
+    description: "Patterns"

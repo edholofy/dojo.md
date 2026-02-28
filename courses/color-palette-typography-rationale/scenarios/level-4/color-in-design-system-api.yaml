@@ -1,0 +1,47 @@
+meta:
+  id: color-in-design-system-api
+  level: 4
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color in design system API — design the API surface for color consumption in a design system including props, variants, and extensibility"
+  tags: [design-system, api, components, props, expert]
+
+state: {}
+
+trigger: |
+  A Design System Architect says: "I'm designing how
+  components in our design system expose color options
+  to consuming teams. Current approach has problems:
+
+  Problem 1: Components accept raw hex values as props
+  (<Button color='#3B82F6' />) — teams pass any color
+  including inaccessible ones
+
+  Problem 2: Some components accept Tailwind class names
+  (<Card className='bg-blue-500' />) — no type safety,
+  breaks when we change the palette
+
+  Problem 3: The Alert component has props for every
+  semantic color (successBg, successText, successBorder,
+  errorBg, errorText, errorBorder...) — 18 color props
+
+  How should design system components expose color to
+  consumers? What's the right API?"
+
+  Task: Design a component color API strategy with type
+  safety, accessibility guardrails, and clean abstraction
+  with rationale for each decision.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs constrained color API — principle: components should expose INTENT not raw color (instead of color='#3B82F6' use variant='primary' or intent='info' — the component decides which colors to use internally, consuming teams declare purpose not implementation), variant-based API (<Button variant='primary' /> <Button variant='secondary' /> <Button variant='danger' /> — limited set of approved variants, type-safe — TypeScript union type: 'primary' | 'secondary' | 'danger' | 'ghost', each variant internally maps to a set of coordinated color tokens: background, text, border, hover, active — all pre-tested for accessibility), Alert component fix (replace 18 color props with one variant prop: <Alert variant='success' /> <Alert variant='error' /> <Alert variant='warning' /> <Alert variant='info' /> — each variant is a pre-designed, accessible color combination, the component owns the relationship between background, text, and border colors for each variant — consumers can't break accessibility by mixing them)."
+    weight: 0.35
+    description: "ConstrainedAPI"
+  - type: llm_judge
+    criteria: "Response balances constraint with extensibility — escape hatch design (some teams have legitimate needs beyond standard variants: provide a controlled escape hatch like colorScheme prop that accepts a design token name — <Button colorScheme='brand-coral' /> — still constrained to approved tokens, not raw hex, or a theme override mechanism at the provider level — <ThemeProvider overrides={{ action: { primary: tokens.coral }}}>), preventing misuse (if accepting any CSS class: components lose control over accessibility, instead: accept only approved tokens via TypeScript — IDE autocomplete shows available options, runtime warning if a deprecated or unknown token is used), accessibility enforcement (variant-based API guarantees accessibility because each variant's colors are pre-validated by the design system team, any custom colorScheme must pass automated contrast check at render time — console warning if it fails WCAG AA, or strict mode: throw error for inaccessible combinations)."
+    weight: 0.35
+    description: "ExtensibilityAndSafety"
+  - type: llm_judge
+    criteria: "Response addresses theming and documentation — theming interaction (component variants consume semantic tokens: Button primary uses color.action.primary.bg and color.action.primary.text — when theme changes to dark mode or different brand, variants automatically update without any prop changes, the API surface stays identical across themes — <Button variant='primary' /> renders correctly in light mode, dark mode, high-contrast mode, and any brand theme), migration from current API (gradual deprecation: keep old props working but with console warnings pointing to new API, provide codemod for automated migration: find color='#...' and map to nearest variant, timeline: old API deprecated now, removed in next major version), and API documentation (component API docs show: available variants with visual preview in each theme, usage examples for common scenarios, migration guide from old to new API, design rationale: 'why we don't accept raw colors' — helps consuming teams understand the philosophy not just the mechanics)."
+    weight: 0.30
+    description: "ThemingAndDocs"

@@ -1,0 +1,32 @@
+meta:
+  id: behavioral-cohorts
+  level: 1
+  course: cohort-analysis
+  type: output
+  description: "Create behavioral cohorts — group users by actions they take and compare outcomes to identify which behaviors predict long-term retention and value"
+  tags: [behavioral-cohort, actions, activation, prediction, beginner]
+
+state: {}
+
+trigger: |
+  The PM asks: "We know that some users stick around and others don't.
+  I want to understand WHY. What actions do our best users take early
+  on that our churned users don't? Can we use that to improve the
+  product?"
+
+  Task: Explain how to create behavioral cohorts and use them to
+  identify actions that predict retention.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains behavioral cohort construction — construction: 'Building behavioral cohorts: instead of grouping users by WHEN they signed up (acquisition cohorts), group them by WHAT they did. Step 1 — Choose the behavioral dimension: identify key actions in the product. Examples for a project management tool: created a project. Invited a team member. Completed a task. Used the mobile app. Connected an integration (Slack, GitHub). Step 2 — Define the time window: restrict to actions taken in the first 7 days (or first session, first 14 days). This focuses on early behaviors that predict long-term outcomes. Step 3 — Create the cohorts: cohort A: users who invited a team member in their first 7 days. Cohort B: users who did NOT invite a team member in their first 7 days. Step 4 — Compare retention: cohort A (invited teammate): month 1 retention: 65%. Month 3 retention: 50%. Month 6 retention: 42%. Cohort B (did not invite teammate): month 1 retention: 25%. Month 3 retention: 12%. Month 6 retention: 5%. The difference is massive — users who invited a teammate retain at 8x the rate at month 6. This behavioral cohort analysis identifies inviting a team member as a critical activation behavior. The product should be designed to guide ALL new users toward this action as quickly as possible'"
+    weight: 0.35
+    description: "Construction"
+  - type: llm_judge
+    criteria: "Response covers finding the activation metric — activation: 'Finding the activation metric (aha moment): The activation metric is the behavior most strongly correlated with long-term retention. Famous examples: Facebook: adding 7 friends in 10 days. Slack: a team exchanging 2,000 messages. Dropbox: putting at least one file in a shared folder. Twitter: following 30 accounts. How to find yours: Step 1 — List all possible early actions: for the project management tool: created first project. Added first task. Invited teammate. Completed first task. Used mobile app. Viewed a template. Set a due date. Step 2 — For each action, compare retention of users who did vs did not do the action (within the first 7 days): created project: doers 55% month-3 retention vs non-doers 15%. Added task: doers 45% vs non-doers 18%. Invited teammate: doers 50% vs non-doers 12%. Completed task: doers 60% vs non-doers 10%. Used mobile: doers 48% vs non-doers 20%. Step 3 — Rank by the retention gap: completed task: 50pp gap (60% vs 10%). Created project: 40pp gap. Invited teammate: 38pp gap. Added task: 27pp gap. Used mobile: 28pp gap. Step 4 — Choose the activation metric: completed task has the largest gap, but it requires creating a project and adding a task first. The activation sequence might be: create project → add task → complete task. The product should guide new users through this sequence in their first session. Caution — correlation is not causation: users who complete a task may be inherently more motivated (selection effect). Forcing all users to complete a task will not magically make them retain at 60%. But designing the onboarding to help users reach this milestone will help many users discover the product's value who otherwise would have bounced'"
+    weight: 0.35
+    description: "Activation"
+  - type: llm_judge
+    criteria: "Response covers practical application of behavioral cohorts — practical: 'Practical application: Using behavioral cohorts to improve the product: 1. Design onboarding around the activation behavior: current onboarding: generic product tour (5 screens, users skip through). New onboarding: guided task — create your first project and complete a task in 5 minutes. Measure: did the percentage of users completing a task in their first session increase? Track: does the increased activation translate to higher month 1 and month 3 retention? 2. Create a behavioral cohort dashboard: for each key behavior, track weekly: percentage of new users who performed the action in their first 7 days. Retention at week 4 and week 12 for each behavioral cohort. Example dashboard row: completed task: 35% of new users do this → 60% month-3 retention. Invited teammate: 15% of new users do this → 50% month-3 retention. Goal: increase the percentage who complete a task from 35% to 50%. Expected retention impact: overall month-3 retention improves from approximately 28% to approximately 36% (more users reach the high-retaining behavior). 3. Combine behavioral and acquisition cohorts: break down by acquisition channel AND behavior: organic users who completed a task: 70% month-3 retention. Paid users who completed a task: 55% month-3 retention. Organic users who did not complete a task: 15% month-3 retention. Paid users who did not complete a task: 5% month-3 retention. Insight: the activation behavior matters for ALL channels, but paid users benefit even more from being guided to activation (relative lift is larger). 4. Monitor behavioral cohort trends over time: if the percentage of new users reaching activation is increasing month over month, the product is improving. If it is decreasing, something is wrong (worse acquisition quality, degraded onboarding, or product changes that make activation harder)'"
+    weight: 0.30
+    description: "Practical"

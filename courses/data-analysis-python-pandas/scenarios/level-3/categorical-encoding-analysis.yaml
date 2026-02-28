@@ -1,0 +1,41 @@
+meta:
+  id: categorical-encoding-analysis
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Handle categorical data effectively — use pandas Categorical dtype, encoding strategies, and memory optimization for large datasets with categorical columns"
+  tags: [python, pandas, categorical, encoding, memory-optimization, advanced]
+
+state: {}
+
+trigger: |
+  You are preparing a dataset of 2 million e-commerce transactions for
+  a machine learning model. The dataset has many categorical columns:
+  product_category (50 values), payment_method (5 values), shipping_carrier
+  (8 values), customer_segment (4 values), region (12 values), device_type
+  (3 values), and order_status (6 values).
+
+  The dataset is 1.2 GB in memory and the data science team needs it
+  under 400 MB. They also need the categorical columns properly encoded
+  for modeling.
+
+  Data columns: order_id, customer_id, product_category, payment_method,
+  shipping_carrier, customer_segment, region, device_type, order_status,
+  order_amount, quantity, discount_pct, order_date.
+
+  Task: Optimize memory with Categorical dtype and prepare encoding
+  strategies for modeling.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates pandas Categorical dtype for memory optimization — categorical: 'Pandas Categorical dtype: Memory analysis before optimization: print(df.memory_usage(deep=True).sum() / 1e6, \"MB\"). for col in df.select_dtypes(include=\"object\").columns: unique = df[col].nunique(). total = len(df). ratio = unique / total. memory = df[col].memory_usage(deep=True) / 1e6. print(f\"{col}: {unique} unique values, ratio={ratio:.6f}, {memory:.1f} MB\"). When a column has few unique values relative to total rows (low cardinality), Categorical dtype saves massive memory. Converting to Categorical: cat_columns = [\"product_category\", \"payment_method\", \"shipping_carrier\", \"customer_segment\", \"region\", \"device_type\", \"order_status\"]. for col in cat_columns: df[col] = df[col].astype(\"category\"). Memory after: print(df.memory_usage(deep=True).sum() / 1e6, \"MB\"). Why this works: object dtype stores each value as a separate Python string. With 2M rows and 5 payment methods, it stores 2M strings. Categorical stores only 5 strings plus a compact integer array of codes. Memory savings: payment_method with 5 values — object: ~120 MB, category: ~2 MB (60x reduction). product_category with 50 values — object: ~150 MB, category: ~4 MB (37x reduction). Ordered categories for ordinal data: df[\"customer_segment\"] = pd.Categorical(df[\"customer_segment\"], categories=[\"bronze\", \"silver\", \"gold\", \"platinum\"], ordered=True). Now comparisons work: df[df[\"customer_segment\"] > \"silver\"] returns gold and platinum. This is useful for filtering and sorting by business hierarchy. Downcast numeric columns too: df[\"quantity\"] = pd.to_numeric(df[\"quantity\"], downcast=\"integer\"). df[\"discount_pct\"] = pd.to_numeric(df[\"discount_pct\"], downcast=\"float\"). int64 (8 bytes) → int8 (1 byte) for small integers. float64 (8 bytes) → float32 (4 bytes) for decimals'"
+    weight: 0.35
+    description: "Categorical dtype"
+  - type: llm_judge
+    criteria: "Response covers encoding strategies for machine learning — encoding: 'Encoding strategies for ML: Label encoding (ordinal categories): from sklearn.preprocessing import LabelEncoder. le = LabelEncoder(). df[\"segment_encoded\"] = le.fit_transform(df[\"customer_segment\"]). Only use for truly ordinal data (bronze=0, silver=1, gold=2, platinum=3). Using label encoding on nominal data (payment_method) implies an ordering that does not exist. One-hot encoding (nominal categories): dummies = pd.get_dummies(df[\"payment_method\"], prefix=\"pay\", dtype=int). df = pd.concat([df, dummies], axis=1). Creates binary columns: pay_credit_card, pay_debit, pay_paypal, etc. For 5 payment methods this adds 5 columns — manageable. Danger: product_category with 50 values creates 50 columns. Use drop_first=True to avoid multicollinearity: pd.get_dummies(df[\"payment_method\"], prefix=\"pay\", drop_first=True, dtype=int). Target encoding (high-cardinality categories): category_means = df.groupby(\"product_category\")[\"order_amount\"].mean(). df[\"category_target_enc\"] = df[\"product_category\"].map(category_means). Replaces each category with the mean of the target variable. Handles high cardinality without creating 50 columns. Warning: causes data leakage if not done within cross-validation folds. Frequency encoding: freq = df[\"product_category\"].value_counts(normalize=True). df[\"category_freq\"] = df[\"product_category\"].map(freq). Replaces each category with its frequency in the dataset. No data leakage risk, handles high cardinality, but loses information about the target relationship. Binary encoding (compromise for medium cardinality): import category_encoders as ce. encoder = ce.BinaryEncoder(cols=[\"shipping_carrier\"]). df = encoder.fit_transform(df). 8 carriers encoded in 3 binary columns (log2(8) = 3). More compact than one-hot, preserves more information than label encoding'"
+    weight: 0.35
+    description: "Encoding"
+  - type: llm_judge
+    criteria: "Explanation covers practical considerations and pitfalls — practical: 'Practical considerations: Categorical dtype gotchas: adding a value not in the categories raises an error. df[\"payment_method\"] = df[\"payment_method\"].cat.add_categories(\"crypto\"). Do this before assigning new values. Merging categorical columns: if two DataFrames have the same categorical column with different categories, the merge converts back to object. Unify categories first: from pandas.api.types import union_categoricals. combined_cat = union_categoricals([df1[\"region\"], df2[\"region\"]]). Choosing encoding by cardinality: low (2-5 values): one-hot encoding — simple, interpretable, no information loss. medium (6-20 values): one-hot or binary encoding — balance between dimensionality and information. high (20-100 values): target encoding or frequency encoding — avoid 100-column explosion. very high (100+ values): embeddings (for neural networks) or hash encoding — compact representation. Pipeline pattern for production: encodings = {}. def encode_categoricals(df, fit=True): if fit: for col in cat_columns: if df[col].nunique() <= 10: encodings[col] = (\"onehot\", None). else: means = df.groupby(col)[\"order_amount\"].mean().to_dict(). encodings[col] = (\"target\", means). for col, (method, params) in encodings.items(): if method == \"onehot\": dummies = pd.get_dummies(df[col], prefix=col, dtype=int). df = pd.concat([df, dummies], axis=1). elif method == \"target\": df[f\"{col}_encoded\"] = df[col].map(params). return df. Call with fit=True on training data, fit=False on test data to prevent leakage'"
+    weight: 0.30
+    description: "Practical"

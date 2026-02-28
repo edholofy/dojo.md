@@ -1,0 +1,50 @@
+meta:
+  id: data-standardization-formats
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Data standardization and format normalization — standardize dates, currencies, addresses, units, and naming conventions across heterogeneous data sources"
+  tags: [standardization, formats, normalization, dates, addresses, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "We're merging customer data from three
+  regional systems (US, Europe, Asia-Pacific) into a single data
+  warehouse. The formatting inconsistencies are a nightmare:
+
+  Dates: '01/15/2024' (US), '15/01/2024' (EU), '2024年1月15日' (JP),
+  '2024-01-15' (ISO)
+
+  Currencies: '$1,234.56' (US), '€1.234,56' (DE), '¥123,456' (JP),
+  sometimes stored as strings with symbols, sometimes as floats
+
+  Addresses: Free-text in some systems, structured (street/city/state/zip)
+  in others. Abbreviations vary ('St.' vs 'Street', 'Apt' vs 'Unit')
+
+  Phone numbers: '+1-555-0101', '(555) 555-0101', '555.555.0101',
+  '011-44-20-7946-0958'
+
+  Names: 'SMITH, JOHN A.' vs 'John Smith' vs 'john a. smith' vs
+  'Smith, John Andrew'
+
+  We have 2 million records to standardize. What's the systematic
+  approach to normalizing all of these formats?"
+
+  Task: Design a data standardization strategy that handles each
+  format type, defines canonical formats, and creates reproducible
+  transformation rules for the 2M record merge.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response defines canonical formats and transformation rules for each data type — dates: convert all formats to ISO 8601 (YYYY-MM-DD), handle ambiguous dates (01/02/2024 — is it Jan 2 or Feb 1?), use locale context to resolve ambiguity; currencies: store as decimal/numeric with separate currency code column (amount: 1234.56, currency: 'USD'), strip symbols and handle comma/period conventions; phone numbers: normalize to E.164 format (+15555550101), parse country codes from regional context; addresses: parse into structured components (street, city, state/province, postal code, country), use postal address standards (USPS for US, Royal Mail for UK); names: define canonical format (First Last), handle prefixes/suffixes, preserve original for reference"
+    weight: 0.35
+    description: "CanonicalFormats"
+  - type: llm_judge
+    criteria: "Response addresses the practical challenges of standardization at scale — handling ambiguous data that can't be automatically resolved (flag for manual review vs apply best guess with confidence score), preserving original values alongside standardized versions (keep source_date and normalized_date), dealing with data loss during standardization (truncating middle names, losing address line 2 nuance), testing standardization rules against edge cases before applying to 2M records, and building validation checks to confirm standardization didn't corrupt data (record counts, spot checks, statistical comparison before/after)"
+    weight: 0.35
+    description: "PracticalChallenges"
+  - type: llm_judge
+    criteria: "Response provides an implementation approach — recommended tools or libraries (dateutil/pendulum for dates, phonenumbers library for phones, libpostal for addresses), a processing pipeline design (parse → validate → transform → verify), how to handle the 2M record volume (batch processing, parallel execution, incremental updates), creating a standardization rulebook that documents every transformation for auditability, and prioritization (which formats to standardize first based on business impact)"
+    weight: 0.30
+    description: "Implementation"

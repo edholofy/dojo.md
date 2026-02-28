@@ -1,0 +1,41 @@
+meta:
+  id: first-schema-migration
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Write your first schema migration — understand what a database migration is and create a simple migration file to add a column to an existing table"
+  tags: [database, migration, schema, beginner, basics]
+
+state: {}
+
+trigger: |
+  You are a junior developer and your team lead asks you to add an
+  "email_verified" boolean column to the "users" table. The team
+  uses a migration tool (like Flyway, Knex, or Prisma Migrate).
+
+  Current users table:
+  - id (integer, primary key, auto-increment)
+  - email (varchar(255), not null, unique)
+  - name (varchar(100), not null)
+  - created_at (timestamp, default now())
+
+  Your team lead says: "Write a migration for this. Don't just run
+  ALTER TABLE in the database directly."
+
+  Task: Explain what a database migration is and why the team uses
+  them instead of manual SQL, then write the migration to add the
+  email_verified column.
+
+assertions:
+  - type: llm_judge
+    criteria: "Explains what migrations are and why they matter — explanation: 'A database migration is a version-controlled change to your database schema (or data). Instead of logging into the database and running ALTER TABLE manually, you write the change as a migration file that is committed to version control alongside your application code. Why migrations instead of manual SQL: (1) Reproducibility: every developer can run the same migrations to get an identical database schema. Without migrations, developers have different schemas and things break. (2) Version control: migrations are tracked in Git. You can see who changed the schema, when, and why. Manual changes leave no audit trail. (3) Automation: migrations run automatically during deployment. The production database gets the same changes that were tested in staging. (4) Rollback: migrations include a down or rollback function that undoes the change if something goes wrong. Manual changes are hard to undo. (5) Ordering: migration tools track which migrations have been applied. They run migrations in order and skip ones that have already run. This prevents duplicate changes or missed changes'"
+    weight: 0.35
+    description: "Migration concept explanation"
+  - type: llm_judge
+    criteria: "Migration file is correct with both up and down — migration: 'Up migration (apply the change): ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE; Why NOT NULL DEFAULT FALSE: new columns should have defaults so existing rows get a valid value. Every existing user gets email_verified = false, which is the correct assumption (they have not verified their email yet). Why BOOLEAN: email_verified is a true/false value. Some databases use BOOLEAN, others use TINYINT(1). The migration tool handles this abstraction. Down migration (rollback): ALTER TABLE users DROP COLUMN email_verified; The down migration reverses the up migration exactly. If the migration causes a problem, running the down migration restores the table to its previous state. Important: running the down migration loses all email_verified data. Once users have verified their emails and the column has real data, rolling back becomes destructive. This is why rollbacks should be planned carefully'"
+    weight: 0.35
+    description: "Correct migration file"
+  - type: llm_judge
+    criteria: "Best practices for the first migration are mentioned — best practices: '(1) Always write both up and down. Even if you think you will never roll back, write the down migration. Your future self will thank you. (2) Test the migration locally first. Run the migration against your local database. Verify the column was added correctly. Run the down migration. Verify the column was removed. Then commit. (3) Use descriptive migration names. Name the migration file something like add_email_verified_to_users (not migration_001 or fix_db). The name should describe what the migration does so anyone reading the migration history can understand it. (4) One change per migration. Do not combine adding email_verified with other schema changes. If one change fails, you want to rollback only that change, not everything. (5) Check the migration in staging before production. The migration should run in your staging environment first. If it fails in staging, fix it before it reaches production. (6) Backup before migrating production. Before running any migration in production, ensure a recent backup exists. This is the safety net if both the migration and the rollback fail'"
+    weight: 0.30
+    description: "Best practices"

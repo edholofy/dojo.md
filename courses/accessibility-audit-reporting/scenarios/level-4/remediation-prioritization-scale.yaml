@@ -1,0 +1,50 @@
+meta:
+  id: remediation-prioritization-scale
+  level: 4
+  course: accessibility-audit-reporting
+  type: output
+  description: "Remediation prioritization at scale — prioritize and plan accessibility remediation across a large product portfolio with limited resources"
+  tags: [remediation, prioritization, planning, scale, expert]
+
+state: {}
+
+trigger: |
+  A VP of Engineering says: "Our accessibility audit
+  found 850 issues across our product suite. We have
+  budget for 2 developers working on accessibility
+  for 6 months. That's clearly not enough to fix
+  everything.
+
+  Issue breakdown:
+  - 45 Critical (blocking barriers)
+  - 120 Major (significant barriers)
+  - 380 Minor (noticeable but not blocking)
+  - 305 Best Practice (improvements)
+
+  Affected products:
+  - Customer portal (500K users, revenue-generating)
+  - Employee intranet (50K users, internal)
+  - Partner API docs (5K users, developer-facing)
+  - Marketing website (1M visitors, informational)
+  - Mobile app (200K users, growing)
+
+  How do I prioritize 850 issues with 2 developers
+  for 6 months? What gets fixed and what doesn't?"
+
+  Task: Create a remediation prioritization framework
+  and 6-month plan for 850 accessibility issues with
+  limited resources.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a prioritization framework — multi-factor scoring (each issue scored on: severity impact × product criticality × user volume × legal risk × fix effort, calculate priority score: Critical on customer portal = highest, Best Practice on API docs = lowest), capacity planning (2 developers × 6 months = ~2,400 developer-hours, estimate fix effort per severity: Critical ~4 hours, Major ~8 hours, Minor ~2 hours, Best Practice ~1 hour, total effort for all 850 issues: 45×4 + 120×8 + 380×2 + 305×1 = 180 + 960 + 760 + 305 = 2,205 hours — barely fits in 2,400 hours but doesn't account for testing and regression, realistic capacity: fix ~60-70% of issues in 6 months — need to prioritize), what gets fixed first (Month 1-2: all 45 Critical issues across all products — non-negotiable, Month 3-4: Major issues on customer portal and mobile app — highest user impact, Month 5-6: Major issues on marketing website, Minor issues on customer portal — highest visibility)"
+    weight: 0.35
+    description: "PrioritizationFramework"
+  - type: llm_judge
+    criteria: "Response provides a detailed 6-month remediation plan — Month 1 (focus: Critical issues, customer portal): fix all Critical issues on customer portal (est. 15 issues, 60 hours), begin Critical issues on mobile app, target: all customer portal Criticals resolved, Month 2 (focus: remaining Critical issues): fix all remaining Critical issues across all products (30 issues, 120 hours), target: zero Critical issues remaining, Month 3-4 (focus: Major issues, customer portal + mobile): fix Major issues on customer portal (est. 50 issues, 400 hours) and mobile app (est. 30 issues, 240 hours), target: customer-facing products cleared of Major issues, Month 5-6 (focus: Major issues remaining + high-impact Minor): fix Major issues on marketing site and intranet, address Minor issues on customer portal that affect common user journeys, what doesn't get fixed in 6 months: Best Practice issues, Minor issues on lower-priority products, partner API docs Minor/Best Practice — document in backlog with priority for next cycle. Each month has measurable targets and review checkpoints"
+    weight: 0.35
+    description: "RemediationPlan"
+  - type: llm_judge
+    criteria: "Response addresses efficiency strategies and reporting — efficiency multipliers (shared component fixes: if the navigation component has a Critical issue, fixing it once fixes all products using that component — identify shared components first, design system fixes: fix accessibility in the design system and it propagates everywhere, batch similar fixes: fix all 'missing alt text' issues in one sprint rather than scattered across months — reduces context switching), progress reporting (weekly: issues fixed this week, severity of fixes, products affected, monthly: compliance score change per product, burn-down chart of remaining issues by severity, 6-month review: total issues fixed, remaining backlog with priority, compliance improvement by product, recommended next 6-month plan), managing expectations (communicate to VP: 'With 2 developers, we will eliminate all Critical barriers and most Major barriers on customer-facing products within 6 months. Best Practice improvements and lower-priority products will require additional investment. The 850 issues represent approximately 12 developer-months of work — we have 12 developer-months available but testing and regression work means we'll complete ~70% of remediation.'), and continuous prevention (while fixing: establish CI/CD accessibility checks to prevent new issues — fixing 850 issues is futile if 200 new ones are introduced each month)"
+    weight: 0.30
+    description: "EfficiencyReporting"

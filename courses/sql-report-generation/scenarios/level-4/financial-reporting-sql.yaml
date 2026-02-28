@@ -1,0 +1,45 @@
+meta:
+  id: financial-reporting-sql
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Build financial reports in SQL — implement P&L statements, balance sheet summaries, variance analysis, and financial close procedures with accounting precision"
+  tags: [SQL, financial-reporting, P&L, variance, accounting, GAAP, advanced]
+
+state: {}
+
+trigger: |
+  The CFO needs three financial reports built in SQL:
+
+  1. Profit & Loss (P&L) statement — revenue minus COGS minus
+     operating expenses, organized by account hierarchy (Revenue >
+     Gross Profit > Operating Income > Net Income)
+  2. Month-over-month variance analysis — actual vs budget, actual
+     vs prior month, with percentage changes and explanations for
+     variances exceeding 10%
+  3. Revenue recognition schedule — track when revenue is earned
+     vs when cash is received (accrual basis)
+
+  Tables: gl_entries (entry_id, account_code, amount, posting_date,
+  description), chart_of_accounts (account_code, account_name,
+  account_type, parent_account, display_order), budgets (account_code,
+  month, budget_amount)
+
+  Constraint: Numbers must tie to the penny — rounding errors in
+  financial reports are unacceptable.
+
+  Task: Build the financial reporting suite.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds a proper P&L statement with account hierarchy — pnl: 'Profit and Loss statement in SQL: WITH account_totals AS (SELECT coa.account_type, coa.account_name, coa.parent_account, coa.display_order, SUM(gl.amount) AS amount FROM gl_entries gl JOIN chart_of_accounts coa ON gl.account_code = coa.account_code WHERE gl.posting_date BETWEEN DATE_TRUNC('month', CURRENT_DATE) AND CURRENT_DATE GROUP BY coa.account_type, coa.account_name, coa.parent_account, coa.display_order), pnl AS (SELECT 'Revenue' AS line_item, 1 AS sort_order, SUM(CASE WHEN account_type = 'revenue' THEN amount ELSE 0 END) AS amount FROM account_totals UNION ALL SELECT 'Cost of Goods Sold', 2, SUM(CASE WHEN account_type = 'cogs' THEN amount ELSE 0 END) FROM account_totals UNION ALL SELECT 'Gross Profit', 3, SUM(CASE WHEN account_type = 'revenue' THEN amount ELSE 0 END) - SUM(CASE WHEN account_type = 'cogs' THEN amount ELSE 0 END) FROM account_totals UNION ALL SELECT 'Operating Expenses', 4, SUM(CASE WHEN account_type = 'opex' THEN amount ELSE 0 END) FROM account_totals UNION ALL SELECT 'Operating Income', 5, SUM(CASE WHEN account_type = 'revenue' THEN amount ELSE 0 END) - SUM(CASE WHEN account_type = 'cogs' THEN amount ELSE 0 END) - SUM(CASE WHEN account_type = 'opex' THEN amount ELSE 0 END) FROM account_totals UNION ALL SELECT 'Other Income/Expense', 6, SUM(CASE WHEN account_type = 'other' THEN amount ELSE 0 END) FROM account_totals UNION ALL SELECT 'Net Income', 7, SUM(CASE WHEN account_type = 'revenue' THEN amount WHEN account_type IN ('cogs', 'opex') THEN -amount WHEN account_type = 'other' THEN amount ELSE 0 END) FROM account_totals) SELECT line_item, ROUND(amount, 2) AS amount, ROUND(amount * 100.0 / NULLIF((SELECT amount FROM pnl WHERE sort_order = 1), 0), 1) AS pct_of_revenue FROM pnl ORDER BY sort_order. Key accounting detail: revenue accounts have credit balances (positive), expense accounts have debit balances (positive in the GL but shown as deductions in the P&L). The sign convention must be consistent or the P&L will be wrong'"
+    weight: 0.35
+    description: "PnL"
+  - type: llm_judge
+    criteria: "Response includes variance analysis with actual vs budget and prior period — variance: 'Variance analysis: WITH actuals AS (SELECT coa.account_name, coa.account_type, DATE_TRUNC('month', gl.posting_date) AS month, SUM(gl.amount) AS actual_amount FROM gl_entries gl JOIN chart_of_accounts coa ON gl.account_code = coa.account_code GROUP BY coa.account_name, coa.account_type, DATE_TRUNC('month', gl.posting_date)), budget_data AS (SELECT coa.account_name, b.month::date, b.budget_amount FROM budgets b JOIN chart_of_accounts coa ON b.account_code = coa.account_code) SELECT a.account_name, a.month, ROUND(a.actual_amount, 2) AS actual, ROUND(b.budget_amount, 2) AS budget, ROUND(a.actual_amount - b.budget_amount, 2) AS variance_amount, ROUND((a.actual_amount - b.budget_amount) * 100.0 / NULLIF(b.budget_amount, 0), 1) AS variance_pct, LAG(a.actual_amount) OVER (PARTITION BY a.account_name ORDER BY a.month) AS prior_month, ROUND(a.actual_amount - LAG(a.actual_amount) OVER (PARTITION BY a.account_name ORDER BY a.month), 2) AS mom_change, CASE WHEN ABS(a.actual_amount - b.budget_amount) * 100.0 / NULLIF(b.budget_amount, 0) > 10 THEN 'INVESTIGATE' ELSE 'OK' END AS variance_flag FROM actuals a LEFT JOIN budget_data b ON a.account_name = b.account_name AND a.month = b.month ORDER BY a.month DESC, ABS(a.actual_amount - b.budget_amount) DESC. Any account with variance exceeding 10% is flagged for investigation. Finance team adds explanations: CREATE TABLE variance_explanations (account_name TEXT, month DATE, explanation TEXT, explained_by TEXT, explained_at TIMESTAMP DEFAULT NOW()). Join explanations to the variance report for the board presentation. Favorable vs unfavorable: for revenue, actual > budget is favorable. For expenses, actual < budget is favorable. The sign convention must be context-aware'"
+    weight: 0.35
+    description: "Variance"
+  - type: llm_judge
+    criteria: "Explanation covers revenue recognition and penny-precise arithmetic — revrec: 'Revenue recognition schedule (ASC 606 compliant): WITH revenue_schedule AS (SELECT o.order_id, o.customer_id, o.order_date AS booking_date, o.amount AS total_contract_value, CASE WHEN o.delivery_type = 'one_time' THEN o.amount WHEN o.delivery_type = 'subscription' THEN ROUND(o.amount / o.contract_months, 2) ELSE 0 END AS monthly_recognized, o.contract_months, generate_series(DATE_TRUNC('month', o.order_date), DATE_TRUNC('month', o.order_date) + (o.contract_months - 1) * INTERVAL '1 month', INTERVAL '1 month') AS recognition_month FROM orders o WHERE o.status = 'completed') SELECT DATE_TRUNC('month', recognition_month) AS month, SUM(monthly_recognized) AS recognized_revenue, SUM(total_contract_value) - SUM(SUM(monthly_recognized)) OVER (PARTITION BY order_id ORDER BY recognition_month) AS deferred_revenue FROM revenue_schedule GROUP BY 1 ORDER BY 1. A $12,000 annual subscription booked in January is recognized as $1,000 per month. In January: $1,000 recognized, $11,000 deferred. By December: $12,000 recognized, $0 deferred. Penny-precise arithmetic: never use FLOAT for financial calculations. Always NUMERIC(15,2) or DECIMAL(15,2). Rounding rule for split amounts: if $100 splits 3 ways, assign $33.34 to the first, $33.33 to the second and third. The total must equal $100.00 exactly. WITH split AS (SELECT amount / 3 AS base_share, amount - (amount / 3) * 3 AS remainder FROM (VALUES (100.00)) v(amount)) SELECT CASE WHEN row_number = 1 THEN base_share + remainder ELSE base_share END AS share FROM split, generate_series(1, 3) AS row_number. Verify: all sub-totals in the P&L must sum to the line items above them. SELECT ABS(gross_profit - (revenue - cogs)) < 0.01 AS ties_out FROM pnl_summary. If this returns false, there is a rounding error that must be fixed before publishing'"
+    weight: 0.30
+    description: "RevRec"

@@ -1,0 +1,49 @@
+meta:
+  id: performance-accessibility-intersection
+  level: 3
+  course: accessibility-audit-reporting
+  type: output
+  description: "Performance and accessibility intersection — audit how page performance impacts accessibility including loading states, timeout behavior, and assistive technology performance"
+  tags: [performance, loading, timeout, intersection, advanced]
+
+state: {}
+
+trigger: |
+  A senior auditor says: "I'm auditing a data-heavy
+  application and finding that performance issues
+  create accessibility barriers:
+
+  1. The page takes 8 seconds to load on 3G — screen
+     reader users hear nothing during loading, then
+     suddenly content appears without announcement
+  2. A data table with 500 rows causes NVDA to freeze
+     for 15 seconds when navigating
+  3. Heavy JavaScript means interactive elements are
+     visible but non-functional for 3-4 seconds
+     during hydration
+  4. Animations and transitions cause motion sickness
+     in some users
+  5. Large page weight (5MB) means mobile users on
+     limited data plans can't access content
+
+  These aren't traditional accessibility issues but
+  they create real barriers. Should I include these
+  in my audit report? What WCAG criteria apply?"
+
+  Task: Audit the performance-accessibility
+  intersection and write findings that connect
+  performance to accessibility impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits performance-accessibility issues with WCAG mapping — Slow page load without announcement (WCAG 4.1.3 Status Messages: loading progress must be communicated to screen readers — silent loading is an accessibility barrier, WCAG 3.1.1 + general usability: 8-second load creates significant barrier for users with cognitive disabilities who may think the page is broken, Severity: Major, Fix: add aria-live=polite loading indicator that screen reader announces: 'Loading data, please wait', announce when loaded: 'Page loaded, 50 records displayed'), Screen reader freeze on large table (WCAG 4.1.1 Parsing + performance: 500 DOM nodes in a table cause assistive technology to struggle — this is an accessibility barrier even though it's a performance issue, Severity: Major, Fix: implement virtual scrolling to render only visible rows, reducing DOM nodes from 500 to ~20 visible + buffer), Hydration gap (WCAG 2.1.1 Keyboard: elements that appear interactive but don't respond to keyboard during hydration create a confusing experience — users think the site is broken, Severity: Major, Fix: show loading state or disable interactions until hydration is complete, or use progressive hydration to prioritize above-fold interactive elements)"
+    weight: 0.35
+    description: "PerformanceFindings"
+  - type: llm_judge
+    criteria: "Response covers motion and data usage accessibility — Animation and motion (WCAG 2.3.3 Animation from Interactions Level AAA + WCAG 2.3.1 Three Flashes Level A: users with vestibular disorders can experience nausea, dizziness, or seizures from motion — this is a genuine health accessibility issue, not just preference, Fix: respect prefers-reduced-motion media query: remove or reduce animations when this user preference is set, provide a visible 'Reduce motion' toggle in settings that persists, ensure no content flashes more than 3 times per second per WCAG 2.3.1 Level A, Severity: Major — health impact for affected users), Large page weight on limited connections (WCAG 2.2.1 Timing Adjustable + digital equity: 5MB page weight creates a financial and practical barrier for users on metered data plans or slow connections — disproportionately affects disabled users who are more likely to have lower incomes, this is more a best practice than a WCAG violation but is important to note in an audit focused on inclusive access, Fix: optimize images, lazy-load below-fold content, offer 'lite' version for slow connections)"
+    weight: 0.35
+    description: "MotionDataFindings"
+  - type: llm_judge
+    criteria: "Response provides framework for including performance in accessibility audits — when performance IS an accessibility issue (assistive technology becomes unusable: report as accessibility barrier, content is unavailable during extended loading: report if no accessible loading indicator, interface appears functional but isn't: report as keyboard/operability barrier, motion causes health impacts: report under WCAG 2.3), when performance is NOT an accessibility issue (site is slow but still usable with assistive technology, large file sizes but content is accessible once loaded, slow API responses but loading states are properly communicated), how to report (create a 'Performance Impact on Accessibility' subsection in the audit — separates these from traditional accessibility findings, for each finding: describe the user impact specifically for assistive technology users, reference applicable WCAG criteria, note when findings extend beyond strict WCAG conformance — label as 'Accessibility Best Practice' vs 'WCAG Conformance Issue'), and testing methodology (test with assistive technology on lower-spec hardware, test on throttled connections using browser DevTools, test with prefers-reduced-motion enabled)"
+    weight: 0.30
+    description: "PerformanceFramework"

@@ -1,0 +1,45 @@
+meta:
+  id: scaling-reviews-100-plus
+  level: 5
+  course: code-review-feedback-writing
+  type: output
+  description: "Scale reviews to 100+ engineers — design review processes that maintain quality and culture at large scale across multiple teams, timezones, and experience levels"
+  tags: [code-review, scaling, large-team, process-design, multi-timezone, master]
+
+state: {}
+
+trigger: |
+  Your company is growing from 50 to 200 engineers over 18 months.
+  The current review process works well at 50 but won't scale:
+
+  - Manual reviewer assignment (team lead picks reviewers)
+  - One review channel in Slack (50 engineers, manageable noise)
+  - Informal mentoring through review (seniors know all juniors)
+  - Single coding standard (everyone agreed in one meeting)
+  - Everyone knows everyone (trust is personal, not institutional)
+
+  At 200 engineers across 4 timezones:
+  - Team lead can't know everyone's expertise
+  - Slack channel becomes unusable noise
+  - Seniors can't personally mentor 150 juniors
+  - Standards need to be written (can't be tribal knowledge)
+  - Trust must be institutional (process-based, not personal)
+
+  Task: Design the review process for 200 engineers. Include:
+  automated assignment, tiered review requirements, timezone-aware
+  scheduling, knowledge preservation systems, and how to maintain
+  the collaborative culture that worked at 50 people.
+
+assertions:
+  - type: llm_judge
+    criteria: "Automated systems replace manual coordination — assignment: CODEOWNERS + automated round-robin weighted by: expertise (code area familiarity), load (current open reviews), timezone (prefer same or adjacent timezone for sync discussions), cross-pollination (10% of assignments go to engineers outside the team for knowledge sharing). Tiered requirements: Tier 1 (low risk: docs, config, style) — 1 approval, any engineer. Tier 2 (standard: features, refactors) — 1 approval, team member. Tier 3 (high risk: security, data, infrastructure) — 2 approvals, at least 1 senior. Tier auto-detected: CI analyzes changed files against CODEOWNERS patterns. Slack: replace single channel with per-team channels + cross-team review request bot. Dashboard: real-time review queue visibility per team"
+    weight: 0.35
+    description: "Automated systems"
+  - type: llm_judge
+    criteria: "Timezone awareness prevents review latency — async-first design: reviews should be completable without real-time discussion (high-quality PR descriptions, thorough first review pass). Timezone routing: assign reviewers in same or +/- 4 hour timezone when possible. Follow-the-sun for urgent reviews: if no reviewer available in requester's timezone, auto-escalate to next timezone's pool. SLA adjustment by timezone overlap: same timezone = 8 hours, adjacent = 16 hours, opposite = 24 hours. Review handoff: if review discussion is complex, write summary for the next timezone reviewer rather than waiting for sync. Critical path: reviews blocking production deploys get priority routing regardless of timezone. Meeting-light: replace synchronous design reviews with async RFC documents + async review comments"
+    weight: 0.35
+    description: "Timezone design"
+  - type: llm_judge
+    criteria: "Culture preservation strategy is explicit — what to preserve from 50-person culture: (1) constructive tone — encode in written guidelines with examples, enforce via manager review. (2) Mentoring — replace personal mentoring with structured program: each junior paired with a mentor-reviewer for 6 months. (3) Trust — shift from personal trust ('I know Alex does good work') to process trust ('this PR passed our quality gates'). (4) Shared ownership — cross-team review rotation prevents silos. What to let go: (1) everyone knowing everyone (impossible at 200), (2) single review channel (too noisy), (3) ad-hoc standards (must be documented). New at scale: (1) written review culture document (onboarding reading), (2) review quality calibration (quarterly, team-level), (3) review recognition program (celebrate excellent reviews monthly), (4) review retrospectives (what's working, what's not, quarterly). Success metric: 'Would a new hire who joined 3 months ago describe our review culture the same way a 3-year veteran would?'"
+    weight: 0.30
+    description: "Culture preservation"

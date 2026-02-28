@@ -1,0 +1,43 @@
+meta:
+  id: multi-dialect-sql
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Write portable SQL across dialects — handle PostgreSQL, MySQL, SQL Server, and BigQuery differences for date functions, window functions, string operations, and CTEs"
+  tags: [SQL, dialect, PostgreSQL, MySQL, SQL-Server, BigQuery, portability, advanced]
+
+state: {}
+
+trigger: |
+  The company acquired two businesses. The combined entity now has:
+  - PostgreSQL (your team's main database)
+  - MySQL 8 (acquired company A — e-commerce)
+  - SQL Server 2022 (acquired company B — enterprise ERP)
+
+  The CFO wants unified financial reports across all three. You need
+  to write equivalent queries that work on each platform, or design
+  an abstraction layer.
+
+  Specific challenges:
+  - Date functions differ across all three platforms
+  - Window function syntax varies
+  - String concatenation is different
+  - CTE support and recursive CTE syntax differs
+  - NULL handling behavior is inconsistent
+
+  Task: Build a cross-dialect reporting strategy with concrete
+  examples of each challenge and solution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides detailed dialect comparisons for date and window functions — dialects: 'Cross-dialect SQL reference for reporting: Date function differences: Truncate to month: PostgreSQL: DATE_TRUNC('month', order_date). MySQL: DATE_FORMAT(order_date, '%Y-%m-01'). SQL Server: DATETRUNC(month, order_date) (2022+) or DATEADD(month, DATEDIFF(month, 0, order_date), 0). BigQuery: DATE_TRUNC(order_date, MONTH). Add interval: PostgreSQL: order_date + INTERVAL '30 days'. MySQL: DATE_ADD(order_date, INTERVAL 30 DAY). SQL Server: DATEADD(day, 30, order_date). Date difference: PostgreSQL: order_date - ship_date (returns integer days) or AGE(order_date, ship_date). MySQL: DATEDIFF(order_date, ship_date). SQL Server: DATEDIFF(day, ship_date, order_date). Note: SQL Server DATEDIFF argument order is (unit, start, end), opposite of MySQL (end, start). Window function differences: Running total: all three support: SUM(amount) OVER (ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW). But MySQL 8 only added window functions — older MySQL versions need correlated subqueries. NTILE: PostgreSQL and SQL Server: NTILE(4) OVER (ORDER BY amount DESC). MySQL 8: same syntax. PERCENTILE_CONT: PostgreSQL: PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount). SQL Server: PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) OVER (PARTITION BY region). MySQL: does not have PERCENTILE_CONT — use a CTE workaround with ROW_NUMBER. String operations: Concatenation: PostgreSQL: first_name || ' ' || last_name. MySQL: CONCAT(first_name, ' ', last_name). SQL Server: first_name + ' ' + last_name or CONCAT(). NULL safety: PostgreSQL || returns NULL if either operand is NULL. CONCAT() in all dialects skips NULLs. Use CONCAT() for portability'"
+    weight: 0.35
+    description: "Dialects"
+  - type: llm_judge
+    criteria: "Response designs an abstraction layer for cross-dialect reporting — abstraction: 'Abstraction layer for dialect-independent reports: Option 1 — SQL template system: CREATE TABLE sql_templates (template_id SERIAL, report_name TEXT, dialect TEXT, query_template TEXT). INSERT INTO sql_templates VALUES (1, 'monthly_revenue', 'postgresql', 'SELECT DATE_TRUNC(''month'', order_date) AS month, SUM(amount) AS revenue FROM orders GROUP BY 1'), (2, 'monthly_revenue', 'mysql', 'SELECT DATE_FORMAT(order_date, ''%Y-%m-01'') AS month, SUM(amount) AS revenue FROM orders GROUP BY month'), (3, 'monthly_revenue', 'sqlserver', 'SELECT DATETRUNC(month, order_date) AS month, SUM(amount) AS revenue FROM orders GROUP BY DATETRUNC(month, order_date)'). The report runner selects the correct template based on the target database. Option 2 — View abstraction: create views on each database that normalize function differences. On PostgreSQL: CREATE VIEW v_orders_normalized AS SELECT order_id, customer_id, amount, order_date, DATE_TRUNC('month', order_date) AS order_month FROM orders. On MySQL: CREATE VIEW v_orders_normalized AS SELECT order_id, customer_id, amount, order_date, DATE_FORMAT(order_date, '%Y-%m-01') AS order_month FROM orders. Report queries use v_orders_normalized — the same SQL works on both databases. Option 3 — ETL into a common warehouse: extract from all three databases into one PostgreSQL reporting warehouse. Use the same extraction approach from the cross-database-reporting scenario. This is the most maintainable long-term solution: write reports once in one dialect. Recommendation: for fewer than 10 reports, use the template system. For 10-50 reports, use the view abstraction. For 50+ reports, consolidate via ETL'"
+    weight: 0.35
+    description: "Abstraction"
+  - type: llm_judge
+    criteria: "Explanation covers NULL handling differences and testing strategies — nulls: 'NULL handling across dialects: PostgreSQL: NULL = NULL returns NULL (standard SQL behavior). Empty string and NULL are different. ORDER BY puts NULLs last by default (NULLS FIRST/LAST is supported). MySQL: NULL = NULL returns NULL. Empty string and NULL are different. ORDER BY puts NULLs first for ASC. SQL Server: NULL = NULL returns NULL. Empty string and NULL are different. ORDER BY puts NULLs first for ASC. No NULLS FIRST/LAST syntax. Portable NULL handling: always use COALESCE(column, default_value) instead of dialect-specific functions (IFNULL in MySQL, ISNULL in SQL Server, COALESCE in PostgreSQL). COALESCE works identically on all three. Always use IS NULL / IS NOT NULL, never = NULL. For ordering with NULLs: use COALESCE(column, large_value) to control position: ORDER BY COALESCE(ship_date, '9999-12-31'). Works on all dialects and always puts NULLs last. Division by zero: PostgreSQL: returns error. MySQL: returns NULL. SQL Server: returns error. Portable fix: always use NULLIF — SELECT revenue / NULLIF(orders, 0) — returns NULL instead of error on all platforms. Testing cross-dialect queries: maintain a test suite that runs each report template against all target databases. Compare result sets: if PostgreSQL returns 150 rows and MySQL returns 148, investigate the 2-row difference. Common causes: NULL handling differences, date boundary edge cases (does BETWEEN include or exclude endpoints), and character collation differences (case-sensitive vs case-insensitive string comparisons). Create a reconciliation report: run the same logic on each database and compare totals. Discrepancies indicate a dialect-specific bug'"
+    weight: 0.30
+    description: "NULLs"

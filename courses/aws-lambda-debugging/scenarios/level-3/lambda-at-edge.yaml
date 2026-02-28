@@ -1,0 +1,64 @@
+meta:
+  id: lambda-at-edge
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda@Edge and CloudFront Functions — diagnose edge function failures, replication delays, and CloudFront integration issues"
+  tags: [AWS, Lambda, Lambda@Edge, CloudFront, edge, CDN, advanced]
+
+state: {}
+
+trigger: |
+  Your Lambda@Edge function for URL rewriting intermittently fails.
+  CloudFront returns 502 errors to some users but not others:
+
+  CloudFront error response:
+  502 ERROR — The request could not be satisfied.
+  Lambda@Edge function execution error.
+
+  Debugging Lambda@Edge is harder than regular Lambda:
+  1. Logs are in the REGION where the function executed, not where
+     it was deployed. A user in Tokyo triggers logs in ap-northeast-1,
+     a user in London triggers logs in eu-west-2.
+
+  2. You deployed the function in us-east-1 (required for Lambda@Edge)
+     but the error happens in eu-west-1. You must check CloudWatch
+     Logs in eu-west-1.
+
+  3. The function exceeds Lambda@Edge limits:
+     - Viewer request/response: 5 seconds timeout, 128MB memory,
+       40KB response size
+     - Origin request/response: 30 seconds timeout, 128MB memory,
+       1MB response size
+
+  Your function takes 6 seconds on some requests (cold start +
+  external API call) — exceeding the 5-second viewer request limit.
+
+  4. After a code fix, replication takes 5-15 minutes. You can't
+     test immediately — the old version runs until replication
+     completes across all edge locations.
+
+  Alternative: CloudFront Functions (simpler, faster, cheaper):
+  - Sub-millisecond execution
+  - Runs at edge locations (not regional)
+  - Limited to simple request/response manipulation
+  - JavaScript only, no network access
+
+  Task: Explain Lambda@Edge debugging. Write: Lambda@Edge vs
+  CloudFront Functions (when to use which), deployment and
+  replication process, finding logs across regions, edge-specific
+  limits and constraints, common failures, and testing strategies.
+
+assertions:
+  - type: llm_judge
+    criteria: "Lambda@Edge vs CloudFront Functions are compared — Lambda@Edge: Node.js/Python, up to 5s (viewer) or 30s (origin), network access, VPC access (origin only), deployed in us-east-1 and replicated. CloudFront Functions: JavaScript only, sub-millisecond, no network access, runs at edge locations, cheaper (1/6th the cost). Use CloudFront Functions for: simple header manipulation, URL rewrites, redirects. Use Lambda@Edge for: complex logic, network calls, authentication, dynamic content generation"
+    weight: 0.35
+    description: "Edge comparison"
+  - type: llm_judge
+    criteria: "Debugging challenges are covered — logs are in the execution region (not us-east-1). To find logs: check CloudFront access logs for x-edge-location, then check CloudWatch Logs in that region. Replication delay: 5-15 minutes after publishing — can't test immediately. Must use published versions (not $LATEST). Limits are stricter than regular Lambda: 128MB memory max, 5s timeout for viewer events, 40KB response size for viewer. Test with CloudFront's test event feature before deploying. Use CloudWatch Logs Insights cross-region query to find errors"
+    weight: 0.35
+    description: "Debugging challenges"
+  - type: llm_judge
+    criteria: "Testing and best practices are practical — test locally: sam local invoke with CloudFront event samples. Test in staging: create a staging CloudFront distribution. Monitor: CloudFront 5xx error rate metric (catches Lambda@Edge failures), Lambda@Edge metrics in us-east-1 (invocations, errors, duration). Keep functions fast: minimize cold starts (small packages), avoid external network calls in viewer events. Cache responses when possible. Use CloudFront Functions for simple tasks — they're faster, cheaper, and easier to debug. Always have a rollback plan (revert to previous version/alias)"
+    weight: 0.30
+    description: "Testing and practices"

@@ -1,0 +1,44 @@
+meta:
+  id: rfc-as-documentation
+  level: 4
+  course: technical-rfc-writing
+  type: output
+  description: "Use RFCs as living documentation — maintain RFCs as architectural decision records that evolve with the system and serve as institutional memory"
+  tags: [RFC, documentation, ADR, institutional-memory, knowledge-management, expert]
+
+state: {}
+
+trigger: |
+  A new senior engineer joins your team and asks: "Why is the system
+  designed this way?" You realize that while you have 200+ approved
+  RFCs from the past 3 years, they don't actually help answer this
+  question because:
+
+  - RFCs capture the decision at the time, not how the system evolved
+  - Many approved RFCs were partially implemented (only parts are
+    relevant to current state)
+  - Some RFCs were superseded by later decisions but the old RFC
+    wasn't updated
+  - Context is lost — the constraints that drove decisions no longer
+    exist but nobody updated the rationale
+  - Engineers read old RFCs and implement outdated patterns because
+    they don't know the RFC was superseded
+
+  Task: Design a system for maintaining RFCs as living documents
+  and architectural decision records. Show how to connect RFCs to
+  current system state, keep them updated, and make them useful for
+  onboarding and ongoing reference — not just historical artifacts.
+
+assertions:
+  - type: llm_judge
+    criteria: "RFCs evolve from proposals to decision records — lifecycle: 'An RFC starts as a proposal (future tense: we should do X). When approved and implemented, it becomes a decision record (past tense: we decided X because Y). When superseded, it becomes historical context (we used to do X, now we do Z because conditions changed).' Each lifecycle stage has different content: Proposal stage: problem, solution, alternatives, risks. Decision record stage: actual implementation (may differ from proposal), actual outcomes vs predicted outcomes, lessons learned. Historical stage: superseded-by reference, what changed, why the original decision no longer applies. Update triggers: 'RFC must be updated when: (1) implementation diverges from proposal, (2) a later RFC supersedes it, (3) the system it describes changes significantly, (4) the constraints that drove the decision change.' Ownership: 'RFC author is responsible for the proposal-to-decision transition. After that, the team owning the system is responsible for keeping the decision record current. Stale decision records are worse than no documentation — they actively mislead'"
+    weight: 0.35
+    description: "Living documents"
+  - type: llm_judge
+    criteria: "Connection between RFCs and current system state is maintained — code-level integration: 'Each significant architectural decision in code references the RFC number in a comment or ADR file. When reading code, engineers can trace back to the decision rationale.' Example: 'In the codebase: a DECISIONS.md or decisions/ directory containing lightweight ADRs that reference full RFCs. ADR-001: Use event sourcing for order processing (see RFC-042). Status: Active. Context: [2 sentences]. Decision: [2 sentences]. Links to implementation: [file paths].' System architecture map: 'Living architecture diagram where each component links to the RFC that created or last modified it. Visual representation of which RFCs are currently relevant.' Dependency graph: 'RFC-to-RFC references show which decisions depend on which. When reconsidering a decision, you can see which downstream decisions might also need revisiting.' Freshness indicators: 'Each RFC shows: last verified date, last updated date, related code last changed date. If code changed significantly without RFC update, flagged as potentially stale.' Onboarding path: 'New engineer reading list: top 10 RFCs that explain current architecture, ordered by system area. Each RFC has a 1-paragraph current-state summary at the top'"
+    weight: 0.35
+    description: "System connection"
+  - type: llm_judge
+    criteria: "Institutional memory is preserved as people leave — knowledge preservation: 'When an engineer who authored key RFCs leaves, conduct a knowledge transfer session. Review their active RFCs, verify they're current, and assign new owners.' Decision context preservation: 'Each RFC must answer: Why did we choose this? and What would cause us to reconsider? The second question is critical — it tells future engineers under what conditions this decision should be revisited vs respected.' Anti-pattern prevention: 'Decision amnesia: a new RFC proposes something that was previously considered and rejected. The search system should surface the prior RFC. If circumstances have changed, the new RFC should explicitly reference the old one and explain what's different.' 'Cargo cult architecture: engineers implement patterns from old RFCs without understanding the context. Decision records with current-state summaries help engineers distinguish living patterns from historical artifacts.' Rotation of knowledge: 'RFC review assignments rotate to spread architectural knowledge. No single engineer should be the only one who understands a critical RFC. Review participation ensures at least 3 engineers deeply understand each architectural decision.' Archive vs delete: 'RFCs are never deleted — even superseded ones provide valuable context. Archive with clear superseded-by markers so they don't mislead but remain searchable for historical context'"
+    weight: 0.30
+    description: "Institutional memory"

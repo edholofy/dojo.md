@@ -1,0 +1,41 @@
+meta:
+  id: data-type-issues
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Data type issues — identify and fix common data type problems including type mismatches, format inconsistencies, and encoding errors"
+  tags: [data-types, format, encoding, conversion, basics]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I loaded a CSV file into my analysis tool and
+  everything looks wrong:
+  - The 'revenue' column loaded as text instead of numbers (because
+    some values have dollar signs and commas like '$1,234.56')
+  - Dates are in different formats ('2024-01-15', '01/15/2024',
+    'Jan 15, 2024', and even '15-Jan-24')
+  - The 'country' column has 'US', 'USA', 'United States', and
+    'united states' — all meaning the same thing
+  - Some text fields have weird characters like â€™ instead of
+    apostrophes
+  - Boolean columns have 'yes', 'Yes', 'Y', '1', 'true', and 'TRUE'
+
+  How do I fix all these consistency and format issues?"
+
+  Task: Explain common data type and format issues, how to identify
+  them, and the standard approaches to fixing each type of problem.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses numeric format issues — removing currency symbols and thousand separators before converting to numeric type, handling different decimal separators (comma vs period by locale), dealing with mixed numeric formats (some values as text, some as numbers), handling percentage values (0.15 vs 15% vs '15%'), and the importance of consistent numeric representation for calculations and aggregations"
+    weight: 0.35
+    description: "NumericFormats"
+  - type: llm_judge
+    criteria: "Response addresses date and categorical standardization — parsing multiple date formats into a single standard format (ISO 8601: YYYY-MM-DD is recommended), handling timezone issues, dealing with ambiguous dates (is 01/02/03 January 2nd or February 1st?), standardizing categorical values (mapping synonyms to canonical values: US/USA/United States → 'US'), case normalization for text fields, and boolean standardization (defining a mapping from all variants to true/false)"
+    weight: 0.35
+    description: "DateAndCategorical"
+  - type: llm_judge
+    criteria: "Response addresses encoding and character issues — explaining character encoding (UTF-8 vs ASCII vs Latin-1), why encoding mismatches cause mojibake (garbled characters), how to detect and fix encoding issues, handling special characters and whitespace (leading/trailing spaces, non-breaking spaces, invisible characters), and best practices for preventing encoding issues (always specify encoding when reading/writing files, use UTF-8 as the default)"
+    weight: 0.30
+    description: "EncodingIssues"

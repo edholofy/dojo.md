@@ -1,0 +1,34 @@
+meta:
+  id: multiindex-operations
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Work with MultiIndex DataFrames — use hierarchical indexing for complex data structures, cross-sections, and multi-level aggregations"
+  tags: [python, pandas, MultiIndex, hierarchical, cross-section, advanced]
+
+state: {}
+
+trigger: |
+  You are building a quarterly business review report that requires
+  multi-dimensional data: revenue broken down by region, category,
+  and quarter simultaneously. The report needs to show subtotals
+  at each level and allow drilling into specific combinations.
+
+  Data: 200,000 transactions with region, category, sub_category,
+  quarter, and revenue columns.
+
+  Task: Build the hierarchical analysis using MultiIndex.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly creates and manipulates MultiIndex structures — code: 'MultiIndex operations: Creating a MultiIndex DataFrame: multi = (df.groupby([\"region\", \"category\", \"quarter\"])[\"revenue\"].agg([\"sum\", \"mean\", \"count\"]).rename(columns={\"sum\": \"total_revenue\", \"mean\": \"avg_order\", \"count\": \"num_orders\"})). The result has a MultiIndex with 3 levels: region, category, quarter. Accessing data in a MultiIndex: Level 1 — Get all data for a region: multi.loc[\"West\"]. Level 2 — Get a specific region-category: multi.loc[(\"West\", \"Electronics\")]. Level 3 — Get a specific combination: multi.loc[(\"West\", \"Electronics\", \"Q4\")]. Cross-sections with xs(): all_q4 = multi.xs(\"Q4\", level=\"quarter\"). This returns all region-category combinations for Q4 (drops the quarter level). all_electronics = multi.xs(\"Electronics\", level=\"category\"). This returns all region-quarter combinations for Electronics. Slicing a MultiIndex: idx = pd.IndexSlice. multi.loc[idx[\"West\":\"East\", :, \"Q3\":\"Q4\"], :]. This selects West through East regions, all categories, Q3 and Q4. Subtotals at each level: region_totals = multi.groupby(level=\"region\").sum(). category_totals = multi.groupby(level=\"category\").sum(). quarter_totals = multi.groupby(level=\"quarter\").sum(). Or using unstack for pivot-like views: region_by_quarter = multi[\"total_revenue\"].unstack(\"quarter\"). This creates a table with region-category rows and quarter columns. region_by_quarter[\"Annual\"] = region_by_quarter.sum(axis=1). Adds an annual total column'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers when MultiIndex is useful vs when flat DataFrames are better — explanation: 'When to use MultiIndex: Use MultiIndex when: you need to represent data with 3 or more dimensions (region x category x time). You frequently need cross-sections (all categories for one region, all regions for one quarter). You want subtotals at different levels without duplicating data. The data naturally has a hierarchical structure (country > state > city). Stick with flat DataFrames when: your data has only 2 dimensions (use a pivot table instead). You primarily filter on one dimension at a time. Other team members are less comfortable with MultiIndex (it has a steeper learning curve). You need to export to CSV or databases (MultiIndex requires flattening). Flattening a MultiIndex: Reset index to get a flat DataFrame: flat = multi.reset_index(). Flatten column MultiIndex: df.columns = [\"_\".join(col).strip() for col in df.columns.values]. Sorting a MultiIndex: multi = multi.sort_index(). Always sort the MultiIndex before using loc or slicing — unsorted MultiIndex slicing gives incorrect results and a PerformanceWarning. Check: multi.index.is_monotonic_increasing — should be True. Swapping levels: multi.swaplevel(\"region\", \"quarter\").sort_index(). This changes the hierarchy order — useful when you want to analyze by quarter first, then by region'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response builds a practical multi-level business report — report: 'Building the quarterly business review report: Executive summary table: summary = multi.groupby(level=\"quarter\").agg({\"total_revenue\": \"sum\", \"num_orders\": \"sum\", \"avg_order\": \"mean\"}).round(2). summary[\"revenue_share\"] = (summary[\"total_revenue\"] / summary[\"total_revenue\"].sum() * 100).round(1). summary[\"qoq_growth\"] = summary[\"total_revenue\"].pct_change().mul(100).round(1). Regional drill-down: region_quarter = multi[\"total_revenue\"].unstack(\"quarter\"). region_quarter[\"Q4_vs_Q3\"] = ((region_quarter[\"Q4\"] - region_quarter[\"Q3\"]) / region_quarter[\"Q3\"] * 100).round(1). Hierarchical subtotals (Excel-style): def add_subtotals(df): result = []. for region in df.index.get_level_values(\"region\").unique(): region_data = df.loc[region]. result.append(region_data). subtotal = region_data.sum(). subtotal.name = (region, \"SUBTOTAL\", \"\"). result.append(pd.DataFrame([subtotal])). return pd.concat(result). This mimics the subtotal rows you see in Excel pivot tables — each region has its own subtotal row. Export to Excel with formatting: with pd.ExcelWriter(\"qbr_report.xlsx\", engine=\"openpyxl\") as writer: summary.to_excel(writer, sheet_name=\"Summary\"). region_quarter.to_excel(writer, sheet_name=\"By Region\"). multi.to_excel(writer, sheet_name=\"Detail\"). The MultiIndex is preserved in Excel with merged cells for the upper levels'"
+    weight: 0.30
+    description: "Report"

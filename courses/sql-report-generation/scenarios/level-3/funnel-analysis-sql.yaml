@@ -1,0 +1,38 @@
+meta:
+  id: funnel-analysis-sql
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Build funnel analysis in SQL — track user progression through multi-step processes like signup, activation, conversion, and retention"
+  tags: [SQL, funnel-analysis, conversion, user-journey, multi-step, advanced]
+
+state: {}
+
+trigger: |
+  The product team needs a conversion funnel report:
+  "Track users through our signup flow: page visit → signup →
+  email verified → first login → activated (used core feature) →
+  converted (started paid plan). Show the count and conversion
+  rate at each step, broken down by acquisition channel."
+
+  Table: user_events (event_id, user_id, event_type, timestamp,
+  properties — JSONB containing channel, plan_type, etc.)
+
+  Funnel steps in order: page_visit, signup, email_verified,
+  first_login, activated, converted
+
+  Task: Build the funnel analysis report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Query correctly calculates funnel steps with conversion rates — funnel: 'Funnel analysis in SQL: Simple funnel — overall counts: WITH funnel AS (SELECT 'page_visit' AS step, 1 AS step_order, COUNT(DISTINCT user_id) AS users FROM user_events WHERE event_type = 'page_visit' UNION ALL SELECT 'signup', 2, COUNT(DISTINCT user_id) FROM user_events WHERE event_type = 'signup' UNION ALL SELECT 'email_verified', 3, COUNT(DISTINCT user_id) FROM user_events WHERE event_type = 'email_verified' UNION ALL SELECT 'first_login', 4, COUNT(DISTINCT user_id) FROM user_events WHERE event_type = 'first_login' UNION ALL SELECT 'activated', 5, COUNT(DISTINCT user_id) FROM user_events WHERE event_type = 'activated' UNION ALL SELECT 'converted', 6, COUNT(DISTINCT user_id) FROM user_events WHERE event_type = 'converted') SELECT step, users, FIRST_VALUE(users) OVER (ORDER BY step_order) AS top_of_funnel, ROUND(users * 100.0 / FIRST_VALUE(users) OVER (ORDER BY step_order), 1) AS pct_of_top, LAG(users) OVER (ORDER BY step_order) AS prev_step_users, ROUND(users * 100.0 / NULLIF(LAG(users) OVER (ORDER BY step_order), 0), 1) AS step_conversion_pct FROM funnel ORDER BY step_order. Output: step | users | pct_of_top | step_conversion. page_visit | 50000 | 100.0% | NULL. signup | 8000 | 16.0% | 16.0%. email_verified | 6500 | 13.0% | 81.3%. first_login | 5800 | 11.6% | 89.2%. activated | 3200 | 6.4% | 55.2%. converted | 1200 | 2.4% | 37.5%. The biggest drop is page_visit to signup (84% lost). The second biggest is activated to converted (62.5% lost). These are the two highest-leverage improvement areas'"
+    weight: 0.35
+    description: "Funnel"
+  - type: llm_judge
+    criteria: "Response includes funnel by segment and ordered funnel — segmented: 'Segmented funnel by acquisition channel: WITH user_channel AS (SELECT DISTINCT user_id, properties->>'channel' AS channel FROM user_events WHERE event_type = 'signup'), step_counts AS (SELECT uc.channel, e.event_type, COUNT(DISTINCT e.user_id) AS users FROM user_events e JOIN user_channel uc ON e.user_id = uc.user_id WHERE e.event_type IN ('signup', 'email_verified', 'first_login', 'activated', 'converted') GROUP BY uc.channel, e.event_type) SELECT channel, MAX(CASE WHEN event_type = 'signup' THEN users END) AS signup, MAX(CASE WHEN event_type = 'activated' THEN users END) AS activated, MAX(CASE WHEN event_type = 'converted' THEN users END) AS converted, ROUND(MAX(CASE WHEN event_type = 'converted' THEN users END) * 100.0 / NULLIF(MAX(CASE WHEN event_type = 'signup' THEN users END), 0), 1) AS overall_conversion FROM step_counts GROUP BY channel ORDER BY overall_conversion DESC. This reveals: organic users convert at 22%, referral at 18%, paid ads at 8%. Ordered funnel — users must complete steps in sequence: WITH ordered_funnel AS (SELECT user_id, MIN(CASE WHEN event_type = 'signup' THEN timestamp END) AS signup_time, MIN(CASE WHEN event_type = 'email_verified' THEN timestamp END) AS verified_time, MIN(CASE WHEN event_type = 'first_login' THEN timestamp END) AS login_time, MIN(CASE WHEN event_type = 'activated' THEN timestamp END) AS activated_time, MIN(CASE WHEN event_type = 'converted' THEN timestamp END) AS converted_time FROM user_events GROUP BY user_id) SELECT COUNT(*) AS signed_up, COUNT(CASE WHEN verified_time > signup_time THEN 1 END) AS verified, COUNT(CASE WHEN login_time > verified_time THEN 1 END) AS logged_in, COUNT(CASE WHEN activated_time > login_time THEN 1 END) AS activated, COUNT(CASE WHEN converted_time > activated_time THEN 1 END) AS converted FROM ordered_funnel. The ordered funnel only counts users who completed steps in the correct sequence. Users who somehow activated before verifying email are not counted at the activated step'"
+    weight: 0.35
+    description: "Segmented"
+  - type: llm_judge
+    criteria: "Analysis covers time-to-convert and funnel optimization — optimization: 'Time-to-convert analysis: WITH conversion_times AS (SELECT user_id, MIN(CASE WHEN event_type = 'signup' THEN timestamp END) AS signup_time, MIN(CASE WHEN event_type = 'converted' THEN timestamp END) AS converted_time FROM user_events GROUP BY user_id HAVING MIN(CASE WHEN event_type = 'converted' THEN timestamp END) IS NOT NULL) SELECT CASE WHEN converted_time - signup_time < INTERVAL '1 day' THEN 'Same day' WHEN converted_time - signup_time < INTERVAL '7 days' THEN 'Within 1 week' WHEN converted_time - signup_time < INTERVAL '30 days' THEN 'Within 1 month' ELSE 'After 1 month' END AS time_bucket, COUNT(*) AS conversions, ROUND(AVG(EXTRACT(EPOCH FROM converted_time - signup_time) / 3600), 1) AS avg_hours FROM conversion_times GROUP BY 1 ORDER BY MIN(converted_time - signup_time). If 60% of conversions happen within 7 days, the first week is the critical window. Focus onboarding efforts there. Users who have not converted by day 30 are unlikely to convert ever — shift to a reactivation campaign. Funnel optimization priorities: fix the step with the lowest conversion rate first. A 10% improvement at the worst step has more impact than 10% at any other step. Calculate impact: if the signup-to-verified step improves from 81% to 90%, that is 720 more users reaching the next step. At the current downstream conversion rates, that means approximately 200 more paying customers'"
+    weight: 0.30
+    description: "Optimization"

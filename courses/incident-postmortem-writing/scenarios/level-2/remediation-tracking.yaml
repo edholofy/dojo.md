@@ -1,0 +1,45 @@
+meta:
+  id: remediation-tracking
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Track remediation progress — create systems to ensure postmortem action items are completed and actually prevent recurrence"
+  tags: [postmortem, remediation, tracking, action-items, follow-through, intermediate]
+
+state: {}
+
+trigger: |
+  You've been asked to audit your team's postmortem follow-through.
+  The results are alarming:
+
+  - 24 postmortems written in the last 12 months
+  - 87 total action items created
+  - Only 34 action items completed (39% completion rate)
+  - 23 action items still "in progress" after 90+ days
+  - 30 action items effectively abandoned (no updates in 60+ days)
+  - 3 recent incidents were caused by issues that had action items
+    from PREVIOUS postmortems that were never completed
+
+  The team writes good postmortems, but the follow-through is broken.
+  Action items go into the backlog and get deprioritized by feature
+  work. The postmortem process is generating recommendations that
+  nobody implements.
+
+  Task: Design a remediation tracking system that ensures postmortem
+  action items get completed. Address: why completion rates are low,
+  how to prioritize action items against feature work, escalation
+  for overdue items, and metrics for tracking follow-through health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Root causes of low completion are identified and addressed — why action items aren't completed: (1) 'They enter the same backlog as feature work and lose priority. Fix: reliability action items have a dedicated budget — not competing with features for the same sprint capacity.' (2) 'No owner accountability — action items are assigned to teams, not individuals. Fix: every action item has exactly one individual owner who is accountable for completion.' (3) 'Unrealistic deadlines set during the postmortem meeting, then quietly extended. Fix: deadlines are negotiated with the owner, not imposed by the facilitator.' (4) 'No escalation when items are overdue — they just age silently. Fix: automated escalation at 7 days overdue (to owner), 14 days (to manager), 30 days (to director).' (5) 'No connection between incomplete action items and new incidents. Fix: every postmortem checks whether previous action items would have prevented or mitigated this incident.' The 3 recurrent incidents are the strongest argument: 'These incidents were preventable if we had completed prior action items. The cost of those 3 incidents exceeded the cost of completing all 87 action items combined'"
+    weight: 0.35
+    description: "Root cause of low completion"
+  - type: llm_judge
+    criteria: "Prioritization system balances remediation with feature work — reliability budget: '20% of each sprint is reserved for reliability work, including postmortem action items. This is not negotiable — it is not borrowed from feature capacity.' Prioritization within reliability budget: 'P0 (must complete within 1 week): action items that prevent recurrence of SEV-1 incidents. P1 (must complete within 2 weeks): action items that prevent recurrence of SEV-2 incidents. P2 (must complete within 1 month): detection and mitigation improvements. P3 (must complete within 1 quarter): process improvements and non-urgent hardening.' Feature work trade-off framework: 'If the reliability budget is insufficient for P0 items, P0 items take priority over feature work until complete. Product manager is informed but does not have veto on P0 reliability items — these represent customer commitments.' Capacity planning: 'At current incident rate (2/month, average 3.6 action items each), the team needs approximately 7 action items per month completed. At 20% sprint capacity, this requires approximately 2 engineer-days per week dedicated to remediation. If this exceeds capacity, the team is either having too many incidents (reduce incidents) or creating too many action items per incident (be more selective)'"
+    weight: 0.35
+    description: "Prioritization system"
+  - type: llm_judge
+    criteria: "Tracking metrics and escalation are defined — metrics dashboard: (1) 'Action item completion rate: target 90% within deadline. Currently 39% — this is a process failure, not a capacity problem.' (2) 'Average age of open action items: target under 14 days for P0-P1, under 30 days for P2. Currently: average 67 days — unacceptable.' (3) 'Recurrence rate: percentage of incidents caused by issues with existing action items. Target: 0%. Currently: 12.5% (3 of 24 incidents). This is the most damning metric.' (4) 'Backlog growth rate: action items created vs completed per month. If creating faster than completing, the backlog grows forever.' Escalation ladder: 'Day 0: action item created with owner and deadline. Day +7 past deadline: automated reminder to owner. Day +14: automated notification to owner's manager. Day +30: flagged in engineering leadership weekly review. Day +60: VP of Engineering review — either complete, reprioritize to P0, or explicitly accept the risk and document why.' Review cadence: 'Weekly: team standup reviews action item status. Monthly: engineering leadership reviews completion metrics. Quarterly: VP reviews recurrence rate and outstanding items'"
+    weight: 0.30
+    description: "Tracking and escalation"

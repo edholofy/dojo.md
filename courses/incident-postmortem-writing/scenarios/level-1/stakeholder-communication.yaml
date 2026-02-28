@@ -1,0 +1,45 @@
+meta:
+  id: stakeholder-communication
+  level: 1
+  course: incident-postmortem-writing
+  type: output
+  description: "Communicate incidents to stakeholders — write status updates, internal notifications, and post-incident summaries for different audiences"
+  tags: [postmortem, communication, stakeholders, status-updates, notifications, beginner]
+
+state: {}
+
+trigger: |
+  Your search service is down. It's been 45 minutes and the fix is
+  in progress but not yet deployed. You need to communicate to:
+
+  1. Engineering Slack channel: technical update for engineers
+  2. Company-wide status: non-technical update for all employees
+  3. Status page: public-facing update for customers
+  4. Customer support: talking points for support agents handling
+     incoming calls and tickets
+
+  Your first draft for all four audiences is the same message:
+  "Elasticsearch cluster node 3 failed health check causing shard
+  reallocation and temporary search index unavailability."
+
+  Customer support responds: "I have no idea what to tell customers."
+  The CEO responds: "What does this mean for the business?"
+
+  Task: Write appropriate communications for all four audiences for
+  the same incident. Show how the same incident requires different
+  language, detail level, and action items for different stakeholders.
+  Then write a guide on incident communication.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each audience gets appropriate content — engineering Slack: 'Search service degraded: Elasticsearch node-3 failed health check at 2:15 PM. Shard reallocation in progress. Impacted: product search and autocomplete. NOT impacted: checkout, user accounts, order history. Status: fix identified (increase heap allocation on node-3), deployment in progress, ETA 15 minutes. IC: Jamie. Next update in 15 minutes or on status change.' Company-wide: 'Product search is currently unavailable. Our engineering team identified the issue and a fix is being deployed now. Expected resolution within 15 minutes. All other features (checkout, account management, order tracking) are working normally. We'll update when search is restored.' Status page: 'Investigating: We are aware that product search is currently experiencing issues. Some users may see errors when searching for products. Our team is actively working on a resolution. Other platform features are operating normally. Posted at 3:00 PM ET.' Customer support: 'Talking points: Product search is temporarily down. Expected fix within 15 minutes. Workaround: customers can browse by category or use direct product links. Do NOT promise an exact time. Escalation: if a customer reports issues OTHER than search, escalate immediately — those would be a separate issue.'"
+    weight: 0.35
+    description: "Audience-appropriate content"
+  - type: llm_judge
+    criteria: "Technical detail scales with audience — engineering: includes specific system components (Elasticsearch, node names, shard reallocation), specific fix (heap allocation), and deployment status. Uses technical vocabulary freely. Company-wide: mentions 'product search' by feature name, not system name. Explains what IS working (not just what's broken). No technical details — employees don't need to know about Elasticsearch. Status page: minimal detail, focused on user experience ('errors when searching'). No internal system names. Calm, professional tone. Customer support: action-oriented — what to tell customers, what workaround to suggest, when to escalate. No unnecessary technical context that support agents don't need and might accidentally share with customers. Common thread: all four communications agree on the facts (search is down, fix in progress, ~15 minutes). Different audiences get different depth but never conflicting information"
+    weight: 0.35
+    description: "Scaled detail"
+  - type: llm_judge
+    criteria: "Communication guide covers timing, tone, and updates — timing: 'First communication within 15 minutes of incident detection for all audiences. Updates every 30 minutes for ongoing incidents, or immediately on status change (escalation, mitigation, resolution).' Tone by audience: 'Engineering: factual, technical, action-oriented. Company-wide: reassuring, clear, non-technical. Status page: professional, calm, customer-focused. Customer support: practical, script-like, with explicit do/don't.' Update cadence: 'Even if nothing has changed, send an update: We are still working on the search issue. Current status unchanged. Next update at [time]. Silence is worse than no news.' Resolution communication: 'All audiences must receive a resolution message. Engineering: root cause summary and link to postmortem. Company-wide: service restored, brief explanation. Status page: resolved, brief summary of what happened. Customer support: all-clear, cancel any temporary workaround instructions.' Common mistakes: inconsistent information across channels (status page says resolved but Slack says still investigating), technical jargon in customer-facing communications, forgetting to send the all-clear message"
+    weight: 0.30
+    description: "Communication guide"

@@ -1,0 +1,40 @@
+meta:
+  id: api-style-guide
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Create API style guide — establish consistent documentation standards for naming, formatting, examples, and tone across all API documentation"
+  tags: [API, documentation, style-guide, standards, consistency, naming, advanced]
+
+state: {}
+
+trigger: |
+  Your company has 12 microservices, each documented by a different team.
+  The inconsistencies are confusing developers:
+
+  - One API uses "userId", another "user_id", another "UserID"
+  - Some endpoints return { data: [...] }, others return bare arrays
+  - Error formats vary: { error: "msg" } vs { errors: [{...}] } vs { message: "msg" }
+  - Date formats: ISO 8601, Unix timestamps, "MM/DD/YYYY" strings
+  - Authentication: some use "Authorization: Bearer", others "X-API-Key"
+  - Some docs say "returns the user object", others show the full schema
+
+  Task: Write a comprehensive API documentation style guide that all teams
+  must follow. Cover: naming conventions, response envelope standards,
+  error format, data types, authentication patterns, example formatting,
+  and tone/voice guidelines. This will be the single source of truth for
+  documentation consistency.
+
+assertions:
+  - type: llm_judge
+    criteria: "Naming and formatting standards are precise — field naming: snake_case for JSON properties (user_id, created_at), kebab-case for URLs (/api/v1/user-profiles), camelCase prohibited with migration path for existing APIs. Resource naming: plural nouns for collections (/users, /payments), singular for actions (/users/{id}/activate). Consistent envelope: { data, meta, pagination } for collections, { data } for singles. Date/time: always ISO 8601 with timezone (2024-01-15T10:30:00Z). Currency: always integer cents with separate currency field. IDs: string type (not integer) to allow future format changes. Boolean fields: prefixed with is_ or has_ (is_active, has_subscription)"
+    weight: 0.35
+    description: "Naming standards"
+  - type: llm_judge
+    criteria: "Error format and documentation patterns are standardized — universal error format: { type (URL to error doc), code (machine-readable string), message (human-readable), details (array of field-level errors), request_id }. Every endpoint must document: summary (one line), description (detailed), authentication requirement, request parameters (with types, constraints, examples), response schema (with examples), error responses (specific to endpoint), rate limit info. Example format: always show curl + one SDK language, always use realistic (not foo/bar) data, always show both success and error cases. Tone: second person ('you'), active voice, present tense, no jargon without definition"
+    weight: 0.35
+    description: "Error and doc patterns"
+  - type: llm_judge
+    criteria: "Migration and enforcement strategies are practical — for existing inconsistent APIs: migration timeline (deprecate old patterns over 2 versions), backward compatibility strategy (accept both old and new naming during transition). Enforcement: linting rules (Spectral/openapi-lint) for OpenAPI specs, CI/CD checks that block merging non-compliant docs, templates for new endpoint documentation. Living document: version the style guide itself, changelog for style guide updates, exceptions process (request variance with justification). Review checklist: documentation review as part of PR process. Adoption: start with new APIs, migrate existing APIs by priority (most-used first)"
+    weight: 0.30
+    description: "Migration strategy"

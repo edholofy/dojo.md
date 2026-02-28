@@ -1,0 +1,45 @@
+meta:
+  id: design-system-governance-docs
+  level: 4
+  course: design-system-documentation
+  type: output
+  description: "Design system governance documentation — document decision-making processes, component lifecycle management, and exception handling for a mature design system"
+  tags: [governance, lifecycle, decision-making, exceptions, expert]
+
+state: {}
+
+trigger: |
+  You're the design system lead at a company with 6 product
+  teams using the system. Governance problems:
+
+  - No formal process for deciding what enters the system:
+    Team A submitted a Stepper component 4 months ago with
+    no response. Team B built their own Stepper meanwhile.
+  - Exception requests have no process: teams override design
+    system components with custom CSS and call it an 'exception'
+    but there's no tracking or expiration
+  - The component lifecycle is undefined: old components linger
+    forever, nobody knows which are officially supported
+  - Decision-making is opaque: teams don't understand why
+    their component was rejected or accepted
+
+  The VP of Design says: "Document the governance model so
+  teams understand how decisions are made and how to work
+  within the system."
+
+  Task: Document the design system governance model including
+  decision framework, component lifecycle, and exception process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response documents a clear decision framework — component evaluation criteria (used by 3+ teams, solves a common pattern, aligns with design principles, doesn't duplicate existing components, maintainable by the DS team), decision process (proposal → evaluation against criteria → design system team vote → decision communicated with rationale within 2 weeks), transparency mechanisms (decision log documenting every proposal and its outcome with reasoning, public backlog of accepted proposals with priority). Addresses the Stepper problem: SLA for responding to proposals"
+    weight: 0.35
+    description: "DecisionFramework"
+  - type: llm_judge
+    criteria: "Response documents the component lifecycle — lifecycle stages: Proposed (under consideration), Draft (in development, API may change), Stable (production-ready, versioned, supported), Deprecated (still available but not recommended, migration guide provided), Removed (no longer in the system). Each stage has: entry criteria, exit criteria, SLA for time in stage, and documentation requirements. Explains when components move between stages, who decides, and how consumers are notified. Includes a lifecycle dashboard showing current status of all components"
+    weight: 0.35
+    description: "ComponentLifecycle"
+  - type: llm_judge
+    criteria: "Response documents the exception process — exception request template (what component, what customization, why the standard component doesn't work, which product, expected duration), approval process (DS team reviews within 1 week, approves with conditions or suggests alternative), exception tracking (registry of all active exceptions with owner, expiration date, and resolution plan), exception types (temporary: approved for 1 quarter with migration plan, permanent: documented as a known variant that may become a component option, rejected: use the standard component with explanation). Prevents untracked CSS overrides and exception sprawl"
+    weight: 0.30
+    description: "ExceptionProcess"

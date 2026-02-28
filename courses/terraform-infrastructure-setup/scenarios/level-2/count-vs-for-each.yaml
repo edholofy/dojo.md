@@ -1,0 +1,58 @@
+meta:
+  id: count-vs-for-each
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Choose between count and for_each — understand index-based vs key-based resources, migration pitfalls, and when to use each"
+  tags: [Terraform, count, for_each, meta-arguments, iteration, intermediate]
+
+state: {}
+
+trigger: |
+  Your infrastructure uses count for EC2 instances:
+
+  ```hcl
+  variable "instances" {
+    default = ["web-1", "web-2", "web-3"]
+  }
+
+  resource "aws_instance" "web" {
+    count         = length(var.instances)
+    ami           = "ami-0c55b159cbfafe1f0"
+    instance_type = "t3.micro"
+    tags = {
+      Name = var.instances[count.index]
+    }
+  }
+  ```
+
+  A developer removes "web-2" from the list. Terraform plan shows:
+
+  ```
+  # aws_instance.web[1] will be updated in-place (web-3 → web-2 tags)
+  # aws_instance.web[2] will be destroyed
+
+  Plan: 0 to add, 1 to change, 1 to destroy.
+  ```
+
+  The web-3 instance gets renamed to web-2, and the real web-3 instance
+  gets destroyed! This is the wrong behavior — you wanted to remove
+  web-2, not web-3.
+
+  Task: Explain count vs for_each, why count causes index shift problems,
+  how for_each solves this with stable keys, how to migrate from count
+  to for_each safely, and when to use each approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Count problems are explained — count uses numeric indices: web[0], web[1], web[2]. Removing a middle element shifts all subsequent indices. Removing 'web-2' (index 1) makes 'web-3' become index 1 — Terraform sees index 1 changed and index 2 disappeared. Result: wrong instance modified, wrong instance destroyed. This is a fundamental limitation of count with lists that can have elements removed. Count is safe only when: (1) all elements are identical, (2) you only add/remove from the end, (3) the count is a simple number not derived from a list"
+    weight: 0.35
+    description: "Count problems"
+  - type: llm_judge
+    criteria: "for_each solution is explained — for_each uses stable map keys: web['web-1'], web['web-2'], web['web-3']. Removing 'web-2' only affects web['web-2'] — other instances untouched. Implementation: resource 'aws_instance' 'web' { for_each = toset(var.instances), tags = { Name = each.key } } or with a map: for_each = var.instances_map, using each.key and each.value. for_each accepts: set(string) or map. Not list — use toset() to convert. Access instances: aws_instance.web['web-1'].id"
+    weight: 0.35
+    description: "for_each solution"
+  - type: llm_judge
+    criteria: "Migration strategy is covered — migrating count to for_each changes resource addresses (web[0] → web['web-1']). Without state management, Terraform destroys and recreates all instances. Safe migration: (1) use moved blocks (Terraform 1.1+): moved { from = aws_instance.web[0], to = aws_instance.web['web-1'] }. (2) Or use terraform state mv: terraform state mv 'aws_instance.web[0]' 'aws_instance.web[\"web-1\"]'. Verify with plan — should show no changes. When to use count: simple numeric repetition (create N identical resources). When to use for_each: named resources, resources that may be individually added/removed"
+    weight: 0.30
+    description: "Migration"

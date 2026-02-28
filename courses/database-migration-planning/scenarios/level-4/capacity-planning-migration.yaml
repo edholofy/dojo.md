@@ -1,0 +1,43 @@
+meta:
+  id: capacity-planning-migration
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Plan capacity for database migrations — estimate resource requirements and plan infrastructure for large-scale data migrations"
+  tags: [database, migration, capacity-planning, infrastructure, performance, expert]
+
+state: {}
+
+trigger: |
+  You are planning a database migration that will move 5TB of data
+  from an on-premises PostgreSQL cluster to AWS Aurora PostgreSQL.
+  The migration must complete within a 48-hour maintenance window.
+
+  Current infrastructure:
+  - Source: 3-node PostgreSQL cluster (primary + 2 replicas)
+  - Data: 5TB across 200 tables
+  - Largest table: 2TB (events, 8 billion rows)
+  - Network: 1 Gbps dedicated link to AWS (via Direct Connect)
+  - Source server: 64 cores, 256GB RAM, NVMe storage
+
+  Target infrastructure (to be provisioned):
+  - AWS Aurora PostgreSQL (instance size TBD)
+  - Needs to handle current production load after migration
+
+  Task: Plan the capacity requirements for the migration. Include:
+  network throughput calculations, target infrastructure sizing,
+  and the migration schedule to fit the 48-hour window.
+
+assertions:
+  - type: llm_judge
+    criteria: "Network and time calculations are correct — calculations: 'Network throughput analysis: available bandwidth: 1 Gbps = 125 MB/s theoretical maximum. Realistic throughput: 70-80% of theoretical = 87-100 MB/s sustained. Data to transfer: 5TB = 5,120 GB. Time to transfer at 100 MB/s: 5,120 GB / 100 MB/s = 51,200 seconds = 14.2 hours. Time to transfer at 87 MB/s: 5,120 GB / 87 MB/s = 58,851 seconds = 16.3 hours. Conclusion: raw data transfer takes 14-17 hours. This leaves 31-34 hours for other migration tasks within the 48-hour window. However: this assumes continuous full-bandwidth utilization. In practice: pg_dump output is compressed (reducing data volume by 2-4x). But: index rebuilding on the target adds time after data loading. And: data verification adds time after loading. Revised estimate with compression: pg_dump with compression: 5TB → approximately 1.5-2TB (3x compression for typical data). Transfer time at 100 MB/s: 1,500-2,000 GB / 100 MB/s = 4.2-5.6 hours. Index rebuilding on target: for 5TB with typical indexes, rebuilding takes 4-8 hours. Data verification: row counts and checksums take 2-4 hours. Total estimated time: transfer (5 hours) + restore (6 hours) + index rebuild (6 hours) + verification (3 hours) = 20 hours. Buffer: 28 hours remaining for issues and final cutover. The 48-hour window is feasible with margin'"
+    weight: 0.35
+    description: "Capacity calculations"
+  - type: llm_judge
+    criteria: "Target infrastructure is sized correctly — target sizing: 'Aurora PostgreSQL instance sizing: CPU: the source has 64 cores handling production load. Aurora equivalent: db.r6g.16xlarge (64 vCPU, 512 GB RAM). Start with this size — it matches the source. Memory: Aurora uses memory for buffer pool (similar to PostgreSQL shared_buffers). For 5TB of data: you want enough memory to cache the hot dataset. If the working set (frequently accessed data) is 500GB: 512 GB RAM provides adequate caching. Storage: Aurora storage auto-scales to 128TB. Provision at least 8TB (5TB data + 3TB for indexes, WAL, and temporary files during migration). Aurora storage IOPS: Aurora provides baseline IOPS based on storage size. For 8TB: approximately 24,000 baseline IOPS. During migration (heavy writes): may need additional I/O capacity. Aurora automatically handles I/O scaling, but monitor for I/O bottlenecks. Instance sizing for the migration phase: during migration, the target handles heavy writes (data loading) without production read traffic. After migration, it handles production read/write traffic. Consider: use a larger instance during migration for faster loading (db.r6g.16xlarge or higher). After migration stabilizes: right-size based on actual production load (may be able to downsize). Read replicas: if the production workload uses replicas for read scaling, create Aurora read replicas after the data is loaded (not during — replicas would slow the primary during heavy writes). Estimated Aurora cost: db.r6g.16xlarge on-demand: approximately $8/hour. Aurora storage: approximately $0.10/GB/month. Monthly cost: approximately $6,000 (instance) + $800 (storage) = $6,800/month. Compare to on-premises cost to validate the business case'"
+    weight: 0.35
+    description: "Infrastructure sizing"
+  - type: llm_judge
+    criteria: "Migration schedule fits the 48-hour window with contingency — schedule: 'Hour-by-hour migration schedule: H+0: Begin maintenance window. Stop application writes to the source database. Take a final source backup. H+1: Begin parallel data export. Split the 200 tables into batches: Batch 1: the events table (2TB, 8 billion rows) — this is the longest transfer and starts first. Batch 2-4: the next 10 largest tables (2TB combined). Batch 5-10: the remaining 189 tables (1TB combined). Run all batches in parallel (limited by network bandwidth). H+1 to H+6: Data transfer and loading. Events table: export with pg_dump --format=directory --jobs=8 for parallel dump. Transfer compressed dump via Direct Connect. Import with pg_restore --jobs=8 for parallel restore. Small tables complete first (by H+3). Large tables complete by H+6. H+6 to H+12: Index rebuilding. Rebuild indexes in parallel (Aurora can handle multiple concurrent index builds). Priority: primary keys first, then foreign key indexes, then application query indexes. Monitor: CPU utilization should be 60-80% (efficient but not overwhelming). H+12 to H+15: Data verification. Row count comparison for all 200 tables. Checksum verification for the 20 most critical tables. Spot-check 1000 random rows from each of the top 10 tables. H+15 to H+16: Application cutover. Update application connection strings to point to Aurora. Start applications in read-only mode first (verify reads work). Enable writes. Run smoke tests. H+16 to H+20: Monitoring and stabilization. Monitor Aurora performance: CPU, memory, I/O, query latency. Compare production query performance to baseline. Address any performance issues. H+20 to H+48: Buffer time for issues. 28 hours of contingency. If everything goes well: close the maintenance window early (H+20). If issues arise: 28 hours to debug and fix without extending the window. Contingency plan: if data transfer takes longer than expected: increase parallelism (more pg_dump/pg_restore workers). If index rebuilding is slow: prioritize critical indexes, rebuild non-critical indexes after the maintenance window. If a critical issue cannot be resolved: rollback — switch applications back to on-premises database (connection string revert). The on-premises database is unchanged during migration'"
+    weight: 0.30
+    description: "Migration schedule"

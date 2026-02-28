@@ -1,0 +1,47 @@
+meta:
+  id: expert-experiment-shift
+  level: 4
+  course: ab-test-analysis
+  type: output
+  description: "Expert experiment shift — handle complex cross-functional experimentation challenges requiring platform design, ML evaluation, pricing strategy, and governance in a single day"
+  tags: [shift-simulation, expert, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Three high-stakes requests arrive at the experimentation center of
+  excellence:
+
+  Request 1 (ML Engineering Lead): "We rebuilt our search ranking model
+  from scratch — new architecture, new features, new training pipeline.
+  Offline metrics are dramatically better. But we've been burned before
+  when offline gains didn't translate online. Design the most rigorous
+  possible evaluation plan."
+
+  Request 2 (VP of Revenue): "We want to test a new pricing tier:
+  keeping the current $29/month plan and adding a $49/month premium
+  plan. But we're worried about cannibalization — will existing $29
+  users upgrade, or will new users choose $49 instead of $29, reducing
+  our total signups?"
+
+  Request 3 (Head of Platform): "We've been building our experimentation
+  platform for 2 years. It handles 100+ concurrent experiments. But
+  trust is eroding — three recent experiments had SRM issues and one
+  team shipped a result that turned out to be wrong. We need to restore
+  confidence in the platform."
+
+  Task: Address all three high-stakes requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with rigorous ML model evaluation plan — ml: 'Request 1 — Rigorous ML search model evaluation: A multi-phase evaluation plan to close the offline-online gap: Phase 1 — Offline validation (week 1): confirm offline gains on multiple test sets (not just one holdout). Test on recent data (last 7 days) to check for temporal drift. Evaluate on segment-specific slices (new vs returning users, mobile vs desktop, high vs low activity). Check for failure modes: are there queries where the new model is dramatically worse? A model that improves average NDCG by 8% but degrades 5% of queries by 50% may hurt user experience. Phase 2 — Interleaving experiment (weeks 2-3): run an interleaving test (team-draft interleaving): merge results from old and new model in each search session. Track which model's results get clicked. Interleaving is 10-100x more sensitive than A/B testing for ranking. With 50,000 daily searches, 2 weeks of interleaving provides strong signal. Expected result: if offline NDCG improved by 8%, expect interleaving to show new model wins 55-60% of paired comparisons. Phase 3 — Ramped A/B test (weeks 4-8): if interleaving confirms the new model is better, run a full A/B test for business metric validation. Week 4: 1% canary (check for errors, latency, crashes). Week 5: 10% ramp. Week 6-8: 50% full A/B test. Primary metrics: conversion rate from search, revenue per search session. Guardrails: search latency (p50 and p99), search diversity, query coverage, zero-result rate. Monitor for novelty effects: if the treatment effect declines week-over-week, the early gains were curiosity-driven. Duration: minimum 4 weeks at 50% to capture long-term engagement effects. Phase 4 — Long-term holdout (months 3-6): after shipping to 100%, maintain a 2% holdout on the old model. Compare business metrics monthly. This catches slow-moving degradation that a 4-week A/B test would miss'"
+    weight: 0.35
+    description: "ML"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with pricing tier cannibalization analysis — pricing: 'Request 2 — Pricing tier cannibalization test: The cannibalization concern: adding a $49 premium plan could: best case: attract new users willing to pay $49 (incremental revenue) AND cause some $29 users to upgrade (upgrade revenue). Worst case: confuse new users with too many options (reduced signups) OR shift new users from $29 to $49 (some upgrade revenue but fewer total signups). Experiment design: control: new visitors see only the $29 plan. Treatment: new visitors see both $29 and $49 plans. Important: test on NEW visitors only. Existing $29 subscribers see the new tier separately (different experiment with different dynamics). Primary metric: revenue per visitor. This captures all effects: revenue per visitor = (% choosing $29 × $29) + (% choosing $49 × $49). If revenue per visitor increases, the tier is net positive regardless of mix. Secondary metrics: total signup rate (does adding a tier reduce total signups?). $29 plan signup rate (is the $29 plan cannibalized?). $49 plan signup rate (is the premium tier attracting users?). Average revenue per signup (are signups more valuable?). Guardrails: trial completion rate (do premium trial users complete at the same rate?). 30-day retention by plan. Support ticket rate by plan. Cannibalization analysis: scenario A (no cannibalization): control: 5% signup rate × $29 = $1.45 revenue per visitor. Treatment: 4.8% choose $29 + 1.5% choose $49 = 6.3% total. Revenue: 0.048 × $29 + 0.015 × $49 = $1.39 + $0.74 = $2.13. Revenue per visitor up 47%. The premium tier attracted additional users without reducing $29 signups much. scenario B (heavy cannibalization): control: 5% signup rate × $29 = $1.45. Treatment: 3% choose $29 + 2.5% choose $49 = 5.5% total. Revenue: 0.03 × $29 + 0.025 × $49 = $0.87 + $1.23 = $2.10. Revenue per visitor up 45% but total signups only up 10%. Many users who would have chosen $29 chose $49 instead. Short-term revenue is higher but long-term LTV depends on whether $49 users retain. Duration: 8+ weeks to capture trial-to-paid conversion and early retention'"
+    weight: 0.35
+    description: "Pricing"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with platform trust restoration plan — platform: 'Request 3 — Restoring experimentation platform trust: Immediate actions (week 1-2): 1. SRM audit: review all 100+ active experiments for SRM. Quarantine experiments with statistically significant SRM (p < 0.001). Publish the list of quarantined experiments transparently. For each SRM, diagnose the root cause using the debugging framework: check by timing (day 1 vs gradual), platform (web/mobile), user type (new/returning), and event completeness. 2. The shipped wrong result: investigate the specific experiment that was wrong. Was it an SRM that went undetected? Was it a novelty effect that faded post-launch? Was it a triggered analysis with selection bias? Was it an interaction with a concurrent experiment? Publish a blameless post-mortem with root cause and corrective actions. 3. A/A test battery: launch A/A tests (identical treatment and control) on the 10 most-used metrics. Run for 2 weeks. If the A/A tests show significant differences, the platform has a systemic instrumentation problem. If A/A tests are clean, the SRMs are experiment-specific (not platform-wide). Medium-term fixes (weeks 3-8): 4. Automated SRM detection: add real-time SRM monitoring to every experiment. Alert experiment owners within 24 hours of a detected SRM. Block experiments from being marked as conclusive if SRM is detected. 5. Server-side assignment logging: migrate all experiment assignment logging from client-side to server-side. This eliminates the most common SRM cause (client-side logging failures). 6. Pre-experiment data quality checks: validate event completeness for all primary and guardrail metrics before an experiment launches. Check that the metric pipeline has no gaps in the past 7 days. Long-term trust building (months 3-6): 7. Transparency dashboard: a public (internal) dashboard showing: total active experiments, SRM rate (target: < 2%), A/A test results (should show 5% false positive rate). Experiment accuracy: post-launch monitoring of shipped experiments to check if the measured effect persists. 8. Quarterly platform reliability report: published by the experimentation platform team. Covers: SRM incidents and root causes, accuracy of shipped experiments, platform uptime and latency. 9. Training and enablement: mandatory experimentation training for new hires on product and engineering teams. Monthly office hours with the platform team for experiment design questions. For the Head of Platform: the trust problem is solvable. Prioritize SRM detection and server-side logging as immediate fixes. The A/A test battery and transparency dashboard will demonstrate platform reliability with data. Expect 3-6 months to fully restore confidence'"
+    weight: 0.30
+    description: "Platform"

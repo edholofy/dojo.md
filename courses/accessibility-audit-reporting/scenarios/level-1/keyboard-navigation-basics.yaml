@@ -1,0 +1,48 @@
+meta:
+  id: keyboard-navigation-basics
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "Keyboard navigation basics — test and report on keyboard accessibility including focus order, focus visibility, and keyboard traps"
+  tags: [keyboard, navigation, focus, common-issues, beginner]
+
+state: {}
+
+trigger: |
+  A junior auditor is testing a website by navigating
+  with only the keyboard (no mouse). They find:
+
+  1. When pressing Tab, focus skips over several
+     buttons in the navigation
+  2. A modal dialog opens but the focus stays behind
+     the modal — Tab moves through the invisible
+     background page
+  3. A custom dropdown menu can only be opened by
+     clicking — no keyboard access
+  4. Focus is not visible on most interactive elements
+     (no outline or highlight when tabbing)
+  5. A video player traps keyboard focus — once you
+     Tab into it, you can't Tab out
+
+  The auditor asks: "These all seem like keyboard
+  issues but I'm not sure how to categorize them
+  or what the expected behavior should be. How do
+  I write these up?"
+
+  Task: Write audit findings for each keyboard
+  accessibility issue with expected behavior,
+  WCAG references, and severity.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes proper findings for each keyboard issue — Skipped buttons (WCAG 2.1.1 Keyboard Level A + 2.4.3 Focus Order Level A: all interactive elements must be reachable via Tab in a logical order matching visual layout, Severity: Critical — some features completely inaccessible, investigate: buttons may use div/span instead of button element or have tabindex=-1), Modal focus escape (WCAG 2.4.3 Focus Order Level A + 2.1.2 No Keyboard Trap Level A: when modal opens, focus must move inside modal and be trapped within modal until dismissed — Tab should cycle through modal controls only, Severity: Critical — modal content inaccessible), Custom dropdown no keyboard (WCAG 2.1.1 Keyboard Level A: all functionality must be operable via keyboard — dropdown must open with Enter/Space, navigate with Arrow keys, select with Enter, close with Escape, Severity: Critical — feature completely inaccessible to keyboard users)"
+    weight: 0.35
+    description: "KeyboardFindings"
+  - type: llm_judge
+    criteria: "Response covers focus visibility and keyboard trap findings — Focus not visible (WCAG 2.4.7 Focus Visible Level AA: a visible focus indicator must be present on all interactive elements — default browser outline is acceptable, custom styles must provide equivalent or better visibility with minimum 2px outline and 3:1 contrast against adjacent colors per WCAG 2.4.11 Focus Appearance, Severity: Major — users can't tell where they are on the page, Fix: add :focus-visible styles or restore browser default outline that was removed with outline: none), Keyboard trap in video player (WCAG 2.1.2 No Keyboard Trap Level A: users must be able to move focus away from any component using standard keyboard — Tab, Shift+Tab, Escape, or arrow keys, Severity: Critical — user is stuck and must use mouse or refresh the page to continue, Fix: ensure all interactive elements within the player are in the tab order and focus can exit the player container). Each finding explains what the user experiences and why it's a barrier"
+    weight: 0.35
+    description: "FocusFindings"
+  - type: llm_judge
+    criteria: "Response includes keyboard testing methodology — how to test keyboard navigation (unplug or disable mouse, start at the top of the page, press Tab to move forward through interactive elements, Shift+Tab to move backward, Enter/Space to activate buttons and links, Arrow keys within composite widgets like menus and tabs, Escape to close modals/popups/menus), what to check at each element (can you reach it? can you see where focus is? can you activate it? can you leave it? is the order logical?), expected keyboard behaviors by component type (links: Enter activates, buttons: Enter or Space activates, checkboxes: Space toggles, radio buttons: Arrow keys move selection, dropdown menus: Enter/Space opens, Arrows navigate, Enter selects, Escape closes, tabs: Arrow keys switch tabs), and reporting tip (record the tab order as a numbered list in the report — helps developers see where the order breaks)"
+    weight: 0.30
+    description: "TestingMethodology"

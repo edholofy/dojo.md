@@ -1,0 +1,48 @@
+meta:
+  id: chaos-engineering-monitoring
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Design chaos engineering for monitoring validation — build a systematic program to verify that monitoring detects failures before customers do through controlled fault injection"
+  tags: [monitoring, chaos-engineering, fault-injection, resilience, validation, master]
+
+state: {}
+
+trigger: |
+  After a major incident where monitoring failed to detect a payment
+  processing outage for 23 minutes (customers reported it), your CTO
+  asks: "How do we know our monitoring actually works? We had alerts
+  for this service, but they didn't fire. How many other alerts are
+  silently broken?"
+
+  This is a fair question. You have 400 alert rules monitoring 200
+  services. You know they were created correctly at some point, but
+  you cannot prove they still work today. Services change, thresholds
+  drift, and dependencies evolve.
+
+  Current state:
+  - 400 alert rules across 200 services
+  - Last systematic validation: never (alerts are tested when created,
+    not regularly)
+  - Unknown number of silently broken alerts
+  - 3 incidents in the last year where monitoring should have detected
+    the issue but did not
+  - The team resists chaos engineering: "What if we break production?"
+
+  Task: Design a chaos engineering program specifically for monitoring
+  validation. Include: what to test, how to test safely, the phased
+  rollout, and how to make this a sustainable practice.
+
+assertions:
+  - type: llm_judge
+    criteria: "Monitoring validation framework defines what and how to test — validation framework: 'The goal is not traditional chaos engineering (testing system resilience) — it is monitoring chaos engineering (testing that monitoring detects problems). We are not asking: does the system survive failure? We are asking: does monitoring detect failure? What to test: (1) Alert firing validation: does the alert actually fire when the condition it monitors occurs? Example: the CPU alert is configured to fire at 90% — inject CPU load to 92% and verify the alert fires within the expected time window. (2) Alert routing validation: when the alert fires, does it reach the right person? Example: fire a test alert and verify it appears in PagerDuty, routes to the correct on-call engineer, and includes the runbook link. (3) Detection coverage validation: for known failure modes, does monitoring detect them? Example: simulate a payment processing failure (return errors for 5% of transactions) and verify that the payment SLO burn-rate alert fires within 2 minutes. (4) Dashboard accuracy validation: do dashboards show the problem accurately during an incident? Example: inject latency into a service and verify that the latency dashboard shows the increase within 30 seconds. How to test safely: (1) Staging first, production second. All experiments run in staging for at least 2 iterations before any production testing. Staging validation catches configuration errors in the experiment itself. (2) Blast radius control. Every experiment has defined boundaries: which service is affected, what failure mode is injected, maximum duration (hard timeout that terminates the experiment automatically), rollback mechanism (how to instantly stop the injection). (3) Production experiments use canary approach. Do not inject failure across 100% of traffic. Start with 1% of requests, verify monitoring detects it, then optionally increase. For most monitoring validation, 1-5% failure injection is sufficient to trigger alerts. (4) Kill switch. Every experiment has a kill switch accessible to the on-call engineer. If an experiment causes unexpected impact, it can be terminated immediately. The on-call engineer is always notified before a production experiment begins'"
+    weight: 0.35
+    description: "Validation framework"
+  - type: llm_judge
+    criteria: "Phased rollout builds confidence and addresses resistance — phased rollout: 'Addressing resistance: the team says what if we break production? This is a valid concern. The phased approach starts with zero production risk and gradually builds confidence. Phase 1 (months 1-2): Alert configuration audit (no fault injection). Before injecting any faults, audit alert configurations statically. Check: do alert rules reference services and metrics that still exist? (Stale alerts referencing decommissioned services will never fire.) Are alert thresholds still appropriate given current baselines? (A latency alert at 500ms when normal latency is now 450ms will fire on normal variation.) Is alert routing correct? (Does the alert route to the team that still owns the service?) Expected findings: 10-20% of alerts are silently broken (referencing removed metrics, wrong routing, or impossible thresholds). Fix these before doing any fault injection. Milestone: all 400 alerts validated at the configuration level. Phase 2 (months 3-4): Staging fault injection. Build fault injection capabilities in staging: latency injection (add N ms to service responses), error injection (return errors for N% of requests), resource exhaustion (consume CPU, memory, disk to threshold), dependency failure (simulate downstream service unavailability). Run experiments for the 20 most critical alerts: inject the fault condition, verify the alert fires, verify the alert routes correctly, verify the runbook is linked and accurate. Expected findings: 15-25% of critical alerts do not fire as expected in staging due to configuration drift, threshold issues, or changed dependencies. Fix these. Milestone: top 20 critical alerts validated by fault injection in staging. Phase 3 (months 5-7): Production canary experiments. Graduate validated experiments to production with canary blast radius (1-5% of traffic). Start with non-customer-facing services (internal tools, batch processing). Expand to customer-facing services with business-hours-only experiments and on-call engineer notification. Run 5-10 experiments per week, validating alerts across all 200 services over 3 months. Expected findings: some alerts that pass in staging fail in production (different traffic patterns, different scale, different configuration). Fix these. Milestone: all critical path alerts validated in production. Phase 4 (months 8-12): Continuous validation. Establish recurring validation schedule: critical alerts (payment, authentication, core API): validated monthly. Standard alerts: validated quarterly. New alerts: validated within 2 weeks of creation. Automate as much as possible: scheduled fault injection that runs, verifies alert fires, and reports results. Alerts that fail validation are immediately flagged for repair. Milestone: monitoring validation is an ongoing practice, not a one-time project'"
+    weight: 0.35
+    description: "Phased rollout"
+  - type: llm_judge
+    criteria: "Sustainability and metrics demonstrate ongoing value — sustainability: 'Making this sustainable: (1) Monitoring confidence score. Introduce a metric: monitoring confidence score per service. Formula: (number of validated alerts / total alerts) × (days since last validation / max validation interval). Score of 1.0: all alerts validated within their required interval. Score below 0.7: some alerts have not been validated recently — prioritize for next validation cycle. Display this score on service dashboards. Teams can see at a glance whether their monitoring is trustworthy. (2) Integration with CI/CD. When a service is deployed, automatically run a subset of monitoring validation experiments. If a deployment changes a metric name or endpoint: the corresponding alert should be checked. This catches monitoring breakage at deploy time rather than during the next incident. (3) Experiment library. Build a reusable library of fault injection experiments mapped to alert types. Standard experiments: latency injection → validates latency alerts. Error injection → validates error rate alerts. Resource exhaustion → validates CPU/memory/disk alerts. Dependency failure → validates dependency health alerts. New alerts get a corresponding experiment when created. The experiment is part of the alert definition of done. (4) Reporting and value demonstration. Monthly report: experiments run, alerts validated, broken alerts discovered, broken alerts fixed. Track: incidents where monitoring failed to detect (target: zero, because broken alerts are caught by validation before they matter in a real incident). Before chaos engineering for monitoring: 3 incidents per year where monitoring should have caught the issue but did not. Target: zero. If we prevent even one incident that would have cost $100K+ (the payment processing outage was estimated at $200K), the program pays for itself. Annual ROI: cost of the program (tooling, engineer time for experiments) vs. cost of incidents caused by broken monitoring. The 23-minute payment outage alone justifies the investment'"
+    weight: 0.30
+    description: "Sustainability and metrics"

@@ -1,0 +1,45 @@
+meta:
+  id: heading-structure-audit
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "Heading and structure audit — evaluate and report on heading hierarchy, landmark regions, and semantic HTML structure"
+  tags: [headings, structure, semantics, landmarks, beginner]
+
+state: {}
+
+trigger: |
+  A junior auditor is checking the structure of a
+  news website. They find:
+
+  1. The page has no H1 heading — the site title is
+     styled to look like a heading but uses a div
+  2. Headings jump from H2 to H5 (skipping H3 and H4)
+  3. Text that looks like a heading visually is just
+     bold paragraph text
+  4. The page has no landmark regions (no nav, main,
+     footer, aside elements)
+  5. There are multiple H1 tags on a single page
+
+  The auditor asks: "I know headings should be in
+  order, but how strict is this? Is a heading
+  hierarchy skip always an issue? What about landmarks
+  — are those required? How do I write these up?"
+
+  Task: Audit and report on heading structure and
+  landmark issues with proper WCAG references and
+  practical remediation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for heading issues — No H1 heading (WCAG 1.3.1 Info and Relationships Level A: the page lacks a programmatic H1 heading — screen reader users navigating by headings can't identify the page's main topic, Severity: Major, Fix: add H1 element for the primary page title), Heading level skip H2→H5 (WCAG 1.3.1 Level A: heading hierarchy should not skip levels — screen reader users navigating by heading level will miss content under skipped levels, Severity: Minor, Fix: restructure as H2 → H3 → H4 as appropriate for content hierarchy), Visual heading without semantic heading (WCAG 1.3.1 Level A: content that looks like a heading must be marked up as a heading — bold text in a div is not recognized by screen readers as a heading, Severity: Major, Fix: use appropriate heading level element instead of styled div), No landmarks (WCAG 1.3.1 Level A + best practice per WCAG 2.4.1: page lacks landmark regions for navigation — screen reader users can't jump to main content or navigate by regions, Fix: add nav, main, footer, aside elements to identify page regions), Multiple H1s (Minor: while technically valid in HTML5, multiple H1s can confuse screen reader users about the page's primary topic, Fix: use single H1 for main page title, H2 for section headings)"
+    weight: 0.35
+    description: "HeadingFindings"
+  - type: llm_judge
+    criteria: "Response explains heading and landmark purpose and testing — why headings matter (screen reader users navigate by headings like a table of contents — JAWS: Insert+F6 for heading list, NVDA: H key to jump to next heading, VoiceOver: rotor for headings — without proper headings, users must listen through all content linearly), heading rules (one H1 per page identifying the main topic, headings nest logically: H1 → H2 → H3 — like an outline, don't use headings for visual styling — use CSS instead, don't skip levels going down — H2 to H4 without H3 creates confusion), landmark regions explained (nav: navigation areas, main: primary content — exactly one per page, aside: complementary content like sidebars, footer: page footer with copyright and links, header: page header with logo and navigation, form: significant form sections — landmarks let screen reader users jump directly to page sections like chapters in a book), and how to test (use WAVE or HeadingsMap browser extension to visualize heading structure, use accessibility tree in DevTools to verify landmarks)"
+    weight: 0.35
+    description: "HeadingLandmarkPurpose"
+  - type: llm_judge
+    criteria: "Response provides remediation guidance and best practices — heading hierarchy fix strategy (map the visual hierarchy to semantic headings: if it looks like a section title → it should be a heading at the appropriate level, create a heading outline before coding to ensure logical structure), landmark implementation (minimum landmarks for a typical page: header, nav, main, footer — takes 5 minutes to add to existing HTML), common mistakes (using headings for visual size instead of document structure, removing heading elements and replacing with styled divs 'because the design doesn't want headings to look like headings' — use CSS to style headings to match design while keeping semantic meaning, using aria-label on landmarks when there are multiple of the same type — e.g., two nav elements should be aria-labeled 'Main navigation' and 'Footer navigation'). Practical and specific enough for developers to implement"
+    weight: 0.30
+    description: "RemediationGuidance"

@@ -1,0 +1,46 @@
+meta:
+  id: color-contrast-audit
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "Color contrast audit — test and report on color contrast issues including text contrast, UI component contrast, and color-only indicators"
+  tags: [color, contrast, visual, common-issues, beginner]
+
+state: {}
+
+trigger: |
+  A junior auditor is testing a corporate website and
+  finds color-related issues:
+
+  1. Light gray body text (#999) on white background
+  2. A red "Required" label that's the only indicator
+     a form field is required (no asterisk or text)
+  3. Green success messages that some users can't
+     distinguish from the surrounding text
+  4. A data chart using only colors to differentiate
+     data series (red, green, blue lines)
+  5. Placeholder text in form fields with very low
+     contrast
+
+  The auditor asks: "I know contrast ratios are
+  important but how do I actually measure them?
+  And how do I write these up? Are they all contrast
+  issues?"
+
+  Task: Audit and report on each color accessibility
+  issue with measurements, WCAG references, and
+  remediation guidance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses each color issue with proper classification — Gray text on white (WCAG 1.4.3 Contrast Minimum Level AA: #999 on #FFF = 2.85:1 ratio — fails 4.5:1 requirement for normal text, Severity: Major, Fix: darken to at least #767676 for 4.5:1 or #595959 for enhanced contrast), Color-only required indicator (WCAG 1.4.1 Use of Color Level A: red color is the sole means of conveying 'required' — users who can't see red miss this, Severity: Critical, Fix: add asterisk * and 'Required' text label alongside color), Low-contrast success messages (WCAG 1.4.3 Level AA: measure actual contrast ratio, also WCAG 1.4.1 if green is only differentiator from normal text, Fix: use sufficient contrast AND add icon like checkmark alongside color), Chart with color-only data series (WCAG 1.4.1 Level A: colorblind users can't distinguish data series, Severity: Major, Fix: add patterns, labels, or different line styles in addition to color), Placeholder text contrast (WCAG 1.4.3 Level AA: placeholder text must meet 4.5:1 if it conveys necessary information — if purely supplementary, lower contrast acceptable but still problematic for usability)"
+    weight: 0.35
+    description: "ColorFindings"
+  - type: llm_judge
+    criteria: "Response explains contrast measurement and tools — how to measure contrast ratio (use tools: browser DevTools color picker shows contrast ratio, WebAIM Contrast Checker for specific color pairs, axe DevTools highlights contrast failures automatically), contrast requirements explained (normal text under 18pt: 4.5:1 minimum at AA, large text 18pt+ or 14pt bold: 3:1 minimum at AA, UI components and graphical objects: 3:1 against adjacent colors per WCAG 1.4.11, AAA requirements: 7:1 for normal text, 4.5:1 for large text — aspirational), how to report contrast findings (include: exact colors as hex codes, measured ratio, required ratio, the difference — e.g., 'Current: #999 on #FFF = 2.85:1, Required: 4.5:1, Gap: 1.65 points below requirement'), and the distinction between 1.4.3 Contrast (text) vs 1.4.1 Use of Color (information conveyed only through color)"
+    weight: 0.35
+    description: "ContrastMeasurement"
+  - type: llm_judge
+    criteria: "Response provides actionable remediation for color issues — for each finding, specific fix with example (gray text: 'Change body text color from #999999 to #595959 — provides 7:1 contrast ratio exceeding both AA and AAA requirements', required fields: 'Add asterisk (*) with aria-required=true on the input, plus text Required next to the label — don't rely on color alone', success messages: 'Add checkmark icon before success text, ensure text meets 4.5:1 contrast against background', chart: 'Add distinct patterns to each data series — dashed line, dotted line, solid line — plus direct labels on each series'), and a tip for designers (test designs with a colorblindness simulator like Sim Daltonism or Chrome DevTools vision deficiency emulation before launch — prevention is easier than remediation)"
+    weight: 0.30
+    description: "ColorRemediation"

@@ -1,0 +1,51 @@
+meta:
+  id: expert-palette-shift
+  level: 4
+  course: color-palette-typography-rationale
+  type: output
+  description: "Expert palette shift — handle multiple expert-level color and typography challenges in a single session"
+  tags: [shift, combined, assessment, expert]
+
+state: {}
+
+trigger: |
+  You're the Design Systems Lead at a large tech company.
+  Your week:
+
+  MONDAY — A product team launches a new dashboard.
+  Within hours, the accessibility team flags that the
+  data visualization colors fail for 3 types of color
+  blindness AND the chart labels at 11px are below
+  minimum readable size. The PM says: "We can't delay
+  the launch. Fix it without changing the visual design."
+
+  WEDNESDAY — The CEO announces a partnership with a
+  luxury brand. Their brand guidelines demand: Pantone
+  Black 6 C, Pantone 871 C (metallic gold), and a
+  specific typeface (Didot). Your design system uses
+  none of these. The partnership launch page must go
+  live in 2 weeks using your component library.
+
+  FRIDAY — Two teams independently created "dark mode"
+  for their products using different approaches. Team A
+  inverted all colors, Team B manually selected dark
+  colors. Neither consulted the design system. Both
+  look different, and both have accessibility issues.
+  The VP says: "Unify this into one official dark mode
+  before more teams ship their own versions."
+
+  Task: Handle all three enterprise design challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Monday — dashboard accessibility emergency — chart colors fix (replace colorblind-failing palette with colorblind-safe palette: Okabe-Ito or Wong palette — 8 distinguishable colors across all common color vision deficiencies, add secondary visual indicators: patterns, shapes, or direct labels on data series — never rely on color alone, test with colorblind simulation to verify), label size fix (11px is below WCAG minimum for comfortable reading: increase to at least 12px, ideally 13-14px — this IS a visual design change but a necessary one, if PM pushes back: 11px fails both accessibility standards and basic readability — non-negotiable, find space by adjusting chart padding or axis formatting), launch approach (hot-fix: patch the colorblind-safe palette and increased label size — these changes don't alter layout or interaction, just color values and font-size, deploy immediately, document the accessibility finding for future dashboard launches — prevent recurrence)."
+    weight: 0.35
+    description: "AccessibilityEmergency"
+  - type: llm_judge
+    criteria: "Response handles Wednesday — luxury brand partnership page — Pantone translation (Pantone Black 6 C → convert to closest hex/RGB for digital: approximately #101820 — deep black with slight blue undertone, Pantone 871 C metallic gold → cannot render true metallic on screen, closest flat equivalent: #8B7536 or similar warm gold, with CSS gradients to simulate metallic sheen), Didot typeface (if licensed: load as web font with font-display: swap, if not licensed or cost-prohibitive: find similar alternative — Playfair Display or Cormorant Garamond are free alternatives with similar high-contrast serif characteristics, document: 'approved digital equivalent of Didot for partnership materials'), component library integration (create a partnership theme: extends design system with co-brand color tokens, partnership-specific page built using existing components with theme override — Header, Hero, Grid, Card components render with partnership palette, don't pollute the main design system — partnership theme is scoped to partnership pages only)."
+    weight: 0.35
+    description: "LuxuryPartnership"
+  - type: llm_judge
+    criteria: "Response handles Friday — dark mode unification — assessment of both approaches (Team A's inversion: likely has issues with saturated colors being too bright, pure black backgrounds causing halation, inverted images, and brand colors looking wrong; Team B's manual selection: likely more thoughtful but without systematic token approach, may have inconsistencies and undocumented color decisions; both lack: systematic semantic token mapping, accessibility verification, design system integration), unification plan (take best elements from both: evaluate which team's dark mode looks better for which components, create official dark mode as design system theme with proper semantic tokens — every light mode token has a verified dark mode counterpart, accessibility audit: verify all text/background combinations meet WCAG AA in unified dark mode, rollout: teams A and B migrate to official dark mode within 4-6 weeks, other teams blocked from shipping unauthorized dark modes — official is the only option), prevention (governance: dark mode is a design system feature, not a product feature — teams don't create their own, add dark mode testing to component acceptance criteria)."
+    weight: 0.30
+    description: "DarkModeUnification"

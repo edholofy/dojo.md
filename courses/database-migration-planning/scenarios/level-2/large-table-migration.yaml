@@ -1,0 +1,37 @@
+meta:
+  id: large-table-migration
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Migrate large tables safely — plan schema changes on tables with tens of millions of rows without extended locking or downtime"
+  tags: [database, migration, large-tables, performance, locking, intermediate]
+
+state: {}
+
+trigger: |
+  Your team needs to make three changes to the "events" table which
+  has 80 million rows and grows by 2 million rows per day:
+
+  1. Add a "processed" boolean column (default false)
+  2. Add a composite index on (user_id, created_at)
+  3. Change "payload" column from TEXT to JSONB
+
+  The table is write-heavy (constant inserts from event processing).
+  Any extended lock will cause the event pipeline to back up.
+
+  Task: Plan the migration strategy for all three changes. Identify
+  which are safe, which are dangerous, and the approach for each.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each change is assessed for safety — safety assessment: 'Change 1 — Add processed boolean (DEFAULT false): SAFE in PostgreSQL 11+. ALTER TABLE events ADD COLUMN processed BOOLEAN NOT NULL DEFAULT FALSE; In PostgreSQL 11+, this is a metadata-only change. The default is stored in the system catalog, not written to every row. Instant execution, no table rewrite, no lock (beyond a brief AccessExclusiveLock for the catalog update). For 80 million rows: completes in milliseconds. Change 2 — Add composite index on (user_id, created_at): DANGEROUS without CONCURRENTLY. Regular CREATE INDEX on 80 million rows could take 10-30 minutes while holding a SHARE lock (blocking writes). Safe approach: CREATE INDEX CONCURRENTLY idx_events_user_created ON events(user_id, created_at); Takes longer (15-45 minutes) but does not block writes. Cannot be in a transaction — disable transaction wrapping for this migration. Monitor: disk space (index building uses temporary space), CPU utilization, replication lag. Change 3 — Change payload from TEXT to JSONB: DANGEROUS. ALTER TABLE events ALTER COLUMN payload TYPE JSONB USING payload::JSONB; This requires a full table rewrite. For 80 million rows: estimated 30-60 minutes with the table locked for writes. Additionally: if any payload value is not valid JSON, the USING cast fails and the entire migration rolls back after 30+ minutes of work. This change cannot be done with a simple ALTER TABLE in production'"
+    weight: 0.35
+    description: "Safety assessment"
+  - type: llm_judge
+    criteria: "Safe migration strategy for the dangerous changes is provided — strategy: 'For Change 3 (TEXT to JSONB) — use expand-and-contract: Step 1: add new column. ALTER TABLE events ADD COLUMN payload_jsonb JSONB; (instant, metadata-only). Step 2: update application to dual-write. Application writes to both payload (TEXT) and payload_jsonb (JSONB). New inserts populate both columns. Step 3: backfill existing data. Write a batch script: UPDATE events SET payload_jsonb = payload::JSONB WHERE payload_jsonb IS NULL AND id BETWEEN $start AND $end; Process in batches of 50,000 rows with 200ms pauses. For 80 million rows at 50K per batch: 1,600 batches. With processing + pauses: approximately 1-2 hours. Handle invalid JSON: some TEXT values may not be valid JSON. Log these failures instead of failing the batch. Fix them manually or with a cleanup query. Step 4: verify backfill. SELECT COUNT(*) FROM events WHERE payload_jsonb IS NULL; (should be 0 or near 0). Verify a sample: SELECT id, payload, payload_jsonb::TEXT FROM events ORDER BY RANDOM() LIMIT 100; Step 5: switch application to read from payload_jsonb. Deploy code changes that read from payload_jsonb instead of payload. Continue dual-writing. Step 6: drop old column. ALTER TABLE events DROP COLUMN payload; ALTER TABLE events RENAME COLUMN payload_jsonb TO payload; (both instant operations). Total timeline: 1-2 weeks for the full expand-and-contract. Recommended migration order: (1) Add processed column (instant, safe — run first). (2) Create index CONCURRENTLY (run during off-peak, takes 15-45 minutes). (3) Begin TEXT to JSONB expand-and-contract (multi-day process)'"
+    weight: 0.35
+    description: "Migration strategy"
+  - type: llm_judge
+    criteria: "Monitoring and rollback plans are included — monitoring and rollback: 'Monitoring during migrations: (1) Table lock monitoring: SELECT pid, query, state, wait_event_type FROM pg_stat_activity WHERE query LIKE percent events percent AND state != idle; Watch for blocked queries waiting on locks. (2) Replication lag (if using replicas): SELECT EXTRACT(EPOCH FROM now() - pg_last_xact_replay_timestamp()) AS lag_seconds; If lag exceeds 30 seconds, pause the backfill. (3) Event pipeline health: monitor the event processing queue depth. If it is growing (events are backing up), the backfill is consuming too many resources. Reduce batch size or increase pause duration. (4) Disk space: backfill and index creation use temporary disk space. Monitor free disk and alert if it drops below 20%. Rollback plans: Change 1 (add column): ALTER TABLE events DROP COLUMN processed; (instant). Change 2 (index): DROP INDEX CONCURRENTLY idx_events_user_created; (use CONCURRENTLY to avoid blocking). Change 3 (TEXT to JSONB): during expand phase: just drop the new column (ALTER TABLE events DROP COLUMN payload_jsonb). After switch: rollback is more complex — you would need to re-add the TEXT column and backfill from JSONB. Plan for this by keeping the old column for at least 1 week after the switch before dropping it'"
+    weight: 0.30
+    description: "Monitoring and rollback"

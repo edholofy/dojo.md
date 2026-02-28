@@ -1,0 +1,45 @@
+meta:
+  id: timezone-handling
+  level: 2
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Timezone handling — resolve timezone-related data issues including DST transitions, naive timestamps, and cross-timezone aggregations"
+  tags: [timezone, DST, timestamp, UTC, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "Our daily revenue dashboard is showing
+  inconsistent numbers depending on when and where you look at it:
+
+  1. Revenue for March 10, 2024 (US DST spring-forward day) shows
+     only 23 hours of data instead of 24, causing a ~4% dip in the
+     chart that the CFO asked about
+
+  2. Our EU and US teams see different daily totals for the same day
+     because the pipeline groups by calendar date, but EU timestamps
+     are CET and US timestamps are stored without timezone info
+
+  3. We have transactions from 3 sources: one stores timestamps in
+     UTC, one in America/New_York, and one as Unix epoch milliseconds.
+     When we join them, some transactions appear to happen in the
+     future relative to others
+
+  How do I properly handle timezones in our ETL pipeline?"
+
+  Task: Diagnose each timezone issue, explain the root causes, and
+  design a timezone handling strategy for the pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each issue — DST dip: when converting from UTC to local time, the spring-forward day has only 23 hours, which is correct but confusing in reporting (the reverse happens in fall with 25 hours). Cross-timezone grouping: grouping by date in different timezones means different UTC windows, so EU and US see different day boundaries. Mixed timestamp formats: joining timestamps from different timezone conventions without normalizing to a common timezone causes temporal ordering errors. The fundamental problem is inconsistent timezone handling"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response designs a proper timezone strategy — store all timestamps in UTC (TIMESTAMPTZ) throughout the pipeline, convert to local timezone only at the presentation/reporting layer, normalize all incoming timestamps to UTC as the first transformation step (convert epoch to UTC datetime, convert local times to UTC using proper timezone-aware conversion), define a 'business day' convention for reporting (e.g., midnight-to-midnight in the company's headquarters timezone), and handle DST transitions explicitly (acknowledge 23/25 hour days in daily aggregations)"
+    weight: 0.35
+    description: "TimezoneStrategy"
+  - type: llm_judge
+    criteria: "Response addresses practical implementation — use timezone-aware datetime types (never naive timestamps), use IANA timezone names (America/New_York) not abbreviations (EST/EDT which are ambiguous), convert Unix epoch correctly (handle milliseconds vs seconds), test pipeline behavior around DST boundaries, document the timezone convention for every data source and every pipeline output, and handle edge cases like timestamps during the ambiguous fall-back hour"
+    weight: 0.30
+    description: "Implementation"

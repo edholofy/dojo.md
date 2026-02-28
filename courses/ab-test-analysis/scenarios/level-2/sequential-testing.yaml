@@ -1,0 +1,33 @@
+meta:
+  id: sequential-testing
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Apply sequential testing methods — use group sequential designs and alpha spending functions to monitor A/B tests continuously while controlling false positive rates"
+  tags: [sequential-testing, alpha-spending, continuous-monitoring, interim-analysis, intermediate]
+
+state: {}
+
+trigger: |
+  The Head of Product says: "Our tests take 4 weeks but I need to make
+  decisions faster. Last week I peeked at a test on day 5 — it was
+  significant at p = 0.03, so I shipped it. The data scientist is upset
+  and says I inflated the false positive rate. But the p-value was below
+  0.05 — what's the problem?"
+
+  Task: Explain why peeking inflates false positives, introduce sequential
+  testing as a principled solution, and show how to implement it.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the peeking problem — peeking: 'The peeking problem: When you run a fixed-sample test at α = 0.05, the 5% false positive guarantee only holds if you check results ONCE at the pre-determined sample size. Every additional look at the data gives the random noise another chance to cross the significance threshold. If you check daily over 4 weeks (28 looks): the actual false positive rate inflates to approximately 20-25%, far above the intended 5%. The math: even under the null hypothesis (no real effect), p-values fluctuate randomly over time. If you peek enough times, you will eventually see p < 0.05 just by chance. Example: Day 5 p = 0.03 (looks significant). Day 8 p = 0.12 (no longer significant). Day 12 p = 0.04 (significant again). Day 15 p = 0.08 (not significant). Day 20 p = 0.02 (significant again). By stopping on day 5 when p = 0.03, the Head of Product caught a random fluctuation. If they had waited, the effect would have disappeared. This is why the data scientist is upset — the result may be a false positive dressed up as a real finding. The solution is not to ban peeking but to use methods designed for continuous monitoring: group sequential testing'"
+    weight: 0.35
+    description: "Peeking"
+  - type: llm_judge
+    criteria: "Response explains group sequential designs and alpha spending — sequential: 'Group sequential testing: Instead of spending the entire α = 0.05 budget on one look, divide it across planned interim analyses. O'Brien-Fleming spending function (most common): allocates very little alpha to early looks and most to the final look. 4 planned looks at 25%, 50%, 75%, 100% of total sample: Look 1 (25% data): test at α = 0.0001. Extremely strict — only stop for massive effects. Look 2 (50% data): test at α = 0.0054. Still very strict. Look 3 (75% data): test at α = 0.0184. Getting more lenient. Look 4 (100% data): test at α = 0.0430. Close to the original 0.05. Total alpha spent across all 4 looks = 0.05. The false positive rate is controlled at exactly 5% even though you check 4 times. Pocock spending function (alternative): spends alpha more evenly across looks. Look 1: α = 0.0182. Look 2: α = 0.0182. Look 3: α = 0.0182. Look 4: α = 0.0182. More lenient at early looks (easier to stop early) but stricter at the final look (0.018 instead of 0.043). Trade-off: O'Brien-Fleming preserves more power at the final analysis. Pocock gives a better chance of stopping early. Practical implementation: before the test starts, specify: total sample size, number of interim looks, which spending function to use. At each interim look: calculate the test statistic, compare to the adjusted threshold for that look, stop only if the threshold is crossed, otherwise continue to the next look'"
+    weight: 0.35
+    description: "Sequential"
+  - type: llm_judge
+    criteria: "Response covers practical application and always-valid p-values — practical: 'Practical implementation: Step 1 — Plan the sequential design before launch: decide on 3-5 interim analysis points (e.g., weekly for a 4-week test). Choose O'Brien-Fleming (recommended for most product tests — preserves final-look power). Calculate the adjusted significance boundaries using software (statsmodels, gsDesign in R). Note: sequential designs require 2-5% more total sample than fixed-sample tests (the cost of the option to stop early). Step 2 — Run the test and check at planned intervals: Week 1 (25%): z-statistic = 2.8. O'Brien-Fleming boundary = 4.05. 2.8 < 4.05 → continue. Week 2 (50%): z-statistic = 2.6. Boundary = 2.86. 2.6 < 2.86 → continue. Week 3 (75%): z-statistic = 2.3. Boundary = 2.34. 2.3 < 2.34 → continue (barely). Week 4 (100%): z-statistic = 2.1. Boundary = 2.02. 2.1 > 2.02 → significant, ship the treatment. Always-valid p-values (confidence sequences): a newer approach that allows checking at ANY time, not just pre-planned looks. The p-value is valid no matter when or how often you check. The trade-off: always-valid methods are more conservative (require 20-40% more data than fixed-sample). Tools: many experimentation platforms (Statsig, Optimizely, Eppo) implement sequential testing automatically. The analyst configures: the primary metric, the MDE, the maximum test duration. The platform handles the spending function and adjusted boundaries. Recommendation for the Head of Product: use sequential testing for all future tests. You get the flexibility to check results regularly AND maintain statistical rigor. Set up weekly interim analyses with O'Brien-Fleming boundaries'"
+    weight: 0.30
+    description: "Practical"

@@ -1,0 +1,48 @@
+meta:
+  id: database-migration-review
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review database migrations — evaluate schema changes for safety, reversibility, data integrity, and production deployment risk"
+  tags: [code-review, database, migration, schema, deployment, safety, advanced]
+
+state: {}
+
+trigger: |
+  You're reviewing a database migration PR. The migration:
+
+  1. Adds a NOT NULL column "subscription_tier" to the users table
+     (2 million rows) without a default value
+
+  2. Renames column "userName" to "user_name" in the orders table
+
+  3. Adds a unique constraint on (email, organization_id) to the
+     users table
+
+  4. Drops the "legacy_tokens" table (mentioned as "unused")
+
+  5. Creates a new index on orders(customer_id, created_at) — the
+     orders table has 50 million rows
+
+  6. Changes the "amount" column type from INTEGER to DECIMAL(10,2)
+
+  The migration has no down/rollback migration defined.
+
+  Task: Review each migration step for production safety. For each,
+  explain the risk, describe what could go wrong during deployment,
+  and suggest the safe approach. These are the reviews that prevent
+  2am deployment incidents.
+
+assertions:
+  - type: llm_judge
+    criteria: "Production risks are identified for each step — (1) NOT NULL without default: migration fails on 2M existing rows (all have NULL for the new column). Even with a default, adding NOT NULL column locks the table during backfill on some databases. (2) Column rename: every query referencing 'userName' breaks instantly — application code, reports, ETL jobs, third-party integrations. (3) Unique constraint: fails if duplicate (email, org_id) pairs already exist — migration aborts mid-way. Need to check for duplicates BEFORE applying. (4) Drop table: 'unused' — how was this verified? Any scheduled jobs, background workers, or external systems accessing it? Data loss is permanent. (5) New index on 50M rows: index creation locks the table (in some DBs) — no reads or writes during build, could take 30+ minutes. (6) Type change: INTEGER to DECIMAL changes data semantics — existing value 1000 (cents) becomes 1000.00 (dollars?). All application code interpreting this value must be updated simultaneously"
+    weight: 0.35
+    description: "Production risks"
+  - type: llm_judge
+    criteria: "Safe approaches are suggested for each — (1) NOT NULL: three-step migration: add column as NULL with default → backfill existing rows → add NOT NULL constraint. (2) Rename: don't rename — add new column, dual-write, migrate reads, drop old column. Or: use database alias/view. (3) Unique constraint: first run SELECT email, organization_id, COUNT(*) ... HAVING COUNT(*) > 1 to find duplicates, fix them, THEN add constraint. (4) Drop table: add a deprecation period — rename to legacy_tokens_deprecated, wait 30 days, monitor for errors, THEN drop. (5) Index: use CREATE INDEX CONCURRENTLY (PostgreSQL) or equivalent to avoid table lock. (6) Type change: coordinate with application deploy — use a feature flag or blue/green deployment so code and schema change together. Each step: show the safe SQL or migration code"
+    weight: 0.35
+    description: "Safe approaches"
+  - type: llm_judge
+    criteria: "Missing rollback and deployment strategy are flagged — 'No down migration defined — if this migration fails halfway, how do we roll back? Every migration must have a corresponding rollback.' Rollback for each step: (1) DROP COLUMN, (2) rename back, (3) DROP CONSTRAINT, (4) can't rollback data loss (strongest argument against dropping tables), (5) DROP INDEX, (6) ALTER COLUMN back to INTEGER (but data precision is lost). Deployment strategy: 'This migration should be split into 6 separate migrations, deployed independently over multiple deploys. If step 3 fails, we don't want to have to roll back steps 1-2.' Testing: 'Run this migration against a copy of production data first — the unique constraint check (#3) and index creation time (#5) should be validated with real data volumes.' Monitor: 'Add migration timing to deployment metrics — alert if any step takes more than 5 minutes'"
+    weight: 0.30
+    description: "Rollback and deployment"

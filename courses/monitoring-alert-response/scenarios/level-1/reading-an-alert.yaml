@@ -1,0 +1,42 @@
+meta:
+  id: reading-an-alert
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Read and interpret a monitoring alert — extract key information from an alert notification to understand what is happening, where, and how severe it is"
+  tags: [monitoring, alert-reading, triage, basics, beginner]
+
+state: {}
+
+trigger: |
+  You're an on-call engineer and just received this alert at 2:47 AM:
+
+  CRITICAL - [payment-service] CPU usage at 95% on payment-service-prod-3
+  Duration: 15 minutes
+  Threshold: >90% for 10 minutes
+  Host: payment-service-prod-3 (10.0.1.47)
+  Cluster: us-east-1 production
+  Dashboard: https://grafana.internal/d/payment-cpu
+  Runbook: https://wiki.internal/runbooks/high-cpu-payment
+
+  Related alerts (last 30 min):
+  - WARNING: payment-service response latency p99 > 2s (triggered 12 min ago)
+  - INFO: payment-service-prod-3 garbage collection pause > 500ms (triggered 18 min ago)
+
+  Task: Explain what this alert is telling you. Identify all the
+  key information, what it means, and what your first 3 actions
+  should be based on the alert content alone.
+
+assertions:
+  - type: llm_judge
+    criteria: "All key alert information is correctly identified and interpreted — key information extraction: 'Service: payment-service (a critical, revenue-generating service). Severity: CRITICAL (highest priority, requires immediate attention). Metric: CPU usage at 95% (the host is nearly at capacity). Duration: 15 minutes (this is not a brief spike — it has been sustained). Threshold: the alert triggers when CPU exceeds 90% for 10 continuous minutes. This has been above threshold for at least 15 minutes. Affected host: payment-service-prod-3 at IP 10.0.1.47 (one specific instance, not all instances). Environment: production in us-east-1 (this is real customer traffic).' Related alert correlation: 'Three alerts form a pattern: (1) GC pause started 18 minutes ago — this is likely the earliest symptom. High garbage collection suggests memory pressure or a memory leak. (2) Latency increased 12 minutes ago — the GC pauses are causing request latency to spike (requests wait while GC runs). (3) CPU hit critical 15 minutes ago — the CPU is spending most of its time on garbage collection and struggling to serve requests. Likely sequence: something caused memory pressure → excessive GC → CPU spikes from GC work → request latency increases. This is one problem manifesting as three alerts, not three separate issues'"
+    weight: 0.35
+    description: "Alert interpretation"
+  - type: llm_judge
+    criteria: "First 3 actions are appropriate and prioritized — action 1: Acknowledge the alert. 'Acknowledge in the alerting system (PagerDuty, OpsGenie, etc.) within 5 minutes. This tells the team you are aware and investigating, and prevents unnecessary escalation to backup on-call.' Action 2: Check the dashboard. 'Open the linked Grafana dashboard to see: is this one host or multiple? What does the CPU trend look like (gradual climb vs. sudden spike)? What is the current request traffic pattern? Is this host receiving more traffic than others? The dashboard provides context that the alert alone cannot.' Action 3: Open the runbook. 'The runbook link is provided — use it. The runbook should have: immediate mitigation steps (restart the service? remove from load balancer?), diagnostic steps (check heap usage, check for stuck threads, check recent deployments), and escalation criteria (when to wake up more people). Follow the runbook rather than improvising, especially at 2:47 AM when judgment is impaired.' Additional context: 'Do NOT start debugging the root cause yet. First priority is understanding the customer impact (is the service degraded or down?) and mitigating (can we reduce load on this host by routing traffic to healthy hosts?). Root cause investigation happens after mitigation'"
+    weight: 0.35
+    description: "Appropriate first actions"
+  - type: llm_judge
+    criteria: "Response demonstrates understanding of alert severity and urgency — severity understanding: 'This is CRITICAL on a payment service — this affects revenue. At 2:47 AM, there may still be significant transaction volume (international customers, scheduled payments, batch processing). Every minute of degradation potentially means failed payments.' Urgency assessment: 'The alert has been firing for 15 minutes. The related latency alert means customers are likely experiencing slow or failed payments right now. The fact that it is 2:47 AM does not reduce urgency — it increases it because there are fewer engineers available to help if the situation worsens.' What NOT to do: 'Do not ignore the alert and go back to sleep — this is a CRITICAL alert on a revenue-generating service. Do not spend 30 minutes investigating root cause before checking customer impact. Do not restart the service without checking the runbook first (a restart might lose in-flight transactions). Do not escalate immediately — acknowledge, assess the dashboard, and follow the runbook first. Escalate if the situation is worsening or if the runbook does not resolve it within its stated timeframe'"
+    weight: 0.30
+    description: "Severity and urgency awareness"

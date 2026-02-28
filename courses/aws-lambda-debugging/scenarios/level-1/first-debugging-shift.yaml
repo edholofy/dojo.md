@@ -1,0 +1,73 @@
+meta:
+  id: first-debugging-shift
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Combined first debugging shift — diagnose a Lambda-based API with timeout, permission, memory, and configuration issues simultaneously"
+  tags: [AWS, Lambda, troubleshooting, combined, shift-simulation, beginner]
+
+state: {}
+
+trigger: |
+  You've joined a team that has a serverless API with 4 Lambda
+  functions behind API Gateway. "The API is broken" — users report
+  various errors. You need to triage everything:
+
+  $ curl https://api.example.com/orders
+  → 502 Bad Gateway
+
+  $ curl https://api.example.com/users
+  → 504 Gateway Timeout (after 29 seconds)
+
+  $ curl https://api.example.com/products
+  → 403 {"message": "Forbidden"}
+
+  $ curl https://api.example.com/payments
+  → 200 but returns empty data instead of payment records
+
+  Investigation:
+
+  1. /orders → 502: Lambda returns malformed response.
+     CloudWatch Logs: function returns {body: orders} without
+     statusCode and body is not a string. Fix: proper proxy
+     integration response format.
+
+  2. /users → 504: Lambda times out.
+     REPORT: Duration 29001ms, timeout is 30s. Function connects
+     to RDS in VPC but has no NAT Gateway for the Secrets Manager
+     call that retrieves the DB password. The Secrets Manager call
+     hangs because there's no internet access from the private subnet.
+     Fix: add VPC endpoint for Secrets Manager, or add NAT Gateway.
+
+  3. /products → 403: API key required but not sent.
+     API Gateway has "API Key Required: true" on this method but
+     documentation doesn't mention it. The API key is correct in
+     the x-api-key header. Fix: send the API key header, or remove
+     the API key requirement if it's unintended.
+
+  4. /payments → 200 but empty: Lambda runs successfully but
+     DynamoDB query returns no items. The function reads from
+     table "Payments" but the actual table is "payments-prod"
+     (different name). The IAM role has permission on "payments-prod"
+     but the code hardcodes "Payments". Fix: use environment variable
+     for table name, update code to match actual table.
+
+  Task: Walk through diagnosing all four issues. Write: the triage
+  approach (check HTTP status codes, then CloudWatch Logs), how
+  to debug each error type, the VPC Lambda networking gotcha,
+  API Gateway configuration checks, and lessons learned for
+  preventing these issues.
+
+assertions:
+  - type: llm_judge
+    criteria: "All four issues are diagnosed — (1) 502 malformed response: fix Lambda proxy response format (statusCode, string body). (2) 504 timeout: VPC Lambda needs NAT Gateway or VPC endpoints for AWS service access. (3) 403 API key: check API Gateway method settings for required API key, send x-api-key header. (4) 200 empty data: code references wrong DynamoDB table name — use environment variables for resource names, not hardcoded strings"
+    weight: 0.35
+    description: "All issues diagnosed"
+  - type: llm_judge
+    criteria: "Triage methodology is systematic — start with HTTP status code (tells error category: 4xx client, 5xx server). Check API Gateway logs first (shows if error is in API GW config or Lambda). Then check Lambda CloudWatch Logs for each function. Read the REPORT line for timeout/memory issues. Check IAM for permission issues. Check VPC configuration for networking issues. Work through issues by severity: 502/504 first (service down), then 403 (auth), then data issues"
+    weight: 0.35
+    description: "Triage methodology"
+  - type: llm_judge
+    criteria: "Prevention lessons are practical — use IaC (SAM/CDK) for consistent configuration. Use environment variables for all resource names (table names, queue URLs, bucket names). Test Lambda responses match API Gateway proxy format before deploying. For VPC Lambda: always plan networking (NAT Gateway or VPC endpoints for AWS services). Document API requirements (API keys, auth). Use local testing (SAM CLI) to catch errors before deployment. Set up CloudWatch alarms for Errors, Throttles, Duration"
+    weight: 0.30
+    description: "Prevention lessons"

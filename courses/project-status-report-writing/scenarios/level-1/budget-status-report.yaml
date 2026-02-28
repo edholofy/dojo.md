@@ -1,0 +1,87 @@
+meta:
+  id: budget-status-report
+  level: 1
+  course: project-status-report-writing
+  type: output
+  description: "Budget status report — create a project budget status report showing planned vs actual spending with variance analysis"
+  tags: [budget, financial, variance, spending, beginner]
+
+state: {}
+
+trigger: |
+  You're a project manager for an event planning project.
+  The finance director wants a budget status report for the
+  annual company conference you're organizing.
+
+  Event: Annual Sales Conference 2026
+  Date: April 15-17, 2026
+  Expected Attendees: 200 employees
+  Total Budget: $150,000
+  Report Date: March 1, 2026 (6 weeks before event)
+
+  Budget breakdown (planned vs actual to date):
+
+  Venue Rental:
+  - Planned: $35,000 | Spent: $35,000 | Remaining: $0
+  - Status: Fully paid. On budget.
+
+  Catering (3 days):
+  - Planned: $30,000 ($50/person/day × 200 × 3)
+  - Spent: $8,000 (deposit paid)
+  - Remaining commitment: $24,000 (final headcount bill)
+  - Issue: Caterer informed you the per-person rate increased
+    from $50 to $55 due to food cost inflation. New total
+    will be $33,000 — $3,000 over budget.
+
+  Travel & Hotel:
+  - Planned: $40,000 | Committed: $38,500 (hotel block booked)
+  - Spent: $12,000 (early flight bookings)
+  - Remaining estimate: $26,500
+  - Note: 15 employees haven't booked travel yet. Late
+    bookings historically cost 20-30% more.
+
+  AV & Technology:
+  - Planned: $15,000 | Spent: $0 | Committed: $12,000
+  - Note: AV vendor quoted $12K for basic package. The CEO
+    wants a "wow factor" — large LED screen wall — which adds
+    $8,000. Not approved yet. If approved, this category goes
+    to $20,000 ($5K over budget).
+
+  Speaker Fees:
+  - Planned: $10,000 | Spent: $5,000 (deposit for keynote)
+  - Remaining: $5,000 (2 breakout session speakers)
+  - Status: On budget.
+
+  Printed Materials & Swag:
+  - Planned: $10,000 | Spent: $3,200 (badges, programs ordered)
+  - Remaining: $4,800 (branded swag items)
+  - Note: Team wants to upgrade swag from branded pens to
+    branded wireless chargers ($12 vs $3 each). Would add
+    $1,800 to this category.
+
+  Contingency:
+  - Planned: $10,000 | Spent: $0
+  - Note: This is your buffer for overages.
+
+  Summary:
+  - Total planned: $150,000
+  - Total spent to date: $63,200
+  - Total committed: $50,500
+  - Pending decisions that add cost: LED screen ($8K),
+    swag upgrade ($1,800), catering increase ($3K)
+
+  Task: Create the budget status report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a clear budget status report — presents each budget category with planned amount, actual spend, committed amounts, and remaining estimate; calculates total variance (planned vs projected actual); shows the overall budget picture: $150K budget, $63.2K spent, $50.5K committed; identifies the potential overages (catering $3K, AV $5K if LED approved, swag $1.8K = $9.8K total potential overage against $10K contingency); uses a format that a finance director can quickly review (table or structured categories with clear numbers)."
+    weight: 0.35
+    description: "BudgetStructure"
+  - type: llm_judge
+    criteria: "Response identifies financial risks and pending decisions — clearly flags the three pending decisions that affect the budget (LED screen wall, swag upgrade, catering increase); calculates the total impact if all are approved ($9.8K, nearly consuming the $10K contingency); flags the late travel booking risk (15 employees with 20-30% premium potential); presents these as decisions the finance director needs to make or approve; provides a risk-adjusted forecast showing best case and worst case budget outcomes."
+    weight: 0.35
+    description: "FinancialRisks"
+  - type: llm_judge
+    criteria: "Response provides recommendations — suggests which overages to absorb and which to push back on; prioritizes the decisions (catering increase is unavoidable, LED screen is optional, swag is nice-to-have); recommends action on the late travel bookings (set a booking deadline, communicate the cost impact); maintains professional financial language appropriate for a finance director; includes a clear bottom line: will the project come in on budget or not, and by how much."
+    weight: 0.30
+    description: "Recommendations"

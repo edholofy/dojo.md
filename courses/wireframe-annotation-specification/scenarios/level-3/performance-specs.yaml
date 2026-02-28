@@ -1,0 +1,44 @@
+meta:
+  id: performance-specs
+  level: 3
+  course: wireframe-annotation-specification
+  type: output
+  description: "Performance specifications — specify loading performance, perceived speed, and performance budgets in wireframe annotations"
+  tags: [performance, loading, perceived-speed, budgets, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "Our product is slow and users
+  complain. The engineering team says: 'The designers never
+  specify performance requirements. We need to know:
+
+  - How fast should each page load?
+  - What's the loading experience (skeleton, spinner, blank)?
+  - Which content loads first (above the fold priority)?
+  - What happens on slow connections (3G)?
+  - When should we use lazy loading vs eager loading?
+  - What are the image size/quality requirements?
+
+  We can't make everything instant, so we need to prioritize
+  what loads fast and what can load progressively.'
+
+  How do I add performance specifications to my wireframes?"
+
+  Task: Write performance specifications for a content-heavy
+  application page including loading strategy, priorities,
+  and perceived performance techniques.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies loading priorities and strategy — above-the-fold content loads first (navigation, hero content, primary CTA: target < 1 second), below-fold content lazy loads on scroll (images, secondary sections, related content), loading budget per section (navigation: instant from cache, hero: 500ms, content cards: skeleton for 1-2 seconds acceptable, images: progressive loading with blur-up). Loading experience by component: page shell (cached, instant), data-dependent content (skeleton placeholder matching layout), images (blur-up: 20px thumbnail → full resolution), infinite scroll (loading indicator at bottom, pre-fetch next page when 80% scrolled). Prioritization framework: users should see and interact with the primary purpose of the page within 2 seconds"
+    weight: 0.35
+    description: "LoadingPriorities"
+  - type: llm_judge
+    criteria: "Response specifies perceived performance techniques — skeleton screens (specify which elements get skeletons: text blocks, image placeholders, avatar circles — not just a generic spinner), optimistic updates (specify which actions feel instant: like button, toggle switch, text input), progressive image loading (hero image: show 20px blurred thumbnail immediately, load full resolution behind it, crossfade on load), staggered content load (cards appear one by one with 50ms delay for perceived animation), and instant navigation (prefetch likely next pages on hover, SPA navigation without full page reload). Each technique specifies where and how to apply it, not just the concept"
+    weight: 0.35
+    description: "PerceivedPerformance"
+  - type: llm_judge
+    criteria: "Response covers performance budgets and slow connection behavior — performance budget: page weight < 1MB initial load, images < 200KB each (specify quality/format: WebP preferred, JPEG fallback, max dimensions per context), JavaScript < 300KB gzipped, fonts < 100KB (system fonts for body, custom font for headings only). Slow connection specs: on 3G (show content within 5 seconds, images load at reduced quality, video thumbnails only — no autoplay), offline (cached shell loads instantly, show 'You're offline' banner, cached content available). Timeout handling: if any API call exceeds 10 seconds, show timeout message with retry. Image lazy loading: load images only when within 200px of viewport"
+    weight: 0.30
+    description: "BudgetsSlowConnection"

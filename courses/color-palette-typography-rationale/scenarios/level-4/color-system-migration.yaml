@@ -1,0 +1,48 @@
+meta:
+  id: color-system-migration
+  level: 4
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color system migration — plan and execute a large-scale color system migration from legacy to modern architecture"
+  tags: [migration, legacy, modernization, tokens, expert]
+
+state: {}
+
+trigger: |
+  A Staff Engineer says: "Our 8-year-old product has
+  color debt everywhere:
+
+  Current state:
+  - 500+ unique hex values across the codebase
+  - Colors defined in: CSS files, Sass variables, JS
+    constants, Tailwind config, inline styles, and
+    hardcoded in SVGs
+  - 3 overlapping color naming systems from different eras:
+    Era 1 (2018): $blue, $dark-blue, $light-blue
+    Era 2 (2021): --color-primary, --color-primary-dark
+    Era 3 (2023): tokens.color.blue.500, tokens.color.blue.700
+  - No single source of truth
+  - Dark mode was bolted on and uses separate hex values
+    that sometimes don't match the light mode semantic intent
+
+  We need to migrate to a unified modern token system.
+  Budget: 1 engineer for 3 months. How do we do this
+  without breaking the product?"
+
+  Task: Create a detailed color system migration plan
+  with technical approach, risk mitigation, and
+  prioritization strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response plans the migration technically — Phase 1: Audit and inventory (automated: scan all files for color values — regex for hex, rgb, hsl, named colors, Sass variables, CSS custom properties, JS color constants, inline SVG fills — produce complete inventory of 500+ values with file locations and usage count, manual: cluster similar colors — how many are near-duplicates? group #3B82F6 and #3A80F4 as 'primary blue variants'), Phase 2: Design target architecture (define modern token system: reference tokens 80-100 values covering all needed colors, semantic tokens mapping to reference tokens for each theme — light and dark, component tokens for specific components, name every token following consistent convention), Phase 3: Create migration mapping (every legacy value mapped to a target token: $blue → --color-primary-600, --color-primary → --color-primary-600, tokens.color.blue.500 → --color-primary-500 — complete lookup table from old → new)."
+    weight: 0.35
+    description: "TechnicalMigration"
+  - type: llm_judge
+    criteria: "Response addresses risk mitigation and incremental approach — no big-bang migration (with 500+ values across multiple formats, a single migration PR would be unreviewable and too risky), incremental strategy (Option A: file-by-file migration — each PR migrates one file or module from legacy values to tokens, reviewable, revertible; Option B: color-by-color migration — migrate all uses of $blue everywhere before moving to next color; Option C: component-by-component — migrate the Button component everywhere before moving to Modal — recommended approach with rationale), backwards compatibility layer (keep old Sass variables as aliases to new tokens during transition: $blue: var(--color-primary-600) — nothing breaks but old names become wrappers, deprecation warnings in Sass compilation, sunset old aliases after all consumers migrate), visual regression testing (screenshot comparison for every migrated page/component — automated with tools like Percy, Chromatic, or BackstopJS — catches unintended color changes before they ship)."
+    weight: 0.35
+    description: "RiskMitigation"
+  - type: llm_judge
+    criteria: "Response provides prioritization and timeline — 3-month plan (Month 1: audit, design target system, create migration mapping, set up tooling — visual regression, lint rules, backwards compatibility aliases; Month 2: migrate high-traffic pages and core components — buttons, forms, navigation, cards — these cover 60-70% of user-visible surface area; Month 3: migrate remaining pages, remove backwards compatibility aliases for completed areas, document remaining technical debt with timeline), prioritization criteria (migrate by: user visibility × usage frequency × complexity — high-traffic simple pages first for quick wins, complex pages with many color references last), lint rules (after Month 1: new code must use tokens — ESLint/Stylelint rule blocking raw hex values and legacy variable names, existing code: warning only during migration, becomes error after Month 3), success metrics (track: % of color references using new tokens — targeting 90%+ by end of Month 3, visual regression test pass rate, dark mode consistency score — all semantic tokens have matching dark mode values), and dark mode fix (as part of migration: dark mode values mapped to same semantic tokens as light mode — eliminates the bolt-on problem)."
+    weight: 0.30
+    description: "PrioritizationTimeline"

@@ -1,0 +1,72 @@
+meta:
+  id: advanced-debugging-shift
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Combined advanced debugging shift — diagnose a complex serverless architecture with Step Functions, EventBridge, cross-account, and observability issues simultaneously"
+  tags: [AWS, Lambda, troubleshooting, combined, shift-simulation, advanced]
+
+state: {}
+
+trigger: |
+  You're the on-call engineer for a serverless e-commerce platform.
+  The PagerDuty alert fires at 2 AM: "Order completion rate dropped
+  from 98% to 72%."
+
+  Architecture:
+  API Gateway → order-api (Lambda)
+  → EventBridge (OrderCreated event)
+  → Step Functions workflow:
+    ValidateOrder → CheckInventory → ProcessPayment →
+    FulfillOrder → NotifyCustomer
+  → DynamoDB Streams → sync-to-analytics (Lambda, cross-account)
+
+  Investigation reveals 5 interconnected issues:
+
+  1. Step Functions: ProcessPayment fails for ~28% of orders.
+     The payment Lambda throws PaymentGatewayError but the Retry
+     config has MaxAttempts: 3 with BackoffRate: 10.0 — retries
+     at 5s, 50s, 500s. The total retry time exceeds the Step
+     Functions execution timeout of 60 seconds. Execution times out
+     during the third retry.
+
+  2. EventBridge: A new event pattern was deployed that's too
+     restrictive. OrderCreated events with amount > $1000 require
+     a "highValue" field that doesn't exist yet in the event
+     schema. These orders silently drop — no DLQ configured on
+     the rule.
+
+  3. Lambda@Edge: An A/B test function on CloudFront is throwing
+     errors for 5% of requests. The logs are scattered across
+     multiple regions. The function exceeds the 5-second viewer
+     request timeout during cold starts.
+
+  4. Cross-account sync: The analytics Lambda in the data account
+     stopped receiving DynamoDB Stream events. The event source
+     mapping shows "PROBLEM: Function call failed." The Lambda's
+     IAM role lost cross-account DynamoDB Stream permissions after
+     a recent IAM policy cleanup.
+
+  5. Observability gap: none of these issues triggered alerts.
+     CloudWatch alarms exist for Lambda Errors but not for Step
+     Functions failures, EventBridge delivery failures, or business
+     metrics (order completion rate).
+
+  Task: Walk through the complete incident response. Write: the
+  triage approach (business impact first), fix for each issue,
+  the monitoring gaps that allowed silent failures, and the
+  post-incident improvements to prevent recurrence.
+
+assertions:
+  - type: llm_judge
+    criteria: "All five issues are diagnosed — (1) Step Functions: reduce BackoffRate from 10 to 2, or increase execution timeout, or set MaxAttempts to 2. (2) EventBridge: fix pattern to not require 'highValue' field, add DLQ to EventBridge rule. (3) Lambda@Edge: reduce package size for faster cold starts, or move to origin request (30s timeout), check logs in execution regions. (4) Cross-account: restore IAM permissions for DynamoDB Stream access, configure MaximumRetryAttempts and failure destination. (5) Add alerts for Step Functions failures, EventBridge FailedInvocations, business metric (order completion rate)"
+    weight: 0.35
+    description: "All issues diagnosed"
+  - type: llm_judge
+    criteria: "Triage approach is business-focused — start with business impact: which orders are failing? (28% failure rate). Identify the data flow: API → EventBridge → Step Functions → completion. Check each step for errors. Step Functions execution history shows exactly which state failed. EventBridge: check FailedInvocations and InvocationsCreatedByRule metrics. For Lambda@Edge: check CloudFront error rate metric (4xx/5xx). Priority: fix Step Functions first (directly causing 28% failure), then EventBridge, then Lambda@Edge, then cross-account sync"
+    weight: 0.35
+    description: "Triage approach"
+  - type: llm_judge
+    criteria: "Post-incident improvements are comprehensive — monitoring gaps: alert on Step Functions ExecutionsFailed, EventBridge FailedInvocations, and business metrics (order completion rate is the most important metric, not Lambda errors). Add DLQ/destination to every async integration. Add observability: end-to-end tracing with X-Ray across all services, business metric dashboards, SLO definition (order completion rate > 99%). Process improvements: require DLQ configuration in IaC reviews, test event patterns with EventBridge sandbox before deploying, document cross-account dependencies, run chaos engineering to discover silent failures"
+    weight: 0.30
+    description: "Post-incident improvements"

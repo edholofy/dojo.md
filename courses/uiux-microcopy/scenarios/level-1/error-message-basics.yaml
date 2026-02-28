@@ -1,0 +1,41 @@
+meta:
+  id: error-message-basics
+  level: 1
+  course: uiux-microcopy
+  type: output
+  description: "Error message basics — write helpful, human-friendly error messages that tell users what went wrong and how to fix it"
+  tags: [error-messages, validation, feedback, basics]
+
+state: {}
+
+trigger: |
+  A junior UX writer says: "Our app has terrible error messages.
+  Users constantly contact support because they don't understand
+  what went wrong. Here are some real examples:
+
+  1. 'Error: 422 Unprocessable Entity'
+  2. 'Invalid input in field 3'
+  3. 'Something went wrong. Please try again later.'
+  4. 'Validation failed'
+  5. 'null is not an object (evaluating 'r.default')'
+
+  Users see these and immediately contact support because they
+  have no idea what to do. How do I rewrite these to actually
+  help people?"
+
+  Task: Rewrite each error message to be helpful and user-friendly,
+  and provide a framework for writing good error messages.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response rewrites each error message effectively — transforms technical jargon into human language: '422 Unprocessable Entity' → something like 'We couldn't process your request. Please check your information and try again.' 'Invalid input in field 3' → identifies the specific field and what's wrong. 'Something went wrong' → provides more context or at least an action ('We're having trouble loading your data. Try refreshing the page, or contact support if this continues.'). 'Validation failed' → specifies which validation. 'null is not an object' → this should never be shown to users, replace with a friendly generic error. Each rewrite explains what went wrong and what the user can do"
+    weight: 0.35
+    description: "ErrorRewrites"
+  - type: llm_judge
+    criteria: "Response provides an error message framework — the three components of a good error message: 1) What happened (describe the problem in plain language), 2) Why it happened (if helpful and non-technical), 3) What to do next (specific action the user can take). Also covers: don't blame the user ('You entered an invalid email' → 'This doesn't look like an email address'), be specific (not 'invalid input' but 'password must be at least 8 characters'), don't use technical jargon (no status codes, no stack traces), and don't use 'please try again later' unless you actually expect the issue to resolve itself"
+    weight: 0.35
+    description: "ErrorFramework"
+  - type: llm_judge
+    criteria: "Response distinguishes between error types — validation errors (user can fix: show inline near the field with specific guidance), system errors (user can't fix: apologize, suggest retry or contact support), and network errors (transient: suggest retry). Also covers: timing of error display (show validation errors as the user types or on blur, not just on submit), placement (inline near the field, not just at the top of the form), and visual design considerations (red is standard but ensure color isn't the only indicator for accessibility)"
+    weight: 0.30
+    description: "ErrorTypes"

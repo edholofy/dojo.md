@@ -1,0 +1,44 @@
+meta:
+  id: competitive-design-analysis
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Competitive design analysis — use competitor design patterns to inform constructive feedback without cargo culting"
+  tags: [competitive, analysis, benchmarking, patterns, advanced]
+
+state: {}
+
+trigger: |
+  A PM says during a design review: "Why doesn't our
+  search work like Google's?" and another says: "Spotify
+  has a great onboarding — we should do exactly that."
+
+  The designer is frustrated: "Every review, someone
+  points to a competitor and says 'do what they do.'
+  But we're not Google or Spotify — we're a B2B
+  inventory management platform. Their patterns don't
+  always apply to our context."
+
+  Meanwhile, you notice that the inventory search IS
+  genuinely worse than industry standard — it only
+  matches exact product names with no fuzzy search,
+  autocomplete, or recent searches.
+
+  Task: Write a competitive design analysis that uses
+  competitor patterns constructively without cargo
+  culting, and teach the team how to reference
+  competitors productively.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response distinguishes productive from unproductive competitive references — cargo culting defined (copying a competitor's design pattern without understanding WHY it works or whether your context requires the same solution — 'Spotify does X so we should too' is cargo culting, analyzing WHAT problem Spotify solved and whether your users have the same problem is productive analysis), the PM's Google reference assessed (Google's search patterns solve a general web search problem — some elements transfer to product search: autocomplete, recent searches, forgiving matching — but Google's context is fundamentally different: unlimited corpus vs. finite inventory, the valid insight: users expect modern search behavior everywhere — autocomplete, fuzzy matching, suggestions — these are now table-stakes patterns not Google-specific innovations), the Spotify onboarding reference assessed (Spotify's onboarding is designed for consumer music discovery — highly emotional, preference-based, B2B inventory management onboarding needs: workflow setup, integration configuration, team roles — radically different goals, the valid insight: progressive disclosure and personalization are good onboarding principles regardless of industry — extract the principle not the execution)."
+    weight: 0.35
+    description: "ProductiveVsCargoculting"
+  - type: llm_judge
+    criteria: "Response provides constructive competitive analysis for the search feature — acknowledges the real problem (the search IS genuinely below industry standard — exact-match-only is inadequate for inventory management where users may search by partial product names, SKUs, categories, or descriptions), analyzes relevant competitors (not Google but industry-specific: how do Shopify, Zoho Inventory, and other B2B platforms handle product search? likely: fuzzy matching, category filters, recent searches, barcode/SKU search — these are industry-specific patterns that directly apply), specific feedback (the search should support: fuzzy matching for typo tolerance — inventory names are often technical, autocomplete with product suggestions — reduces errors, filter by category/status/location — common inventory search patterns, recent searches — users often search for the same products repeatedly, barcode/SKU input — specific to inventory management context — Google doesn't have this), framed as user needs not competitor copying ('Our users need to find products quickly with minimal typing and high accuracy — here's how industry-standard search patterns serve those needs')."
+    weight: 0.35
+    description: "ConstructiveAnalysis"
+  - type: llm_judge
+    criteria: "Response teaches the team how to reference competitors productively — framework for competitive references (1. Identify the PATTERN, not the product — 'autocomplete search' not 'Google search', 2. Verify the PROBLEM exists for your users — do your users struggle with search? evidence?, 3. Evaluate the CONTEXT — does the pattern translate to your domain? B2B vs B2C, expert vs novice users, etc., 4. Adapt, don't copy — take the principle and design for your specific context and constraints), ground rules for critique sessions (when referencing a competitor: state the problem you're identifying, then reference the competitor's approach as one possible solution — not as the definitive answer, always ask: 'Do our users have the same problem?' before suggesting a competitor's pattern, avoid: 'just do what X does' — instead: 'X solves the [specific problem] with [specific pattern]. Our users face a similar problem — could we adapt this approach for our context?'), and for this team specifically (the inventory search is a valid area for improvement — the competitor references pointed to a real gap even if the delivery was cargo-cult-ish, help the PM learn to extract the insight: 'You're right that our search needs improvement. Let me analyze how inventory-specific platforms handle this and design something that works for our users' specific needs.')."
+    weight: 0.30
+    description: "CompetitiveReferenceFramework"

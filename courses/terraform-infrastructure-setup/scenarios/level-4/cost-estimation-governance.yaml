@@ -1,0 +1,42 @@
+meta:
+  id: cost-estimation-governance
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Implement cost governance with Terraform — integrate Infracost for pre-deployment estimation, set budget alerts, and enforce cost policies"
+  tags: [Terraform, cost, Infracost, FinOps, governance, budgets, expert]
+
+state: {}
+
+trigger: |
+  Your monthly AWS bill is $150K and growing 15% month-over-month.
+  Nobody knows the cost impact of Terraform changes until the bill
+  arrives. Recent surprises:
+
+  - Engineer created a NAT Gateway in 4 AZs ($576/month) when 1 was
+    sufficient ($144/month)
+  - A for_each over 50 items created 50 CloudWatch dashboards at
+    $3/each ($150/month) — nobody realized
+  - An RDS upgrade from db.r5.large to db.r5.4xlarge increased cost
+    from $260/month to $2,080/month
+  - Dev environment running same instance types as production ($8K/month
+    wasted)
+
+  Task: Design the cost governance strategy covering: Infracost
+  integration in CI/CD, policy-based cost controls, environment-specific
+  sizing, tagging for cost allocation, and ongoing cost optimization
+  practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "Infracost integration is designed — Infracost estimates cost changes in PRs before deployment. CI integration: infracost breakdown --path . shows total monthly cost, infracost diff shows cost change from PR. PR comment: shows cost increase/decrease per resource. Setup: install Infracost in CI, generate plan JSON (terraform plan -out=plan.tfplan && terraform show -json plan.tfplan), run infracost diff --path plan.json. Thresholds: alert if monthly cost increase > $100, block if > $500 (configurable). Free tier available for open source and small teams"
+    weight: 0.35
+    description: "Infracost"
+  - type: llm_judge
+    criteria: "Policy-based cost controls are implemented — Sentinel/OPA policies: restrict expensive instance types (no db.r5.4xlarge in non-prod), limit resource counts (max 3 NAT Gateways), require cost justification for changes over threshold. Variable validation: variable 'instance_type' { validation { condition = !contains(['r5.4xlarge','r5.8xlarge'], var.instance_type) || var.environment == 'prod' } }. Environment sizing: locals { env_sizing = { dev = 't3.small', staging = 't3.medium', prod = 't3.large' } }. Enforce via policy: dev instances must be t3.small or smaller"
+    weight: 0.35
+    description: "Cost policies"
+  - type: llm_judge
+    criteria: "Tagging and optimization are practical — mandatory tags for cost allocation: Team, Environment, CostCenter, Service. AWS Cost Explorer uses tags for breakdown. Enforce tags via Sentinel policy or AWS SCP (deny resource creation without required tags). Cost optimization: (1) right-size instances (use AWS Compute Optimizer data), (2) Reserved Instances or Savings Plans for steady-state, (3) spot instances for non-critical workloads, (4) auto-shutdown dev environments off-hours (Lambda + CloudWatch Events). Monthly cost review: compare actual vs Infracost estimates, identify optimization opportunities"
+    weight: 0.30
+    description: "Tagging and optimization"

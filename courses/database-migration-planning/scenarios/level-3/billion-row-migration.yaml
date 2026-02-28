@@ -1,0 +1,46 @@
+meta:
+  id: billion-row-migration
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Migrate a billion-row table — plan and execute a schema change on a table with over 1 billion rows without extended downtime"
+  tags: [database, migration, large-scale, billion-rows, partitioning, advanced]
+
+state: {}
+
+trigger: |
+  Your analytics events table has 1.2 billion rows (800GB) and grows
+  by 10 million rows per day. You need to:
+
+  1. Add a "session_id" UUID column
+  2. Partition the table by month (currently unpartitioned)
+  3. Add an index on (user_id, session_id)
+
+  The table is INSERT-heavy (50,000 inserts/second during peak) with
+  read queries for analytics that can tolerate some latency.
+
+  Current schema:
+  CREATE TABLE events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    payload JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  );
+
+  Task: Plan the migration strategy for all three changes. This is
+  too large for simple ALTER TABLE operations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Migration strategy handles the scale correctly — strategy: 'At 1.2 billion rows and 800GB, standard ALTER TABLE operations are not viable. The approach depends on the change: Change 1 (Add session_id UUID column): In PostgreSQL 11+, adding a nullable column with no default is a metadata-only operation — even on a 1.2 billion row table, it completes in milliseconds. ALTER TABLE events ADD COLUMN session_id UUID; This is safe. The column is nullable, so existing rows get NULL. New inserts can populate session_id. Backfilling 1.2 billion rows with UUIDs is a separate concern (addressed below). Change 2 (Partition by month): this is the most complex change. You cannot ALTER an existing unpartitioned table into a partitioned table in PostgreSQL. You must create a new partitioned table and migrate the data. Approach — create partitioned table alongside: (1) CREATE TABLE events_partitioned (same columns) PARTITION BY RANGE (created_at); (2) Create monthly partitions for the data range (perhaps 24 months of historical data + future months). (3) Migrate data from events to events_partitioned in batches. For 1.2 billion rows at 100K rows per batch with 200ms pauses: approximately 12,000 batches = 40-60 hours of batch processing. (4) During migration: new inserts go to BOTH the old and new tables (dual-write via application code or trigger). (5) After migration complete: switch reads to the new partitioned table. (6) Stop dual-writing. Rename tables: events → events_old, events_partitioned → events. Change 3 (Add index on user_id, session_id): create the index CONCURRENTLY on each partition individually, not on the parent table. This is faster because each partition is smaller, and it can be done in parallel across partitions'"
+    weight: 0.35
+    description: "Migration strategy"
+  - type: llm_judge
+    criteria: "Data migration for partitioning is planned in detail — data migration: 'Batch migration from unpartitioned to partitioned table: INSERT INTO events_partitioned SELECT * FROM events WHERE id BETWEEN $start AND $start + 100000; Run for each batch of 100K rows, incrementing $start. For 1.2 billion rows: 12,000 batches. Time estimate: each batch takes 1-3 seconds (depends on row width and I/O). With 200ms pauses: approximately 15,000-40,000 seconds = 4-11 hours of continuous processing. Run during off-peak hours or spread over 3-4 days. Handling concurrent inserts during migration: during the 4-11 hours of batch migration, 10 million new rows per day (approximately 115 rows per second) are being inserted. These inserts must reach both the old table and the new partitioned table. Options: (1) Application dual-write: modify the application to insert into both tables during the migration period. Simplest but requires a code change. (2) Database trigger: CREATE TRIGGER on the old table that also inserts into the new partitioned table. Adds latency to every insert (doubles the write work). (3) CDC/logical replication: use PostgreSQL logical replication to stream inserts from the old table to the new table. Most elegant but most complex to set up. Recommendation: application dual-write for simplicity. The code change is small and can be feature-flagged. Verification: after batch migration completes: SELECT COUNT(*) FROM events; vs SELECT COUNT(*) FROM events_partitioned; Counts should match (accounting for the dual-write period). Spot-check: SELECT * FROM events WHERE id = [random_id]; vs SELECT * FROM events_partitioned WHERE id = [same_id]; Row data should be identical. Cutover: (1) Stop dual-writing (switch application to write only to events_partitioned). (2) Process any remaining rows in events that are not in events_partitioned. (3) Swap table names. (4) Drop old table after 1 week of verification'"
+    weight: 0.35
+    description: "Data migration plan"
+  - type: llm_judge
+    criteria: "Partitioning design and ongoing maintenance addressed — partitioning: 'Partition design: PARTITION BY RANGE (created_at). Monthly partitions. For 24 months of historical data: CREATE TABLE events_y2024m01 PARTITION OF events_partitioned FOR VALUES FROM (2024-01-01) TO (2024-02-01); (repeat for each month). Future partitions: create partitions 3 months ahead. Set up a cron job or pg_partman to auto-create future partitions monthly. Benefits of partitioning for this table: (1) Query performance: analytics queries that filter by date range only scan relevant partitions (months), not the entire 800GB table. (2) Data lifecycle: old partitions can be dropped instantly. DROP TABLE events_y2023m01; removes an entire month of data without running DELETE on the main table. For a table growing 10M rows/day, this is essential for managing size. (3) Index maintenance: indexes on individual partitions are smaller and faster to maintain. VACUUM and ANALYZE run per-partition, not on the entire table. (4) Backup and restore: individual partitions can be backed up and restored independently. Ongoing maintenance: (1) Auto-partition creation: create partitions at least 3 months ahead to prevent insert failures. (2) Retention policy: decide how many months to retain. Drop partitions older than the retention window. (3) Index per partition: the composite index (user_id, session_id) is created on each partition. New partitions automatically inherit the index definition. (4) Monitoring: alert if a partition is approaching its range boundary (indicates the auto-creation job failed). Monitor partition sizes — uneven sizes may indicate a hot partition'"
+    weight: 0.30
+    description: "Partitioning design"

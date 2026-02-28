@@ -1,0 +1,43 @@
+meta:
+  id: board-financial-reporting
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Build board-level financial reports — create investor-grade P&L, cash flow analysis, unit economics, and SaaS metrics with the precision and presentation standards boards expect"
+  tags: [SQL, board-reporting, financial, investor, SaaS-metrics, unit-economics, master]
+
+state: {}
+
+trigger: |
+  The company is raising a Series C. The CFO needs board-quality
+  financial reports for the investor data room:
+
+  1. Full P&L with trailing 12 months, year-over-year comparison,
+     and margin analysis
+  2. SaaS metrics dashboard: MRR, ARR, net revenue retention,
+     logo retention, CAC, LTV, LTV:CAC ratio, payback period
+  3. Unit economics by cohort: CAC by acquisition channel, time
+     to recover CAC, gross margin per customer, expansion revenue
+  4. Cash flow projection: runway calculation based on current
+     burn rate and revenue growth trajectory
+
+  Standards: numbers must tie to the general ledger. Percentages
+  must be calculated consistently. YoY comparisons must handle
+  seasonality. All metrics must match what was reported in previous
+  board decks (consistency).
+
+  Task: Build the board-quality financial reporting suite.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds a comprehensive P&L with trailing 12 months and YoY comparison — pnl: 'Board-quality P&L report: WITH monthly_pnl AS (SELECT DATE_TRUNC('month', gl.posting_date) AS month, coa.account_type, coa.display_category, SUM(gl.amount) AS amount FROM gl_entries gl JOIN chart_of_accounts coa ON gl.account_code = coa.account_code WHERE gl.posting_date >= CURRENT_DATE - INTERVAL '24 months' GROUP BY 1, 2, 3), current_year AS (SELECT display_category, SUM(CASE WHEN month >= DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END) AS ytd, SUM(CASE WHEN month >= CURRENT_DATE - INTERVAL '12 months' THEN amount ELSE 0 END) AS trailing_12m FROM monthly_pnl GROUP BY display_category), prior_year AS (SELECT display_category, SUM(CASE WHEN month >= DATE_TRUNC('year', CURRENT_DATE - INTERVAL '1 year') AND month < DATE_TRUNC('year', CURRENT_DATE) THEN amount ELSE 0 END) AS prior_ytd, SUM(CASE WHEN month >= CURRENT_DATE - INTERVAL '24 months' AND month < CURRENT_DATE - INTERVAL '12 months' THEN amount ELSE 0 END) AS prior_trailing_12m FROM monthly_pnl GROUP BY display_category) SELECT cy.display_category, ROUND(cy.ytd, 0) AS current_ytd, ROUND(py.prior_ytd, 0) AS prior_ytd, ROUND((cy.ytd - py.prior_ytd) * 100.0 / NULLIF(ABS(py.prior_ytd), 0), 1) AS ytd_yoy_pct, ROUND(cy.trailing_12m, 0) AS t12m, ROUND(py.prior_trailing_12m, 0) AS prior_t12m, ROUND((cy.trailing_12m - py.prior_trailing_12m) * 100.0 / NULLIF(ABS(py.prior_trailing_12m), 0), 1) AS t12m_yoy_pct FROM current_year cy JOIN prior_year py ON cy.display_category = py.display_category ORDER BY CASE cy.display_category WHEN 'Revenue' THEN 1 WHEN 'Cost of Revenue' THEN 2 WHEN 'Gross Profit' THEN 3 WHEN 'Sales & Marketing' THEN 4 WHEN 'R&D' THEN 5 WHEN 'G&A' THEN 6 WHEN 'Operating Income' THEN 7 WHEN 'Net Income' THEN 8 END. Margin calculations: SELECT month, revenue, gross_profit, ROUND(gross_profit * 100.0 / NULLIF(revenue, 0), 1) AS gross_margin_pct, operating_income, ROUND(operating_income * 100.0 / NULLIF(revenue, 0), 1) AS operating_margin_pct FROM monthly_summary. Board expectation: gross margins trending up (scale economies), operating margins improving toward breakeven'"
+    weight: 0.35
+    description: "PnL"
+  - type: llm_judge
+    criteria: "Response includes SaaS metrics and unit economics calculations — saas: 'SaaS metrics for the board deck: MRR and ARR: WITH mrr_calc AS (SELECT DATE_TRUNC('month', period_start) AS month, SUM(CASE WHEN status = 'active' THEN monthly_amount END) AS mrr, SUM(CASE WHEN status = 'active' AND created_at >= DATE_TRUNC('month', period_start) THEN monthly_amount END) AS new_mrr, SUM(CASE WHEN status = 'active' AND monthly_amount > prev_amount THEN monthly_amount - prev_amount END) AS expansion_mrr, SUM(CASE WHEN status = 'cancelled' THEN prev_amount END) AS churned_mrr FROM subscriptions GROUP BY 1) SELECT month, mrr, mrr * 12 AS arr, new_mrr, expansion_mrr, churned_mrr, ROUND(churned_mrr * 100.0 / NULLIF(LAG(mrr) OVER (ORDER BY month), 0), 2) AS gross_churn_rate, ROUND((expansion_mrr - churned_mrr) * 100.0 / NULLIF(LAG(mrr) OVER (ORDER BY month), 0), 2) AS net_revenue_retention FROM mrr_calc ORDER BY month. Net revenue retention above 100% means existing customers are growing faster than churn — the holy grail for SaaS investors. Unit economics: WITH customer_economics AS (SELECT c.customer_id, c.acquisition_channel, c.acquisition_cost, c.signup_date, SUM(o.amount) AS lifetime_revenue, SUM(o.amount) * 0.75 AS lifetime_gross_profit, COUNT(DISTINCT DATE_TRUNC('month', o.order_date)) AS months_active FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id AND o.status = 'completed' GROUP BY c.customer_id, c.acquisition_channel, c.acquisition_cost, c.signup_date) SELECT acquisition_channel, COUNT(*) AS customers, ROUND(AVG(acquisition_cost), 0) AS avg_cac, ROUND(AVG(lifetime_gross_profit), 0) AS avg_ltv, ROUND(AVG(lifetime_gross_profit) / NULLIF(AVG(acquisition_cost), 0), 1) AS ltv_cac_ratio, ROUND(AVG(acquisition_cost) / NULLIF(AVG(lifetime_gross_profit / NULLIF(months_active, 0)), 0), 1) AS payback_months FROM customer_economics GROUP BY acquisition_channel ORDER BY ltv_cac_ratio DESC. Investors look for LTV:CAC above 3x and payback under 18 months. If organic has 8x LTV:CAC but paid ads has 1.5x, the recommendation is to increase organic investment and reduce paid spend'"
+    weight: 0.35
+    description: "SaaS"
+  - type: llm_judge
+    criteria: "Explanation covers cash flow projections and consistency checks — cashflow: 'Cash flow projection and runway: WITH monthly_cashflow AS (SELECT DATE_TRUNC('month', transaction_date) AS month, SUM(CASE WHEN type = 'inflow' THEN amount ELSE 0 END) AS cash_inflows, SUM(CASE WHEN type = 'outflow' THEN amount ELSE 0 END) AS cash_outflows, SUM(CASE WHEN type = 'inflow' THEN amount ELSE -amount END) AS net_cashflow FROM cash_transactions GROUP BY 1 ORDER BY 1), projections AS (SELECT month, cash_inflows, cash_outflows, net_cashflow, SUM(net_cashflow) OVER (ORDER BY month) AS cumulative_cashflow, AVG(net_cashflow) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS trailing_3m_avg_burn FROM monthly_cashflow) SELECT month, ROUND(cash_inflows, 0) AS inflows, ROUND(cash_outflows, 0) AS outflows, ROUND(net_cashflow, 0) AS net, ROUND(cumulative_cashflow, 0) AS cumulative, CASE WHEN trailing_3m_avg_burn < 0 THEN ROUND(cumulative_cashflow / ABS(trailing_3m_avg_burn), 1) ELSE NULL END AS months_of_runway FROM projections. If cumulative cash is $5M and average monthly burn is $400K, runway is 12.5 months. The board needs to see this trending — is burn rate decreasing (good) or increasing (concerning)? Consistency verification: cross-check board metrics against prior reports. CREATE TABLE board_metric_history (report_date DATE, metric_name TEXT, reported_value NUMERIC, source_query TEXT). Before presenting: SELECT h.metric_name, h.reported_value AS last_reported, current.value AS current_calculation, CASE WHEN ABS(h.reported_value - current.value) / NULLIF(h.reported_value, 0) < 0.001 THEN 'CONSISTENT' ELSE 'CHANGED — investigate' END AS consistency FROM board_metric_history h JOIN current_calculations current ON h.metric_name = current.metric_name WHERE h.report_date = (SELECT MAX(report_date) FROM board_metric_history). If ARR was reported as $12M last quarter and the same calculation now shows $11.8M for that period, something changed — a refund was backdated, a definition changed, or a data quality issue. Never present inconsistent numbers to investors — it destroys credibility'"
+    weight: 0.30
+    description: "Cashflow"

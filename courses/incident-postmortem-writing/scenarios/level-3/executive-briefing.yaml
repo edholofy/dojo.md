@@ -1,0 +1,47 @@
+meta:
+  id: executive-briefing
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Write executive incident briefings — translate technical incidents into business-impact presentations for C-suite and board audiences"
+  tags: [postmortem, executive, briefing, C-suite, business-impact, advanced]
+
+state: {}
+
+trigger: |
+  Your company's payment processing was down for 90 minutes during
+  business hours. The CEO has called an emergency executive meeting
+  and wants a briefing in 1 hour. Attendees: CEO, CFO, CPO, General
+  Counsel, and VP of Customer Success.
+
+  Technical summary: A certificate expiration on the payment gateway
+  caused TLS handshake failures. The certificate was auto-renewed
+  but the renewal was blocked by a firewall rule that was added
+  during a security audit 2 months ago. The expired cert wasn't
+  detected because the monitoring checked certificate files on disk
+  (which were renewed) not the actual TLS handshake (which used a
+  cached expired cert).
+
+  Impact: $450K in failed transactions. 12,000 customers unable to
+  complete purchases. SLA breach for 5 enterprise customers. Social
+  media trending with negative mentions.
+
+  Task: Write the executive briefing document and prepare talking
+  points for the meeting. Translate the technical failure into
+  business terms. Address each executive's specific concerns (CFO:
+  financial impact, General Counsel: legal exposure, CPO: customer
+  impact, VP Customer Success: account risk).
+
+assertions:
+  - type: llm_judge
+    criteria: "Briefing translates technical failure to business language — opening: 'Our payment processing was unavailable for 90 minutes today between 10:00 AM and 11:30 AM. During this window, no customer could complete a purchase. The cause: an expired security certificate that our monitoring systems failed to detect.' No jargon in the main briefing — no mention of TLS, firewall rules, or cached certs in the executive summary. Technical details available as appendix for CEO's reference. Business impact headline: '$450K in failed transactions, 12,000 affected customers, 5 enterprise SLA breaches.' Root cause in plain language: 'A security certificate expired because our renewal process was inadvertently blocked by a recent security change. Our monitoring checked the wrong indicator — it verified the file was renewed but not that the active certificate was actually updated.' What we're doing: '(1) Immediate: all certificates audited and verified within 24 hours. (2) This week: monitoring updated to check actual certificate validity, not just file presence. (3) This month: security change process updated to include impact assessment on existing automation.' Status: 'Service fully restored. No data was compromised. No ongoing risk'"
+    weight: 0.35
+    description: "Business translation"
+  - type: llm_judge
+    criteria: "Each executive's concerns are specifically addressed — CFO: 'Financial impact: $450K in failed transactions. Recovery estimate: 60-70% of customers will retry within 24 hours (based on historical cart recovery data). Net permanent revenue loss: estimated $135K-180K. SLA credits: 5 enterprise customers owed credits per contract terms, estimated $X total. No regulatory fines anticipated — this was a service outage, not a data breach.' General Counsel: 'Legal exposure: low. No customer data was compromised. The outage was operational, not a security breach. SLA credits are contractual obligations we will honor. No notification requirements under GDPR, CCPA, or PCI-DSS for availability incidents. Recommendation: proactive communication to enterprise customers is preferable to waiting for them to ask.' CPO: 'Customer experience impact: 12,000 customers encountered failed checkout. Customer support volume: 800 tickets, 150 phone calls. Cart abandonment during window: approximately 3x normal. Recovery actions: abandoned cart email campaign tonight, 10% discount code for affected customers.' VP Customer Success: 'At-risk accounts: 5 enterprise customers with SLA breaches. Account managers notified. Recommended: proactive call to each account within 4 hours with: acknowledgment, timeline of what happened, credit confirmation, and prevention steps. Two of these accounts are in renewal negotiations — handle with extra care.'"
+    weight: 0.35
+    description: "Executive-specific concerns"
+  - type: llm_judge
+    criteria: "Talking points prepare the CEO for questions — anticipated questions and prepared answers: 'Q: Could this happen again? A: Not this specific failure — we are auditing all certificates today. For the broader risk: we are implementing monitoring that detects certificate issues before they cause outages. Timeline: 1 week for full protection.' 'Q: Was customer data at risk? A: No. The failure was an expired certificate preventing connections. No data was exposed, accessed, or compromised. This was an availability issue, not a security breach.' 'Q: Why didn't we catch this earlier? A: Our monitoring checked whether the certificate file was renewed (it was) but not whether the active certificate was actually updated (it wasn't — it was cached). The monitoring had a blind spot. We are fixing the blind spot this week.' 'Q: How do I know the fix will work? A: We are adding end-to-end certificate validation that tests the actual TLS connection, not just the file. We will run daily automated tests and alert when any certificate is within 30 days of expiration.' 'Q: What is this costing us? A: Direct impact: approximately $180K in permanent revenue loss plus $X in SLA credits. Remediation cost: approximately $Y in engineering time. Prevention investment going forward: $Z for improved monitoring. The prevention cost is a fraction of one incident cost.' Tone guidance: 'Be factual, not defensive. Acknowledge the impact. Show the path forward. Do not minimize or dramatize'"
+    weight: 0.30
+    description: "Prepared talking points"

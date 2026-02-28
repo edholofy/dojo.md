@@ -1,0 +1,112 @@
+meta:
+  id: intermediate-meeting-shift
+  level: 2
+  course: meeting-notes-action-items
+  type: output
+  description: "Intermediate meeting shift — handle a chaotic all-hands meeting with multiple announcements, audience questions, and sensitive topics requiring careful documentation"
+  tags: [shift, intermediate, all-hands, chaotic, sensitive]
+
+state: {}
+
+trigger: |
+  You're the executive assistant to the CEO of a 200-person
+  software company. You're responsible for documenting the
+  quarterly all-hands meeting that just happened. It was
+  chaotic, emotional, and contained both exciting news and
+  difficult announcements. The CEO wants notes distributed
+  to the entire company within 2 hours.
+
+  Meeting: Q3 All-Hands
+  Duration: 75 minutes (ran 15 minutes over)
+  Format: In-person in the main hall + livestream for
+  remote employees (about 60 remote)
+
+  What happened (in order):
+
+  1. CEO opened with exciting news: the company secured a
+     $30M Series C funding round. Applause. The CEO named
+     the lead investor (Horizon Ventures) and said the
+     funding will be used for international expansion and
+     product development. The CEO said: "This validates
+     everything we've built together."
+
+  2. CEO then delivered difficult news: as part of the
+     strategic refocus that Horizon Ventures requires, the
+     company is shutting down the Consumer product line and
+     going all-in on Enterprise. This affects the 22-person
+     Consumer team. The CEO said affected employees will
+     receive "generous" severance and priority for internal
+     transfers. HR will meet with affected employees
+     individually starting tomorrow.
+
+  3. The room went very quiet. Someone in the back (later
+     identified as Jake from the Consumer team) said loudly:
+     "So you're celebrating funding while telling us we're
+     fired? Nice." The CEO paused, acknowledged the pain, and
+     said: "I understand this is hard. The individual meetings
+     tomorrow will address each person's situation." Several
+     Consumer team members were visibly upset.
+
+  4. CTO presented the product roadmap for Q4: three major
+     enterprise features. She demoed a new AI-powered
+     analytics dashboard that got enthusiastic reactions.
+     She mentioned the engineering team is hiring 15 new
+     roles (all Enterprise-focused).
+
+  5. CFO presented financials: Revenue up 35% YoY. Enterprise
+     revenue up 62%. Consumer revenue down 15% — the CFO
+     said this "confirmed the strategic decision" to exit
+     Consumer. Cash runway: 24 months with new funding.
+     Customer count: 340 enterprise clients (up from 280).
+
+  6. VP of People announced new benefits: expanded parental
+     leave (16 weeks from 12), mental health stipend ($1,500
+     per year), and a new learning budget ($2,000 per
+     employee per year). These are effective January 1.
+
+  7. Q&A session (30 minutes, ran long):
+     - Employee asked about international expansion timeline.
+       CEO: "We'll open London office in Q1 2026, Singapore
+       in Q2 2026."
+     - Employee asked if Enterprise hiring means Consumer
+       team members can transfer. CEO: "Absolutely, we want
+       to keep as many people as possible."
+     - Remote employee asked (via chat) if remote workers
+       would be required to relocate for international
+       offices. CEO: "No, we're remote-friendly. The offices
+       are for local market presence."
+     - Jake asked again: "How is it generous severance when
+       this company exists because the Consumer team built
+       the initial product?" CEO responded: "Jake, I hear
+       you. The Consumer team's contribution is immense and
+       that's exactly why we're prioritizing internal
+       transfers. Let's talk one-on-one tomorrow."
+     - Employee asked about the AI dashboard pricing. CTO:
+       "Enterprise Plus tier, pricing TBD."
+     - Employee asked about stock option impact of the
+       Series C. CEO deferred to CFO. CFO said: "Your
+       existing options are unaffected. The Series C
+       valuation means your options are worth more. We'll
+       send detailed information to everyone this week."
+
+  8. CEO closed with: "This is a transformative moment for
+     our company. Change is hard, and I won't pretend
+     otherwise. But I believe in this team's ability to build
+     something extraordinary."
+
+  Task: Create the all-hands meeting notes for company-wide
+  distribution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates company-wide meeting notes that handle sensitive content appropriately — documents both the positive news (funding, benefits, product roadmap) and the difficult news (Consumer team restructuring) honestly but with appropriate sensitivity; does not include Jake's confrontational quotes verbatim or describe employees being 'visibly upset' — instead summarizes the Q&A substantively; captures the CEO's commitment to severance, internal transfers, and individual meetings; does not sanitize the reality but frames it in a way that's appropriate for a company-wide document; acknowledges that this is a significant change affecting real people."
+    weight: 0.35
+    description: "SensitiveContentHandling"
+  - type: llm_judge
+    criteria: "Response captures all substantive announcements and Q&A answers accurately — documents: Series C ($30M from Horizon Ventures), Consumer team restructuring (22 people, severance + transfer priority, HR meetings starting tomorrow), product roadmap (3 enterprise features, AI analytics dashboard), financials (35% YoY revenue growth, 62% enterprise growth, 340 clients, 24 months runway), new benefits (16 weeks parental leave, $1,500 mental health stipend, $2,000 learning budget — effective Jan 1), international expansion (London Q1 2026, Singapore Q2 2026), hiring (15 engineering roles), stock option information (unaffected, details coming this week), remote work policy (no relocation required); all Q&A answers are captured even though the questions may be paraphrased."
+    weight: 0.35
+    description: "ComprehensiveContent"
+  - type: llm_judge
+    criteria: "Response is organized for quick consumption by 200 employees — uses clear headers and sections so people can find what's relevant to them; someone on the Consumer team can quickly find information about their situation; someone in engineering can find the hiring and roadmap information; a remote employee can find the international expansion and remote work answers; the notes read as an authoritative company record, not as the CEO's personal narrative; includes next steps and key dates (HR meetings tomorrow, stock info this week, benefits effective Jan 1, London Q1 2026); appropriate length for a 75-minute all-hands — comprehensive but not a transcript."
+    weight: 0.30
+    description: "OrganizationAndAccessibility"

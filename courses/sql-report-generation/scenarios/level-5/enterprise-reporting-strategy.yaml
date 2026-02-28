@@ -1,0 +1,40 @@
+meta:
+  id: enterprise-reporting-strategy
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Design enterprise reporting strategy — define the organizational reporting architecture, governance model, technology stack, and 12-month roadmap for a data-driven company"
+  tags: [SQL, enterprise, strategy, governance, architecture, roadmap, master]
+
+state: {}
+
+trigger: |
+  You are hired as VP of Data & Analytics at a 5,000-person company
+  that has grown through 4 acquisitions. The current state:
+
+  - 347 reports across 12 BI tools (Tableau, Power BI, Looker,
+    Metabase, custom SQL scripts, Excel macros, etc.)
+  - No single source of truth — the same metric is defined
+    differently in 23 places
+  - Finance spends 2 weeks per month reconciling numbers
+  - The CEO gets different revenue figures from 3 different dashboards
+  - Data quality issues cause wrong decisions monthly
+  - No data governance, no documentation, no data catalog
+
+  The board has allocated $2M and given you 12 months to fix this.
+
+  Task: Present your enterprise reporting transformation strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response presents a comprehensive current-state assessment and target architecture — architecture: 'Enterprise reporting transformation strategy: Current state assessment: Report inventory audit: categorize all 347 reports by usage (daily, weekly, monthly, never), owner (who created it, who uses it), source (which database), accuracy (verified vs unverified), and business function (finance, sales, marketing, operations). Expected finding: 40% of reports are unused (zombie reports), 30% duplicate each other, and only 30% are unique and actively used. Target: consolidate from 347 reports to approximately 50 curated, governed reports. Target architecture: three-tier reporting stack. Tier 1 — Certified data warehouse (single source of truth). PostgreSQL or Snowflake data warehouse with dimensional modeling. All source systems (4 acquired company databases + the original) feed into a unified star schema. Fact tables: fact_orders, fact_revenue, fact_customer_activity. Dimension tables: dim_customers, dim_products, dim_regions, dim_time. All business logic (what is revenue, what is an active customer) is defined once in the transformation layer. Tier 2 — Semantic layer (business-friendly definitions). A semantic layer (dbt metrics, Looker LookML, or Cube.js) translates SQL into business terms. Metric definitions: revenue = SUM(fact_orders.amount) WHERE status = completed AND type != refund. This is the metric: it is defined once and used everywhere. Every dashboard, report, and API query uses this definition. Tier 3 — Consumption layer (dashboards and reports). Standardize on 2 BI tools maximum (one for analysts — Looker or Mode, one for self-service — Metabase or Preset). Executive dashboards query the semantic layer. Analysts can write SQL against the certified warehouse. No one queries raw production databases for reporting'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response includes metric governance and the organizational model — governance: 'Metric governance framework: Metric ownership model: CREATE TABLE metric_registry (metric_id SERIAL PRIMARY KEY, metric_name TEXT UNIQUE, business_definition TEXT NOT NULL, sql_definition TEXT NOT NULL, owner_team TEXT NOT NULL, owner_person TEXT NOT NULL, data_sources TEXT[], grain TEXT, update_frequency TEXT, certified BOOLEAN DEFAULT false, certified_by TEXT, certified_date DATE, tags TEXT[]). Every metric has one owner who is responsible for its accuracy. Example: INSERT INTO metric_registry VALUES (1, 'Monthly Recurring Revenue (MRR)', 'Sum of all active subscription amounts at end of month, excluding one-time charges, discounts applied, in USD', 'SELECT SUM(subscription_amount) FROM fact_subscriptions WHERE status = active AND charge_type = recurring AND as_of_date = last_day_of_month', 'Finance', 'Jane Smith — Director of FP&A', ARRAY['fact_subscriptions', 'dim_customers'], 'monthly', 'daily', true, 'CFO', '2025-01-15', ARRAY['revenue', 'subscription', 'board-metric']). Certification process: 1. Metric owner proposes the definition. 2. Data team validates the SQL produces correct results. 3. Finance verifies it ties to the general ledger. 4. CFO certifies — the metric is now the official definition. 5. All dashboards must use this certified metric. No exceptions. Organizational model: Data team structure. Head of Data Engineering (you) — owns the warehouse, pipelines, and data quality. Analytics Engineering team (4 people) — owns the semantic layer and metric definitions. BI team (3 people) — owns dashboards and visualization. Data Governance lead (1 person) — owns the metric registry, data catalog, and certification process. Embedded analysts (in each business unit) — build reports using certified metrics, cannot create new metric definitions'"
+    weight: 0.35
+    description: "Governance"
+  - type: llm_judge
+    criteria: "Response provides a phased 12-month roadmap with budget allocation — roadmap: '12-month transformation roadmap: Phase 1 — Foundation (Months 1-3, $500K): Month 1: complete report inventory audit, identify top 20 critical reports, interview all stakeholders. Month 2: set up the data warehouse (Snowflake or PostgreSQL), build ingestion pipelines from 4 source databases. Month 3: migrate top 20 reports to the new warehouse. Freeze new report creation in old tools. Deliverable: 20 certified reports in one BI tool. CEO gets one dashboard with one revenue number. Quick win: fix the CEO's conflicting dashboards in week 2 — this buys political capital for the rest of the project. Phase 2 — Scale (Months 4-6, $600K): Month 4: build the semantic layer with 50 certified metrics. Month 5: migrate the next 30 reports (covering 80% of business needs). Month 6: launch self-service analytics for power users with training. Deliverable: 50 reports, 50 certified metrics, self-service available. Finance reconciliation time drops from 2 weeks to 2 days. Phase 3 — Optimize (Months 7-9, $500K): Month 7: implement data quality monitoring (automated checks before every report). Month 8: decommission old BI tools (from 12 to 2). Month 9: build the data catalog and lineage system. Deliverable: zero data quality incidents, 2 BI tools, full lineage. Phase 4 — Mature (Months 10-12, $400K): Month 10: predictive analytics on top of the certified data. Month 11: real-time reporting for operational dashboards. Month 12: full governance handoff — the system is self-sustaining. Budget allocation: infrastructure $600K (warehouse, BI tools, pipeline tooling), people $900K (hiring 4 analytics engineers and 1 governance lead), training $200K (company-wide data literacy), contingency $300K. Success metrics: time-to-report drops from 2 weeks to 2 hours, zero conflicting metric definitions, finance close accelerated by 10 business days, 90% report adoption on certified platform'"
+    weight: 0.30
+    description: "Roadmap"

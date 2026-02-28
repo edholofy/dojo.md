@@ -1,0 +1,43 @@
+meta:
+  id: slo-based-alerting
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Implement SLO-based alerting — design alerts based on error budget burn rates rather than raw metric thresholds to focus on customer impact"
+  tags: [monitoring, SLO, error-budget, burn-rate, customer-impact, advanced]
+
+state: {}
+
+trigger: |
+  Your team currently alerts on raw thresholds (CPU > 90%, latency
+  > 500ms, error rate > 1%). This creates noise because thresholds
+  do not account for customer impact. Your SRE lead wants to move
+  to SLO-based alerting.
+
+  Current SLOs:
+  - Availability SLO: 99.9% (43.8 minutes/month error budget)
+  - Latency SLO: 95% of requests under 300ms
+  - Payment success SLO: 99.95%
+
+  Current problem: last month, the threshold alerts fired 200 times.
+  Only 15 of those actually affected SLOs. The other 185 were
+  threshold violations that did not impact customer experience.
+
+  Task: Design the SLO-based alerting system. Define the burn rate
+  alerts for each SLO, explain how they work, and show how this
+  approach reduces alert volume while improving detection of real
+  customer impact.
+
+assertions:
+  - type: llm_judge
+    criteria: "Burn rate alerting is correctly explained and designed — burn rate concept: 'A burn rate measures how fast the error budget is being consumed. A burn rate of 1x means the error budget will be exactly exhausted at the end of the period (consuming the budget evenly over the month). A burn rate of 10x means the error budget will be exhausted in 1/10th of the period. For our 99.9% availability SLO with 43.8 minutes/month budget: burn rate 1x = consuming 43.8 minutes/month (normal, sustainable). Burn rate 10x = consuming error budget 10x faster, will exhaust in 3 days. Burn rate 100x = consuming error budget 100x faster, will exhaust in 7 hours.' Alert design for availability SLO (99.9%): 'Fast burn alert (SEV-1, page): burn rate > 14.4x over a 1-hour window, checked against 5-minute window. Translation: at this rate, we will consume the entire monthly error budget in under 3 days. Actual meaning: approximately 14.4% of requests are failing right now. This is a significant outage requiring immediate attention. Slow burn alert (SEV-2, ticket): burn rate > 6x over a 6-hour window, checked against 30-minute window. Translation: we are burning error budget 6x faster than sustainable. At this rate, we will exhaust the budget in 5 days. Actual meaning: there is a sustained degradation that is not an acute outage but will consume our error budget if not addressed. Why two tiers: fast burns catch acute outages (deploy broke everything). Slow burns catch chronic degradation (a feature is subtly broken and slowly consuming budget).' Similar design for latency and payment SLOs with burn rates calibrated to their specific budgets"
+    weight: 0.35
+    description: "Burn rate alert design"
+  - type: llm_judge
+    criteria: "Comparison shows concrete reduction in alert volume — before vs. after comparison: 'Before (threshold alerts): 200 alerts per month. 15 affected SLOs (7.5% actionable for customer impact). 185 were threshold violations with no customer impact: CPU spikes that did not cause errors, latency spikes that were within SLO, error rate blips from single requests. After (SLO-based alerts): estimated 20-30 alerts per month. All represent actual or impending SLO violations. Actionable rate: 80%+.' Specific examples of eliminated noise: '(1) CPU > 90% for 2 minutes: under threshold alerting, this pages. Under SLO-based alerting: if requests are still succeeding within the latency SLO, no alert fires. The CPU spike is real but not customer-impacting. (2) Error rate spike to 2% for 30 seconds: under threshold alerting, this pages. Under SLO-based alerting: 30 seconds of 2% errors does not significantly burn the error budget (0.01% of monthly budget). No alert fires. (3) Gradual latency increase from 200ms to 280ms over a week: under threshold alerting (threshold: 500ms), no alert fires because 280ms is under threshold. Under SLO-based alerting: if the latency SLO is 95% under 300ms and the increase pushes us to 93% under 300ms, the slow burn alert fires because we are violating the SLO. This is a real problem that threshold alerting misses.' Net effect: 90% fewer alerts, catching the same (or more) customer-impacting issues"
+    weight: 0.35
+    description: "Volume reduction comparison"
+  - type: llm_judge
+    criteria: "Implementation plan addresses practical challenges — implementation: 'Phase 1 (week 1-2): define SLIs that measure customer experience. Availability SLI: percentage of requests returning non-5xx responses. Latency SLI: percentage of requests completing under 300ms. Payment SLI: percentage of payment attempts succeeding. These must be measured from the customer's perspective (at the load balancer or API gateway, not at individual services). Phase 2 (week 3-4): implement burn rate calculation. Set up Prometheus recording rules (or equivalent) that calculate error budget consumption over rolling windows (5 min, 30 min, 1 hour, 6 hours). Phase 3 (week 5-6): create SLO-based alerts alongside existing threshold alerts (do not remove threshold alerts yet). Run both in parallel and compare: every time a threshold alert fires, check whether an SLO alert also fired. If the threshold alert fires and SLO alert does not, the threshold alert was noise. If the SLO alert fires and threshold alert did not, the SLO alert caught a real problem that the threshold approach missed. Phase 4 (week 7-8): decommission threshold alerts that are fully covered by SLO alerts. Keep a small number of critical threshold alerts as safety nets (disk full, health check failing, security alerts). These are hard limits where SLOs do not apply.' Challenges: '(1) SLO definition requires agreement on what good means. This is a business conversation, not just an engineering decision. (2) Burn rate windows must be tuned: too short creates noise (brief spikes trigger alerts), too long delays detection. (3) Not everything fits SLO alerting: infrastructure alerts (disk full), security alerts (unauthorized access), and operational alerts (certificate expiring) still need threshold-based alerting. SLO-based alerting replaces customer-experience alerts, not all alerts'"
+    weight: 0.30
+    description: "Implementation plan"

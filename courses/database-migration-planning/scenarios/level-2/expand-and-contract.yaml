@@ -1,0 +1,38 @@
+meta:
+  id: expand-and-contract
+  level: 2
+  course: database-migration-planning
+  type: output
+  description: "Apply the expand-and-contract pattern — safely rename a column or change a data type using the three-phase migration pattern"
+  tags: [database, migration, expand-contract, zero-downtime, pattern, intermediate]
+
+state: {}
+
+trigger: |
+  Your team needs to rename the "username" column to "display_name"
+  in the users table. The table has 5 million rows and the application
+  serves traffic 24/7 with zero-downtime requirements.
+
+  A simple RENAME COLUMN would be instant in PostgreSQL, but the
+  problem is: the application code references "username" in 47
+  places. During a rolling deployment, some application instances
+  will use "username" and others will use "display_name". If you
+  rename the column, old instances will fail immediately.
+
+  Task: Apply the expand-and-contract pattern to safely rename this
+  column with zero downtime. Show all three phases and the migrations
+  for each.
+
+assertions:
+  - type: llm_judge
+    criteria: "Three phases of expand-and-contract are clearly explained — three phases: 'The expand-and-contract pattern (also called parallel change) splits a breaking change into three safe, non-breaking steps. Phase 1: EXPAND (add the new, keep the old). Migration 1: add the new column. ALTER TABLE users ADD COLUMN display_name VARCHAR(100); Update application to dual-write: when writing to users, write to BOTH username and display_name. UPDATE users SET display_name = username WHERE display_name IS NULL; (backfill existing data). At this point: both columns exist, both have data, old application instances use username, new instances can start using display_name. No breaking change — old code still works because username still exists and is populated. Phase 2: MIGRATE (switch to the new). Deploy application code changes: all 47 references to username are updated to display_name. Continue dual-writing to both columns during this phase (in case of rollback). Verify: all application instances are using display_name. No queries reference username. Phase 3: CONTRACT (remove the old). Migration 2: remove the old column. ALTER TABLE users DROP COLUMN username; Stop dual-writing. At this point: only display_name exists, all code uses it. The column rename is complete without any downtime or breaking change.' Why this works: each individual step is backward-compatible. No single deployment breaks old or new application instances. The pattern trades speed for safety — a 1-second rename becomes a multi-day process, but with zero risk of downtime'"
+    weight: 0.35
+    description: "Three phases"
+  - type: llm_judge
+    criteria: "Practical implementation details are covered — implementation: 'Migration 1 (Expand): ALTER TABLE users ADD COLUMN display_name VARCHAR(100); CREATE OR REPLACE FUNCTION sync_username_to_display_name() RETURNS TRIGGER AS $$ BEGIN NEW.display_name := COALESCE(NEW.display_name, NEW.username); RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER trg_sync_username BEFORE INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION sync_username_to_display_name(); The trigger ensures that any write to username also populates display_name, even from old application instances that do not know about the new column. Backfill: UPDATE users SET display_name = username WHERE display_name IS NULL; For 5 million rows, run the backfill in batches to avoid long-running transactions: UPDATE users SET display_name = username WHERE display_name IS NULL AND id BETWEEN 1 AND 100000; (repeat for each batch of 100K). Verification: SELECT COUNT(*) FROM users WHERE display_name IS NULL; (should be 0 after backfill and with the trigger active). Migration 2 (Contract — after all code is updated): DROP TRIGGER trg_sync_username ON users; DROP FUNCTION sync_username_to_display_name(); ALTER TABLE users DROP COLUMN username; Optionally: ALTER TABLE users ALTER COLUMN display_name SET NOT NULL; (now that it is the only column and fully populated). Timeline: Phase 1 (Expand): deploy migration 1 and dual-write code. Wait 1-2 deployment cycles to ensure stability. Phase 2 (Migrate): deploy code changes in batches. Monitor for any remaining references to username. Phase 3 (Contract): deploy migration 2 after verifying all code uses display_name. Typical total timeline: 1-2 weeks for a careful expand-and-contract'"
+    weight: 0.35
+    description: "Implementation details"
+  - type: llm_judge
+    criteria: "When to use and not use this pattern — applicability: 'Use expand-and-contract when: (1) Renaming a column that is referenced by application code. (2) Changing a column type that requires data transformation. (3) Splitting one column into multiple columns. (4) Merging multiple columns into one. (5) Any schema change that would break running application instances during a rolling deployment. Do NOT use expand-and-contract when: (1) Adding a new column (no existing code references it — just add it). (2) Removing an unused column (no code references it — just drop it). (3) Simple additive changes that do not affect existing queries. (4) You have a maintenance window (a simpler direct change is acceptable if you can tolerate a brief deployment pause). The pattern is overhead. It triples the number of migrations and extends the timeline. Use it when the alternative (downtime or breaking changes) is worse than the overhead. For a high-traffic production system serving 24/7, the overhead is always justified. For a low-traffic internal tool, a maintenance window with a direct rename is simpler and acceptable'"
+    weight: 0.30
+    description: "Applicability"

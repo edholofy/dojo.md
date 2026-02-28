@@ -1,0 +1,36 @@
+meta:
+  id: handling-missing-data
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Handle missing data — identify, analyze, and address missing values in a pandas DataFrame using appropriate strategies"
+  tags: [python, pandas, missing-data, NaN, fillna, dropna, beginner]
+
+state: {}
+
+trigger: |
+  Your sales DataFrame has missing values:
+  - product_name: 12 missing (0.12%)
+  - category: 5 missing (0.05%)
+  - unit_price: 23 missing (0.23%)
+
+  Your manager asks: "Clean up the missing data so we can do our
+  analysis. But don't just delete everything — think about what
+  makes sense for each column."
+
+  Task: Write code to handle the missing values and explain your
+  strategy for each column.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates multiple missing data strategies appropriate to each column — code: 'Handling missing data — strategy per column: Step 1 — Understand the missing data pattern: df.isnull().sum() shows counts. (df.isnull().sum() / len(df) * 100).round(2) shows percentages. df[df[\"unit_price\"].isnull()] shows the actual rows with missing prices — this helps understand if the missingness is random or systematic. Step 2 — product_name (12 missing): strategy: these are rows where we do not know what was sold. Since product_name is a key identifier, filling with a guess would be misleading. Option A — drop the rows: df = df.dropna(subset=[\"product_name\"]). Rationale: 12 out of 10,000 rows (0.12%) is negligible. Dropping them will not affect analysis results. Option B — fill with Unknown: df[\"product_name\"] = df[\"product_name\"].fillna(\"Unknown\"). Rationale: keeps all rows but marks unknowns clearly. Use this if other columns in those rows have valuable data. Recommendation: Option A (drop) — 12 rows is insignificant and Unknown product names add no analytical value. Step 3 — category (5 missing): strategy: we might be able to infer the category from the product_name. df[df[\"category\"].isnull()][[\"product_name\", \"category\"]] — check if the product names suggest a category. If product_name can determine category: use a mapping. category_map = df.dropna(subset=[\"category\"]).drop_duplicates(\"product_name\").set_index(\"product_name\")[\"category\"]. df[\"category\"] = df[\"category\"].fillna(df[\"product_name\"].map(category_map)). If the mapping does not resolve all missing values: df[\"category\"] = df[\"category\"].fillna(\"Uncategorized\"). Step 4 — unit_price (23 missing): strategy: filling prices with a default or dropping requires more thought. Option A — fill with the median price for that product: df[\"unit_price\"] = df.groupby(\"product_name\")[\"unit_price\"].transform(lambda x: x.fillna(x.median())). This fills each missing price with the median price for that specific product. This is the best approach because the same product typically has the same price. Option B — fill with the overall median: df[\"unit_price\"] = df[\"unit_price\"].fillna(df[\"unit_price\"].median()). This is simpler but less accurate (a $10 product should not get the $50 overall median). Option C — drop the rows: df = df.dropna(subset=[\"unit_price\"]). Use this only if you cannot justify any fill strategy. Recommendation: Option A (group median) — it uses the most relevant information. Step 5 — Verify: df.isnull().sum() — should show 0 for all columns after handling'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation teaches when to drop vs fill and the implications of each — explanation: 'Decision framework for missing data: When to drop rows (dropna): the percentage of missing data is very small (under 1%). The missing column is a key identifier (cannot be meaningfully filled). You need exact data and cannot tolerate approximations. Use: df.dropna() drops rows with ANY missing value. df.dropna(subset=[\"column\"]) drops rows where a specific column is missing. df.dropna(thresh=5) keeps rows with at least 5 non-null values. When to fill (fillna): the missing data can be reasonably estimated. Dropping would lose too many rows (over 5% missing). The analysis requires complete data (some models cannot handle NaN). Fill strategies ranked by quality: (1) Domain knowledge (best): you know the correct value (e.g., missing region for a known store is always West). (2) Group-based fill (good): fill with median/mean of a relevant group (product median price). (3) Forward/backward fill (good for time series): df[\"value\"].fillna(method=\"ffill\") fills with the previous row's value. (4) Overall statistic (acceptable): fill with the column median or mean. (5) Constant fill (last resort): fill with 0, Unknown, or a placeholder. When NOT to fill: if the missing data is not random (MNAR — missing not at random). Example: if high-value transactions are more likely to have missing prices (because they require manual entry), filling with the median would systematically undercount high-value sales. Always investigate WHY the data is missing before deciding how to handle it. Common mistake: using mean instead of median. The mean is sensitive to outliers. If unit_price has values [10, 10, 10, 10, 1000], the mean is 208 but the median is 10. The median is almost always the safer choice for filling numeric missing values'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers missing data visualization and detection patterns — detection: 'Visualizing and detecting missing data patterns: visual inspection: import seaborn as sns. import matplotlib.pyplot as plt. sns.heatmap(df.isnull(), cbar=False, yticklabels=False) — creates a heatmap where missing values appear as colored bars. This shows if missing values cluster together (e.g., rows where both product_name and category are missing — suggesting a systematic data quality issue). Missingness correlation: df.isnull().corr() — shows if missing values in one column correlate with missing values in another. High correlation suggests a systematic cause (e.g., a batch import that failed for certain fields). Percentage summary: missing_pct = (df.isnull().sum() / len(df) * 100).round(2). missing_pct[missing_pct > 0].sort_values(ascending=False) — shows only columns with missing data, sorted by percentage. Rule of thumb thresholds: under 1% missing: safe to drop rows. 1-5% missing: consider filling with appropriate strategy. 5-20% missing: filling required, but results should note the imputation. Over 20% missing: consider dropping the column entirely or using advanced imputation (e.g., scikit-learn IterativeImputer)'"
+    weight: 0.30
+    description: "Detection"

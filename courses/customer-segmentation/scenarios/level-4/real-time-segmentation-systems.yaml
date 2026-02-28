@@ -1,0 +1,44 @@
+meta:
+  id: real-time-segmentation-systems
+  level: 4
+  course: customer-segmentation
+  type: output
+  description: "Real-time segmentation systems — build systems that classify and reclassify customers in real-time based on streaming behavioral data"
+  tags: [real-time, streaming, classification, production, expert]
+
+state: {}
+
+trigger: |
+  A VP of engineering says: "Our segmentation runs as a monthly batch
+  job. A customer's segment is frozen for 30 days regardless of what
+  they do. If a power user suddenly stops logging in, we don't notice
+  for a month.
+
+  We want real-time segmentation. When a customer's behavior changes,
+  their segment should update within minutes, not months. This means:
+  - Real-time event ingestion from our product
+  - Streaming feature computation
+  - Online model scoring
+  - Real-time segment assignment pushed to our CRM and marketing tools
+
+  We process 50M events/day across 200,000 customers. How do we build
+  a real-time segmentation pipeline?"
+
+  Task: Design a real-time segmentation system architecture that ingests
+  behavioral events, computes features in real-time, scores customers
+  against segmentation models, and pushes segment updates to downstream
+  systems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the streaming architecture — event ingestion layer (Kafka, Kinesis, or similar for capturing product events), stream processing layer (Flink, Spark Streaming, or similar for computing real-time features from events), feature store (combining real-time streaming features with batch historical features), model serving layer (pre-trained classification model deployed as a service that scores customers on feature updates), and output layer (publishing segment changes to CRM, marketing automation, and data warehouse). Addresses the 50M events/day scale requirement"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response addresses the real-time feature computation challenge — which features can be computed in real-time (rolling counts, recency of last action, session duration) vs which require batch computation (monthly averages, trend slopes, cohort comparisons), how to maintain streaming aggregations (windowed counts, exponentially weighted moving averages), how to handle late-arriving events and out-of-order data, and the feature store pattern for combining real-time and batch features into a unified feature vector for scoring"
+    weight: 0.35
+    description: "FeatureComputation"
+  - type: llm_judge
+    criteria: "Response covers operational concerns — how to handle segment flapping (customers rapidly switching segments due to noisy real-time data — solutions include debouncing, minimum dwell time, hysteresis thresholds), model retraining cadence (train on batch data, deploy for real-time scoring), monitoring and alerting (track segment distribution drift, unusual migration volumes, model performance degradation), and the transition strategy from batch to real-time (run both in parallel, compare, then cutover)"
+    weight: 0.30
+    description: "OperationalConcerns"

@@ -1,0 +1,80 @@
+meta:
+  id: dependency-management
+  level: 2
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Manage resource dependencies — debug dependency graphs, resolve circular references, use depends_on correctly, and understand the DAG"
+  tags: [Terraform, dependencies, DAG, circular, depends-on, intermediate]
+
+state: {}
+
+trigger: |
+  Your infrastructure has a complex dependency chain that's causing
+  issues during apply:
+
+  ```hcl
+  resource "aws_iam_role" "lambda" {
+    name = "lambda-role"
+    assume_role_policy = jsonencode({...})
+  }
+
+  resource "aws_iam_role_policy" "lambda" {
+    role   = aws_iam_role.lambda.name
+    policy = jsonencode({
+      Statement = [{
+        Action   = "s3:GetObject"
+        Resource = aws_s3_bucket.data.arn
+      }]
+    })
+  }
+
+  resource "aws_lambda_function" "processor" {
+    function_name = "processor"
+    role          = aws_iam_role.lambda.arn
+    handler       = "index.handler"
+    runtime       = "nodejs18.x"
+    filename      = "lambda.zip"
+  }
+
+  resource "aws_s3_bucket_notification" "trigger" {
+    bucket = aws_s3_bucket.data.id
+    lambda_function {
+      lambda_function_arn = aws_lambda_function.processor.arn
+      events              = ["s3:ObjectCreated:*"]
+    }
+  }
+
+  resource "aws_lambda_permission" "s3" {
+    action        = "lambda:InvokeFunction"
+    function_name = aws_lambda_function.processor.function_name
+    principal     = "s3.amazonaws.com"
+    source_arn    = aws_s3_bucket.data.arn
+  }
+  ```
+
+  Error:
+  ```
+  Error: error creating S3 Bucket Notification: Unable to validate
+  the following destination configurations: Lambda function ARN
+
+  The Lambda function doesn't have permission to be invoked by S3 yet
+  (the permission resource hasn't been created).
+  ```
+
+  Task: Explain the Terraform dependency graph (DAG), implicit vs
+  explicit dependencies, how to debug dependency ordering issues,
+  terraform graph command, and depends_on best practices.
+
+assertions:
+  - type: llm_judge
+    criteria: "DAG and implicit dependencies are explained — Terraform builds a directed acyclic graph (DAG) from resource references. Implicit: when resource A uses resource B's attribute, A depends on B. The chain: role → role_policy (references role.name), role → lambda (references role.arn), bucket → notification (references bucket.id), lambda → notification (references lambda.arn). The error: s3_bucket_notification depends on lambda (implicit) but NOT on lambda_permission (no attribute reference). S3 notification tries to verify the Lambda ARN but permission doesn't exist yet"
+    weight: 0.35
+    description: "DAG explained"
+  - type: llm_judge
+    criteria: "The fix uses depends_on correctly — add depends_on = [aws_lambda_permission.s3] to the aws_s3_bucket_notification resource. This creates an explicit dependency where no implicit one exists. depends_on is needed because the notification resource doesn't reference any attribute of the permission resource, but the permission must exist for the notification to succeed. terraform graph: visualize dependencies with terraform graph | dot -Tsvg > graph.svg. Look for missing edges that represent real-world dependencies"
+    weight: 0.35
+    description: "Fix with depends_on"
+  - type: llm_judge
+    criteria: "depends_on best practices are covered — use depends_on sparingly: prefer implicit dependencies (reference attributes). depends_on forces sequential creation (reduces parallelism). Common scenarios needing depends_on: IAM permissions before resources that need them, DNS records before health checks, network resources before resources placed in them (when ID isn't directly referenced). Anti-pattern: depends_on everywhere 'just in case' — slows down apply. Use terraform graph to verify dependency order before adding depends_on. Module-level depends_on: depends_on on module blocks waits for entire module to complete"
+    weight: 0.30
+    description: "Best practices"

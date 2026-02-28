@@ -1,0 +1,52 @@
+meta:
+  id: game-day-design
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Design game days and chaos engineering exercises — create controlled failure experiments that test incident response and generate proactive postmortems"
+  tags: [postmortem, game-day, chaos-engineering, resilience-testing, proactive, expert]
+
+state: {}
+
+trigger: |
+  Your VP of Engineering wants to shift from reactive postmortems
+  (we broke something, now we learn) to proactive resilience testing
+  (we intentionally test failures before customers experience them).
+
+  The idea: run quarterly "Game Days" where you deliberately inject
+  failures into your systems, practice incident response, and write
+  postmortems on the results — all in a controlled environment.
+
+  Your systems:
+  - 12 microservices with various dependencies
+  - 3 external API integrations (payment, email, SMS)
+  - Redis cache layer, PostgreSQL database, message queue
+  - Load balancer, CDN, API gateway
+  - 5 teams responsible for different services
+
+  Previous chaos attempts failed because:
+  - An engineer ran a chaos experiment in production without telling
+    anyone and caused a real outage
+  - A game day was too easy (kill one pod — Kubernetes restarted it
+    in 10 seconds) and didn't test anything meaningful
+  - No one wrote a postmortem for the game day because "nothing real
+    broke"
+
+  Task: Design a Game Day program that generates meaningful learning.
+  Include: how to design failure scenarios, safety controls, how to
+  run the game day, and how to write proactive postmortems from
+  controlled experiments.
+
+assertions:
+  - type: llm_judge
+    criteria: "Game Day failure scenarios are realistic and graduated — scenario design framework: 'Game Day scenarios must test meaningful failure modes, not trivial ones. Design principle: test the failures you fear, not the failures you have already solved. Tier 1 scenarios (building confidence): (1) Single service failure: kill one of the 12 microservices. Expected: dependent services degrade gracefully with circuit breakers, health checks detect and route around the failure. Tests: do circuit breakers actually work? Do health checks respond correctly? (2) Cache failure: terminate Redis. Expected: cache miss rate spikes, database handles the load increase, performance degrades but service remains available. Tests: does the application function without cache? Is the database sized to handle cache-miss traffic? Tier 2 scenarios (testing resilience): (3) Dependency failure: simulate payment API timeout (not down — slow). Expected: payment service returns errors gracefully, non-payment features remain unaffected. Tests: do timeouts prevent cascade? Does the bulkhead pattern isolate payment from other features? (4) Database failover: trigger PostgreSQL failover. Expected: brief connection interruption, application reconnects to new primary within seconds. Tests: does auto-failover work? Do applications handle connection reset gracefully? Tier 3 scenarios (testing organizational response): (5) Multi-service cascade: kill Redis and simultaneously inject latency into the API gateway. Expected: this is where you discover unknown dependencies and cascading failure paths. Tests: does incident response handle compound failures? Can the team diagnose when multiple things fail simultaneously? (6) Communication blackout: simulate a failure during a game day where the incident Slack channel is not available. Tests: does the team have backup communication methods? Can the IC coordinate without the primary communication tool?'"
+    weight: 0.35
+    description: "Scenario design"
+  - type: llm_judge
+    criteria: "Safety controls and game day execution process prevent real incidents — safety controls: '(1) Blast radius limits: every Game Day experiment has a defined blast radius. For production experiments: only one service affected at a time, automatic abort if customer error rate exceeds 1%, dedicated safety engineer monitoring who can abort at any time. For staging experiments: broader scope allowed but still monitored. (2) Abort criteria: explicitly defined before each experiment. If any of the following occur, the experiment is immediately aborted: customer-facing errors exceed the pre-defined threshold, the failure propagates beyond the intended blast radius, the team cannot diagnose the situation within the allotted time, any data integrity concern. (3) Communication: all Game Day experiments are announced to the engineering organization 48 hours in advance. The exact time and affected services are disclosed. Customer support is briefed. No surprise chaos in production.' Execution process: 'Pre-Game Day (1 week before): select scenarios, define expected behavior for each, assign roles (IC, TL, Safety Engineer, observers), prepare rollback procedures for each experiment. Game Day agenda: (1) Kickoff (30 min): review scenarios, confirm safety controls, verify monitoring dashboards. (2) Experiments (2-3 hours): run scenarios sequentially with debriefs between each. Each experiment: inject failure, observe system and team response, run for defined duration or until abort criteria met, restore normal operation, brief debrief. (3) Wrap-up (30 min): initial observations, assign postmortem owners. Post-Game Day (within 1 week): write proactive postmortems for each scenario'"
+    weight: 0.35
+    description: "Safety and execution"
+  - type: llm_judge
+    criteria: "Proactive postmortem format captures learning from controlled experiments — proactive postmortem template: 'A proactive postmortem (from a Game Day) uses a modified template because the context is different: the failure was intentional, controlled, and observed. Template sections: (1) Experiment Design: what failure was injected, what was the expected system behavior, what was the expected team response. (2) Actual vs. Expected: what actually happened vs. what we expected. This is the core learning section. Surprises go here — the things we learned that we did not know before the experiment. (3) System Findings: technical discoveries about system resilience. Example: we expected the circuit breaker to trip in 5 seconds; it took 45 seconds because the threshold was misconfigured. Example: we expected database failover to take 10 seconds; it took 3 minutes because the connection pool did not handle reconnection gracefully. (4) Process Findings: discoveries about incident response process. Example: IC was assigned in 2 minutes, but it took 15 minutes to assemble the right people because the escalation list was outdated. Example: status updates were clear and timely, but no one remembered to update the status page. (5) Action Items: same rigor as real postmortem action items — owner, due date, specific and measurable. (6) Next Game Day Recommendations: what should the next Game Day test based on what we learned?' Why proactive postmortems matter: 'Game Day postmortems are often skipped because nothing real broke. This is exactly wrong. The value of a Game Day is the postmortem — it captures what would have gone wrong in a real incident. Without the postmortem, the Game Day is an expensive demo. With the postmortem, the Game Day is a proactive investment in reliability.' Success metrics for the Game Day program: 'Leading: number of findings per Game Day (target: 5+), action items generated and completed, scenarios that revealed unknown failure modes. Lagging: real incidents that match Game Day scenarios (should have better outcomes), mean time to detect and recover for failure modes that were game-day tested vs. untested'"
+    weight: 0.30
+    description: "Proactive postmortem format"

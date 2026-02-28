@@ -1,0 +1,49 @@
+meta:
+  id: expert-data-cleaning-shift
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Expert data cleaning shift — solve an enterprise-scale data quality crisis combining technical, organizational, and compliance challenges"
+  tags: [shift, combined, assessment, expert]
+
+state: {}
+
+trigger: |
+  You are the newly hired chief data officer at a mid-size insurance
+  company. The CEO tells you:
+
+  "We just failed a regulatory audit because of data quality. Our
+  customer data is a mess — we can't reliably identify which policies
+  belong to which customers. Our claims processing has a 12% error
+  rate attributable to data quality. And we're about to undergo a
+  core system migration that will touch all 3 million customer records.
+
+  Specific issues:
+  1. 3 million customer records across 6 legacy systems, estimated
+     15% duplicates
+  2. Policy data has 8% missing fields critical for claims processing
+  3. Historical data quality: some records are 20+ years old with
+     outdated formats and standards
+  4. No data quality metrics — we don't even know how bad it is
+  5. The core system migration starts in 6 months — we need clean
+     data to migrate
+
+  You have 6 months, a team of 8, and a $2M budget. Fix this."
+
+  Task: Design a 6-month data quality remediation plan that addresses
+  deduplication, missing data, legacy records, quality measurement,
+  and migration readiness within the given constraints.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a realistic 6-month plan with the given constraints — prioritizes based on the migration deadline (what MUST be done before migration vs what can be done after), allocates the 8-person team effectively (some on deduplication, some on missing data, some on quality metrics), phases the work (month 1: assessment and profiling, months 2-3: critical cleaning for migration, months 4-5: broader quality remediation, month 6: migration readiness testing), and manages the $2M budget (tooling, possibly contractors, data quality platform). Acknowledges what can't be done in 6 months and plans for post-migration continuation"
+    weight: 0.35
+    description: "RealisticPlan"
+  - type: llm_judge
+    criteria: "Response addresses the 15% deduplication challenge at insurance scale — matching customers across 6 legacy systems with different schemas and IDs, insurance-specific matching rules (policy holder name + date of birth + address is the strongest combination), handling family members at the same address (not duplicates), creating a master customer index before migration, and the risk of incorrect merges in insurance (merging two different customers could misassign policies and claims)"
+    weight: 0.35
+    description: "Deduplication"
+  - type: llm_judge
+    criteria: "Response addresses migration readiness — defining data quality acceptance criteria for the new system (what quality level must data meet to be migrated?), data quality gates in the migration process (validate each batch before loading into the new system), handling records that don't meet quality standards (clean and migrate, migrate with quality flags, or leave in legacy?), testing the migration with representative data samples, and the ongoing quality monitoring after migration (ensuring the new system doesn't re-introduce quality issues)"
+    weight: 0.30
+    description: "MigrationReadiness"

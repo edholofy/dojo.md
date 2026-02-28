@@ -1,0 +1,39 @@
+meta:
+  id: metadata-driven-reporting
+  level: 4
+  course: sql-report-generation
+  type: output
+  description: "Build metadata-driven reporting systems — use data dictionaries, report catalogs, and configuration tables to create self-documenting, maintainable report infrastructure"
+  tags: [SQL, metadata, data-dictionary, report-catalog, self-documenting, advanced]
+
+state: {}
+
+trigger: |
+  After the third incident where a report used the wrong column
+  because column names were ambiguous (is "revenue" gross or net?
+  is "date" order date or ship date?), the data team decides to
+  build a metadata layer.
+
+  Requirements:
+  1. Data dictionary — every column has a business definition
+  2. Report catalog — every report is documented with its purpose,
+     owner, data sources, and refresh schedule
+  3. Column lineage — trace any report column back to its source
+  4. Self-service discovery — business users can search for existing
+     reports and understand what data is available
+
+  Task: Design the metadata-driven reporting infrastructure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response builds a comprehensive data dictionary and report catalog — catalog: 'Metadata-driven reporting infrastructure: Data dictionary: CREATE TABLE data_dictionary (dict_id SERIAL PRIMARY KEY, schema_name TEXT NOT NULL, table_name TEXT NOT NULL, column_name TEXT NOT NULL, business_name TEXT NOT NULL, business_definition TEXT NOT NULL, data_type TEXT, example_values TEXT, owner_team TEXT, pii_flag BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW(), UNIQUE(schema_name, table_name, column_name)). Populate with clear definitions: INSERT INTO data_dictionary (schema_name, table_name, column_name, business_name, business_definition, example_values) VALUES ('reporting', 'monthly_revenue', 'revenue', 'Net Revenue', 'Sum of completed order amounts after refunds and discounts have been subtracted. Excludes tax and shipping. Currency: USD.', '$12,500.00, $0.00, $150,000.00'), ('reporting', 'monthly_revenue', 'month', 'Revenue Month', 'The calendar month in which the order was placed (not shipped or paid). Truncated to first day of month.', '2024-01-01, 2024-02-01'), ('staging', 'stg_orders', 'amount', 'Gross Order Amount', 'Total amount charged to customer including tax and shipping. Before refunds. This is NOT the same as reporting.monthly_revenue.revenue.', '$135.99'). Now when someone asks: is revenue gross or net? the answer is in the dictionary. Report catalog: CREATE TABLE report_catalog (report_id SERIAL PRIMARY KEY, report_name TEXT UNIQUE NOT NULL, description TEXT, business_purpose TEXT, owner_email TEXT, source_tables TEXT[], refresh_schedule TEXT, avg_runtime_seconds INTEGER, downstream_consumers TEXT[], sla_hours INTEGER, tags TEXT[], created_at TIMESTAMP DEFAULT NOW()). INSERT INTO report_catalog VALUES (DEFAULT, 'monthly_revenue_by_segment', 'Monthly revenue broken down by customer segment and product category', 'Used by CFO for board presentations and by marketing for budget allocation', 'finance-team@company.com', ARRAY['reporting.monthly_revenue', 'business.dim_customers'], 'Daily at 6 AM', 45, ARRAY['CFO Dashboard', 'Marketing Budget Tool'], 8, ARRAY['finance', 'revenue', 'segment'])'"
+    weight: 0.35
+    description: "Catalog"
+  - type: llm_judge
+    criteria: "Response includes column lineage tracking and impact analysis — lineage: 'Column lineage — trace any number back to its source: CREATE TABLE column_lineage (lineage_id SERIAL PRIMARY KEY, target_schema TEXT, target_table TEXT, target_column TEXT, source_schema TEXT, source_table TEXT, source_column TEXT, transformation TEXT). INSERT INTO column_lineage VALUES (DEFAULT, 'reporting', 'monthly_revenue', 'revenue', 'staging', 'stg_orders', 'amount', 'SUM(amount) WHERE status = completed — refunds subtracted in business layer'), (DEFAULT, 'reporting', 'monthly_revenue', 'revenue', 'staging', 'stg_refunds', 'refund_amount', 'Subtracted from gross amount'), (DEFAULT, 'business', 'dim_customers', 'is_active', 'staging', 'stg_orders', 'order_date', 'Customer has at least one completed order in last 90 days'). Lineage query — where does this number come from: WITH RECURSIVE lineage_trace AS (SELECT target_schema, target_table, target_column, source_schema, source_table, source_column, transformation, 1 AS depth FROM column_lineage WHERE target_table = 'monthly_revenue' AND target_column = 'revenue' UNION ALL SELECT cl.target_schema, cl.target_table, cl.target_column, cl.source_schema, cl.source_table, cl.source_column, cl.transformation, lt.depth + 1 FROM column_lineage cl JOIN lineage_trace lt ON cl.target_table = lt.source_table AND cl.target_column = lt.source_column WHERE lt.depth < 5) SELECT * FROM lineage_trace ORDER BY depth. Impact analysis — what breaks if I change this column: SELECT rc.report_name, rc.owner_email, rc.downstream_consumers FROM column_lineage cl JOIN report_catalog rc ON cl.target_table = ANY(SELECT unnest(rc.source_tables)) WHERE cl.source_table = 'stg_orders' AND cl.source_column = 'amount'. Before changing the orders.amount column, run this query to see every report and dashboard that depends on it. Notify all owners before the change'"
+    weight: 0.35
+    description: "Lineage"
+  - type: llm_judge
+    criteria: "Explanation covers self-service discovery and metadata maintenance — discovery: 'Self-service report discovery: Search function for business users: CREATE OR REPLACE FUNCTION search_reports(p_keyword TEXT) RETURNS TABLE(report_name TEXT, description TEXT, owner TEXT, tags TEXT[]) AS $$ BEGIN RETURN QUERY SELECT rc.report_name, rc.description, rc.owner_email, rc.tags FROM report_catalog rc WHERE rc.report_name ILIKE '%' || p_keyword || '%' OR rc.description ILIKE '%' || p_keyword || '%' OR p_keyword = ANY(rc.tags) ORDER BY rc.report_name; END; $$ LANGUAGE plpgsql. SELECT * FROM search_reports('revenue') returns all reports related to revenue. Column search: SELECT schema_name, table_name, column_name, business_name, business_definition FROM data_dictionary WHERE business_definition ILIKE '%refund%'. A marketing analyst searching for refund finds the exact column with its definition. Metadata maintenance: automate dictionary updates when schema changes. CREATE OR REPLACE FUNCTION detect_undocumented_columns() RETURNS TABLE(schema_name TEXT, table_name TEXT, column_name TEXT) AS $$ BEGIN RETURN QUERY SELECT c.table_schema, c.table_name, c.column_name FROM information_schema.columns c LEFT JOIN data_dictionary dd ON c.table_schema = dd.schema_name AND c.table_name = dd.table_name AND c.column_name = dd.column_name WHERE c.table_schema IN ('staging', 'business', 'reporting') AND dd.dict_id IS NULL; END; $$ LANGUAGE plpgsql. Run weekly: any column without a dictionary entry triggers a notification to the data team. Coverage dashboard: SELECT schema_name, COUNT(*) AS total_columns, COUNT(dd.dict_id) AS documented, ROUND(COUNT(dd.dict_id) * 100.0 / COUNT(*), 1) AS coverage_pct FROM information_schema.columns c LEFT JOIN data_dictionary dd USING (schema_name, table_name, column_name) WHERE schema_name IN ('staging', 'business', 'reporting') GROUP BY schema_name. Target: 100% coverage for the reporting schema, 80% for business, 50% for staging'"
+    weight: 0.30
+    description: "Discovery"

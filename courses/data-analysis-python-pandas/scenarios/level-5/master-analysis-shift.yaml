@@ -1,0 +1,51 @@
+meta:
+  id: master-analysis-shift
+  level: 5
+  course: data-analysis-python-pandas
+  type: output
+  description: "Master analysis shift — navigate a day as CDO handling simultaneous strategic and tactical challenges requiring the full range of data leadership skills"
+  tags: [python, pandas, analysis, shift-simulation, CDO, master, leadership]
+
+state: {}
+
+trigger: |
+  You are the CDO. Today is the most consequential day of your tenure:
+
+  Challenge 1 (8 AM): The board demands an emergency data review.
+  A journalist is publishing a story tomorrow claiming your company's
+  published metrics (user counts, growth rates) are inflated.
+  "Prove our numbers are accurate or tell us if they're not."
+
+  Challenge 2 (10 AM): A major enterprise customer ($2M ARR) is
+  threatening to leave because their data shows your product's
+  reported 99.9% uptime is actually 97.5% by their measurement.
+  "Reconcile the numbers and save the account."
+
+  Challenge 3 (1 PM): The VP of Engineering proposes replacing the
+  entire data stack (warehouse, BI tool, pipelines) with a new
+  "modern data stack." Estimated cost: $3M over 2 years. The CEO
+  wants your recommendation by end of day.
+
+  Challenge 4 (3 PM): Your best data scientist just resigned.
+  They were the only person who understood the pricing optimization
+  model that generates $5M in annual value. No documentation exists.
+
+  Challenge 5 (5 PM): A regulatory inquiry arrives — the FTC wants
+  to understand how your recommendation algorithm works and whether
+  it discriminates against any protected classes.
+
+  Task: Navigate all five challenges with CDO-level responses.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles the metrics accuracy investigation and customer uptime reconciliation with analytical rigor — accuracy: 'Challenge 1 — Metrics accuracy audit: This is existential — inflated metrics can trigger SEC investigations, lawsuits, and loss of investor confidence. Immediate actions: pull the exact methodology used to calculate every published metric. user_count_audit = pd.DataFrame({\"metric\": [\"Monthly Active Users\", \"Total Registered Users\", \"YoY Growth Rate\", \"Net Revenue Retention\"], \"published_value\": [2_500_000, 8_000_000, 85, 125], \"methodology\": [\"Users with 1+ login in 30 days\", \"All accounts ever created\", \"(current MAU - prior MAU) / prior MAU\", \"(Starting MRR + expansion - churn) / Starting MRR\"]}). For each metric, independently recalculate from raw data: mau = events[events[\"timestamp\"] > cutoff_30d][\"user_id\"].nunique(). Are bot accounts excluded? Are internal test accounts excluded? Are inactive trials counted? Common inflation sources: counting deleted accounts in total users, counting bots or scrapers as MAUs, using a generous definition of active (page view vs meaningful action), comparing non-equivalent time periods for growth rates. If discrepancies exist: quantify the difference. Prepare corrected numbers. Brief the board with both old and new methodology. If the journalist is right: get ahead of the story. Publish corrected metrics with transparent methodology before the article drops. Challenge 2 — Uptime reconciliation: the customer is measuring uptime differently — this is a definitions problem. Our measurement: server-side availability (is the API responding). Their measurement: end-to-end availability (can their users complete transactions). uptime_comparison = pd.DataFrame({\"measurement\": [\"Server availability\", \"API response under 500ms\", \"API response under 2s\", \"End-to-end transaction success\", \"Customer-perceived uptime\"], \"our_number\": [99.95, 99.8, 99.9, 99.2, None], \"their_number\": [None, None, None, None, 97.5]}). The gap: our server was available 99.95% of the time, but API latency spikes caused transaction timeouts, which the customer measures as downtime. Resolution: acknowledge their measurement is valid for their use case. Propose SLA amendment that includes latency guarantees, not just availability. Offer credit for the gap between promised and delivered SLA. Commit to latency monitoring and alerting'"
+    weight: 0.35
+    description: "Accuracy"
+  - type: llm_judge
+    criteria: "Response evaluates the technology migration and handles the key person risk — strategy: 'Challenge 3 — Data stack migration evaluation: The VP of Engineering wants to replace everything. The CEO wants your recommendation. Framework for evaluation: migration_analysis = pd.DataFrame({\"dimension\": [\"Current pain points solved\", \"Migration risk\", \"Business disruption\", \"Team retraining cost\", \"Opportunity cost of 2-year migration\", \"New capabilities enabled\"], \"current_stack\": [\"none (status quo)\", \"none\", \"none\", \"none\", \"none\", \"none\"], \"full_migration\": [\"all\", \"high\", \"6+ months partial outage\", \"$500K\", \"team builds infra instead of analysis for 2 years\", \"real-time, ML serving, better governance\"], \"incremental_upgrade\": [\"most\", \"low\", \"minimal\", \"$100K\", \"team continues analysis with phased improvements\", \"most new capabilities within 12 months\"]}). Recommendation: incremental upgrade, NOT full migration. Reasons: the current stack works — it has pain points but no critical failures. A 2-year migration means 2 years of reduced analytical output. The team builds infrastructure instead of delivering business value. The risk of migration failure is significant (30-40% of data migrations exceed budget and timeline). Counter-proposal: replace the weakest component first (usually the ETL layer). Add new capabilities alongside existing ones. Migrate data sources incrementally. Budget: $1.2M over 18 months instead of $3M over 24 months. Challenge 4 — Key person risk (pricing model): Immediate (today): before the data scientist's last day, schedule knowledge transfer sessions. Ask them to record video walkthroughs of the model. Request all code, notebooks, and training data locations. This week: assign 2 team members to pair with the departing scientist. Run the model end-to-end with them watching. Document inputs, outputs, parameters, and business logic. Next 30 days: reproduce the model results independently. Write comprehensive documentation. Add monitoring to detect model drift. Build retraining pipeline so the model can be updated. Long-term policy change: no model goes to production without: documentation, at least 2 people who understand it, automated retraining pipeline, monitoring and alerting. This is the bus factor problem. The $5M model was a $5M single point of failure'"
+    weight: 0.35
+    description: "Strategy"
+  - type: llm_judge
+    criteria: "Response addresses the regulatory inquiry about algorithmic fairness — regulatory: 'Challenge 5 — FTC algorithmic fairness inquiry: This is the most legally sensitive challenge. Involve legal counsel immediately. Do not respond to the FTC without legal review. What the FTC wants to know: what data does the recommendation algorithm use? Does it use any protected attributes (race, gender, age, religion, national origin) directly or through proxies? Are outcomes equitable across protected groups? Prepare the analysis (with legal oversight): recommendations = pd.read_sql(\"SELECT * FROM recommendation_outcomes\", engine). users = pd.read_sql(\"SELECT user_id, age_group, gender, zip_code FROM users\", engine). analysis = recommendations.merge(users, on=\"user_id\"). Disparate impact analysis: for attr in [\"gender\", \"age_group\"]: outcome_by_group = analysis.groupby(attr)[\"positive_outcome\"].mean(). max_rate = outcome_by_group.max(). min_rate = outcome_by_group.min(). disparate_impact = min_rate / max_rate. print(f\"{attr}: DI ratio = {disparate_impact:.2f} (threshold: 0.80)\"). Proxy analysis: does zip_code correlate with race? Does browsing history correlate with age? Run correlation analysis on all features used by the algorithm against protected attributes. Model explainability: prepare SHAP values or feature importance for the recommendation model. Show which features drive recommendations and whether any are proxies for protected attributes. Response preparation: document the algorithm's purpose, inputs, training data, and evaluation methodology. Show the disparate impact analysis results. If issues are found: acknowledge them and present a remediation plan. If no issues: present the evidence clearly with statistical backing. The CDO day summary: 5 challenges, each requiring different skills — audit methodology, customer negotiation, technology strategy, people management, and regulatory compliance. The common thread: data leadership is not about pandas and SQL. It is about using data to navigate business decisions under pressure, communicating with diverse stakeholders, and balancing short-term urgency with long-term strategy'"
+    weight: 0.30
+    description: "Regulatory"

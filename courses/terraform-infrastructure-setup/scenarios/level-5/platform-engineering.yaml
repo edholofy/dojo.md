@@ -1,0 +1,47 @@
+meta:
+  id: platform-engineering
+  level: 5
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Build platform engineering with Terraform — design self-service infrastructure platforms, golden paths, and developer experience layers"
+  tags: [Terraform, platform-engineering, self-service, golden-paths, developer-experience, master]
+
+state: {}
+
+trigger: |
+  Your client (Series D startup, 300 engineers) wants to build an
+  internal developer platform (IDP). Current state:
+  - Platform team (5 engineers) is a bottleneck: every infrastructure
+    request goes through them (2-week backlog)
+  - Teams can't provision their own infrastructure
+  - 100+ Jira tickets/month for "create an S3 bucket", "add a
+    security group rule", "deploy a new service"
+  - Platform team burns out, application teams frustrated
+  - CTO: "I want developers to provision infrastructure like ordering
+    from a menu. Self-service, guardrails, no tickets."
+
+  The vision:
+  ```
+  Developer: "I need a new microservice with a database"
+  Platform:  → Service catalog → select template → customize parameters
+             → automated deployment → service running in 15 minutes
+  ```
+
+  Task: Design the self-service infrastructure platform using
+  Terraform as the foundation. Cover: platform architecture,
+  service catalog design, golden path modules, developer experience
+  (UI/CLI), governance and guardrails, and team structure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Platform architecture is designed — layers: (1) Foundation layer: Terraform modules for core infrastructure (VPC, EKS, networking) managed by platform team. (2) Service layer: golden path modules for common patterns (microservice, worker, scheduled job) — opinionated defaults, compliant by construction. (3) Self-service layer: Backstage/Port/internal tool that presents modules as a catalog, takes developer inputs, generates Terraform code, creates PR, applies via CI/CD. Developers interact with the catalog, not with Terraform directly. Platform team maintains modules and platform, not individual team infrastructure"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Service catalog and golden paths are practical — golden path: the recommended, supported, and easiest way to do something. Example golden paths: (1) 'Microservice': ECS Fargate + ALB + CloudWatch + IAM role + optional RDS, (2) 'Data Pipeline': Lambda + S3 + DynamoDB + Step Functions, (3) 'Static Website': S3 + CloudFront + Route53. Each path: configurable parameters (team, environment, size), pre-configured security (encryption, logging, network isolation), cost-estimated (Infracost). Developer inputs: service name, team, environment, size (small/medium/large) — platform handles the rest. Escape hatch: teams can customize beyond golden paths with platform team review"
+    weight: 0.35
+    description: "Catalog and golden paths"
+  - type: llm_judge
+    criteria: "Developer experience and team structure are covered — UX options: (1) Web UI (Backstage with Terraform plugin) for visual catalog, (2) CLI tool for power users (terraform-wrapper that sets backend, workspace, validates inputs), (3) GitOps (developer creates YAML, platform auto-generates Terraform). Guardrails: all golden paths include compliance controls by default, policy enforcement prevents non-compliant customization, cost limits per team. Team structure: platform team maintains modules and self-service tools, dedicated 'customer success' role for developer support, rotating on-call for platform issues. Success metrics: time-to-infrastructure (target: < 30 minutes), developer satisfaction (NPS), ticket reduction (target: 80% reduction), platform team leverage (ratio of supported engineers per platform engineer)"
+    weight: 0.30
+    description: "DX and team"

@@ -1,0 +1,37 @@
+meta:
+  id: funnel-based-pricing
+  level: 4
+  course: funnel-analysis
+  type: output
+  description: "Funnel-based pricing optimization — use funnel data to optimize pricing strategy, measure price sensitivity at each stage, and maximize revenue across the conversion journey"
+  tags: [pricing, price-sensitivity, revenue-optimization, conversion, expert]
+
+state: {}
+
+trigger: |
+  The VP of Revenue says: "I suspect our pricing is wrong. Some users
+  fly through the funnel until they see the price, then drop off
+  massively. Others seem willing to pay more than we charge. How do
+  I use funnel data to optimize our pricing strategy?"
+
+  Current funnel data:
+  Visit: 200,000 → Signup: 10,000 (5%) → Activation: 3,500 (35%) →
+  View pricing: 2,800 (80%) → Start trial: 1,400 (50%) → Paid: 420
+  (30%). ARPU: $49/month.
+
+  Task: Design a funnel-based pricing optimization approach that uses
+  conversion data to identify pricing issues and opportunities.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses pricing issues from funnel data — diagnosis: 'Pricing diagnosis from funnel data: where pricing friction appears: the pricing page is a clear friction point: 80% of activated users view pricing (strong interest). But only 50% of pricing viewers start a trial (half are deterred). Of those who trial, 30% convert (reasonable for SaaS). The pricing page → trial transition (50%) is the weakest step after initial acquisition. This suggests: price may be too high for 50% of interested users. The pricing page may not communicate value effectively. The plan structure may not match user needs (wrong tiers, wrong feature allocation). Pricing page behavioral analysis: segment users who viewed pricing into converters vs non-converters. Behavioral signals of price sensitivity: time on pricing page: converters spend 45 seconds. Non-converters spend 15 seconds (quick bounce = sticker shock) or 3+ minutes (comparing carefully but ultimately deciding against). Pricing page interactions: converters click on the recommended plan. Non-converters toggle between plans, check the FAQ, or visit the comparison page multiple times. Post-pricing behavior: non-converters who do not start a trial: 40% leave the site entirely (price is a dealbreaker). 35% return to the product (still evaluating, may convert later). 25% visit the pricing page again within 7 days (considering but hesitant). Revenue analysis: current: 420 paid × $49 = $20,580 MRR. Revenue ceiling: if ALL pricing viewers converted: 2,800 × 30% trial conversion × $49 = $41,160 MRR. The pricing page drop-off is costing approximately $20,000/month in potential revenue. Even a 10pp improvement (50% → 60% pricing-to-trial) adds approximately $4,100/month'"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response covers pricing experimentation methodology — experimentation: 'Pricing experimentation using funnel data: Experiment 1 — Price point testing: current price: $49/month. Test prices: $39, $49 (control), $59, $79. For each price point, measure: pricing page → trial conversion rate. Trial → paid conversion rate. Revenue per pricing page visitor (price × conversion rate). Expected results pattern: price | pricing→trial | trial→paid | revenue per visitor. $39: 62% | 35% | $8.47. $49: 50% | 30% | $7.35. $59: 42% | 28% | $6.94. $79: 28% | 25% | $5.53. In this pattern, $39 maximizes revenue per visitor despite lower price. But also consider: LTV at each price point (lower price users may churn faster). Willingness to expand (users anchored at $39 may resist upgrades). Implementation: use a between-subjects design (each user sees only one price). Ensure random assignment at the user level (not session level). Run for at least 4 weeks to capture the full trial-to-paid cycle. Experiment 2 — Tier structure testing: current: one plan at $49. Test: three tiers. Starter ($29): basic features, 1 user, limited usage. Professional ($49): all features, 5 users, moderate usage. Team ($99): all features, unlimited users, advanced features. Measure: which tier is selected most often (distribution). Overall revenue per pricing page visitor. Does the presence of a cheaper option increase total trial starts? The decoy effect: the $99 plan may not generate many subscribers itself, but it makes $49 look like great value by comparison. Experiment 3 — Value communication testing: same price ($49) but different pricing page designs. Variant A: feature comparison table (feature-focused). Variant B: ROI calculator showing cost savings (value-focused). Variant C: customer testimonials with specific outcomes (social-proof-focused). This tests whether the problem is the price itself or how the value is communicated. If variant B or C significantly outperforms variant A at the same price, the issue is not price — it is perceived value'"
+    weight: 0.35
+    description: "Experimentation"
+  - type: llm_judge
+    criteria: "Response covers advanced pricing-funnel strategies — advanced: 'Advanced pricing-funnel strategies: Strategy 1 — Segment-specific pricing funnels: different user segments have different willingness to pay. Segment the funnel by user characteristics: solo users (1 person, using for personal projects): willing to pay $15-25/month. Small teams (2-5 people): willing to pay $30-60/month per seat. Enterprises (50+ people): willing to pay $80-150/month per seat. A single $49 price point: overcharges solo users (they drop off at pricing). Undercharges enterprises (leaving money on the table). Solution: personalized pricing page based on signals: user invited 0 colleagues during trial → show solo pricing. User invited 3 colleagues → show team pricing. User from a Fortune 500 company → show enterprise pricing. Strategy 2 — Reverse pricing from funnel targets: work backwards from the revenue target. Target: $50,000 MRR. Required paid customers at $49: 1,020. Required trials at 30% conversion: 3,400. Required pricing page views at current 50% trial start: 6,800. Required activations at 80% pricing view rate: 8,500. Required signups at 35% activation: 24,286. Required visitors at 5% signup: 485,714. If 485K visitors is unrealistic (current: 200K), something must change. Option A: improve conversion rates (the optimization path). Option B: increase ARPU (the pricing path). If ARPU increases to $99: required paid = 505. Required trials = 1,683. Required pricing views = 3,366 (at 50%). Required activations = 4,208. Required signups = 12,023. Required visitors = 240,460 (achievable with current traffic + modest growth). Higher pricing may make the revenue target achievable without needing to 2.5x traffic. Strategy 3 — Price anchoring in the funnel: introduce pricing signals before the pricing page. During onboarding: this feature you just used is part of our Professional plan ($49/month). During trial: you have used $150 worth of features this month. During pricing page: your team has saved 12 hours using our product (worth $600 at your team's rate). By the time users reach the pricing page, they have already been anchored to the value, reducing sticker shock. Measurement: compare pricing page conversion for users who received anchoring signals vs those who did not'"
+    weight: 0.30
+    description: "Advanced"

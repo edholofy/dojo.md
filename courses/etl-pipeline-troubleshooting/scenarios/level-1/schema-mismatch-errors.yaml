@@ -1,0 +1,42 @@
+meta:
+  id: schema-mismatch-errors
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Schema mismatch errors — handle failures caused by source schema changes like added/removed columns, renamed fields, and data type changes"
+  tags: [schema, mismatch, column, data-type, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "Our ETL pipeline that loads data
+  from a REST API into our warehouse broke this morning. The error:
+
+  KeyError: 'customer_phone'
+
+  It turns out the API team renamed 'customer_phone' to 'phone_number'
+  in their latest release — without telling us. Last month something
+  similar happened when they added a new field 'loyalty_tier' that
+  caused our INSERT to fail because the target table didn't have
+  that column.
+
+  How do I fix this and make our pipeline more resilient to upstream
+  schema changes?"
+
+  Task: Explain how to handle schema mismatches in ETL pipelines,
+  fix the immediate issues, and design approaches that are resilient
+  to upstream changes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response fixes the immediate issues — for the renamed field: update the ETL mapping to use 'phone_number' instead of 'customer_phone', or add an alias/mapping layer that handles the rename. For the new field: either add the column to the target table (ALTER TABLE ADD COLUMN) or configure the ETL to ignore unknown fields. Explains the difference between hard-coded field references (brittle) and configurable field mappings (resilient)"
+    weight: 0.35
+    description: "ImmediateFix"
+  - type: llm_judge
+    criteria: "Response designs resilience patterns — schema detection: compare source schema against expected schema before processing (flag new/removed/renamed columns), flexible parsing: use schema-on-read approaches that tolerate extra fields, column mapping configuration: externalize field mappings so they can be updated without code changes, schema versioning: work with the API team to version their schema and provide changelogs, defensive coding: check for field existence before accessing (get() with defaults instead of direct key access)"
+    weight: 0.35
+    description: "ResiliencePatterns"
+  - type: llm_judge
+    criteria: "Response addresses the organizational problem — the real issue is that the API team changed the schema without communicating to downstream consumers. Suggests: establishing data contracts between teams, setting up schema change notifications, creating a schema registry that tracks breaking changes, implementing automated schema drift detection that alerts the ETL team when source schemas change. Distinguishes between breaking changes (renames, removals, type changes) and non-breaking changes (additions)"
+    weight: 0.30
+    description: "OrganizationalFix"

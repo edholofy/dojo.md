@@ -1,0 +1,43 @@
+meta:
+  id: expert-funnel-shift
+  level: 4
+  course: funnel-analysis
+  type: output
+  description: "Expert funnel shift — handle enterprise-level funnel challenges requiring architecture design, cross-product analysis, and organizational transformation in a single day"
+  tags: [shift-simulation, expert, enterprise, multi-request]
+
+state: {}
+
+trigger: |
+  Three expert-level funnel requests arrive simultaneously:
+
+  Request 1 (CTO): "We're migrating from a monolith to microservices.
+  Our funnel tracking is embedded in the monolith codebase. How do we
+  ensure zero tracking regression during the migration while building
+  a better funnel data architecture?"
+
+  Request 2 (Chief Revenue Officer): "Our company just acquired a
+  competitor. They have 2 million users with a completely different
+  product and funnel. How do I create a unified funnel view across
+  both products and identify the combined portfolio opportunities?"
+
+  Request 3 (Board Member): "I'm seeing reports from the product team,
+  marketing team, and sales team — they all show different conversion
+  numbers. I've lost trust in the data. Fix this before the next
+  board meeting."
+
+  Task: Handle all three requests with detailed analysis.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with migration strategy — migration: 'Request 1 — Funnel tracking migration strategy: phase 1 — Dual-write architecture (month 1-2): before migrating any service, implement dual-write tracking. Every funnel event writes to BOTH the old monolith tracking system AND the new microservices event stream. This ensures: zero tracking regression (old system continues working). Parallel validation (compare old and new event streams). Rollback capability (if the new system has issues, old system is still active). Implementation: add a tracking proxy layer that receives events and forwards to both systems. Monitor discrepancy rate: old system events vs new system events (target: under 1% discrepancy). Phase 2 — Service-by-service migration (month 3-6): migrate funnel tracking one service at a time. For each service: 1. Map all funnel events in the monolith code to the new service. 2. Implement the events in the new service with identical schemas. 3. Deploy and run dual-write for 2 weeks. 4. Compare event counts and properties between old and new. 5. If discrepancy is under 0.5%: decommission old tracking for that service. 6. If discrepancy exceeds 0.5%: investigate and fix before cutting over. Migration order: start with lowest-risk funnel steps (page views, non-critical engagement events). Then move to medium-risk (signup, activation). Last: highest-risk (checkout, payment, transaction events). Phase 3 — New architecture advantages (month 6+): with the migration complete, the new architecture enables: service-level funnel ownership (each team owns their funnel events). Standardized event schema (enforced by a schema registry). Real-time event streaming (Kafka-based, sub-second latency). Self-serve funnel creation (no code deployment needed). Critical risk mitigation: the biggest risk is losing events during migration. Mitigation: maintain the dual-write for 30 days after each service migration. Run automated reconciliation daily. Any discrepancy above threshold automatically reverts to old system'"
+    weight: 0.35
+    description: "Migration"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with acquisition integration plan — acquisition: 'Request 2 — Post-acquisition unified funnel analysis: step 1 — Map both products' funnels (week 1-2): our product funnel: visit → signup → activation → trial → paid → expansion. Acquired product funnel: visit → register → onboarding → subscribe → upgrade. These are different funnels with different stage definitions. Mapping: our signup ≈ their register (account creation). Our activation ≈ their onboarding (first value moment). Our paid ≈ their subscribe (first payment). Step 2 — Create a unified funnel framework (week 3-4): define a canonical funnel that encompasses both products: awareness → acquisition → activation → revenue → expansion. Map each product's specific stages to the canonical stages: canonical stage | our product | acquired product. Awareness: website visit | website visit. Acquisition: signup | register. Activation: activation (connected data) | onboarding (created workspace). Revenue: paid subscription | subscribe. Expansion: plan upgrade or seat addition | plan upgrade. Step 3 — Unified metrics (week 4-6): compute conversion rates at each canonical stage for both products: stage | our product | acquired product | combined. Awareness → acquisition: 5.0% | 3.2% | 4.3%. Acquisition → activation: 35% | 42% | 38%. Activation → revenue: 18% | 25% | 21%. Revenue → expansion: 15% | 8% | 12%. Overall: 0.47% | 0.34% | 0.41%. Insights: the acquired product has better activation → revenue (25% vs 18%) — they are better at converting activated users to paying. Our product has better expansion (15% vs 8%) — we are better at upselling. Combined opportunity: apply their activation-to-revenue playbook to our users AND our expansion playbook to their users. Step 4 — Portfolio opportunity analysis: cross-product potential: our 3M users + their 2M users = 5M total. Overlap analysis: 200K users have accounts on both (4% overlap). These overlapping users: convert at 2x the rate of single-product users. Have 3x the LTV. Cross-sell opportunity: introduce our product to their 1.8M unique users and vice versa. If 5% adopt the second product: 90,000 cross-product users × 3x LTV multiplier = significant revenue uplift'"
+    weight: 0.35
+    description: "Acquisition"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with trust restoration plan — trust: 'Request 3 — Restoring board trust in funnel data: why the numbers disagree (root cause analysis): product team reports: signup → activation → paid conversion (product-centric view). Uses Mixpanel. Counts unique users. 30-day conversion window. Result: 18% overall conversion (signup to paid). Marketing team reports: visitor → lead → MQL → opportunity conversion (marketing-centric view). Uses Google Analytics + HubSpot. Counts sessions (not users). 90-day attribution window. Result: 3.2% overall conversion (visitor to paid). Sales team reports: lead → SQL → opportunity → close (sales-centric view). Uses Salesforce. Counts leads. Variable time window (deal-specific). Result: 22% overall conversion (SQL to close). All three numbers are correct within their own definitions. The problem is not inaccuracy — it is inconsistency. Immediate fix for the next board meeting (2 weeks): 1. Create ONE certified board-level funnel metric. Definition: unique visitors who complete a purchase within 30 days of first visit. Source of truth: data warehouse (not any team's tool). Computed: by the analytics engineering team with documented methodology. 2. Show how each team's metric relates to the certified metric: certified overall conversion: 2.1% (visitor to paid, 30-day window, unique users). Product's 18% is the BOTTOM of the funnel (signup to paid) — a valid but narrower metric. Marketing's 3.2% uses sessions instead of users, inflating the denominator — will be harmonized. Sales's 22% covers only sales-touched leads — a valid segment metric, not the overall funnel. 3. Present a reconciliation slide to the board: one slide showing: the certified metric (2.1%) as the headline. How each team's metric maps to a specific segment or stage. Why the numbers are different (different definitions, not errors). Commitment: going forward, all board reporting will use certified metrics. Long-term governance plan: implement the enterprise funnel governance framework. Metric certification process with clear ownership. Quarterly metric reviews with cross-functional stakeholders. Single dashboard for board reporting using only certified metrics. Timeline: Q1 — certify top 5 metrics, create board dashboard. Q2 — migrate all teams to reference certified metrics. Q3 — implement self-serve with governance guardrails. The board should see consistent numbers starting at the next meeting'"
+    weight: 0.30
+    description: "Trust"

@@ -1,0 +1,51 @@
+meta:
+  id: review-roi-analysis
+  level: 5
+  course: code-review-feedback-writing
+  type: output
+  description: "Calculate code review ROI — build a rigorous cost-benefit analysis of code review investment including time costs, defect prevention, knowledge sharing, and talent retention"
+  tags: [code-review, ROI, cost-benefit, financial-analysis, business-case, master]
+
+state: {}
+
+trigger: |
+  The CFO challenges your engineering budget: "Your engineers spend
+  30% of their time reviewing each other's code. That's 20 full-time
+  engineer equivalents doing nothing but reading code. Can we cut
+  reviews in half and hire 10 fewer engineers?"
+
+  You need a rigorous ROI analysis. Data:
+
+  Engineering costs:
+  - 60 engineers × $180K average total comp = $10.8M/year
+  - 30% on review = $3.24M/year on review activities
+  - Average time-to-hire: 3 months, cost: $45K per hire
+
+  Quality data:
+  - With current reviews: 4% defect escape rate (20 production bugs/year)
+  - Average production bug cost: $25K (investigation, fix, customer impact)
+  - Before reviews (2 years ago): 18% defect escape rate (90 bugs/year)
+
+  Knowledge/talent data:
+  - Attrition: 8% (industry: 15%)
+  - New hire productivity: full speed in 3 months (industry: 6 months)
+  - Knowledge sharing: 65% of cross-team knowledge via reviews
+
+  Task: Build the financial model for the CFO. Include: true cost
+  of reviews, value of defect prevention, value of knowledge sharing,
+  value of talent retention, and the optimal review investment level.
+  Answer: can we cut reviews without consequence?
+
+assertions:
+  - type: llm_judge
+    criteria: "Cost model is rigorous and transparent — review cost: $3.24M/year (30% of engineering time). But: not all review time is equal. Breakdown: 40% reading/understanding code (this IS knowledge sharing), 30% writing feedback (this IS mentoring), 20% style/formatting discussion (this SHOULD be automated), 10% back-and-forth disagreements (this CAN be reduced). The actual waste is ~30% of review time (~$970K), not the full $3.24M. Reduction opportunity: automate style checks (eliminate 20% of review time = $648K savings), streamline process (reduce back-and-forth = $324K savings). Total recoverable: ~$972K without touching quality review time. This is different from 'cutting reviews in half'"
+    weight: 0.35
+    description: "Cost model"
+  - type: llm_judge
+    criteria: "Value model quantifies benefits across dimensions — defect prevention: current 20 bugs/year × $25K = $500K. Without reviews (historical): 90 bugs/year × $25K = $2.25M. Net prevention value: $1.75M/year. If we cut reviews in half, estimate 50 bugs/year × $25K = $1.25M (net loss of $750K). Talent retention: 8% vs 15% attrition difference = 4.2 fewer departures × ($45K hiring + $90K ramp-up + $180K first-year productivity loss) = $1.32M/year saved. Onboarding speed: 3 vs 6 month ramp = 3 months × $15K/month × 10 new hires/year = $450K value. Knowledge sharing: prevents knowledge silos, reduces bus factor risk (quantify: if key engineer leaves unplanned, $500K estimated recovery cost per critical system). Total value of current review investment: $3.5M+ annually for $3.24M cost = positive ROI"
+    weight: 0.35
+    description: "Value quantification"
+  - type: llm_judge
+    criteria: "Recommendation addresses the CFO's specific question — 'Can we cut reviews in half? No — but we can make reviews 30% more efficient.' The 30% efficiency gain: (1) automate style/formatting ($648K saved), (2) reduce review rounds with better PR templates ($324K saved), (3) total savings: $972K/year — equivalent to hiring 5.4 additional engineers. The 10 engineers the CFO wants to not-hire: our review efficiency improvements free up equivalent capacity without the quality and retention risks. Optimal review investment: ~20-22% of engineering time (down from 30%) achieves same quality outcomes. Below 15%: defect rate increases measurably. Below 10%: knowledge sharing collapses, attrition rises. Visualization: show the diminishing returns curve — quality vs review investment percentage. Present as: 'We're over-investing in the wrong parts of review. Let me redirect that investment, not eliminate it.'"
+    weight: 0.30
+    description: "Actionable recommendation"

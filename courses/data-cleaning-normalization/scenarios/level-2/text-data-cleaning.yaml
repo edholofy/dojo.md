@@ -1,0 +1,39 @@
+meta:
+  id: text-data-cleaning
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Text data cleaning — standardize, normalize, and clean unstructured text data including names, addresses, and free-text fields"
+  tags: [text-cleaning, standardization, names, addresses, intermediate]
+
+state: {}
+
+trigger: |
+  A data engineer says: "I'm building a master customer record by
+  merging data from 4 source systems. The text fields are a mess:
+
+  Names: 'JOHN SMITH', 'john smith', 'Smith, John', 'Dr. John R. Smith Jr.'
+  Addresses: '123 Main St', '123 Main Street', '123 main st., apt 4B'
+  Phone: '(555) 123-4567', '555-123-4567', '+1 5551234567', '555.123.4567'
+  Company: 'IBM', 'I.B.M.', 'International Business Machines', 'IBM Corp'
+  Free text (notes): inconsistent formatting, abbreviations, typos
+
+  I need to standardize all of these so that matching and deduplication
+  work correctly. What's the systematic approach to cleaning text data?"
+
+  Task: Design a systematic text cleaning and standardization pipeline
+  for merging customer records from multiple source systems.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a systematic text cleaning pipeline — ordered steps: trim whitespace, normalize Unicode characters, handle encoding issues, normalize case (lowercase for matching, preserve original for display), remove or standardize punctuation, expand or standardize abbreviations (St → Street, Dr → Doctor or Dr for titles), handle special characters, and normalize name components (split into first/middle/last, handle prefixes and suffixes). Addresses each field type with specific rules"
+    weight: 0.35
+    description: "Pipeline"
+  - type: llm_judge
+    criteria: "Response addresses address and phone standardization specifically — address: parse into components (street number, street name, unit, city, state, zip), standardize street type abbreviations (St/Street/Str → Street), normalize directional prefixes (N/North → N), handle unit numbers consistently. Phone: strip all non-numeric characters, normalize to a standard format (E.164: +15551234567), handle country codes, extension numbers. Company names: remove common suffixes for matching (Corp, Inc, LLC, Ltd), handle abbreviations and acronyms"
+    weight: 0.35
+    description: "FieldSpecific"
+  - type: llm_judge
+    criteria: "Response distinguishes between matching normalization and display normalization — for matching purposes, aggressive normalization is appropriate (lowercase everything, remove punctuation, standardize aggressively). For display/storage, preserve the original or a well-formatted version. Store both: a normalized key for matching and the best-formatted version for display. Addresses the order of operations and how normalization enables downstream deduplication"
+    weight: 0.30
+    description: "MatchVsDisplay"

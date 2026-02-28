@@ -1,0 +1,37 @@
+meta:
+  id: migration-automation-pipeline
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Build a migration automation pipeline — design CI/CD integration for database migrations with automated testing, safety checks, and deployment orchestration"
+  tags: [database, migration, CI/CD, automation, pipeline, DevOps, expert]
+
+state: {}
+
+trigger: |
+  Your team currently runs database migrations manually: an engineer
+  SSHs into a bastion host and runs the migration tool against
+  production. This process is:
+
+  - Error-prone (wrong database targeted twice last year)
+  - Slow (manual steps add 30 minutes to each deployment)
+  - Unaudited (no log of who ran what migration when)
+  - Inconsistent (different engineers run migrations differently)
+
+  Task: Design an automated migration pipeline that integrates with
+  CI/CD. Include: the pipeline stages, safety gates, rollback
+  automation, and audit logging.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pipeline stages are comprehensive with safety gates — pipeline design: 'Stage 1: Migration detection (on PR creation). Detect: does this PR contain migration files? If yes: run the migration-specific pipeline stages. If no: skip migration stages (standard code deployment). Stage 2: Static analysis (automated, on PR). Run migration linter: check for unsafe patterns (missing CONCURRENTLY, backwards-incompatible changes, missing down migration). Validate migration file format: correct naming convention, valid SQL syntax. Check for conflicts: does this migration affect a table that another open PR also migrates? Query staging database for table sizes: annotate the PR with table row counts and estimated execution time. Gate: PR cannot merge if the linter reports critical issues. Stage 3: Staging migration (automated, on PR merge to main). Apply pending migrations to the staging database. Run the full application test suite against the migrated staging database. Time the migration execution. Compare staging schema against expected schema (schema diff). Gate: if staging migration fails or tests fail, block production deployment. Stage 4: Pre-production checks (automated, before production deployment). Verify: production database is healthy (connections, disk space, replication lag). Verify: no other migration is currently running. Verify: current production schema matches expected pre-migration state. Take a database snapshot (automated, before migration). Gate: if any check fails, halt and alert. Stage 5: Production migration (automated, during deployment). Apply the migration with statement_timeout and lock_timeout configured. Monitor: migration execution time, lock waits, error rates. If migration succeeds: proceed to application deployment. If migration fails: halt deployment, alert on-call team, and attempt automated rollback. Stage 6: Post-migration verification (automated, after deployment). Verify: schema matches expected post-migration state. Run smoke tests against production. Monitor application error rates for 15 minutes. If error rates spike: alert and optionally trigger automated rollback'"
+    weight: 0.35
+    description: "Pipeline stages"
+  - type: llm_judge
+    criteria: "Rollback automation handles failure scenarios — rollback: 'Automated rollback scenarios: (1) Migration fails to apply. Trigger: migration command exits with non-zero status. Action: if the migration was transactional (PostgreSQL DDL in a transaction), the database automatically rolled back. Verify the schema is unchanged. If the migration was non-transactional (CONCURRENTLY index, multi-step migration): assess the partial state. Run the down migration if one exists. If the down migration also fails: alert the on-call team for manual intervention. (2) Migration succeeds but application fails. Trigger: post-migration smoke tests or error rate monitoring detect issues. Action: run the down migration. Revert the application deployment to the previous version. Verify: schema is back to pre-migration state. Application health is restored. (3) Migration succeeds, application works, but issues found hours later. Trigger: manual decision by the on-call team. Action: the pipeline provides a rollback command that: runs the down migration, reverts the application if needed, and logs the rollback. This command is available for 48 hours after migration. After 48 hours: rollback becomes risky (data has been written to the new schema). Manual intervention is required. Rollback safety checks: before running any automated rollback: verify the down migration is safe (does not drop data that was written after the migration). If the rollback would cause data loss: alert the engineer and require manual approval. Log: every rollback action, who triggered it, and the outcome'"
+    weight: 0.35
+    description: "Rollback automation"
+  - type: llm_judge
+    criteria: "Audit logging and environment protection are addressed — audit and protection: 'Audit logging: every migration execution is logged with: timestamp, migration name and version, environment (staging/production), who triggered it (the CI/CD system, with the PR author), execution time, success or failure status, any rollback actions. Logs are stored in a centralized logging system (not just in CI/CD build logs). Retention: 2 years (for compliance and incident investigation). Format: structured JSON for searchability. Example: {timestamp: 2026-02-27T03:15:00Z, migration: 20260227_add_subscription_tier, environment: production, triggered_by: ci/cd, pr_author: engineer@company.com, duration_ms: 1250, status: success}. Environment protection: (1) Targeting safety: the pipeline determines the target database from the deployment environment, not from engineer input. This eliminates the wrong database targeted problem. The production database connection string is stored as a CI/CD secret, not in engineer-accessible configuration. (2) Migration ordering enforcement: the pipeline verifies that the staging migration ran successfully before allowing the production migration. Skip staging → block production. (3) Concurrent migration prevention: the pipeline acquires a distributed lock before running migrations. If another migration is running, it waits (with a timeout). This prevents two deployments from running conflicting migrations simultaneously. (4) Database credentials: the migration pipeline uses a dedicated database user with limited permissions. It can: CREATE, ALTER, DROP tables (schema changes). It cannot: DROP DATABASE, modify database-level settings, access other databases. This limits the blast radius of a misconfigured migration'"
+    weight: 0.30
+    description: "Audit and protection"

@@ -1,0 +1,40 @@
+meta:
+  id: advanced-clustering-methods
+  level: 3
+  course: customer-segmentation
+  type: output
+  description: "Advanced clustering methods — compare and apply hierarchical clustering, DBSCAN, and Gaussian mixture models for customer segmentation"
+  tags: [clustering, hierarchical, DBSCAN, GMM, advanced]
+
+state: {}
+
+trigger: |
+  A senior data scientist says: "We've been using k-means for customer
+  segmentation but I think it's limiting us. Our customer data has:
+  - Non-spherical clusters (some segments are elongated or irregular)
+  - Outlier customers that don't belong to any group
+  - Some customers that plausibly belong to multiple segments
+  - Nested sub-segments within larger groups
+
+  We have 40,000 customers with 15 behavioral features. I want to
+  explore hierarchical clustering, DBSCAN, and Gaussian mixture models
+  as alternatives. When would I use each one, and what are the tradeoffs
+  compared to k-means?"
+
+  Task: Compare advanced clustering methods (hierarchical, DBSCAN, GMM)
+  for customer segmentation, explaining when each is appropriate and
+  the practical tradeoffs of each approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains hierarchical clustering in the segmentation context — agglomerative (bottom-up) vs divisive (top-down), dendrogram interpretation (cutting at different heights gives different granularity), linkage methods (single, complete, average, Ward's), strengths (no need to predefine k, reveals nested segment structure, produces a hierarchy useful for zoom in/out analysis), weaknesses (O(n²) memory, doesn't scale well past ~20K points without sampling, sensitive to linkage choice), and when to use it (when segment hierarchy matters, when exploring natural grouping levels)"
+    weight: 0.35
+    description: "HierarchicalDBSCAN"
+  - type: llm_judge
+    criteria: "Response explains DBSCAN and GMM — DBSCAN: density-based, finds arbitrary-shaped clusters, automatically identifies outliers as noise points, parameters (epsilon and min_points), strengths (handles noise, no need to specify k, finds non-spherical clusters), weaknesses (struggles with varying density clusters, parameter tuning is tricky). GMM: probabilistic soft clustering, each customer gets a probability of belonging to each cluster, strengths (handles overlapping segments, provides uncertainty estimates, flexible cluster shapes), weaknesses (more computationally expensive, need to choose number of components, can converge to poor solutions)"
+    weight: 0.35
+    description: "DBSCANandGMM"
+  - type: llm_judge
+    criteria: "Response provides a practical decision framework — when to use each method based on the specific problem: k-means for fast baseline with clear spherical clusters, hierarchical for exploring natural grouping hierarchies, DBSCAN when outlier detection matters and clusters have irregular shapes, GMM when customers genuinely span multiple segments. Includes practical advice on scaling (sampling for hierarchical, HDBSCAN as an improvement over DBSCAN) and ensemble approaches (combining multiple methods)"
+    weight: 0.30
+    description: "DecisionFramework"

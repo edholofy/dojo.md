@@ -1,0 +1,51 @@
+meta:
+  id: pagination-docs
+  level: 1
+  course: api-documentation-writing
+  type: output
+  description: "Document pagination — write clear pagination documentation for offset, cursor, and keyset pagination patterns"
+  tags: [API, documentation, pagination, offset, cursor, collections, beginner]
+
+state: {}
+
+trigger: |
+  Your API returns lists of resources (users, orders, transactions).
+  Developers ask:
+  - "How do I get the next page?"
+  - "How do I know if there are more results?"
+  - "The total count changes between pages — is that a bug?"
+  - "Cursor pagination? What's a cursor?"
+
+  Your API supports two pagination styles:
+  1. Offset pagination (legacy): ?page=2&per_page=20
+  2. Cursor pagination (recommended): ?after=cursor_abc123&limit=20
+
+  Response format (cursor):
+  ```json
+  {
+    "data": [...],
+    "pagination": {
+      "has_more": true,
+      "next_cursor": "cursor_def456",
+      "previous_cursor": "cursor_abc123"
+    }
+  }
+  ```
+
+  Task: Document both pagination styles, explain when to use each,
+  show step-by-step examples of paginating through results, and
+  explain the pagination response fields.
+
+assertions:
+  - type: llm_judge
+    criteria: "Both pagination styles are documented — offset: ?page=1&per_page=20 (page 1 of 20 results). Response includes total_count, total_pages, current_page. Pros: jump to any page. Cons: inconsistent with concurrent writes (items shift between pages). Cursor: ?after=<cursor>&limit=20. Response includes has_more, next_cursor. Pros: consistent results even with concurrent writes, better performance on large datasets. Cons: can't jump to page N. Recommendation: use cursor for real-time data (transactions, events), offset for stable data (reports)"
+    weight: 0.35
+    description: "Both styles"
+  - type: llm_judge
+    criteria: "Step-by-step pagination examples are shown — cursor example: (1) first page: GET /api/v1/orders?limit=20 → get data + next_cursor. (2) next page: GET /api/v1/orders?after=cursor_abc&limit=20 → get more data + next_cursor. (3) last page: has_more = false, no next_cursor. Complete curl commands for each step. Show how to implement a loop: 'keep fetching while has_more is true'. Offset example: page=1, page=2, etc. Show total_pages for loop termination"
+    weight: 0.35
+    description: "Step-by-step"
+  - type: llm_judge
+    criteria: "Edge cases and best practices are covered — empty results: data is empty array, has_more is false. Rate limiting: respect rate limits when paginating (don't blast all pages at once). Maximum limit value documented (e.g., limit max 100). Default limit documented (e.g., 20). Invalid cursor: returns 400 with clear error message. Sorting: document whether sort order affects pagination. Filter + paginate: show example combining filters with pagination. Total count: may be expensive to compute on cursor pagination (document whether it's available)"
+    weight: 0.30
+    description: "Edge cases"

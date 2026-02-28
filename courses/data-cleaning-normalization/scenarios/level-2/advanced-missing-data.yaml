@@ -1,0 +1,39 @@
+meta:
+  id: advanced-missing-data
+  level: 2
+  course: data-cleaning-normalization
+  type: output
+  description: "Advanced missing data handling — apply MICE, KNN imputation, and mechanism-aware strategies for complex missing data patterns"
+  tags: [missing-data, MICE, KNN-imputation, advanced-imputation, intermediate]
+
+state: {}
+
+trigger: |
+  A data scientist says: "I have a dataset of 50,000 loan applications
+  with 25 features. Missing data patterns:
+  - Income: 18% missing (applicants who didn't disclose — likely MNAR)
+  - Employment length: 10% missing (MAR — correlates with age)
+  - Credit score: 5% missing (MCAR — random system failures)
+  - Debt-to-income ratio: 22% missing (depends on income being present)
+
+  Simple mean imputation won't work — these missingness patterns have
+  different mechanisms. What advanced imputation techniques should I use,
+  and how do I handle each pattern differently?"
+
+  Task: Apply mechanism-aware imputation strategies using MICE, KNN
+  imputation, and domain-based approaches for different missing data
+  patterns in a loan application dataset.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response selects appropriate imputation methods based on mechanism — for MCAR credit score: simple imputation (mean/median) is acceptable since missingness is random, or KNN imputation using similar applicants' scores. For MAR employment length: MICE or regression imputation using correlated variables (age, income, job title). For MNAR income: domain-based approach (income is likely missing because it's low — simple imputation would overestimate), suggests using external data, proxy variables, or sensitivity analysis. For dependent DTI: impute income first, then calculate DTI from imputed income and known debt"
+    weight: 0.35
+    description: "MechanismAware"
+  - type: llm_judge
+    criteria: "Response explains MICE and KNN imputation in practical terms — MICE (Multiple Imputation by Chained Equations): creates multiple imputed datasets, runs the analysis on each, pools results. Explains the iterative process: each variable with missing values is modeled as a function of all other variables, imputed, then the next variable is imputed, iterating until convergence. KNN imputation: finds the k most similar complete records and uses their values to impute. Covers practical considerations: choosing k, distance metrics with mixed data types, computational cost for large datasets"
+    weight: 0.35
+    description: "TechniqueExplanation"
+  - type: llm_judge
+    criteria: "Response addresses validation of imputation quality — comparing distributions before and after imputation (imputed values should follow the same distribution as observed values), checking that relationships between variables are preserved (correlation structure shouldn't change dramatically), sensitivity analysis for MNAR variables (how do conclusions change under different assumptions about why data is missing?), and reporting imputation uncertainty (multiple imputation provides confidence intervals that account for imputation uncertainty)"
+    weight: 0.30
+    description: "Validation"

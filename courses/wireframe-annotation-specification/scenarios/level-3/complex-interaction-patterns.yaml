@@ -1,0 +1,46 @@
+meta:
+  id: complex-interaction-patterns
+  level: 3
+  course: wireframe-annotation-specification
+  type: output
+  description: "Complex interaction patterns — specify multi-user, real-time, and state-heavy interaction patterns for collaborative and data-intensive applications"
+  tags: [complex-interactions, real-time, collaborative, state-management, advanced]
+
+state: {}
+
+trigger: |
+  A senior designer says: "I'm specifying a collaborative
+  document editor (think Google Docs). Complex interactions:
+
+  1. Real-time multi-user editing: multiple cursors, conflict
+     resolution, presence indicators
+  2. Rich text formatting toolbar: bold, italic, links, lists,
+     headings, images, tables
+  3. Comment system: inline comments anchored to text
+     selections, threaded replies, resolve/reopen
+  4. Version history: view previous versions, compare diff,
+     restore previous version
+  5. Autosave with offline support: save status indicator,
+     sync when reconnected
+
+  These interactions have dependencies, concurrent states,
+  and failure modes I've never specified before. How do I
+  write specs for this level of complexity?"
+
+  Task: Write interaction specifications for the collaborative
+  document editor covering real-time, conflict, and offline
+  scenarios.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response specifies real-time collaboration comprehensively — presence indicators (colored cursors with user name labels, user avatars in header showing who's viewing), concurrent editing (operational transformation or CRDT-based: each user sees their own edits immediately, remote edits appear within 500ms), cursor and selection awareness (see other users' cursors and text selections in real-time, colored per user), conflict resolution (last-write-wins for simultaneous edits to same character, changes merge at paragraph level without conflict UI for most cases, explicit conflict resolution only for structural changes like deleting a section someone is editing). Save indicator states: 'Saving...', 'All changes saved', 'Offline — changes saved locally'"
+    weight: 0.35
+    description: "RealTimeCollaboration"
+  - type: llm_judge
+    criteria: "Response specifies the comment and version history systems — Comments: select text → 'Add comment' appears, comment anchored to selection (highlight persists), threaded replies, resolve/reopen with audit trail ('Resolved by Sarah, 2h ago'), unresolved comment count badge, comments panel (sidebar showing all comments, jump to comment location on click), handling anchored text changes (if someone edits the text a comment is attached to: comment stays anchored to nearest relevant text, orphaned comments moved to paragraph level). Version history: view versions on timeline, diff view highlighting additions (green) and deletions (red), restore prompts confirmation ('Restore to version from Mar 15? Current changes will be preserved as a new version.'), version naming (auto: 'Mar 15, 2:30 PM by Sarah', manual: user can name versions)"
+    weight: 0.35
+    description: "CommentsVersionHistory"
+  - type: llm_judge
+    criteria: "Response covers offline and failure modes — offline editing: detect connectivity loss, show 'Offline' indicator, continue editing with local storage, queue changes, sync on reconnect with conflict notification if needed. Network degradation: show 'Slow connection' warning, batch sync less frequently. Browser crash recovery: auto-save to localStorage every 30 seconds, on reopen show 'Recovered unsaved changes' with option to restore or discard. Permission changes: if a user's edit access is revoked while editing, gracefully transition to read-only mode with notification. Concurrent structural changes: if user A deletes a heading while user B is typing under it, preserve B's content under a new heading or in a 'Recovered content' section"
+    weight: 0.30
+    description: "OfflineFailureModes"

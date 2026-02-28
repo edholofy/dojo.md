@@ -1,0 +1,37 @@
+meta:
+  id: data-quality-sql
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Build data quality checks in SQL — validate completeness, consistency, and accuracy of data before report generation"
+  tags: [SQL, data-quality, validation, completeness, consistency, advanced]
+
+state: {}
+
+trigger: |
+  After the revenue discrepancy incident (the CFO presented wrong
+  numbers because the source data had duplicates), the data team
+  needs automated data quality checks that run before every report.
+
+  "Before generating any report, validate: no duplicate order IDs,
+  no NULL amounts, dates are within expected ranges, foreign keys
+  match, and row counts are within 20% of the previous day."
+
+  Tables: orders, customers, products, daily_row_counts (table_name,
+  date, row_count — historical counts for comparison)
+
+  Task: Build a SQL-based data quality validation suite.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code implements comprehensive data quality checks — checks: 'Data quality validation suite: Completeness checks — NULLs in required fields: SELECT 'orders.order_id' AS check_field, COUNT(*) AS null_count, ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) AS null_pct FROM orders WHERE order_id IS NULL UNION ALL SELECT 'orders.amount', COUNT(*), ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) FROM orders WHERE amount IS NULL UNION ALL SELECT 'orders.customer_id', COUNT(*), ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) FROM orders WHERE customer_id IS NULL UNION ALL SELECT 'orders.order_date', COUNT(*), ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) FROM orders WHERE order_date IS NULL. Uniqueness checks — duplicate detection: SELECT 'duplicate_order_ids' AS check_name, COUNT(*) AS violation_count FROM (SELECT order_id, COUNT(*) AS cnt FROM orders GROUP BY order_id HAVING COUNT(*) > 1) dupes. Validity checks — values within expected ranges: SELECT 'negative_amounts' AS check_name, COUNT(*) FROM orders WHERE amount < 0 UNION ALL SELECT 'future_dates', COUNT(*) FROM orders WHERE order_date > CURRENT_DATE UNION ALL SELECT 'ancient_dates', COUNT(*) FROM orders WHERE order_date < '2020-01-01' UNION ALL SELECT 'extreme_amounts', COUNT(*) FROM orders WHERE amount > 100000. Referential integrity — orphaned foreign keys: SELECT 'orphaned_customer_ids' AS check_name, COUNT(*) FROM orders o LEFT JOIN customers c ON o.customer_id = c.customer_id WHERE c.customer_id IS NULL UNION ALL SELECT 'orphaned_product_ids', COUNT(*) FROM orders o LEFT JOIN products p ON o.product_id = p.product_id WHERE p.product_id IS NULL'"
+    weight: 0.35
+    description: "Checks"
+  - type: llm_judge
+    criteria: "Response includes volume anomaly detection and a unified validation framework — framework: 'Volume anomaly detection: WITH today_counts AS (SELECT 'orders' AS table_name, COUNT(*) AS row_count FROM orders UNION ALL SELECT 'customers', COUNT(*) FROM customers), historical AS (SELECT table_name, row_count AS yesterday_count FROM daily_row_counts WHERE date = CURRENT_DATE - INTERVAL '1 day'), comparison AS (SELECT tc.table_name, tc.row_count AS today, h.yesterday_count AS yesterday, ROUND((tc.row_count - h.yesterday_count) * 100.0 / NULLIF(h.yesterday_count, 0), 1) AS pct_change FROM today_counts tc LEFT JOIN historical h ON tc.table_name = h.table_name) SELECT *, CASE WHEN ABS(pct_change) > 20 THEN 'FAIL — volume change exceeds 20%' WHEN today < yesterday THEN 'WARNING — row count decreased' ELSE 'PASS' END AS status FROM comparison. Unified validation framework: CREATE TABLE data_quality_results (check_id SERIAL, run_date DATE DEFAULT CURRENT_DATE, check_name TEXT, check_category TEXT, status TEXT, violation_count INTEGER, details TEXT, run_at TIMESTAMP DEFAULT NOW()). INSERT INTO data_quality_results (check_name, check_category, status, violation_count) SELECT 'no_null_order_ids', 'completeness', CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END, COUNT(*) FROM orders WHERE order_id IS NULL. Run all checks, then query results: SELECT check_category, COUNT(CASE WHEN status = 'PASS' THEN 1 END) AS passed, COUNT(CASE WHEN status = 'FAIL' THEN 1 END) AS failed, COUNT(CASE WHEN status = 'WARNING' THEN 1 END) AS warnings FROM data_quality_results WHERE run_date = CURRENT_DATE GROUP BY check_category. Gate the report: only generate the revenue report if all critical checks pass. SELECT CASE WHEN COUNT(*) = 0 THEN 'PROCEED' ELSE 'BLOCKED' END AS report_status FROM data_quality_results WHERE run_date = CURRENT_DATE AND status = 'FAIL' AND check_category IN ('completeness', 'uniqueness', 'referential_integrity')'"
+    weight: 0.35
+    description: "Framework"
+  - type: llm_judge
+    criteria: "Explanation covers freshness checks and consistency validation — freshness: 'Data freshness and cross-table consistency: Freshness check — is the data current: SELECT 'orders' AS table_name, MAX(order_date) AS latest_record, CURRENT_DATE - MAX(order_date)::date AS days_stale, CASE WHEN CURRENT_DATE - MAX(order_date)::date > 1 THEN 'STALE' ELSE 'FRESH' END AS freshness FROM orders UNION ALL SELECT 'customers', MAX(signup_date), CURRENT_DATE - MAX(signup_date)::date, CASE WHEN CURRENT_DATE - MAX(signup_date)::date > 1 THEN 'STALE' ELSE 'FRESH' END FROM customers. If the orders table's latest record is 3 days old, the pipeline is broken or the source is not exporting. Cross-table consistency: SELECT 'revenue_mismatch' AS check_name, ABS(a.total - b.total) AS discrepancy, CASE WHEN ABS(a.total - b.total) / NULLIF(a.total, 0) < 0.01 THEN 'PASS' ELSE 'FAIL' END AS status FROM (SELECT SUM(amount) AS total FROM orders WHERE status = 'completed' AND order_date >= DATE_TRUNC('month', CURRENT_DATE)) a, (SELECT SUM(amount) AS total FROM invoices WHERE payment_status = 'paid' AND invoice_date >= DATE_TRUNC('month', CURRENT_DATE)) b. If orders revenue and invoices revenue differ by more than 1%, there is a reconciliation issue. This is exactly the check that would have caught the CFO's wrong numbers'"
+    weight: 0.30
+    description: "Freshness"

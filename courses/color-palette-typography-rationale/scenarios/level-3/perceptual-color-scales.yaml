@@ -1,0 +1,43 @@
+meta:
+  id: perceptual-color-scales
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Perceptual color scales — create color scales using perceptually uniform color spaces for visually even steps"
+  tags: [perceptual, oklch, cielab, uniform, advanced]
+
+state: {}
+
+trigger: |
+  A senior design engineer says: "I noticed our blue
+  scale looks uneven. The steps from blue-100 to blue-300
+  are barely noticeable, but blue-700 to blue-900 is a
+  huge jump. Our data visualization lead says this creates
+  misleading heat maps because equal data differences
+  don't look equal visually.
+
+  I've heard about perceptually uniform color spaces like
+  OKLCH and CIELAB. How do I generate color scales that
+  have visually even steps instead of the current HSL-
+  based scales where equal numerical steps create unequal
+  visual steps?
+
+  And can I do this in CSS now?"
+
+  Task: Explain perceptual color spaces and generate a
+  perceptually uniform color scale with implementation
+  guidance and rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains perceptual uniformity — why HSL fails (HSL lightness is not perceptually uniform — 10% lightness difference at mid-range looks bigger than 10% at extremes, HSL saturation varies perceptually across hues — 100% saturation blue looks more saturated than 100% saturation yellow, HSL hue has perceptual 'bumps' — green occupies a larger perceptual range than yellow), perceptually uniform color spaces (CIELAB: models human color perception with L for lightness, a for green-red, b for blue-yellow — equal ΔE values mean equal perceived difference, OKLCH: modern improvement — O for perceptual corrections, L for lightness, C for chroma, H for hue — equal numeric steps in L create equal perceived lightness steps, why OKLCH over CIELAB: better hue constancy, simpler polar coordinates, native CSS support), Delta E (measure of perceptual color difference — ΔE < 1: imperceptible, ΔE 1-2: barely perceptible, ΔE 2-10: clearly noticeable — use to verify scale steps are even)."
+    weight: 0.35
+    description: "PerceptualExplanation"
+  - type: llm_judge
+    criteria: "Response generates a perceptually uniform blue scale — generation method (in OKLCH: fix hue H to blue ~260°, set chroma C for desired saturation, step lightness L in equal increments from ~95% for lightest to ~20% for darkest — 10 steps with equal L spacing), example scale with values (blue-50: oklch(0.97 0.02 260) — near white with blue tint, blue-100: oklch(0.89 0.05 260), blue-200: oklch(0.81 0.08 260), blue-300: oklch(0.73 0.11 260), blue-400: oklch(0.65 0.14 260), blue-500: oklch(0.57 0.17 260), blue-600: oklch(0.49 0.17 260), blue-700: oklch(0.41 0.15 260), blue-800: oklch(0.33 0.12 260), blue-900: oklch(0.25 0.09 260) — exact values may vary but the principle is equal L steps), verification (calculate Delta E between each adjacent pair — should all be approximately equal, compare to HSL-based scale where Delta E varies dramatically between steps — this proves the perceptual improvement)."
+    weight: 0.35
+    description: "UniformScale"
+  - type: llm_judge
+    criteria: "Response provides CSS implementation and data visualization application — CSS support (oklch() is supported in all modern browsers since 2023: color: oklch(0.57 0.17 260), define as CSS custom properties: --color-blue-500: oklch(0.57 0.17 260), fallback for older browsers: @supports not (color: oklch(0 0 0)) { use hex fallback }), data visualization improvement (heat maps using perceptually uniform scales: equal data differences now create equal visual differences — the map doesn't mislead, sequential scales: lightness-only variation in OKLCH guarantees perceptual linearity, diverging scales: two hues meeting at a common lightness midpoint — the midpoint is visually neutral), tooling (libraries for OKLCH color manipulation: Culori, Color.js, chroma.js — programmatic scale generation, Leonardo by Adobe — visual tool for creating accessible color scales with perceptual uniformity), and migration from existing HSL scales (generate new OKLCH scales, compare visually — the improvement is immediately obvious especially in data visualization contexts, migration path: update design token values, no API changes — same token names, better values)."
+    weight: 0.30
+    description: "ImplementationAndDataViz"

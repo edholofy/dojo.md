@@ -1,0 +1,37 @@
+meta:
+  id: kpi-automation-systems
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Build KPI automation systems — design automated pipelines that collect, calculate, validate, and distribute KPIs without manual intervention"
+  tags: [automation, pipeline, scheduling, validation, distribution, expert]
+
+state: {}
+
+trigger: |
+  The Head of Data says: "Every Monday morning, 3 analysts spend 4
+  hours each manually updating dashboards — pulling data from Salesforce,
+  running calculations in spreadsheets, copying numbers into the BI
+  tool, and sending email summaries to executives. That's 12 person-
+  hours per week spent on repetitive work that should be automated.
+
+  Last week, an analyst made a copy-paste error and the revenue number
+  was wrong by $200K. The CEO saw it in the board deck before anyone
+  caught the mistake."
+
+  Task: Design a KPI automation system that eliminates manual work
+  and prevents data errors.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs an end-to-end KPI automation pipeline — pipeline: 'KPI automation pipeline: The pipeline has 5 stages, all automated: Stage 1 — Data collection (automated ingestion): Fivetran (or similar) syncs data from source systems every 6 hours. Salesforce → Snowflake (opportunities, accounts, contacts). Stripe → Snowflake (subscriptions, invoices, payments). Intercom → Snowflake (conversations, CSAT scores). Product database → Snowflake (user events, feature usage). No analyst touches the raw data. If a sync fails, an alert fires to the data engineering Slack channel. Stage 2 — Transformation (dbt runs): Scheduled dbt job runs at 2 AM daily. Transforms raw data into analytics-ready models: staging models clean and standardize (deduplicate, handle nulls, normalize currencies). intermediate models join and enrich (add calculated fields, map account hierarchies). mart models produce final metrics (revenue, MRR, churn, NPS, pipeline). dbt tests run automatically: not_null tests on key columns. unique tests on primary keys. accepted_values tests on status fields. relationship tests on foreign keys. Custom tests: revenue must be positive. MRR month-over-month change must be within ±20% (catches data anomalies). If any test fails, the pipeline stops and alerts the data team. The bad data never reaches the dashboard. Stage 3 — Metric calculation (semantic layer): The dbt semantic layer calculates KPIs using certified definitions. Revenue = SUM(invoice_amount) WHERE status = paid AND type = subscription. MRR = SUM(monthly_equivalent) WHERE subscription_status = active. Churn = customers lost this month / customers at start of month. All definitions are in code, version-controlled, and peer-reviewed. No spreadsheet calculations. No copy-paste. Stage 4 — Validation (automated checks): Before publishing to dashboards, automated validation: compare today's metrics to yesterday's metrics. If any metric changes by more than a configured threshold, flag for review. Revenue changed by more than 5% day-over-day → flag. Customer count changed by more than 3% → flag. Churn spiked above 5% → flag. Cross-check totals: the sum of segment revenues must equal total revenue. The sum of regional customers must equal total customers. These checks catch the $200K error before it reaches the dashboard'"
+    weight: 0.35
+    description: "Pipeline"
+  - type: llm_judge
+    criteria: "Response covers automated distribution and reporting — distribution: 'Automated distribution: Stage 5 — Distribution (multi-channel delivery): The pipeline automatically delivers KPIs to the right people at the right time. Channel 1 — Dashboard refresh: Looker dashboards refresh automatically when the dbt job completes. No manual update needed. The dashboard shows: Data as of: Feb 27, 2026, 2:00 AM. Updated automatically. Channel 2 — Scheduled email reports: Monday 7 AM: Weekly executive summary email to CEO, CFO, COO. Contains: 5 KPI cards (revenue, customers, churn, NPS, pipeline). Comparison to last week and same week last year. Top 3 highlights and concerns (auto-generated from threshold analysis). 1st of each month: Monthly board packet email to CEO and board members. Contains: PDF dashboard export, monthly narrative (template populated with actual data, key variances noted). Channel 3 — Slack notifications: Daily at 8 AM: post KPI summary to the executive-metrics Slack channel. Revenue: $142K today ($4.2M MTD, 88% of monthly target). New customers: 8 today (210 MTD). Alerts: only when a metric crosses a threshold. ALERT: SMB churn reached 4.2% (target: <4%). Investigate in the churn dashboard: [link]. Channel 4 — API endpoint: REST API that serves current KPI values. GET /api/metrics/revenue → returns current MRR, ARR, revenue trend. Used by: the product team to show revenue in internal tools. The sales team to display targets in their CRM. The mobile app to power the CEO's mobile dashboard. The entire Monday morning process (12 person-hours) is now fully automated. The 3 analysts are freed to do analysis instead of data entry'"
+    weight: 0.35
+    description: "Distribution"
+  - type: llm_judge
+    criteria: "Explanation covers error handling and monitoring of the automation — monitoring: 'Error handling and monitoring: Failure modes and responses: 1. Source system sync failure: Fivetran cannot connect to Salesforce. Response: retry 3 times over 30 minutes. If still failing, alert data engineering. Dashboard shows stale data banner: Salesforce data as of yesterday. Revenue may not reflect today's closed deals. Do not block the entire pipeline — other data sources are still valid. 2. dbt transformation failure: a model fails due to schema change in the source. Response: pipeline stops at the failed model. All downstream models are not updated. Alert with the specific error: model stg_salesforce_opportunities failed — column deal_stage renamed to opportunity_stage. Data engineer fixes the model and reruns. The dashboard shows the previous day's data until the fix is deployed. 3. Validation failure: revenue changed by 15% overnight (above the 5% threshold). Response: flag for manual review. Do not publish to dashboards until reviewed. Notify the data team: Revenue validation failed: $4.2M yesterday → $4.8M today (+14.3%). Possible causes: large deal closed, data correction, or ETL error. The data analyst investigates: was a legitimate large deal closed? If yes, approve and publish. Was it an error? If yes, fix and republish. 4. Distribution failure: email report fails to send. Response: retry. If the email bounces, alert the data team. Log all distribution events: who received what, when, delivery status. Monitoring dashboard (for the data team): pipeline health dashboard showing: last successful run time for each stage. Data freshness for each source system. Test pass/fail rates over time. Distribution delivery success rates. Alert history and resolution times. SLA: dashboards are updated by 7 AM every day. If not updated by 7:30 AM, escalate to the data engineering manager'"
+    weight: 0.30
+    description: "Monitoring"

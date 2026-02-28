@@ -1,0 +1,44 @@
+meta:
+  id: design-token-color-architecture
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Design token color architecture — create a multi-layer color token system with reference, semantic, and component tokens"
+  tags: [design-tokens, architecture, semantic, component, advanced]
+
+state: {}
+
+trigger: |
+  A design systems architect says: "Our color system is
+  a mess. Developers reference raw hex values everywhere.
+  When we rebranded last year and changed our primary blue,
+  we had to find and replace in 400+ files.
+
+  I want to build a proper token architecture so that:
+  1. A rebrand only changes values in ONE place
+  2. Dark mode is a token swap, not a redesign
+  3. Developers use semantic names like 'color-action-primary'
+     not 'blue-500'
+  4. New themes (high contrast, seasonal) are easy to add
+
+  Our current palette has 8 base colors × 10 shades each
+  (80 reference colors). How do I structure the token
+  layers?"
+
+  Task: Design a multi-layer design token architecture
+  for colors with reference, semantic, and component
+  layers with documented rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs three-layer token architecture — Layer 1: Reference tokens (raw color values with no implied usage — color.blue.500: #3B82F6, color.gray.100: #F3F4F6, color.red.600: #DC2626 — these are the 80 raw palette values, named by color and shade, never used directly in components), Layer 2: Semantic tokens (purpose-based aliases that reference Layer 1 — color.action.primary: {color.blue.600}, color.bg.primary: {color.white}, color.text.primary: {color.gray.900}, color.feedback.error: {color.red.600}, color.border.default: {color.gray.200} — these are what developers use, named by function not appearance), Layer 3: Component tokens (component-specific tokens referencing semantic tokens — button.primary.bg: {color.action.primary}, button.primary.text: {color.text.inverse}, input.border.default: {color.border.default}, input.border.error: {color.feedback.error} — these are the most specific and most optional layer). Each layer explanation includes WHY the indirection exists."
+    weight: 0.35
+    description: "TokenArchitecture"
+  - type: llm_judge
+    criteria: "Response demonstrates theming capabilities — dark mode (semantic tokens swap to different reference tokens: color.bg.primary changes from {color.white} to {color.gray.900}, color.text.primary changes from {color.gray.900} to {color.gray.100}, color.action.primary may desaturate from {color.blue.600} to {color.blue.400} — all component tokens automatically update because they reference semantic tokens), high contrast mode (increase contrast: text tokens reference darker values, borders become more prominent — same architecture, different semantic mappings), seasonal/brand themes (rebrand: only change reference token values — if blue changes to teal, update color.blue.500 value and everything downstream updates — this is why the rebrand required 400 file changes before: they were using values not tokens), new themes are purely additive — define a new set of semantic token mappings without touching any component code."
+    weight: 0.35
+    description: "ThemingCapabilities"
+  - type: llm_judge
+    criteria: "Response provides implementation and governance — token naming convention (consistent pattern: category.type.variant.state — color.action.primary.hover, color.text.secondary.disabled — documented naming rules prevent ad-hoc token creation), token file organization (reference tokens in one file, semantic tokens in theme-specific files, component tokens alongside component definitions), governance rules (no new reference tokens without design review — prevents palette bloat, no raw hex values in component code — linting rule, new semantic tokens require documented use case, deprecated tokens have sunset timeline), migration strategy from current hex-everywhere to tokens (audit: find all color values in codebase, map: create lookup from hex values to token names, replace: automated find-replace with manual verification, prevent: lint rules blocking raw hex values), and tooling recommendations (Style Dictionary or Tokens Studio for token management, transformation to CSS custom properties / iOS / Android formats)."
+    weight: 0.30
+    description: "ImplementationGovernance"

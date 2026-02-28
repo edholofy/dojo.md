@@ -1,0 +1,42 @@
+meta:
+  id: first-dashboard-shift
+  level: 1
+  course: dashboard-kpi-design
+  type: output
+  description: "First dashboard shift — handle multiple basic dashboard requests as a new data analyst, applying chart selection, layout, color, and audience principles"
+  tags: [shift-simulation, beginner, chart-selection, layout, audience]
+
+state: {}
+
+trigger: |
+  It's your first week as a data analyst. Three requests arrive:
+
+  Request 1 (Sales Director): "Build me a dashboard showing this
+  quarter's sales performance. I need total revenue, number of deals
+  closed, average deal size, and how we're tracking against target.
+  I look at this every morning for 2 minutes."
+
+  Request 2 (Marketing Manager): "My team needs a dashboard showing
+  which campaigns are working. We have 12 active campaigns across
+  email, paid search, and social. I need to see spend, leads
+  generated, and cost per lead for each."
+
+  Request 3 (CEO): "I want one number I can check on my phone every
+  morning that tells me if the business is healthy."
+
+  Task: Design all three dashboards applying the principles you've
+  learned.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the Sales Director dashboard correctly — sales: 'Sales Director Dashboard: Audience: executive-level, 2 minutes daily. This means minimal charts, maximum clarity. Layout: Row 1 — Four KPI cards: Total Revenue: $1.8M ↑15% QoQ | Target: $2.0M (90%) | Yellow status. Deals Closed: 47 ↑8 vs last quarter | Target: 50 (94%) | Yellow status. Avg Deal Size: $38K ↑$3K vs last quarter | Target: $35K (109%) | Green status. Win Rate: 22% ↑2pp vs last quarter | Target: 20% (110%) | Green status. Row 2 — One trend chart: line chart showing cumulative revenue vs target over the quarter. X-axis: weeks 1-13. Two lines: actual revenue (solid blue) and target pace (dashed gray). The gap between the lines shows whether the team is ahead or behind. Row 3 — One table: top 5 deals expected to close this quarter (deal name, value, probability, expected close date). These are the deals that will make or break the target. Total: 4 KPI cards + 1 chart + 1 table = 6 elements. Fits one screen. 2-minute review. Chart types: KPI cards (summary), line chart (trend), table (detail). Colors: green for above target, yellow for within 10%, red for below 10%. Date filter defaulted to current quarter'"
+    weight: 0.35
+    description: "Sales"
+  - type: llm_judge
+    criteria: "Response designs the Marketing Manager dashboard correctly — marketing: 'Marketing Manager Dashboard: Audience: manager-level, reviews weekly with team. More detail than executive. Layout: Row 1 — Three KPI cards: Total Spend: $120K | Budget: $150K (80% used, on pace). Total Leads: 2,400 ↑12% MoM. Blended Cost per Lead: $50 ↓$5 vs last month (improving — green). Row 2 — Bar chart: leads by campaign (horizontal bars, sorted by leads descending). 12 bars, one per campaign. Color-coded by channel: blue = email, orange = paid search, green = social. This immediately shows which campaigns generate the most leads. Row 3 — Scatter plot: cost per lead (y-axis) vs leads generated (x-axis) by campaign. Campaigns in the bottom-right quadrant are the best performers (many leads, low cost). Campaigns in the top-left are the worst (few leads, high cost). Row 4 — Table: all 12 campaigns with spend, leads, CPL, conversion rate, sortable by any column. The marketing manager uses this to decide: which campaigns to increase spend on (bottom-right quadrant) and which to pause (top-left quadrant). Filters: channel dropdown (All, Email, Paid Search, Social) and date range (default: this month). Total: 3 KPI cards + 2 charts + 1 table = 6 elements. Slightly more detail than the Sales Director's dashboard because the manager needs to make operational decisions'"
+    weight: 0.35
+    description: "Marketing"
+  - type: llm_judge
+    criteria: "Response designs the CEO mobile dashboard correctly — ceo: 'CEO Mobile Dashboard: Audience: CEO, checks on phone, needs one health signal. The CEO asked for one number. Respect that request. Primary view: a single large KPI card filling the mobile screen. Company Health Score: 82/100 | Status: Healthy (green). The health score is a composite index combining: Revenue vs target (weight 40%), Customer health — NPS and churn (weight 30%), Growth — new customers and pipeline (weight 30%). Below the score, three mini indicators: Revenue: $1.8M — 90% of target (yellow). Customers: NPS 65, Churn 2.1% (green). Growth: 42 new customers this month (green). The CEO sees 82/100 and green — the business is healthy. If the score drops to 60, it turns yellow. Below 40, red. The CEO's reaction: green = no action needed, check tomorrow. Yellow = ask the COO what's happening. Red = call an emergency meeting. The health score is calculated from the same data as the Sales Director and Marketing Manager dashboards — but abstracted into one number. This is the ultimate KPI hierarchy: detailed metrics roll up into department dashboards, department dashboards roll up into the CEO's health score. Design note: this dashboard must work on a phone screen. Large font (48px for the score), minimal text, no charts that require zooming. The CEO should understand the state of the business in 5 seconds while standing in an elevator'"
+    weight: 0.30
+    description: "CEO"

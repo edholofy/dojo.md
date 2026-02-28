@@ -1,0 +1,46 @@
+meta:
+  id: compliance-as-code
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Implement compliance as code — enforce SOC2, HIPAA, and PCI-DSS requirements through Terraform policies, scanning, and automated remediation"
+  tags: [Terraform, compliance, SOC2, HIPAA, PCI-DSS, policy-as-code, expert]
+
+state: {}
+
+trigger: |
+  Your healthtech company needs SOC2 Type II and HIPAA compliance.
+  The compliance auditor found these Terraform-managed infrastructure
+  gaps:
+
+  1. S3 buckets without encryption at rest (5 of 30 buckets)
+  2. Security groups allowing 0.0.0.0/0 ingress on non-HTTP ports
+  3. RDS instances without encryption or automated backups
+  4. CloudTrail not enabled in all regions
+  5. No log retention policy (CloudWatch logs kept indefinitely)
+  6. IAM users with programmatic access keys older than 90 days
+  7. EBS volumes not encrypted by default
+
+  The auditor needs evidence that:
+  - These controls are enforced automatically (not just documented)
+  - Non-compliant resources cannot be deployed
+  - Continuous monitoring detects and alerts on compliance drift
+
+  Task: Design the compliance-as-code strategy covering: policy
+  enforcement (prevent non-compliant deployments), automated scanning,
+  remediation patterns, audit evidence generation, and continuous
+  compliance monitoring.
+
+assertions:
+  - type: llm_judge
+    criteria: "Policy enforcement prevents non-compliant deployments — pre-deployment: checkov/tfsec in CI catches violations before apply. Sentinel policies (Terraform Cloud): hard-mandatory rules that block non-compliant applies. Example policies: all S3 buckets must have server_side_encryption_configuration, all RDS instances must have storage_encrypted = true and backup_retention_period >= 7, security groups cannot have cidr_blocks = ['0.0.0.0/0'] except on ports 80 and 443. Module library: compliant-by-default modules that enforce encryption, logging, and access controls"
+    weight: 0.35
+    description: "Policy enforcement"
+  - type: llm_judge
+    criteria: "Remediation and audit evidence are covered — remediation: (1) update Terraform modules to include compliance requirements by default (encryption, backups, logging), (2) apply changes across all environments using shared module updates, (3) for existing non-compliant resources: plan and apply to add encryption/backups. Audit evidence: (1) Terraform Cloud audit logs showing who approved what, (2) Git history showing code reviews for all infrastructure changes, (3) checkov reports stored as CI artifacts, (4) AWS Config compliance dashboard. Compliance as code = evidence generated automatically from deployment pipeline"
+    weight: 0.35
+    description: "Remediation and audit"
+  - type: llm_judge
+    criteria: "Continuous monitoring is practical — AWS Config rules: detect non-compliant resources in real-time (encrypted-volumes, s3-bucket-server-side-encryption-enabled, rds-storage-encrypted). Config remediation: auto-remediate with SSM Automation (e.g., enable encryption on new unencrypted volumes). Terraform Cloud drift detection: scheduled plans detect unauthorized changes. Alert pipeline: Config finding → SNS → Lambda → Slack/PagerDuty. Quarterly compliance review: run full checkov scan, compare against SOC2/HIPAA control matrix, generate compliance report. Map each Terraform policy to specific compliance control (SOC2 CC6.1, HIPAA §164.312(a)(2)(iv))"
+    weight: 0.30
+    description: "Continuous monitoring"

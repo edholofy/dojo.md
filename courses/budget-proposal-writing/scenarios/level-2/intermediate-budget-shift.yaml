@@ -1,0 +1,85 @@
+meta:
+  id: intermediate-budget-shift
+  level: 2
+  course: budget-proposal-writing
+  type: output
+  description: "Intermediate budget shift — handle conflicting budget demands, a surprise expense, and a last-minute board request simultaneously"
+  tags: [shift-simulation, multi-task, pressure, conflicting-demands, intermediate]
+
+state: {}
+
+trigger: |
+  You're the Finance Manager at a 320-person healthcare
+  services company. It's the last week of budget season
+  and 3 situations demand your attention simultaneously.
+
+  Situation 1 — Dueling Budget Requests:
+  Two department heads submitted budget requests that
+  together exceed available funding. You have $400,000 in
+  discretionary budget to allocate.
+
+  VP of Clinical Operations requests $310,000:
+  - Electronic health records upgrade: $180,000
+  - Clinical staff training (HIPAA + new protocols):
+    $85,000
+  - Patient safety monitoring equipment: $45,000
+  - Justification: "Patient safety is non-negotiable.
+    Our EHR is 8 years old and creating clinical risk."
+
+  VP of Business Development requests $350,000:
+  - CRM platform: $120,000
+  - Sales team expansion (2 reps): $160,000
+  - Marketing campaign for new service line: $70,000
+  - Justification: "Without investment in growth, we'll
+    fall behind competitors. Revenue growth funds
+    everything else."
+
+  Combined request: $660,000 vs $400,000 available.
+  The CEO says "figure it out" and doesn't want to be the
+  tiebreaker.
+
+  Situation 2 — Surprise Expense:
+  The facilities team just discovered that the HVAC system
+  in your main clinic needs emergency replacement. Quotes
+  range from $85,000-$120,000. This wasn't in any budget.
+  The current system is failing, and in healthcare, you
+  can't operate without climate control (patient care
+  and medication storage requirements).
+
+  Options:
+  A. Emergency repair (temporary, buys 6-12 months):
+     $22,000
+  B. Partial replacement (2 of 4 units): $55,000
+  C. Full replacement: $95,000-$120,000
+  D. Finance full replacement over 3 years: $4,200/month
+
+  Situation 3 — Board Presentation Pivot:
+  The CFO just told you the board meeting is moved up
+  from next Friday to this Wednesday. The board wants to
+  see:
+  - A 1-page budget summary (they were going to get a
+    15-page document)
+  - A clear recommendation on the two competing budget
+    requests
+  - How you're handling the HVAC surprise
+  - Your confidence level in next year's revenue
+    projections
+
+  Task: Address all 3 situations. Propose a resolution
+  for the competing budgets, recommend an approach for
+  the HVAC situation, and create the 1-page board summary
+  that ties everything together.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response resolves the competing budgets fairly — doesn't simply split 50/50 (that would underfund both); proposes a prioritized allocation that considers urgency (EHR clinical risk may be more urgent than CRM) and business impact (growth investment has revenue implications); may propose phasing (fund the most critical items now, defer others to mid-year); explains the rationale in a way both VPs can accept even if neither gets everything."
+    weight: 0.35
+    description: "CompetingBudgetResolution"
+  - type: llm_judge
+    criteria: "Response handles the HVAC surprise practically — considers the healthcare regulatory constraint (can't operate without climate control); evaluates repair vs replace trade-off (emergency repair buys time but defers cost; full replacement is expensive but solves the problem); identifies funding source (pull from contingency, defer a discretionary item, finance the purchase); the recommendation balances immediate need with financial prudence."
+    weight: 0.35
+    description: "SurpriseExpenseHandling"
+  - type: llm_judge
+    criteria: "Response creates an effective 1-page board summary — distills complex budget information into a concise, executive-level document; includes the key numbers (total budget, major changes, revenue projection confidence); addresses all 3 situations the board wants to hear about; uses a format that respects board members' time (bullets, key metrics, clear recommendation); the document would give a board member enough context to ask smart questions without overwhelming detail."
+    weight: 0.30
+    description: "OnePagBoardSummary"

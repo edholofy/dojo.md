@@ -1,0 +1,36 @@
+meta:
+  id: accessible-dashboard-design
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Design accessible dashboards — ensure dashboards are usable by people with visual impairments, color blindness, and other accessibility needs while meeting WCAG standards"
+  tags: [accessibility, WCAG, color-blindness, screen-reader, inclusive, advanced]
+
+state: {}
+
+trigger: |
+  A new VP joins the company and reports that they are red-green color
+  blind. The executive dashboard relies heavily on red/green color
+  coding to indicate metric status. They say: "I literally cannot
+  tell which metrics are performing well and which are failing. The
+  dashboard is useless to me."
+
+  The HR team adds: "We also have team members who use screen readers
+  and high-contrast modes. Our dashboards should be usable by everyone."
+
+  Task: Redesign the dashboard to be fully accessible while maintaining
+  its effectiveness for all users.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses color blindness and color-independent design — colorblind: 'Accessible color design: The problem: approximately 8% of men and 0.5% of women have red-green color blindness (deuteranopia/protanopia). A dashboard using red = bad and green = good is illegible to them. Fix 1 — Color-blind-safe palettes: replace red/green with color combinations that are distinguishable by all types of color blindness. Blue (#2563EB) for positive/on-track. Orange (#EA580C) for warning. Dark red (#991B1B) for critical (distinguishable from green even with color blindness). Teal (#0D9488) for neutral. Test the palette with a color blindness simulator (tools like Coblis or Sim Daltonism) to verify all colors are distinguishable. Fix 2 — Do not rely on color alone: every piece of information conveyed by color must also be conveyed by another visual element. Shape: use ▲ for up/improving, ▼ for down/declining, ● for stable. A metric card showing $4.2M ▲ 12% is readable without any color at all. Icons: ✓ for on-track, ⚠ for warning, ✕ for critical. Text labels: add the word GREEN ON TRACK, YELLOW WARNING, RED CRITICAL as visible text near the colored indicator. Pattern fills: in charts, use solid, dashed, and dotted patterns in addition to colors to distinguish data series. A bar chart with blue solid bars (actuals) and blue hatched bars (target) is distinguishable without color. Fix 3 — Sufficient contrast: WCAG 2.1 requires a minimum contrast ratio of 4.5:1 for normal text and 3:1 for large text. Check all text-to-background combinations. Light gray text (#9CA3AF) on a white background (#FFFFFF) has a contrast ratio of 2.9:1 — fails WCAG. Use darker gray (#4B5563) for a ratio of 7:1 — passes'"
+    weight: 0.35
+    description: "Colorblind"
+  - type: llm_judge
+    criteria: "Response covers screen reader compatibility and keyboard navigation — screenreader: 'Screen reader and keyboard accessibility: Screen reader support: every chart and visualization must have a text alternative. Alt text for charts: a line chart showing monthly revenue should have alt text: Monthly revenue trend from January to December 2025. Revenue grew from $3.0M in January to $4.2M in December, a 40% increase. Peak month was November at $4.5M. Data tables behind charts: every chart should have an accessible data table that screen readers can navigate. The table is hidden visually but available to assistive technology. KPI cards must use semantic HTML: the metric name is a heading. The value, trend, and status are labeled with ARIA attributes. aria-label on the status indicator: Status: on track instead of just a green dot. Example accessible KPI card markup: heading Revenue with aria-describedby linking to a description: $4.2M, up 12% month over month, status on track. Keyboard navigation: every interactive element (filters, drill-downs, tabs) must be reachable via Tab key. Focus indicators must be visible — a highlighted border around the focused element. Dropdown filters must be operable with arrow keys and Enter. Charts with tooltips must support keyboard focus on data points. Skip navigation link: a hidden link at the top of the dashboard that allows keyboard users to skip past the navigation menu and jump directly to the main content. Tab order: the dashboard must have a logical tab order — left to right, top to bottom, matching the visual layout. Avoid tab traps where keyboard focus gets stuck in a widget'"
+    weight: 0.35
+    description: "ScreenReader"
+  - type: llm_judge
+    criteria: "Explanation covers WCAG compliance and testing methodology — wcag: 'WCAG compliance for dashboards: Key WCAG 2.1 requirements for dashboards: 1.1.1 Non-text Content (Level A): all charts, images, and icons have text alternatives. 1.3.1 Info and Relationships (Level A): structure is conveyed programmatically, not just visually. Use headings, labels, and ARIA landmarks. 1.4.1 Use of Color (Level A): color is not the sole method of conveying information. Status must use text, shape, or pattern in addition to color. 1.4.3 Contrast (Level AA): text contrast ratio of at least 4.5:1. UI component contrast of at least 3:1. 1.4.11 Non-text Contrast (Level AA): chart elements (bars, lines, data points) must have 3:1 contrast against the background. 2.1.1 Keyboard (Level A): all functionality is operable via keyboard. 2.4.3 Focus Order (Level A): tab order is logical and intuitive. 4.1.2 Name, Role, Value (Level A): all interactive elements have accessible names and roles. Testing methodology: 1. Automated testing: run axe or WAVE on every dashboard page. These catch approximately 30-50% of accessibility issues (missing alt text, contrast failures, missing labels). 2. Screen reader testing: test with VoiceOver (Mac), NVDA (Windows), or JAWS. Navigate the entire dashboard using only the screen reader. Verify: every metric is announced with its name, value, and status. Charts are described via alt text or data tables. Filters and interactions are operable. 3. Keyboard-only testing: unplug the mouse and navigate the dashboard using only the keyboard. Verify all elements are reachable and usable. 4. Color blindness simulation: view the dashboard through a deuteranopia simulator. Verify all information is distinguishable. 5. Zoom testing: zoom the browser to 200%. Verify the dashboard remains usable with no content cut off or overlapping'"
+    weight: 0.30
+    description: "WCAG"

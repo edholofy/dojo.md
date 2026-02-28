@@ -1,0 +1,43 @@
+meta:
+  id: reviewing-unfamiliar-code
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Review unfamiliar code — develop strategies for reviewing code in codebases you don't know well, asking the right questions, and still providing value"
+  tags: [code-review, unfamiliar-codebase, learning, questions, onboarding, advanced]
+
+state: {}
+
+trigger: |
+  You just joined a new team and are asked to review PRs on day one.
+  You don't know:
+  - The architecture or how services communicate
+  - Team conventions (naming, patterns, error handling approach)
+  - Business domain (insurance claims processing)
+  - Why certain design decisions were made
+  - What the testing expectations are
+
+  The PR adds a new "claims escalation" feature — 200 lines across
+  5 files. You can read the code but you're missing context for many
+  decisions.
+
+  Task: Write a review that provides value despite limited context.
+  Show how to: identify universal quality issues (any codebase),
+  ask context-gathering questions that also serve as review, learn
+  the codebase through reviewing, and be honest about what you can
+  and can't evaluate. Write the review comments and a reflection
+  on your review strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Universal quality issues are identified — regardless of domain knowledge, catch: (1) error handling gaps (catch block that swallows errors), (2) missing input validation, (3) potential null/undefined references, (4) SQL injection or security concerns, (5) dead code or unused variables, (6) inconsistent patterns within the PR itself (does the PR's own code follow its own conventions?). (7) Test quality: are tests testing behavior or implementation? Do tests have meaningful names? (8) Code clarity: are variable/function names descriptive? Is the control flow easy to follow? These issues are valid in any codebase and show the reviewer is thorough despite being new"
+    weight: 0.35
+    description: "Universal issues"
+  - type: llm_judge
+    criteria: "Questions serve double duty as review and learning — questions that are both genuine learning AND review prompts: 'I notice ClaimEscalation inherits from BaseProcessor — could you point me to where BaseProcessor is defined? I want to understand the lifecycle hooks.' This helps the reviewer learn AND surfaces whether the inheritance is appropriate. 'What triggers a claim to enter the escalation queue? I want to make sure the conditions in isEligibleForEscalation() cover all cases.' Asks for business context AND validates the logic. 'I see we're using Redis for the escalation queue — is there a reason we're not using the existing RabbitMQ setup I saw in other services?' Learns architecture AND questions the design choice. Each question shows the reviewer is engaged and thinking, not just rubber-stamping"
+    weight: 0.35
+    description: "Dual-purpose questions"
+  - type: llm_judge
+    criteria: "Honest scope disclosure builds trust — opening comment: 'Disclosure: I'm new to this codebase and the insurance domain. I focused my review on code quality, error handling, and testing patterns. I can't yet validate the business logic or architectural fit — I'd recommend a domain expert also reviews the escalation rules.' Specific limitations: 'I'm not sure if the 72-hour escalation window is a business requirement or an arbitrary choice — if it's business-critical, it should be a named constant with a comment explaining the requirement.' Learning-through-review: 'This review helped me understand how claims flow through the system. I documented what I learned in case it's useful: [brief architecture note].' Value: even as a newcomer, catching a null reference exception or a missing error handler is valuable — don't apologize for what you can contribute"
+    weight: 0.30
+    description: "Honest scope"

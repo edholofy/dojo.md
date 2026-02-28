@@ -1,0 +1,47 @@
+meta:
+  id: following-a-runbook
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "Follow a runbook during alert response — execute documented procedures step by step while adapting when the runbook does not match reality"
+  tags: [monitoring, runbook, procedures, documentation, beginner]
+
+state: {}
+
+trigger: |
+  You received a CRITICAL alert: "Redis connection failures > 50/min
+  on order-service." You open the runbook and find:
+
+  ## Redis Connection Failure Runbook
+  1. Check Redis cluster health: `redis-cli -h redis-primary ping`
+  2. If Redis is responding: check order-service connection pool
+     settings in the config dashboard
+  3. If Redis is NOT responding: check if Redis pods are running
+     with `kubectl get pods -n redis`
+  4. If pods are running but not responding: restart the Redis
+     primary with `kubectl rollout restart statefulset/redis-primary`
+  5. If pods are NOT running: check node health and disk space
+  6. Escalate to the database team if not resolved in 15 minutes
+
+  You follow step 1 and Redis responds with PONG (it's healthy).
+  You check step 2 — the connection pool shows 48/50 connections
+  in use (nearly exhausted). But the runbook doesn't have a step
+  for "connection pool nearly full."
+
+  Task: Explain how you would handle this situation — following the
+  runbook where it applies and adapting when it does not. What do
+  you do about the connection pool issue?
+
+assertions:
+  - type: llm_judge
+    criteria: "Runbook is followed correctly and the gap is identified — runbook execution: 'Step 1: executed correctly. Redis responded with PONG — the Redis server itself is healthy. This eliminates Redis being down as the cause. Step 2: checked the connection pool. Found 48/50 connections in use — this is the likely cause of connection failures. When the pool is exhausted, new connection requests fail, generating the alert.' Gap identification: 'The runbook covers Redis being down (steps 3-5) but does not cover connection pool exhaustion on the application side. This is a gap — the runbook assumed the problem would be Redis health, but the actual problem is the application consuming too many connections.' What to do when the runbook runs out: 'First: do not panic. The runbook got you to the diagnosis: connection pool is nearly exhausted. Second: document that you deviated from the runbook (note in the incident channel: runbook steps 1-2 completed, Redis healthy, connection pool at 96% capacity — runbook does not cover this scenario). Third: investigate the connection pool issue using your engineering knowledge. Fourth: after the incident, update the runbook to cover this scenario'"
+    weight: 0.35
+    description: "Runbook execution and gap handling"
+  - type: llm_judge
+    criteria: "Connection pool investigation and mitigation are reasonable — investigation: 'Connection pool at 48/50 suggests either: (1) Connections are leaking — the application opens connections but does not return them to the pool. This is often caused by a code bug where connections are not properly closed in error paths. (2) Connections are held too long — slow Redis commands are holding connections longer than expected, starving the pool. (3) Traffic spike — more requests than usual are all needing Redis simultaneously, legitimately exhausting the pool.' Diagnostic steps: 'Check order-service request volume — is traffic higher than normal? Check Redis slow log — are there slow commands that would hold connections? Check if the connection pool issue started after a recent deployment (possible code change introduced a leak). Check other order-service instances — are all of them showing pool exhaustion or just one?' Mitigation options: '(1) If it is a connection leak: restart the order-service pods to reclaim connections. This is a temporary fix but gives immediate relief. (2) If it is slow Redis commands: identify and investigate the slow commands. (3) If it is legitimate traffic: consider temporarily increasing the connection pool size (if the config allows hot reloading) or scaling up order-service instances to distribute load.' Important: 'Choose the least risky mitigation first. Restarting a single pod (if there are multiple healthy pods) is relatively safe. Changing configuration parameters carries more risk'"
+    weight: 0.35
+    description: "Investigation and mitigation"
+  - type: llm_judge
+    criteria: "Response demonstrates when to escalate and how to improve the runbook — escalation decision: 'The runbook says to escalate after 15 minutes if not resolved. Even though the runbook did not cover this exact scenario, the escalation guidance still applies. If you cannot identify and mitigate the connection pool issue within 15 minutes, escalate to the database team or the team that owns order-service. When escalating, provide: what you have found (Redis healthy, connection pool at 96%), what you have tried, and what you need help with.' Runbook improvement: 'After the incident, update the runbook to add: Step 2a: If connection pool is above 80% utilized: check for connection leaks (look for connections in ESTABLISHED state that are idle), check Redis slow log for long-running commands, check if recent deployment changed connection behavior. If pool is above 95%: consider restarting one order-service pod to reclaim connections while investigating root cause. This improvement helps the next on-call engineer handle the same scenario without having to improvise.' Key lesson: 'Runbooks are guides, not scripts. They cover the most common scenarios but cannot anticipate every situation. A good on-call engineer follows the runbook where it applies, uses engineering judgment where it does not, and improves the runbook after every incident where a gap is found'"
+    weight: 0.30
+    description: "Escalation and runbook improvement"

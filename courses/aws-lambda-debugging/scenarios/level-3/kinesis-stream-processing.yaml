@@ -1,0 +1,64 @@
+meta:
+  id: kinesis-stream-processing
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda Kinesis stream processing — diagnose shard iterator issues, throughput limits, and enhanced fan-out for high-volume stream consumers"
+  tags: [AWS, Lambda, Kinesis, streams, shards, fan-out, advanced]
+
+state: {}
+
+trigger: |
+  Your Lambda function processes a Kinesis data stream for real-time
+  analytics. Suddenly, processing lag increases from seconds to hours:
+
+  CloudWatch Metric — IteratorAge:
+  10:00 - 500ms (normal)
+  11:00 - 30,000ms (30 seconds behind)
+  12:00 - 3,600,000ms (1 hour behind!)
+
+  Investigation:
+
+  1. The stream has 4 shards but traffic doubled. Each shard supports
+     1MB/s or 1,000 records/s input. At 2,000 records/s, shards are
+     at capacity. Records back up.
+     Fix: increase shard count (UpdateShardCount) or use on-demand mode.
+
+  2. Lambda processes one batch per shard concurrently. With 4 shards,
+     maximum 4 concurrent Lambda invocations. Each takes 2 seconds.
+     Throughput: 4 batches × 100 records / 2 seconds = 200 records/s.
+     But 2,000 records/s are arriving!
+     Fix: increase parallelization factor (up to 10 per shard):
+     $ aws lambda update-event-source-mapping --uuid abc-123 \
+       --parallelization-factor 10
+     Now: 4 shards × 10 parallel = 40 concurrent Lambda invocations.
+
+  3. After fixing throughput, one shard has a "poison pill" record
+     that causes the Lambda to crash. The shard is blocked — the
+     same bad record retries indefinitely.
+     Fix: configure BisectBatchOnFunctionError, MaximumRetryAttempts,
+     and OnFailure destination (same as DynamoDB Streams).
+
+  4. Multiple consumers on the same stream compete for read throughput
+     (2MB/s per shard shared). Enhanced fan-out gives each consumer
+     a dedicated 2MB/s pipe.
+
+  Task: Explain Kinesis + Lambda debugging. Write: how Kinesis event
+  source mapping works (shards, iterators, checkpointing), throughput
+  optimization (parallelization factor, shard splitting), error
+  handling for stream records, enhanced fan-out for multiple consumers,
+  and monitoring stream processing health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Kinesis processing mechanics are explained — Lambda polls each shard independently. One batch per shard at a time by default. Parallelization factor: run up to 10 Lambda invocations per shard concurrently (records within a partition key remain ordered). Shard throughput: 1MB/s write, 2MB/s read per shard. IteratorAge: time between record written and processed — critical metric for lag detection. Checkpointing: Lambda checkpoints after successful batch processing. Failed batches retry from the last successful checkpoint"
+    weight: 0.35
+    description: "Processing mechanics"
+  - type: llm_judge
+    criteria: "Error handling and throughput are covered — poison pill: one bad record blocks the entire shard. Fix: BisectBatchOnFunctionError (split batch to isolate bad record), MaximumRetryAttempts (stop retrying after N attempts), MaximumRecordAgeInSeconds (skip old records), OnFailure destination (send failed records to SQS). Throughput: increase parallelization factor for more concurrency, split shards for more capacity, use on-demand mode for auto-scaling shards. Enhanced fan-out: dedicated 2MB/s per consumer (avoids shared throughput limits)"
+    weight: 0.35
+    description: "Errors and throughput"
+  - type: llm_judge
+    criteria: "Monitoring is practical — key metrics: IteratorAge (processing lag, most important), GetRecords.IteratorAgeMilliseconds, IncomingBytes/IncomingRecords (input rate), ReadProvisionedThroughputExceeded (consumer hitting read limits). Alert on: IteratorAge > threshold (minutes, not hours), ReadProvisionedThroughputExceeded > 0 (need enhanced fan-out or more shards). Lambda metrics: Errors, Duration, ConcurrentExecutions per stream function. Capacity planning: records/second × average record size must be less than shard capacity × number of shards"
+    weight: 0.30
+    description: "Monitoring"

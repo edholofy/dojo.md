@@ -1,0 +1,63 @@
+meta:
+  id: master-migration-shift
+  level: 5
+  course: database-migration-planning
+  type: output
+  description: "Master migration shift — lead a complex, multi-dimensional database migration program combining technical execution, organizational change, regulatory compliance, and business case justification"
+  tags: [database, migration, shift-simulation, master, comprehensive, leadership]
+
+state: {}
+
+trigger: |
+  You are the Chief Technology Officer of a healthcare company that
+  has just been acquired by a larger health system. You have 90 days
+  to present a complete database integration plan to the parent
+  company's board. The situation:
+
+  Your company (HealthStart, 500 employees):
+  - 20 PostgreSQL databases on AWS (1.5TB total)
+  - Modern microservices architecture
+  - HIPAA compliant, SOC 2 Type II certified
+
+  Parent company (MegaHealth, 10,000 employees):
+  - 80 Oracle databases on-premises (50TB total)
+  - Monolithic architecture, some systems 20+ years old
+  - HIPAA compliant but last audit found 12 findings
+  - 3 DB2 mainframe databases handling claims processing
+
+  The board's requirements:
+  1. Unified patient record: patients seen at either organization
+     should have a single record
+  2. Cost reduction: eliminate $15M/year in redundant database costs
+  3. HIPAA compliance: zero audit findings within 18 months
+  4. No disruption: both organizations must continue operating during
+     the integration (combined: 5 million patient encounters/year)
+  5. Timeline: present the plan in 90 days, complete integration in
+     3 years
+
+  Complicating factors:
+  - Patient ID overlap: both systems use numeric IDs. Patient 12345
+    at HealthStart is a different person than Patient 12345 at
+    MegaHealth
+  - MegaHealth's Oracle DBAs (20 people) are skeptical of PostgreSQL
+  - HealthStart engineers (50 people) do not want to move to Oracle
+  - HIPAA breach risk during data integration (PHI from 5M+ patients)
+  - Budget for integration: $25M over 3 years
+
+  Task: Present the complete database integration plan addressing
+  all five board requirements, the organizational challenges, and
+  the regulatory risks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Integration strategy addresses all five board requirements with a coherent plan — strategy: 'Board requirement 1: Unified patient record. The Master Patient Index (MPI) is the foundation of the entire integration. Do not merge databases first — build the MPI first. MPI approach: create a new, shared patient identity service. Every patient gets a globally unique ID (UUID). The MPI maps: healthstart_patient_id ↔ global_uuid and megahealth_patient_id ↔ global_uuid. Patient matching algorithm: deterministic matching (SSN + date of birth + name): catches 70-80% of matches. Probabilistic matching (name variants, address similarity, phone matching): catches another 15-20%. Manual review queue: the remaining 5% (approximately 250K patients) reviewed by clinical staff. Critical: matching errors have clinical consequences. A false positive (merging two different patients) could cause a patient to receive the wrong medication. Build in clinical review for any match below 95% confidence. Timeline: MPI built and deployed in months 1-9. Patient matching runs months 3-12 (overlapping with MPI development). Board requirement 2: $15M/year cost reduction. Current combined database costs: MegaHealth Oracle: $12M/year (licensing: $8M, infrastructure: $2M, staff: $2M). MegaHealth DB2: $3M/year (mainframe costs). HealthStart PostgreSQL: $2M/year (AWS Aurora, infrastructure, staff). Total: $17M/year. Target: reduce to $2M/year or below. Approach: migrate MegaHealth Oracle databases to PostgreSQL on AWS (eliminates $8M in Oracle licensing over 3 years). Migrate MegaHealth DB2 to PostgreSQL (eliminates $3M in mainframe costs). Consolidate overlapping databases (both organizations have patient records, billing, scheduling — consolidate to one of each). Right-size AWS infrastructure after consolidation. Target state: PostgreSQL on AWS Aurora: $1.5M/year. Staff (consolidated DBA team): $1.5M/year. Total target: $3M/year. Savings: $14M/year (exceeds $15M target when amortized). Board requirement 3: Zero HIPAA findings within 18 months. MegaHealth has 12 current findings. Addressing them is a prerequisite for integration, not a consequence of it. Approach: immediately remediate the 12 findings (this is independent of the database integration). During integration: every database migration plan includes a HIPAA compliance review. Access controls are designed from scratch (do not inherit MegaHealth's broken access controls). Audit logging is mandatory for every database that handles PHI. Encryption at rest and in transit for all databases (both organizations). The integration is an opportunity to raise the compliance bar — HealthStart's SOC 2 practices become the standard for the combined organization. Board requirement 4: No disruption during integration. 5 million patient encounters per year = approximately 14,000 per day. Any disruption could delay patient care, which is unacceptable. Approach: every integration step uses the strangler fig pattern. Old systems continue operating unchanged. New systems are built alongside. Traffic is gradually shifted (canary deployment at the database level). If anything fails: immediate rollback to the old system. No big-bang cutovers. No maintenance windows longer than 4 hours. For critical systems (claims processing, patient records): zero-downtime migration with dual-write and parallel validation. Board requirement 5: Plan in 90 days, complete in 3 years. The 90-day plan is the deliverable for this board meeting. The 3-year execution is phased (described in the migration plan). Year 1: MPI, quick wins (MySQL elimination, small database consolidation), Oracle DBA training. Year 2: major Oracle migrations (largest databases), DB2 migration begins. Year 3: remaining migrations, optimization, decommissioning old infrastructure'"
+    weight: 0.35
+    description: "Integration strategy"
+  - type: llm_judge
+    criteria: "Organizational change management addresses both teams' concerns — organizational management: 'The people challenge is harder than the technical challenge. Two engineering cultures must merge: HealthStart (modern, cloud-native, 50 engineers) and MegaHealth (traditional, on-premises, 200+ engineers). If managed poorly: the best engineers from both organizations leave. Principles: (1) Respect both cultures — neither is wrong. MegaHealth's Oracle expertise kept a healthcare system running for 20+ years. That is not technical debt — that is reliability. HealthStart's cloud-native approach is modern, but it has not been tested at MegaHealth's scale. Both teams have something to teach each other. (2) The target platform is PostgreSQL on AWS — but this does not mean MegaHealth lost. Frame: the combined organization is choosing the best technology for the future. PostgreSQL was chosen because it eliminates $8M in licensing, not because HealthStart is better. MegaHealth's operational discipline and scale experience will make the PostgreSQL platform more reliable than either organization could achieve alone. (3) Addressing the MegaHealth Oracle DBAs (20 people). Commitment: no DBA loses their job in the first 2 years. Every DBA gets PostgreSQL training (funded, on company time, with certification bonuses). DBAs who become PostgreSQL-certified are eligible for promotion to Senior Database Engineer (expanded scope, higher compensation). The DBA team lead from MegaHealth becomes the Database Platform Lead for the combined organization (reporting to the VP of Engineering). This gives the MegaHealth DBA team leadership a stake in the success of the migration. (4) Addressing HealthStart engineers (50 people). Concern: being absorbed into a larger, slower organization. Response: HealthStart's cloud practices become the standard for the combined organization. HealthStart engineers are positioned as mentors and technical leads for migration teams. Key HealthStart leaders are retained with 2-year retention packages. HealthStart engineers do not report to MegaHealth management — the Platform Engineering organization is new, led by a leader acceptable to both sides. (5) Joint engineering culture. Create cross-organizational teams for each major migration. Each team has members from both HealthStart and MegaHealth. Shared on-call rotations (start in Year 2, after training). Joint engineering all-hands quarterly (celebrate wins from both organizations). Shared tooling and practices (CI/CD, monitoring, incident management) — select the best tool from either organization, not always HealthStart's'"
+    weight: 0.35
+    description: "Organizational management"
+  - type: llm_judge
+    criteria: "Risk management addresses HIPAA, data integrity, and budget risks comprehensively — risk management: 'Critical risk register: (1) HIPAA breach during patient data integration — likelihood: MEDIUM, impact: CRITICAL. Merging patient records from 2 organizations means PHI from 5M+ patients is being processed, matched, and moved. A breach during this process would be devastating (regulatory fines, patient trust, board liability). Mitigation: all patient matching happens in a HIPAA-compliant environment (encrypted, access-controlled, audit-logged). No PHI is exposed during the matching process — only hashed identifiers are used for matching. The actual patient record merging happens after matching is verified. Clinical staff review edge cases (not engineers — engineers should not have access to PHI during matching). Engage a HIPAA compliance consultant to review the integration plan before execution. HIPAA breach insurance: verify coverage extends to integration activities. (2) Patient identity matching errors — likelihood: HIGH, impact: HIGH. False positives (merging different patients): patient receives wrong treatment, wrong medications, wrong billing. Life-safety risk. False negatives (failing to merge same patient): duplicate records persist. Less dangerous but creates operational confusion. Mitigation: conservative matching threshold — require 95% confidence for automatic matching. Below 95%: route to clinical review. Implement a matched-record review period: after matching, clinical staff spot-check 1% of merged records. If the error rate exceeds 0.1%: stop matching, investigate, and adjust the algorithm. After go-live: provide a self-service tool for patients and clinicians to report incorrect merges. (3) Budget overrun ($25M over 3 years) — likelihood: HIGH, impact: MEDIUM. $25M for integrating 103 databases across 2 organizations is tight. Historical M&A database integrations typically run 30-50% over budget. Mitigation: phase the budget with decision gates. Year 1: $8M (MPI + quick wins + training). Gate: if Year 1 is more than 20% over budget, re-scope Year 2. Year 2: $10M (major migrations). Gate: if Year 2 is over budget, defer lowest-priority migrations to Year 3. Year 3: $7M (completion + optimization). If budget is exhausted: the remaining databases continue operating on their current platforms. This is acceptable — the highest-value migrations are prioritized in Years 1-2. Identify the $15M/year savings that justify continued investment even if the budget increases. (4) Key person departure — likelihood: MEDIUM, impact: HIGH. The top 5 engineers from each organization are critical to the integration. If they leave: knowledge is lost, timelines slip, morale drops. Mitigation: retention packages for the top 10 engineers (total: $2M over 2 years, included in the $25M budget). Ensure no single person is a bottleneck — pair programming, documentation requirements, cross-training. (5) Integration fatigue — likelihood: HIGH, impact: MEDIUM. A 3-year integration program is exhausting. By Year 2, teams may be burned out and cutting corners. Mitigation: celebrate milestones (every database migrated is a win). Rotate team members (no one works on integration for more than 12 consecutive months). Year 3 is explicitly lighter (optimization, not heavy migration). Build slack into the schedule (not every week is a migration week)'"
+    weight: 0.30
+    description: "Risk management"

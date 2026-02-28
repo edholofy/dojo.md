@@ -1,0 +1,40 @@
+meta:
+  id: data-types-and-conversion
+  level: 1
+  course: data-analysis-python-pandas
+  type: output
+  description: "Understand and convert data types — handle datetime parsing, numeric conversion, categorical types, and string operations in pandas"
+  tags: [python, pandas, dtypes, datetime, astype, type-conversion, beginner]
+
+state: {}
+
+trigger: |
+  After loading sales_data.csv, df.dtypes shows:
+
+  date            object    (should be datetime)
+  product_name    object    (correct — string)
+  category        object    (could be category for efficiency)
+  quantity        int64     (correct)
+  unit_price      float64   (correct)
+  region          object    (could be category)
+  customer_id     int64     (should be string — IDs are not numbers)
+
+  Your manager says: "The date column should work as dates so we
+  can filter by month, and the customer_id should not be treated
+  as a number — we never do math on IDs."
+
+  Task: Convert the data types and explain why correct types matter.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly converts all problematic data types — code: 'Converting data types: Date conversion: df[\"date\"] = pd.to_datetime(df[\"date\"]). Common date formats: pd.to_datetime(df[\"date\"], format=\"%Y-%m-%d\") — explicitly specify format (faster for large datasets). pd.to_datetime(df[\"date\"], format=\"%m/%d/%Y\") — for US date format (01/15/2024). pd.to_datetime(df[\"date\"], dayfirst=True) — for European format where day comes first (15/01/2024). pd.to_datetime(df[\"date\"], errors=\"coerce\") — converts invalid dates to NaT (Not a Time) instead of raising an error. After conversion, you can extract components: df[\"year\"] = df[\"date\"].dt.year. df[\"month\"] = df[\"date\"].dt.month. df[\"day_of_week\"] = df[\"date\"].dt.day_name(). df[\"quarter\"] = df[\"date\"].dt.quarter. Filter by date range: df[df[\"date\"].between(\"2024-01-01\", \"2024-03-31\")]. Customer ID conversion: df[\"customer_id\"] = df[\"customer_id\"].astype(str). Why: customer_id 12345 is an identifier, not a quantity. You would never calculate the average customer_id. Treating it as a string prevents accidental mathematical operations and preserves leading zeros (00123 becomes 123 if stored as int). Category type conversion: df[\"category\"] = df[\"category\"].astype(\"category\"). df[\"region\"] = df[\"region\"].astype(\"category\"). Why: the category dtype stores repeated strings efficiently. If region has 4 unique values repeated across 10,000 rows, category stores the 4 unique strings once and uses integer codes internally. Memory savings: 50-90% for columns with low cardinality (few unique values). Verification: df.dtypes should now show: date datetime64[ns], product_name object, category category, quantity int64, unit_price float64, region category, customer_id object. df.memory_usage(deep=True) — compare before and after to see the memory savings from category conversion'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation covers why data types matter for analysis and performance — explanation: 'Why correct data types matter: (1) Correctness: wrong types lead to wrong results. If customer_id is int64, df[\"customer_id\"].mean() returns a meaningless number (average of IDs). If date is a string, df[\"date\"] > \"2024-06-01\" does string comparison (lexicographic), not date comparison — \"2024-12-01\" > \"2024-06-01\" works by accident, but \"12/01/2024\" > \"06/01/2024\" does not. (2) Functionality: datetime types unlock date-specific operations. Strings cannot do: df.groupby(df[\"date\"].dt.month)[\"revenue\"].sum() — monthly revenue. df.set_index(\"date\").resample(\"W\")[\"revenue\"].sum() — weekly revenue. df[\"date\"].dt.dayofweek — day of week analysis. (3) Performance: the category type is significantly faster for groupby operations on low-cardinality columns. Comparing integers (category codes) is faster than comparing strings. (4) Memory: a column with 10,000 rows and 4 unique regions uses approximately 80KB as object but only 10KB as category. For large datasets (millions of rows), this makes the difference between fitting in memory or not. Best practice: convert types immediately after loading: df = pd.read_csv(\"sales_data.csv\", parse_dates=[\"date\"], dtype={\"customer_id\": str, \"category\": \"category\", \"region\": \"category\"}). Specifying dtypes in read_csv is faster than converting after loading because pandas only parses each value once'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers common conversion errors and troubleshooting — troubleshooting: 'Common conversion issues: Issue 1 — Mixed types prevent conversion. df[\"quantity\"].astype(int) fails if the column contains strings like N/A. Solution: df[\"quantity\"] = pd.to_numeric(df[\"quantity\"], errors=\"coerce\") converts valid numbers and turns invalid values into NaN. Then handle the NaN values before converting to int: df[\"quantity\"] = df[\"quantity\"].fillna(0).astype(int). Issue 2 — Date parsing is slow on large files. pd.to_datetime without a format string tries multiple formats, which is slow. Solution: always specify the format: pd.to_datetime(df[\"date\"], format=\"%Y-%m-%d\") is 5-10x faster. Issue 3 — Losing precision with astype(int). If unit_price is 19.99 and you convert to int, it becomes 19 (truncated, not rounded). Solution: use round() first if you want rounding: df[\"unit_price\"].round().astype(int). Issue 4 — Category ordering. By default, categories are unordered. For regions like Low, Medium, High, you may want ordered categories: df[\"priority\"] = pd.Categorical(df[\"priority\"], categories=[\"Low\", \"Medium\", \"High\"], ordered=True). Ordered categories support comparisons: df[df[\"priority\"] > \"Low\"] returns Medium and High rows'"
+    weight: 0.30
+    description: "Troubleshooting"

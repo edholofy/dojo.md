@@ -1,0 +1,49 @@
+meta:
+  id: proposing-solutions
+  level: 1
+  course: technical-rfc-writing
+  type: output
+  description: "Propose solutions with alternatives — present a recommended approach alongside alternatives considered, with clear reasoning for the recommendation"
+  tags: [RFC, solutions, alternatives, recommendation, reasoning, beginner]
+
+state: {}
+
+trigger: |
+  You're writing the solution section of an RFC. The problem: your
+  application needs real-time notifications. You've researched three
+  approaches:
+
+  1. Polling: clients poll API every 5 seconds
+     - Pros: simple, works everywhere, no infrastructure changes
+     - Cons: high server load, 5-second delay, wastes bandwidth
+
+  2. WebSocket: persistent connection for real-time push
+     - Pros: instant delivery, low latency, bidirectional
+     - Cons: connection management complexity, load balancer config,
+       harder to scale horizontally
+
+  3. Server-Sent Events (SSE): server pushes over HTTP
+     - Pros: simpler than WebSocket, automatic reconnection, works
+       through most proxies
+     - Cons: unidirectional only, limited browser connection pool
+
+  You recommend SSE.
+
+  Task: Write the "Proposed Solution" and "Alternatives Considered"
+  sections. Show how to present your recommendation with reasoning
+  while fairly representing the alternatives. The reader should
+  understand WHY SSE was chosen, not just THAT it was chosen.
+
+assertions:
+  - type: llm_judge
+    criteria: "Recommendation is clearly stated with reasoning — the proposed solution section leads with the recommendation: 'We recommend Server-Sent Events (SSE) for real-time notifications.' Then explains WHY: (1) Our use case is unidirectional (server → client), so WebSocket's bidirectional capability is unnecessary complexity. (2) SSE's automatic reconnection handles network instability (common on mobile) without custom code. (3) SSE works through existing load balancers and proxies without configuration changes. (4) Simpler to implement than WebSocket while meeting all requirements. Decision criteria explicitly stated: we optimized for simplicity and reliability over maximum capability. The reasoning should be convincing — a reader should agree with the choice after reading the justification"
+    weight: 0.35
+    description: "Clear recommendation"
+  - type: llm_judge
+    criteria: "Alternatives are fairly represented — each alternative: (1) described accurately (not straw-manned to make the recommendation look better), (2) pros acknowledged (polling IS simpler, WebSocket IS more capable), (3) specific reasons for rejection tied to THIS project's needs. Polling rejected: 'Polling at 5-second intervals for 10,000 concurrent users = 2,000 requests/second. This triples our API load and still has unacceptable latency for time-sensitive notifications (payment confirmations).' WebSocket rejected: 'WebSocket requires significant infrastructure changes (sticky sessions, WebSocket-aware load balancer) and custom reconnection logic. The capability gain (bidirectional) doesn't justify the complexity for our unidirectional notification use case.' A reader favoring an alternative should feel their option was genuinely considered, not dismissed"
+    weight: 0.35
+    description: "Fair alternatives"
+  - type: llm_judge
+    criteria: "Decision matrix or comparison is provided — structured comparison: table with criteria (latency, complexity, scalability, infrastructure changes, browser support) × options. Each cell has a specific value, not just 'good/bad.' Under what conditions the recommendation changes: 'If we later need bidirectional communication (e.g., real-time collaboration features), we should revisit WebSocket.' 'If we need to support very old browsers, polling becomes the fallback.' This shows the recommendation isn't dogmatic — it's the best choice for current requirements. Reversibility: 'SSE and WebSocket have similar client-side interfaces — migrating from SSE to WebSocket later is straightforward (estimated 2 weeks). This makes SSE a low-risk starting point.'"
+    weight: 0.30
+    description: "Comparison structure"

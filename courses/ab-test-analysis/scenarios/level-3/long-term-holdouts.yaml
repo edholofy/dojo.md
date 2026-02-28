@@ -1,0 +1,33 @@
+meta:
+  id: long-term-holdouts
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Design long-term holdout experiments — measure the cumulative impact of shipped features over months using holdout groups, detecting long-term effects that short-term A/B tests miss"
+  tags: [holdout, long-term-effects, cumulative-impact, retention, advanced]
+
+state: {}
+
+trigger: |
+  The VP of Product asks: "We ship 50+ experiments per quarter that
+  individually show 1-3% improvements. But our overall metrics have
+  been flat for a year. Are these small wins actually adding up? How
+  do we measure whether our experimentation program is driving real
+  cumulative value?"
+
+  Task: Explain how to use long-term holdout groups to measure the
+  cumulative impact of experimentation and detect long-term effects.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains long-term holdouts and why they're needed — holdouts: 'Long-term holdout groups: A long-term holdout is a small percentage of users (typically 1-5%) who are excluded from ALL experiments for an extended period (3-12 months). These users experience the product as it was at the start of the holdout period. Purpose: measure the cumulative impact of all shipped experiments by comparing the holdout group (old product) to the rest of the user base (product with all shipped improvements). Why standard A/B tests are insufficient: 1. Compounding effects are invisible: each test measures a marginal improvement (e.g., +1.5% conversion). But the interaction between 50 shipped changes may create compound effects that no individual test captured. 2. Long-term effects differ from short-term: a feature that shows +2% conversion in a 2-week A/B test might have +5% impact over 6 months (users learn and adopt) or -3% over 6 months (initial novelty fades, or the feature creates dependencies that degrade over time). 3. Answering the VPs question: if holdout users have 15% lower conversion than non-holdout users after 6 months, you can confidently say: our experimentation program delivered a 15% cumulative improvement. If holdout users have similar metrics to non-holdout users: the individual experiment wins did not compound into real aggregate value (suggesting metric gaming, novelty effects, or interactions that cancel out). This is uncomfortable but essential knowledge'"
+    weight: 0.35
+    description: "Holdouts"
+  - type: llm_judge
+    criteria: "Response covers holdout design and management — design: 'Holdout experiment design: Step 1 — Select the holdout population: size: 1-5% of total users. Larger holdout = more statistical power but more users deprived of improvements. 2% is a common balance. Selection: random, stable hash-based assignment. The same users remain in the holdout for the entire period. Stratification: ensure the holdout is representative across key dimensions (platform, geography, user tenure, engagement level). Step 2 — Define the holdout scope: global holdout: holdout users are excluded from ALL experiments. Measures total experimentation impact. Layer holdout: holdout users are excluded from experiments in one product area (e.g., checkout) but included in others. Measures the impact of experimentation on a specific feature area. Multiple holdouts: maintain separate holdouts for different product areas and one global holdout. Most informative but requires more traffic. Step 3 — Manage the holdout over time: new users: randomly assign new users to the holdout at the same rate (2%). This maintains the holdout size as the user base grows. New users in the holdout never experience shipped features — they get the baseline product from day 1. Existing holdout users: do NOT remove users from the holdout mid-period. Survivorship bias would make the holdout group artificially different. Feature flags: every shipped experiment must have a feature flag that respects the holdout. If a user is in the holdout, they always see the control version (pre-experiment product state). Step 4 — Duration: minimum 3 months to detect compounding effects. Ideal: 6-12 months. Reset the holdout annually by releasing all holdout users and selecting a new random holdout. The old holdout users finally get all the improvements'"
+    weight: 0.35
+    description: "Design"
+  - type: llm_judge
+    criteria: "Response covers analysis and interpretation of holdout results — analysis: 'Analyzing holdout results: Quarterly holdout review: after 3 months: compare the holdout group to the non-holdout population on all key metrics. Key metric comparisons: conversion rate — holdout: 8.0%, non-holdout: 9.2%, difference: +1.2pp (+15%). Revenue per user — holdout: $42, non-holdout: $48, difference: +$6 (+14.3%). 30-day retention — holdout: 45%, non-holdout: 48%, difference: +3pp (+6.7%). Session frequency — holdout: 3.2/week, non-holdout: 3.5/week, difference: +0.3 (+9.4%). Interpretation: the experimentation program delivered a 15% cumulative improvement in conversion over 3 months. This is the compound effect of the approximately 25 experiments shipped during this period. The sum of individual experiment lifts was approximately 22% (adding up each experiment's reported lift). The actual cumulative effect is 15% — meaning some experiment effects did not fully compound (interaction effects, novelty fading, or diminishing returns). The 70% compounding rate (15%/22%) is healthy — some loss is expected. Potential pitfalls: 1. Selection bias over time: if holdout users churn at a different rate than non-holdout users, the remaining populations diverge. Monitor churn rates separately for holdout and non-holdout groups. If they diverge, use an intent-to-treat analysis (include all users who were originally assigned, even if they churned). 2. Contamination: holdout users who interact with non-holdout users (in a social product) may be indirectly exposed to feature changes. This attenuates the measured holdout effect (makes it look smaller than reality). 3. Ethical considerations: holdout users receive an inferior product experience for months. Limit the holdout to the minimum size needed for statistical significance. Provide a mechanism to release users from the holdout if a critical safety or security feature is shipped. Have an executive sponsor who understands the trade-off. For the VP: set up a 2% global holdout now. In 3-6 months, you will have definitive data on whether your experimentation program is delivering real cumulative value. Use this data to calibrate experiment sizing, prioritize high-impact experiments, and justify the experimentation team's budget'"
+    weight: 0.30
+    description: "Analysis"

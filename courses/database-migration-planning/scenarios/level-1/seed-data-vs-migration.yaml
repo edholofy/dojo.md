@@ -1,0 +1,36 @@
+meta:
+  id: seed-data-vs-migration
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Distinguish seed data from migrations — understand when to use seed files vs data migrations and how to handle initial data setup"
+  tags: [database, migration, seed-data, data-migration, beginner]
+
+state: {}
+
+trigger: |
+  Your team is building a feature that requires a "roles" table with
+  predefined values (admin, editor, viewer). A junior developer asks:
+  "Should I add the INSERT statements for these roles in the migration
+  file, or is there a separate place for initial data?"
+
+  Another developer says: "We also need test users for development.
+  Where do those go?"
+
+  Task: Explain the difference between schema migrations, data
+  migrations, and seed data. Clarify when each is appropriate and
+  how they should be organized.
+
+assertions:
+  - type: llm_judge
+    criteria: "Three types of database changes are distinguished — distinction: 'There are three different types of database changes, each with a different purpose: (1) Schema migrations: changes to database structure. CREATE TABLE, ALTER TABLE, ADD COLUMN, CREATE INDEX. These define what the database looks like. They run in all environments (development, staging, production). Example: CREATE TABLE roles (id SERIAL PRIMARY KEY, name VARCHAR(50) NOT NULL UNIQUE). (2) Data migrations: changes to production data that are part of the application evolution. INSERT, UPDATE, DELETE that are required for the application to function. These also run in all environments. Example: INSERT INTO roles (name) VALUES (admin), (editor), (viewer). The roles table is useless without its initial values — the application code references these roles. This data is part of the schema, not test data. (3) Seed data: test or development data used to populate the database for local development and testing. Test users, sample products, example content. These run ONLY in development and testing environments, NEVER in production. Example: INSERT INTO users (name, email, role_id) VALUES (Test Admin, admin@test.local, 1)'"
+    weight: 0.35
+    description: "Three types distinguished"
+  - type: llm_judge
+    criteria: "Where to put each type is clearly explained — placement: 'For the roles question: the predefined roles (admin, editor, viewer) belong IN the migration file, not in seed data. Why? Because the application cannot function without these roles. If a new developer sets up the database and runs migrations but skips seeding, the application breaks. Required reference data should be in migrations so it is automatically applied everywhere. The migration: CREATE TABLE roles (id SERIAL PRIMARY KEY, name VARCHAR(50) NOT NULL UNIQUE); INSERT INTO roles (name) VALUES (admin), (editor), (viewer); Both the schema and the initial data are in the same migration. They are deployed together. For the test users question: test users belong in a seed file, NOT in migrations. Why? Because test users should never exist in production. Seed files are run manually or by a separate command: npx knex seed:run (Knex), prisma db seed (Prisma), or a custom script. Seed files are idempotent — they check if data exists before inserting, or they clear and re-insert. Organization: migrations/ directory: schema changes and required data. seeds/ directory: development and test data. The CI/CD pipeline runs migrations automatically. It does NOT run seeds (seeds are for local development only)'"
+    weight: 0.35
+    description: "Correct placement"
+  - type: llm_judge
+    criteria: "Edge cases and guidelines are provided — guidelines: '(1) When is data a migration vs a seed? Ask: does the application work without this data in production? If no → it is a data migration (put it in migrations). If yes → it is seed data (put it in seeds). Examples: country codes table → migration (application needs these in production). Enum values (status types, role types) → migration. Sample products for demo → seed data. Test accounts → seed data. (2) Large data migrations are different. If you need to backfill 1 million rows, do NOT put it in a migration file. Large data migrations should be separate scripts that run asynchronously. The migration adds the column. A separate backfill script populates it. This prevents the migration from timing out or locking the table for too long. (3) Seed data should be realistic. Good seed data mimics production patterns: realistic names, varied data, edge cases. This helps developers catch bugs that only appear with real-world data. (4) Never put secrets in seed files. Seed files are in version control. Do not include real passwords, API keys, or personal data. Use obviously fake data (test@example.com, password123). (5) Seed files should be runnable multiple times. Use upserts or delete-then-insert patterns. A developer should be able to run seeds repeatedly without errors or duplicate data'"
+    weight: 0.30
+    description: "Guidelines"

@@ -1,0 +1,48 @@
+meta:
+  id: style-vs-logic
+  level: 1
+  course: code-review-feedback-writing
+  type: output
+  description: "Distinguish style from logic — categorize review comments by severity and type, separating cosmetic preferences from functional issues"
+  tags: [code-review, severity, style, logic, categorization, nit, beginner]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR with 15 comments to make. You need to
+  categorize them properly so the author knows what's critical vs
+  what's optional. Your comments are:
+
+  1. Missing semicolons (linter would catch this)
+  2. Race condition in concurrent database writes
+  3. Inconsistent indentation (tabs vs spaces)
+  4. Unvalidated user input passed to shell command
+  5. Variable named "data" — could be more descriptive
+  6. API key hardcoded in source code
+  7. Prefer arrow functions over function declarations (style preference)
+  8. Off-by-one error in pagination logic
+  9. Unused import statement
+  10. Missing error handling — function swallows exceptions silently
+  11. Single-letter variable in a 3-line loop (acceptable)
+  12. Potential memory leak from unclosed database connection
+  13. Comment says "TODO: fix later" with no context
+  14. Long ternary that could be an if/else for readability
+  15. Business logic doesn't match acceptance criteria
+
+  Task: Categorize all 15 items into severity levels and write
+  appropriate review comments for each. Show how to prefix comments
+  to signal severity. Explain the categorization rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Items are correctly categorized by severity — blocking/must-fix: race condition (#2), shell command injection (#4), hardcoded API key (#6), off-by-one error (#8), swallowed exceptions (#10), memory leak (#12), wrong business logic (#15). These are bugs, security vulnerabilities, or incorrect behavior. Suggestion/should-fix: descriptive variable name (#5), unused import (#9), TODO without context (#13). Nice-to-have/nit: semicolons (#1), indentation (#3), arrow functions (#7), single-letter variable (#11), ternary readability (#14). Clear rationale for each: security/correctness issues are blocking, maintainability issues are suggestions, pure style preferences are nits"
+    weight: 0.35
+    description: "Correct categorization"
+  - type: llm_judge
+    criteria: "Comments use severity prefixes consistently — prefix system: 'blocking:' or 'must-fix:' for issues that must be addressed before merge. 'suggestion:' for improvements that should be made. 'nit:' for optional style preferences. 'question:' for things the reviewer is unsure about. 'praise:' for things done well. Each comment uses the appropriate prefix. Blocking comments explain the specific risk (security vulnerability, data corruption, production crash). Nits are explicitly marked as optional ('nit: feel free to ignore'). The author can quickly scan prefixes to prioritize their work — address all blocking items, consider suggestions, optionally handle nits"
+    weight: 0.35
+    description: "Severity prefixes"
+  - type: llm_judge
+    criteria: "Guidance on when to block vs suggest vs nit is practical — blocking criteria: security vulnerabilities, correctness bugs, data loss risk, breaking changes without migration. Suggest criteria: maintainability issues, missing error handling, unclear naming, dead code. Nit criteria: pure style preferences, formatting (especially if no linter), alternative approaches that are equivalent. Rule of thumb: 'Would I wake someone up at 3am for this?' — if yes, it's blocking. 'Would this cause a bug in 6 months?' — suggestion. 'Does this bother only me?' — nit. Also: don't block on nits, don't nit on critical bugs (everything looks minor when prefixed 'nit:'). Automation recommendation: let linters handle style, humans focus on logic"
+    weight: 0.30
+    description: "Categorization guidance"

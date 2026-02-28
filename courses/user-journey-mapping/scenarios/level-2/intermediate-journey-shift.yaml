@@ -1,0 +1,60 @@
+meta:
+  id: intermediate-journey-shift
+  level: 2
+  course: user-journey-mapping
+  type: output
+  description: "Intermediate journey shift — handle multiple intermediate journey mapping challenges in a single session"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a UX lead at a healthcare company that operates
+  urgent care clinics and a telemedicine service. You face
+  three journey mapping challenges this week:
+
+  TASK 1 — A patient had a terrible cross-channel experience:
+  She felt sick on Monday, used the telemedicine app to see
+  a doctor, was prescribed antibiotics, but the prescription
+  was sent to a pharmacy in a different state (her profile
+  address was outdated). She called telemedicine support,
+  who said "we can't change prescriptions, call your doctor."
+  She went to a physical urgent care clinic Tuesday, waited
+  2 hours, and the clinic doctor had no record of her
+  telemedicine visit — she had to explain everything again,
+  get re-examined, and get a new prescription.
+  Create a cross-channel journey map highlighting the
+  system failures.
+
+  TASK 2 — Your medical director wants a service blueprint
+  for the telemedicine visit flow. Behind the scenes:
+  the doctor uses 3 systems (EMR, video platform, e-prescribe),
+  the video platform drops calls 8% of the time, the
+  e-prescribe system doesn't verify pharmacy locations
+  against patient addresses, and the EMR doesn't sync
+  between telemedicine and physical clinics.
+  Create a service blueprint.
+
+  TASK 3 — The CEO is presenting to the board about the
+  company's digital health strategy. She needs a future-
+  state journey showing how a patient experience SHOULD
+  work when telemedicine and physical clinics are properly
+  integrated. You have 2 hours to prepare a future-state
+  journey narrative.
+
+  Task: Handle all three intermediate journey mapping
+  challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Task 1 — cross-channel journey map — channel failure mapping (traces the patient across three channels: telemedicine app → phone support → physical clinic; each channel transition loses critical information: telemedicine visit data doesn't transfer to the clinic, phone support can't modify prescriptions, the clinic starts from scratch), pain point severity (maps the healthcare-specific impact: this isn't just inconvenience — the patient was sick and had to wait an additional day plus 2 hours because systems don't connect; the wrong-state prescription means medication was delayed; the re-examination means unnecessary medical costs and patient discomfort), system-caused patient harm (the journey map should clearly show that the patient did nothing wrong — the outdated address was a system design failure: the e-prescribe system should verify pharmacy location, the telemedicine system should prompt address verification, the clinic should have access to telemedicine records)."
+    weight: 0.35
+    description: "CrossChannelHealthcare"
+  - type: llm_judge
+    criteria: "Response handles Task 2 — service blueprint — blueprint lanes (maps the telemedicine visit with proper service blueprint structure: patient actions — opens app, waits for doctor, describes symptoms, receives diagnosis, gets prescription; frontstage — doctor on video, visible interface; backstage — doctor switching between 3 systems EMR/video/e-prescribe, video call stability, prescription routing; support processes — EMR infrastructure, video platform reliability with 8% drop rate, e-prescribe pharmacy verification gap, EMR non-sync between telemedicine and physical clinics), fail points identified (marks the critical failure points in the blueprint: 8% video drop rate creates unreliable visits, e-prescribe doesn't verify pharmacy against patient address — this caused the Task 1 scenario, EMR doesn't sync across delivery channels — this caused the clinic to have no records, doctor uses 3 separate systems — context switching during patient care), systemic root cause (the blueprint reveals that the healthcare system's backstage fragmentation — 3 unconnected systems — directly causes the patient-facing problems in Task 1; the blueprint provides the 'why' behind the journey map's 'what')."
+    weight: 0.35
+    description: "TelemedicineBlueprint"
+  - type: llm_judge
+    criteria: "Response handles Task 3 — future-state journey for board — future-state narrative (presents the ideal integrated experience: patient feels sick, opens the app, app confirms her address and preferred pharmacy, sees a doctor via video, prescription is sent to verified local pharmacy, if symptoms worsen the next day she walks into a clinic where the doctor already has her telemedicine records on screen — no re-explanation, no re-examination, seamless continuity of care), board-appropriate format (the future-state journey is presented as a narrative story, not a detailed map — the board needs to understand the vision and the patient impact, not the system architecture; includes competitive positioning: 'integrated care is what patients expect from modern healthcare companies'), connecting all three tasks (the future-state journey implicitly solves the problems identified in Tasks 1 and 2: the cross-channel failures are eliminated by integrated systems, the service blueprint failures are addressed by unified EMR and verified e-prescribe — the three deliverables form a coherent story: here's what's broken, here's why it's broken, here's what it should look like)."
+    weight: 0.30
+    description: "FutureStateBoard"

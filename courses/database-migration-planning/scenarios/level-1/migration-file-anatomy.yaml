@@ -1,0 +1,45 @@
+meta:
+  id: migration-file-anatomy
+  level: 1
+  course: database-migration-planning
+  type: output
+  description: "Understand migration file anatomy — learn the structure and naming conventions of migration files and how migration tools track applied changes"
+  tags: [database, migration, file-structure, naming, tracking, beginner]
+
+state: {}
+
+trigger: |
+  You open the migrations directory in your project and see these
+  files:
+
+  migrations/
+  ├── 20260115_001_create_users_table.sql
+  ├── 20260120_002_add_email_index.sql
+  ├── 20260201_003_create_orders_table.sql
+  ├── 20260215_004_add_status_to_orders.sql
+  └── 20260227_005_add_shipping_address.sql
+
+  You also notice a table in the database called "schema_migrations"
+  with entries for migrations 001 through 004 (but not 005).
+
+  Your team lead asks: "Can you explain to the new intern how our
+  migration system works? Walk them through what these files mean
+  and how the tool knows which ones to run."
+
+  Task: Explain the migration file structure, naming conventions,
+  the schema_migrations tracking table, and how the migration tool
+  decides which migrations to run.
+
+assertions:
+  - type: llm_judge
+    criteria: "File naming conventions are explained — naming: 'Migration file naming follows a pattern: [timestamp]_[sequence]_[description].[extension]. Timestamp (20260115): the date the migration was created. This ensures migrations sort chronologically. Sequence number (001): an incremental number within the project. Combined with the timestamp, this creates a unique, ordered identifier. Description (create_users_table): a human-readable summary of what the migration does. Read the description to understand the migration without opening the file. Extension (.sql): the file format. SQL migrations contain raw SQL. Some tools use .js or .ts for JavaScript/TypeScript migrations. Why this ordering matters: migrations MUST run in order. Migration 003 (create_orders_table) must run before 004 (add_status_to_orders) because you cannot add a column to a table that does not exist yet. The timestamp+sequence naming ensures the tool always runs migrations in the correct order. Convention tip: the description should be in snake_case and start with a verb: create_, add_, remove_, rename_, alter_. This makes the migration history readable: create_users_table, add_email_index, create_orders_table'"
+    weight: 0.35
+    description: "Naming conventions"
+  - type: llm_judge
+    criteria: "Tracking table and execution logic are explained — tracking: 'The schema_migrations table (or equivalent) is the migration tool state tracker. It records which migrations have been applied to this database. Typical schema: CREATE TABLE schema_migrations (version VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP DEFAULT NOW()). Each row represents one applied migration. The table currently shows migrations 001-004 are applied (but not 005). How the tool decides which migrations to run: (1) List all migration files in the migrations directory (sorted by name/timestamp). (2) Query the schema_migrations table for all applied migrations. (3) Compare the two lists. (4) Run any migration files that are NOT in the schema_migrations table. In our case: files 001-005 exist. schema_migrations has 001-004. The tool will run only 005 (add_shipping_address). This is why migration 005 has not been applied yet — it was created but not yet run (perhaps it is waiting for the next deployment). After running 005: the tool inserts a row into schema_migrations for 005. Next time: the tool compares again and finds nothing to run (all 5 are applied). This logic is idempotent: you can run the migrate command as many times as you want. It only executes pending migrations and skips applied ones'"
+    weight: 0.35
+    description: "Tracking table explanation"
+  - type: llm_judge
+    criteria: "Common questions about migration files are answered — common questions: '(1) Can I edit an already-applied migration? No (in production). Once a migration is applied, it is recorded in schema_migrations. If you edit the file, the tool will not re-run it (it thinks it is already applied). The edited version and the applied version will be different, causing inconsistency. In development: you can rollback, edit, and re-apply. In production: write a new migration to make corrections. (2) Can I delete a migration file? Not if it has been applied. Deleting the file but leaving the record in schema_migrations confuses the tool. If you need to undo a migration, write a new migration that reverses it. (3) What if two developers create migrations at the same time? The timestamp naming helps — different dates mean different names. But if both create migrations on the same day, the sequence number differentiates them. Some tools use full timestamps (YYYYMMDDHHmmss) to minimize conflicts. If a conflict does occur: rename one migration to maintain the correct order. (4) What happens if a migration fails halfway through? This depends on the database. PostgreSQL supports transactional DDL (schema changes inside transactions). If a migration is wrapped in a transaction and fails, the entire migration is rolled back. MySQL does not support transactional DDL. If a migration fails halfway, the database is in a partial state — this is why backups are critical'"
+    weight: 0.30
+    description: "Common questions"

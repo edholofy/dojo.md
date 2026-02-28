@@ -1,0 +1,67 @@
+meta:
+  id: cost-optimization-strategy
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design Lambda cost optimization — implement right-sizing, architecture optimizations, and FinOps practices for serverless applications at scale"
+  tags: [AWS, Lambda, cost, optimization, FinOps, right-sizing, expert]
+
+state: {}
+
+trigger: |
+  Your serverless application's AWS bill has grown from $5K to $45K
+  per month. The CFO wants answers. Cost Explorer breakdown:
+
+  Lambda:           $18,000 (40%)
+  DynamoDB:          $9,000 (20%)
+  API Gateway:       $6,000 (13%)
+  CloudWatch:        $5,000 (11%)
+  S3/Data Transfer:  $4,000 (9%)
+  Other:             $3,000 (7%)
+
+  Lambda cost analysis:
+  - 50 functions, 120M invocations/month
+  - Average duration: 800ms
+  - Average memory: 512MB (many over-provisioned)
+  - 5 functions with provisioned concurrency: $3,200/month
+  - ARM (Graviton2): not used (could save 20%)
+
+  Investigation reveals cost drivers:
+
+  1. Over-provisioned memory: 30 functions at 512MB-1024MB but
+     Max Memory Used is 50-100MB. They were set high "just in case."
+     Right-sizing to actual usage + 20% buffer saves $4,500/month.
+
+  2. Unnecessary invocations: a "poller" Lambda runs every 1 second
+     checking for SQS messages. SQS event source mapping would
+     eliminate 2.5M unnecessary invocations/month ($800).
+
+  3. CloudWatch Logs: $5,000/month! Functions log everything at
+     DEBUG level in production. Switching to INFO saves 80% of
+     log volume ($4,000/month).
+
+  4. Provisioned concurrency: 5 functions with 100 provisioned
+     concurrent executions each, but traffic only needs 100 total.
+     Reduce to 20 per function with auto-scaling.
+
+  5. Not using ARM: all functions on x86_64. Graviton2 is 20%
+     cheaper and often faster. Simple switch for most functions.
+
+  Task: Design Lambda cost optimization strategy. Write: memory
+  right-sizing methodology, ARM migration, invocation reduction
+  patterns, CloudWatch cost management, provisioned concurrency
+  optimization, and the FinOps process for ongoing cost governance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Right-sizing methodology is explained — use Lambda Power Tuning to test functions at different memory levels. Analyze Max Memory Used from CloudWatch Logs Insights (filter @type = 'REPORT' | stats avg(@maxMemoryUsed), p99(@maxMemoryUsed) by @logStream). Set memory to p99 + 20% buffer. Remember: memory also controls CPU — some functions need more memory for CPU, not for memory. Monitor after changes: track duration and cost. ARM (Graviton2): 20% cheaper, often faster. Migration: change architecture in function config, rebuild native dependencies for arm64"
+    weight: 0.35
+    description: "Right-sizing"
+  - type: llm_judge
+    criteria: "Invocation and infrastructure optimization are covered — reduce invocations: use event source mappings instead of polling, batch processing (increase SQS batch size), use EventBridge scheduled rules instead of CloudWatch Events for cron. CloudWatch costs: set log level to INFO/WARN in production, set log retention (7-30 days), use sampling for high-frequency functions, consider structured logging with selective field logging. API Gateway: use HTTP API (cheaper than REST API) where possible. DynamoDB: on-demand vs provisioned (on-demand more expensive per request but no over-provisioning)"
+    weight: 0.35
+    description: "Infrastructure optimization"
+  - type: llm_judge
+    criteria: "FinOps process is practical — tag all Lambda functions (team, environment, service) for cost attribution. Use AWS Cost Explorer with tags for per-service cost breakdown. Set up budgets with alerts ($X threshold per service). Monthly cost review: identify top 10 cost drivers, track cost per transaction/user. Compute Savings Plans: up to 17% additional savings for committed usage. Reserved capacity: use for stable base load, on-demand for burst. Track: cost per invocation, cost per request, cost per user as key metrics. Automate: Lambda Power Tuning on schedule to catch optimization opportunities"
+    weight: 0.30
+    description: "FinOps process"

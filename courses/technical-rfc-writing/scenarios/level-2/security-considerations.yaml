@@ -1,0 +1,44 @@
+meta:
+  id: security-considerations
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Write security considerations — address authentication, authorization, data protection, and threat modeling in technical proposals"
+  tags: [RFC, security, authentication, authorization, threat-model, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to build a file sharing feature for your
+  collaboration platform. Users can:
+  - Upload files (up to 100MB) to shared workspaces
+  - Share files via links (public or authenticated)
+  - Set permissions (view, edit, download) per user or group
+  - Preview files in-browser (images, PDFs, documents)
+
+  Your colleague reviews the draft and says: "Where's the security
+  section? You're building a file upload feature with public links
+  and you haven't mentioned security once."
+
+  They're right. File sharing touches almost every security concern:
+  malware, access control, data leakage, path traversal, SSRF, and
+  information disclosure.
+
+  Task: Write the security considerations section for this RFC.
+  Include threat modeling, access control design, data protection
+  measures, and security testing requirements. Show how to think
+  systematically about security in technical proposals.
+
+assertions:
+  - type: llm_judge
+    criteria: "Threat model identifies specific attack vectors — threats enumerated by category: (1) Upload attacks: malware upload (user uploads executable disguised as PDF), path traversal (filename contains ../../../etc/passwd), zip bombs (compressed file expands to fill disk), oversized files bypassing limits. (2) Access control: broken link sharing (guessing share link UUIDs), privilege escalation (viewer modifying edit-restricted file), expired access persisting (revoked share still accessible via cached link). (3) Data leakage: file metadata exposure (revealing internal paths, user IDs), preview generation information disclosure (server-side rendering of malicious documents causing SSRF), search index leaking private file content. (4) Infrastructure: storage exhaustion (single user uploading to fill storage quota), denial of service via large file uploads, SSRF through preview generation of URLs embedded in documents. Each threat has likelihood and severity estimate and specific mitigation"
+    weight: 0.35
+    description: "Threat modeling"
+  - type: llm_judge
+    criteria: "Access control and data protection are designed defensively — access control: 'Share links use cryptographically random tokens (not sequential IDs). Token format: 256-bit random value, base62 encoded. Rate limiting on link access: 100 requests per link per minute.' Permission model: 'Permissions checked at the API layer AND the storage layer (defense in depth). Even if API authorization is bypassed, storage-level ACLs prevent unauthorized access.' File upload protections: 'Files scanned by antimalware service before storage. File type validated by magic bytes, not just extension (a .jpg containing executable code is rejected). Filenames sanitized — stripped to alphanumeric + limited punctuation, original name stored as metadata only. Files stored outside web root with randomized paths.' Data protection: 'Files encrypted at rest (AES-256). Files encrypted in transit (TLS 1.3). Preview generation happens in sandboxed container — no network access, no access to other files. Temporary preview files deleted after generation.' Expiration: 'Public share links expire after 30 days by default. Configurable up to 90 days. Expired links return 404, not 403 (no information leakage about link existence)'"
+    weight: 0.35
+    description: "Access control design"
+  - type: llm_judge
+    criteria: "Security testing and monitoring are included — testing requirements: 'Before launch: (1) Penetration testing of file upload and sharing endpoints by security team. (2) Automated SAST/DAST scanning of new code. (3) Specific test cases for path traversal, SSRF, and access control bypass. (4) Load testing with malicious file payloads.' Monitoring: 'Alert on: upload error rate spike (potential scanning evasion), unusual download patterns (data exfiltration), failed access control checks exceeding threshold (potential enumeration attack), storage growth anomalies.' Incident response: 'Ability to revoke all share links for a file instantly. Ability to quarantine uploaded files suspected of being malicious. Audit log of all file access for forensic analysis.' Security review process: 'This feature requires sign-off from the security team before production deployment. Security review should focus on: upload validation implementation, access control enforcement, and preview generation sandbox configuration.' The security section should make reviewers confident that security was deeply considered, not an afterthought"
+    weight: 0.30
+    description: "Security testing"

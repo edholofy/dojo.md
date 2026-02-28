@@ -1,0 +1,45 @@
+meta:
+  id: data-lineage-debugging
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data lineage debugging — use lineage tracking to trace data issues from reports back to source systems and identify where problems were introduced"
+  tags: [lineage, tracing, root-cause, debugging, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "A VP just told me that last quarter's
+  board report showed revenue $2.3M higher than the accounting system.
+  The discrepancy was discovered 3 weeks after the report was sent.
+
+  I need to trace the revenue number in the board report back through
+  our data pipeline to find where the discrepancy was introduced:
+
+  Board Report → BI Dashboard (Looker) → data mart (revenue_summary)
+  → intermediate model (revenue_by_product) → staging model
+  (stg_orders) → raw data (raw.shopify_orders + raw.stripe_payments)
+
+  There are 6 layers and I don't know which layer introduced the
+  error. The numbers match in the raw layer but don't match in the
+  data mart. So the error is somewhere in the transformation chain.
+
+  How do I systematically trace this and build lineage capabilities
+  to prevent future detective work?"
+
+  Task: Design a systematic approach to tracing the discrepancy,
+  and build a data lineage strategy for ongoing issue resolution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides a systematic tracing methodology — binary search approach: check the number at each layer from bottom up, find the layer where the discrepancy first appears (raw data is correct, data mart is wrong — check each intermediate layer). For each layer: compare the aggregated revenue to the known-correct value, check the transformation logic for errors (wrong join conditions, incorrect filters, double-counting from bad joins, missing WHERE clauses). Common causes of revenue discrepancies: duplicate transactions from bad deduplication, currency conversion errors, including voided/refunded transactions, wrong date filtering"
+    weight: 0.35
+    description: "TracingMethodology"
+  - type: llm_judge
+    criteria: "Response designs a data lineage strategy — column-level lineage tracking (which source columns feed which target columns through which transformations), automated lineage from dbt (dbt generates lineage DAGs from ref() and source() macros), lineage visualization tools (dbt docs, OpenLineage, Marquez, DataHub), impact analysis (before changing a model, understand all downstream consumers), and how lineage helps debugging (instead of manually checking 6 layers, the lineage graph shows exactly which transformations touch the revenue column)"
+    weight: 0.35
+    description: "LineageStrategy"
+  - type: llm_judge
+    criteria: "Response addresses prevention — reconciliation checks at critical boundaries (compare aggregated values between adjacent layers and alert on discrepancies), control totals (embed known reference values that can be verified at each stage), automated regression testing for transformation logic (when revenue calculation changes, test against historical known-good values), and regular audits (monthly comparison between data platform totals and source-of-truth systems like the accounting system)"
+    weight: 0.30
+    description: "Prevention"

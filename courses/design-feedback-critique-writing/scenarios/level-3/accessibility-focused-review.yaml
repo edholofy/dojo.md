@@ -1,0 +1,45 @@
+meta:
+  id: accessibility-focused-review
+  level: 3
+  course: design-feedback-critique-writing
+  type: output
+  description: "Accessibility-focused review — conduct a comprehensive accessibility critique of a design with WCAG-referenced feedback"
+  tags: [accessibility, wcag, a11y, inclusive, advanced]
+
+state: {}
+
+trigger: |
+  You're conducting an accessibility review of a banking
+  app's transaction history screen. Issues found:
+
+  1. Transaction status uses color alone: green dots for
+     completed, red dots for failed, yellow for pending
+  2. Filter dropdown has no visible label — only a
+     funnel icon
+  3. Transaction amounts use light gray (#999) on white
+     — 2.85:1 contrast
+  4. Infinite scroll loads new transactions automatically
+     with no screen reader announcement
+  5. The 'Export' button appears on hover only — invisible
+     to keyboard and touch users
+  6. Date headers ('Today', 'Yesterday', 'March 15')
+     are styled as regular text, not headings
+  7. Tapping a transaction opens a detail panel that
+     traps keyboard focus — no escape key handling
+
+  Task: Write a comprehensive accessibility review with
+  WCAG criteria references and remediation guidance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes WCAG-referenced accessibility feedback — each issue mapped to specific criteria: color-only status (WCAG 1.4.1 Use of Color — add icon shapes: checkmark for completed, X for failed, clock for pending, or text labels), unlabeled filter (WCAG 1.3.1 Info and Relationships + 4.1.2 Name, Role, Value — add aria-label or visible text label, icon alone is insufficient), low contrast amounts (WCAG 1.4.3 Contrast Minimum — #999 on #FFFFFF is 2.85:1, needs 4.5:1 minimum, darken to #767676 or darker), infinite scroll (WCAG 4.1.3 Status Messages — new content loaded without announcement, add aria-live region announcing 'X more transactions loaded'), hover-only button (WCAG 2.1.1 Keyboard — content must be operable via keyboard, hover-only elements are invisible to keyboard users, make Export persistently visible), heading structure (WCAG 1.3.1 — date groupings should use proper heading elements for screen reader navigation), focus trap (WCAG 2.1.2 No Keyboard Trap — detail panel must allow Escape to close, Shift+Tab to return focus to triggering element)."
+    weight: 0.35
+    description: "WCAGReferencedFeedback"
+  - type: llm_judge
+    criteria: "Response provides severity classification and remediation — severity levels (Critical — blocks access: focus trap in detail panel, hover-only Export button — keyboard users literally cannot use these features; Major — significant barrier: color-only status for 8% of colorblind males, low contrast on financial data — users cannot read transaction amounts; Moderate — impairs experience: missing heading structure, unlabeled filter — screen reader users can use the page but with difficulty; Minor — best practice: infinite scroll announcements — enhancement that improves experience), remediation for each issue (specific fix with implementation guidance: 'Add aria-label=\"Filter transactions\" to the dropdown trigger, and add role=\"listbox\" to the dropdown panel with role=\"option\" on each item', 'Change transaction amount color from #999999 to #595959 for 7:1 AAA contrast on white background' — each fix is immediately actionable by a developer)."
+    weight: 0.35
+    description: "SeverityAndRemediation"
+  - type: llm_judge
+    criteria: "Response frames accessibility as user impact not just compliance — human-centered framing (for each issue: describe the real user impact — 'A screen reader user opening a transaction detail panel gets trapped — they cannot navigate away without refreshing the page. For a banking app, this means they cannot complete their task of reviewing multiple transactions.' not just 'WCAG 2.1.2 failure'), banking context (financial applications have heightened accessibility requirements — users must be able to independently manage their finances, accessibility failures in banking can trigger ADA complaints and regulatory scrutiny), testing recommendations (test with: NVDA on Chrome for Windows screen reader flow, VoiceOver on Safari for iOS mobile, keyboard-only navigation — Tab through the entire page, colorblind simulation — verify status dots with Sim Daltonism), and the overall assessment (this screen has multiple accessibility barriers that would prevent disabled users from managing their transaction history independently — the most critical fixes — focus trap and hover-only button — should be hot-fixed, remaining issues should be addressed within one sprint)."
+    weight: 0.30
+    description: "UserImpactFraming"

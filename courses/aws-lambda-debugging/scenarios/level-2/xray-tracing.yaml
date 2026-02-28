@@ -1,0 +1,62 @@
+meta:
+  id: xray-tracing
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda with X-Ray tracing — implement distributed tracing to identify performance bottlenecks across multiple services"
+  tags: [AWS, Lambda, X-Ray, tracing, distributed, performance, intermediate]
+
+state: {}
+
+trigger: |
+  Your API has intermittent slow responses. CloudWatch shows p99
+  latency of 4.5 seconds but p50 is 200ms. You need to find what
+  causes the occasional slowness. CloudWatch Logs alone can't tell
+  you which downstream call is slow.
+
+  Enable X-Ray tracing:
+  $ aws lambda update-function-configuration \
+    --function-name order-api \
+    --tracing-config Mode=Active
+
+  After enabling X-Ray, the service map shows:
+  API Gateway → order-api (Lambda) → DynamoDB (getItem)
+                                   → payment-service (Lambda)
+                                   → SES (sendEmail)
+
+  X-Ray trace for a slow request (4.2s total):
+  ├─ Lambda Init: 450ms (cold start)
+  ├─ DynamoDB getItem: 15ms
+  ├─ payment-service invoke: 3,500ms ← BOTTLENECK
+  │  └─ payment-service Lambda:
+  │     ├─ Stripe API call: 3,200ms ← ROOT CAUSE
+  │     └─ DynamoDB putItem: 50ms
+  └─ SES sendEmail: 180ms
+
+  X-Ray reveals: the payment-service makes a synchronous call to
+  Stripe's API that occasionally takes 3+ seconds (Stripe rate
+  limiting or connectivity issue).
+
+  Fix: Make the payment processing asynchronous — invoke payment-
+  service with InvocationType=Event, confirm the order immediately,
+  process payment in the background.
+
+  Task: Explain X-Ray tracing for Lambda. Write: how to enable and
+  configure X-Ray, reading service maps and traces, adding custom
+  subsegments for detailed breakdown, correlating X-Ray traces with
+  CloudWatch Logs (trace ID), common performance patterns revealed
+  by tracing, and the cost of X-Ray tracing.
+
+assertions:
+  - type: llm_judge
+    criteria: "X-Ray setup and traces are explained — enable: set tracing mode to Active on Lambda function. Lambda execution role needs xray:PutTraceSegments and xray:PutTelemetryRecords. Service map: visual representation of all services and their connections. Traces: timeline view of a single request showing each segment (service call) with duration. Subsegments: detailed breakdown within a segment (database queries, HTTP calls). X-Amzn-Trace-Id header propagates trace context across services automatically"
+    weight: 0.35
+    description: "X-Ray setup"
+  - type: llm_judge
+    criteria: "Reading traces and debugging are covered — trace view shows: total duration, each service call's duration, errors/faults at each step. Identify bottleneck: longest segment in the trace. Annotations: key-value pairs for filtering traces (e.g., userId, orderId). Metadata: additional data not indexed. Custom subsegments: wrap code blocks to track internal operations (e.g., database query, API call, data processing). AWS SDK calls automatically create subsegments. Correlate with CloudWatch Logs: trace ID appears in both for cross-reference"
+    weight: 0.35
+    description: "Reading traces"
+  - type: llm_judge
+    criteria: "Patterns and cost are practical — common patterns: cold start visible as Init segment, slow external API calls, N+1 query patterns (many small DB calls), synchronous chains (each service waits for the next). Solutions: async invocation for non-critical work, caching for repeated lookups, connection reuse. X-Ray cost: $5 per million traces recorded, $0.50 per million traces retrieved. First 100K traces/month free. Sampling: X-Ray samples 1 request/second + 5% of additional requests by default. Custom sampling rules to control cost"
+    weight: 0.30
+    description: "Patterns and cost"

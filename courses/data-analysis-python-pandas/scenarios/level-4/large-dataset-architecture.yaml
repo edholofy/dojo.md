@@ -1,0 +1,39 @@
+meta:
+  id: large-dataset-architecture
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Architect solutions for datasets that exceed memory — use chunked processing, Dask, Polars, and database-backed analysis for multi-gigabyte datasets"
+  tags: [python, pandas, large-data, dask, polars, chunked-processing, expert]
+
+state: {}
+
+trigger: |
+  Your company's data warehouse exports a 45 GB transaction log
+  (850 million rows) for annual analysis. The analytics team's
+  machines have 32 GB of RAM. Previous attempts to load the file
+  crashed Python.
+
+  The CFO needs: total revenue by region and product category,
+  month-over-month growth trends, and the top 100 customers by
+  lifetime value — all from this single file.
+
+  Columns: transaction_id, customer_id, product_id, category,
+  region, amount, quantity, transaction_date, payment_method.
+
+  Task: Design and implement a strategy to analyze data that
+  does not fit in memory.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates chunked processing with pandas for out-of-memory data — chunked: 'Chunked processing with pandas: Strategy 1 — Process in chunks, aggregate incrementally: revenue_by_region_cat = pd.DataFrame(). customer_totals = {}. monthly_revenue = pd.DataFrame(). chunk_size = 500_000. for chunk in pd.read_csv(\"transactions.csv\", chunksize=chunk_size, parse_dates=[\"transaction_date\"]): chunk_agg = chunk.groupby([\"region\", \"category\"])[\"amount\"].sum(). revenue_by_region_cat = pd.concat([revenue_by_region_cat, chunk_agg.reset_index()]).groupby([\"region\", \"category\"])[\"amount\"].sum().reset_index(). chunk[\"month\"] = chunk[\"transaction_date\"].dt.to_period(\"M\"). monthly = chunk.groupby(\"month\")[\"amount\"].sum(). monthly_revenue = pd.concat([monthly_revenue, monthly.reset_index()]).groupby(\"month\")[\"amount\"].sum().reset_index(). for cid, amt in chunk.groupby(\"customer_id\")[\"amount\"].sum().items(): customer_totals[cid] = customer_totals.get(cid, 0) + amt. top_100 = pd.Series(customer_totals).nlargest(100). Key pattern: aggregate within each chunk, then merge aggregations across chunks. This works because sum, count, min, max are decomposable — you can combine partial results. Mean is NOT directly decomposable (you need sum and count separately). Memory usage: only one chunk (500K rows ~ 200 MB) is in memory at any time, plus the small aggregation DataFrames. Strategy 2 — Pre-filter with usecols and dtype optimization: needed_cols = [\"customer_id\", \"category\", \"region\", \"amount\", \"transaction_date\"]. dtypes = {\"customer_id\": \"int32\", \"category\": \"category\", \"region\": \"category\", \"amount\": \"float32\"}. df = pd.read_csv(\"transactions.csv\", usecols=needed_cols, dtype=dtypes, parse_dates=[\"transaction_date\"]). Loading only 5 of 9 columns with optimized dtypes might reduce the 45 GB file to 8-10 GB in memory — possibly feasible on a 32 GB machine'"
+    weight: 0.35
+    description: "Chunked processing"
+  - type: llm_judge
+    criteria: "Response covers alternative frameworks for large data — alternatives: 'Alternative frameworks: Dask — pandas syntax, parallel execution: import dask.dataframe as dd. ddf = dd.read_csv(\"transactions.csv\", dtype={\"category\": \"category\", \"region\": \"category\"}). revenue = ddf.groupby([\"region\", \"category\"])[\"amount\"].sum().compute(). top_customers = ddf.groupby(\"customer_id\")[\"amount\"].sum().nlargest(100).compute(). Dask uses lazy evaluation: it builds a task graph and only executes when .compute() is called. It automatically partitions the data and processes chunks in parallel across CPU cores. The API is nearly identical to pandas. Polars — Rust-based, faster than pandas: import polars as pl. df = pl.scan_csv(\"transactions.csv\"). revenue = (df.group_by([\"region\", \"category\"]).agg(pl.col(\"amount\").sum().alias(\"total_revenue\")).collect()). top_customers = (df.group_by(\"customer_id\").agg(pl.col(\"amount\").sum().alias(\"ltv\")).sort(\"ltv\", descending=True).head(100).collect()). Polars scan_csv is lazy — it reads only what is needed. It uses Apache Arrow memory format and is typically 5-10x faster than pandas. DuckDB — SQL on files, no server: import duckdb. con = duckdb.connect(). revenue = con.execute(\"SELECT region, category, SUM(amount) as total FROM read_csv_auto('transactions.csv') GROUP BY region, category\").fetchdf(). DuckDB can query CSV and Parquet files directly without loading into memory. It uses columnar processing and is extremely fast for analytical queries. Recommendation hierarchy: under 1 GB: pandas (simple, familiar). 1-10 GB: pandas with dtype optimization + chunked processing. 10-100 GB: Dask or Polars or DuckDB. Over 100 GB: Spark, or push computation to the data warehouse'"
+    weight: 0.35
+    description: "Alternatives"
+  - type: llm_judge
+    criteria: "Explanation covers file format optimization and architectural decisions — architecture: 'File format optimization: Convert CSV to Parquet first: The 45 GB CSV becomes approximately 8-12 GB Parquet because: columnar storage compresses similar values together, Parquet uses efficient encoding (dictionary, run-length, delta), column pruning — reading 5 of 9 columns only reads 55% of the file. Conversion using chunked approach: import pyarrow as pa. import pyarrow.parquet as pq. writer = None. for chunk in pd.read_csv(\"transactions.csv\", chunksize=1_000_000): table = pa.Table.from_pandas(chunk). if writer is None: writer = pq.ParquetWriter(\"transactions.parquet\", table.schema). writer.write_table(table). writer.close(). Now analysis is much faster: df = pd.read_parquet(\"transactions.parquet\", columns=[\"region\", \"category\", \"amount\"]). Partitioned Parquet for repeated queries: df.to_parquet(\"transactions_partitioned/\", partition_cols=[\"region\"]). Reading only the West region reads only the west partition file — instant filtering without scanning 850M rows. Architectural decision tree: one-time analysis — chunked pandas is fine, simple and no new dependencies. Repeated weekly analysis — convert to Parquet first, then use pandas or DuckDB. Multiple analysts querying the same data — set up DuckDB or push to a proper data warehouse. Real-time dashboard — this data should be in a database, not a flat file. Pipeline integration — use Dask or Polars with a scheduler (Airflow, Prefect). The key insight: the tool choice depends on the access pattern, not just the data size'"
+    weight: 0.30
+    description: "Architecture"

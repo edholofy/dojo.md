@@ -1,0 +1,44 @@
+meta:
+  id: automated-review-strategy
+  level: 4
+  course: code-review-feedback-writing
+  type: output
+  description: "Design automated review tooling — determine what to automate vs keep as human review, select tools, and integrate automation into the review workflow"
+  tags: [code-review, automation, linting, static-analysis, CI, tooling, expert]
+
+state: {}
+
+trigger: |
+  Your team spends too much time on mechanical review tasks. You want
+  to automate what you can so humans focus on what matters. Current
+  review pain points:
+
+  - 40% of comments are style/formatting (Prettier/ESLint should handle)
+  - Security vulnerabilities sometimes slip through (Snyk/Semgrep could catch)
+  - Type errors found in review (TypeScript strict mode would prevent)
+  - Dead code and unused imports flagged manually
+  - Test coverage gaps discovered during review
+  - API breaking changes not noticed until production
+  - Documentation staleness (code changed, docs not updated)
+
+  Budget: $500/month for tooling. Team: 30 engineers.
+
+  Task: Design the automated review tooling strategy. For each pain
+  point, decide: automate fully, automate as advisory, or keep human.
+  Include: tool selection, CI/CD integration, configuration approach,
+  and how to introduce automation without overwhelming developers
+  with noise.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each pain point has a clear automation decision — automate fully (block PR if failing): formatting (Prettier — auto-fix on commit), linting (ESLint — errors block, warnings advisory), type checking (TypeScript strict — blocks build), unused imports (ESLint rule — auto-fix). Automate as advisory (comment on PR, don't block): security scanning (Semgrep/CodeQL — flag but human validates severity), test coverage (report delta — don't block on arbitrary threshold), dead code detection (report but human decides if intentional). Keep human: architectural review, business logic validation, API design review, documentation quality (detect CHANGE but human reviews quality). Each decision justified: 'Formatting is objectively correct — no human judgment needed. Security findings require context — is this a real vulnerability or a false positive?'"
+    weight: 0.35
+    description: "Automation decisions"
+  - type: llm_judge
+    criteria: "Tool selection is specific and budget-conscious — within $500/month: (1) Prettier + ESLint: free, handles formatting and code quality. (2) TypeScript strict mode: free, catches type errors. (3) GitHub Actions: included in GitHub, runs CI checks. (4) Semgrep: free tier covers security scanning. (5) CodeCov: free for open source, ~$100/month for private — coverage delta reporting. (6) danger.js or similar: free, custom PR automation (check for docs updates when API files change, check for changelog when version bumps). (7) Spectral: free, OpenAPI linting for API breaking changes. Total: ~$100-200/month, well under budget. Alternative: GitHub Advanced Security (~$400/month) for CodeQL + secret scanning + dependency review. Configuration: use shared config packages so all 30 engineers have consistent setup"
+    weight: 0.35
+    description: "Tool selection"
+  - type: llm_judge
+    criteria: "Rollout strategy prevents automation fatigue — phase 1 (week 1-2): Prettier auto-format only (zero noise — just fixes things). Phase 2 (week 3-4): ESLint errors only (not warnings — configure strictly to avoid noise). Phase 3 (month 2): Security scanning as advisory comments. Phase 4 (month 3): Coverage reporting and API change detection. Key principle: 'Every automated check must be actionable. If developers start ignoring bot comments, the automation is noise, not signal.' Configuration: tune tools before enabling — run against existing codebase, fix existing violations, THEN enable as blocking. False positive budget: 'If a tool produces more than 10% false positives, fix configuration or remove the tool. Developer trust in automation is fragile.' Gradual: introduce one tool at a time, measure impact, adjust before adding the next"
+    weight: 0.30
+    description: "Rollout strategy"

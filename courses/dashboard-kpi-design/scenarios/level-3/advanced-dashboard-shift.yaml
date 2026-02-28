@@ -1,0 +1,43 @@
+meta:
+  id: advanced-dashboard-shift
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Advanced dashboard shift — handle complex dashboard challenges requiring architecture design, anomaly investigation, cross-functional analysis, and predictive elements in a single day"
+  tags: [shift-simulation, advanced, architecture, anomaly, cross-functional]
+
+state: {}
+
+trigger: |
+  Three complex requests arrive in the same morning:
+
+  Request 1 (COO): "We have 52 dashboards and growing. I can't find
+  the one I need, they sometimes show conflicting numbers, and nobody
+  knows who owns them. Design a dashboard architecture that organizes
+  this chaos into a coherent system."
+
+  Request 2 (VP Product): "Our conversion rate dropped from 3.8% to
+  2.1% overnight. The dashboard shows the drop but doesn't tell me
+  WHY. I need a dashboard that detects anomalies AND helps me
+  investigate root causes."
+
+  Request 3 (CEO): "I'm tired of dashboards that only show the past.
+  I want to see where we're heading — will we hit our quarterly
+  targets? What are the early warning signs? Give me a forward-looking
+  executive view."
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses the COO's architecture request with a layered dashboard system — architecture: 'Request 1 — Dashboard architecture: Audit and consolidation: 52 dashboards audited by last view date, owner, audience, and overlap. Results: 15 dashboards not viewed in 90+ days → archive immediately. 10 dashboards are near-duplicates (e.g., 3 different revenue dashboards) → merge. 27 dashboards serve clear purposes → organize into the architecture. Resulting 3-layer architecture: Layer 1 — Strategic (5 dashboards): Company Health (CEO, CFO). Revenue Performance (CFO, VP Sales). Product Health (CPO, VP Product). Customer Health (VP CS, VP Support). People & Operations (COO, VP People). Each shows 5-8 top-level KPIs. Updated daily. Layer 2 — Tactical (12 dashboards, 2-3 per department): Sales Pipeline, Sales Rep Performance. Marketing Acquisition, Marketing Campaign Performance. Product Engagement, Product Release Tracking. Support Operations, Support Quality. Finance P&L, Finance Cash Flow. Engineering Velocity, Engineering Reliability. Each shows 10-15 metrics with filters. Updated daily or hourly. Layer 3 — Operational (10 dashboards): Support Queue (real-time). Sales Daily Activity. Engineering Incident Monitor. Marketing Campaign Live (during campaigns). Operational dashboards for daily work. Updated real-time or near-real-time. Total: 27 organized dashboards (down from 52). Navigation: Layer 1 KPIs link to Layer 2 detail. Layer 2 dimensions link to Layer 3. Breadcrumbs show the drill path. Governance: every dashboard has a named owner. New dashboard requests require justification and deduplication check. Quarterly review archives unused dashboards'"
+    weight: 0.35
+    description: "Architecture"
+  - type: llm_judge
+    criteria: "Response addresses the VP Product's anomaly detection and investigation request — anomaly: 'Request 2 — Anomaly detection and investigation dashboard: The conversion rate dropped from 3.8% to 2.1% overnight. This is a 4.5σ deviation from the baseline (mean 3.7%, σ = 0.35%). The anomaly detection system should have caught this. Redesigned conversion dashboard with anomaly detection: Top banner: ANOMALY DETECTED — Conversion rate 2.1% (expected 3.5-4.0%). Duration: 8 hours. Severity: CRITICAL. Trend chart with confidence bands: the conversion rate line exits the blue confidence band (normal range 3.1-4.3%) at 11 PM last night. The area outside the band is shaded red. Investigation drill-down (built into the dashboard): Step 1 — Decompose the metric: Conversion = Visitors who complete checkout / Total visitors. Visitors: 12,400 (normal — no traffic change). Checkouts: 260 (normally 470 — checkout completions dropped 45%). Finding: traffic is normal, but checkout is broken. Step 2 — Segment the anomaly: Conversion by device: Desktop: 3.6% (normal). Mobile: 0.8% (normally 3.5% — mobile is the problem). Conversion by browser: Chrome: normal. Safari mobile: 0.3% (critical). Firefox: normal. Finding: the anomaly is isolated to Safari on mobile. Step 3 — Context panel (auto-populated): Recent deployments: v2.14.3 deployed at 10:45 PM (15 minutes before the drop). Infrastructure alerts: none. Third-party services: payment provider status page shows no issues. Finding: deployment v2.14.3 likely introduced a bug affecting Safari mobile checkout. Root cause identified in 3 drill-down steps. Action: roll back v2.14.3 and alert engineering'"
+    weight: 0.35
+    description: "Anomaly"
+  - type: llm_judge
+    criteria: "Response addresses the CEO's request for a forward-looking executive dashboard — predictive: 'Request 3 — Forward-looking executive dashboard: Redesigned executive dashboard with predictive elements: Section 1 — Quarterly target tracker: Revenue: Quarter target $6.0M. Actual to date: $3.6M (Month 1: $1.8M, Month 2: $1.8M). Forecast for Month 3: $2.3M. Quarter forecast: $5.9M (98% of target). Confidence: 72%. Progress bar: 60% actual (solid fill), 38% forecast (hatched fill), 2% gap (red). The CEO sees: we are slightly behind target with a 72% chance of hitting it. If the pipeline converts at the expected rate, we make it. If 2+ deals slip, we miss. Customers: Quarter target 1,300. Current: 1,240. Forecast: 1,290 (99% of target). Confidence: 65%. The customer target is at higher risk than revenue — flag it. Section 2 — Leading indicators dashboard: Three leading indicators with forward-looking implications: Pipeline: $1.6M ↑8% (healthy — supports the revenue forecast). Trial signups: 380 this month ↓12% (concerning — future customer growth may slow). Support tickets per customer: 2.3 ↑22% (red flag — predicts churn increase in 60 days). Each indicator has a what this means note: Pipeline ↑ means Q2 revenue is well-supported. Trial signups ↓ means investigate if a marketing channel underperformed. Support tickets ↑ means proactively engage at-risk customers now. Section 3 — Risk and opportunity summary: Risks: SMB churn trending up (leading indicator: support tickets). Customer target at risk (65% confidence vs 72% for revenue). Sales cycle lengthening by 5 days (deals may slip to Q2). Opportunities: Enterprise pipeline strongest in company history ($800K). LATAM growth accelerating at 22% QoQ. New feature adoption at 34% (above 25% target). The CEO reads this in 3 minutes and knows: what is on track, what is at risk, and what the early warning signs are. The dashboard drives a conversation, not a data review'"
+    weight: 0.30
+    description: "Predictive"

@@ -1,0 +1,55 @@
+meta:
+  id: advanced-alert-shift
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Advanced alert shift — handle a multi-dimensional on-call scenario with cascading alerts, security concerns, cross-team coordination, and SLO-based decision making"
+  tags: [monitoring, shift-simulation, advanced, comprehensive]
+
+state: {}
+
+trigger: |
+  You're the primary on-call for a B2B SaaS platform. At 4:47 AM
+  on a Saturday, the following unfolds over 30 minutes:
+
+  4:47 AM: CRITICAL — error budget burn rate 50x on primary API
+  (fast burn alert, 99.9% SLO)
+
+  4:48 AM: 12 WARNING alerts fire across 6 services (all downstream
+  of the primary API)
+
+  4:50 AM: CRITICAL — unusual outbound data transfer spike (3x
+  normal) from the data-export service
+
+  4:52 AM: You check the API — a new feature flag was enabled by an
+  automated rollout system at 4:45 AM. The feature sends customer
+  data to a new analytics pipeline.
+
+  4:55 AM: Customer support (automated): "5 enterprise customers'
+  monitoring has detected elevated error rates on our API"
+
+  4:58 AM: You investigate the data transfer spike — the new
+  analytics pipeline is sending customer data to an external
+  endpoint you don't recognize.
+
+  You now have: an SLO crisis (50x burn rate), a potential security
+  issue (unrecognized external data endpoint), automated customer
+  detection, and it's 5 AM on a Saturday.
+
+  Task: Handle this situation. Prioritize between the reliability
+  crisis and the potential security issue. Show decision-making
+  under uncertainty with incomplete information at 5 AM.
+
+assertions:
+  - type: llm_judge
+    criteria: "Prioritization correctly treats potential security issue as highest priority — priority assessment: 'The unrecognized external data endpoint is the highest priority — higher than the SLO crisis. Reasoning: (1) If customer data is being sent to an unauthorized external endpoint, this is a potential data breach. A data breach has legal, regulatory, and trust implications that far exceed any availability SLO. (2) The SLO crisis and the data transfer may be the same incident: the new feature flag enabled at 4:45 AM likely caused both the API errors (buggy feature) and the data transfer (feature's analytics pipeline). (3) Containment first: disable the feature flag immediately. This likely fixes both the SLO issue and stops the data transfer. One action, two problems solved.' Immediate actions (4:58 - 5:05 AM): '(1) Disable the feature flag. This is the most urgent action — it stops the potential data exfiltration AND should reduce the API error rate. (2) Verify: after disabling the flag, confirm that outbound data transfer returns to normal AND API error rate recovers. (3) Preserve evidence: do not delete anything. Capture: which external endpoint was receiving data, what data was sent, when the transfer started, and whether this endpoint is a legitimate vendor or unknown'"
+    weight: 0.35
+    description: "Correct prioritization"
+  - type: llm_judge
+    criteria: "Response handles both reliability and security tracks — reliability track: 'After disabling the feature flag: (1) Monitor SLO burn rate — it should begin recovering as errors stop. (2) Post in #incidents: SEV-1 declared. Root cause: feature flag auto-enabled at 4:45 AM caused API errors. Flag disabled at 5:00 AM. Monitoring recovery. SLO burn rate was 50x — monitoring error budget consumption. (3) Enterprise customers: their monitoring will detect recovery within minutes. Proactively message enterprise customer success contacts: We identified an issue with our API starting at 4:45 AM and resolved it by 5:00 AM. Details to follow.' Security track: 'The unrecognized external endpoint requires security investigation: (1) Escalate to the security team immediately. Even at 5 AM on a Saturday. A potential data exfiltration to an unknown endpoint is a security emergency. (2) Investigate the endpoint: who configured it? Was it part of the feature's design? Is it a legitimate analytics vendor or an unauthorized destination? (3) Determine what data was sent: check the data-export service logs for the payload contents. Was it anonymized analytics or full customer records? (4) Do NOT assume this is benign. The feature was auto-rolled out — was the feature's code reviewed? Could the analytics pipeline have been compromised or misconfigured? (5) If the endpoint is unrecognized after investigation: treat as a potential breach. Engage legal, begin breach assessment'"
+    weight: 0.35
+    description: "Dual-track response"
+  - type: llm_judge
+    criteria: "5 AM Saturday context is addressed with appropriate escalation — context-aware decision making: 'It is 5 AM on a Saturday. Your judgment is impaired by sleep deprivation. The situation involves security implications beyond your authority. Appropriate actions: (1) Escalate to your secondary on-call for the reliability side. Two people at 5 AM are better than one — especially when you need to manage both reliability and security simultaneously. (2) Escalate to the security team lead (even at 5 AM). A potential data exfiltration to an unknown endpoint is worth waking someone up for. If it turns out to be a legitimate analytics vendor, the cost is one interrupted night of sleep. If it turns out to be a breach, early detection saves the company. (3) Escalate to your engineering manager. An auto-rolled feature flag causing a SEV-1 AND a potential security issue on a Saturday morning is a situation management should be aware of. (4) Document everything now. At 5 AM, memory is unreliable. Write down every action you take, every finding, and every decision in the incident channel. This is both for the security investigation and for the postmortem.' What NOT to do: 'Do not decide on your own that the external endpoint is probably fine. You do not have enough information, and your judgment at 5 AM is not the best judge of whether this is a security incident. Let the security team make that determination. Your job is: contain (disable the flag), preserve evidence (logs), and escalate to people who can properly assess the security implications'"
+    weight: 0.30
+    description: "Context-aware escalation"

@@ -1,0 +1,46 @@
+meta:
+  id: color-for-data-visualization
+  level: 2
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color for data visualization — create color palettes for charts, graphs, and data maps with accessibility and clarity"
+  tags: [data-viz, charts, sequential, categorical, intermediate]
+
+state: {}
+
+trigger: |
+  A data visualization designer says: "I need to create
+  color palettes for our analytics platform's charts.
+  We have three types:
+
+  1. Categorical charts (bar, pie) — up to 8 distinct
+     categories that need to be visually different
+  2. Sequential charts (heat maps, choropleth maps) —
+     show low-to-high with one color ramping up
+  3. Diverging charts (profit/loss, positive/negative) —
+     show a neutral midpoint with two directions
+
+  Our brand color is #6366F1 (indigo). I want the
+  chart colors to feel 'on brand' without being
+  impossible to read. And they need to work for
+  colorblind users.
+
+  What palettes should I use and why?"
+
+  Task: Design three data visualization color palettes
+  (categorical, sequential, diverging) with accessibility
+  rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates categorical palette — 8 distinct colors that are: visually distinguishable from each other at chart-relevant sizes (legend swatches, bar segments, pie slices), distinguishable in common colorblind conditions (avoid adjacent red/green, ensure luminance differences between all colors), includes brand indigo #6366F1 as the first/primary category color, remaining colors span the hue wheel with sufficient separation (at least 30° hue difference between adjacent palette entries), each color has similar saturation and lightness to feel cohesive (avoid mixing neon colors with pastels), specific hex values provided for all 8 colors, order matters — most commonly compared categories should use most distinct colors."
+    weight: 0.35
+    description: "CategoricalPalette"
+  - type: llm_judge
+    criteria: "Response creates sequential and diverging palettes — Sequential: single-hue ramp from light to dark using brand indigo (lightest: near-white indigo tint for low values, darkest: deep indigo for high values — 5-7 steps, perceptually even luminance progression, works in grayscale because luminance changes linearly, useful for heat maps where 'more = darker'). Diverging: two-hue palette with neutral midpoint (one end: warm color like orange or red for negative/below, midpoint: neutral gray or near-white, other end: brand indigo for positive/above — 7-9 steps, equal luminance on both sides of midpoint, midpoint clearly distinct from both ends, both ends distinguishable in colorblind simulation). Each palette includes: hex values for every step, usage guidance (when to use sequential vs diverging), and the data interpretation logic (darker = more, left color = negative, right color = positive)."
+    weight: 0.35
+    description: "SequentialDivergingPalettes"
+  - type: llm_judge
+    criteria: "Response provides accessibility testing and documentation — colorblind verification (all three palettes tested against deuteranopia, protanopia, and tritanopia — document which palettes pass and any adjustments needed), non-color redundancy (recommend adding: patterns or textures for categorical charts, value labels on sequential maps, +/- symbols or icons for diverging charts — don't rely on color alone), perceptual uniformity (colors should have perceptually even spacing — a step from color 3 to 4 should look the same 'distance' as step 4 to 5, use perceptually uniform color spaces like CIELAB or HCL for generating ramps), documentation format (each palette documented as: color swatches with hex values, usage rules, accessibility notes, implementation code — array of hex values ready for chart library configuration — e.g., Chart.js or D3 scale format)."
+    weight: 0.30
+    description: "AccessibilityAndDocs"

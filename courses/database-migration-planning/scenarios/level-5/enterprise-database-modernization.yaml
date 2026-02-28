@@ -1,0 +1,49 @@
+meta:
+  id: enterprise-database-modernization
+  level: 5
+  course: database-migration-planning
+  type: output
+  description: "Enterprise database modernization — advise the board on a multi-year database platform modernization strategy across the entire organization"
+  tags: [database, migration, modernization, enterprise-strategy, board-advisory, master]
+
+state: {}
+
+trigger: |
+  You are a Database Strategy Consultant presenting to the board of
+  directors of a Fortune 500 retail company. Their database landscape:
+
+  - 47 Oracle databases (licensing: $12M/year)
+  - 23 SQL Server databases ($4M/year)
+  - 15 MySQL databases (community edition, no support)
+  - 8 MongoDB clusters (Atlas, $800K/year)
+  - 3 mainframe DB2 systems (2 engineers retiring in 18 months)
+  - Total: 96 databases, 200TB of data, 400+ applications
+
+  Pain points:
+  - Database licensing costs growing 15% annually
+  - 60% of DBA time spent on patching and maintenance
+  - No cloud-native databases — everything is on-premises
+  - Talent shortage: cannot hire Oracle or DB2 specialists
+  - Compliance: PCI-DSS for payment data, HIPAA for pharmacy data,
+    GDPR for European operations
+
+  The board asks: "We want to cut database costs by 50% and be
+  cloud-native in 3 years. Is this realistic? What is the strategy?"
+
+  Task: Present the enterprise database modernization strategy with
+  a phased roadmap, cost analysis, risk assessment, and governance
+  framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-year modernization roadmap is realistic and phased — roadmap: 'Year 1: Foundation and quick wins. Q1-Q2: establish the Database Modernization Office (DMO) — a cross-functional team of DBAs, cloud architects, application leads, and compliance officers. The DMO governs all migration decisions, maintains the database inventory, and tracks progress. Q1-Q2: quick wins — migrate the 15 MySQL community databases to Aurora MySQL or Cloud SQL. These have no licensing costs but lack support and monitoring. Moving to managed services reduces DBA maintenance burden by 30-40 hours/month. Estimated savings: $200K/year in DBA time. Q3-Q4: begin Oracle reduction — identify the 10 lowest-complexity Oracle databases (under 50GB, under 20 tables, under 5 connected applications). Migrate to Aurora PostgreSQL using AWS SCT and DMS. Each migration: 4-6 weeks. Estimated licensing savings: $2.5M/year (removing 10 of 47 Oracle licenses). Q4: begin DB2 knowledge transfer — the 3 DB2 systems are critical and the 2 engineers retire in 18 months. Start documenting everything: schemas, stored procedures, business logic, data flows. Hire or contract DB2-to-PostgreSQL specialists. Year 1 savings target: $2.7M (from $16.8M to $14.1M). Year 2: Major migrations. Q1-Q2: migrate the next 20 Oracle databases (medium complexity). Use the patterns established in Year 1. Parallelize with 3-4 migration teams running simultaneously. Q1-Q4: migrate DB2 to PostgreSQL — this is the highest-risk migration. The retiring engineers must be involved. Target completion before their departure. Q3-Q4: begin SQL Server consolidation — identify databases that can be merged or retired. Migrate remaining SQL Server databases to Aurora PostgreSQL or Azure Database for PostgreSQL (depending on cloud strategy). Year 2 savings target: $5M additional (from $14.1M to $9.1M). Year 3: Completion and optimization. Q1-Q2: complete remaining Oracle migrations (the 17 most complex databases). These require the most application refactoring. Q3-Q4: optimize cloud database costs — right-size instances, implement reserved capacity, consolidate where possible. Q4: decommission on-premises database infrastructure. Year 3 savings target: $3M additional (from $9.1M to $6.1M). Three-year result: from $16.8M/year to approximately $6-7M/year (60% reduction, exceeding the 50% target). Cloud-native: 100% managed database services'"
+    weight: 0.35
+    description: "Modernization roadmap"
+  - type: llm_judge
+    criteria: "Cost analysis and business case is detailed and credible — cost analysis: 'Current state costs (annual): Oracle licensing: $12M. SQL Server licensing: $4M. MongoDB Atlas: $800K. On-premises infrastructure (servers, storage, networking): $3M. DBA team (12 FTE at $150K average): $1.8M. Total current: $21.6M/year. Target state costs (annual): managed cloud databases (Aurora, Cloud SQL, etc.): $4M. MongoDB Atlas (retained, already cloud-native): $800K. Cloud infrastructure (compute, storage, networking): $2M. DBA team (8 FTE — reduced from 12, managed services reduce maintenance): $1.2M. Total target: $8M/year. Net annual savings: $13.6M/year (63% reduction). Migration investment: Year 1: $3M (tooling: $500K, consulting: $1.5M, cloud infrastructure during migration: $500K, training: $500K). Year 2: $4M (consulting: $2M, parallel infrastructure: $1M, application refactoring: $1M). Year 3: $2M (remaining migrations: $1M, optimization: $500K, decommissioning: $500K). Total 3-year investment: $9M. ROI calculation: 3-year investment: $9M. Cumulative savings over 3 years: Year 1: $2.7M, Year 2: $7.7M (2.7+5), Year 3: $10.7M (7.7+3). Total 3-year savings: $21.1M. Net 3-year benefit: $21.1M - $9M = $12.1M. Payback period: approximately 14 months. After Year 3: $13.6M annual savings ongoing. Risks to the business case: cloud costs may be higher than estimated (cloud pricing changes). Application refactoring costs may exceed estimates. Migration delays extend the period of running dual infrastructure (on-premises + cloud). Contingency: add 20% to the investment estimate ($10.8M total) for unexpected costs'"
+    weight: 0.35
+    description: "Cost analysis"
+  - type: llm_judge
+    criteria: "Governance framework and risk management are comprehensive — governance and risk: 'Governance framework: (1) Database Modernization Office (DMO): composition — VP of Engineering (executive sponsor), Head of Database Engineering (program lead), cloud architects (2), compliance officer, representatives from each major application team. Responsibilities: approve all migration plans, track progress against roadmap, manage the migration budget, resolve cross-team conflicts and resource allocation, report to the board quarterly. (2) Migration decision framework: for each database, evaluate on 4 axes — business criticality (revenue impact if migration fails), technical complexity (stored procedures, triggers, proprietary features), compliance requirements (PCI, HIPAA, GDPR), application coupling (number and complexity of connected applications). Score each axis 1-5 and prioritize: low score databases first (quick wins build confidence). (3) Compliance guardrails: PCI-DSS databases (payment processing): require security team sign-off before and after migration. Data must be encrypted in transit during migration. No data can pass through non-PCI-certified systems. HIPAA databases (pharmacy): require privacy officer approval. PHI data must maintain audit trails during migration. BAA (Business Associate Agreement) required with cloud provider. GDPR databases (European operations): EU data must remain in EU regions. Data processing agreements must be updated. Right to deletion must be preserved across the migration. Risk register: (1) DB2 engineer departure — likelihood: HIGH, impact: CRITICAL. Mitigation: start knowledge transfer immediately, contract DB2 specialists, complete DB2 migration before engineers depart. (2) Application breakage during migration — likelihood: HIGH (across 400+ applications), impact: HIGH. Mitigation: expand-and-contract pattern for all migrations, canary deployments, automated rollback tested for every migration. (3) Cost overrun — likelihood: MEDIUM, impact: MEDIUM. Mitigation: 20% contingency budget, defer lower-priority migrations if budget is exhausted. (4) Cloud vendor lock-in — likelihood: MEDIUM, impact: LONG-TERM HIGH. Mitigation: use open-source database engines (PostgreSQL) on cloud-managed platforms. Avoid proprietary cloud database features where possible. This preserves the option to move between AWS, GCP, and Azure'"
+    weight: 0.30
+    description: "Governance and risk"

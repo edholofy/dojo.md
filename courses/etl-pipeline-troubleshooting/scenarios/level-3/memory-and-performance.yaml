@@ -1,0 +1,49 @@
+meta:
+  id: memory-and-performance
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Memory and performance issues — debug OOM errors, slow queries, resource bottlenecks, and optimize ETL pipeline performance"
+  tags: [memory, OOM, performance, optimization, query-tuning, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "Our pipelines are hitting resource
+  limits and performance problems:
+
+  1. A Python transform task processes a 15GB CSV file and gets
+     killed with 'OOM Killed' on our 8GB memory worker. It loads
+     the entire file into a pandas DataFrame before processing.
+
+  2. A SQL transform that joins two large tables (500M rows each)
+     has been running for 6 hours in Snowflake on an XL warehouse.
+     The query profile shows 90% of time spent in a hash join with
+     'spilling to remote storage.'
+
+  3. An API extraction task that fetches 2M records is taking 12
+     hours because it makes one API call per record (2M sequential
+     HTTP requests).
+
+  4. Our daily pipeline window is 6 hours (midnight to 6 AM) but
+     pipelines now take 7.5 hours, causing the morning dashboard
+     to show stale data.
+
+  How do I diagnose and fix these performance issues?"
+
+  Task: Diagnose each performance bottleneck, provide optimization
+  strategies, and design a performance management approach.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses and fixes each issue — OOM: use chunked processing (pd.read_csv with chunksize parameter), process in batches instead of loading all 15GB at once, or use a tool designed for larger-than-memory datasets (Polars, DuckDB, or push processing to the warehouse). Slow SQL join: analyze the query profile for data skew, add appropriate clustering keys, filter data before joining (predicate pushdown), consider pre-aggregating one side of the join, or size up the warehouse temporarily. Slow API: implement concurrent API calls (asyncio/aiohttp or ThreadPoolExecutor), use batch API endpoints if available, implement pagination efficiently. Pipeline window: identify the critical path (longest chain of dependent tasks), parallelize independent tasks, optimize the slowest tasks first"
+    weight: 0.35
+    description: "DiagnosisAndFixes"
+  - type: llm_judge
+    criteria: "Response provides optimization strategies — for memory: streaming/chunked processing, pushing computation to the database (don't download data to process locally if the warehouse can do it), memory profiling to find the actual peak usage. For query performance: EXPLAIN/query profile analysis, materialized intermediate results for complex multi-join queries, proper indexing and clustering, avoid SELECT * (only select needed columns). For I/O: concurrent API calls with rate limiting, connection pooling, compression for data transfer. For pipeline duration: critical path analysis, task parallelization, resource right-sizing"
+    weight: 0.35
+    description: "OptimizationStrategies"
+  - type: llm_judge
+    criteria: "Response addresses ongoing performance management — track pipeline duration trends over time (catch degradation early before it causes SLA breaches), set up performance budgets (each task should complete within X minutes, alert if exceeded), regular performance reviews (weekly check on slowest pipelines), capacity planning (at current growth rate, when will we outgrow our infrastructure?), and cost-aware optimization (sometimes a bigger warehouse for 30 minutes is cheaper than optimizing a query for days of engineering time)"
+    weight: 0.30
+    description: "PerformanceManagement"

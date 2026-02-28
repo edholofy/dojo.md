@@ -1,0 +1,49 @@
+meta:
+  id: automation-incident-documentation
+  level: 4
+  course: incident-postmortem-writing
+  type: output
+  description: "Automate incident documentation — design systems that capture incident data automatically, reducing toil and improving postmortem accuracy"
+  tags: [postmortem, automation, documentation, tooling, efficiency, expert]
+
+state: {}
+
+trigger: |
+  Your postmortem process has a recurring problem: the timeline
+  section is always incomplete or inaccurate. Engineers reconstruct
+  events from memory days after the incident, miss key moments, and
+  get timestamps wrong.
+
+  Current pain points:
+  - Timeline reconstruction takes 2-3 hours per postmortem
+  - Key decisions made in Slack during the incident are buried in
+    thousands of messages
+  - Alert timestamps, deployment timestamps, and communication
+    timestamps live in different systems
+  - Engineers dispute the timeline ("I think we noticed at 2:15,
+    not 2:30")
+  - Some incidents have no documentation at all because the scribe
+    role wasn't assigned
+
+  Your org runs 4 postmortems per month. That's 8-12 hours/month
+  just on timeline reconstruction, and the result is still inaccurate.
+
+  Task: Design an automated incident documentation system. Define
+  what data should be captured automatically, how it integrates with
+  existing tools (Slack, PagerDuty, deployment systems, monitoring),
+  and how automated capture improves postmortem quality. Include the
+  postmortem template that leverages automated data.
+
+assertions:
+  - type: llm_judge
+    criteria: "Automated data capture plan covers all incident data sources — data sources and capture: '(1) Alert and monitoring data (automatic): when an incident is declared, automatically pull: initial alert timestamp and source, alert escalation chain, monitoring dashboards snapshotted at incident start (captures the state that triggered the alert). Source: PagerDuty API, monitoring system API. (2) Deployment data (automatic): pull all deployments in the 2 hours before the incident. Include: who deployed, what changed (PR link), deployment timestamp. Source: CI/CD system API. (3) Communication data (automatic): when the incident Slack channel is created, capture: all messages with timestamps and authors, reactions (which often indicate agreement or acknowledgment), links shared. Source: Slack API export of incident channel. (4) Infrastructure changes (automatic): pull recent infrastructure changes: scaling events, configuration changes, DNS changes, certificate events. Source: cloud provider audit logs. (5) Status page updates (automatic): capture all status page updates with timestamps. Source: status page API. (6) Manual annotations (human-assisted): IC or scribe can add annotations at any point during the incident. These capture context that automated systems miss: decisions made verbally, hypotheses tested, judgment calls. A simple /annotate command in Slack that records a timestamped note.' Integration design: 'All automated data flows into a unified incident record. The incident record is a living document during the incident, then becomes the source of truth for the postmortem timeline. No reconstruction needed — the timeline writes itself'"
+    weight: 0.35
+    description: "Automated capture design"
+  - type: llm_judge
+    criteria: "Postmortem template leverages automated data for quality improvement — automated postmortem template: 'Section 1: Incident Summary (human-written). IC writes a 3-5 sentence summary of what happened and the impact. This is the human context that automated data cannot provide. Section 2: Timeline (auto-generated, human-verified). System generates the timeline from automated data sources. Timeline entries include: timestamp (exact, from system logs — no memory disputes), event type (alert, deployment, communication, decision, mitigation), source (which system provided this data), and content. Human step: IC reviews the auto-generated timeline, adds context to key events, marks the most significant moments, and fills in any gaps. Expected time: 30 minutes (down from 2-3 hours). Section 3: Root Cause Analysis (human-written, data-supported). Engineers write the root cause analysis. Automated data provides: the exact deployment that introduced the issue, the configuration change timeline, relevant log snippets. Section 4: Impact Assessment (auto-calculated where possible). Automated: duration of customer impact (from monitoring), number of affected requests (from traffic data), error rates during incident. Human: business impact assessment, customer escalation summary.' Quality improvements from automation: 'Timeline accuracy: no more memory-based disputes. Automated timestamps are authoritative. Timeline completeness: captures events that humans forget or deprioritize. Speed: 30-minute review vs. 3-hour reconstruction. Monthly time savings: 6-9 hours. Annual: 72-108 engineering hours returned to productive work. Consistency: every postmortem has the same data quality regardless of scribe availability'"
+    weight: 0.35
+    description: "Template integration"
+  - type: llm_judge
+    criteria: "Implementation plan is phased and addresses adoption challenges — implementation phases: 'Phase 1 (weeks 1-2): automated timeline generation. Build integration that pulls data from PagerDuty, Slack (incident channels), and CI/CD on incident declaration. Output: a chronological timeline of all automated events. This alone solves the biggest pain point. Phase 2 (weeks 3-4): deployment correlation. When an incident is declared, automatically identify deployments in the preceding window. Flag the most likely contributing deployment based on timing and affected services. Phase 3 (weeks 5-8): postmortem template auto-population. When a postmortem is initiated, auto-generate the document with: pre-filled timeline, deployment context, monitoring snapshots, and impact metrics. IC fills in the analysis sections. Phase 4 (ongoing): pattern detection. As postmortem data accumulates, identify patterns: most common root cause categories, services with highest incident rates, time-of-day patterns, deployment-to-incident correlation times.' Adoption challenges and solutions: '(1) Trust in automated data: engineers may dispute automated timelines. Solution: always show the source system for each data point. Make it easy to correct errors and add context. The automated timeline is a starting point, not gospel. (2) Privacy concerns: automated Slack capture may make engineers uncomfortable. Solution: only capture incident channels (which are designated for incident work). Clearly communicate the policy. Engineers should already know incident channels are documented. (3) Tooling maintenance: integrations break when APIs change. Solution: health checks for each integration. If a data source is unavailable, the template notes the gap rather than silently omitting data. (4) Over-automation: risk of engineers treating the auto-generated postmortem as complete without adding analysis. Solution: the template explicitly marks sections that require human input and will not pass the quality review without them'"
+    weight: 0.30
+    description: "Implementation plan"

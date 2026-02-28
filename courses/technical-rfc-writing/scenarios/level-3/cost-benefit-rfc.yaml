@@ -1,0 +1,49 @@
+meta:
+  id: cost-benefit-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write cost-benefit analyses in RFCs — quantify the financial and operational impact of technical proposals for business decision-makers"
+  tags: [RFC, cost-benefit, financial-analysis, ROI, business-case, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to replace your self-hosted Kubernetes
+  cluster with a managed service (EKS/GKE). The infrastructure
+  team is overwhelmed managing the cluster, but the CFO needs
+  numbers before approving what looks like a cost increase.
+
+  Current state:
+  - 3 engineers spend ~40% of time on Kubernetes maintenance
+  - Self-hosted cluster: $8,000/month (EC2 instances)
+  - 2-3 Kubernetes-related incidents per month (avg 4 hours to resolve)
+  - Last quarter: one major outage (12 hours, estimated $50K impact)
+  - Security patching delayed 3 months behind upstream
+
+  Managed service:
+  - EKS/GKE management fee: $2,400/month additional
+  - Same compute costs (~$8,000/month)
+  - Total: $10,400/month (looks like a $2,400/month cost increase)
+
+  The CFO sees "$2,400/month more" and says no. You need to show
+  the total cost of ownership, not just the infrastructure line item.
+
+  Task: Write a cost-benefit analysis that captures the full
+  financial picture — including engineering time, incident costs,
+  opportunity costs, and risk reduction. Make the business case
+  compelling with honest numbers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Total cost of ownership includes hidden costs — current TCO calculation: 'Infrastructure: $8,000/month. Engineering time: 3 engineers × 40% × $15,000/month loaded cost = $18,000/month. Incident response: 2.5 incidents/month × 4 hours × 2 engineers × $90/hour = $1,800/month. Major incident (annualized): $50K/quarter = $16,700/month (revenue impact + engineer time + customer compensation). Security risk (estimated): delayed patches create vulnerability window, potential breach cost estimated at $200K-500K × probability. Total current TCO: approximately $44,500/month.' Managed service TCO: 'Infrastructure: $10,400/month. Engineering time: 3 engineers × 10% × $15,000/month = $4,500/month (maintenance reduced but not eliminated). Incident response: estimated 0.5 incidents/month × 2 hours × 1 engineer = $90/month. Major incident (annualized): reduced frequency, estimated $4,200/month. Total managed TCO: approximately $19,190/month.' Net savings: approximately $25,310/month ($303,720/year) despite the $2,400/month infrastructure cost increase"
+    weight: 0.35
+    description: "Total cost of ownership"
+  - type: llm_judge
+    criteria: "Opportunity cost and strategic value are quantified — opportunity cost of current state: 'The 3 engineers spending 40% on Kubernetes maintenance represent 1.2 FTE equivalents. At our hiring cost of $180K/year fully loaded per engineer, this is $216K/year of engineering capacity redirected from product development.' What that capacity could deliver: 'The product backlog contains $X in estimated revenue-generating features blocked by insufficient backend engineering capacity. Recovering 1.2 FTE enables: [specific features] with estimated revenue impact of $Y/quarter.' Strategic value: 'Managed Kubernetes eliminates our biggest operational single point of failure. Only 2 of 3 engineers fully understand the cluster — if both leave, we face a critical knowledge gap. Managed service reduces this bus factor risk.' Competitive analysis: 'Industry peers have moved to managed services. Self-hosting Kubernetes is not a competitive advantage for a SaaS company — it's operational overhead that diverts from our core product.' Risk reduction: 'Security patches applied within 24 hours (vs 3 months). Compliance audit finding (delayed patches) resolved, unblocking SOC 2 renewal.'"
+    weight: 0.35
+    description: "Opportunity cost"
+  - type: llm_judge
+    criteria: "Financial analysis is honest and includes uncertainty — assumptions stated: 'Engineering time estimates based on time tracking data from last 2 quarters (verifiable). Incident costs based on actual incidents logged in PagerDuty. Revenue impact of major outage based on SRE incident report ($50K figure). Security breach cost is an estimate and may vary significantly.' Sensitivity analysis: 'If engineering time on maintenance is actually 25% (not 40%), savings drop to $17,810/month — still strongly positive. If managed service incidents are higher than estimated (1/month instead of 0.5/month), savings drop by $1,620/month — still positive. Break-even point: the managed service is cheaper if engineers spend more than 12% of time on Kubernetes maintenance.' What the analysis does NOT claim: 'This analysis does not guarantee zero incidents with managed service. It does not account for migration costs (estimated one-time $30K, separate line item). It does not include potential future price increases from cloud provider.' Payback period: 'Migration cost of $30K recovered in approximately 6 weeks of operational savings.' Recommendation: 'The $2,400/month infrastructure cost increase saves approximately $25,310/month in total costs. This is not a cost increase — it is a $303K/year cost reduction disguised as a line-item increase.'"
+    weight: 0.30
+    description: "Honest financials"

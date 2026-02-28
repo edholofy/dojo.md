@@ -1,0 +1,55 @@
+meta:
+  id: meeting-decision-log
+  level: 3
+  course: meeting-notes-action-items
+  type: output
+  description: "Meeting decision log — create and maintain a comprehensive decision log that tracks decisions across meetings with rationale, stakeholders, and review triggers"
+  tags: [decision-log, tracking, rationale, governance, advanced]
+
+state: {}
+
+trigger: |
+  Your company has a problem with decision amnesia — decisions
+  made in meetings are forgotten, revisited, or contradicted
+  in subsequent meetings. Examples from the past quarter:
+
+  1. In September, the product team decided to use PostgreSQL
+     for the new service. In November, a different engineer
+     proposed MongoDB and no one remembered the September
+     decision or why PostgreSQL was chosen. The team spent
+     2 hours re-debating.
+
+  2. The marketing team decided on a brand color update in
+     October. In December, the CEO asked "why did we change
+     the colors?" and no one could articulate the rationale.
+     The CEO reversed the decision.
+
+  3. The engineering team decided to deprecate an old API
+     version in August with a 6-month sunset period. In
+     January, a customer complained they weren't warned.
+     Support couldn't find any record of the deprecation
+     decision or the communication plan.
+
+  4. The leadership team decided on a hiring freeze in Q3.
+     Two months later, a VP approved 3 new hires claiming
+     "I didn't know about the freeze."
+
+  The COO says: "We need a decision log. Not just meeting
+  notes — a searchable record of every significant decision
+  with who made it, why, and when it should be reviewed."
+
+  Task: Design the decision log system and process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the decision log system — decision log structure (defines what a decision record contains: decision ID — unique identifier for reference; decision statement — clear, unambiguous statement of what was decided; date — when the decision was made; decision maker(s) — who had the authority to make this decision (not just who was in the room); stakeholders — who is affected by this decision; context — why was this decision needed? what problem does it solve?; alternatives considered — what other options were evaluated? briefly, why were they rejected?; rationale — why this option was chosen; evidence — data, research, or analysis that informed the decision; impact scope — which teams, products, or processes are affected; communication plan — who needs to be informed and how; review trigger — when should this decision be revisited? (time-based: 'review in 6 months'; event-based: 'review if monthly active users exceed 100K'; or 'no review needed'); status — active, superseded, or reversed; if superseded or reversed, link to the new decision), decision categorization (classifies decisions by scope and impact: strategic decisions — company direction, major investments, org structure; reviewed by leadership team; examples: hiring freeze, market entry, brand changes; product decisions — feature scope, technology choices, roadmap priorities; reviewed by product leadership; examples: database selection, API deprecation; operational decisions — process changes, tool adoption, workflow modifications; reviewed by department heads; each category has different documentation requirements and review cadences)."
+    weight: 0.35
+    description: "DecisionLogSystem"
+  - type: llm_judge
+    criteria: "Response creates the process and governance — decision logging process (defines when and how decisions are logged: during meetings — the designated note-taker identifies decisions as they're made and tags them for the decision log; post-meeting — within 24 hours, significant decisions are entered into the decision log with full context; the meeting notes link to the decision log entry; the decision log links back to the meeting notes for additional context; the process distinguishes between decisions and action items — a decision is 'we will use PostgreSQL'; an action item is 'evaluate PostgreSQL performance benchmarks by Friday'; decision identification criteria — not every meeting produces a loggable decision; a decision is significant if: it affects multiple people or teams, it commits resources, it sets a precedent, or it's likely to be questioned later), governance and review (prevents the problems described in the scenarios: anti-contradiction check — before making a decision, check the decision log for existing decisions on the same topic; if a prior decision exists, it must be explicitly revisited and superseded, not accidentally contradicted; this prevents the PostgreSQL/MongoDB re-debate and the hiring freeze violation; scheduled reviews — strategic decisions are reviewed quarterly; product decisions are reviewed when the relevant project completes; the review checks: is the decision still valid? has the context changed? should it be extended, modified, or reversed?; communication enforcement — each decision record includes a communication plan; the system tracks whether the communication was completed; this prevents the API deprecation communication gap)."
+    weight: 0.35
+    description: "ProcessAndGovernance"
+  - type: llm_judge
+    criteria: "Response addresses implementation and resolves the example scenarios — practical implementation (makes the decision log usable: the decision log should be searchable — by keyword, date, decision maker, category, and affected team; suggest a specific implementation: a dedicated section in the company wiki, a structured database, or a purpose-built tool; the log should be visible to everyone — decisions shouldn't be hidden in private meeting notes; integration with meeting notes — when meeting notes reference a decision, they link to the decision log entry; when a new decision supersedes an old one, both records are updated; quarterly decision audit — review all active decisions: are they still being followed? do any need updating? are there conflicting decisions?), scenario resolution (demonstrates how the log prevents each example problem: PostgreSQL — the decision log entry includes: rationale for PostgreSQL, alternatives considered including MongoDB, and evidence; when the engineer proposes MongoDB, the log is checked first; brand colors — the decision log entry includes: the rationale for the change with data; when the CEO asks 'why?', the answer is in the log; the CEO can still reverse the decision, but the reversal is also logged; API deprecation — the decision log entry includes: the communication plan with specific dates and channels; support can find the decision record and verify whether communication was completed; hiring freeze — the decision log entry is categorized as strategic and communicated to all VPs; the VP can't credibly claim ignorance because the log shows they were notified)."
+    weight: 0.30
+    description: "ImplementationAndResolution"

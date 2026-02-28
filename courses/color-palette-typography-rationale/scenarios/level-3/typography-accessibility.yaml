@@ -1,0 +1,46 @@
+meta:
+  id: typography-accessibility
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography accessibility — ensure typographic choices support users with dyslexia, low vision, and cognitive disabilities"
+  tags: [accessibility, dyslexia, low-vision, cognitive, typography, advanced]
+
+state: {}
+
+trigger: |
+  An accessibility specialist says: "We need to evaluate
+  our typography choices for accessibility beyond just
+  contrast ratios. Specific concerns:
+
+  1. Users with dyslexia report difficulty reading our
+     body text (we use a geometric sans-serif with tight
+     letter-spacing)
+  2. Low-vision users using 200% zoom report text
+     overflow and clipping
+  3. Users with cognitive disabilities find our long
+     paragraphs overwhelming
+  4. Our mobile app doesn't respond to the system font
+     size setting — users who set 'Extra Large' text
+     in iOS still see our default sizes
+
+  We need to make our typography truly accessible — not
+  just pass contrast checks but be genuinely usable by
+  people with disabilities."
+
+  Task: Audit the typography for accessibility and
+  recommend changes with rationale for each improvement.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response addresses dyslexia-specific typography — letter differentiation (geometric sans-serifs like Futura and Century Gothic have similar letterforms: b/d, p/q, I/l/1 are hard to distinguish — fonts with unique letterforms for these characters improve readability for dyslexic users), recommended fonts (humanist sans-serifs with distinct letterforms: Atkinson Hyperlegible designed specifically for readability, or Lexie Readable, or established fonts like Verdana, Tahoma that have good letter differentiation, or the existing font with adjustments), spacing (increase letter-spacing by 0.05-0.12em for body text — research shows increased spacing improves reading speed for dyslexic users, line-height at least 1.5× font size — reduces line confusion, paragraph spacing at least 1.5× line spacing — creates clear paragraph boundaries), and line length (50-75 characters per line — excessive line length causes tracking errors for all readers but especially those with dyslexia, constrain with max-width: 65ch or similar)."
+    weight: 0.35
+    description: "DyslexiaTypography"
+  - type: llm_judge
+    criteria: "Response addresses zoom/reflow and system font settings — 200% zoom (WCAG 1.4.4: text must be resizable up to 200% without loss of content or functionality — audit all text containers for overflow: hidden that clips text at zoom, use relative units rem/em not px so text scales with browser zoom, ensure layouts reflow to single column at high zoom — no horizontal scrolling), system font size respect (iOS Dynamic Type: use UIFontMetrics or SwiftUI dynamic type support so text scales with user's accessibility settings, Android: use sp units not dp for text — sp respects user's font size preference, web: use rem units based on user's browser font-size setting — never set html { font-size: 16px } which overrides user preference, use html { font-size: 100% } instead), WCAG 1.4.12 Text Spacing (users must be able to adjust: line-height to 1.5×, paragraph spacing to 2× font size, letter-spacing to 0.12em, word-spacing to 0.16em — without loss of content, test with bookmarklet that applies these values)."
+    weight: 0.35
+    description: "ZoomAndScaling"
+  - type: llm_judge
+    criteria: "Response addresses cognitive accessibility and documentation — cognitive load reduction (break long paragraphs into shorter ones — 3-5 sentences maximum, use bullet points and numbered lists instead of dense paragraphs, ensure clear heading hierarchy so users can scan and find information, progressive disclosure: show summary first with option to expand for detail), implementation guidance (CSS: max-width for line length, margin-bottom for paragraph spacing, relative units for all text, overflow-wrap: break-word to prevent overflow, text-size-adjust: 100% to prevent iOS text size manipulation), testing protocol (test with screen magnification at 200%, 300%, 400%, test with OS large text settings on iOS and Android, test with WCAG text spacing override bookmarklet, test with dyslexia simulation tools, ideally: test with actual users with disabilities), and documentation (typography accessibility specification: minimum font sizes, required spacing, font stack requirements, zoom behavior, system settings compliance — document as acceptance criteria for every text-containing component)."
+    weight: 0.30
+    description: "CognitiveAndDocs"

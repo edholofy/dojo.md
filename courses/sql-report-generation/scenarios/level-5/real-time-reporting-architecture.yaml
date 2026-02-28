@@ -1,0 +1,43 @@
+meta:
+  id: real-time-reporting-architecture
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Architect real-time reporting systems — design CDC pipelines, streaming aggregations, and hybrid batch/real-time architectures for operational dashboards"
+  tags: [SQL, real-time, CDC, streaming, lambda-architecture, operational, master]
+
+state: {}
+
+trigger: |
+  The operations team needs real-time reporting:
+
+  "Our batch reports update daily, but the business moves hourly.
+  The fraud team needs transaction monitoring within 30 seconds.
+  Customer support needs live queue metrics. The trading desk needs
+  real-time position updates. Marketing needs campaign performance
+  within 5 minutes of ad spend."
+
+  Current architecture: nightly ETL batch job populates the warehouse.
+  All reports are 12-24 hours stale.
+
+  Constraints:
+  - Cannot modify the production database schema
+  - Must not add more than 5% CPU overhead to production
+  - Historical reports must remain accurate (no data loss)
+  - Budget: $15K/month for infrastructure
+
+  Task: Architect the real-time reporting system.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a CDC-based real-time pipeline — cdc: 'Real-time reporting architecture: Change Data Capture (CDC) as the foundation: Use Debezium to capture changes from the production database without schema modifications: Debezium reads the PostgreSQL WAL (write-ahead log) — zero impact on production queries. Configuration: connector: postgres-source, database.hostname: prod-db, database.port: 5432, slot.name: debezium_reporting, plugin.name: pgoutput, table.include.list: public.orders, public.payments, public.customers. Every INSERT, UPDATE, DELETE on monitored tables becomes an event in Kafka. Event flow: PostgreSQL WAL → Debezium → Kafka topics → Stream processor → Real-time tables. Kafka topics mirror production tables: topic orders.public.orders receives every order change within 1-2 seconds. Stream processing for real-time aggregations (using ksqlDB or Flink SQL): CREATE STREAM orders_stream (order_id INT, customer_id INT, amount DECIMAL, status VARCHAR, order_date TIMESTAMP) WITH (KAFKA_TOPIC='orders.public.orders', VALUE_FORMAT='JSON'). CREATE TABLE rt_revenue_by_minute AS SELECT WINDOWSTART AS window_start, WINDOWEND AS window_end, COUNT(*) AS order_count, SUM(amount) AS revenue FROM orders_stream WHERE status = 'completed' WINDOW TUMBLING (SIZE 1 MINUTE) GROUP BY 1. This produces a continuously updating revenue table with 1-minute granularity. Fraud monitoring (30-second latency): CREATE TABLE rt_fraud_signals AS SELECT customer_id, COUNT(*) AS orders_last_5min, SUM(amount) AS total_last_5min, CASE WHEN COUNT(*) > 5 OR SUM(amount) > 10000 THEN 'HIGH_RISK' WHEN COUNT(*) > 3 OR SUM(amount) > 5000 THEN 'MEDIUM_RISK' ELSE 'LOW_RISK' END AS risk_level FROM orders_stream WINDOW HOPPING (SIZE 5 MINUTES, ADVANCE 30 SECONDS) GROUP BY customer_id HAVING COUNT(*) > 1. Updates every 30 seconds — the fraud team sees high-risk transactions within a minute'"
+    weight: 0.35
+    description: "CDC"
+  - type: llm_judge
+    criteria: "Response covers the hybrid batch and real-time architecture — hybrid: 'Hybrid batch plus real-time architecture (Lambda pattern): The challenge: real-time aggregations can drift from batch-computed truth due to late-arriving events, reprocessing, or clock skew. Solution: maintain both layers and merge them. Batch layer (source of truth, nightly): CREATE MATERIALIZED VIEW mv_daily_revenue AS SELECT order_date, region, SUM(amount) AS revenue, COUNT(*) AS orders FROM orders WHERE status = 'completed' GROUP BY 1, 2. Refreshed nightly at 2 AM. Accurate but stale. Real-time layer (fast but approximate): The streaming tables from Kafka contain today's activity with sub-minute latency. Serving layer (merges both): CREATE VIEW v_live_revenue AS SELECT date, region, revenue, orders, 'batch' AS source FROM mv_daily_revenue WHERE date < CURRENT_DATE UNION ALL SELECT DATE(window_start), region, SUM(revenue), SUM(order_count), 'realtime' FROM rt_revenue_by_region_minute WHERE DATE(window_start) = CURRENT_DATE GROUP BY 1, 2. Historical data comes from the accurate batch layer. Today's data comes from the real-time stream. Dashboards query v_live_revenue — they get sub-minute freshness for today and penny-accurate numbers for yesterday and beyond. Reconciliation: every morning, compare what the real-time layer reported for yesterday against the batch layer's calculation. SELECT rt.date, rt.revenue AS realtime_total, batch.revenue AS batch_total, ABS(rt.revenue - batch.revenue) AS discrepancy, ROUND(ABS(rt.revenue - batch.revenue) * 100.0 / NULLIF(batch.revenue, 0), 2) AS discrepancy_pct FROM rt_daily_summary rt JOIN mv_daily_revenue batch ON rt.date = batch.date WHERE rt.date = CURRENT_DATE - 1. If discrepancy exceeds 1%, investigate. Common causes: late-arriving events, status changes (an order completed after the real-time window closed), or timezone edge cases'"
+    weight: 0.35
+    description: "Hybrid"
+  - type: llm_judge
+    criteria: "Explanation addresses infrastructure sizing, cost, and latency tradeoffs — infrastructure: 'Infrastructure sizing and cost analysis: Component costs within $15K/month budget: Kafka cluster (3 brokers): $3,000/month on managed Kafka (Confluent Cloud or AWS MSK). Handles 10K events/second — sufficient for most mid-size companies. Debezium connectors: $500/month (runs on a small instance). Stream processor (ksqlDB or Flink): $2,000/month for a small cluster. Real-time database (for serving queries): $2,000/month for a TimescaleDB or ClickHouse instance optimized for time-series queries. Monitoring and alerting: $500/month (Datadog or Grafana Cloud). Total: approximately $8,000/month — well within budget with room for growth. Latency tradeoffs by use case: Fraud detection: 30-second latency required. Use streaming aggregations with 30-second hopping windows. Cost: dedicated stream processor resources. Support queue: 1-minute latency acceptable. Use 1-minute tumbling windows. Less resource-intensive. Campaign performance: 5-minute latency acceptable. Use 5-minute batch micro-aggregations. Can run as a scheduled query every 5 minutes against a CDC-populated table — no stream processor needed. SELECT ... FROM cdc_orders WHERE cdc_timestamp >= NOW() - INTERVAL '5 minutes'. This approach uses only the CDC layer and a standard SQL database, saving the $2,000/month stream processor cost. Decision framework: sub-10-second latency → dedicated stream processor. 10 seconds to 5 minutes → micro-batch SQL queries against CDC tables. 5 minutes to 1 hour → scheduled materialized view refresh. 1 hour to 24 hours → nightly batch ETL. Match the latency requirement to the cheapest architecture that meets it. Over-engineering real-time is expensive — only the fraud team truly needs sub-minute data'"
+    weight: 0.30
+    description: "Infrastructure"

@@ -1,0 +1,50 @@
+meta:
+  id: ma-review-alignment
+  level: 5
+  course: code-review-feedback-writing
+  type: output
+  description: "Align review practices post-M&A — unify code review cultures when two engineering organizations merge, preserving the best of both while creating a cohesive new culture"
+  tags: [code-review, M&A, culture-alignment, merger, integration, master]
+
+state: {}
+
+trigger: |
+  Your company (80 engineers, structured review process, Python/Go
+  stack) just acquired a startup (30 engineers, fast-moving review
+  culture, Node.js/TypeScript stack). You need to unify the code
+  review practices.
+
+  Your company: 2 required approvals, security review for auth changes,
+  detailed PR templates, 24-hour SLA, formal review guidelines,
+  automated linting, code review training program.
+
+  Acquired startup: 1 approval ("trust the developer"), no security
+  review requirement, minimal PR descriptions, ship same-day,
+  no written guidelines, minimal automation, review by vibes.
+
+  Tensions:
+  - Startup engineers feel "slowed down by bureaucracy"
+  - Your engineers worry about "quality regression from the acquisition"
+  - Startup's best engineer says "I'll leave if you make me wait
+    2 days for a review"
+  - Your security team says "their code has 3 critical vulnerabilities
+    we found in due diligence"
+
+  Task: Design the review alignment strategy. Include: assessment
+  of both cultures' strengths, unified review framework, migration
+  timeline, how to handle resistance from both sides, and the target
+  state that preserves the best of both cultures.
+
+assertions:
+  - type: llm_judge
+    criteria: "Assessment respects both cultures' strengths — your company strengths: security rigor, consistent quality, thorough documentation, knowledge sharing through detailed reviews. Weaknesses: slow (24-hour SLA is too long), heavy process (2 approvals for everything is overkill for low-risk changes). Startup strengths: speed, developer trust, low friction, quick iteration. Weaknesses: no security review (3 vulnerabilities found), no documentation (knowledge in people's heads), inconsistent quality. Key insight: neither culture is 'right' — the unified culture should be faster than yours and more rigorous than theirs. 'The startup's speed is their competitive advantage. Our rigor is ours. The merged culture must have both.'"
+    weight: 0.35
+    description: "Culture assessment"
+  - type: llm_judge
+    criteria: "Unified framework takes the best of both — new framework: tiered reviews (adopted from startup speed + your company rigor). Tier 1 (low risk: docs, config, style-only): 1 approval, 4-hour SLA (startup speed). Tier 2 (standard: features, refactors): 1 approval, 12-hour SLA (compromise). Tier 3 (high risk: auth, payments, data): 2 approvals including security reviewer, 24-hour SLA (your company rigor). Auto-classification: CI determines tier based on changed files (CODEOWNERS + risk labels). Result: 60% of PRs get Tier 1 treatment (faster than before for both teams), 30% get Tier 2, 10% get Tier 3 (only when truly needed). Both sides benefit: your engineers get faster reviews for routine changes, startup engineers get security review only where it matters. Automation from your team + speed culture from startup"
+    weight: 0.35
+    description: "Unified framework"
+  - type: llm_judge
+    criteria: "Migration and resistance management are political — timeline: month 1 (mutual learning): engineers from both teams review each other's code, cross-pollination builds understanding. Month 2 (pilot): unified framework piloted on one integrated team (mix of both cultures). Month 3 (expand): all teams adopt unified framework with feedback iteration. Resistance handling: startup engineer threatening to leave: 'We hear you — Tier 1 reviews will be faster than your current process. Security review only applies to auth and payments code, which you'd want someone checking anyway.' Your security team: 'The startup code will go through a security audit sprint before integration. Going forward, Tier 3 classification ensures security review where it matters.' Key principle: don't force either culture to adopt the other — create something new that both contributed to. Name it: 'Combined Engineering Review Standard' — both teams co-authored. Leadership: joint review council with leads from both organizations"
+    weight: 0.30
+    description: "Migration strategy"

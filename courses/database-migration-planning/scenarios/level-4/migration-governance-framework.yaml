@@ -1,0 +1,41 @@
+meta:
+  id: migration-governance-framework
+  level: 4
+  course: database-migration-planning
+  type: output
+  description: "Establish migration governance — design change management processes for database migrations that balance safety with developer velocity"
+  tags: [database, migration, governance, change-management, process, expert]
+
+state: {}
+
+trigger: |
+  Your organization has 200 engineers across 30 teams deploying to
+  production 50 times per day. Database migrations run as part of
+  deployments. Recent problems:
+
+  - An engineer ran an ALTER TABLE on a 500M row table without
+    knowing it would lock the table for 20 minutes
+  - Two teams created migrations that both added a "status" column
+    to the same table (different data types), causing a conflict
+  - A migration deleted a column that another team's service was
+    still reading, causing a production outage
+  - No one reviews migrations before production — they just run
+    in the CI/CD pipeline
+
+  Task: Design a database migration governance framework. Balance
+  safety (preventing the problems above) with velocity (50 deploys/
+  day cannot be blocked by heavy approval processes).
+
+assertions:
+  - type: llm_judge
+    criteria: "Governance framework tiers migrations by risk level — tiered governance: 'Not all migrations need the same level of scrutiny. Tier the governance by risk: Tier 1 (Low Risk — automated approval): adding a nullable column with no default, creating a new table, creating an index CONCURRENTLY, adding a column with a constant DEFAULT (PostgreSQL 11+). These are safe, online operations that cannot cause downtime. Governance: standard code review (same as application code). CI/CD pipeline runs automatically. No additional approval needed. Expected: 80% of migrations are Tier 1. Tier 2 (Medium Risk — requires DBA review): adding or validating constraints on existing tables, data backfill migrations (UPDATE on existing rows), removing columns (data loss risk), adding indexes without CONCURRENTLY. These can cause performance issues or data loss if done incorrectly. Governance: standard code review PLUS DBA or senior engineer review. The CI/CD pipeline gates these migrations: it detects the migration type (by parsing the SQL) and requires an additional approval label on the PR before deploying. Expected: 15% of migrations are Tier 2. Tier 3 (High Risk — requires DBA approval and scheduling): ALTER COLUMN TYPE (table rewrite), migrations on tables with over 100 million rows, cross-service schema changes (changes to tables used by multiple services), destructive migrations (DROP TABLE, TRUNCATE). These can cause outages if executed during peak traffic. Governance: DBA review required. Scheduled for a low-traffic window. On-call team notified. Rollback plan documented and tested. Expected: 5% of migrations are Tier 3'"
+    weight: 0.35
+    description: "Tiered governance"
+  - type: llm_judge
+    criteria: "Automated safety checks prevent common mistakes — automated checks: '(1) CI migration linter. Integrate a migration linter into the CI pipeline that automatically checks for: unsafe operations (ALTER TABLE without CONCURRENTLY for indexes, type changes on large tables), missing down migrations, backwards-incompatible changes (DROP COLUMN, RENAME COLUMN without expand-and-contract), naming convention violations. Tool options: strong_migrations (Rails gem), squawk (PostgreSQL migration linter), custom linter using SQL parsing. If the linter finds issues: the PR is blocked until the issues are fixed. This catches the 500M-row ALTER TABLE problem automatically — no human review needed. (2) Schema ownership registry. Maintain a registry mapping tables to owning teams. When a migration modifies a table owned by another team: the CI pipeline automatically requests review from the owning team. This prevents the cross-team column conflict and the cross-team column deletion problems. Registry format: a YAML file in the repository: tables.users.owner: user-team. tables.orders.owner: order-team. (3) Migration impact estimator. The CI pipeline queries the staging database for table sizes. If a migration affects a table with more than 10M rows: automatically flag as Tier 2 or Tier 3. Display the estimated impact in the PR: this migration affects the events table (500M rows). Estimated execution time: 15-20 minutes. Risk level: Tier 3 — requires DBA approval. (4) Conflict detection. When a PR contains a migration: check if any other open PRs contain migrations for the same table. If yes: flag a potential conflict. The authors must coordinate before merging'"
+    weight: 0.35
+    description: "Automated checks"
+  - type: llm_judge
+    criteria: "Process supports 50 deploys/day velocity — velocity: 'The governance framework must NOT become a bottleneck. Key design decisions for velocity: (1) Most migrations are Tier 1 and flow through automatically. The linter and automated checks handle safety without human gates. 80% of migrations require no additional approval beyond standard code review. (2) DBA review has an SLA. Tier 2 migrations: DBA review within 4 business hours. Tier 3 migrations: DBA review within 1 business day, with scheduling within 3 business days. If the DBA cannot review within the SLA: an alternate senior engineer can approve. (3) Self-service for common patterns. Provide approved migration templates for common operations: adding a column, creating a table, adding an index CONCURRENTLY. Engineers who use the templates get automatic Tier 1 classification. (4) Asynchronous review. DBA review does not block the PR merge — it blocks the production deployment of that specific migration. Engineers can merge their PR (which deploys the code change) and the migration deploys separately after DBA approval. This requires the code to be backward-compatible with the pre-migration schema. (5) Emergency bypass. For hotfixes: an engineer can bypass Tier 2/3 governance with manager approval. The migration is applied immediately and reviewed retroactively. This should be rare (fewer than 1 per month) and is audited. Metrics to track: percentage of migrations in each tier, average time from PR creation to production migration execution, number of governance-blocked deployments per week, number of migration-related incidents (should decrease over time). Target: Tier 1 migrations add zero delay. Tier 2 adds less than 4 hours. Tier 3 adds less than 3 days (scheduled for the next available window)'"
+    weight: 0.30
+    description: "Velocity support"

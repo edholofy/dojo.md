@@ -1,0 +1,47 @@
+meta:
+  id: large-scale-data-migration
+  level: 4
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Large-scale data migration — plan and execute a major data platform migration (e.g., on-prem to cloud, legacy warehouse to modern stack) with zero data loss"
+  tags: [migration, cloud, platform, cutover, expert]
+
+state: {}
+
+trigger: |
+  A director of data engineering says: "We're migrating from our
+  on-premises Oracle data warehouse to Snowflake. The scope:
+
+  - 500 tables (50TB total data)
+  - 300 ETL jobs (mix of Informatica, custom Python, stored procedures)
+  - 150 downstream reports and dashboards
+  - Zero-downtime requirement (both systems must run in parallel
+    during transition)
+  - 12-month timeline
+
+  Past migration attempts failed because:
+  - Data validation found discrepancies between source and target
+    after migration
+  - Some ETL jobs couldn't be translated (Oracle-specific SQL)
+  - Business users didn't trust the new numbers and reverted
+  - Performance was worse on the new platform for some queries
+
+  How do we plan and execute this migration successfully?"
+
+  Task: Design a comprehensive data migration plan that addresses
+  historical data migration, ETL translation, parallel running,
+  validation, and cutover strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a phased migration plan — Phase 1 (months 1-3): assessment and foundation (inventory all tables, ETL jobs, and reports; set up Snowflake environment; establish connectivity; build the validation framework). Phase 2 (months 3-8): migration execution (migrate tables in priority order, translate ETL jobs, implement dual-write where needed). Phase 3 (months 8-10): parallel running (both systems run simultaneously, compare outputs daily). Phase 4 (months 10-12): cutover and decommission (switch consumers to new platform, monitor, decommission old platform). Includes a table/pipeline prioritization framework (start with high-value, low-complexity items)"
+    weight: 0.35
+    description: "MigrationPlan"
+  - type: llm_judge
+    criteria: "Response addresses the specific failure risks — data discrepancies: automated reconciliation framework (row counts, checksums, key aggregate comparisons between Oracle and Snowflake for every migrated table), run reconciliation continuously during parallel period. Oracle-specific SQL: identify Oracle-specific features (CONNECT BY, MODEL clause, analytical functions with Oracle syntax), map to Snowflake equivalents, test edge cases thoroughly. Trust issues: involve business users in validation (they verify their key metrics match), provide comparison dashboards showing Oracle vs Snowflake side-by-side. Performance: benchmark critical queries on Snowflake before committing to migration, optimize warehouse sizing and clustering for Snowflake's architecture"
+    weight: 0.35
+    description: "FailureRiskMitigation"
+  - type: llm_judge
+    criteria: "Response addresses the parallel running and cutover strategy — how to run both systems simultaneously (dual-write or replication from Oracle to Snowflake), how to handle the cutover (big-bang vs phased, per-pipeline cutover), rollback plan if Snowflake issues are discovered after cutover, how to handle the 'tail' of migration (the last 10% of edge cases that take 90% of the effort), and when to decommission Oracle (criteria for declaring migration complete, data retention requirements, license cost savings timeline)"
+    weight: 0.30
+    description: "CutoverStrategy"

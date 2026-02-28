@@ -1,0 +1,46 @@
+meta:
+  id: security-alert-response
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Respond to security alerts — triage and investigate security-related monitoring alerts that may indicate active threats or vulnerabilities"
+  tags: [monitoring, security, threat-detection, triage, investigation, advanced]
+
+state: {}
+
+trigger: |
+  At 11:30 PM, you receive three security-related alerts within
+  5 minutes:
+
+  1. WARNING: "Unusual login pattern — 50 failed login attempts
+     from IP 203.0.113.42 in 5 minutes targeting different usernames"
+  2. CRITICAL: "Privileged API key used from unrecognized IP address
+     (previously only seen from your office IPs)"
+  3. WARNING: "Data export volume anomaly — user account 'admin-ops'
+     exported 10x normal data volume in last hour"
+
+  These could be:
+  - A coordinated attack (credential stuffing + stolen API key +
+    data exfiltration)
+  - Three unrelated events (bot activity + remote worker + legitimate
+    batch job)
+  - A mix of real threats and false positives
+
+  Task: Triage these three security alerts. For each, explain your
+  investigation steps, how to determine if it is a real threat, and
+  what immediate containment actions to take if confirmed. Show how
+  security alert response differs from operational alert response.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each alert is triaged with security-specific investigation — alert 1 (failed logins): 'Investigation: (1) Check if the targeted usernames are real accounts in your system. If they are random/non-existent usernames, this is likely a credential stuffing attack using a leaked credential database. If they are real usernames, the attacker may have reconnaissance on your user base. (2) Check if any of the 50 attempts succeeded. A failed brute force is concerning; a successful one is a breach. (3) Check the IP reputation — is 203.0.113.42 from a known botnet, VPN, or hosting provider? (4) Check if rate limiting is blocking these attempts or if they are all reaching the authentication backend. Immediate action: if no rate limiting is in place, block the IP at the WAF immediately. If rate limiting exists, verify it is working.' Alert 2 (privileged API key): 'This is the highest-priority alert. Investigation: (1) Which API key is it? What permissions does it have? (2) What requests were made with this key from the unrecognized IP? (3) Was the key recently rotated or shared? Check with the key owner. (4) Is the unrecognized IP a VPN or cloud provider IP that a team member might use remotely? Immediate action: if the key owner cannot be immediately reached to confirm legitimate use, rotate the API key NOW. The cost of rotating a legitimate key (brief disruption) is far less than the cost of an attacker using a privileged key for hours while you investigate.' Alert 3 (data export): 'Investigation: (1) What data is the admin-ops account exporting? Customer data, financial records, source code? (2) Is there a scheduled batch job that runs at this time? Check with the operations team. (3) Does the export volume correlate with any legitimate business activity (month-end reporting, data migration)? (4) Is the admin-ops account's session coming from a normal IP or the same unrecognized IP from alert 2? Immediate action: if you cannot confirm the export is legitimate within 15 minutes, suspend the admin-ops account's export permissions. Preserve all access logs for forensic review'"
+    weight: 0.35
+    description: "Security-specific triage"
+  - type: llm_judge
+    criteria: "Correlation between alerts is assessed for coordinated attack — correlation analysis: 'These three alerts must be evaluated for correlation before treating them as independent: (1) Check if the unrecognized IP from alert 2 (API key) matches or is related to the IP from alert 1 (brute force). Same subnet? Same hosting provider? Same geographic region? (2) Check if the data export in alert 3 started after the API key was used from the unrecognized IP. If the timeline is: brute force attempts → API key used from new IP → data export spike, this looks like a coordinated attack: the attacker tried credential stuffing, then used a stolen API key, and is now exfiltrating data. (3) Check if the admin-ops account in alert 3 was accessed using the API key from alert 2. If yes: this is almost certainly a breach in progress — the API key was compromised and is being used to export data.' If coordinated attack is likely: 'Escalate immediately to the security team. This is not an operational alert to handle alone — this is a potential data breach. Containment actions: (a) rotate the API key, (b) suspend the admin-ops account, (c) block the offending IPs, (d) preserve all logs, (e) notify the CISO or security lead. Do all of these in parallel within 15 minutes. Investigate later; contain now'"
+    weight: 0.35
+    description: "Correlation assessment"
+  - type: llm_judge
+    criteria: "Security alert response principles differ from operational response — how security response differs from operational: '(1) Containment before diagnosis: in operational alerts, you often investigate before acting (understand the problem before fixing it). In security alerts, you contain first and investigate later. Rotating an API key that turns out to be legitimately used is a minor inconvenience. Leaving a compromised API key active while you investigate is a potential data breach. (2) Evidence preservation: in operational alerts, you might restart a service to fix it. In security alerts, do not restart or modify anything before capturing evidence — logs, access records, system state. Forensic investigation requires preserving the scene. (3) Assume the worst: in operational alerts, you often start with the most likely benign explanation. In security alerts, assume compromise until proven otherwise. The cost of over-reacting to a false positive is low (brief disruption). The cost of under-reacting to a real breach is enormous (data loss, regulatory fines, customer trust). (4) Escalation threshold is lower: operational alerts might be investigated for 30 minutes before escalating. Security alerts involving potential data access should be escalated within 15 minutes. (5) Communication is restricted: operational incidents are communicated broadly (Slack channels, status pages). Security incidents are communicated on a need-to-know basis until the scope is understood — you do not want to alert an internal threat actor that they have been detected'"
+    weight: 0.30
+    description: "Security vs operational response"

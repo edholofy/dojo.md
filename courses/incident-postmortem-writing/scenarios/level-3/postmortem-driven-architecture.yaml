@@ -1,0 +1,53 @@
+meta:
+  id: postmortem-driven-architecture
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Translate postmortem findings into architecture improvements — use incident patterns to propose systemic architectural changes that prevent classes of failures"
+  tags: [postmortem, architecture, systemic-improvements, reliability, design, advanced]
+
+state: {}
+
+trigger: |
+  You've been asked to write the "Architecture Recommendations" section
+  of a postmortem for an incident that keeps recurring in different forms.
+
+  The pattern: Your monolithic API has a single database connection pool
+  shared by all features. Three times in the past 6 months, a single
+  feature's database queries have starved the entire connection pool:
+
+  Incident 1: A reporting feature ran expensive analytical queries
+  during peak hours, exhausting connections. All API endpoints returned
+  503 for 20 minutes.
+
+  Incident 2: A bulk import feature opened long-running transactions,
+  holding connections for minutes instead of milliseconds. Real-time
+  API endpoints couldn't get connections for 35 minutes.
+
+  Incident 3 (this one): A new search feature had an N+1 query bug
+  that consumed 40x expected connections. Entire API degraded for
+  15 minutes.
+
+  Each previous postmortem had action items like "fix the specific
+  query" or "add query timeout." But the class of failure keeps
+  recurring because the architecture allows any feature to starve
+  all other features of database connections.
+
+  Task: Write the architecture recommendations section. Identify the
+  systemic issue, propose architectural changes that eliminate the
+  class of failure (not just this instance), and show how postmortem
+  patterns should drive architectural evolution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pattern analysis identifies the systemic issue across incidents — analysis: 'Three incidents in 6 months share the same architectural root cause: a shared database connection pool with no isolation between features. Incident 1: reporting queries exhausted the pool. Incident 2: bulk imports held connections. Incident 3: N+1 queries consumed excessive connections. Each postmortem addressed the specific trigger (optimize query, add timeout, fix N+1) but not the underlying vulnerability: any feature can monopolize database connections and starve all other features. This is the noisy neighbor problem at the database layer. The pattern: we keep fixing symptoms while the disease persists. Previous action items: Incident 1 — add query timeout for reports (implemented, worked for that case). Incident 2 — add transaction timeout for imports (implemented, worked for that case). Incident 3 — fix N+1 query (will work for this case). None of these prevent the next variant. We need to stop playing whack-a-mole and address the architectural gap.' Clearly articulates: 'The question is not why did search have an N+1 bug — bugs happen. The question is why did a bug in search take down payments, authentication, and every other feature. The answer: shared connection pool with no isolation boundaries'"
+    weight: 0.35
+    description: "Systemic pattern identification"
+  - type: llm_judge
+    criteria: "Architecture proposals eliminate the class of failure — proposal 1: Connection pool isolation (bulkhead pattern). 'Separate connection pools per feature category: (a) Critical path pool (authentication, payments, core API): 60% of connections, reserved exclusively. (b) Standard feature pool (search, profiles, messaging): 30% of connections. (c) Background/batch pool (reporting, imports, analytics): 10% of connections. Behavior: if the background pool is exhausted, only background features degrade. Critical path features are unaffected. This is the bulkhead pattern — compartmentalize failures so they don't propagate.' Proposal 2: Query governance at the connection level. 'Connection-level query timeout: 5 seconds for critical path, 30 seconds for standard, 5 minutes for background. Connection-level row limit: queries returning more than 10,000 rows are automatically terminated in critical path pool. Statement-level monitoring: queries exceeding cost threshold are logged and flagged before they cause incidents.' Proposal 3: Read replica routing. 'Analytical and reporting queries route to read replicas, not the primary database. This removes an entire category of connection pool contention — heavy reads never compete with transactional writes.' Each proposal includes: what it prevents, implementation complexity, timeline estimate, and which past incidents it would have prevented"
+    weight: 0.35
+    description: "Architecture proposals"
+  - type: llm_judge
+    criteria: "Recommendations show how postmortems should drive architectural evolution — meta-recommendation on postmortem process: 'When three postmortems share the same architectural root cause, the third postmortem must escalate from fixing instances to fixing architecture. Proposed rule: if two or more incidents in a 12-month period share the same contributing factor category, an architecture review is triggered automatically.' Migration plan: 'Phase 1 (1 week): implement connection pool monitoring — visibility into per-feature connection usage. We cannot manage what we cannot measure. Phase 2 (2 weeks): implement bulkhead pattern with separate pools. Start with critical path isolation (auth, payments). Phase 3 (3 weeks): add read replica routing for reporting and analytics queries. Phase 4 (ongoing): connection usage dashboards and alerts when any feature approaches pool limits.' Success criteria: 'After implementation, a feature-level database issue (slow queries, connection leaks, N+1 bugs) should degrade only that feature, not the entire platform. Blast radius of database connection issues reduced from all features to single feature category.' Risk assessment: 'Connection pool splitting reduces total connections available to each feature. Monitor for false positives where legitimate traffic spikes hit lower per-pool limits. Plan: start with generous pool sizes and tighten based on observed usage.' Links this incident to architectural debt: 'This pattern is technical debt manifesting as incidents. Each incident is interest paid on the debt of a shared connection pool. The architecture change is paying down the principal'"
+    weight: 0.30
+    description: "Postmortem-driven evolution"

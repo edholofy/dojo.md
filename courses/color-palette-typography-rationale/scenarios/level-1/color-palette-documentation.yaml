@@ -1,0 +1,46 @@
+meta:
+  id: color-palette-documentation
+  level: 1
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color palette documentation — create a structured color documentation with roles, usage rules, and examples"
+  tags: [documentation, palette, usage-rules, structure, beginner]
+
+state: {}
+
+trigger: |
+  A UI designer says: "I created a color palette for our
+  app but developers keep using the wrong colors. Someone
+  used the error red for a decorative border. Another used
+  the primary blue at 20% opacity for disabled states
+  instead of using the actual disabled gray.
+
+  Current palette (just hex values in a Figma file):
+  - #2563EB (some kind of blue)
+  - #10B981 (green)
+  - #EF4444 (red)
+  - #F59E0B (yellow/orange)
+  - #6B7280 (gray)
+  - #F9FAFB (light background)
+  - #111827 (dark text)
+
+  How do I document this palette so people know WHEN
+  and WHERE to use each color?"
+
+  Task: Create structured color palette documentation
+  with semantic naming, usage rules, and do/don't
+  examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates semantic color naming — transforms raw hex values into named semantic roles (Primary/Brand Blue #2563EB — main interactive elements, buttons, links, active states; Success Green #10B981 — success messages, confirmation states, positive indicators; Error Red #EF4444 — error messages, destructive actions, validation failures; Warning Amber #F59E0B — warning messages, caution states, attention-needed indicators; Neutral Gray #6B7280 — secondary text, borders, disabled states, icons; Background #F9FAFB — page backgrounds, card backgrounds; Text Primary #111827 — headings, body text, primary content), explains why semantic naming matters (developers think in purpose not appearance — 'error' is clearer than 'red', semantic names prevent misuse — hard to accidentally use error-red decoratively when it's named 'error')."
+    weight: 0.35
+    description: "SemanticNaming"
+  - type: llm_judge
+    criteria: "Response provides usage rules for each color — per-color documentation includes: when to use (Primary Blue: buttons, links, active tabs, selected states, focus rings, progress bars), when NOT to use (Primary Blue: NOT for decorative backgrounds, NOT for text on colored backgrounds without contrast check, NOT for error or warning states), opacity rules (if opacity variations are allowed — specify which: Primary Blue at 10% for hover backgrounds, at 5% for selected row highlights — no arbitrary opacity), state variations (each color needs: default, hover, active, disabled variants — either as specific hex values or percentage adjustments), and combination rules (never use Error Red and Success Green adjacent without another differentiator — color-blind users cannot distinguish)."
+    weight: 0.35
+    description: "UsageRules"
+  - type: llm_judge
+    criteria: "Response includes do/don't examples and documentation format — do/don't pairs (DO: use Error Red for form validation messages with an error icon, DON'T: use Error Red for decorative borders or illustrations; DO: use Primary Blue for interactive elements that respond to clicks, DON'T: use Primary Blue for static informational text; DO: use the specific Disabled Gray for disabled states, DON'T: apply arbitrary opacity to Primary Blue for disabled states), documentation format (structured as a reference document — table or card format per color with: color swatch, name, hex value, role description, usage examples, restrictions, accessibility notes including contrast ratios against common backgrounds), and addresses the specific problems mentioned (error red for borders — explicitly forbidden in docs, opacity hack for disabled states — specific disabled color provided instead)."
+    weight: 0.30
+    description: "DosDontsAndFormat"

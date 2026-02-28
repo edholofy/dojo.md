@@ -1,0 +1,50 @@
+meta:
+  id: aiops-intelligent-alerting
+  level: 5
+  course: monitoring-alert-response
+  type: output
+  description: "Design AIOps-driven intelligent alerting — architect an ML-powered alerting system that reduces noise, predicts failures, and automates root cause analysis"
+  tags: [monitoring, AIOps, machine-learning, intelligent-alerting, prediction, master]
+
+state: {}
+
+trigger: |
+  Your organization has mature observability infrastructure but is
+  hitting the limits of static threshold-based alerting. Current
+  challenges:
+
+  - 400 well-maintained alert rules but still 30% false positive rate
+  - Seasonal traffic patterns cause false alerts every Monday morning
+    and during monthly billing runs
+  - Cascading failures generate alert storms (50+ alerts in 2 minutes)
+    that overwhelm the on-call engineer
+  - Slow degradation (gradual latency increase over days) is never
+    caught by threshold alerts until it crosses a cliff
+  - Engineers spend 40% of investigation time correlating data across
+    metrics, logs, and traces manually
+  - The team has asked: "Can we use ML to make alerting smarter?"
+
+  Data available:
+  - 2 years of metrics history (500K time series)
+  - 18 months of incident data (300 incidents with timelines)
+  - Full trace data for the last 6 months
+  - Alert firing history with resolution outcomes
+
+  Task: Design an AIOps strategy for intelligent alerting. Be honest
+  about what ML can and cannot do for alerting, include specific use
+  cases where ML adds value, and address the risks of over-relying
+  on ML for critical alerting.
+
+assertions:
+  - type: llm_judge
+    criteria: "AIOps capabilities are honestly assessed with clear value vs hype distinction — honest assessment: 'What ML can reliably do for alerting: (1) Anomaly detection on well-behaved time series. ML can learn the normal pattern for a metric (including daily, weekly, and seasonal patterns) and alert when the metric deviates significantly from the expected pattern. This solves the Monday morning and billing run false alerts — the model learns that traffic spikes on Mondays are normal. Best for: metrics with predictable patterns (traffic volume, latency baselines, error rates). Technique: statistical models (Prophet, Holt-Winters) or simple ML models (isolation forest). These are proven and reliable. (2) Alert correlation and grouping. When 50 alerts fire in 2 minutes, ML can group them into a single incident based on: temporal correlation (fired within the same time window), topological correlation (the alerting services are connected in the service graph), and historical correlation (these alerts have co-occurred in past incidents). This reduces 50 alerts to 1 incident with 50 contributing signals. Technique: clustering algorithms on alert features + service dependency graph analysis. (3) Alert noise classification. Train a classifier on historical alert data: given an alert that fired, was it actionable (led to a real incident) or noise (auto-resolved, was false positive)? The model can score new alerts with a confidence level. High-confidence noise alerts can be suppressed or downgraded. Technique: supervised classification using features like time of day, recent deployments, metric trajectory, and historical alert outcomes. What ML cannot reliably do (yet): (1) Replace well-defined threshold alerts. For known failure modes (disk full at 95%, error rate above 5%, database connections exhausted), static thresholds are simpler, more predictable, and easier to debug than ML models. Do not replace working threshold alerts with ML alternatives. (2) Fully automated root cause analysis. ML can suggest probable root causes based on historical patterns, but it cannot reliably determine root cause for novel failures. Root cause analysis requires human judgment. ML assists — it does not replace. (3) Predict arbitrary failures. ML can predict failures that have occurred before (pattern matching). It cannot predict truly novel failure modes. Claims of predicting unknown failures are largely hype'"
+    weight: 0.35
+    description: "Honest AIOps assessment"
+  - type: llm_judge
+    criteria: "Specific implementation plan addresses high-value use cases — implementation plan: 'Phase 1 (months 1-3): Anomaly detection for noisy metrics. Target: the metrics that cause the most false alerts due to seasonal patterns. Implementation: deploy anomaly detection on the top 30 metrics with the highest false positive rates. Use Prophet or similar time series decomposition to learn seasonal patterns. Alert when a metric deviates more than 3 standard deviations from its predicted value, not from a static threshold. Validation: run the anomaly detection model in shadow mode alongside existing static alerts for 4 weeks. Compare: does it fire on real incidents (true positives preserved)? Does it suppress the Monday morning and billing run false alerts (false positives reduced)? Only replace the static alert with the ML alert after shadow mode validation. Expected outcome: false positive rate for these 30 metrics reduced from 30% to under 10%. Phase 2 (months 4-6): Alert correlation and grouping. Implementation: build a service dependency graph from trace data (which services call which). When multiple alerts fire within a 5-minute window, group them using: service graph proximity (alerts in connected services likely have a common cause), temporal clustering (alerts that fire within 60 seconds of each other), historical co-occurrence (alerts that have fired together in past incidents). Present the grouped alerts as a single incident to the on-call engineer with the probable root cause service highlighted (the service at the top of the dependency chain that alerted). Expected outcome: alert storms of 50+ alerts are presented as 1-3 grouped incidents. On-call engineer sees the probable root cause service first instead of a wall of alerts. Phase 3 (months 7-9): Slow degradation detection. Implementation: for key latency and error rate metrics, train a model that detects gradual trends (not just point anomalies). When p99 latency has been increasing by 5ms per day for the past week, alert with a warning: service X latency is trending upward, expected to breach SLO in 4 days at current rate. This is predictive but not speculative — it is extrapolating an observed trend, not predicting an unknown failure. Expected outcome: catch slow degradation issues 2-5 days before they breach SLO thresholds. Phase 4 (months 10-12): Investigation assistance. Implementation: when an incident is declared, automatically present the on-call engineer with correlated context: recent deployments to the affected service and its dependencies, similar past incidents (based on alert pattern matching), suggested investigation queries (pre-built log and trace queries for the specific alert type). This is not automated root cause analysis — it is accelerated human investigation. Expected outcome: investigation time reduced by 30-40%'"
+    weight: 0.35
+    description: "Implementation plan"
+  - type: llm_judge
+    criteria: "Risks and safeguards prevent over-reliance on ML — risk management: '(1) The black box problem. Risk: ML models can suppress alerts for reasons that are not transparent. If an ML model suppresses an alert that would have caught a real incident, the failure is worse than a false positive — it is a missed detection. Safeguard: never fully suppress alerts based on ML classification alone. Instead: ML can downgrade a high-confidence noise alert from a page to a notification. But it cannot delete or fully suppress alerts. All ML-suppressed alerts are logged and reviewable. Weekly review: did the ML model suppress any alerts that were followed by an incident within 2 hours? If yes: the model needs retraining. (2) Training data bias. Risk: the model learns from historical data. If past alerting was poor (which it was — 30% false positive rate), the model learns from imperfect data. It may learn to suppress alerts that were historically non-actionable but would have been actionable with better investigation. Safeguard: train only on well-labeled data. Use incident data (where ground truth is known) rather than alert-resolution data (where resolution may mean someone dismissed it without investigation). Continuously relabel training data as incident quality improves. (3) Model drift. Risk: system behavior changes over time (new services, different traffic patterns, architectural changes). A model trained on 2 years of history becomes less accurate as the system evolves. Safeguard: retrain models monthly. Monitor model accuracy: track false positive rate and false negative rate continuously. Alert on model accuracy degradation — yes, alert on the alerting models performance. If model accuracy drops below acceptable thresholds, fall back to static threshold alerts until the model is retrained. (4) Critical path protection. Rule: ML-based alerting must never be the only detection mechanism for P1 failure modes. For every critical failure mode (payment processing failure, authentication outage, data loss), maintain a simple static threshold alert as a safety net alongside any ML-based detection. The static alert may be noisier, but it is predictable and debuggable. ML enhances; static alerts are the safety net. (5) Organizational readiness. Do not deploy ML-based alerting before the team understands it. Training: every on-call engineer must understand how the ML models work at a high level, when to trust and when to question ML alert classifications, and how to escalate when ML behavior seems wrong. Culture: ML in alerting is an assistant, not an authority. Human judgment always overrides ML classification'"
+    weight: 0.30
+    description: "Risk management"

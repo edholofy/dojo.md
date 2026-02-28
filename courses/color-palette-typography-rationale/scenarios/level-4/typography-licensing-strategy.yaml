@@ -1,0 +1,46 @@
+meta:
+  id: typography-licensing-strategy
+  level: 4
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography licensing strategy — navigate font licensing for enterprise use across web, mobile, desktop, and print"
+  tags: [licensing, legal, enterprise, fonts, expert]
+
+state: {}
+
+trigger: |
+  A Legal Counsel says: "Our design team uses 5 font
+  families but I'm not confident our licensing covers
+  all our use cases. Current situation:
+
+  - Font A (Google Fonts / OFL): used everywhere
+  - Font B ($12K/year web license): used on website only
+  - Font C (desktop license only): being used in our
+    iOS and Android apps — potentially in violation
+  - Font D (free for personal use): being used in our
+    commercial product — definitely in violation
+  - Font E (custom font from agency): we think we own
+    it but can't find the contract
+
+  We have 50M monthly active users across web and mobile.
+  We're also launching an enterprise product where
+  clients will see our fonts rendered in their instances.
+
+  What's our exposure and how do we fix this?"
+
+  Task: Audit font licensing compliance, assess risk,
+  and create an enterprise font licensing strategy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response audits each font's licensing status — Font A (Google Fonts/OFL): compliant — OFL permits commercial use, modification, web embedding, and redistribution, requires: include license notice with font files, SAFE; Font B ($12K/year web license): partially compliant — covers website but: does the license include mobile app embedding? desktop use? SaaS embedding where clients see the font? check license terms for: allowed platforms, pageview/user limits, embedding rights, likely needs expansion; Font C (desktop license in mobile apps): HIGH RISK — desktop licenses typically don't cover mobile app embedding — apps distribute font files to user devices which is a different license class, remediation: purchase mobile embedding license or replace font; Font D (free for personal use in commercial product): CRITICAL RISK — personal-use fonts explicitly prohibit commercial use, immediate remediation: remove from product, replace with properly licensed alternative, potential liability: check if foundry has enforcement history; Font E (custom from agency, contract missing): UNKNOWN RISK — without the contract: unclear who owns the font, whether it was work-for-hire or licensed, usage rights may be limited, remediation: find the contract, contact agency for clarification, if ownership can't be confirmed: treat as unlicensed."
+    weight: 0.35
+    description: "LicensingAudit"
+  - type: llm_judge
+    criteria: "Response assesses risk and creates remediation plan — risk quantification (Font C mobile violation: foundries have issued cease-and-desist letters and demanded back-licensing fees — could be $50K-200K depending on user count and duration of violation, Font D personal use violation: statutory damages for copyright infringement can be $750-30,000 per infringement in the US — with 50M users, exposure is theoretically massive, practical risk depends on foundry's enforcement posture, Font E unknown ownership: if agency owns the font, we may owe licensing fees for all years of unauthorized use), immediate remediation (within 30 days: Font D — replace immediately with OFL-licensed alternative that matches visually, Font C — purchase mobile embedding license or switch to licensed alternative, Font E — contact agency, locate contract, clarify ownership — legal hold on font changes until resolved), enterprise product consideration (SaaS embedding: when enterprise clients see our fonts rendered in their instances — this may require SaaS/embedding license beyond standard web license, some foundries charge per-seat for SaaS embedding — could be significant cost with enterprise clients, evaluate: should the enterprise product use a different, more permissively licensed font?)."
+    weight: 0.35
+    description: "RiskRemediation"
+  - type: llm_judge
+    criteria: "Response creates enterprise font licensing strategy — licensing framework (categorize all font needs: web self-hosted, web CDN, mobile app embedding, desktop application, SaaS/white-label, email, print/PDF generation — each is a separate licensing dimension, for each font: create matrix of needed vs. licensed platforms — identify all gaps), procurement recommendations (Option A: consolidate to OFL/open-source fonts — zero licensing cost, unlimited usage rights, trade-off: reduced font selection, may not match premium brand aspirations; Option B: license one premium font family comprehensively — negotiate enterprise-wide license covering all platforms and use cases, typically $30-60K/year for large enterprise — predictable cost, no compliance risk; Option C: mixed approach — OFL for body text and most UI, premium licensed font for headings and brand identity — balances cost and brand quality), ongoing governance (font licensing registry: database of all fonts in use, their licenses, coverage, renewal dates, and responsible contacts, review process: new font requests require licensing review before implementation — design team cannot add fonts without legal clearance, annual audit: verify all fonts in production are properly licensed across all platforms, training: designers and developers educated on licensing basics — 'free download' ≠ 'free to use commercially'), and contract templates (for custom font commissions: ensure work-for-hire or perpetual license, require: all platforms, all use cases, no user/pageview limits, right to modify)."
+    weight: 0.30
+    description: "LicensingStrategy"

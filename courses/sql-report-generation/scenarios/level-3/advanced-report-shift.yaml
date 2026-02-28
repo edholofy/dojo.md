@@ -1,0 +1,43 @@
+meta:
+  id: advanced-report-shift
+  level: 3
+  course: sql-report-generation
+  type: output
+  description: "Advanced report shift — handle complex reporting challenges requiring window functions, CTEs, performance optimization, and data quality validation"
+  tags: [SQL, shift-simulation, advanced, window-functions, CTE, optimization]
+
+state: {}
+
+trigger: |
+  Three urgent requests arrive simultaneously:
+
+  Request 1 (Board meeting in 2 hours): "Build a customer lifetime
+  value report: for each customer, show total revenue, months active,
+  average monthly spend, predicted 12-month value (based on their
+  trend), and rank them within their segment."
+
+  Request 2 (Data team escalation): "The daily report ran but shows
+  revenue 40% lower than yesterday. Before we alert the business,
+  determine if this is real or a data issue. Check data quality,
+  compare with previous patterns, and provide a diagnosis."
+
+  Request 3 (Product launch): "We launched a new feature yesterday.
+  Build a real-time adoption funnel: how many users saw the feature
+  announcement → clicked to learn more → activated the feature →
+  used it more than once. Break down by user segment."
+
+  Task: Handle all three requests with advanced SQL techniques.
+
+assertions:
+  - type: llm_judge
+    criteria: "LTV query uses window functions and trend calculation — ltv: 'Customer lifetime value report: WITH monthly_spend AS (SELECT customer_id, DATE_TRUNC('month', order_date) AS month, SUM(amount) AS monthly_revenue FROM orders WHERE status = 'completed' GROUP BY 1, 2), customer_metrics AS (SELECT ms.customer_id, COUNT(DISTINCT ms.month) AS months_active, SUM(ms.monthly_revenue) AS total_revenue, AVG(ms.monthly_revenue) AS avg_monthly_spend, REGR_SLOPE(ms.monthly_revenue, EXTRACT(EPOCH FROM ms.month)) AS spend_trend FROM monthly_spend ms GROUP BY ms.customer_id HAVING COUNT(DISTINCT ms.month) >= 3) SELECT cm.customer_id, c.name, c.segment, cm.total_revenue, cm.months_active, ROUND(cm.avg_monthly_spend, 2) AS avg_monthly_spend, ROUND(cm.avg_monthly_spend * 12, 2) AS projected_annual_value, CASE WHEN cm.spend_trend > 0 THEN 'Growing' WHEN cm.spend_trend < 0 THEN 'Declining' ELSE 'Stable' END AS trend_direction, RANK() OVER (PARTITION BY c.segment ORDER BY cm.total_revenue DESC) AS rank_in_segment, ROUND(cm.total_revenue * 100.0 / SUM(cm.total_revenue) OVER (PARTITION BY c.segment), 1) AS pct_of_segment_revenue FROM customer_metrics cm JOIN customers c ON cm.customer_id = c.customer_id ORDER BY c.segment, rank_in_segment. REGR_SLOPE calculates the linear trend of monthly spend over time. Positive slope means spending is increasing. RANK within segment shows each customer's position among peers'"
+    weight: 0.35
+    description: "LTV"
+  - type: llm_judge
+    criteria: "Response diagnoses the revenue drop with systematic data quality checks — diagnosis: 'Revenue drop diagnosis: Step 1 — Is the data complete? WITH daily_volume AS (SELECT order_date, COUNT(*) AS orders, SUM(amount) AS revenue FROM orders GROUP BY order_date ORDER BY order_date DESC LIMIT 14) SELECT order_date, orders, revenue, LAG(orders) OVER (ORDER BY order_date) AS prev_day_orders, ROUND((orders - LAG(orders) OVER (ORDER BY order_date)) * 100.0 / NULLIF(LAG(orders) OVER (ORDER BY order_date), 0), 1) AS order_count_change_pct FROM daily_volume. If order COUNT dropped 40% too, it is likely a data pipeline issue (incomplete load). If order count is normal but revenue dropped, it is a business change (lower average order). Step 2 — Check for data pipeline issues: SELECT MAX(order_date) AS latest_order, COUNT(CASE WHEN order_date = CURRENT_DATE - INTERVAL '1 day' THEN 1 END) AS yesterday_orders, COUNT(CASE WHEN created_at > CURRENT_DATE - INTERVAL '1 day' THEN 1 END) AS recently_loaded FROM orders. If yesterday_orders is lower than expected but recently_loaded shows ongoing inserts, the pipeline may still be running. Step 3 — Compare with same day of week: SELECT EXTRACT(DOW FROM order_date) AS day_of_week, AVG(daily_revenue) AS avg_revenue FROM (SELECT order_date, SUM(amount) AS daily_revenue FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL '8 weeks' GROUP BY order_date) daily GROUP BY 1. If yesterday was a Monday and Monday revenue is typically 40% lower than the previous Friday, the drop is normal. Diagnosis report for the data team: 'Revenue dropped 40% because the data pipeline for payment_processor_B failed at 2 AM and has not loaded 60% of yesterday's transactions. The pipeline team has been notified. Do NOT alert the business — numbers will normalize once the pipeline backfill completes by 11 AM'"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response builds the feature adoption funnel with segment breakdown — funnel: 'Feature adoption funnel: WITH feature_funnel AS (SELECT user_id, MAX(CASE WHEN event_type = 'feature_announcement_viewed' THEN 1 ELSE 0 END) AS saw_announcement, MAX(CASE WHEN event_type = 'feature_learn_more_clicked' THEN 1 ELSE 0 END) AS clicked_learn_more, MAX(CASE WHEN event_type = 'feature_activated' THEN 1 ELSE 0 END) AS activated, COUNT(CASE WHEN event_type = 'feature_used' THEN 1 END) AS usage_count FROM user_events WHERE event_type IN ('feature_announcement_viewed', 'feature_learn_more_clicked', 'feature_activated', 'feature_used') AND timestamp >= CURRENT_DATE - INTERVAL '1 day' GROUP BY user_id) SELECT c.segment, COUNT(*) AS saw_announcement, COUNT(CASE WHEN ff.clicked_learn_more = 1 THEN 1 END) AS clicked, ROUND(COUNT(CASE WHEN ff.clicked_learn_more = 1 THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 1) AS click_rate, COUNT(CASE WHEN ff.activated = 1 THEN 1 END) AS activated, ROUND(COUNT(CASE WHEN ff.activated = 1 THEN 1 END) * 100.0 / NULLIF(COUNT(CASE WHEN ff.clicked_learn_more = 1 THEN 1 END), 0), 1) AS activation_rate, COUNT(CASE WHEN ff.usage_count > 1 THEN 1 END) AS repeat_users, ROUND(COUNT(CASE WHEN ff.usage_count > 1 THEN 1 END) * 100.0 / NULLIF(COUNT(CASE WHEN ff.activated = 1 THEN 1 END), 0), 1) AS repeat_rate FROM feature_funnel ff JOIN customers c ON ff.user_id = c.customer_id WHERE ff.saw_announcement = 1 GROUP BY c.segment ORDER BY saw_announcement DESC. Key insight: if enterprise users have 80% activation rate but free users have 20%, the feature resonates with power users but the onboarding for casual users needs improvement'"
+    weight: 0.30
+    description: "Funnel"

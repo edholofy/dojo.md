@@ -1,0 +1,49 @@
+meta:
+  id: failed-migration-recovery
+  level: 3
+  course: database-migration-planning
+  type: output
+  description: "Recover from a failed migration — diagnose and recover from a migration that failed mid-execution, leaving the database in a partial state"
+  tags: [database, migration, failure, recovery, incident, advanced]
+
+state: {}
+
+trigger: |
+  A migration failed mid-execution in production at 2 AM. The
+  migration was supposed to:
+  1. Add a "verified_at" timestamp column to users
+  2. Backfill verified_at for 3 million users from the audit log
+  3. Add a NOT NULL constraint to verified_at
+  4. Create an index on verified_at
+
+  The migration failed at step 3 (adding NOT NULL) because 47,000
+  users had no entry in the audit log and therefore had NULL
+  verified_at values. Steps 1 and 2 completed, but 3 and 4 did not.
+
+  Current state:
+  - The verified_at column EXISTS (step 1 completed)
+  - 2,953,000 users have verified_at populated (step 2 partially
+    completed)
+  - 47,000 users have verified_at = NULL (missed by backfill)
+  - NO NOT NULL constraint (step 3 failed)
+  - NO index (step 4 never ran)
+  - The application was already deployed expecting verified_at to
+    exist (the code reads verified_at but handles NULL gracefully)
+  - It is now 2:30 AM and the on-call engineer is asking what to do
+
+  Task: Diagnose the failure, decide on immediate and follow-up
+  actions, and design the recovery plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Immediate assessment and triage is correct — immediate actions: 'Step 1: Assess the current state (5 minutes). Is the application working? Yes — the code handles NULL verified_at gracefully. The application is not broken. Is there data loss? No — no data was deleted. The column was added and partially populated. Is there ongoing damage? No — the partial state is stable. No further degradation will occur. Decision: this is NOT an emergency. The application is functional. The migration is incomplete but the database is in a safe (if unexpected) partial state. Do NOT attempt to fix the migration at 2:30 AM. Communicate: update the incident channel: the migration failed at step 3, the application is functional, the database is in a partial state. No customer impact. Fix will be applied during business hours. The on-call engineer should: document the current state, note the error message from step 3, and go back to sleep. Step 2: Understand why it failed. The NOT NULL constraint failed because 47,000 users have NULL verified_at. Why: the backfill used the audit log, but 47,000 users had no audit log entry. These are likely old accounts created before the audit log existed, test accounts, or accounts created through a code path that did not generate audit entries. The migration assumed every user would have an audit log entry — this assumption was wrong'"
+    weight: 0.35
+    description: "Immediate assessment"
+  - type: llm_judge
+    criteria: "Recovery plan addresses the partial state — recovery plan: 'Option A (recommended): Fix forward. Do NOT roll back. The column exists and most data is correct. Rolling back (dropping the column) would lose the 2,953,000 correctly backfilled values. Instead, fix the remaining 47,000 rows and complete the migration. Step 1: Investigate the 47,000 NULL rows. SELECT id, email, created_at FROM users WHERE verified_at IS NULL; Are they old accounts? Test accounts? Inactive accounts? This determines the correct value for verified_at. Options for the NULL rows: (a) Set to account creation date: verified_at = created_at (reasonable assumption for old accounts). (b) Set to a sentinel value: verified_at = epoch (1970-01-01) to indicate unknown. (c) Set to NULL and make the column nullable (change the requirement). Discuss with the product team during business hours. Their decision determines the fix. Step 2: Complete the backfill (during business hours). UPDATE users SET verified_at = created_at WHERE verified_at IS NULL; (or whatever the product team decides). Verify: SELECT COUNT(*) FROM users WHERE verified_at IS NULL; (must be 0). Step 3: Add the NOT NULL constraint. ALTER TABLE users ALTER COLUMN verified_at SET NOT NULL; This will now succeed because all rows have values. Step 4: Create the index. CREATE INDEX CONCURRENTLY idx_users_verified_at ON users(verified_at); Option B: Roll back (not recommended). ALTER TABLE users DROP COLUMN verified_at; This loses all backfilled data and requires re-running the entire migration later. Only choose this if the partial state causes application problems'"
+    weight: 0.35
+    description: "Recovery plan"
+  - type: llm_judge
+    criteria: "Prevention measures for future migrations are identified — prevention: '(1) Test migrations with production data. This failure would have been caught if the migration was tested against a staging database with production data. The 47,000 users without audit log entries would have caused the same failure in staging. Lesson: always test migrations with production-scale data, not just development data. (2) Make migrations transactional where possible. If steps 1-4 were in a single transaction, the failure at step 3 would have rolled back steps 1 and 2 automatically. PostgreSQL supports transactional DDL — most schema changes can be in a transaction. However: some operations (like CREATE INDEX CONCURRENTLY) cannot be in a transaction. For those, split into separate migrations. (3) Add pre-condition checks. Before step 3 (adding NOT NULL), add a check: SELECT COUNT(*) FROM users WHERE verified_at IS NULL; If count > 0: fail the migration BEFORE attempting the constraint. This gives a clear error message (47,000 users have NULL verified_at) instead of a cryptic constraint violation. (4) Write idempotent migrations. The backfill script should be safe to run multiple times. Use WHERE verified_at IS NULL so re-running only processes unprocessed rows. (5) Separate schema changes from data changes. Migration 1: ADD COLUMN (instant, safe). Script: backfill (can run independently, can be re-run). Migration 2: ADD CONSTRAINT (after backfill is verified). Migration 3: CREATE INDEX (after constraint is in place). Each step is independently deployable and verifiable'"
+    weight: 0.30
+    description: "Prevention measures"

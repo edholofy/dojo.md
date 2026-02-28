@@ -1,0 +1,45 @@
+meta:
+  id: rate-limiting-docs
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document rate limiting — write clear rate limit documentation with headers, tiers, retry strategies, and best practices"
+  tags: [API, documentation, rate-limiting, throttling, headers, retry, intermediate]
+
+state: {}
+
+trigger: |
+  Developers keep getting rate limited and don't know how to handle it:
+  - "I'm getting 429 errors randomly — what are the limits?"
+  - "How long do I wait before retrying?"
+  - "Do different endpoints have different limits?"
+  - "My webhook processor hits the limit — how do I batch requests?"
+
+  Your API rate limits:
+  - Free tier: 100 requests/minute, 1000/hour
+  - Pro tier: 1000 requests/minute, 10000/hour
+  - Enterprise: custom limits
+  - Per-endpoint overrides: POST /payments limited to 50/minute
+  - Burst: up to 10 requests/second regardless of tier
+
+  Response headers:
+  X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset,
+  Retry-After (on 429 responses)
+
+  Task: Write comprehensive rate limiting documentation including:
+  limits by tier, response headers, retry strategies, and best
+  practices for staying within limits.
+
+assertions:
+  - type: llm_judge
+    criteria: "Rate limits are clearly documented by tier — table format: tier, requests/minute, requests/hour, burst rate. Per-endpoint overrides listed separately (POST /payments: 50/min for fraud prevention). Headers explained: X-RateLimit-Limit (your total allowed), X-RateLimit-Remaining (how many left), X-RateLimit-Reset (Unix timestamp when window resets), Retry-After (seconds to wait, only on 429). Example response headers shown with actual values. How to check your current tier: GET /api/v1/account shows rate limit info"
+    weight: 0.35
+    description: "Rate limit tiers"
+  - type: llm_judge
+    criteria: "Retry strategy is explained with code — exponential backoff algorithm: wait = min(base_delay * 2^attempt, max_delay) + random_jitter. Code example showing proper 429 handling: check Retry-After header, fall back to exponential backoff, add jitter to prevent thundering herd. Maximum retry attempts (3-5). Example in code: if response.status === 429, wait parseInt(response.headers['retry-after']) seconds, then retry. Don't retry immediately — you'll just get rate limited again"
+    weight: 0.35
+    description: "Retry strategy"
+  - type: llm_judge
+    criteria: "Best practices for staying within limits — (1) monitor X-RateLimit-Remaining to throttle proactively (don't wait for 429), (2) batch operations where possible (bulk create instead of individual creates), (3) cache responses (don't re-fetch data that hasn't changed — use ETags), (4) use webhooks instead of polling, (5) spread requests evenly (don't burst all at start of minute), (6) request rate limit increase if consistently hitting limits. Anti-pattern: aggressive retry loops without backoff. Contact sales for enterprise needs"
+    weight: 0.30
+    description: "Best practices"

@@ -1,0 +1,47 @@
+meta:
+  id: public-incident-communication
+  level: 3
+  course: incident-postmortem-writing
+  type: output
+  description: "Write public incident reports — create transparent post-incident communications that build customer trust while protecting sensitive details"
+  tags: [postmortem, public-communication, transparency, trust, status-page, advanced]
+
+state: {}
+
+trigger: |
+  Your platform had a major outage that affected all customers for
+  3 hours. It made tech news. Customers are demanding a public
+  explanation. Your company has never published a public incident
+  report before.
+
+  The incident: A database schema migration corrupted an index,
+  causing queries to return incorrect results. For 90 minutes,
+  customers saw other customers' data in some views (a data
+  isolation failure). For the remaining 90 minutes, the platform
+  was down while data integrity was verified.
+
+  This is sensitive because:
+  - Customers saw other customers' data (privacy violation)
+  - The data exposure may trigger regulatory notification
+  - Competitors will read this report
+  - Customers need to trust you didn't lose their data
+  - Engineering candidates will judge your culture by this report
+
+  Task: Write a public incident report that is transparent enough
+  to rebuild trust, careful enough to not create legal liability,
+  and technically credible for engineering audiences. Show how to
+  balance transparency with appropriate information boundaries.
+
+assertions:
+  - type: llm_judge
+    criteria: "Report is transparent about what happened without creating unnecessary liability — what to include: 'On [date], our platform experienced two related issues: (1) For approximately 90 minutes, a data display error caused some users to see account information belonging to other users. (2) We then took the platform offline for 90 minutes to verify data integrity and deploy a fix. No data was modified, deleted, or extracted. The display error has been corrected and verified.' What to disclose: 'The incident was caused by a database migration that corrupted an index, causing queries to return results from incorrect accounts. We identified the issue, determined the scope of data exposure, and took the platform offline to prevent further exposure while we fixed the root cause.' What NOT to include: specific technical details that reveal architecture to competitors (no database names, version numbers, or internal service names), specific numbers of affected users (say 'some users' until legal confirms disclosure scope), or details that prejudge regulatory findings. Language vetted with legal: 'We take data privacy seriously' — too generic. Better: 'We identified that account data was displayed to incorrect users. Our investigation determined: the data displayed was limited to [specific data types]. No financial data, passwords, or payment information was exposed. No data was modified or extracted. We are notifying affected users directly.'"
+    weight: 0.35
+    description: "Transparent but careful"
+  - type: llm_judge
+    criteria: "Report rebuilds trust through accountability and specific prevention measures — accountability without excuse: 'This incident should not have happened. A database migration that could cause data isolation failures should have been caught by our testing process. It was not, and we take full responsibility.' What we're doing (specific, not vague): '(1) Immediate: all affected users notified with details of what data was visible and to whom. (2) This week: database migration process now requires data isolation verification before and after every migration. Automated test added that verifies no cross-account data leakage. (3) This month: independent security audit of all data isolation boundaries. (4) Ongoing: we are implementing row-level security policies that enforce data isolation at the database level, making this class of error architecturally impossible.' Timeline for improvements: 'Data isolation testing: deployed this week. Security audit: results within 30 days. Row-level security: implemented within 90 days.' Transparency commitment: 'We will publish an update when the security audit is complete and when row-level security is fully deployed. We believe transparency about failures — not just successes — is how we earn your continued trust.'"
+    weight: 0.35
+    description: "Trust rebuilding"
+  - type: llm_judge
+    criteria: "Report serves multiple audiences without compromising any — for customers: 'Clear explanation of what data was exposed, what was not, and what to do (nothing — no action required on your part). Individual notifications sent to affected users.' For engineering community: 'Technically credible root cause analysis. Shows the team understands what went wrong at a technical level. Includes enough detail that other engineers respect the analysis without revealing competitive information.' For regulators: 'Demonstrates prompt identification, containment, notification, and remediation. Includes timeline of events and remediation steps.' For potential customers/investors: 'Shows mature incident response process. Company handles failures transparently and with clear remediation plans.' For recruitment: 'Demonstrates blameless engineering culture. Engineers reading this should think: this is a team that handles incidents well, not one that hides them.' What the report avoids: naming individuals, revealing specific technologies or vendors, providing information that could be used to exploit similar vulnerabilities, or making promises about future reliability that can't be guaranteed. Closing: 'We know trust is earned through actions, not words. The improvements described above are already in progress. We will provide updates as they are completed'"
+    weight: 0.30
+    description: "Multi-audience balance"

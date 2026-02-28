@@ -1,0 +1,32 @@
+meta:
+  id: cohort-retention-triangles
+  level: 2
+  course: cohort-analysis
+  type: output
+  description: "Build cohort retention triangles — understand weekly vs monthly granularity, read the triangle structure, and extract insights from incomplete data patterns"
+  tags: [retention-triangle, granularity, weekly, monthly, intermediate]
+
+state: {}
+
+trigger: |
+  The Head of Product says: "I keep seeing these triangular retention
+  tables in blog posts and investor decks. Ours is just a flat table.
+  Can you build me a proper retention triangle? I want both weekly and
+  monthly views. And explain why the bottom-right is always empty."
+
+  Task: Explain cohort retention triangles, build both weekly and
+  monthly versions, and show how to read the triangle structure.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the triangle structure and why it exists — structure: 'The retention triangle: why is the bottom-right empty? A retention triangle is a cohort retention table where each row is a cohort and each column is a time period after signup. It forms a triangle because newer cohorts have less data. Example monthly retention triangle: Cohort | M0 | M1 | M2 | M3 | M4 | M5. July: 100% 38% 28% 22% 19% 17%. August: 100% 40% 30% 24% 20%. September: 100% 42% 32% 26%. October: 100% 44% 34%. November: 100% 46%. December: 100%. The bottom-right is empty because those cohorts have not existed long enough. December cohort has only had month 0 — we cannot know their month 1 retention yet. This is not missing data — it is future data that does not exist yet. Reading the triangle: the staircase edge (the diagonal) represents the most recent data point for each cohort. Cells above and to the left of the diagonal are complete (actual measured data). Cells below and to the right would require time travel. The shape is always a triangle (or trapezoid if older cohorts are excluded). Common mistake: filling in the empty cells with projections or averages without clearly marking them as estimates. Always separate actual data from projections. The triangle width tells you the maximum observable retention period: if the oldest cohort is 12 months old, month 12 is the longest retention you can measure'"
+    weight: 0.35
+    description: "Structure"
+  - type: llm_judge
+    criteria: "Response covers weekly vs monthly granularity trade-offs — granularity: 'Weekly vs monthly retention triangles: weekly retention triangle (last 8 cohorts): Week cohort | W0 | W1 | W2 | W3 | W4 | W5 | W6 | W7. W1 (Jan 6): 100% 45% 35% 30% 28% 26% 25% 24%. W2 (Jan 13): 100% 46% 36% 31% 29% 27% 25%. W3 (Jan 20): 100% 48% 38% 33% 30% 28%. W4 (Jan 27): 100% 47% 37% 32% 29%. W5 (Feb 3): 100% 50% 40% 34%. W6 (Feb 10): 100% 52% 41%. W7 (Feb 17): 100% 51%. W8 (Feb 24): 100%. When to use weekly: early-stage products iterating rapidly (need to see retention impact of weekly releases). Products with short usage cycles (daily-use apps, games, social media). When you need fast feedback on product changes (do not want to wait months for signal). When to use monthly: mature products with longer usage cycles (B2B SaaS, marketplace). When cohort sizes are small (weekly cohorts may have too few users for statistical reliability). Executive and investor reporting (standard format). When seasonal patterns operate on monthly or quarterly cycles. Hybrid approach: use weekly internally for operational decisions and early detection. Use monthly for reporting, board decks, and trend analysis. Convert weekly to monthly by grouping (4-week rolling windows) for smoother trends. Granularity pitfall: weekly cohorts are noisier — a single marketing campaign or product bug can create a visible spike or dip. Monthly cohorts smooth out weekly noise but may hide short-lived issues. Choose granularity based on: how fast the product changes, cohort size, and audience'"
+    weight: 0.35
+    description: "Granularity"
+  - type: llm_judge
+    criteria: "Response covers reading patterns from the triangle — patterns: 'Reading patterns from the retention triangle: Pattern 1 — Read columns vertically (same period, different cohorts): month 1 column: July 38%, August 40%, September 42%, October 44%, November 46%. Month 1 retention is improving by about 2pp per month. This means the product is getting better at retaining users after their first month (likely due to onboarding improvements, product changes, or better acquisition quality). Pattern 2 — Read the diagonal (same calendar month, different cohorts): the diagonal represents the current month's data across all cohorts. July cohort at M5 (December): 17%. August cohort at M4 (December): 20%. September cohort at M3 (December): 26%. All of these represent December activity. If the diagonal shows a dip, an external event may have affected ALL cohorts simultaneously (holiday, outage, competitor launch). Pattern 3 — Read rows horizontally (single cohort over time): July cohort: 100% → 38% → 28% → 22% → 19% → 17%. The biggest drop is month 0 to month 1 (62pp loss). Then month 1 to month 2 (10pp loss). The curve is flattening — retention loss slows over time. By month 4-5, the curve is nearly flat (2pp per month), approaching the retention floor. Pattern 4 — Compare the shape of the retention curve across cohorts: if newer cohorts have steeper initial drops but higher later retention, the product may be acquiring broader audiences but retaining the right users. If newer cohorts have gentler drops at every stage, the product is genuinely improving. Pattern 5 — The incomplete triangle problem: the most recent cohorts have the least data. You cannot compare December month-6 retention to July month-6 retention because December has not reached month 6 yet. Avoid the temptation to project — instead, compare at the same maturity point (e.g., all cohorts at month 1)'"
+    weight: 0.30
+    description: "Patterns"

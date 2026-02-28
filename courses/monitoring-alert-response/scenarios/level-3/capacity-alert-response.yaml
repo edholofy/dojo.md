@@ -1,0 +1,48 @@
+meta:
+  id: capacity-alert-response
+  level: 3
+  course: monitoring-alert-response
+  type: output
+  description: "Respond to capacity alerts — investigate resource exhaustion trends and make scaling decisions before they become outages"
+  tags: [monitoring, capacity, scaling, resource-exhaustion, forecasting, advanced]
+
+state: {}
+
+trigger: |
+  You receive a series of capacity-related alerts over a week:
+
+  Monday: WARNING - "Database connection pool at 75% capacity"
+  (resolved after morning traffic peak)
+
+  Wednesday: WARNING - "Database connection pool at 82% capacity"
+  (resolved after morning peak, took longer to recover)
+
+  Friday: CRITICAL - "Database connection pool at 95% capacity"
+  (caused 2 minutes of connection errors before recovering)
+
+  Additional data:
+  - Your database max_connections = 200
+  - 3 months ago, peak utilization was 50% (100 connections)
+  - 1 month ago, peak utilization was 65% (130 connections)
+  - This week: peaking at 75-95% (150-190 connections)
+  - Traffic has grown 20% month-over-month
+  - A new microservice (recommendation-engine) was deployed 2 weeks
+    ago and uses 30 database connections
+
+  Task: Analyze the capacity trend, determine whether this is a
+  traffic growth issue or a resource allocation issue, and propose
+  both an immediate fix and a long-term capacity plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Capacity trend analysis is data-driven and identifies both causes — trend analysis: 'Connection pool usage is growing faster than traffic: Traffic growth: 20% month-over-month (3 months: 100% → 120% → 144% → ~173%). Connection growth: 50% → 65% → 95% peak (3 months: 100 → 130 → 190 connections). Connection growth rate (90% in 3 months) far outpaces traffic growth rate (73% in 3 months). This means traffic growth alone does not explain the connection increase. There is an additional factor.' Identifying the cause: 'Two contributing factors: (1) Organic traffic growth: 20% month-over-month increases baseline connection needs. This alone would have pushed peak from 100 to approximately 173 connections by now — significant but manageable. (2) New service deployment: recommendation-engine was deployed 2 weeks ago using 30 connections. This explains the acceleration: 173 (organic) + 30 (new service) = approximately 203, which exceeds max_connections of 200. The new service deployment pushed us from comfortable to critical.' The Monday-Wednesday-Friday pattern: 'Monday hit 75% because traffic was at normal peak. Wednesday hit 82% because traffic was slightly higher (midweek is typically the highest traffic day). Friday hit 95% because a combination of peak traffic and the new service's connection usage nearly exhausted the pool. Next week, we will likely hit 100% and have a real outage'"
+    weight: 0.35
+    description: "Data-driven trend analysis"
+  - type: llm_judge
+    criteria: "Immediate and long-term fixes address both the symptom and the cause — immediate fix (this week): '(1) Increase max_connections from 200 to 300. This provides headroom for current usage plus growth. Check: does the database server have enough memory and CPU to handle 300 connections? Each connection consumes memory. (2) Review recommendation-engine's connection usage. 30 persistent connections for a single service may be excessive. Can it use a smaller pool (10-15 connections) with connection pooling? Was it configured with a default pool size rather than a right-sized one? (3) Implement connection pooling (PgBouncer or equivalent) in front of PostgreSQL. This allows more application connections while using fewer database connections, as a connection pooler can multiplex many application connections over a smaller number of database connections.' Long-term capacity plan: '(1) Connection budget per service: assign each service a maximum connection allocation. New services must request connections as a resource (like CPU and memory), not assume unlimited access. (2) Predictive alerting: instead of alerting when connections hit a threshold, alert when the projected time to exhaustion is less than 7 days based on current growth rate. This gives time to act before a crisis. (3) Capacity review cadence: monthly review of database connection usage trends. When total peak exceeds 70% of max_connections, trigger a capacity expansion. (4) Traffic growth planning: at 20% month-over-month growth, run quarterly capacity projections for all constrained resources (database connections, CPU, memory, disk). Plan expansions 1-2 months ahead of projected exhaustion'"
+    weight: 0.35
+    description: "Immediate and long-term fixes"
+  - type: llm_judge
+    criteria: "Response distinguishes urgent capacity from forecasted capacity — urgency assessment: 'This is an urgent capacity issue, not just a planning exercise. The Friday incident (95%, with connection errors) demonstrates that the next traffic peak could cause an outage. Monday morning is 2 days away. If traffic follows the growth pattern, Monday peak could hit 98-100% and cause sustained connection failures.' Action timeline: 'Before Monday morning: increase max_connections or deploy PgBouncer. This is not a next sprint item — this is a this weekend item. The risk of doing nothing: connection pool exhaustion during Monday peak traffic, causing failed requests, degraded user experience, and a potential SEV-1 incident.' Capacity alerts as leading indicators: 'The Monday 75% alert was the leading indicator. If the team had investigated the trend on Monday (why are we at 75% when we were at 50% three months ago?), Friday's near-outage could have been prevented. Capacity alerts are not fire-and-forget — they are trend signals that require analysis. A single capacity alert is a data point. Three capacity alerts with increasing severity in one week is a trajectory that demands immediate action.' General principle: 'Capacity issues are unique because they are predictable. Unlike software bugs (which happen suddenly), capacity exhaustion follows a trend. Every capacity alert should trigger the question: when will we hit 100% at the current growth rate? If the answer is within 2 weeks, act now'"
+    weight: 0.30
+    description: "Urgent vs forecasted capacity"

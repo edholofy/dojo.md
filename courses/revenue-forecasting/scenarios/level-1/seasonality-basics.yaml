@@ -1,0 +1,40 @@
+meta:
+  id: seasonality-basics
+  level: 1
+  course: revenue-forecasting
+  type: output
+  description: "Seasonality basics — understand how seasonal patterns affect revenue and how to identify, measure, and account for seasonality in forecasts"
+  tags: [seasonality, patterns, cycles, calendar-effects, beginner]
+
+state: {}
+
+trigger: |
+  A marketing director says: "Every December our revenue spikes 40%
+  and every January it drops 30%. My CEO keeps asking why Q1 forecasts
+  look bad compared to Q4. Here's our monthly revenue for the past
+  two years:
+
+  Year 1: Jan $80K, Feb $85K, Mar $95K, Apr $100K, May $105K, Jun $110K,
+  Jul $100K, Aug $95K, Sep $115K, Oct $120K, Nov $140K, Dec $160K.
+
+  Year 2: Jan $95K, Feb $100K, Mar $110K, Apr $118K, May $122K, Jun $128K,
+  Jul $118K, Aug $112K, Sep $135K, Oct $142K, Nov $165K, Dec $190K.
+
+  How do I properly account for seasonality in our forecasts?"
+
+  Task: Explain seasonality concepts, identify the seasonal patterns
+  in this data, and show how to build a seasonally-adjusted forecast.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains what seasonality is and identifies patterns in the data — concepts: 'Seasonality concepts: what is seasonality: seasonality refers to predictable, recurring patterns in revenue that follow a regular cycle (weekly, monthly, quarterly, or annually). These patterns repeat at roughly the same time each year with similar magnitude. Types of seasonal patterns: 1. Calendar seasonality: tied to calendar events — holiday shopping (Nov-Dec spike), back-to-school (Aug-Sep), tax season (Q1). 2. Industry seasonality: tied to industry cycles — retail peaks in Q4, B2B software peaks in Q4 (budget flush), travel peaks in summer. 3. Day-of-week effects: B2C e-commerce peaks on weekends, B2B sales peak Tuesday-Thursday. 4. Pay-cycle effects: consumer spending spikes around payday (1st and 15th). Identifying patterns in the data: monthly seasonal indices — calculate each month's revenue as a percentage of the annual average. Year 1 annual average: ($80K + $85K + ... + $160K) ÷ 12 = $108.75K. Year 2 annual average: ($95K + $100K + ... + $190K) ÷ 12 = $127.9K. Seasonal indices (average of both years): January: (80/108.75 + 95/127.9) ÷ 2 = (0.74 + 0.74) ÷ 2 = 0.74 (26% below average). February: approximately 0.76 (24% below average). March: approximately 0.87 (13% below average). April: approximately 0.92. May: approximately 0.96. June: approximately 1.01. July: approximately 0.92. August: approximately 0.87. September: approximately 1.06. October: approximately 1.10. November: approximately 1.29 (29% above average). December: approximately 1.47 (47% above average). Clear pattern: revenue builds through the year, dips in summer (Jul-Aug), peaks sharply in Nov-Dec, then drops in Jan-Feb. This is a classic retail or B2C seasonal pattern. The CEO question explained: Q1 does not look bad because the business is struggling — it looks bad because Q4 is seasonally inflated. Comparing Q1 to Q4 is like comparing a Tuesday to Black Friday. The right comparison is Q1 this year vs Q1 last year, which shows 18% growth (Year 1 Q1: $260K vs Year 2 Q1: $305K)'"
+    weight: 0.35
+    description: "Concepts"
+  - type: llm_judge
+    criteria: "Response shows how to build a seasonally-adjusted forecast — adjustment: 'Building a seasonally-adjusted forecast: Step 1 — Remove seasonality to find the trend: deseasonalized revenue = actual revenue ÷ seasonal index. January Year 2: $95K ÷ 0.74 = $128.4K (deseasonalized). December Year 2: $190K ÷ 1.47 = $129.3K (deseasonalized). Notice: once seasonality is removed, the monthly values are much closer together. The deseasonalized values reveal the true underlying trend without seasonal noise. Step 2 — Find the growth trend in deseasonalized data: plot the deseasonalized values over time and fit a trend line. The deseasonalized data shows approximately $5K/month growth (approximately 4% month-over-month). Year 1 average deseasonalized: approximately $108K. Year 2 average deseasonalized: approximately $128K. Year-over-year growth: approximately 18%. Step 3 — Project the deseasonalized trend forward: Year 3 monthly deseasonalized baseline: approximately $128K + $5K per month = $133K to $188K. Year 3 average deseasonalized: approximately $150K. Step 4 — Re-apply seasonality to get the forecast: forecast = deseasonalized projection × seasonal index. January Year 3: $133K × 0.74 = $98K. June Year 3: $158K × 1.01 = $160K. November Year 3: $183K × 1.29 = $236K. December Year 3: $188K × 1.47 = $276K. Year 3 total forecast: approximately $1.8M (vs Year 2: $1.535M = 17% growth). This method captures both the growth trend AND the seasonal pattern. Without seasonal adjustment, you might forecast January at $210K (just extending December's trend) and miss badly when actual comes in at $98K. Sanity check: Year 3 Q1 forecast ($98K + $104K + $120K = $322K) is 18% above Year 2 Q1 ($305K). This is consistent with the overall growth rate. The seasonal pattern is preserved (Q1 is still the weakest quarter). The CEO can now see that Q1 is growing at the same rate as the rest of the year'"
+    weight: 0.35
+    description: "Adjustment"
+  - type: llm_judge
+    criteria: "Response covers practical seasonality considerations — practical: 'Practical seasonality considerations: communicating seasonal results: always compare like-to-like. Month-over-month (MoM) comparisons: misleading when seasonality is present. Jan vs Dec always looks like a decline. Year-over-year (YoY) comparisons: the gold standard for seasonal businesses. Jan Year 2 vs Jan Year 1 shows true growth (+18.75%). Sequential deseasonalized: compare deseasonalized values month-to-month to detect mid-year trend changes. Dashboard design: always show YoY growth alongside absolute numbers. Include a same-month-last-year line on revenue charts. Flag months where seasonal index is above 1.2 or below 0.8. Common seasonality mistakes: 1. Annualizing a peak month: December $190K × 12 = $2.28M. Actual Year 2 total = $1.535M. The annualized number is 49% too high because December is 47% above average. 2. Annualizing a trough month: January $95K × 12 = $1.14M. This is 26% too low. 3. Using Q4 as the baseline for Q1 targets: sales team hits $190K in Dec, gets a $200K target for Jan. They will fail — Jan's seasonal capacity is approximately $98-100K. Set targets using seasonal indices or YoY growth. 4. Ignoring changing seasonal patterns: seasonal patterns can shift over time. If the business adds B2B customers, the Q4 spike may moderate. Re-calculate seasonal indices annually. When seasonality is unreliable: new businesses (less than 2 years of data) — not enough history to confirm patterns. Rapidly changing businesses — a pivot may invalidate prior patterns. One-time events — a viral moment in July does not mean July is always strong. Rule of thumb: you need at least 2 full years of data to confidently identify seasonal patterns, and 3 years to validate them. With only 1 year of data, patterns might be coincidences rather than true seasonality'"
+    weight: 0.30
+    description: "Practical"

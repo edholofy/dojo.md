@@ -1,0 +1,43 @@
+meta:
+  id: risk-assessment-matrix
+  level: 2
+  course: technical-rfc-writing
+  type: output
+  description: "Build a risk assessment matrix — systematically evaluate risks by likelihood and impact, prioritize mitigations, and communicate risk tolerance"
+  tags: [RFC, risk-assessment, matrix, prioritization, mitigation, intermediate]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to introduce a third-party payment processor
+  (Stripe) to replace your custom payment handling. The migration
+  affects:
+  - 50,000 active subscribers with stored payment methods
+  - $2M monthly recurring revenue
+  - Integration with invoicing, refunds, and reporting systems
+  - PCI compliance requirements
+  - 3 different billing plans with custom logic
+
+  Stakeholders keep asking "what's the worst that could happen?" but
+  your initial risk list is unstructured — some risks are catastrophic
+  but unlikely, others are minor but certain. Everything feels equally
+  scary when presented as a flat list.
+
+  Task: Create a structured risk assessment using a likelihood × impact
+  matrix. Prioritize risks, assign mitigation strategies proportional
+  to risk level, and communicate risk tolerance clearly. Show how to
+  help decision-makers understand which risks matter most.
+
+assertions:
+  - type: llm_judge
+    criteria: "Risk matrix categorizes risks by likelihood and impact — matrix has clear axes: Likelihood (Rare, Unlikely, Possible, Likely, Almost Certain) × Impact (Negligible, Minor, Moderate, Major, Catastrophic). Risks placed on the matrix with justification: Critical (red): 'Payment data migration error causing double-charges — Likelihood: Possible, Impact: Catastrophic (customer trust, revenue, legal). Justification: migration of 50K stored payment methods has many edge cases.' High (orange): 'Billing logic discrepancy between old and new systems — Likelihood: Likely, Impact: Major. Justification: custom billing plans have undocumented edge cases that may not translate directly to Stripe's billing model.' Medium (yellow): 'Temporary reporting gaps during migration — Likelihood: Almost Certain, Impact: Minor. Justification: new reporting integration will have a 1-2 week gap.' Low (green): 'Stripe service outage during migration — Likelihood: Rare, Impact: Moderate. Justification: Stripe's 99.99% uptime SLA.' At least 6-8 risks categorized with brief justification for placement"
+    weight: 0.35
+    description: "Structured risk matrix"
+  - type: llm_judge
+    criteria: "Mitigations are proportional to risk level — critical risks get multiple mitigation layers: double-charge risk gets (1) dry-run migration on production data copy, (2) automated reconciliation comparing old and new system charges, (3) customer-facing migration notification with dispute process, (4) 24-hour monitoring with automatic pause if discrepancies detected. High risks get proactive mitigation: billing logic discrepancy gets (1) comprehensive test suite comparing old and new billing calculations for all plan types, (2) parallel-run period where both systems calculate but only old system charges, (3) gradual migration by plan type starting with simplest. Medium risks get monitoring: reporting gaps get (1) acceptance as known limitation, (2) manual reporting bridge during transition, (3) stakeholder notification of expected gap. Low risks get acceptance: Stripe outage gets (1) monitoring only, (2) rely on Stripe's SLA and incident response. The effort invested in mitigation should clearly match the risk level"
+    weight: 0.35
+    description: "Proportional mitigations"
+  - type: llm_judge
+    criteria: "Risk tolerance and decision support are explicit — risk tolerance statement: 'We accept all green and yellow risks with monitoring. Orange risks require active mitigation before proceeding. Red risks must be reduced to orange or below before migration begins.' Risk budget: 'We allocate 2 weeks of the 8-week timeline specifically for risk mitigation activities. This is non-negotiable — cutting risk mitigation to save time is not acceptable given $2M MRR at stake.' Abort criteria: 'If parallel-run testing reveals billing discrepancies exceeding 0.1% of transactions, we pause migration until resolved.' Residual risk: 'Even with all mitigations, we accept approximately 0.01% chance of individual billing errors during cutover, bounded to a 24-hour window. Estimated financial exposure: $200-500 in billing corrections.' Communicates to decision-makers: these are the risks, this is our tolerance, this is the investment needed, and here is what we cannot eliminate"
+    weight: 0.30
+    description: "Risk tolerance clarity"

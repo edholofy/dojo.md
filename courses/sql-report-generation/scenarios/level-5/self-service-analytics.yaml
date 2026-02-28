@@ -1,0 +1,42 @@
+meta:
+  id: self-service-analytics
+  level: 5
+  course: sql-report-generation
+  type: output
+  description: "Build a self-service analytics platform — empower business users to create their own reports while maintaining data quality, security, and governance guardrails"
+  tags: [SQL, self-service, analytics-platform, governance, training, democratization, master]
+
+state: {}
+
+trigger: |
+  The data team receives 150 ad-hoc report requests per month. Each
+  takes 2-4 hours. The backlog is 3 months long. Business users are
+  frustrated: "We wait weeks for a simple report that should take
+  5 minutes."
+
+  The CDO proposes self-service analytics: "Enable business users to
+  create their own reports without writing SQL. But maintain quality
+  — we can't have 500 people creating conflicting metrics."
+
+  Requirements:
+  - Business users can explore data and build reports without SQL
+  - Certified metrics are enforced (no one redefines revenue)
+  - Sensitive data (PII, salaries) is automatically restricted
+  - Performance guardrails prevent users from crashing the database
+  - Training program to build data literacy across the company
+
+  Task: Design the self-service analytics platform and rollout plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs the self-service platform architecture with guardrails — platform: 'Self-service analytics platform architecture: Curated data layer (what business users see): CREATE SCHEMA self_service; CREATE VIEW self_service.orders AS SELECT o.order_id, o.order_date, d.month_name AS order_month, d.quarter AS order_quarter, d.fiscal_year, c.customer_name, c.segment AS customer_segment, c.industry, r.region_name, r.country, p.product_name, p.category AS product_category, o.net_amount AS revenue, o.quantity, o.net_amount / NULLIF(o.quantity, 0) AS unit_price FROM fact_orders o JOIN dim_date d ON o.order_date_key = d.date_key JOIN dim_customer c ON o.customer_key = c.customer_key AND c.is_current = true JOIN dim_region r ON o.region_key = r.region_key JOIN dim_product p ON o.product_key = p.product_key AND p.is_current = true. Business users see clean, pre-joined data with business-friendly column names. They never see fact_orders or dim_customer — they see orders with customer_segment and product_category already joined. The revenue column is the certified net revenue definition — users cannot access gross_amount or redefine it. PII restriction: CREATE VIEW self_service.customers AS SELECT customer_id, segment, industry, signup_date, lifetime_value, is_active, CASE WHEN current_user IN ('hr_role', 'admin_role') THEN email ELSE 'restricted' END AS email, CASE WHEN current_user IN ('hr_role', 'admin_role') THEN phone ELSE 'restricted' END AS phone FROM dim_customer WHERE is_current = true. Regular business users see restricted instead of actual email and phone. Only HR and admin roles see PII. Performance guardrails: ALTER ROLE self_service_user SET statement_timeout = '60s'. ALTER ROLE self_service_user SET work_mem = '128MB'. GRANT SELECT ON ALL TABLES IN SCHEMA self_service TO self_service_user. REVOKE ALL ON SCHEMA staging, raw, business FROM self_service_user. Users can only SELECT from the curated self_service schema. Queries timeout after 60 seconds. If a query is too slow, it means the underlying data model needs optimization — not that the user should wait longer'"
+    weight: 0.35
+    description: "Platform"
+  - type: llm_judge
+    criteria: "Response includes the training program and adoption strategy — training: 'Data literacy training program: Tier 1 — All employees (2 hours): what data is available, how to read dashboards, what metrics mean, where to find reports. No SQL required. Delivered via recorded video modules. Tier 2 — Power users (8 hours, 2 sessions): how to use the BI tool (Metabase or Looker), how to filter and drill down, how to create saved questions, how to share reports with teams. Hands-on workshop with real company data. Tier 3 — Analysts (16 hours, 4 sessions): SQL fundamentals, how to write queries against the self_service schema, how to use CTEs and window functions, how to request new certified metrics. Includes SQL style guide and review process. Certification: users must pass a quiz to unlock each tier. Tier 1 unlocks dashboard viewing. Tier 2 unlocks report creation in the BI tool. Tier 3 unlocks direct SQL access. Adoption strategy: Phase 1 — Champions (Month 1): identify 10 power users across departments. Train them as champions. They get early access and provide feedback. Phase 2 — Department rollout (Months 2-3): roll out to entire departments one at a time. Start with marketing (high report demand, lower data sensitivity). Then sales, then operations. Finance last (highest accuracy requirements). Phase 3 — Full rollout (Month 4): all employees have Tier 1 access. Self-service report creation available to trained users. Success metrics: ad-hoc requests to the data team drop from 150/month to under 30. Average time from question to answer drops from 2 weeks to 30 minutes. User satisfaction survey: above 80% satisfaction with data access'"
+    weight: 0.35
+    description: "Training"
+  - type: llm_judge
+    criteria: "Explanation covers monitoring, support model, and scaling the platform — monitoring: 'Platform monitoring and support: Usage monitoring: SELECT username, COUNT(*) AS queries_run, COUNT(DISTINCT DATE(executed_at)) AS active_days, AVG(EXTRACT(EPOCH FROM duration)) AS avg_query_seconds, COUNT(CASE WHEN timed_out THEN 1 END) AS timeout_count FROM self_service_query_log WHERE executed_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY username ORDER BY queries_run DESC. Identify: power users who may need advanced access, struggling users who need additional training (high timeout rate), unused accounts (may indicate the platform is not meeting their needs). Content governance: track what users create. SELECT creator_username, COUNT(*) AS reports_created, COUNT(CASE WHEN shared_with_others THEN 1 END) AS shared_reports, COUNT(CASE WHEN last_viewed < CURRENT_DATE - INTERVAL '90 days' THEN 1 END) AS stale_reports FROM self_service_reports GROUP BY creator_username. If a user creates 50 reports but shares none, they may be duplicating existing reports. Proactively reach out to help them discover certified content. Support model: Level 1 — Self-service: data catalog, documentation, FAQ, training videos. Level 2 — Community: Slack channel where power users help each other. Champions answer most questions. Level 3 — Data team: complex requests, new metric definitions, data quality issues. Only requests that require schema changes or new data sources escalate to this level. Scaling: as the company grows from 500 to 5,000 users, the self_service schema must handle increased query load. Strategy: add read replicas for the BI tool to query, implement query result caching (same query from multiple users returns cached result), pre-compute popular drill-down combinations as materialized views. Cost tracking: attribute warehouse compute costs to departments based on usage. If marketing generates 40% of queries, they own 40% of the compute budget. This creates accountability and prevents runaway costs'"
+    weight: 0.30
+    description: "Monitoring"

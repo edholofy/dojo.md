@@ -1,0 +1,32 @@
+meta:
+  id: linear-vs-branching-funnels
+  level: 1
+  course: funnel-analysis
+  type: output
+  description: "Understand linear vs branching funnels — handle non-linear user journeys, parallel paths, skip steps, and loops in funnel analysis"
+  tags: [linear-funnel, branching, non-linear, user-journey, beginner]
+
+state: {}
+
+trigger: |
+  The PM says: "Our funnel isn't a straight line. Users can sign up
+  from three different pages, some skip the tutorial, others go back
+  and forth between steps. How do I analyze a funnel that's not
+  linear?"
+
+  Task: Explain the difference between linear and branching funnels,
+  and how to analyze funnels where users take non-linear paths.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains linear vs branching funnels — types: 'Linear vs branching funnels: Linear funnel: users must complete steps in a fixed sequence. Step 1 → Step 2 → Step 3 → Step 4 → Done. Example: checkout flow — add to cart → enter shipping → enter payment → confirm order. Users cannot skip steps or go out of order. Analysis is straightforward: measure conversion at each step. Branching funnel: users can take multiple paths to the same outcome. Entry points: users can enter from homepage, pricing page, or blog post. Skip steps: some users go directly from homepage to checkout (skipping product browsing). Parallel paths: users can sign up via email, Google OAuth, or Apple ID. Loops: users may return to a previous step (go back to browse more products after adding one to cart). Real-world example — SaaS signup: path A (70% of conversions): homepage → features page → pricing page → signup → onboarding. Path B (20%): blog post → signup → onboarding. Path C (10%): direct link → signup → onboarding (skips all awareness steps). If you only analyze path A, you miss 30% of conversions. Handling multiple entry points: instead of one funnel, consider: a TOFU (top-of-funnel) analysis: how do users enter? A MOFU (middle-of-funnel) analysis: what paths do they take? A BOFU (bottom-of-funnel) analysis: what converts them? Alternatively, define the funnel starting from the first meaningful action (signup start) and measure everything before that as pre-funnel acquisition'"
+    weight: 0.35
+    description: "Types"
+  - type: llm_judge
+    criteria: "Response covers analyzing non-linear funnels — analysis: 'Analyzing non-linear funnels: Approach 1 — Strict sequential funnel (simplest): define the intended path and only count users who follow it in order. Pros: clean analysis, easy to communicate. Cons: excludes users who took alternate paths (undercounts conversions). When to use: checkout flows, registration forms, onboarding wizards (naturally sequential). Approach 2 — Unordered funnel (most common): count users who completed each step regardless of order. A user who went step 1 → step 3 → step 2 → step 4 is counted as completing all steps. Pros: includes all conversions regardless of path. Cons: does not show the actual user journey or path-specific friction. When to use: when the steps can logically happen in any order (e.g., profile setup where users can complete name, photo, and bio in any sequence). Approach 3 — Path analysis (most detailed): track the actual sequence of steps each user took. Identify the most common paths and analyze conversion for each path separately. Path A (homepage → product → cart → checkout → purchase): 2,000 users started, 300 purchased (15%). Path B (search → product → cart → checkout → purchase): 1,500 users started, 250 purchased (17%). Path C (email → product → purchase directly): 500 users started, 150 purchased (30%). Insight: path C (email to direct purchase) has 2x the conversion rate of paths A and B. Invest in email marketing. Handling skip steps: a user who goes from homepage directly to checkout (skipping product page and cart) should be tracked as: did they really skip, or did they do those steps in a previous session? Session-stitching: connect multiple sessions from the same user to build a complete journey. A user may browse products on Monday (session 1) and purchase on Wednesday (session 2). Without session-stitching, the Wednesday session looks like they skipped the browsing step'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Response covers loops, re-entries, and practical recommendations — loops: 'Handling loops and re-entries: loops — users returning to a previous step: common loop: add to cart → browse more products → add another item → checkout. This is healthy behavior (increasing order value) but complicates funnel analysis. Solution: count the user once at each step (even if they visit multiple times). Track the number of loops as a separate metric (average items added before checkout). Re-entries — users who exit and return: a user who abandons checkout and returns the next day. Should they be counted as a new funnel entry or a continuation? Recommended approach: use a conversion window (e.g., 7 days). If the user returns within the window, count as the same funnel journey. If they return after the window, count as a new funnel entry. Practical recommendations for non-linear funnels: 1. Define a primary funnel path: even if users take varied paths, define the most common path (used by 50-70% of converters) as the primary funnel. Analyze this path in detail. Track alternate paths separately. 2. Use the critical event model: instead of tracking every step, track only the critical conversion events: first meaningful action (e.g., signup), activation event (e.g., completed first task), revenue event (e.g., first payment). This reduces the funnel to 3-4 critical stages that apply regardless of path. 3. Segment by path: compare conversion rates for users who followed different paths. If path B converts 2x better than path A, design the product to guide more users toward path B. 4. Track path distribution over time: if the percentage of users taking path A is declining while path C is growing, the product experience is changing. Monitor whether the new path distribution is better or worse for overall conversion. 5. Use Sankey diagrams for visualization: Sankey diagrams show the flow between all steps, including branches, loops, and exits. This is the best visualization for non-linear funnels'"
+    weight: 0.30
+    description: "Loops"

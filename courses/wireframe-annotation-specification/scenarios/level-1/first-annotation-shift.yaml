@@ -1,0 +1,51 @@
+meta:
+  id: first-annotation-shift
+  level: 1
+  course: wireframe-annotation-specification
+  type: output
+  description: "First annotation shift — handle a day of basic annotation tasks including screen specs, developer questions, and review feedback"
+  tags: [shift, combined, assessment, beginner]
+
+state: {}
+
+trigger: |
+  You're a junior designer on your first day writing
+  wireframe annotations. Your tasks:
+
+  9:00 AM — Annotate a simple modal dialog. The modal has:
+  title ('Delete Project'), body text ('This action cannot
+  be undone. All project data will be permanently deleted.'),
+  and two buttons ('Cancel' and 'Delete'). Write the
+  complete annotation.
+
+  11:00 AM — A developer messages: "On the dashboard page,
+  there's a 'Recent Projects' section showing 4 project
+  cards. What happens when a user has 0 projects? What
+  about 50? The wireframe only shows 4." Answer their
+  questions with proper annotations.
+
+  2:00 PM — Your lead reviews your modal annotation and
+  says: "You forgot to specify: what triggers this modal,
+  where focus goes when it opens, what keyboard shortcuts
+  work, and what happens after deletion succeeds." Fix
+  your annotation.
+
+  4:00 PM — You receive a wireframe for a simple toggle
+  switch labeled 'Dark Mode'. The designer who made it
+  left no annotations. Write the complete specification.
+
+  Task: Handle all four annotation tasks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes complete modal annotations — initial annotation: trigger (how the modal opens — from a menu, button, or right-click), overlay (dims background, clicking outside closes OR doesn't close — specify which), button behavior (Cancel: closes modal, returns to previous state; Delete: API call to delete, loading state on button, success redirects to project list or shows toast), and the missing items from the lead's feedback: focus management (focus moves to modal on open, trapped inside, returns to trigger on close), keyboard (Escape closes, Tab cycles through Cancel and Delete, Enter on Delete confirms), and post-deletion behavior (toast 'Project deleted', redirect to projects list, undo option?)"
+    weight: 0.35
+    description: "ModalAnnotation"
+  - type: llm_judge
+    criteria: "Response handles the Recent Projects states and toggle specification — 0 projects: empty state with illustration and 'Create your first project' CTA, no section header 'Recent Projects' (or show header with helpful message below). 50 projects: show only 4-6 most recent with 'View all projects →' link to full projects page, not all 50 on the dashboard. Toggle specification: current state source (user.preferences.darkMode), behavior on toggle (immediately applies dark mode theme, no page reload, saves preference to server), states (on/off with clear visual distinction), accessibility (role=switch, aria-checked, announce 'Dark mode on/off'), and what 'Dark Mode' affects (entire app, or just this page?)"
+    weight: 0.35
+    description: "StatesAndToggle"
+  - type: llm_judge
+    criteria: "Response demonstrates learning from the review feedback — the fixed modal annotation incorporates all the lead's feedback items (trigger, focus, keyboard, post-deletion), showing improvement from the initial version. All four tasks show increasing annotation quality through the day. The toggle spec (4 PM task) includes items that were missing from the initial modal spec (trigger, keyboard, accessibility, states), demonstrating that the designer learned from the earlier feedback. Annotations are practical and implementable"
+    weight: 0.30
+    description: "LearningImprovement"

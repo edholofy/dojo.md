@@ -1,0 +1,37 @@
+meta:
+  id: duplicate-detection-dedup
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Detect and handle duplicate records — identify exact and fuzzy duplicates, understand their business impact, and implement deduplication strategies"
+  tags: [python, pandas, duplicates, deduplication, data-quality, intermediate]
+
+state: {}
+
+trigger: |
+  Your CRM database export has 85,000 customer records but the team
+  suspects there are duplicates from multiple data entry points (web
+  form, phone support, in-store). The duplicates are causing inflated
+  customer counts, duplicate marketing emails, and incorrect revenue
+  attribution.
+
+  Data: customers.csv with columns: customer_id, first_name, last_name,
+  email, phone, address, city, state, signup_date, total_purchases,
+  lifetime_value.
+
+  Task: Find and handle duplicates — exact and fuzzy — and explain
+  each technique.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates exact and fuzzy duplicate detection methods — detection: 'Duplicate detection techniques: Exact duplicates — identical rows: exact_dupes = df[df.duplicated(keep=False)]. print(f\"Exact duplicate rows: {len(exact_dupes)}\"). df.duplicated() returns True for rows where ALL columns match a previous row. keep=False marks ALL duplicates (not just the second occurrence). keep=\"first\" marks all but the first. keep=\"last\" marks all but the last. Duplicates on specific columns — same email different records: email_dupes = df[df.duplicated(subset=[\"email\"], keep=False)].sort_values(\"email\"). print(f\"Duplicate emails: {df['email'].duplicated().sum()}\"). phone_dupes = df[df.duplicated(subset=[\"phone\"], keep=False)].sort_values(\"phone\"). Compound key duplicates — same name AND city: name_city_dupes = df[df.duplicated(subset=[\"first_name\", \"last_name\", \"city\"], keep=False)]. This catches cases where the same person signed up twice with different emails. Fuzzy matching for near-duplicates: from fuzzywuzzy import fuzz. def find_fuzzy_matches(df, column, threshold=85): matches = []. values = df[column].dropna().unique(). for i, val1 in enumerate(values): for val2 in values[i+1:]: score = fuzz.ratio(str(val1).lower(), str(val2).lower()). if score >= threshold: matches.append((val1, val2, score)). return pd.DataFrame(matches, columns=[\"value1\", \"value2\", \"score\"]). fuzzy_names = find_fuzzy_matches(df, \"last_name\", threshold=90). This catches typos and variations: \"Smith\" vs \"Smth\", \"O'Brien\" vs \"OBrien\". Email normalization before matching: df[\"email_clean\"] = (df[\"email\"].str.lower().str.strip().str.replace(r\"\\+.*@\", \"@\", regex=True)). This normalizes john+promo@gmail.com and John@gmail.com to john@gmail.com'"
+    weight: 0.35
+    description: "Detection"
+  - type: llm_judge
+    criteria: "Response covers deduplication strategies and merge logic — dedup: 'Deduplication strategies: Strategy 1 — Keep the most recent record: deduped = df.sort_values(\"signup_date\", ascending=False).drop_duplicates(subset=[\"email\"], keep=\"first\"). This keeps the latest signup for each email — appropriate when newer data is more accurate. Strategy 2 — Keep the record with most activity: deduped = df.sort_values(\"total_purchases\", ascending=False).drop_duplicates(subset=[\"email\"], keep=\"first\"). This keeps the most active account — appropriate when you want to preserve the richest customer profile. Strategy 3 — Merge duplicate records (golden record): def merge_duplicates(group): if len(group) == 1: return group.iloc[0]. merged = group.iloc[0].copy(). merged[\"total_purchases\"] = group[\"total_purchases\"].sum(). merged[\"lifetime_value\"] = group[\"lifetime_value\"].sum(). merged[\"signup_date\"] = group[\"signup_date\"].min(). return merged. golden = df.groupby(\"email_clean\").apply(merge_duplicates).reset_index(drop=True). The golden record approach combines data from duplicates: sum up purchases and lifetime value, keep the earliest signup date. This preserves all business data. Strategy 4 — Flag but do not remove: df[\"is_duplicate\"] = df.duplicated(subset=[\"email\"], keep=\"first\"). df[\"duplicate_group\"] = df.groupby(\"email_clean\").ngroup(). This lets the business team review before deletion — safer for production systems. Reporting: total = len(df). unique_emails = df[\"email_clean\"].nunique(). print(f\"Total records: {total}\"). print(f\"Unique customers: {unique_emails}\"). print(f\"Duplicate rate: {(total - unique_emails) / total * 100:.1f}%\"). print(f\"Inflated customer count by: {total - unique_emails} records\")'"
+    weight: 0.35
+    description: "Dedup strategies"
+  - type: llm_judge
+    criteria: "Explanation covers business impact and prevention — impact: 'Business impact of duplicates: Revenue attribution errors: if a customer has 2 records, their $5,000 lifetime value appears as two customers worth $2,500 and $2,500. This distorts customer segments: the high-value segment appears smaller and the medium segment appears larger. Marketing waste: duplicate emails mean duplicate sends. At $0.01 per email, 10,000 duplicates across 50 campaigns per year = $5,000 wasted. Worse, duplicate emails increase spam complaints and hurt deliverability. Incorrect metrics: customer acquisition cost (CAC) is understated because the customer count is inflated. If you spent $100K acquiring what looks like 10,000 customers (CAC = $10) but 2,000 are duplicates, the real CAC is $12.50 — 25% higher. Prevention strategies: validate email uniqueness at signup (database constraint). Normalize inputs before storage (lowercase emails, standardize phone formats). Implement matching rules in the CRM: block creation of records with existing email. Schedule regular dedup audits: monthly fuzzy match scan on new records. Create a dedup pipeline: ingest → normalize → match → merge → store. The pandas dedup is a one-time fix. Prevention requires system-level controls at the data entry point'"
+    weight: 0.30
+    description: "Impact"

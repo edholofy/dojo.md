@@ -1,0 +1,49 @@
+meta:
+  id: multi-region-migration-architecture
+  level: 5
+  course: database-migration-planning
+  type: output
+  description: "Multi-region migration architecture — design a global database migration strategy that addresses data sovereignty, latency, and consistency across regions"
+  tags: [database, migration, multi-region, data-sovereignty, global-architecture, master]
+
+state: {}
+
+trigger: |
+  You are the Chief Data Architect for a global SaaS company
+  expanding from US-only to 5 regions: US, EU, APAC, LATAM, and
+  Middle East. Current state:
+
+  - Single-region database: US-East (AWS)
+  - Aurora PostgreSQL: 8TB, 500 tables, 50 billion rows
+  - 200 microservices connected to the database
+  - 10 million active users (growing to 50M with expansion)
+  - Latency requirement: under 50ms for database reads globally
+  - Current US-East latency from EU: 120ms, APAC: 250ms
+
+  Regulatory requirements:
+  - GDPR: EU user data must be stored and processed in the EU
+  - China: data must remain within China (Cybersecurity Law)
+  - Brazil: LGPD requires data to be accessible from Brazil
+  - UAE: financial data must be stored in-country
+  - US: SOC 2 and HIPAA compliance maintained
+
+  The CEO says: "We're launching in all 5 regions in 18 months.
+  Every region needs to feel fast and be compliant. How do we
+  get our database architecture there?"
+
+  Task: Design the multi-region database migration architecture,
+  including data routing, consistency model, and migration plan.
+
+assertions:
+  - type: llm_judge
+    criteria: "Multi-region architecture design addresses latency and sovereignty — architecture: 'Architecture pattern: regional primary databases with global coordination. Each region gets its own Aurora PostgreSQL cluster (or equivalent managed PostgreSQL). Data is partitioned by region based on user residency. A global coordination layer routes requests to the correct regional database. Tier 1 — Regional data (user-specific, must stay in region): user profiles, personal data, PII. User-generated content (documents, messages, files). Financial data (invoices, payments, billing). Audit logs and compliance data. Rule: this data lives ONLY in the user's home region. It never replicates to other regions. This satisfies GDPR, China Cybersecurity Law, LGPD, and UAE requirements. Tier 2 — Global reference data (shared, read-heavy): product catalog, pricing (by region). Feature flags and configuration. Shared schemas and metadata. Rule: this data has a primary (US-East) and read replicas in every region. Replication lag accepted (eventual consistency, typically under 1 second). Tier 3 — Cross-region operational data: cross-region reporting and analytics. Global dashboards and metrics. Rule: this data is aggregated asynchronously. Each region pushes anonymized/aggregated metrics to a central analytics database. No PII crosses borders for analytics. Data routing layer: every API request includes the user's home region (determined at signup based on location). The routing layer directs database operations to the correct regional database. For users traveling: reads go to the nearest region's cached copy. Writes always go to the home region (adds latency but ensures compliance). Consistency model: within a region — strong consistency (single Aurora cluster). Across regions — eventual consistency for Tier 2 data (read replicas). No cross-region consistency for Tier 1 data (it exists in only one region). Latency targets: regional reads: under 10ms (database in the same region as the application). Cross-region reads (Tier 2 cached): under 15ms. Cross-region writes (user traveling): home region latency + 5ms overhead (acceptable for writes)'"
+    weight: 0.35
+    description: "Architecture design"
+  - type: llm_judge
+    criteria: "Migration plan for moving from single-region to multi-region is phased — migration plan: 'Phase 1 (months 1-4): Foundation. Set up regional infrastructure: deploy Aurora PostgreSQL clusters in each region (EU: eu-west-1, APAC: ap-southeast-1, LATAM: sa-east-1, Middle East: me-south-1). All clusters start empty. Build the data routing layer: add region awareness to the API gateway. Every user record gets a home_region field. New user signups are assigned a region based on location. Implement the global coordination service that routes database operations. Deploy Tier 2 replication: set up cross-region read replicas for global reference data. Product catalog, pricing, and configuration are replicated to all regions. Phase 2 (months 5-10): Data migration. Classify all 50 billion rows by region: identify which user each row belongs to. Map each user to their home region based on location data. For rows that cannot be attributed to a single user (shared data): classify as Tier 2 or Tier 3. Migrate Tier 1 data region by region: start with the smallest region (Middle East, likely fewest users). Use CDC (Change Data Capture) to stream data from US-East to the target region. Process: (1) begin CDC streaming to target region. (2) Backfill historical data to target region. (3) Verify data completeness (row counts, checksums). (4) Switch writes for that region's users to the regional database. (5) Stop CDC for migrated users. (6) Verify and monitor for 2 weeks. (7) Delete migrated users' Tier 1 data from US-East (GDPR compliance — data must not remain in the US). Repeat for each region in order: Middle East → LATAM → APAC → EU (smallest to largest, building confidence). Phase 3 (months 11-15): Application migration. Update all 200 microservices to be region-aware. Approach: deploy the region-aware version alongside the existing version (canary). Route 1% of traffic to the region-aware version. Monitor for errors, latency regressions, and data inconsistencies. Gradually increase to 100% over 4 weeks per service. With 200 services and parallel teams: approximately 12 weeks. Phase 4 (months 16-18): Optimization and compliance verification. Performance optimization: tune each regional database for its workload. Compliance audit: engage external auditors to verify data residency. GDPR: verify no EU user data exists outside the EU. China: verify data isolation. UAE: verify financial data residency. Decommission: remove single-region fallback paths. Update disaster recovery to be region-aware'"
+    weight: 0.35
+    description: "Migration plan"
+  - type: llm_judge
+    criteria: "Risk management addresses cross-region complexity — risks: 'Critical risks: (1) Data misclassification — likelihood: HIGH. Some rows may be attributed to the wrong region. Multi-tenant data (shared team resources) may have users from multiple regions. Mitigation: conservative classification — if a row's region is ambiguous, keep it in the most restrictive region. Build data lineage tracking to audit which data went where. Provide a self-service tool for users to verify their data residency. (2) Cross-region transaction failures — likelihood: MEDIUM. Some business operations span multiple regions (e.g., user A in EU shares a document with user B in US). If the application expects a single database transaction, multi-region breaks this. Mitigation: identify all cross-region workflows before migration. Redesign as eventual consistency (message queues between regions) instead of distributed transactions. Accept higher latency for cross-region operations (send message to other region, process asynchronously). (3) China regulatory complexity — likelihood: HIGH. China requires data to be stored within China AND may require government access. AWS China is operated by a local partner (Sinnet) with different terms. Mitigation: evaluate whether China should use a completely separate deployment (not connected to the global system). Many global SaaS companies operate China as an independent installation. Budget separately for China compliance. (4) Migration causes data loss — likelihood: LOW but impact CRITICAL. During Tier 1 data migration, data flows from US-East to regional databases and is deleted from US-East. If the migration has a bug: data could be lost or corrupted. Mitigation: never delete data from US-East until 30 days after migration AND verification passes. Maintain encrypted backups of all pre-migration data for 90 days. Checksum every table before and after migration. (5) Latency regression during migration — likelihood: MEDIUM. During the migration period, some users may experience higher latency as requests are routed through the data routing layer before regional databases are ready. Mitigation: pre-warm regional databases with Tier 2 data before migrating Tier 1. Use feature flags to gradually enable regional routing. Maintain the ability to fall back to US-East for any region'"
+    weight: 0.30
+    description: "Risk management"

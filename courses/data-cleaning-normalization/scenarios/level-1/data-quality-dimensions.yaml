@@ -1,0 +1,46 @@
+meta:
+  id: data-quality-dimensions
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Data quality dimensions — understand accuracy, completeness, consistency, timeliness, validity, and uniqueness as the foundation for measuring data quality"
+  tags: [data-quality, dimensions, accuracy, completeness, consistency, fundamentals]
+
+state: {}
+
+trigger: |
+  A junior data analyst says: "My manager keeps saying our data has
+  'quality issues' but doesn't get more specific than that. I want
+  to understand what data quality actually means in a structured way.
+
+  Here's a sample of our customer table:
+
+  | id  | name          | email              | signup_date | country | phone        |
+  |-----|---------------|--------------------|-------------|---------|--------------|
+  | 101 | John Smith    | john@email.com     | 2024-01-15  | US      | 555-0101     |
+  | 102 | jane doe      | JANE@EMAIL.COM     | 15/01/2024  | USA     |              |
+  | 103 | John Smith    | john@email.com     | 2024-01-15  | US      | 555-0101     |
+  | 104 | Bob Wilson    | bob@invalid        | 2024-13-01  | UK      | 44-555-0103  |
+  | 105 |               | alice@email.com    | 2024-02-28  | France  | +33-555-0104 |
+  | 106 | Charlie Brown | charlie@email.com  | 2024-02-30  | US      | 555-0105     |
+
+  What are the different ways data can be 'bad,' and how do I
+  identify each type of issue in this table?"
+
+  Task: Explain the core data quality dimensions, identify specific
+  examples of each dimension's violation in the sample table, and
+  describe how to measure each dimension.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains the core data quality dimensions clearly — accuracy (data correctly represents reality: row 104 has an invalid email and impossible date 2024-13-01, row 106 has impossible date 2024-02-30), completeness (all required values are present: row 102 missing phone, row 105 missing name), consistency (data follows the same format: country is 'US' vs 'USA', date formats differ between rows, name capitalization varies), uniqueness (no unwarranted duplicates: rows 101 and 103 are exact duplicates), validity (data conforms to defined rules: email format, date ranges, phone number formats), and timeliness (data is current and available when needed). Each dimension is illustrated with specific examples from the table"
+    weight: 0.35
+    description: "DimensionExplanation"
+  - type: llm_judge
+    criteria: "Response provides a systematic analysis of the sample table — walks through each row or each dimension and identifies all issues: row 102 has inconsistent casing, different date format, 'USA' instead of 'US', missing phone; row 103 is a duplicate of 101; row 104 has invalid email format and impossible date; row 105 has missing name; row 106 has an impossible date (Feb 30). Shows that a single row can have multiple dimension violations simultaneously"
+    weight: 0.35
+    description: "TableAnalysis"
+  - type: llm_judge
+    criteria: "Response describes how to measure each dimension — completeness can be measured as percentage of non-null values per column, accuracy requires comparison against a reference source or validation rules, consistency can be measured by checking format conformity rates, uniqueness by duplicate detection ratios, validity by testing against business rules. Provides simple metrics or formulas the analyst can start using immediately (e.g., completeness_score = non_null_count / total_count)"
+    weight: 0.30
+    description: "MeasurementApproach"

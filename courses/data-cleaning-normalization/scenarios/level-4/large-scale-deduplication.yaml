@@ -1,0 +1,40 @@
+meta:
+  id: large-scale-deduplication
+  level: 4
+  course: data-cleaning-normalization
+  type: output
+  description: "Large-scale deduplication — design distributed deduplication systems for billions of records using MinHash, LSH, and graph-based approaches"
+  tags: [deduplication, large-scale, MinHash, LSH, distributed, expert]
+
+state: {}
+
+trigger: |
+  A data platform architect says: "We need to deduplicate a dataset of
+  2 billion web pages for our search index. Traditional pairwise
+  comparison is impossible (4×10^18 comparisons). Even blocking-based
+  approaches struggle at this scale.
+
+  We need near-duplicate detection — pages that are mostly the same
+  but differ in ads, timestamps, or minor formatting. And we need
+  it to run across our distributed computing cluster.
+
+  What algorithms handle near-duplicate detection at billion-record
+  scale, and how do we distribute the computation?"
+
+  Task: Design a large-scale near-duplicate detection system using
+  MinHash, Locality-Sensitive Hashing (LSH), and distributed
+  computation for billions of records.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains MinHash for document similarity — shingling (converting documents to sets of n-grams), the MinHash signature (compact representation that preserves Jaccard similarity), how multiple hash functions create a signature that approximates the original set, and the key property: the probability that two MinHash values match equals the Jaccard similarity of the original sets. Explains how this reduces comparison from comparing full documents to comparing compact signatures"
+    weight: 0.35
+    description: "MinHash"
+  - type: llm_judge
+    criteria: "Response explains LSH for candidate pair identification — banding the MinHash signatures into bands of rows, hashing each band so that similar documents are likely to hash to the same bucket (candidate pairs), the tradeoff between number of bands (b) and rows per band (r): more bands = higher recall but more false positives, fewer bands = fewer false positives but may miss true duplicates. Shows the S-curve probability function and how to tune b and r for the desired similarity threshold. Explains how LSH reduces the candidate pairs from O(n²) to near-linear"
+    weight: 0.35
+    description: "LSH"
+  - type: llm_judge
+    criteria: "Response covers distributed implementation — using MapReduce or Spark for distributed MinHash computation (each partition computes signatures independently), distributed LSH bucketing (hash bands to identify candidate pairs across partitions), handling the output (candidate pairs may still be millions — verify with exact similarity computation), connected component analysis to cluster duplicates, and practical considerations: memory management for 2B records, incremental deduplication (new documents against existing index), and accuracy validation on a labeled sample"
+    weight: 0.30
+    description: "DistributedImplementation"

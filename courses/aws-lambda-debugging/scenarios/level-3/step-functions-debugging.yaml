@@ -1,0 +1,80 @@
+meta:
+  id: step-functions-debugging
+  level: 3
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Step Functions workflows — diagnose state machine failures, Lambda integration errors, retry policies, and error handling in complex orchestrations"
+  tags: [AWS, Lambda, Step-Functions, orchestration, state-machine, workflow, advanced]
+
+state: {}
+
+trigger: |
+  Your order processing workflow uses Step Functions to orchestrate
+  5 Lambda functions. The workflow fails intermittently:
+
+  State machine definition:
+  StartAt: ValidateOrder
+  States:
+    ValidateOrder:
+      Type: Task
+      Resource: arn:aws:lambda:...:validate-order
+      Next: CheckInventory
+    CheckInventory:
+      Type: Task
+      Resource: arn:aws:lambda:...:check-inventory
+      Next: ProcessPayment
+      Catch:
+        - ErrorEquals: [States.TaskFailed]
+          Next: NotifyOutOfStock
+    ProcessPayment:
+      Type: Task
+      Resource: arn:aws:lambda:...:process-payment
+      Retry:
+        - ErrorEquals: [PaymentGatewayError]
+          IntervalSeconds: 5
+          MaxAttempts: 3
+          BackoffRate: 2.0
+      Next: FulfillOrder
+    FulfillOrder:
+      Type: Task
+      Resource: arn:aws:lambda:...:fulfill-order
+      End: true
+    NotifyOutOfStock:
+      Type: Task
+      Resource: arn:aws:lambda:...:notify-customer
+      End: true
+
+  Issue 1: ProcessPayment retries 3 times then fails with:
+  "States.TaskFailed" — but there's no Catch for this state!
+  The entire workflow fails. Missing error handler after retries
+  are exhausted.
+
+  Issue 2: CheckInventory Lambda returns:
+  {"error": "OutOfStock", "item": "SKU-123"}
+  But Step Functions expects the Lambda to THROW an error to
+  trigger the Catch. Returning an error object is not an error —
+  it's a successful invocation with data.
+
+  Issue 3: Execution history shows the workflow took 45 minutes.
+  ProcessPayment waited 5s, then 10s, then 20s between retries
+  (exponential backoff). Meanwhile, the customer waited.
+
+  Task: Explain Step Functions debugging. Write: how Task states
+  invoke Lambda (integration patterns), error handling (Catch, Retry),
+  the difference between Lambda errors and successful returns, reading
+  execution history, timeout and heartbeat configuration, and common
+  Step Functions anti-patterns.
+
+assertions:
+  - type: llm_judge
+    criteria: "Lambda integration is explained — Task states can invoke Lambda in two ways: RequestResponse (synchronous, default) or InvokeFunction (similar). Lambda must THROW an error (not return an error object) to trigger Catch/Retry. Common mistake: returning {error: message} is a successful invocation. Use callback pattern for long-running tasks (send taskToken to Lambda, Lambda calls SendTaskSuccess/Failure when done). Execution input/output: use InputPath, OutputPath, ResultPath to control data flow between states"
+    weight: 0.35
+    description: "Lambda integration"
+  - type: llm_judge
+    criteria: "Error handling is covered — Retry: ErrorEquals matches error type, IntervalSeconds for delay, MaxAttempts for retry count, BackoffRate for exponential backoff. Catch: ErrorEquals matches error, Next routes to error handling state, ResultPath stores error details. Always add a catch-all Catch after Retry (handles errors after retries are exhausted). Error types: States.ALL (catch everything), States.TaskFailed (Lambda failure), States.Timeout (task timeout), custom errors thrown by Lambda. Without Catch, unhandled errors fail the entire execution"
+    weight: 0.35
+    description: "Error handling"
+  - type: llm_judge
+    criteria: "Debugging and anti-patterns are practical — read execution history: shows each state transition with input/output and timing. Visual workflow view highlights which state failed (red). Anti-patterns: no timeout on Task states (can run indefinitely — set TimeoutSeconds), no Catch after Retry (errors after retries kill the workflow), returning errors instead of throwing them, overly long retry delays for user-facing workflows. Use Step Functions local for development testing. Monitor: ExecutionsFailed, ExecutionThrottled, ExecutionsTimedOut metrics"
+    weight: 0.30
+    description: "Debugging and anti-patterns"

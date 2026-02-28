@@ -1,0 +1,42 @@
+meta:
+  id: first-experiment-shift
+  level: 1
+  course: ab-test-analysis
+  type: output
+  description: "First experiment shift — handle multiple A/B test requests requiring hypothesis formation, sample size planning, result interpretation, and stakeholder communication in a single day"
+  tags: [shift-simulation, beginner, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Three A/B test requests arrive on the same day:
+
+  Request 1 (Product Manager): "I want to test changing our CTA
+  button from 'Sign Up Free' to 'Get Started'. Our current signup
+  rate is 3.5% and I want to know if the new copy is better. We get
+  about 8,000 visitors per day."
+
+  Request 2 (Growth Lead): "We ran a test on the landing page hero
+  image. Results: control 2.1% click-through, treatment 2.5% click-
+  through, 15,000 visitors per group, p-value 0.04. Should we ship?"
+
+  Request 3 (Marketing Manager): "I tested two email subject lines.
+  Version A: 22% open rate (5,500 opens / 25,000 sent). Version B:
+  23% open rate (5,750 opens / 25,000 sent). The p-value is 0.19.
+  But Version B is clearly better — 23 is higher than 22, right?"
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with proper test planning — planning: 'Request 1 — CTA button copy test planning: Hypothesis: if we change the CTA button from Sign Up Free to Get Started, the signup rate will increase from 3.5% to at least 4.0% (a 0.5pp absolute improvement, 14% relative lift) because Get Started is action-oriented and less committal than Sign Up which implies creating an account. Primary metric: signup button click rate. Guardrail metrics: signup completion rate (people who click should still complete), bounce rate. Sample size calculation: baseline: 3.5%. MDE: 0.5 percentage points (3.5% → 4.0%). Alpha: 0.05. Power: 80%. Required sample: approximately 18,500 per group (37,000 total). At 8,000 visitors per day with a 50/50 split (4,000 per group per day): duration: 18,500 / 4,000 = 4.6 days. Round up to 7 days (one full week). Test plan: launch Monday morning. 50/50 random split by user cookie. Run for 7 days (Monday to Sunday). Analyze results the following Monday. Do not peek at results during the test. Pre-register the analysis plan: two-proportion z-test, α = 0.05, one primary metric'"
+    weight: 0.35
+    description: "Planning"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with correct result interpretation — interpretation: 'Request 2 — Landing page hero image results: Results summary: control 2.1% CTR, treatment 2.5% CTR, 15,000 per group, p = 0.04. Analysis: p = 0.04 < 0.05 → statistically significant. The treatment produces a real improvement in click-through rate. Absolute lift: 0.4 percentage points. Relative lift: 19%. 95% confidence interval for the difference: approximately [0.02pp, 0.78pp]. Business impact: if the landing page gets 30,000 visitors per week: additional clicks per week: 30,000 × 0.4% = 120. If 20% of clicks convert to signups: 24 additional signups per week, 96 per month. Guardrail check: confirm no degradation in downstream metrics (bounce rate, time on site, signup completion). If guardrails are clean: ship the treatment. Recommendation: ship the new hero image to 100% of traffic. Monitor for 2 weeks post-launch to confirm the lift persists in production'"
+    weight: 0.35
+    description: "Interpretation"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with proper explanation of non-significance — nonsignificant: 'Request 3 — Email subject line test: Results: Version A 22% open rate, Version B 23%, p = 0.19. The Marketing Manager thinks B is clearly better because 23 > 22. Explanation: the 1 percentage point difference is NOT statistically significant. p = 0.19 means there is a 19% chance of seeing a difference this large by random chance alone. That is almost 1 in 5 — too common to trust. 23% is higher than 22% in this specific send, but if you sent the exact same emails again to a different sample, Version A might win next time. With 25,000 recipients per version, the standard error is approximately 0.26pp per group. The difference of 1pp divided by the combined standard error yields a z-score of about 1.31, which corresponds to p = 0.19. To detect a 1pp improvement with significance: you would need approximately 50,000 recipients per group (100,000 total). Decision: do not adopt Version B based on this test. Options: run a larger test with more recipients. Test a more different subject line (bigger change = bigger potential effect = easier to detect). Conclude that both subject lines perform similarly and move on to higher-impact experiments. Key takeaway for the Marketing Manager: a higher number does not mean a better result. Statistical testing separates real signals from random noise. In this case, the noise is too loud to hear the signal'"
+    weight: 0.30
+    description: "NonSignificant"

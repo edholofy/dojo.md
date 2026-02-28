@@ -1,0 +1,43 @@
+meta:
+  id: reviewing-complex-prs
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Review complex PRs — manage large pull requests by batching feedback, identifying critical paths, and providing structured review across many files"
+  tags: [code-review, complex-pr, large-pr, batching, structure, intermediate]
+
+state: {}
+
+trigger: |
+  A teammate submits a 450-line PR touching 12 files. It implements
+  a new order processing pipeline with:
+  - New database migration (adds 3 tables)
+  - New service class with business logic (order validation, pricing,
+    inventory checks)
+  - API controller with 4 new endpoints
+  - 8 test files
+  - Updates to 2 existing services (inventory, notifications)
+
+  You've been reviewing for 30 minutes and have 20+ comments scattered
+  across files. The review is becoming unfocused and you're losing
+  track of what's critical vs minor.
+
+  Task: Organize your review of this complex PR. Write: (1) a
+  structured summary that groups feedback by theme rather than file,
+  (2) identify the critical path (which parts MUST be correct for the
+  PR to be safe), (3) acknowledge what you didn't review thoroughly
+  (and why), and (4) suggest whether this PR should have been split.
+
+assertions:
+  - type: llm_judge
+    criteria: "Feedback is grouped thematically, not file-by-file — categories: (1) Data model concerns (migration issues, schema design), (2) Business logic (validation rules, pricing calculations, inventory checks), (3) API design (endpoint paths, request/response formats, error handling), (4) Testing gaps (missing edge cases, untested paths), (5) Integration concerns (changes to existing services, backward compatibility). Each category: list of specific comments with severity. This structure helps the author: they can address all data model concerns at once rather than jumping between files. The author sees the reviewer understands the overall design, not just individual lines"
+    weight: 0.35
+    description: "Thematic grouping"
+  - type: llm_judge
+    criteria: "Critical path is identified explicitly — 'The most important things to get right: (1) the database migration must be reversible and handle existing data, (2) the pricing calculation must match the business rules exactly (errors here cost real money), (3) the inventory check must be atomic (race condition between check and decrement would oversell).' Distinguish: areas where bugs cause data loss/money loss (critical) vs areas where bugs cause bad UX but are recoverable (important) vs areas where issues are cosmetic (minor). State what you focused review time on: 'I spent most time on the service class and migration. I did a lighter review of the tests and controller.'"
+    weight: 0.35
+    description: "Critical path identified"
+  - type: llm_judge
+    criteria: "PR splitting recommendation is constructive — acknowledge: 'I understand this is one feature, but a 450-line PR across 12 files is hard to review thoroughly. Reviewer fatigue after 200 lines means later files get less attention.' Suggest splitting: 'For future features like this, consider: PR 1: migration + model (reviewable independently), PR 2: service layer + tests, PR 3: API controller + integration. Each PR is ~150 lines and can be reviewed in one focused session.' Don't demand retroactive splitting of this PR (too late). Be honest about review limitations: 'I did a thorough review of the service layer but a lighter review of the tests — you may want a second reviewer for the test coverage.'"
+    weight: 0.30
+    description: "PR splitting advice"

@@ -1,0 +1,48 @@
+meta:
+  id: color-perception-science
+  level: 5
+  course: color-palette-typography-rationale
+  type: output
+  description: "Color perception science — apply color science, perceptual uniformity, and psychophysics to create superior color palettes"
+  tags: [color-science, perception, perceptual, psychophysics, master]
+
+state: {}
+
+trigger: |
+  A Design Research Director says: "Our color palette
+  was created by a designer 'picking colors that look
+  good.' But we're a $5B enterprise with products used
+  by millions. I want our color system to be grounded
+  in color science, not gut feel.
+
+  Specific questions:
+  1. Our color scales (blue-100 to blue-900) have
+     perceptually uneven steps — the jump from 300 to
+     400 looks bigger than 700 to 800. Why?
+  2. Our colors look different on different displays —
+     how do we ensure consistency?
+  3. Our data visualization colors were chosen to 'look
+     different' but scientific studies show perceptual
+     distance matters more than just 'looks different'
+  4. We need a color system that works in sRGB, P3, and
+     CMYK for print — can we have one source of truth?
+
+  Build me a color system grounded in science."
+
+  Task: Design a scientifically-grounded color system
+  addressing perceptual uniformity, cross-device
+  consistency, and multi-gamut support.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains color science foundations — perceptual uniformity problem (RGB and HSL are device-oriented color spaces, not perceptually uniform — equal numeric steps don't create equal visual steps, CIELAB/LCH/OKLCH are perceptually uniform color spaces — equal numeric differences produce equal perceived differences, why blue-300 to 400 looks bigger than 700 to 800: in HSL lightness is not perceptual — the same lightness step feels larger at mid-range than at extremes, solution: generate color scales using OKLCH or CIELAB with equal perceptual steps — each 100 increment in the scale creates a visually equal step), color appearance phenomena (simultaneous contrast: colors look different depending on surrounding colors, chromatic adaptation: the eye adjusts to ambient lighting changing color perception, metamerism: two colors can match under one light source but differ under another — relevant for print-digital consistency), and why this matters at enterprise scale (millions of users on diverse displays, data visualization accuracy depends on perceptual uniformity, accessibility depends on accurate contrast measurement)."
+    weight: 0.35
+    description: "ColorScienceFoundations"
+  - type: llm_judge
+    criteria: "Response designs a scientifically-grounded color system — perceptually uniform scales (generate all color scales in OKLCH: fix hue, set chroma range, step lightness in equal perceptual increments — validate with Delta E calculations: each adjacent pair should have similar Delta E values — e.g., all steps differ by ΔE ~8-12, confirming visual uniformity), cross-device consistency (color management: define colors in a device-independent color space like CIELAB, convert to device-specific profiles for display, embed ICC profiles in design assets, test on calibrated displays — but acknowledge that consumer devices are not calibrated, practical approach: test on representative devices — MacBook, Windows laptop, iPhone, Android — adjust palette so that acceptable rendering across all, not perfect on one), data visualization colors (use perceptual distance — ΔE > 30 between any two categorical colors ensures clear distinction, generate data visualization palette in OKLCH with: equal lightness for equal visual weight, maximum hue separation for categorical distinction, test in colorblind simulation using OKLCH — perceptual space makes colorblind impact predictable)."
+    weight: 0.35
+    description: "ScientificColorSystem"
+  - type: llm_judge
+    criteria: "Response addresses multi-gamut and documentation — multi-gamut strategy (sRGB as primary: widest device support, all web and most displays, Display P3 as enhanced: modern Apple devices, newer Android and monitors — 25% wider gamut, allows more vibrant colors, define colors in P3 with sRGB fallback: CSS color(display-p3 0.2 0.4 0.9) with sRGB hex fallback, CMYK for print: convert from L*a*b* source values to CMYK using appropriate ICC profile — never convert directly from RGB to CMYK), single source of truth (define every color in CIELAB/OKLCH as the canonical representation, auto-generate: sRGB hex, Display P3, CMYK, HSL, Pantone nearest match — all from one source, when the source value changes, all representations update automatically — build pipeline using color-convert library or similar), documentation (color system documentation includes: color science rationale — why OKLCH, perceptual uniformity validation data — Delta E measurements between scale steps, multi-gamut conversion methodology, testing protocol for cross-device consistency, data visualization guidelines with perceptual distance requirements — this elevates the color system from opinion to engineering)."
+    weight: 0.30
+    description: "MultiGamutAndDocs"

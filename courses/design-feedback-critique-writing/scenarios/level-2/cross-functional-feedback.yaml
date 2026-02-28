@@ -1,0 +1,50 @@
+meta:
+  id: cross-functional-feedback
+  level: 2
+  course: design-feedback-critique-writing
+  type: output
+  description: "Cross-functional feedback — facilitate and synthesize design feedback from PMs, engineers, QA, and content stakeholders"
+  tags: [cross-functional, stakeholders, synthesis, multidisciplinary, intermediate]
+
+state: {}
+
+trigger: |
+  A product designer receives feedback from 5 different
+  stakeholders on a new settings page redesign:
+
+  PM: "We need to add 3 more settings that weren't in
+  the original spec. Also, can we add a search bar?"
+
+  Engineer: "This custom toggle animation will take 2
+  extra sprint days. The standard toggle works fine."
+
+  Content Strategist: "The labels are inconsistent —
+  some say 'Enable' and others say 'Turn on.' Also,
+  some descriptions are too long for mobile."
+
+  QA: "What happens if the user changes a setting and
+  navigates away without saving? Is there an unsaved
+  changes prompt?"
+
+  Accessibility Specialist: "The settings groups need
+  proper heading hierarchy and the toggles need
+  associated labels for screen readers."
+
+  The designer is overwhelmed by the volume and variety.
+
+  Task: Help the designer synthesize, prioritize, and
+  respond to cross-functional feedback.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response categorizes and prioritizes the feedback — categorization (scope: PM's 3 new settings and search bar — scope change requiring PM discussion, implementation: engineer's animation concern — technical trade-off, content: content strategist's consistency and length issues — actionable fixes, edge cases: QA's unsaved changes question — critical UX gap that needs resolution, accessibility: specialist's heading and label concerns — compliance requirement), prioritization (Critical — must address: accessibility issues — heading hierarchy and toggle labels are WCAG requirements, QA's unsaved changes prompt — users will lose data without it; Important — should address: content consistency and length — directly affects usability; Negotiate — requires discussion: engineer's animation trade-off — discuss cost/benefit, PM's scope additions — evaluate against release timeline; Defer if needed — evaluate: search bar for settings — may be over-engineering for current number of settings)."
+    weight: 0.35
+    description: "CategorizeAndPrioritize"
+  - type: llm_judge
+    criteria: "Response provides response strategy for each stakeholder — PM response ('I'd like to discuss the 3 new settings — can you help me understand the priority? Adding them may push the timeline by X. For the search bar — with our current 15 settings, users can scan the page without search. Can we revisit when we have 25+?'), Engineer response ('I understand the animation adds complexity. Let me compare the custom animation vs. standard toggle with the team — if the visual difference is marginal, let's use the standard. If it significantly improves the interaction feel, let's budget the 2 days.'), Content response ('Great catches — I'll standardize all labels to use [Enable/Disable] and trim descriptions for mobile. Can you review the revised copy before I hand off?'), QA response ('Excellent edge case — I'll add an unsaved changes prompt with Save/Discard/Cancel options. I'll add this to the spec and prototype.'), Accessibility response ('I'll update the heading hierarchy to H2 for sections and ensure all toggles have proper aria-labels. Can you review the updated version for compliance?'). Each response is collaborative, specific, and acknowledges the feedback's value."
+    weight: 0.35
+    description: "StakeholderResponses"
+  - type: llm_judge
+    criteria: "Response teaches the synthesis skill — synthesis framework (1. Collect all feedback in one document — don't try to act on scattered comments, 2. Categorize by type: scope, implementation, content, UX, accessibility, 3. Identify conflicts — PM wants more but engineer needs less scope, 4. Prioritize by: user impact > compliance requirements > stakeholder preference, 5. Respond to each stakeholder confirming how their feedback will be handled — agree/defer/discuss), conflict resolution (when stakeholders disagree: identify the underlying concern — PM wants features for completeness, engineer wants manageable scope — find the compromise that serves the user, escalate truly conflicting priorities to the decision-maker), and documentation (create a feedback resolution log: Feedback | Source | Priority | Decision | Status — share with all stakeholders so everyone sees the full picture and their input is tracked)."
+    weight: 0.30
+    description: "SynthesisSkill"

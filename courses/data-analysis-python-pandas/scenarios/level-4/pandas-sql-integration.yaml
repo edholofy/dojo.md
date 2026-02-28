@@ -1,0 +1,40 @@
+meta:
+  id: pandas-sql-integration
+  level: 4
+  course: data-analysis-python-pandas
+  type: output
+  description: "Integrate pandas with SQL databases — read from and write to databases, optimize query pushdown, and build hybrid SQL-pandas workflows"
+  tags: [python, pandas, SQL, database, SQLAlchemy, query-optimization, expert]
+
+state: {}
+
+trigger: |
+  Your analytics team is split: half prefer writing SQL, half prefer
+  pandas. The data lives in a PostgreSQL data warehouse with 500 GB
+  of tables. Analysts frequently pull entire tables into pandas,
+  process them locally, and then struggle with memory issues.
+
+  The head of analytics wants a unified approach: "We need to
+  leverage the database for heavy lifting (filtering, joining, aggregating)
+  and use pandas for the final analysis, visualization, and ML prep.
+  Stop downloading 500 GB into 16 GB laptops."
+
+  Tables: orders (200M rows), customers (5M), products (50K),
+  web_events (2B rows), support_tickets (10M).
+
+  Task: Design a hybrid SQL-pandas workflow that is efficient and
+  maintainable.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code demonstrates efficient database reads with query pushdown — pushdown: 'Hybrid SQL-pandas workflow: Rule 1 — Push filtering and aggregation to the database: BAD — pulls 200M rows then filters in pandas: df = pd.read_sql(\"SELECT * FROM orders\", engine). df = df[df[\"order_date\"] >= \"2024-01-01\"]. df = df[df[\"region\"] == \"West\"]. GOOD — database filters first, pandas gets only what it needs: query = \"SELECT * FROM orders WHERE order_date >= '2024-01-01' AND region = 'West'\". df = pd.read_sql(query, engine). The database has indexes on order_date and region — filtering 200M rows down to 500K happens in milliseconds on the server. Pulling 200M rows over the network takes minutes and may crash the client. Rule 2 — Aggregate in SQL, analyze in pandas: query = \"\"\"SELECT region, product_category, DATE_TRUNC('month', order_date) AS month, COUNT(*) AS order_count, SUM(amount) AS revenue, AVG(amount) AS avg_order_value FROM orders WHERE order_date >= '2024-01-01' GROUP BY region, product_category, DATE_TRUNC('month', order_date)\"\"\". summary = pd.read_sql(query, engine). 200M rows become approximately 2,000 rows (regions x categories x months). Pandas handles visualization, pivoting, and trend analysis on the summary. Rule 3 — Join in the database, not in pandas: query = \"\"\"SELECT o.order_id, o.amount, c.segment, c.industry, p.category, p.name FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN products p ON o.product_id = p.product_id WHERE o.order_date >= '2024-01-01'\"\"\". enriched = pd.read_sql(query, engine). The database join uses indexes and optimized join algorithms. Pandas merge on 200M rows is slow and memory-intensive. Connection management with SQLAlchemy: from sqlalchemy import create_engine. engine = create_engine(\"postgresql://user:pass@host:5432/warehouse\", pool_size=5, max_overflow=10, pool_timeout=30)'"
+    weight: 0.35
+    description: "Query pushdown"
+  - type: llm_judge
+    criteria: "Response covers writing back to databases and chunked reading — write-back: 'Writing pandas results back to the database: Basic write: results.to_sql(\"analysis_results\", engine, if_exists=\"replace\", index=False). if_exists options: fail (default, error if table exists), replace (drop and recreate), append (add rows). Performance optimization for large writes: results.to_sql(\"analysis_results\", engine, if_exists=\"append\", index=False, method=\"multi\", chunksize=10000). method=\"multi\" uses multi-row INSERT (much faster than row-by-row). chunksize=10000 batches the inserts to avoid memory spikes. For very large DataFrames, use COPY (PostgreSQL): from io import StringIO. def copy_to_postgres(df, table_name, engine): buffer = StringIO(). df.to_csv(buffer, index=False, header=False). buffer.seek(0). with engine.raw_connection() as conn: with conn.cursor() as cursor: cursor.copy_from(buffer, table_name, sep=\",\", null=\"\"). conn.commit(). COPY is 10-50x faster than INSERT for bulk loads. Chunked reading for medium-large queries: chunks = pd.read_sql(\"SELECT * FROM web_events WHERE date >= '2024-01-01'\", engine, chunksize=100000). results = []. for chunk in chunks: processed = chunk.groupby(\"event_type\").size(). results.append(processed). final = pd.concat(results).groupby(level=0).sum(). Each chunk loads 100K rows into memory, processes, and discards. Only the small aggregation result is kept. This handles the 2B row web_events table without memory issues. Parameterized queries to prevent SQL injection: from sqlalchemy import text. query = text(\"SELECT * FROM orders WHERE region = :region AND order_date >= :start_date\"). df = pd.read_sql(query, engine, params={\"region\": \"West\", \"start_date\": \"2024-01-01\"}). NEVER use f-strings or string concatenation to build SQL queries with user input'"
+    weight: 0.35
+    description: "Write-back"
+  - type: llm_judge
+    criteria: "Explanation covers when to use SQL vs pandas and team workflow — workflow: 'When to use SQL vs pandas: Use SQL for: filtering large tables (WHERE clause uses indexes). joining tables (database optimizer chooses the best join strategy). aggregating at scale (GROUP BY with billions of rows). window functions on large datasets (OVER/PARTITION BY). data that stays in the database (views, materialized views). Use pandas for: exploratory analysis (quick iteration, easy to try different approaches). visualization (matplotlib, seaborn, plotly integration). statistical analysis (scipy, statsmodels integration). ML feature engineering (scikit-learn pipeline integration). complex transformations (custom functions, regex, string operations). ad-hoc analysis that changes frequently (easier to modify Python than SQL). Hybrid workflow pattern: def analyze_segment(segment, start_date, end_date): query = text(\"\"\"SELECT o.order_date, o.amount, c.industry, p.category FROM orders o JOIN customers c ON o.customer_id = c.customer_id JOIN products p ON o.product_id = p.product_id WHERE c.segment = :segment AND o.order_date BETWEEN :start AND :end\"\"\"). df = pd.read_sql(query, engine, params={\"segment\": segment, \"start\": start_date, \"end\": end_date}). df[\"month\"] = pd.to_datetime(df[\"order_date\"]).dt.to_period(\"M\"). pivot = df.pivot_table(values=\"amount\", index=\"month\", columns=\"category\", aggfunc=\"sum\"). return pivot. SQL does the heavy lifting (filter, join). Pandas does the analysis (pivot, visualize). Team standardization: create a shared query library — common SQL queries as Python functions. Each function documents what data it returns and how large the result is. Analysts call get_orders_by_segment(\"enterprise\", \"2024-Q1\") instead of writing raw SQL. This prevents the worst anti-pattern: analysts copying and pasting SQL queries and accidentally modifying WHERE clauses'"
+    weight: 0.30
+    description: "Workflow"

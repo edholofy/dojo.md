@@ -1,0 +1,46 @@
+meta:
+  id: mentoring-through-review
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Mentor through code review — use reviews as teaching opportunities that develop junior developers' skills while maintaining code quality"
+  tags: [code-review, mentoring, teaching, junior-developers, growth, advanced]
+
+state: {}
+
+trigger: |
+  You're reviewing code from a junior developer (3 months on the team).
+  Their PR implements a user notification preferences feature. The code
+  works but has several learning opportunities:
+
+  1. They wrote 200 lines of procedural code in one file instead of
+     using the service pattern the team follows
+  2. They used string comparison for notification types instead of
+     the existing NotificationType enum
+  3. They implemented their own email queue instead of using the
+     existing NotificationQueue service
+  4. Error handling catches everything and returns a generic 500
+  5. Tests are tightly coupled to implementation (mock everything)
+  6. Good: the database migration is clean and well-structured
+  7. Good: they wrote thorough documentation for the new endpoints
+
+  They're eager to learn but past harsh reviews have made them
+  defensive. How do you turn this review into a growth opportunity?
+
+  Task: Write the complete mentoring review. For each issue, teach
+  the principle (not just the fix), connect to team patterns, and
+  offer to pair. Make the developer feel supported, not criticized.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each comment teaches a principle, not just a fix — (1) Service pattern: explain WHY the team uses services (testability, reuse, separation of concerns) — not just 'move this to a service.' Show how the existing OrderService follows this pattern as a reference. (2) Enum: explain WHY enums exist (typo prevention, IDE autocomplete, refactoring safety) — show what happens when someone types 'emal' instead of 'email'. (3) Existing queue: explain HOW to discover existing utilities (search patterns, team wiki, ask in Slack) — the skill is knowing to look, not just what to use. (4) Error handling: explain the difference between expected errors (user not found) and unexpected errors (database crash) — each needs different handling. (5) Test coupling: explain what happens when implementation changes (all tests break even though behavior is correct) — suggest testing behavior: 'when user disables email notifications, emails stop being sent'"
+    weight: 0.35
+    description: "Principle teaching"
+  - type: llm_judge
+    criteria: "Tone supports growth without lowering the bar — start with genuine praise: 'The migration is really clean — especially the default values and constraints. And the endpoint documentation is better than what most senior developers write. These are the things that matter for long-term code quality.' For issues: frame as learning, not mistakes: 'This is a great opportunity to learn about our service pattern — it's not obvious when you're new and it took me a while to internalize it too.' Normalize the learning process: 'When I joined, I wrote a custom email sender too before discovering we had NotificationQueue — it's hard to know what exists in a large codebase.' Offer help: 'Want to pair on extracting this into a service? I can show you the pattern and you can drive.' Encourage: 'Your code logic is solid — the refactoring is mostly about fitting into team patterns, which takes time to learn.'"
+    weight: 0.35
+    description: "Supportive tone"
+  - type: llm_judge
+    criteria: "Review develops the developer's independence — don't just give answers, teach how to find them: 'Next time you need to handle notifications, try searching for NotificationType in the codebase — you'll find the enum and the existing service. Pro tip: `grep -r NotificationType src/` is my go-to for discovering existing patterns.' Suggest a discovery process: 'Before building a new utility, check: (1) search the codebase for similar patterns, (2) check the team wiki under Shared Services, (3) ask in #eng-questions — someone might have built it.' Set expectations for growth: 'For your next PR, try to identify one existing utility you can reuse instead of building from scratch.' Don't over-correct: 'I'm suggesting improvements for several areas, but you don't need to address everything in this PR. Focus on the service extraction (#1) and enum usage (#2) — those are the highest-impact changes. The rest can be follow-up work.'"
+    weight: 0.30
+    description: "Building independence"

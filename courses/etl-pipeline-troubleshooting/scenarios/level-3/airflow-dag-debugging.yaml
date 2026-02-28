@@ -1,0 +1,48 @@
+meta:
+  id: airflow-dag-debugging
+  level: 3
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Airflow DAG debugging — troubleshoot complex DAG dependency issues, task failures, scheduler problems, and Airflow-specific pitfalls"
+  tags: [airflow, DAG, orchestration, scheduler, debugging, advanced]
+
+state: {}
+
+trigger: |
+  A senior data engineer says: "Our Airflow installation is causing
+  headaches:
+
+  1. A DAG with 200 tasks takes 10 minutes just to be parsed by the
+     scheduler. The Web UI is slow to load and sometimes times out.
+     We suspect the DAG is doing database queries at parse time.
+
+  2. Tasks are stuck in 'queued' state for 30+ minutes even though
+     the workers have available slots. We have 4 Celery workers with
+     16 slots each, but only 20 tasks are running.
+
+  3. A sensor task (ExternalTaskSensor) is timing out because the
+     upstream DAG's task_id was renamed. The sensor is waiting for
+     a task that will never complete under its old name.
+
+  4. Cross-DAG dependencies are a mess — DAG_A triggers DAG_B which
+     triggers DAG_C, but when DAG_A fails and is re-run, DAG_B and
+     DAG_C don't re-trigger automatically, leaving data inconsistent.
+
+  How do I debug and fix these Airflow issues?"
+
+  Task: Diagnose each Airflow issue, explain the Airflow concepts
+  involved, and provide fixes and architectural improvements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response diagnoses each issue — slow DAG parsing: DAGs should be parsed quickly (no database calls, API calls, or heavy computation at module level — move these into task callables), reduce task count if possible (use task groups, dynamic task mapping). Queued tasks: check Airflow pool configuration, parallelism setting, dag_concurrency, worker_concurrency — one of these is limiting execution below the available capacity. Sensor timeout: ExternalTaskSensor is looking for the wrong task_id — update the sensor configuration or use a more resilient triggering mechanism. Cross-DAG re-triggering: TriggerDagRunOperator doesn't create automatic re-run cascades — need to design explicit re-run logic or use dataset-triggered DAGs"
+    weight: 0.35
+    description: "Diagnosis"
+  - type: llm_judge
+    criteria: "Response provides Airflow-specific fixes — for parsing: move all computation inside task functions, use DAG factories or dynamic DAG generation carefully, set dag_file_processor_timeout appropriately. For queued tasks: check and increase parallelism, max_active_tasks_per_dag, and pool sizes; verify worker connectivity and health. For sensor: update the external_task_id parameter, consider using Airflow Datasets (data-aware scheduling) instead of sensors for cross-DAG dependencies. For cross-DAG re-runs: design an explicit backfill mechanism, use TriggerDagRunOperator with clear_downstream parameters, or consolidate related tasks into a single DAG"
+    weight: 0.35
+    description: "AirflowFixes"
+  - type: llm_judge
+    criteria: "Response provides Airflow architecture best practices — keep DAGs simple and fast to parse, use Airflow pools to manage resource contention, prefer Datasets over sensors for cross-DAG dependencies (Airflow 2.4+), implement DAG versioning and testing in CI/CD, monitor scheduler health metrics (scheduler heartbeat, DAG parse time, task queue depth), and consider when to split vs merge DAGs (trade-off between isolation and coordination complexity)"
+    weight: 0.30
+    description: "ArchitectureBestPractices"

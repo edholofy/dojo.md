@@ -1,0 +1,36 @@
+meta:
+  id: chart-type-selection
+  level: 1
+  course: dashboard-kpi-design
+  type: output
+  description: "Choose the right chart type — match data types and relationships to the correct visualization (bar, line, pie, scatter, table) for clear communication"
+  tags: [charts, visualization, bar-chart, line-chart, pie-chart, beginner]
+
+state: {}
+
+trigger: |
+  A marketing analyst has 4 datasets to visualize for a dashboard:
+
+  1. Monthly revenue over the past 12 months
+  2. Revenue breakdown by product category (5 categories)
+  3. Top 10 customers by lifetime value
+  4. Correlation between ad spend and new signups
+
+  They put everything in pie charts because "pie charts look nice."
+
+  Task: Recommend the correct chart type for each dataset and
+  explain why.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response correctly maps each dataset to the right chart type — mapping: 'Chart type selection for each dataset: Dataset 1 — Monthly revenue over 12 months: Line chart. Why: line charts show trends over time. The x-axis is time (months), the y-axis is revenue. The line reveals whether revenue is growing, declining, or seasonal. A bar chart would also work but the line makes the trend more visually obvious. Never use a pie chart for time series — pie charts have no time axis. Dataset 2 — Revenue by product category (5 categories): Horizontal bar chart. Why: bar charts compare categories. Each bar represents a category, length represents revenue. Use horizontal bars when category names are long. Sort bars by value (largest at top) so the most important category is immediately visible. A pie chart could work for 5 categories but only if you want to show proportion of the whole. Bar charts are better because humans compare lengths more accurately than angles. Dataset 3 — Top 10 customers by LTV: Horizontal bar chart. Why: ranked lists are best as sorted horizontal bars. The customer with the highest LTV is at the top. The ranking is immediately clear. A table would also work if exact numbers matter more than visual comparison. Dataset 4 — Ad spend vs signups: Scatter plot. Why: scatter plots show the relationship between two variables. Each point is a month (or week). X-axis: ad spend. Y-axis: signups. If points form an upward trend, more ad spend leads to more signups. If points are scattered randomly, ad spend is not driving signups. Add a trendline to quantify the relationship'"
+    weight: 0.35
+    description: "Mapping"
+  - type: llm_judge
+    criteria: "Response explains common chart type mistakes and when NOT to use certain charts — mistakes: 'Common chart type mistakes: Pie chart overuse: pie charts only work when showing parts of a whole (percentages that sum to 100%), the number of slices is 5 or fewer, and you do not need precise comparison. With 10 slices, humans cannot distinguish between a 7% and 9% slice. Use a bar chart instead. 3D charts: never use 3D charts. They distort the data — a 3D bar chart makes bars farther from the viewer appear smaller than they are. Always use 2D. Dual-axis charts: two y-axes on one chart are confusing. The reader does not know which axis to look at. Instead, use two separate charts stacked vertically. They share the same x-axis (time) but each has its own clear y-axis. Truncated axes: starting the y-axis at a number other than zero makes small differences look dramatic. Revenue going from $95K to $100K looks like a doubling if the axis starts at $90K. Always start bar charts at zero. Line charts can have a non-zero axis when the focus is on the trend, not the absolute value. Too many lines: a line chart with 15 lines is unreadable. Limit to 5-7 lines maximum. If you need more, use small multiples (one small chart per category, same scale)'"
+    weight: 0.35
+    description: "Mistakes"
+  - type: llm_judge
+    criteria: "Explanation provides a decision framework for chart selection — framework: 'Chart selection decision framework: Ask two questions: what is the relationship in the data, and how many data points are there? Comparison between categories → bar chart. Example: revenue by region, customers by segment. Trend over time → line chart. Example: monthly revenue, weekly signups, daily active users. Part of a whole → pie chart (if 5 or fewer slices) or stacked bar. Example: market share, budget allocation. Relationship between two variables → scatter plot. Example: price vs demand, ad spend vs conversions. Distribution → histogram. Example: order value distribution, customer age distribution. Geographic data → map. Example: revenue by state, customers by country. Exact numbers matter → table. Example: financial statements, individual customer details. Progress toward a goal → gauge or progress bar. Example: quarterly sales target, budget utilization. Quick reference: time + one metric = line chart. Categories + one metric = bar chart. Two metrics per data point = scatter plot. Proportion = pie chart (sparingly). Ranking = sorted bar chart. When in doubt, use a bar chart — it is the most universally understood chart type'"
+    weight: 0.30
+    description: "Framework"

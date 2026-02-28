@@ -1,0 +1,40 @@
+meta:
+  id: code-samples-multilang
+  level: 3
+  course: api-documentation-writing
+  type: output
+  description: "Write multi-language code samples — create consistent, tested code examples across Python, Node.js, curl, and other languages for API endpoints"
+  tags: [API, documentation, code-samples, multi-language, examples, curl, advanced]
+
+state: {}
+
+trigger: |
+  Your API documentation has code examples but only in curl. Developers
+  using Python, Node.js, Go, and Java feel unsupported. When you do add
+  examples, they're inconsistent:
+
+  - curl example creates a payment with amount: 2000
+  - Python example creates with amount: 5000
+  - Node.js example is missing error handling
+  - Go example uses a deprecated library
+  - Java example doesn't compile
+
+  Task: Write a code sample strategy and produce examples for the
+  "Create Payment" endpoint in curl, Python, Node.js, and Go. Each
+  example must: use identical parameters, include error handling,
+  follow language idioms, and be copy-paste runnable. Also document
+  your process for keeping examples consistent and tested.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code examples are consistent and complete — all four languages (curl, Python, Node.js, Go) create the same payment: amount 2000, currency 'usd', customer_id 'cus_123', same metadata. Each example includes: import/setup, authentication, the API call, response handling, error handling. curl: shows -H headers, -d JSON body, response parsing with jq. Python: requests library with proper headers and json parameter. Node.js: fetch or axios with async/await. Go: net/http with proper JSON marshaling and error checking. All examples use the same sandbox URL and test API key (sk_test_...)"
+    weight: 0.35
+    description: "Consistent examples"
+  - type: llm_judge
+    criteria: "Language idioms are respected — Python: use requests.post() not urllib, use f-strings for interpolation, snake_case variables, proper exception handling with requests.exceptions. Node.js: async/await (not callbacks or .then()), destructuring, const/let (not var), proper try/catch. Go: proper error checking (if err != nil), defer resp.Body.Close(), json.NewDecoder, no panic in examples. curl: proper quoting, -X POST, -H for headers, -d for body, show piping to jq for readable output. Each feels like code a native developer would write, not a translation from another language"
+    weight: 0.35
+    description: "Language idioms"
+  - type: llm_judge
+    criteria: "Testing and maintenance strategy is documented — how to keep examples in sync: (1) single source of truth for parameter values (YAML/JSON config file), (2) code generation from templates or automated testing that runs each example against sandbox, (3) CI/CD that tests examples on every API change. Recommend x-codeSamples OpenAPI extension for embedding in spec. Version management: examples tagged with API version, updated when API changes. Contribution guide: how to add a new language. Common mistakes to avoid: hardcoded URLs (use variables), missing error handling, using deprecated APIs, not showing response parsing. Review checklist for code examples"
+    weight: 0.30
+    description: "Testing strategy"

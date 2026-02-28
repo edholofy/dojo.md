@@ -1,0 +1,67 @@
+meta:
+  id: stakeholder-tailored-reporting
+  level: 3
+  course: project-status-report-writing
+  type: output
+  description: "Stakeholder-tailored reporting — create multiple versions of the same status report tailored to different audience levels (team, management, executive, board)"
+  tags: [stakeholder, audience, tailored, multi-level, advanced]
+
+state: {}
+
+trigger: |
+  You're a senior PM managing a major IT infrastructure
+  project. You need to create 3 versions of the same weekly
+  status update, each tailored to a different audience.
+
+  Project: Data Center Migration to Hybrid Cloud
+  Timeline: 12 months (currently Month 6)
+  Budget: $5M
+  Team: 25 people
+
+  This week's events:
+  - Successfully migrated 3 production workloads to AWS
+    (databases for the CRM, HR system, and billing platform)
+  - The CRM database migration had a 2-hour performance
+    degradation during cutover (affected 200 internal users,
+    no customer impact)
+  - Total workloads migrated: 18 of 45 (40%)
+  - Discovered that 5 legacy applications cannot be migrated
+    as-is — they require refactoring (estimated 8 weeks each)
+  - AWS costs in Month 6: $42K (budget was $35K — 20% over
+    due to running parallel environments during migration)
+  - The security team completed a penetration test of the
+    AWS environment — passed with 2 low-severity findings
+  - One team member (infrastructure engineer) gave 2 weeks
+    notice — he handles the VMware-to-AWS migration scripts
+  - Sprint velocity for the migration team: 28 points
+    (average is 32 — slightly below due to the CRM issue)
+
+  Audience 1 — Technical Team (daily standup summary):
+  Engineers who need to know technical specifics, blockers,
+  and immediate priorities for the next day.
+
+  Audience 2 — IT Director (weekly management report):
+  Your direct manager who manages 8 project managers and
+  needs to understand progress, risks, and anything that
+  needs her attention or escalation.
+
+  Audience 3 — CIO (monthly executive brief):
+  The CIO who oversees a $50M IT portfolio and has 5 minutes
+  to review each project. She cares about business impact,
+  strategic risks, and budget.
+
+  Task: Create all 3 versions of the status update.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates 3 distinctly different status updates — the technical team version includes specific technical details (which workloads migrated, CRM performance issue details, VMware migration script impact, sprint velocity, pen test findings); the management version includes project-level metrics, risk assessment, and items needing the director's attention; the executive version is a brief strategic summary with budget, timeline, and key decisions; each version is clearly appropriate for its audience and not just the same report with different headers."
+    weight: 0.35
+    description: "ThreeDistinctVersions"
+  - type: llm_judge
+    criteria: "Response appropriately escalates detail vs abstracts information — technical team gets: CRM 2-hour degradation specifics, 5 legacy apps needing refactoring with 8-week estimates, pen test findings, engineer departure impact on migration scripts; IT Director gets: 40% workload migration progress, AWS cost variance ($42K vs $35K), legacy app refactoring risk to timeline, staffing gap risk, CRM incident summary without deep technical detail; CIO gets: on track for migration with one budget concern and one staffing risk, no mention of 2-hour CRM issue (internal-only impact), strategic question about legacy app approach."
+    weight: 0.35
+    description: "AppropriateDetailLevel"
+  - type: llm_judge
+    criteria: "Response demonstrates understanding of what each audience needs to act on — technical team needs: immediate priorities, who's working on what, blockers to resolve tomorrow; IT Director needs: risks to flag in her portfolio review, decisions to make (approve replacement hire, escalate legacy app scope), items to report upward; CIO needs: confidence that the project is on track, awareness of budget trajectory, one key decision (legacy app refactoring approach — refactor all, retire some, or accept hybrid); each version enables its audience to take their appropriate next action."
+    weight: 0.30
+    description: "ActionablePerAudience"

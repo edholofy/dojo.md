@@ -1,0 +1,49 @@
+meta:
+  id: system-design-rfc
+  level: 3
+  course: technical-rfc-writing
+  type: output
+  description: "Write system design RFCs — propose large-scale architectural changes with component diagrams, data flow, and operational considerations"
+  tags: [RFC, system-design, architecture, distributed-systems, operations, advanced]
+
+state: {}
+
+trigger: |
+  You're writing an RFC to design a multi-region deployment strategy
+  for your application. Currently everything runs in us-east-1. You
+  have growing customer bases in Europe and Asia-Pacific who experience
+  200-400ms latency. GDPR requires European data to stay in Europe.
+
+  The system includes:
+  - 3 stateless API services (easy to replicate)
+  - 1 PostgreSQL primary database (hard to replicate)
+  - Redis cache layer
+  - File storage (S3)
+  - Background job processing (Sidekiq)
+  - WebSocket connections for real-time features
+
+  You need to handle:
+  - Data residency requirements (GDPR for EU)
+  - Cross-region consistency vs latency trade-offs
+  - Failover and disaster recovery
+  - Operational complexity of running 3 regions
+
+  Task: Write the system design section of this RFC covering
+  multi-region architecture, data replication strategy, consistency
+  model, and operational runbooks. Show how to propose large-scale
+  infrastructure changes in a way that's evaluable by both engineers
+  and infrastructure leadership.
+
+assertions:
+  - type: llm_judge
+    criteria: "Architecture covers all components across regions — region topology: primary region (us-east-1), EU region (eu-west-1), APAC region (ap-southeast-1). Per component: Stateless API services: 'Deployed in all 3 regions behind global load balancer (CloudFront/Route53 latency-based routing). Each region handles local traffic autonomously.' Database: 'PostgreSQL with read replicas in EU and APAC for low-latency reads. Writes route to primary (us-east-1) with ~100ms cross-region latency. EU user data stored in EU-specific tables with PostgreSQL partitioning — writes for EU users go to EU database instance (GDPR compliance).' Redis: 'Regional Redis clusters. Cache invalidation via pub/sub across regions (eventual consistency, ~500ms propagation).' S3: 'Regional buckets with cross-region replication for shared assets. EU user uploads stored in eu-west-1 bucket only (no replication to US).' Background jobs: 'Regional Sidekiq workers process jobs in the region where data resides. Job routing based on user region tag.' WebSocket: 'Regional WebSocket servers. Cross-region presence via shared Redis pub/sub channel.' Clear diagram showing request flow for a European user vs a US user"
+    weight: 0.35
+    description: "Multi-region architecture"
+  - type: llm_judge
+    criteria: "Consistency model and trade-offs are explicit — consistency levels by operation: 'User authentication: strongly consistent (always hits primary). Profile reads: eventually consistent (regional read replica, up to 2 seconds stale). Write operations: EU user writes go to EU database, US user writes go to US database. Cross-region reads of other users data: eventually consistent.' Trade-off analysis: 'We choose availability over strict consistency (AP in CAP theorem) for most operations. Rationale: a European user seeing a 2-second-stale profile is acceptable; a European user seeing a 400ms delay on every request is not.' Where strong consistency is required: 'Payment processing, inventory deductions, and account security operations always route to the primary database. We accept higher latency for these critical operations rather than risk double-processing.' Conflict resolution: 'Last-write-wins with region-tagged timestamps for non-critical data. For critical data (billing, permissions), single-writer pattern ensures no conflicts.' Data residency: 'EU user data never leaves eu-west-1. Technically enforced via database routing rules and S3 bucket policies, not just application logic'"
+    weight: 0.35
+    description: "Consistency trade-offs"
+  - type: llm_judge
+    criteria: "Operational considerations are realistic — failover strategy: 'If us-east-1 fails: EU and APAC continue serving local reads. Writes for non-EU users queue locally and replay when primary recovers (RPO: 0, RTO: 15 minutes). EU writes unaffected (independent database). If eu-west-1 fails: EU traffic routes to us-east-1 with increased latency. GDPR consideration: temporary processing in US is permitted under emergency provisions, but data is migrated back within 72 hours.' Monitoring: 'Per-region dashboards showing: request latency, replication lag, cross-region pub/sub delay, cache hit rates. Alert thresholds: replication lag above 5 seconds, cross-region latency above 300ms.' Operational complexity honestly assessed: 'Running 3 regions triples the operational surface area. Required: (1) on-call rotation with region-specific runbooks, (2) automated canary deployments per region, (3) region-specific incident response procedures. Team impact: requires 2 additional infrastructure engineers for on-call coverage.' Cost: 'Estimated 2.2x current infrastructure cost. Breakdown: compute (3x regions, partial load each), data transfer (cross-region replication), managed database replicas. Cost per latency-ms-saved analysis provided'"
+    weight: 0.30
+    description: "Operational realism"

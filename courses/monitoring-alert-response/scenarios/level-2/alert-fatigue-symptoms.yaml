@@ -1,0 +1,41 @@
+meta:
+  id: alert-fatigue-symptoms
+  level: 2
+  course: monitoring-alert-response
+  type: output
+  description: "Recognize and address alert fatigue — identify when on-call teams are overwhelmed by alert volume and take corrective action"
+  tags: [monitoring, alert-fatigue, burnout, noise-reduction, intermediate]
+
+state: {}
+
+trigger: |
+  You're an engineering manager and you notice concerning patterns
+  in your team's on-call behavior:
+
+  - Average alert acknowledgment time has increased from 2 minutes
+    to 12 minutes over the past 3 months
+  - Three engineers have asked to be removed from the on-call rotation
+  - Last week, a real SEV-1 incident was ignored for 25 minutes
+    because the on-call engineer assumed it was "another false alarm"
+  - Engineers are muting alert channels on their phones
+  - The team receives an average of 40 alerts per on-call shift
+    (12 hours)
+  - Only 8 of those 40 alerts typically require action (20%
+    actionable rate)
+
+  Task: Diagnose the alert fatigue problem, explain why it is
+  dangerous, and propose a concrete plan to fix it within 30 days.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert fatigue is correctly diagnosed with evidence — diagnosis: 'This team is experiencing severe alert fatigue. The evidence is unmistakable: (1) Acknowledgment time tripled (2 min → 12 min): engineers are no longer treating alerts as urgent because experience has taught them most alerts are noise. (2) Engineers requesting off the rotation: on-call has become a burden rather than a professional responsibility. 40 alerts per 12-hour shift is one alert every 18 minutes — engineers cannot get meaningful sleep during overnight shifts. (3) SEV-1 ignored for 25 minutes: this is the worst outcome of alert fatigue — a real incident was treated as noise. The engineer's judgment was actually rational based on experience: 80% of alerts do not require action, so any given alert is probably noise. (4) Channel muting: engineers are bypassing the alerting system entirely because it has lost credibility.' Root cause: '80% of alerts are not actionable. 32 out of 40 alerts per shift are noise. This volume trains engineers to distrust all alerts — including the 8 that matter. The noise-to-signal ratio is 4:1. A healthy ratio is below 1:1 (more signal than noise)'"
+    weight: 0.35
+    description: "Diagnosis with evidence"
+  - type: llm_judge
+    criteria: "Danger of alert fatigue is clearly articulated — why this is dangerous: 'Alert fatigue is not just an engineer satisfaction problem — it is a reliability crisis. (1) Delayed incident response: the SEV-1 that was ignored for 25 minutes is the canary in the coal mine. The next ignored alert could be a data breach, a payment processing failure, or a complete outage. Alert fatigue directly increases MTTR because engineers stop responding quickly. (2) Normalized deviance: the team has normalized ignoring alerts. This is a cultural shift that is hard to reverse — once engineers learn that alerts are noise, rebuilding trust in the alerting system takes months. (3) Retention risk: three engineers asking off the rotation is a retention signal. If on-call is miserable, engineers will leave. Replacing an engineer who leaves because of on-call burden costs $50K-100K in recruiting and ramp-up time. (4) Cascading effects: as more engineers leave the rotation, the remaining engineers carry more load, receive more alerts, and burn out faster. This is a death spiral.' The paradox: 'We have too many alerts, which makes us less safe than having fewer alerts. More monitoring does not equal better monitoring. It is the signal quality that matters, not the quantity'"
+    weight: 0.35
+    description: "Danger articulation"
+  - type: llm_judge
+    criteria: "30-day fix plan is concrete and achievable — week 1 (immediate noise reduction): '(1) Identify the top 10 noisiest alerts by volume. For each: is it actionable? If the actionable rate is below 30%, either tune the threshold or convert it from a page to a log entry. Goal: eliminate 50% of alert volume in week 1. (2) Separate pages from notifications. Only conditions requiring immediate human intervention should page (wake up the engineer). Everything else becomes a notification (visible in a dashboard, reviewed during business hours). (3) Implement alert batching: if the same alert fires 5 times in 30 minutes, batch it into a single notification instead of 5 separate pages.' Week 2 (structural improvements): '(4) Every alert must have a documented runbook. Alerts without runbooks cannot page — they are downgraded to notifications until a runbook is written. This forces teams to think about whether each alert is worth the on-call engineer's time. (5) Set an alert budget: the team targets a maximum of 10 actionable alerts per 12-hour shift. Any alert volume above this requires justification or tuning.' Week 3-4 (measurement and culture): '(6) Track and publish weekly metrics: total alerts, actionable rate, acknowledgment time. Make improvement visible. (7) Recognize engineers who tune or remove noisy alerts — deleting a useless alert is as valuable as adding a useful one. (8) Retrospective: 4-week review with the team. What improved? What is still noisy? Commit to ongoing monthly alert hygiene.' Success criteria at 30 days: 'Alert volume reduced from 40 to 15 or fewer per shift. Actionable rate increased from 20% to 60%+. Average acknowledgment time under 5 minutes. Zero engineers requesting off the rotation due to alert burden'"
+    weight: 0.30
+    description: "Concrete 30-day plan"

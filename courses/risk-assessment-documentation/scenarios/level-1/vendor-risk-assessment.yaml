@@ -1,0 +1,71 @@
+meta:
+  id: vendor-risk-assessment
+  level: 1
+  course: risk-assessment-documentation
+  type: output
+  description: "Vendor risk assessment — evaluate and document risks associated with a critical third-party vendor"
+  tags: [vendor-risk, third-party, due-diligence, beginner]
+
+state: {}
+
+trigger: |
+  You're the IT Manager at a 150-person healthcare staffing
+  agency. Your company is about to sign a 3-year contract
+  with a cloud-based staffing platform vendor that will
+  handle scheduling, credentialing, and payroll for your
+  temporary healthcare workers. The CFO has asked you to
+  "document the risks of using this vendor" before she'll
+  approve the contract.
+
+  Vendor information:
+  - Company: StaffCloud (fictional), 5-year-old SaaS startup
+  - Employees: 85
+  - Revenue: ~$12M (growing 40%/year)
+  - Funding: Series B, $18M raised
+  - Data they'll handle: Employee SSNs, medical credentials,
+    pay rates, client hospital information, scheduling data
+  - Hosting: AWS US-East
+  - Certifications: SOC 2 Type I (not Type II yet)
+  - Uptime SLA: 99.5%
+  - Contract value: $180K/year
+  - Implementation timeline: 3 months
+
+  Concerns you've identified:
+  - They're small — what if they go out of business?
+  - They handle PHI-adjacent data (healthcare worker
+    credentials, assignments to hospitals)
+  - Their SOC 2 is Type I only (point-in-time, not operating
+    effectiveness)
+  - No HITRUST certification
+  - Their security questionnaire response had some gaps
+    (encryption at rest, data retention policy unclear)
+  - You'd be their largest customer by contract value
+  - Your current process is manual (spreadsheets) — if the
+    vendor fails, you can't easily go back
+
+  CFO's questions:
+  - "What's the worst that could happen?"
+  - "What would it cost us if they went down for a week?"
+  - "Are we exposed to any regulatory risk?"
+  - "What protections should we put in the contract?"
+
+  Task: Create the vendor risk assessment document
+  evaluating StaffCloud across risk categories (financial
+  viability, operational, security/data privacy, regulatory
+  compliance, concentration/dependency). Rate each risk and
+  propose both contractual protections and operational
+  mitigations.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a structured vendor risk assessment — evaluates the vendor across multiple risk categories (financial viability, operational continuity, data security, regulatory compliance, vendor dependency/lock-in); each risk category has specific risk statements with severity ratings; the assessment is specific to StaffCloud's situation (startup financials, SOC 2 Type I gap, healthcare data handling); the document format would be useful for the CFO's contract approval decision."
+    weight: 0.35
+    description: "StructuredVendorAssessment"
+  - type: llm_judge
+    criteria: "Response answers the CFO's specific questions — describes worst-case scenarios concretely (data breach affecting employee SSNs, vendor bankruptcy mid-contract, extended outage during peak staffing season); quantifies the cost of a week-long outage (revenue impact, manual workaround costs, client relationship damage); identifies specific regulatory risks (state data breach notification laws, healthcare credentialing requirements); proposes specific contractual protections (data escrow, termination rights, SLA penalties, insurance requirements)."
+    weight: 0.35
+    description: "CFOQuestionsAnswered"
+  - type: llm_judge
+    criteria: "Response proposes practical risk mitigations — recommends both contractual protections and operational actions; addresses the vendor dependency risk (data portability requirements, keeping manual process capability during transition, avoiding customization lock-in); proposes ongoing monitoring (quarterly business reviews, annual SOC 2 review, financial health checks); recommendations are proportionate to a $180K/year contract at a 150-person company; the assessment helps the CFO make an informed go/no-go decision."
+    weight: 0.30
+    description: "PracticalRiskMitigations"

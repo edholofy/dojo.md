@@ -1,0 +1,44 @@
+meta:
+  id: reviewing-breaking-changes
+  level: 2
+  course: code-review-feedback-writing
+  type: output
+  description: "Review breaking changes — identify and communicate backward compatibility issues, migration requirements, and deployment risks in code reviews"
+  tags: [code-review, breaking-changes, backward-compatibility, migration, deployment, intermediate]
+
+state: {}
+
+trigger: |
+  You're reviewing a PR that modifies a shared library used by 6
+  microservices. The changes:
+
+  1. Renamed function: getUserById() → findUser() (affects all callers)
+  2. Changed return type: was { user: User } now returns User directly
+     (all callers destructure the old format)
+  3. Removed deprecated parameter: search(query, options) no longer
+     accepts options.fuzzy (3 services use this)
+  4. Changed default: connection timeout changed from 30s to 5s
+     (services with slow DB queries will start timing out)
+  5. New required parameter: authenticate(token) now requires
+     authenticate(token, scope) — all callers must be updated
+
+  The author says: "I cleaned up the API to be more consistent."
+
+  Task: Write review comments for each breaking change. For each,
+  explain: who is affected, what will break, whether it needs
+  migration, and how to make the change safely. Address the overall
+  approach of making 5 breaking changes in one PR.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each breaking change impact is identified precisely — (1) Function rename: all 6 services that import getUserById will fail to compile/build. (2) Return type change: `const { user } = getUserById(id)` becomes `const user = findUser(id)` — runtime error: destructuring undefined. (3) Removed parameter: 3 services using options.fuzzy silently lose fuzzy search (might not error, just behave differently — WORSE than an error). (4) Changed default: services with queries that take 6-29 seconds worked before, now timeout. Performance regression masquerading as a bug. (5) New required parameter: TypeScript catches this at compile time, JavaScript fails at runtime. Each change: number of affected services, type of failure (compile error, runtime error, silent behavior change), how to detect the break"
+    weight: 0.35
+    description: "Impact identification"
+  - type: llm_judge
+    criteria: "Safe migration paths are proposed — (1) Rename: add findUser as alias first, deprecate getUserById with console.warn, remove after all callers migrate. (2) Return type: version the library, v2 returns new format, v1 maintained for 3 months. Or: support both formats with options parameter. (3) Remove parameter: warn when fuzzy is passed (don't silently ignore), give callers time to remove. (4) Default change: make it configurable, don't change the default — let callers opt-in to the shorter timeout. (5) New required parameter: make scope optional with a default value first, then make it required after all callers update. Overall: each change should be a separate PR that can be deployed independently. Use semantic versioning: these are MAJOR version changes"
+    weight: 0.35
+    description: "Migration paths"
+  - type: llm_judge
+    criteria: "Overall approach is challenged constructively — 'I understand the motivation to clean up the API — consistency is valuable. But 5 breaking changes in one PR affecting 6 services is risky. If something goes wrong, we can't identify which change caused the problem.' Suggest: 'Can we split this into 5 separate PRs, each with its own migration? This way: (1) each change can be reviewed independently, (2) each service team can update at their own pace, (3) if a change causes issues, we know exactly which one. Recommended order: add aliases/new APIs first (non-breaking), then deprecate old APIs, then remove old APIs after all consumers migrate.' Deployment strategy: 'This requires coordinated deployment of the library + all 6 services simultaneously. A versioned approach with backward compatibility lets services migrate independently.'"
+    weight: 0.30
+    description: "Approach challenge"

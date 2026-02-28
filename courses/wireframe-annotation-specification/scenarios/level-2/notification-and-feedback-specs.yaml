@@ -1,0 +1,47 @@
+meta:
+  id: notification-and-feedback-specs
+  level: 2
+  course: wireframe-annotation-specification
+  type: output
+  description: "Notification and feedback specifications — specify toast messages, alerts, confirmation dialogs, and system feedback across an application"
+  tags: [notifications, toasts, alerts, feedback, intermediate]
+
+state: {}
+
+trigger: |
+  An intermediate designer says: "I realized I've been
+  inconsistently specifying user feedback. Some screens have
+  toast messages after save, others have no feedback. Some
+  destructive actions show confirmation dialogs, others don't.
+  There's no system.
+
+  I need to create a feedback specification that covers:
+  - When to show a toast vs an alert vs a dialog
+  - What message to show for each action
+  - How long toasts display
+  - When to require confirmation
+  - Error message patterns
+
+  Actions in our app that need feedback:
+  - Saving settings, Creating items, Deleting items
+  - Inviting team members, Removing team members
+  - Publishing content, Unpublishing content
+  - Connecting/disconnecting integrations
+  - Bulk operations (delete 20 items at once)
+
+  Task: Create a comprehensive feedback specification system
+  for the application.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a systematic feedback framework — categorizes actions by feedback type: No feedback needed (minor actions: toggling a checkbox, selecting a filter). Toast notification (successful CRUD operations: 'Settings saved', 'Project created', 'Integration connected'). Confirmation dialog (destructive or irreversible actions: deleting items, removing members, unpublishing live content, bulk operations). Alert banner (system-level information: maintenance warning, plan limit approaching). Error inline (validation failures, API errors specific to a field). Error toast (general API failures). Each category has clear criteria for when to use it"
+    weight: 0.35
+    description: "FeedbackFramework"
+  - type: llm_judge
+    criteria: "Response specifies every action's feedback — creates a table mapping each action to its feedback: Save settings (toast: 'Settings saved', 3 seconds, auto-dismiss). Create item (toast: 'Project created. View project →' with link, 5 seconds). Delete item (confirmation dialog first: 'Delete [name]? This cannot be undone.' → on confirm: toast 'Project deleted', with undo for 10 seconds). Invite member (toast: 'Invitation sent to [email]'). Remove member (confirmation: 'Remove [name] from the team?'). Publish (toast: 'Content published. View live →'). Bulk delete (confirmation: 'Delete 20 items? This cannot be undone.' → progress indicator → toast '20 items deleted'). Each entry includes: message copy, duration, dismissal behavior, and follow-up action"
+    weight: 0.35
+    description: "ActionFeedbackMapping"
+  - type: llm_judge
+    criteria: "Response covers toast behavior specifications and error patterns — toast specs: position (top-right or bottom-center), stacking behavior (newest on top, max 3 visible), auto-dismiss timing (success: 3-5 seconds, error: persistent until dismissed, with action: 5-8 seconds), dismiss interaction (X button or swipe), animation (slide in, fade out). Error patterns: inline validation errors (appear on blur, clear on correction), API error toasts (persistent, red, with retry option), connectivity errors (persistent banner at top: 'You're offline. Changes will sync when connection is restored.'). Undo pattern: when to offer undo (deletions, removals, status changes), undo mechanism (toast with 'Undo' button, 10-second window)"
+    weight: 0.30
+    description: "ToastAndErrorSpecs"

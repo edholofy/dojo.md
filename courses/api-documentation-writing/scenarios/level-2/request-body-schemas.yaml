@@ -1,0 +1,46 @@
+meta:
+  id: request-body-schemas
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document request body schemas — write detailed schemas for create, update, and partial update operations with validation rules"
+  tags: [API, documentation, schemas, request-body, validation, PATCH, intermediate]
+
+state: {}
+
+trigger: |
+  Developers struggle with your API's request bodies:
+
+  POST /api/v1/orders (create) — expects full object
+  PUT /api/v1/orders/{id} (full update) — expects full object
+  PATCH /api/v1/orders/{id} (partial update) — expects partial object
+
+  Questions:
+  - "What's the difference between PUT and PATCH?"
+  - "Which fields are required for POST vs PUT vs PATCH?"
+  - "Can I send null to clear a field?"
+  - "What happens if I send extra fields not in the schema?"
+  - "The nested 'shipping_address' — do I send the whole object
+    or just the fields I want to change?"
+
+  Order object: status (enum), items (array of objects),
+  shipping_address (nested object), notes (string, nullable),
+  discount_code (string, optional), metadata (object)
+
+  Task: Document request body schemas for POST, PUT, and PATCH
+  operations. Include: required fields per operation, null handling,
+  nested object update behavior, and validation rules.
+
+assertions:
+  - type: llm_judge
+    criteria: "POST/PUT/PATCH differences are clear — POST (create): send all required fields, optional fields use defaults if omitted. PUT (full replace): send entire object, omitted fields are reset to defaults (not just unchanged). PATCH (partial update): send only fields to change, omitted fields remain unchanged. For each operation: separate schema showing which fields are required. Example: POST requires items and shipping_address, PATCH requires nothing (all optional). Unknown fields: document whether they're ignored (lenient) or rejected (strict)"
+    weight: 0.35
+    description: "Operation types"
+  - type: llm_judge
+    criteria: "Null handling and nested objects are documented — null vs omitted: sending 'notes': null explicitly clears the field. Omitting 'notes' in PATCH means don't change it. For PUT: omitting 'notes' resets to default (null). Document this distinction clearly — it's a common source of bugs. Nested objects in PATCH: 'shipping_address': { 'city': 'New York' } — does this replace the entire address or merge? Document the behavior (typically: replace the entire nested object). For merge behavior: use JSON Merge Patch (RFC 7396) and document it"
+    weight: 0.35
+    description: "Null and nested"
+  - type: llm_judge
+    criteria: "Validation rules are specific — per-field validation: status (enum: pending/confirmed/shipped/delivered — can only transition forward), items (non-empty array, min 1 item), shipping_address (required for non-digital orders), discount_code (alphanumeric, 6-20 chars, validated against active codes). Show validation error response for each rule violation. Document which validations are checked on create vs update (e.g., status can't be set on create — always starts as 'pending'). Array handling in PATCH: does sending items replace the entire array or append?"
+    weight: 0.30
+    description: "Validation rules"

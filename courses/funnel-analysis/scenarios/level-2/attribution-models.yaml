@@ -1,0 +1,37 @@
+meta:
+  id: attribution-models
+  level: 2
+  course: funnel-analysis
+  type: output
+  description: "Funnel attribution models — understand how different attribution models assign credit to touchpoints and how this affects funnel optimization decisions"
+  tags: [attribution, multi-touch, touchpoints, channel-credit, intermediate]
+
+state: {}
+
+trigger: |
+  The marketing director says: "Our customer bought after this journey:
+  1. Saw a Facebook ad (day 1)
+  2. Clicked a Google search result (day 5)
+  3. Opened an email newsletter (day 12)
+  4. Typed our URL directly and purchased (day 14)
+
+  Which channel gets credit for the conversion? Different models give
+  me completely different answers, and it changes how I allocate my
+  marketing budget."
+
+  Task: Explain the major attribution models, show how each one would
+  credit this customer journey, and recommend when to use each model.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains major attribution models with the specific journey example — models: 'Attribution models applied to the example journey (Facebook → Google → Email → Direct purchase): Last-click attribution: 100% credit to direct (the last touchpoint before purchase). Result: Facebook 0%, Google 0%, Email 0%, Direct 100%. Problem: completely ignores the marketing effort that created awareness and nurtured the customer. Direct gets all credit, making marketing look useless. First-click attribution: 100% credit to Facebook (the first touchpoint that introduced the brand). Result: Facebook 100%, Google 0%, Email 0%, Direct 0%. Problem: ignores the nurturing and decision-making steps. Overvalues top-of-funnel awareness channels. Linear attribution: equal credit to all touchpoints (25% each). Result: Facebook 25%, Google 25%, Email 25%, Direct 25%. Problem: treats a casual ad impression the same as the final purchase session. Not all touchpoints contribute equally. Time-decay attribution: more credit to touchpoints closer to conversion. Example weighting: Facebook 10%, Google 20%, Email 30%, Direct 40%. Result: recent touchpoints get more credit, reflecting that closer interactions are more influential. Problem: may undervalue the critical awareness-building first touch. Position-based (U-shaped) attribution: 40% to first touch, 40% to last touch, 20% split among middle touches. Result: Facebook 40%, Google 10%, Email 10%, Direct 40%. Problem: arbitrary 40/40/20 split may not reflect reality. Data-driven attribution (algorithmic): uses machine learning on thousands of conversion paths to determine actual contribution. Result: varies based on data — might find that email is the most influential touchpoint for this customer segment. Problem: requires large data volumes (10,000+ conversions) and sophisticated tooling'"
+    weight: 0.35
+    description: "Models"
+  - type: llm_judge
+    criteria: "Response covers how attribution affects funnel optimization decisions — impact: 'How attribution model choice affects funnel and budget decisions: budget allocation example: assume $100,000 monthly marketing budget across 4 channels. Under last-click: direct gets all credit → marketing budget cut because channels look ineffective. Facebook: budget cut (shows 0 conversions). Google: budget cut. Email: budget cut. This is obviously wrong — cutting all marketing would eventually destroy the pipeline. Under first-click: Facebook gets all credit → pour money into awareness. Overfund Facebook ads, underfund email and Google. Miss the fact that Facebook alone does not convert — it only introduces. Under linear: spread budget evenly → no prioritization. Every channel gets $25,000 regardless of actual effectiveness. Under data-driven: allocate based on marginal contribution → the most efficient allocation. May reveal that email is the most cost-effective channel (costs $5 per touchpoint vs $15 for Google clicks). Impact on funnel analysis: attribution model choice changes which funnel ENTRY POINT you optimize. Last-click funnels focus on the bottom: optimize checkout, product pages, direct traffic landing pages. First-click funnels focus on the top: optimize ad creative, awareness campaigns, content marketing. Multi-touch funnels reveal the full journey: optimize the handoff between channels (Facebook → Google query should land on a relevant page). Identify which mid-funnel touchpoints are essential (removing email kills 30% of conversions). The practical recommendation: use multi-touch attribution (linear or data-driven) for strategic budget allocation. Use last-click for tactical channel optimization (each channel's landing page and conversion flow). Track both models and compare — the difference reveals which channels are undervalued'"
+    weight: 0.35
+    description: "Impact"
+  - type: llm_judge
+    criteria: "Response provides practical attribution recommendations — recommendations: 'Practical attribution recommendations: for small teams (under 10,000 conversions/month): use position-based (U-shaped) attribution as a starting point. It is simple, does not require machine learning, and avoids the worst problems of first-click and last-click. Supplement with channel-level analysis: for each channel, measure both first-touch conversions (how many journeys it started) and last-touch conversions (how many purchases it directly preceded). If a channel has high first-touch but low last-touch, it is an awareness channel. If high last-touch but low first-touch, it is a conversion channel. Both are valuable but serve different purposes. For larger teams (10,000+ conversions/month): implement data-driven attribution using Google Analytics 4 or a dedicated attribution platform. Run incrementality tests: turn off a channel for 2 weeks in a geo-holdout and measure the actual revenue impact. Incrementality is the gold standard — it measures causal impact, not just correlation. For funnel analysts specifically: layer attribution INTO the funnel: instead of one monolithic funnel, build channel-specific funnels. Facebook-sourced funnel: ad → landing page → product → cart → purchase (6% overall conversion). Google-sourced funnel: search → product → cart → purchase (12% overall conversion). Email-sourced funnel: email → product → cart → purchase (15% overall conversion). This reveals that email traffic converts 2.5x better than Facebook traffic — a fact hidden in the blended funnel. Common mistake: do not change attribution models frequently. Pick one, use it consistently, and compare trends over time. Switching models makes historical comparison impossible'"
+    weight: 0.30
+    description: "Recommendations"

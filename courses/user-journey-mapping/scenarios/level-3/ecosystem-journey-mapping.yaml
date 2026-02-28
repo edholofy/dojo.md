@@ -1,0 +1,61 @@
+meta:
+  id: ecosystem-journey-mapping
+  level: 3
+  course: user-journey-mapping
+  type: output
+  description: "Ecosystem journey mapping — map journeys that span multiple organizations, partners, and third parties"
+  tags: [ecosystem, partners, third-party, multi-org, advanced]
+
+state: {}
+
+trigger: |
+  You're the Head of Partner Experience at a travel
+  booking platform. Your platform connects travelers
+  with airlines, hotels, car rentals, activity providers,
+  and travel insurance. Customer satisfaction is 3.8/5
+  for bookings but drops to 2.1/5 when something goes
+  wrong during the trip.
+
+  The problem: when issues arise, the customer is bounced
+  between organizations:
+
+  Scenario: A family booked a vacation package (flight +
+  hotel + car rental) through your platform. Their flight
+  was delayed 6 hours, causing them to miss the hotel
+  check-in deadline, and the car rental location had
+  closed by the time they arrived.
+
+  - They called your platform: "We only handle bookings,
+    contact the airline for flight issues"
+  - Called airline: "We compensated you with a meal voucher.
+    Hotel and car aren't our responsibility"
+  - Called hotel: "You're marked as a no-show. Contact
+    your booking platform for a refund"
+  - Called car rental: "Your reservation expired. You'll
+    need to book again at current rates"
+  - Called your platform again: "We'll investigate and
+    get back to you in 5-7 business days"
+  - 10 days later: received a partial refund for the hotel
+    but nothing for the car rental upcharge
+
+  The family made 6 phone calls across 4 organizations
+  and spent 3+ hours trying to resolve issues caused by
+  one flight delay.
+
+  Task: Create an ecosystem journey map that covers the
+  experience across all organizations and identify where
+  accountability breaks down.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response maps the journey across organizational boundaries — multi-org swim lanes (creates lanes for each organization in the ecosystem: the booking platform, the airline, the hotel, the car rental company, and the customer — showing how each organization's actions and inactions affect the customer's experience), the cascade effect (maps how a single event — the flight delay — cascades across the ecosystem: flight delay → missed hotel check-in → car rental location closed → each downstream failure is caused by the upstream one but no single organization takes responsibility for the chain), organizational handoff failures (each phone call is an organizational boundary where the customer falls through: the platform says 'not our responsibility,' the airline says 'not our problem,' the hotel says 'no-show policy,' the car rental says 'expired reservation' — the customer is the only entity that has visibility across the full journey, and they're forced to be their own case manager)."
+    weight: 0.35
+    description: "EcosystemMapping"
+  - type: llm_judge
+    criteria: "Response identifies accountability gaps and the customer burden — the accountability vacuum (no organization owns the end-to-end experience: the platform facilitated the booking but disclaims responsibility for fulfillment; the airline caused the delay but isn't accountable for downstream impacts; the hotel and car rental enforce their policies without context about the root cause; the result: the customer bears 100% of the problem-resolution burden for a situation 0% of their making), customer effort quantification (6 phone calls, 4 organizations, 3+ hours, 10-day wait, partial resolution — the customer's effort to resolve this is orders of magnitude greater than any single organization's effort to help), the platform's unique position (as the orchestrator of the package, the booking platform is the natural owner of the end-to-end experience: the customer chose the platform specifically because it packages flights, hotels, and cars together — the implicit promise is that the platform manages the package, not just the booking; the platform's refusal to coordinate is a betrayal of the core value proposition)."
+    weight: 0.35
+    description: "AccountabilityAnalysis"
+  - type: llm_judge
+    criteria: "Response redesigns the ecosystem journey for accountability — platform as orchestrator (the future-state ecosystem journey positions the platform as the customer's advocate: when a flight delay occurs, the platform proactively contacts the hotel and car rental to modify reservations, notifies the customer with updated plans, and handles rebooking or refunds centrally — the customer makes 0 phone calls, not 6), partner agreements (the platform needs contractual agreements with partners that enable this: real-time flight status integration to detect delays automatically, hotel and car rental APIs to modify or cancel reservations on the customer's behalf, clear liability and refund policies when cascade failures occur, SLAs for partner response times during disruptions), ecosystem journey governance (the platform needs ongoing management of the ecosystem journey: monitor cascade failure patterns, measure end-to-end resolution time, track customer effort across organizational boundaries, incentivize partners to participate in seamless experience — partners who integrate well get better platform placement)."
+    weight: 0.30
+    description: "EcosystemRedesign"

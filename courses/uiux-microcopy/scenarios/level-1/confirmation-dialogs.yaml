@@ -1,0 +1,44 @@
+meta:
+  id: confirmation-dialogs
+  level: 1
+  course: uiux-microcopy
+  type: output
+  description: "Confirmation dialogs — write clear confirmation copy for destructive actions, state changes, and user decisions"
+  tags: [confirmation, dialogs, destructive-actions, modals, basics]
+
+state: {}
+
+trigger: |
+  A junior UX writer says: "Users keep accidentally deleting things
+  in our app and then contacting support to undo it. Our current
+  confirmation dialogs all look the same:
+
+  Title: 'Are you sure?'
+  Body: (empty)
+  Buttons: 'OK' / 'Cancel'
+
+  This dialog appears for everything — deleting a project (serious,
+  can't be undone), removing a team member (can be re-invited),
+  archiving an item (can be unarchived), and canceling a subscription
+  (has billing implications).
+
+  Users click 'OK' without reading because every dialog looks the
+  same. How do I write confirmation dialogs that prevent mistakes?"
+
+  Task: Rewrite each confirmation dialog to be clear about the
+  action and its consequences, and provide a framework for
+  confirmation copy.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response rewrites each confirmation dialog with specific copy — Delete project: title 'Delete [Project Name]?', body 'This will permanently delete all tasks, files, and comments in this project. This action can't be undone.', buttons 'Delete project' / 'Keep project'. Remove team member: 'Remove [Name] from [Team]?', 'They'll lose access to all team projects. You can invite them back later.', 'Remove [Name]' / 'Cancel'. Archive item: 'Archive [Item Name]?', 'Archived items can be found in your archive and restored anytime.', 'Archive' / 'Cancel'. Cancel subscription: 'Cancel your Pro plan?', 'Your plan will remain active until [date]. After that, you'll lose access to [specific features].', 'Cancel plan' / 'Keep my plan'"
+    weight: 0.35
+    description: "DialogRewrites"
+  - type: llm_judge
+    criteria: "Response provides a confirmation dialog framework — title: describe the specific action (not 'Are you sure?'), body: explain what will happen and whether it's reversible, buttons: label with the specific action (not 'OK/Cancel' but 'Delete project / Keep project'), severity calibration (destructive permanent actions need stronger warnings than reversible ones), and the principle that button labels should clearly distinguish between the two options without requiring the user to read the full body text"
+    weight: 0.35
+    description: "DialogFramework"
+  - type: llm_judge
+    criteria: "Response addresses when to use confirmation dialogs — not every action needs a confirmation (undo is often better than confirm for low-risk actions), reserve confirmation for destructive/irreversible actions and actions with significant consequences, avoid confirmation fatigue (if everything requires confirmation, users stop reading them), and consider alternatives to confirmation dialogs (undo toast notifications, soft deletes, cooling-off periods for account-level actions)"
+    weight: 0.30
+    description: "WhenToConfirm"

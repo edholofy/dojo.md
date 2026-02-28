@@ -1,0 +1,48 @@
+meta:
+  id: data-truncation-and-loss
+  level: 1
+  course: etl-pipeline-troubleshooting
+  type: output
+  description: "Data truncation and loss — detect and prevent silent data loss from truncation, rounding, encoding issues, and dropped records during ETL"
+  tags: [truncation, data-loss, silent-failure, validation, basics]
+
+state: {}
+
+trigger: |
+  A junior data engineer says: "I discovered that our pipeline has
+  been silently losing data for weeks. The pipeline shows 'success'
+  every day, but:
+
+  1. Product descriptions are being truncated at 255 characters
+     because the staging table column is VARCHAR(255) but some
+     descriptions are 1000+ characters
+
+  2. Financial amounts stored as FLOAT are showing rounding errors:
+     $19.99 + $19.99 is showing as $39.97999999... in reports
+
+  3. We extracted 100,000 records from the API but only 98,500
+     loaded into the warehouse. The 1,500 missing records had
+     special characters in the name field that caused silent failures
+
+  4. Timestamps from our US-based source are being stored without
+     timezone info, so when EU users query the data, times are off
+     by 5-8 hours
+
+  How do I detect and prevent silent data loss in our pipelines?"
+
+  Task: Explain why each type of silent data loss occurs, how to
+  detect it, and how to prevent it in ETL pipelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains each data loss scenario — truncation: VARCHAR column is too small, the database silently truncates (or errors depending on settings); floating point: IEEE 754 representation can't exactly represent all decimal numbers, causing rounding errors; dropped records: records with special characters fail during processing but the pipeline continues without reporting them; timezone loss: storing timestamps without timezone info (naive timestamps) loses context and causes interpretation errors across time zones"
+    weight: 0.35
+    description: "DataLossExplanation"
+  - type: llm_judge
+    criteria: "Response provides detection strategies — record count reconciliation (compare source count to target count at every stage: extracted vs transformed vs loaded), checksum validation (compare aggregates like SUM of amounts between source and target), data length monitoring (check max length of source data vs target column constraints before loading), schema validation (compare source data profile against target schema), and automated alerts when counts don't match or when truncation occurs"
+    weight: 0.35
+    description: "Detection"
+  - type: llm_judge
+    criteria: "Response provides prevention measures — use appropriately sized columns (TEXT instead of VARCHAR(255) when lengths vary), use DECIMAL/NUMERIC for financial data (never FLOAT), handle encoding issues explicitly (UTF-8 throughout, with error handling for invalid characters), always store timestamps with timezone (TIMESTAMPTZ), implement row-level error handling that quarantines failed records instead of silently dropping them, and add data quality assertions (dbt tests, Great Expectations) that fail the pipeline if counts don't reconcile"
+    weight: 0.30
+    description: "Prevention"

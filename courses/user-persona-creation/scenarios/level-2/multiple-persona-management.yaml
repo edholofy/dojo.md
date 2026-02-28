@@ -1,0 +1,50 @@
+meta:
+  id: multiple-persona-management
+  level: 2
+  course: user-persona-creation
+  type: output
+  description: "Multiple persona management — create, prioritize, and manage a set of personas including primary, secondary, and anti-personas"
+  tags: [multiple-personas, prioritization, anti-persona, management, intermediate]
+
+state: {}
+
+trigger: |
+  You're building a B2B HR software platform. Through
+  research, you've identified these potential user types:
+
+  1. HR Director — strategic, buys the software, cares
+     about compliance and reporting
+  2. HR Generalist — daily user, handles employee
+     onboarding, leave, benefits administration
+  3. Recruiter — uses the hiring module extensively,
+     cares about candidate experience and pipeline
+  4. Department Manager — occasional user, approves time
+     off and reviews performance, dislikes HR software
+  5. Employee — self-service user, checks pay stubs,
+     requests time off, updates personal info
+  6. IT Administrator — sets up integrations, manages
+     permissions, handles SSO configuration
+  7. Payroll Specialist — processes payroll, handles
+     tax documents, needs accuracy above all
+  8. C-suite Executive — sees dashboards only, needs
+     headcount and cost data
+
+  That's 8 potential personas. Your team can realistically
+  design for 3-4 primary personas.
+
+  Task: Prioritize these into primary, secondary, and
+  anti-personas with clear rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response prioritizes personas with clear rationale — primary personas 3-4 (likely: HR Generalist — daily power user, the person who lives in the software, if the tool fails for them it fails entirely; HR Director — the buyer AND a strategic user, needs to see value for purchase decision and renewal; Employee — largest user volume, self-service success reduces HR workload; possibly Recruiter if hiring is a core module), secondary personas 2-3 (Department Manager — important but infrequent user, design shouldn't compromise primary experience; Payroll Specialist — critical but narrow use case; IT Administrator — setup and maintenance, important but not the core experience), anti-persona or deprioritized (C-suite Executive — they see dashboards that can be an extension of the HR Director experience, not a separate design focus; alternatively, a specific user type that the platform is NOT designed for should be identified — perhaps very small businesses under 10 employees, or enterprises over 10,000 that need a different class of tool), rationale should consider: frequency of use, impact on business outcomes, volume of users, influence on purchase decision."
+    weight: 0.35
+    description: "PrioritizationDecision"
+  - type: llm_judge
+    criteria: "Response explains prioritization methodology — selection criteria (multiple factors should inform prioritization: usage frequency — how often does this persona use the product? revenue influence — does this persona influence purchase or renewal decisions? user volume — how many people does this persona represent? risk if underserved — what happens if this persona's experience is poor? differentiation — does serving this persona well distinguish us from competitors?), anti-persona concept (explain what anti-personas are: users you explicitly decide NOT to design for — not because they're bad users but because designing for them would compromise the experience for primary personas, example: if C-suite is an anti-persona, it means you won't add executive dashboard complexity that slows down the HR Generalist's daily workflow, anti-personas prevent scope creep — 'but what about the CEO?' is answered by 'the CEO is an anti-persona for this product'), the 3-6 persona guideline (more than 6 primary personas means you're designing for everyone and therefore no one — each persona should drive meaningfully different design decisions, if two personas would make the same design choices, merge them)."
+    weight: 0.35
+    description: "PrioritizationMethodology"
+  - type: llm_judge
+    criteria: "Response addresses persona relationships and management — persona ecosystem (personas don't exist in isolation — they interact: the HR Generalist creates processes the Employee uses, the HR Director sets policies the Generalist implements, the IT Admin configures the system everyone accesses — map these relationships to understand how design decisions for one persona affect others), conflict resolution (when personas have conflicting needs: the HR Director wants comprehensive reporting, the HR Generalist wants simplicity — these can coexist through progressive disclosure: simple daily interface with reporting depth available when needed, when they can't coexist: primary personas win), management practices (document personas in an accessible shared location, assign an owner responsible for each persona's accuracy and updates, review persona prioritization quarterly — as the product matures, priorities may shift, track feature requests by persona — which persona drives the most requests? which is underserved?), communication (every team member should know: who are the primary personas? what are their core needs? how do we resolve conflicts between them? — if a developer can't name the primary personas, the personas aren't being used effectively)."
+    weight: 0.30
+    description: "PersonaRelationships"

@@ -1,0 +1,33 @@
+meta:
+  id: data-profiling-basics
+  level: 1
+  course: data-cleaning-normalization
+  type: output
+  description: "Data profiling basics — learn how to assess data quality by examining distributions, patterns, and anomalies before cleaning"
+  tags: [profiling, assessment, distributions, exploration, basics]
+
+state: {}
+
+trigger: |
+  A data analyst says: "I received a new dataset with 100,000 rows and
+  30 columns. Before I start cleaning or analyzing it, my senior
+  colleague said I should 'profile the data first.' What does data
+  profiling mean? What should I look at? And how does profiling help
+  me identify quality issues?"
+
+  Task: Explain data profiling, what to examine when profiling a new
+  dataset, and how profiling results guide the data cleaning process.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains what data profiling examines — for each column: data type and format, count of null/missing values and their percentage, unique value count (cardinality), min/max/mean/median/mode for numeric columns, most common values and their frequencies for categorical columns, value length distribution for text columns, and pattern analysis (do all phone numbers follow the same format?). Also covers row-level profiling: total row count, duplicate row count, and completeness rate"
+    weight: 0.35
+    description: "ProfilingElements"
+  - type: llm_judge
+    criteria: "Response shows how profiling reveals quality issues — a column with 99% unique values might be a natural key or might have data entry errors. A numeric column with a mean of 45 but a max of 999999 has outliers. A column that's 40% null may be unreliable for analysis. A categorical column with 50 variations of 'United States' needs standardization. A date column where 10% of values are in the future indicates errors. Connects specific profiling findings to specific cleaning actions"
+    weight: 0.35
+    description: "IssueFinding"
+  - type: llm_judge
+    criteria: "Response introduces profiling tools and practical approach — mentions tools like pandas .describe(), .info(), .value_counts() for Python users, and libraries like ydata-profiling (formerly pandas-profiling) or Great Expectations for automated profiling. Recommends a practical workflow: generate the profile first, review it to identify issues, prioritize issues by impact, then clean. Emphasizes profiling before cleaning (understand the data before changing it)"
+    weight: 0.30
+    description: "ToolsAndWorkflow"

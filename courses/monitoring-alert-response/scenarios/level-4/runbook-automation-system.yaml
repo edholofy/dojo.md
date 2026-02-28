@@ -1,0 +1,42 @@
+meta:
+  id: runbook-automation-system
+  level: 4
+  course: monitoring-alert-response
+  type: output
+  description: "Design a runbook management system — create a scalable system for maintaining, versioning, and automating runbooks across the organization"
+  tags: [monitoring, runbook, management, automation, knowledge-management, expert]
+
+state: {}
+
+trigger: |
+  Your organization has 200+ runbooks scattered across wikis, Google
+  Docs, README files, and Slack bookmarks. A recent incident review
+  found:
+
+  - The on-call engineer followed a runbook that was 8 months stale
+    and referenced a service that no longer exists
+  - 30% of alerts have no linked runbook
+  - 3 different runbooks exist for the same PostgreSQL failover
+    procedure (all with slightly different steps)
+  - Runbooks are write-once — created during an incident but never
+    reviewed or updated
+  - No way to tell if a runbook has been tested recently
+  - Average runbook discovery time during an incident: 5 minutes
+
+  Task: Design a runbook management system. Include: where runbooks
+  live, how they are kept current, how they link to alerts, and how
+  to partially automate runbook execution.
+
+assertions:
+  - type: llm_judge
+    criteria: "Runbook system design addresses discovery, currency, and linkage — system design: 'Single source of truth: all runbooks live in a single system (options: runbook-as-code in Git, or a purpose-built tool like Rundeck, PagerDuty Runbook Automation, or Shoreline). The key requirement: every runbook has a unique ID that can be linked from an alert. Runbooks in wikis, Google Docs, and Slack bookmarks are migrated to the central system. Structure: every runbook follows a standard template: (1) Trigger: which alert(s) link to this runbook. (2) Overview: 2-3 sentences describing the problem this runbook addresses. (3) Severity assessment: how to determine if this is a SEV-1 vs SEV-3. (4) Diagnostic steps: ordered steps to identify the specific cause. Each step has an expected outcome. (5) Remediation steps: ordered steps to fix the issue. Each step has a verification check. (6) Escalation: when and to whom to escalate if the runbook does not resolve the issue. (7) Post-resolution: follow-up actions after the immediate fix.' Alert linkage: 'Every paging alert MUST include a runbook URL in its metadata. Alerting tools (Grafana, PagerDuty) display the runbook link prominently when the alert fires. Policy: an alert without a linked runbook cannot page. It is downgraded to a notification until a runbook is created. This policy drives runbook creation organically — teams that want their alerts to page must write runbooks.' Discovery time: 'Target: 0 seconds. The runbook should be one click from the alert notification. No searching, no asking in Slack, no bookmarks. The alert hands you the runbook'"
+    weight: 0.35
+    description: "System design"
+  - type: llm_judge
+    criteria: "Currency and testing mechanisms keep runbooks reliable — currency mechanisms: '(1) Runbook-as-code: store runbooks in the same Git repository as the service they document. When the service code changes (PR merged), a CI check verifies whether the runbook needs updating. Specifically: if the PR changes a file referenced in a runbook (config file, deployment script, environment variable), the CI flags the runbook for review. The runbook update is part of the PR definition of done. (2) Review-by date: every runbook has a mandatory review date (default: 6 months from last review). When the review date passes, the runbook is flagged as potentially stale and the owning team is notified. A stale runbook that has not been reviewed within 30 days past its review date is marked with a warning banner visible to on-call engineers: this runbook has not been reviewed since [date] — verify steps before executing. (3) Incident-triggered updates: after every incident where a runbook was used, the postmortem includes a runbook assessment: was the runbook accurate? Were any steps missing or incorrect? If the runbook needs updates, this is a postmortem action item.' Testing mechanisms: '(1) Runbook fire drills: quarterly, select 5 runbooks at random and execute them in a staging environment. Verify every step works as documented. If a step fails, update the runbook immediately. (2) Automated step validation: for runbook steps that are commands (kubectl, SQL queries, API calls), create automated tests that verify the commands are syntactically valid and reference resources that exist. This catches stale references (commands referencing decommissioned services). (3) Runbook execution tracking: when a runbook is used during an incident, record which steps were followed, which were skipped, and which were modified. This data shows which runbooks are regularly modified during execution (indicating they need updating)'"
+    weight: 0.35
+    description: "Currency and testing"
+  - type: llm_judge
+    criteria: "Partial automation bridges manual runbooks and full automation — automation levels: 'Not all runbook steps can or should be fully automated. Design for three levels: Level 1 (manual with guidance): the runbook displays step-by-step instructions. The on-call engineer executes each step manually. The system tracks which steps have been completed. This is the baseline for all runbooks. Level 2 (semi-automated): the runbook includes executable commands. The on-call engineer can click to execute each step (with confirmation). The system executes the command and displays the output. The engineer reviews the output before proceeding to the next step. Example: the runbook for checking database connections includes a button that runs SELECT count(*) FROM pg_stat_activity and displays the result, rather than the engineer copying and pasting the command. Level 3 (fully automated with approval): the entire runbook can be executed automatically with a single approval from the on-call engineer. The system presents: I detected [condition]. The runbook recommends [actions]. Approve to execute automatically? If approved: system executes all steps, validates results, and reports the outcome. If any step fails: system stops and escalates to manual intervention.' Migration path: 'Start all runbooks at Level 1 (manual). Gradually upgrade the most-frequently-used runbooks to Level 2, then Level 3 as confidence grows. Priority for automation: the 5 most frequently executed runbooks (from incident data). Each level upgrade requires: testing in staging, dry-run in production, approval from the service owning team. Expected timeline: 50% of runbooks at Level 2 within 6 months, top 20% at Level 3 within 12 months'"
+    weight: 0.30
+    description: "Partial automation"

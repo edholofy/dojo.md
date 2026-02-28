@@ -1,0 +1,60 @@
+meta:
+  id: serverless-security-design
+  level: 4
+  course: aws-lambda-debugging
+  type: output
+  description: "Design serverless security architecture — implement defense-in-depth for Lambda applications including IAM, API authentication, data protection, and compliance"
+  tags: [AWS, Lambda, security, IAM, authentication, compliance, expert]
+
+state: {}
+
+trigger: |
+  A penetration test on your serverless application found several
+  vulnerabilities:
+
+  Finding 1 — Overly permissive IAM:
+  Lambda execution role has AdministratorAccess. The tester could
+  use the function to access ANY resource in the account.
+  "From inside the Lambda, I called sts:AssumeRole to escalate to
+  any role in the account."
+
+  Finding 2 — Injection through event data:
+  The function constructs a DynamoDB query using unsanitized input:
+  const result = await dynamo.query({
+    KeyConditionExpression: `userId = ${event.userId}`
+  });
+  NoSQL injection: userId = "1 OR 1=1" returns all records.
+
+  Finding 3 — Sensitive data in logs:
+  console.log(JSON.stringify(event));
+  Logs contain: credit card numbers, SSN, passwords from the
+  API request body. CloudWatch Logs retained for 30 days.
+
+  Finding 4 — No API authentication:
+  API Gateway endpoints have no authorizer. Anyone can invoke
+  any endpoint with any data.
+
+  Finding 5 — Dependencies with known CVEs:
+  24 npm packages with known vulnerabilities, including a CRITICAL
+  RCE in a JSON parsing library.
+
+  Task: Design serverless security architecture. Write: IAM least
+  privilege for Lambda (per-function roles), API authentication
+  (Cognito, custom authorizers), input validation and injection
+  prevention, sensitive data handling (no logging PII, encryption),
+  dependency security scanning, and compliance frameworks for
+  serverless (SOC2, HIPAA).
+
+assertions:
+  - type: llm_judge
+    criteria: "IAM and authentication are explained — per-function IAM roles: each Lambda gets its own role with only the permissions it needs. Never use AdministratorAccess or AmazonDynamoDBFullAccess. Specify exact resources (not Resource: *). API authentication: Cognito user pools (managed auth), Lambda authorizers (custom logic), IAM authorization (for service-to-service). API keys for rate limiting (not security). Use AWS WAF on API Gateway for common attack protection (SQL injection, XSS)"
+    weight: 0.35
+    description: "IAM and authentication"
+  - type: llm_judge
+    criteria: "Data protection and input validation are covered — input validation: validate all event data at the function entry point. Use schema validation (Zod, Joi, JSON Schema). Never construct queries with string concatenation — use parameterized queries. Sensitive data: never log PII (use Powertools Logger with data masking). Encrypt sensitive data at rest (KMS). Use Secrets Manager for credentials (not environment variables). CloudWatch Logs: set retention policy, encrypt with KMS. Use AWS Macie to detect PII in logs/S3"
+    weight: 0.35
+    description: "Data protection"
+  - type: llm_judge
+    criteria: "Dependency security and compliance are practical — dependency scanning: npm audit, Snyk, or GitHub Dependabot in CI/CD. Block deployments with CRITICAL CVEs. Keep dependencies updated (automated PRs for patches). Compliance: SOC2 requires audit logging (CloudTrail), access control (IAM), encryption (KMS). HIPAA: BAA with AWS, encrypt PHI, restrict access, audit all data access. PCI-DSS: network segmentation (VPC), encryption, logging, vulnerability management. Serverless advantage: no server patching, no OS hardening. Serverless risk: larger attack surface through event sources, more IAM complexity"
+    weight: 0.30
+    description: "Dependencies and compliance"

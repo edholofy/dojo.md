@@ -1,0 +1,36 @@
+meta:
+  id: avoiding-vanity-metrics
+  level: 1
+  course: dashboard-kpi-design
+  type: output
+  description: "Identify and avoid vanity metrics — distinguish between metrics that look impressive and metrics that drive decisions, and replace vanity metrics with actionable alternatives"
+  tags: [vanity-metrics, actionable-metrics, decision-making, measurement, beginner]
+
+state: {}
+
+trigger: |
+  A CEO proudly presents to the board:
+  - "We have 500,000 registered users!"
+  - "Our app was downloaded 1 million times!"
+  - "We got 10,000 social media followers this month!"
+  - "Our blog had 2 million page views!"
+
+  A board member asks: "How much revenue did you make?" The CEO
+  pauses. Revenue is $50K/month and declining.
+
+  Task: Explain why these are vanity metrics and propose actionable
+  replacements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response identifies each metric as vanity and explains why — vanity: 'Why these are vanity metrics: 500,000 registered users: vanity because it is a cumulative number that can only go up. It says nothing about how many users are active. If 490,000 signed up and never came back, the company effectively has 10,000 users, not 500,000. The metric feels good but does not inform decisions. 1 million app downloads: vanity because a download is not usage. If users download the app and delete it within a day, the download count is meaningless. App stores often count reinstalls and updates, inflating the number further. 10,000 social media followers: vanity because followers do not equal customers. A company can have 1 million followers and zero revenue. Followers are also easily purchased (fake followers), making the metric unreliable. 2 million page views: vanity because page views measure website traffic, not business outcomes. A viral blog post about cats could drive 2 million views without generating a single customer. Also, one person refreshing 100 times counts as 100 page views. The common thread: all four metrics are cumulative or easily inflated, they only go up (creating a false sense of progress), and none of them directly connect to revenue, retention, or customer value'"
+    weight: 0.35
+    description: "Vanity"
+  - type: llm_judge
+    criteria: "Response provides actionable replacement metrics — replacements: 'Actionable replacements for each vanity metric: Instead of 500,000 registered users → Monthly Active Users (MAU) or Daily Active Users (DAU). MAU measures how many users actually use the product each month. If MAU is declining while registrations increase, the product has a retention problem. Even better: DAU/MAU ratio (stickiness). A ratio of 0.5 means half of monthly users come back daily — strong engagement. Instead of 1 million downloads → Activated users (users who completed onboarding and used a core feature within 7 days). If 1 million downloaded but only 50,000 activated, the activation rate is 5% — the onboarding needs work. This metric drives action: improve the onboarding flow. Instead of 10,000 followers → Engagement rate (likes + comments + shares / followers) and attributed conversions (how many followers became customers). If engagement is 0.1%, the content is not resonating. If zero followers convert, social media is not contributing to revenue. Instead of 2 million page views → Conversion rate (page views that result in signup or purchase). If 2 million views produce 200 signups, the conversion rate is 0.01% — the website needs better calls to action or is attracting the wrong audience. The test for any metric: can I make a business decision based on this number? If DAU drops, I investigate and fix the product. If page views drop, I might not care — what matters is whether conversions dropped'"
+    weight: 0.35
+    description: "Replacements"
+  - type: llm_judge
+    criteria: "Explanation connects metrics to business decisions and includes a vanity metric detection checklist — decisions: 'Connecting metrics to decisions: Every metric on a dashboard should answer one of these questions: are we growing (revenue, active users, new customers)? Are we retaining (churn rate, retention rate, NPS)? Are we efficient (CAC, LTV:CAC ratio, gross margin)? If a metric does not answer one of these questions, it does not belong on the executive dashboard. It might belong on a team-level dashboard, but not the one the board sees. Vanity metric detection checklist: 1. Can it only go up? (Cumulative total users, total downloads) — vanity. Actionable metrics can go up and down (DAU, revenue, churn). 2. Can I act on it? If the number changes, do I know what to do? If page views drop and I have no idea what to fix — it is not actionable. 3. Is it easily gamed? If the marketing team can inflate it by buying ads or bots — suspect. Revenue cannot be faked (easily). 4. Does it measure input or output? Inputs (ad spend, emails sent) are leading indicators — useful but not KPIs. Outputs (revenue, profit, retention) are the KPIs. 5. Would I be embarrassed showing it to a sophisticated investor alongside the revenue number? If the contrast is jarring (2 million views but $50K revenue), the metric is vanity'"
+    weight: 0.30
+    description: "Decisions"

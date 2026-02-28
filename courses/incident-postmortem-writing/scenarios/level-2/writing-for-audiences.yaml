@@ -1,0 +1,47 @@
+meta:
+  id: writing-for-audiences
+  level: 2
+  course: incident-postmortem-writing
+  type: output
+  description: "Write postmortems for different audiences — adapt the same incident analysis for engineers, managers, executives, and auditors"
+  tags: [postmortem, audience, communication, adaptation, stakeholders, intermediate]
+
+state: {}
+
+trigger: |
+  Your company's recommendation engine served incorrect product
+  recommendations for 6 hours due to a corrupted machine learning
+  model. The model was updated with training data that included a
+  data pipeline bug, causing it to recommend unrelated products.
+
+  Impact: 2M users saw irrelevant recommendations. Estimated $150K
+  in lost conversion revenue. No security issue. Model was retrained
+  and redeployed.
+
+  You need to write versions of the postmortem for:
+  1. Engineers: technical analysis of the ML pipeline failure
+  2. Engineering manager: resource allocation and timeline impact
+  3. VP of Engineering: business impact and strategic implications
+  4. Compliance/audit team: data handling and model governance
+
+  Your current postmortem is one 6-page technical document. The VP
+  says "I can't tell if this is serious or not." The auditor says
+  "I need to understand the data governance implications."
+
+  Task: Write the key sections adapted for each audience. Show how
+  the same incident requires fundamentally different framing for
+  different readers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Engineering version provides deep technical analysis — technical detail: 'The training pipeline ingested data from the clickstream database. A recent change to the clickstream schema renamed the product_id column to item_id but the training pipeline config still referenced product_id. The pipeline silently used a default value (NULL) for missing columns, resulting in a model trained on corrupted feature vectors. The corrupted model passed automated validation because validation checked model format, not prediction quality.' Diagrams: data flow from clickstream → training pipeline → model → serving. Where the corruption occurred. Why validation didn't catch it. Technical root cause: 'Schema evolution in the clickstream database was not propagated to the training pipeline configuration. No contract testing between the database schema and pipeline expectations.' Technical action items: add schema contract tests, implement prediction quality validation (not just format validation), add feature drift detection to model monitoring"
+    weight: 0.35
+    description: "Technical version"
+  - type: llm_judge
+    criteria: "VP version focuses on business impact and strategic implications — VP framing: 'Our recommendation engine showed irrelevant products to 2M users for 6 hours, resulting in estimated $150K lost revenue and reduced customer experience. The issue was caused by a gap in our ML pipeline validation — we validated model format but not model quality.' Strategic implications: 'This reveals a broader risk: our ML systems lack the same rigor as our traditional software. Code changes go through testing and review. Model changes go through minimal validation. As we invest more in ML-driven features, this gap creates increasing risk.' Investment ask: 'Implementing ML model validation and monitoring requires 2 engineers for 4 weeks. Cost: approximately $X. This prevents not just this failure mode but an entire class of ML quality issues.' What the VP needs to decide: 'Do we invest in ML governance now (proactive) or wait until a larger incident forces our hand (reactive)? The recommendation engine incident was relatively contained — a similar issue in the pricing or fraud detection models would have much larger impact'"
+    weight: 0.35
+    description: "VP version"
+  - type: llm_judge
+    criteria: "Compliance version addresses data governance and model risk — compliance framing: 'A data pipeline inconsistency caused a machine learning model to be trained on incorrectly mapped data. No personal data was exposed. No data was shared outside authorized systems. The incident is a model governance issue, not a data breach.' Data handling analysis: 'The training data (clickstream events) is classified as behavioral data. It was processed within our authorized data infrastructure. The corruption was a mapping error, not unauthorized access or processing.' Model governance gaps identified: 'Our model deployment process lacks: (1) model quality gates tied to business metrics, (2) automated rollback when model performance degrades, (3) training data lineage tracking (we cannot currently trace which data was used to train which model version), (4) separation between model validation (format) and model verification (behavior).' Regulatory relevance: 'If this model were used for pricing or credit decisions (regulated use cases), this type of silent corruption could create compliance violations. This incident is a warning signal that should inform our AI governance program.' Recommended controls: model risk management framework, training data lineage, automated quality validation, model change approval process"
+    weight: 0.30
+    description: "Compliance version"

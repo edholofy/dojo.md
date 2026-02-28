@@ -1,0 +1,70 @@
+meta:
+  id: dynamodb-streams-debugging
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda DynamoDB Streams integration — diagnose stream processing failures, iterator exhaustion, and event ordering issues"
+  tags: [AWS, Lambda, DynamoDB, Streams, event-source, iterator, intermediate]
+
+state: {}
+
+trigger: |
+  Your Lambda function processes DynamoDB Streams events (change data
+  capture) to sync order data to Elasticsearch. It stopped processing:
+
+  $ aws lambda list-event-source-mappings \
+    --function-name sync-to-es --query "EventSourceMappings[].State"
+  ["Enabled"]
+
+  The mapping is enabled but CloudWatch shows no invocations. Checking
+  the event source mapping details:
+
+  $ aws lambda get-event-source-mapping --uuid abc-123
+  {
+    "State": "Enabled",
+    "StateTransitionReason": "USER_INITIATED",
+    "LastProcessingResult": "PROBLEM: Function call failed"
+  }
+
+  LastProcessingResult: "Function call failed" — the function threw
+  an unhandled error. For DynamoDB Streams (and Kinesis), Lambda
+  retries the SAME batch until it succeeds or the record expires
+  (24 hours by default). One bad record blocks the entire shard!
+
+  CloudWatch Logs (from the failing invocation):
+  Processing INSERT event for order ORD-999
+  Error: Cannot read property 'S' of undefined
+  — A DynamoDB record had an unexpected schema (missing field)
+
+  The function was stuck retrying the same bad record for 6 hours,
+  blocking all subsequent stream records.
+
+  Fix — configure error handling:
+  $ aws lambda update-event-source-mapping --uuid abc-123 \
+    --maximum-retry-attempts 3 \
+    --bisect-batch-on-function-error \
+    --destination-config '{"OnFailure":{"Destination":"arn:aws:sqs:..."}}'
+
+  - maximum-retry-attempts: stop retrying after 3 attempts
+  - bisect-batch-on-function-error: split batch to isolate bad record
+  - destination on failure: send failed records to SQS for investigation
+
+  Task: Explain DynamoDB Streams + Lambda debugging. Write: how
+  stream processing works (shards, iterators, ordering), the blocking
+  behavior on errors (entire shard stops), error handling configuration
+  (retry limits, bisect, on-failure destination), common stream
+  processing patterns, and monitoring stream consumer lag.
+
+assertions:
+  - type: llm_judge
+    criteria: "Stream processing mechanics are explained — DynamoDB Streams capture INSERT, MODIFY, DELETE events in order per partition key. Lambda polls stream shards via event source mapping. Records include OldImage and/or NewImage (depending on StreamViewType). Processing is ordered within a shard — one batch at a time. If Lambda fails, it retries the SAME batch (blocks shard). Different from SQS: stream records must be processed in order, so failed records block subsequent records"
+    weight: 0.35
+    description: "Stream mechanics"
+  - type: llm_judge
+    criteria: "Error handling and blocking are covered — default behavior: retry forever until record expires (24h) — blocks shard processing. Configure: MaximumRetryAttempts (limit retries), BisectBatchOnFunctionError (split batch to isolate bad record), MaximumRecordAgeInSeconds (skip old records), DestinationConfig OnFailure (send failed records to SQS/SNS for investigation). Without these settings, one bad record stops ALL processing on that shard. Always configure error handling for stream consumers"
+    weight: 0.35
+    description: "Error handling"
+  - type: llm_judge
+    criteria: "Monitoring and patterns are practical — monitor: IteratorAge metric (time between record written and processed — high value means lag). Alert when IteratorAge exceeds acceptable threshold (e.g., 5 minutes). Check: LastProcessingResult in event source mapping for error state. Common patterns: use DynamoDB Streams for CDC (change data capture), search index sync, cross-region replication, audit logging. Design Lambda for idempotency (records may be delivered more than once). Handle schema evolution gracefully (new/missing fields shouldn't crash the function)"
+    weight: 0.30
+    description: "Monitoring and patterns"

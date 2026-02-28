@@ -1,0 +1,36 @@
+meta:
+  id: mobile-dashboard-design
+  level: 3
+  course: dashboard-kpi-design
+  type: output
+  description: "Design mobile-first dashboards — create dashboards that work effectively on phones and tablets with progressive disclosure, touch-friendly interactions, and responsive layouts"
+  tags: [mobile, responsive, touch, progressive-disclosure, compact, advanced]
+
+state: {}
+
+trigger: |
+  The CEO says: "I check the dashboard on my phone during my morning
+  commute. The desktop dashboard is crammed onto a tiny screen — I
+  can't read the numbers, the charts overlap, and I can't tap the
+  filters because they're too small. I end up waiting until I get to
+  the office, which defeats the purpose."
+
+  Analytics show 40% of dashboard views come from mobile devices, but
+  the dashboards were designed only for 1920×1080 desktop screens.
+
+  Task: Design a mobile-first dashboard experience that gives the CEO
+  the key information on their phone without sacrificing usability.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a mobile-first dashboard layout — layout: 'Mobile-first dashboard design: Principle: mobile is not a smaller desktop — it is a different experience. Do not shrink 8 desktop charts onto a phone. Instead, redesign the information hierarchy for a vertical scroll. Mobile layout (375px wide): Screen 1 (above the fold, no scrolling needed): Health banner: Business Status — ON TRACK. Single sentence: Revenue $4.2M ↑8% MoM. Target exceeded. Four KPI cards in a 2×2 grid: Revenue: $4.2M ▲. Green left border. Customers: 1,240 ▲. Green left border. Churn: 3.2% ▼. Green left border. NPS: 52 ▲. Green left border. Each card shows: metric name, value, trend arrow, and a colored left border for status. No chart, no sparkline — just the number and direction. The CEO gets the full health check in 5 seconds without scrolling. Screen 2 (first scroll): Revenue trend — a simplified line chart. Single line, last 6 months. Large data point labels on the most recent months. Tap a data point to see the exact value. No legend needed — it is a single series. Screen 3 (second scroll): Top 3 alerts (if any): 1. SMB churn at 6.1% — above 4% target. 2. Pipeline below $1M — below $1.5M threshold. 3. Support wait time 22 min — above 15 min SLA. Each alert is a tappable card that expands with detail. If no alerts, this section shows: No active alerts — all metrics within target. Screen 4 (third scroll): Quick links to detailed dashboards (open in the BI app): Revenue Detail → Sales Detail → Product Detail → Support Detail. The mobile dashboard is 4 screens of scrolling instead of 8 complex desktop charts'"
+    weight: 0.35
+    description: "Layout"
+  - type: llm_judge
+    criteria: "Response covers progressive disclosure and touch interactions — interactions: 'Progressive disclosure on mobile: The mobile dashboard shows less by default and reveals detail on demand. This prevents information overload on a small screen. Technique 1 — Expandable cards: each KPI card shows the headline number. Tap to expand: Revenue $4.2M ▲ becomes Revenue $4.2M ↑8% MoM. Target: $3.9M. YoY: ↑22%. Sparkline appears below the number showing the 6-month trend. Tap again to collapse back to the compact view. Technique 2 — Swipe between views: instead of cramming multiple charts on screen, use horizontal swipe to navigate between them. Swipe left/right between: Overview → Revenue → Customers → Churn → NPS. Dots at the bottom indicate the current view (like mobile app onboarding). Technique 3 — Drill-down via tap: tap the Revenue chart to drill into segments. Enterprise / SMB / Startup appears as a segmented bar chart. Tap a segment to see further detail. Back button returns to the previous level. Touch-friendly design rules: minimum tap target: 44×44 pixels (Apple HIG) or 48×48dp (Material Design). No hover states — mobile has no hover. Replace hover tooltips with tap-to-reveal. Spacing between tappable elements: at least 8px gap to prevent accidental taps. Filters: use a bottom sheet (slides up from the bottom) instead of a dropdown menu. Bottom sheets are easier to reach with one hand. Swipe gestures: pull down to refresh data. Swipe left on an alert to dismiss or snooze. These native mobile patterns feel familiar to the CEO'"
+    weight: 0.35
+    description: "Interactions"
+  - type: llm_judge
+    criteria: "Explanation covers responsive design strategy and performance on mobile — responsive: 'Responsive design strategy: Do not make one dashboard responsive — make two experiences: Desktop experience: full detail, 8 charts, filters, drill-downs. Optimized for analysis and exploration. Mobile experience: headline numbers, simplified charts, alerts. Optimized for quick status checks. Both pull from the same data source but present different views. Responsive breakpoints: above 1024px: desktop layout (multi-column, full charts). 768-1024px: tablet layout (2-column, simplified charts). Below 768px: mobile layout (single column, KPI cards). Content decisions by breakpoint: desktop shows all 8 charts → tablet shows 4 priority charts → mobile shows KPI cards with expandable detail. Desktop shows filter bar always visible → tablet shows a filter button that opens a panel → mobile shows filters in a bottom sheet triggered by a floating button. Desktop shows data tables with 10 columns → tablet shows 5 columns → mobile shows a card list with the key values. Performance on mobile: mobile users are often on cellular connections. Target: dashboard loads in under 3 seconds on 4G. Techniques: lazy load below-the-fold content — KPI cards load first, charts load as the user scrolls. Use smaller chart images or SVG instead of heavy canvas rendering. Cache aggressively — the morning commute check should load from cache if data has not changed. Reduce payload: the mobile endpoint returns only the data needed for the mobile view, not the full desktop dataset. A desktop dashboard query might return 50 data points per chart. The mobile sparkline needs only 6. Send 6, not 50. Push notifications: the mobile experience can push alerts to the CEO's phone. If revenue drops below target or churn exceeds 5%, a push notification appears — the CEO does not even need to open the dashboard'"
+    weight: 0.30
+    description: "Responsive"

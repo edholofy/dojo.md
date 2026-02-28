@@ -1,0 +1,40 @@
+meta:
+  id: first-funnel-shift
+  level: 1
+  course: funnel-analysis
+  type: output
+  description: "First funnel shift — handle multiple funnel analysis requests requiring conversion calculation, drop-off diagnosis, visualization, and benchmarking in a single day"
+  tags: [shift-simulation, beginner, multi-request, end-to-end]
+
+state: {}
+
+trigger: |
+  Three funnel analysis requests arrive on the same day:
+
+  Request 1 (Product Manager): "Our signup funnel has 5 steps. I need
+  to know the conversion rate at each step and which step is our
+  biggest problem. Here's the data: landing page 8,000, click signup
+  2,400, fill form 1,440, verify email 720, complete onboarding 360."
+
+  Request 2 (Marketing Lead): "I need to compare our funnel to
+  industry benchmarks. Are we good? And what goals should I set
+  for next quarter?"
+
+  Request 3 (CEO): "I need a one-page funnel report for the board.
+  Make it visual and tell me what we should fix."
+
+  Task: Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response handles Request 1 with conversion rate calculation and drop-off analysis — analysis: 'Request 1 — Funnel analysis with conversion rates and drop-off: step-by-step conversion rates: landing page (8,000) → click signup (2,400): 30.0%. Click signup (2,400) → fill form (1,440): 60.0%. Fill form (1,440) → verify email (720): 50.0%. Verify email (720) → complete onboarding (360): 50.0%. Overall conversion: 360 / 8,000 = 4.5%. Drop-off analysis: step 1→2: 5,600 users lost (70% drop-off) — largest absolute loss. This is the top-of-funnel problem. Most visitors do not click signup. Step 2→3: 960 users lost (40% drop-off). 4 in 10 users who click signup do not complete the form. Likely causes: form is too long, too many required fields, or confusing layout. Step 3→4: 720 users lost (50% drop-off). Half of form completers do not verify their email. This is a critical friction point — email verification is killing half the signups. Users must leave the app, open email, find the verification link, and click it. Many never return. Step 4→5: 360 users lost (50% drop-off). Half of verified users do not complete onboarding. The onboarding may be too long, confusing, or not demonstrating enough value. Biggest problem diagnosis: by absolute impact: step 1→2 (5,600 lost). By fixability: step 3→4 (email verification — can be replaced with magic links, in-app code, or delayed verification). The PM should prioritize step 3→4 first (highest confidence fix). Expected impact: improving email verification from 50% to 80% adds 432 more verified users → approximately 216 more onboarded users (a 60% increase in funnel output)'"
+    weight: 0.35
+    description: "Analysis"
+  - type: llm_judge
+    criteria: "Response handles Request 2 with benchmarking and goal-setting — benchmarks: 'Request 2 — Benchmarking and goal-setting: comparing to SaaS signup funnel benchmarks: step | our rate | industry median | our position. Visitor → click signup: 30% | 25-35% | at median. Click → fill form: 60% | 60-75% | at lower end. Form → verify email: 50% | 65-80% | well below (problem). Verify → onboarding: 50% | 50-70% | at lower end. Overall: 4.5% | 3-7% | at median. Assessment: email verification (50%) is significantly below the 65-80% benchmark — this is the weakest step. Form completion (60%) is at the low end — room for improvement. Click-to-signup (30%) is at benchmark — acceptable but improvable. Quarter goals (ambitious but achievable): step 1→2: maintain at 30% (no major initiative planned). Step 2→3: improve from 60% to 68% (reduce form fields from 8 to 5). Step 3→4: improve from 50% to 75% (implement magic link authentication). Step 4→5: improve from 50% to 55% (streamline onboarding to 3 steps). Projected impact: current: 8,000 × 30% × 60% × 50% × 50% = 360 completions. Target: 8,000 × 30% × 68% × 75% × 55% = 674 completions. That is an 87% increase in funnel output — nearly doubling signups. The most impactful single change: email verification improvement accounts for 50% of the projected gain'"
+    weight: 0.35
+    description: "Benchmarks"
+  - type: llm_judge
+    criteria: "Response handles Request 3 with a board-ready visual report — report: 'Request 3 — One-page board report: headline: Our signup funnel converts 4.5% of visitors — fixing email verification could nearly double it. Section 1 — The funnel (visual): funnel diagram showing 5 stages with narrowing bars. Each bar labeled with absolute count and conversion rate. The email verification step highlighted in red (50% conversion — worst step). Annotation: 720 users per month lost at email verification. Section 2 — The insight (2 sentences): our funnel is at industry median overall (4.5%) but our email verification step is 15-30 points below benchmark. This single step costs us approximately 360 potential signups per month. Section 3 — The plan (3 bullet points): 1. Replace email verification with magic link authentication (ship by end of Q1). Expected impact: +300 monthly signups. 2. Reduce signup form from 8 fields to 5 (ship by mid-Q1). Expected impact: +100 monthly signups. 3. Streamline onboarding from 7 steps to 3 (ship by end of Q2). Expected impact: +50 monthly signups. Section 4 — The bottom line: combined impact: approximately 87% more completed signups per month. Investment required: 2 engineering sprints for magic link, 1 sprint for form reduction. Expected ROI: if each signup is worth $50 LTV, the improvements generate $22,500/month in additional lifetime revenue from a one-time engineering investment'"
+    weight: 0.30
+    description: "Report"

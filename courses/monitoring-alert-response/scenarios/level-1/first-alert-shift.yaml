@@ -1,0 +1,48 @@
+meta:
+  id: first-alert-shift
+  level: 1
+  course: monitoring-alert-response
+  type: output
+  description: "First alert response shift — handle a realistic on-call shift with multiple alerts requiring triage, investigation, escalation, and documentation"
+  tags: [monitoring, shift-simulation, beginner, on-call, comprehensive]
+
+state: {}
+
+trigger: |
+  You're starting your first solo on-call shift (6 PM - 6 AM). Your
+  team lead gave you:
+  - Access to Grafana dashboards
+  - PagerDuty app on your phone
+  - Link to the runbook wiki
+  - The #on-call Slack channel
+  - Your secondary on-call's contact info (Jamie)
+
+  During your shift, the following happens:
+
+  7:30 PM: INFO alert - "Scheduled job 'nightly-data-export'
+  completed with warnings: 3 of 500 records skipped"
+
+  9:15 PM: WARNING alert - "API response time p95 > 1.5s on
+  product-service" (threshold: 1.5s for 5 minutes)
+
+  11:45 PM: CRITICAL alert - "Health check failing on
+  notification-service-prod-1"
+
+  Task: Walk through your entire shift response. For each alert,
+  explain what you would do, including acknowledgment, investigation,
+  communication, and documentation. Show how you manage the full
+  shift, not just individual alerts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Each alert is handled with appropriate urgency and thoroughness — 7:30 PM INFO alert: 'Acknowledge. This is informational — the job completed but with minor issues. Check: what records were skipped and why? If the skipped records are important (customer data, financial records), create a ticket for the data team to investigate. If they are expected (known data quality issues), note it and move on. Do not ignore INFO alerts — they often provide early warning of developing issues. Post brief note in #on-call: Nightly export completed with 3 skipped records. Checking if this is expected.' 9:15 PM WARNING alert: 'Acknowledge. Check the dashboard: is latency still climbing or has it stabilized? Check: was there a recent deployment to product-service? Is there a traffic spike? Are database queries slower than normal? If latency is stable at 1.5s and not climbing, monitor for 15 minutes. If it is climbing, investigate more urgently. Post in #on-call: Investigating product-service latency warning. p95 at 1.5s, checking for cause.' 11:45 PM CRITICAL alert: 'Acknowledge immediately. This is the highest priority of the night. Check: is the health check failing on one instance or multiple? Check the service logs. Check if other notification-service instances are healthy. Follow the notification-service runbook. Post in #on-call: CRITICAL — notification-service health check failing on prod-1. Investigating now. If not resolved in 15 minutes or if the situation worsens, page Jamie (secondary on-call)'"
+    weight: 0.35
+    description: "Individual alert handling"
+  - type: llm_judge
+    criteria: "Shift management demonstrates readiness, communication, and handoff practices — shift start: 'At 6 PM: verify PagerDuty is receiving alerts (check for test alert or last received alert). Check #on-call channel for any active issues from the previous shift. Read the handoff notes from the outgoing on-call engineer. Verify you have access to dashboards and VPN (do not discover access issues at 3 AM). Post in #on-call: I am now on-call for the 6 PM - 6 AM shift. Acknowledging handoff from [previous engineer].' Throughout the shift: 'Keep #on-call channel updated with your investigations, even brief notes. If you resolve an alert, document what happened. If you are going to be away from your computer for more than 15 minutes (shower, walk), let #on-call know and make sure PagerDuty can reach you by phone.' End of shift: 'At 5:30 AM (30 minutes before handoff): prepare your handoff summary. Include all three alerts and their current status: INFO alert: resolved, ticket filed for data team. WARNING alert: [resolved/still borderline — include current status]. CRITICAL alert: [resolved with details — or still active with what has been done]. Post the handoff for the incoming engineer with all context they need'"
+    weight: 0.35
+    description: "Shift management"
+  - type: llm_judge
+    criteria: "Response shows appropriate judgment about when to escalate and when to handle alone — escalation judgment: 'INFO alert at 7:30 PM: handle alone. This is routine and informational. No escalation needed. WARNING alert at 9:15 PM: handle alone initially. If latency continues to climb for 30+ minutes and you cannot identify the cause, consider escalating. If latency returns to normal, no escalation needed. CRITICAL alert at 11:45 PM: handle alone for the first 15 minutes. If you cannot diagnose or mitigate within 15 minutes, page Jamie. A failing health check on a production service is serious enough to justify waking your secondary, especially if customer impact is confirmed.' Jamie escalation criteria: 'Page Jamie (secondary) if: (1) the CRITICAL alert is not resolved and you are stuck, (2) multiple CRITICAL alerts fire simultaneously, (3) you need to make a risky decision (rollback, failover) and want a second opinion, (4) you are unsure whether the situation warrants a full incident declaration. Do not page Jamie for the INFO or WARNING alerts unless they escalate to CRITICAL.' Confidence vs. humility: 'Your first solo shift is about building confidence while staying humble. Handle what you can. Ask for help when you need it. Document everything. No one expects you to resolve every issue alone on your first night — they expect you to respond promptly, investigate competently, escalate appropriately, and communicate clearly'"
+    weight: 0.30
+    description: "Escalation judgment"

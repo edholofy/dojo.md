@@ -1,0 +1,51 @@
+meta:
+  id: intermediate-design-system-docs-shift
+  level: 2
+  course: design-system-documentation
+  type: output
+  description: "Intermediate design system docs shift — handle a day of documentation challenges including API docs, accessibility specs, and cross-team requests"
+  tags: [shift, combined, assessment, intermediate]
+
+state: {}
+
+trigger: |
+  You're a mid-level design system documentarian. Your day:
+
+  9:00 AM — A developer files a bug: "The DatePicker component
+  docs say it accepts a 'format' prop but don't specify the
+  format string syntax. I assumed ISO 8601 but it actually
+  uses Moment.js format tokens. Wasted 2 hours debugging."
+  Write the missing format documentation.
+
+  11:00 AM — The accessibility team reviewed your Accordion
+  component docs and says: "The keyboard navigation spec is
+  wrong. You wrote 'Tab moves between accordion headers' but
+  the ARIA Accordion Pattern says arrow keys should move
+  between headers and Tab should move to the next focusable
+  element." Fix the accessibility spec.
+
+  1:00 PM — Product Team A asks: "We need to use the Table
+  component in a new way — with inline editing. Should we
+  document this as a variant of Table or as a new pattern?"
+  Help them decide and draft the documentation approach.
+
+  3:00 PM — You're reviewing a junior's first component
+  documentation draft for a Tooltip component. It has
+  anatomy and variants but is missing interaction specs,
+  accessibility, and content guidelines. Provide feedback.
+
+  Task: Handle all four documentation challenges.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response fixes the DatePicker and Accordion documentation — DatePicker: writes clear format prop documentation with syntax reference (lists supported tokens: YYYY, MM, DD, HH, mm, etc.), common format examples ('MM/DD/YYYY' for US, 'DD/MM/YYYY' for international, 'YYYY-MM-DD' for ISO), default format value, and a note about the Moment.js dependency. Accordion: corrects the keyboard nav spec per WAI-ARIA Accordion Pattern (Up/Down arrows between headers, Home/End for first/last, Enter/Space to toggle, Tab moves to next focusable element outside the accordion), and explains why this pattern matters for screen reader users"
+    weight: 0.35
+    description: "FixDocumentation"
+  - type: llm_judge
+    criteria: "Response makes a clear recommendation on the inline editing Table — analyzes whether it's a variant or pattern (recommendation: document as a pattern 'Editable Table' that composes the Table component with inline editing behaviors, because it changes the interaction model significantly), outlines what the pattern documentation should include (when to use editable vs read-only tables, edit trigger mechanism, validation behavior, save/cancel interaction, keyboard navigation changes, accessibility for editable cells), and drafts the documentation structure"
+    weight: 0.35
+    description: "TablePatternDecision"
+  - type: llm_judge
+    criteria: "Response provides constructive Tooltip documentation feedback — identifies what's missing: interaction specs (show on hover with 200ms delay, show on focus for keyboard users, dismiss on Escape, positioning logic: prefer top, flip if clipped), accessibility (role=tooltip, aria-describedby linking, not announced on focus alone — use aria-describedby), content guidelines (max 1-2 sentences, no interactive elements, action guidance belongs in a Popover not Tooltip). Feedback is specific, actionable, and constructive (acknowledges what's good before identifying gaps)"
+    weight: 0.30
+    description: "TooltipFeedback"

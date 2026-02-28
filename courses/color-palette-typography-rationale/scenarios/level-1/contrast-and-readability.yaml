@@ -1,0 +1,43 @@
+meta:
+  id: contrast-and-readability
+  level: 1
+  course: color-palette-typography-rationale
+  type: output
+  description: "Contrast and readability — explain how color contrast affects readability and accessibility in typography"
+  tags: [contrast, readability, accessibility, wcag, beginner]
+
+state: {}
+
+trigger: |
+  A web developer says: "Our designer created a beautiful
+  palette but I'm getting accessibility complaints. The
+  issues:
+
+  1. Light gray text (#999999) on white background (#FFFFFF)
+     for body text — users say they can't read it
+  2. White text on a yellow button (#FFD700) — almost
+     invisible
+  3. Red error text (#FF0000) on a dark background (#333333)
+     — some users say it's fine, others can't read it
+
+  I know there's a WCAG contrast requirement but I don't
+  understand the numbers. What's wrong with these combos
+  and how do I fix them while keeping the palette's feel?"
+
+  Task: Explain color contrast ratios, identify the issues
+  with these specific combinations, and provide accessible
+  alternatives.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains color contrast fundamentals — WCAG contrast ratios (contrast ratio is the relative luminance difference between foreground and background colors, expressed as X:1, WCAG AA requires 4.5:1 for normal text and 3:1 for large text at 18px+ or 14px+ bold, WCAG AAA requires 7:1 for normal text and 4.5:1 for large text), how to calculate (relative luminance formula or use tools like WebAIM contrast checker, browser dev tools, Figma plugins), why contrast matters (approximately 8% of men are color blind, aging reduces contrast sensitivity, screen glare and brightness settings affect perceived contrast, poor contrast excludes users with low vision)."
+    weight: 0.35
+    description: "ContrastFundamentals"
+  - type: llm_judge
+    criteria: "Response analyzes each specific combination — Issue 1: #999999 on #FFFFFF has approximately 2.85:1 contrast ratio — fails WCAG AA (needs 4.5:1), fix: darken gray to at least #767676 for 4.54:1 or #595959 for 7:1 AAA compliance — maintains gray feel while being readable. Issue 2: #FFFFFF on #FFD700 has approximately 1.29:1 contrast ratio — catastrophically low, nearly invisible, fix: use dark text (#333333 or #1A1A00) on yellow button instead, or darken the yellow to something like #B8860B if white text is required — yellow is one of the worst background colors for white text. Issue 3: #FF0000 on #333333 has approximately 5.42:1 contrast ratio — actually passes WCAG AA, but red-green color blindness (deuteranopia) may make red text harder to distinguish — fix: don't rely on color alone for error states, add an icon or bold text alongside the color."
+    weight: 0.35
+    description: "SpecificAnalysis"
+  - type: llm_judge
+    criteria: "Response provides accessible alternatives that preserve design intent — for each fix: specific hex values that maintain the palette's aesthetic while meeting WCAG AA, explanation of how the original feel is preserved (darker gray still feels minimal and elegant, dark text on yellow maintains energy, error treatment with icon feels more professional), general principles (when designers resist accessibility changes: show side-by-side comparisons — accessible versions often look MORE polished, never sacrifice readability for aesthetics — unreadable text serves no design purpose, build accessibility into palette creation from the start rather than fixing after), and testing workflow (recommend contrast checking tools: WebAIM Contrast Checker, Stark plugin for Figma, browser DevTools accessibility panel — check every text/background combination during design)."
+    weight: 0.30
+    description: "AccessibleAlternatives"

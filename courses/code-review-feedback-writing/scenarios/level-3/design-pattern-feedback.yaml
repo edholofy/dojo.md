@@ -1,0 +1,48 @@
+meta:
+  id: design-pattern-feedback
+  level: 3
+  course: code-review-feedback-writing
+  type: output
+  description: "Give design pattern feedback — recognize pattern opportunities and anti-patterns in code reviews and explain when patterns help vs when they over-engineer"
+  tags: [code-review, design-patterns, anti-patterns, refactoring, over-engineering, advanced]
+
+state: {}
+
+trigger: |
+  You're reviewing code that could benefit from design patterns, but
+  you need to be careful — not every piece of code needs a pattern.
+  You've found:
+
+  1. A 500-line switch statement handling 20 different notification
+     types — each case has similar but slightly different logic
+
+  2. A class with 15 methods that all start by loading user data,
+     checking permissions, and logging — massive duplication
+
+  3. Code that creates database connections directly in 30 different
+     places instead of using a connection pool
+
+  4. A simple CRUD endpoint where someone suggests "we should add
+     a Strategy pattern for the create operation"
+
+  5. Three layers of abstraction for a function that's called in
+     exactly one place
+
+  Task: For each situation, decide: does it need a pattern, which
+  pattern, or is the current approach fine? Write review comments
+  that teach WHEN patterns are appropriate, not just WHAT patterns
+  exist. Call out over-engineering as firmly as under-engineering.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pattern recommendations are justified with concrete benefits — (1) Switch statement: Strategy or Command pattern — define a NotificationHandler interface, create EmailHandler, SMSHandler, PushHandler. Benefit: each handler is independently testable, new notification types don't modify existing code. Show the refactored structure. (2) Repeated setup: Template Method or middleware/decorator pattern — extract loadUser(), checkPermission(), logAction() into middleware that runs before each method. Benefit: DRY, single place to modify auth logic. (3) Direct connections: use connection pool (singleton or factory pattern). Benefit: resource management, connection reuse, centralized configuration. Each recommendation includes: what pattern, why it helps HERE, and a code sketch showing the result"
+    weight: 0.35
+    description: "Justified patterns"
+  - type: llm_judge
+    criteria: "Over-engineering is called out with equal conviction — (4) Strategy for simple CRUD: 'This endpoint creates a record in a table — a Strategy pattern adds 3 files and an interface for something that's 10 lines of straightforward code. The Strategy pattern is valuable when you have multiple interchangeable algorithms, not for a single code path that does one thing. YAGNI — You Aren't Gonna Need It. If we need different creation strategies later, we can refactor then.' (5) Three abstraction layers: 'This function is called in one place. The abstraction adds cognitive overhead — a reader must trace through 3 files to understand what happens. Inline the logic into the caller. Abstractions are earned by duplication, not created in anticipation.' Equal firmness: over-engineering wastes time and adds complexity just as under-engineering creates duplication"
+    weight: 0.35
+    description: "Over-engineering callout"
+  - type: llm_judge
+    criteria: "Guidelines for WHEN to apply patterns are practical — rules of thumb: (1) Three strikes rule — the first time, just write the code; the second time, note the duplication; the third time, extract a pattern. (2) Patterns are answers to specific problems — if you can't name the problem, you don't need the pattern. (3) Test: would a new team member understand the code better WITH or WITHOUT the pattern? If the pattern adds confusion, skip it. (4) Patterns should reduce code, not increase it — if Strategy adds 100 lines to save 20 lines of duplication, it's not worth it yet. (5) Favor simple composition over complex inheritance. Anti-patterns to watch for: 'Abstract Factory for one implementation', 'Singleton just because', 'Observer for two components that could just call each other.' Maturity signal: knowing when NOT to use a pattern is more valuable than knowing patterns"
+    weight: 0.30
+    description: "When to apply"

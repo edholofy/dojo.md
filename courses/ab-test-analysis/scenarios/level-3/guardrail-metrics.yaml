@@ -1,0 +1,34 @@
+meta:
+  id: guardrail-metrics
+  level: 3
+  course: ab-test-analysis
+  type: output
+  description: "Design and monitor guardrail metrics — set up safety metrics that prevent shipping experiments that improve the primary metric at the cost of user experience, revenue, or system health"
+  tags: [guardrail-metrics, safety-metrics, trade-offs, monitoring, advanced]
+
+state: {}
+
+trigger: |
+  A product team tested an aggressive upsell modal that appears after
+  every purchase. Results: upgrade rate increased 40% (p < 0.001).
+  The team wants to ship immediately. But the data scientist flags:
+  "Customer support tickets doubled, 30-day retention dropped 5%, and
+  NPS decreased by 12 points. The upsell works but at what cost?"
+
+  Task: Explain guardrail metrics, how to design a guardrail framework,
+  and how to make ship/no-ship decisions when primary and guardrail
+  metrics conflict.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains guardrail metrics and their purpose — guardrails: 'Guardrail metrics: Guardrail metrics are safety metrics that must NOT degrade significantly when shipping an experiment, even if the primary metric improves. They protect against: Goodhart's Law — optimizing one metric at the expense of overall health (the upsell modal optimizes upgrade rate but destroys user experience). Short-term gains with long-term costs — the 40% upgrade lift generates immediate revenue but the 5% retention drop compounds over months. Unintended side effects — the modal annoys users who were not going to upgrade, increasing support burden. Three categories of guardrail metrics: 1. User experience guardrails: retention (7-day, 30-day), NPS or satisfaction scores, support ticket rate, session frequency, time to complete core tasks. These protect against degrading the user experience for short-term metric gains. 2. Business health guardrails: revenue per user (not just conversion rate), customer lifetime value (CLTV), refund rate, churn rate. These protect against winning a metric battle but losing the business war. 3. System health guardrails: page load time, error rate, crash rate, API latency. These catch technical regressions caused by the treatment. For the upsell modal test: primary metric: upgrade rate +40% ✓ (improved). Guardrail 1 — retention: -5% ✗ (degraded significantly). Guardrail 2 — support tickets: +100% ✗ (degraded dramatically). Guardrail 3 — NPS: -12 points ✗ (degraded significantly). Verdict: DO NOT SHIP. Three guardrails are breached. The short-term upgrade lift does not justify the damage to user experience and long-term retention'"
+    weight: 0.35
+    description: "Guardrails"
+  - type: llm_judge
+    criteria: "Response covers guardrail framework design — framework: 'Designing a guardrail framework: Step 1 — Define guardrail thresholds before the test: for each guardrail metric, set a maximum acceptable degradation. Retention: must not decrease by more than 0.5pp. Support tickets: must not increase by more than 10%. Page load time: must not increase by more than 100ms. NPS: must not decrease by more than 2 points. These thresholds are set based on: business judgment (how much degradation can we tolerate?). Historical variance (how much does this metric fluctuate naturally?). Economic trade-offs (what is the dollar cost of 1pp retention loss vs the gain from 1% upgrade rate increase?). Step 2 — Determine statistical requirements: guardrails need to be tested with sufficient power to detect meaningful degradation. One-sided tests: only check for degradation (we do not care if guardrails improve). Lower significance threshold: α = 0.10 for guardrails (more sensitive to degradation than α = 0.05). This makes the system more protective — willing to flag degradation even with weaker statistical evidence. Power: 80% power to detect the threshold degradation. Step 3 — Define the decision matrix: Primary improved + all guardrails safe → ship. Primary improved + guardrail degraded → do not ship. Investigate and iterate. Primary not improved + all guardrails safe → do not ship. Move on. Primary not improved + guardrail degraded → do not ship. Investigate the degradation. Ambiguous cases (primary improved, guardrail borderline): extend the test for more data. Check if the guardrail degradation is within the acceptable threshold. Consult stakeholders with the full trade-off picture. Step 4 — Quantify trade-offs economically: upgrade rate +40% = +$500K annual revenue. Retention -5% at current base = -$2M annual revenue (retention compounds — each retained user generates future revenue). Support tickets +100% = +$200K annual support cost. Net impact: +$500K - $2M - $200K = -$1.7M. The upsell modal is a net negative despite the impressive headline metric'"
+    weight: 0.35
+    description: "Framework"
+  - type: llm_judge
+    criteria: "Response covers practical guardrail implementation — practical: 'Practical guardrail implementation: Pre-test checklist: 1. Document 1-2 primary metrics (what you are trying to improve). 2. Document 3-5 guardrail metrics (what must not degrade). 3. Set numerical thresholds for each guardrail. 4. Get stakeholder sign-off on the thresholds BEFORE launching. 5. Build a dashboard showing primary and guardrail metrics together. During the test: monitor guardrails at the same cadence as the primary metric. If a guardrail shows strong degradation early: consider stopping the test early to limit user harm. This is especially important for guardrails like error rate or crash rate — do not wait 4 weeks if the treatment is breaking things. Use sequential testing for guardrails (not just the primary metric) to enable valid early stopping. After the test: present all metrics together — never report just the primary metric in isolation. Example report format: Primary metric (upgrade rate): +40% (p < 0.001) ✓. Guardrail: 30-day retention: -5% (p = 0.001) ✗ BREACHED. Guardrail: support tickets: +100% (p < 0.001) ✗ BREACHED. Guardrail: NPS: -12 points (p = 0.02) ✗ BREACHED. Guardrail: page load time: +15ms (p = 0.30) ✓ safe. Guardrail: error rate: +0.01% (p = 0.85) ✓ safe. Decision: do not ship. Iterate on the design. Iterating on the upsell modal: reduce frequency (show once per 5 purchases instead of every purchase). Add a dismiss option that is easy to find. Target only users who have shown upgrade interest (clicked pricing page). Limit the modal to users in the first 30 days (when upgrade propensity is highest). Re-test with the softer approach and check all guardrails again. Common pitfall — guardrail theater: defining guardrails but ignoring them when they conflict with a metric the team wants to ship. The guardrail framework only works if the organization commits to respecting it. The decision to not ship despite a 40% upgrade lift is uncomfortable but correct — it prevents $1.7M in net losses'"
+    weight: 0.30
+    description: "Practical"

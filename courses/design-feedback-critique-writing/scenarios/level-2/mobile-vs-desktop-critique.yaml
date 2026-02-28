@@ -1,0 +1,49 @@
+meta:
+  id: mobile-vs-desktop-critique
+  level: 2
+  course: design-feedback-critique-writing
+  type: output
+  description: "Mobile vs desktop critique — adapt feedback approach for reviewing responsive designs across device types"
+  tags: [mobile, desktop, responsive, cross-device, intermediate]
+
+state: {}
+
+trigger: |
+  A designer presents both mobile and desktop versions
+  of a recipe sharing app. Issues you notice:
+
+  Desktop:
+  - Great use of whitespace, 3-column layout works well
+  - Recipe ingredients list is on the left, instructions
+    on the right — easy to follow side-by-side
+  - Large hero images look beautiful
+
+  Mobile:
+  - The 3-column layout was just shrunk to fit — text
+    is 10px and requires pinch-to-zoom
+  - Ingredients and instructions are in separate tabs
+    — user must switch back and forth while cooking
+  - Hero images take up 80% of the viewport — user has
+    to scroll past a massive photo to see the recipe
+  - The 'Save Recipe' button is a tiny icon in the
+    top-right corner — easy to miss
+
+  The designer says: "I designed desktop first and then
+  adapted for mobile."
+
+  Task: Write feedback that addresses the mobile-specific
+  issues and teaches mobile-first thinking.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response provides specific mobile feedback — text size (10px is below the minimum readable size on mobile — iOS recommends 17px for body text, Android recommends 14px minimum, WCAG requires text to be resizable up to 200% without loss — don't shrink desktop text, redesign for mobile constraints), ingredient/instruction tabs (splitting content into tabs that users need to see simultaneously is a mobile-specific UX failure — while cooking, users need ingredients visible while reading instructions, recommend: interleaved format where each step lists its ingredients inline, or a persistent ingredients panel accessible via slide-out), hero image size (80% of viewport for a decorative image pushes the actual content — the recipe — below the fold, on mobile screen real estate is precious: reduce hero to 40% or use a background image with text overlay — the recipe title and metadata should be visible without scrolling), save button (tiny icon in top-right corner on mobile: touch target below 44x44px is an accessibility failure, the save action is important — make it a visible button, not a cryptic icon)."
+    weight: 0.35
+    description: "MobileFeedback"
+  - type: llm_judge
+    criteria: "Response teaches mobile-first thinking — why desktop-first caused these problems (when you design desktop first and 'adapt' for mobile, you're fitting a large design into a small space — this always results in compromises, mobile-first forces you to prioritize: what's essential when space is limited? that clarity then enhances the desktop version), key mobile-first principles (content priority: decide what's most important and show it first — recipe content > hero image, touch-friendly: all interactive elements at least 44x44px with adequate spacing, context-aware: mobile users may be in the kitchen with wet hands — one-handed use, large tap targets, minimal typing, progressive disclosure: show essential information first, provide access to details on demand — don't try to show everything at once), and specific recommendation (redesign mobile from scratch with mobile context in mind — a recipe app's mobile experience should be optimized for the kitchen: large text, hands-free scrolling, minimal interaction needed during cooking)."
+    weight: 0.35
+    description: "MobileFirstThinking"
+  - type: llm_judge
+    criteria: "Response acknowledges what works and provides balanced assessment — desktop praise (the desktop design genuinely works well — 3-column layout, side-by-side ingredients and instructions, beautiful imagery — acknowledge this specifically before discussing mobile issues), balanced framing (the problem isn't that the designer is bad — desktop-first is a common approach, the feedback helps them understand a different mindset), device-specific review checklist (provide a quick reference: When reviewing mobile: check minimum text size, verify touch targets are 44px+, ensure primary content is above fold, test one-handed reachability, verify no horizontal scroll, check if content order serves mobile context; When reviewing desktop: check line length stays under 75 characters, verify whitespace usage, check for empty screen real estate, ensure multi-column layouts serve the content), and suggests a testing method ('pull up the design on your actual phone and try to use it while standing in a kitchen — the issues become immediately obvious')."
+    weight: 0.30
+    description: "BalancedAssessment"

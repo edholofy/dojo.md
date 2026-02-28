@@ -1,0 +1,38 @@
+meta:
+  id: multi-touch-attribution
+  level: 3
+  course: funnel-analysis
+  type: output
+  description: "Multi-touch attribution — build data-driven attribution models that accurately credit touchpoints across complex customer journeys"
+  tags: [multi-touch, data-driven-attribution, markov-chains, shapley-values, advanced]
+
+state: {}
+
+trigger: |
+  The CMO says: "Simple attribution models aren't cutting it anymore.
+  We have customers with 8-15 touchpoints across 4-6 channels before
+  converting. I need a data-driven attribution model that tells me the
+  TRUE contribution of each channel. What are my options and how do
+  I implement them?"
+
+  Channel data (last quarter, 5,000 conversions):
+  Average touchpoints per conversion: 11
+  Channels: paid search, organic, social, email, display, direct, referral
+  Average journey length: 23 days
+
+  Task: Explain advanced multi-touch attribution approaches, their
+  implementation, and how to use the results for budget decisions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response explains advanced attribution methodologies — methods: 'Advanced multi-touch attribution methods: Method 1 — Markov chain attribution: concept: model the customer journey as a series of states (channels). Each transition between states has a probability. The attribution is calculated by measuring the removal effect — how much would conversions drop if a channel were removed? Implementation: build a transition matrix from actual customer journey data. State: current channel. Transition: probability of moving to the next channel or converting. For each channel, calculate: conversion probability with the channel in the model vs without it. The channel's attribution = the proportional drop in conversions when removed. Example: removing email from all journeys drops predicted conversions from 5,000 to 3,200 (36% drop). Removing social drops conversions to 4,500 (10% drop). Email gets 3.6x more credit than social. Advantages: data-driven, accounts for channel interactions and sequencing. Limitations: requires large datasets (10,000+ journeys), does not capture within-channel differences (good ad vs bad ad). Method 2 — Shapley value attribution (game theory approach): concept: borrowed from cooperative game theory. Each channel is a player. The Shapley value calculates the average marginal contribution of each channel across ALL possible orderings and coalitions. For each channel, consider every possible subset of channels: how much does adding this channel to the subset improve conversion? Average across all possible subsets = Shapley value. Example: email alone converts 2%. Email + social converts 5%. Email + search converts 8%. The marginal value of adding email varies by context. Shapley averages all contexts. Advantages: mathematically fair, accounts for synergies between channels. Limitations: computationally expensive (2^n subsets for n channels — 128 subsets for 7 channels), requires conversion data for every channel combination. Method 3 — Algorithmic/ML attribution: use machine learning to predict conversion probability based on the sequence and timing of touchpoints. Models: logistic regression (simple, interpretable). Random forest or gradient boosted trees (more accurate, less interpretable). LSTM/sequence models (captures order effects, least interpretable). Features: channel sequence, time between touches, number of touches per channel, recency of each touch. Advantages: most accurate, captures complex patterns. Limitations: black box, requires data science expertise, needs large datasets'"
+    weight: 0.35
+    description: "Methods"
+  - type: llm_judge
+    criteria: "Response covers implementation and practical considerations — implementation: 'Implementation guide: Step 1 — Data preparation (most critical step): required data per user journey: user ID, timestamp, channel/touchpoint, conversion (yes/no), conversion value. Data quality requirements: consistent user identification across channels (cross-device identity resolution). Accurate timestamp recording (timezone-normalized to UTC). Complete journey capture (all touchpoints, not just last 5). Minimum data: 10,000 converting journeys and 50,000+ non-converting journeys for reliable results. Step 2 — Build the baseline (position-based model): before implementing advanced models, establish a baseline with position-based attribution. This gives the team an immediate improvement over last-click while the advanced model is being built. Step 3 — Implement Markov chain model (recommended starting point): why start here: easier to implement than Shapley, more interpretable than ML. Libraries: ChannelAttribution (R), or custom Python implementation with transition matrices. Steps: extract all user journeys as ordered channel sequences. Build first-order transition probability matrix. Calculate removal effects for each channel. Normalize to get attribution weights. Validation: compare Markov attribution to last-click attribution. Channels that are overvalued by last-click (typically direct and branded search) will lose credit. Channels that are undervalued (typically display and social) will gain credit. Step 4 — Incrementality testing (ground truth): attribution models estimate channel contribution. Incrementality tests MEASURE it causally. For each major channel: run a geographic holdout test (turn off the channel in select markets for 2-4 weeks). Measure the actual revenue impact. Compare to model predictions. If the attribution model says email drives 20% of conversions and the holdout shows 18%, the model is well-calibrated. Step 5 — Operationalize: integrate attribution weights into budget allocation decisions. Update the model monthly (customer journeys change over time). Report attribution alongside incrementality results'"
+    weight: 0.35
+    description: "Implementation"
+  - type: llm_judge
+    criteria: "Response covers using attribution results for budget decisions — budget: 'Using attribution for budget optimization: translating attribution to budget allocation: channel | last-click attribution | Markov attribution | current budget | recommended budget. Paid search: 40% | 28% | $200K | $150K (-25%). Organic: 5% | 12% | $60K | $80K (+33%). Social: 8% | 15% | $40K | $80K (+100%). Email: 12% | 20% | $30K | $65K (+117%). Display: 3% | 10% | $50K | $55K (+10%). Direct: 25% | 8% | $0 | $0. Referral: 7% | 7% | $20K | $35K (+75%). Key insight: last-click massively overvalues paid search and direct (bottom-of-funnel channels). Markov reveals that email and social play critical mid-funnel roles that last-click ignores. Budget reallocation approach: do not shift budget all at once. Phase 1 (month 1-2): shift 10% of paid search budget to email and social. Measure impact on overall conversions. Phase 2 (month 3-4): if conversions hold or improve, shift another 10%. Phase 3 (month 5-6): continue gradual reallocation based on results. Why gradual: sudden budget cuts to paid search may cause conversion drops that take weeks to recover from. The upper-funnel investment in social and email takes time to show results. Channel interaction effects: attribution often reveals synergies: users who see a social ad AND receive an email convert 3x better than either channel alone. This means cutting social would also hurt email effectiveness. Budget optimization must account for these synergies — optimizing channels independently can destroy synergistic value. Common mistake: using attribution to CUT budgets rather than REALLOCATE. The goal is not to spend less but to spend more effectively. Total budget should be determined by overall ROAS targets, not channel-level attribution'"
+    weight: 0.30
+    description: "Budget"

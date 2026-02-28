@@ -1,0 +1,47 @@
+meta:
+  id: typography-audit-redesign
+  level: 3
+  course: color-palette-typography-rationale
+  type: output
+  description: "Typography audit and redesign — audit existing typography system for issues and design an improved system"
+  tags: [audit, redesign, consistency, rationalization, advanced]
+
+state: {}
+
+trigger: |
+  A design director says: "Our product has grown over
+  5 years with 3 different designers. The typography is
+  chaos:
+
+  Audit findings:
+  - 4 font families in production (Inter, Roboto, Open
+    Sans, Lato) — all serve similar purposes
+  - 23 different font-size values ranging from 10px to 64px
+  - 7 different line-height values, inconsistently applied
+  - Some components use rem, others px, others em
+  - No documented type scale — sizes chosen ad hoc
+  - Mobile typography is just desktop shrunk by 80%
+
+  We need to rationalize this into a coherent typography
+  system. But we can't change everything overnight — we
+  have 200+ screens.
+
+  How do we audit, design the new system, and plan the
+  migration?"
+
+  Task: Conduct a typography audit, design a rationalized
+  type system, and create a migration plan with rationale.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response conducts systematic typography audit — font family consolidation (4 families serving similar roles is redundant — pick one: likely Inter as most complete and well-maintained, assess each family's usage: which is most prevalent? which has the best feature set — variable font, tabular figures, multiple weights? recommendation with rationale for the chosen family), size rationalization (23 sizes to ~8-10 sizes: map each current size to the nearest value in a new modular scale — document the mapping table, identify outlier sizes that no component truly needs), line-height standardization (7 inconsistent values to 3-4 standardized values tied to text roles: tight 1.2 for headings, normal 1.5 for body, relaxed 1.7 for long-form), unit standardization (choose rem for all typography sizes — explain why: respects user browser font size preferences, consistent scaling, document conversion from px to rem with base 16px)."
+    weight: 0.35
+    description: "TypographyAudit"
+  - type: llm_judge
+    criteria: "Response designs the new typography system — type scale based on a ratio (e.g., 1.250 Major Third: 12, 14, 16, 20, 24, 30, 36, 48 — or Perfect Fourth: 12, 14, 16, 21, 28, 37, 50 — chosen ratio explained and compared to alternatives), named styles not just sizes (Display: 48px/1.1 Bold — page hero text, H1: 36px/1.2 SemiBold — page titles, H2: 24px/1.25 SemiBold — section headers, H3: 20px/1.3 Medium — subsection headers, Body Large: 18px/1.6 Regular — featured paragraphs, Body: 16px/1.5 Regular — primary reading, Body Small: 14px/1.5 Regular — secondary content, Caption: 12px/1.4 Regular — labels and metadata), responsive behavior per style (Display scales from 48px desktop to 28px mobile, Body stays 16px across all breakpoints — explicit responsive mapping), and design tokens (each named style becomes a design token: --typography-h1-size, --typography-h1-line-height, --typography-h1-weight — for implementation)."
+    weight: 0.35
+    description: "NewTypeSystem"
+  - type: llm_judge
+    criteria: "Response provides migration plan — phased approach for 200+ screens (Phase 1: new components use new system immediately — all new work follows new standards, Phase 2: high-traffic screens migrated first — home, dashboard, settings — visible improvement for most users, Phase 3: remaining screens migrated as part of regular maintenance — opportunistic updates when screens are touched for other reasons, Phase 4: final cleanup — find remaining non-conforming values with lint rules), mapping guide (document: current 23 sizes mapped to nearest new scale value — '15px → 16px, 13px → 14px, 22px → 20px' — developers can look up the mapping), visual regression testing (screenshot comparison before/after migration of each screen — ensure changes are intentional), and governance (lint rules blocking new non-standard sizes, type scale documentation in design system, PR review checklist includes typography compliance)."
+    weight: 0.30
+    description: "MigrationPlan"

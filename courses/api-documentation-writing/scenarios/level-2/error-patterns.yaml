@@ -1,0 +1,48 @@
+meta:
+  id: error-patterns
+  level: 2
+  course: api-documentation-writing
+  type: output
+  description: "Document error response patterns — design and document consistent error schemas with machine-readable codes, field-level details, and troubleshooting links"
+  tags: [API, documentation, errors, error-codes, patterns, consistency, intermediate]
+
+state: {}
+
+trigger: |
+  Your API has inconsistent error responses across endpoints:
+
+  Endpoint A returns:
+  ```json
+  { "error": "Invalid email" }
+  ```
+
+  Endpoint B returns:
+  ```json
+  { "code": 422, "errors": [{ "field": "email", "msg": "bad format" }] }
+  ```
+
+  Endpoint C returns:
+  ```json
+  { "status": "error", "reason": "email_invalid" }
+  ```
+
+  Developers can't write generic error handling because every endpoint
+  is different. You need to design and document a unified error pattern.
+
+  Task: Design a standard error response format and document it
+  comprehensively. Include: error schema, error code catalog,
+  per-endpoint error documentation, and SDK error handling examples.
+
+assertions:
+  - type: llm_judge
+    criteria: "Standard error format is designed — consistent structure: { 'error': { 'type': 'validation_error' (category), 'code': 'INVALID_EMAIL' (machine-readable, stable), 'message': 'The email address format is invalid' (human-readable, may change), 'param': 'email' (which parameter caused the error), 'documentation_url': 'https://docs.api.com/errors/INVALID_EMAIL' (link to detailed docs) } }. For validation errors with multiple fields: 'details' array with per-field errors. HTTP status code in response, error code for programmatic handling"
+    weight: 0.35
+    description: "Error format"
+  - type: llm_judge
+    criteria: "Error code catalog is organized — categories: authentication_error (INVALID_TOKEN, TOKEN_EXPIRED, MISSING_AUTH), validation_error (REQUIRED_FIELD, INVALID_FORMAT, OUT_OF_RANGE), resource_error (NOT_FOUND, ALREADY_EXISTS, CONFLICT, GONE), rate_limit_error (RATE_EXCEEDED), payment_error (INSUFFICIENT_FUNDS, CARD_DECLINED, EXPIRED_CARD), server_error (INTERNAL_ERROR, SERVICE_UNAVAILABLE). Each code: stable identifier (won't change), HTTP status, description, common causes, how to handle. Error codes are part of the API contract — adding new ones is non-breaking, removing is breaking"
+    weight: 0.35
+    description: "Error catalog"
+  - type: llm_judge
+    criteria: "Per-endpoint and SDK documentation are practical — each endpoint documents which error codes it can return (not every endpoint returns every error). SDK error handling example: try { await api.createPayment(data) } catch (err) { if (err.code === 'CARD_DECLINED') { showMessage('Card declined, try another') } else if (err.type === 'validation_error') { showFieldErrors(err.details) } }. Type-based handling (validation_error → show form errors) vs code-based handling (CARD_DECLINED → specific action). Anti-pattern: don't match on message strings (they change)"
+    weight: 0.30
+    description: "SDK integration"

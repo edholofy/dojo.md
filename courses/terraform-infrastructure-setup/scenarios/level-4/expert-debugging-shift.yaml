@@ -1,0 +1,51 @@
+meta:
+  id: expert-debugging-shift
+  level: 4
+  course: terraform-infrastructure-setup
+  type: output
+  description: "Combined expert shift — advise on organizational IaC strategy while handling CI/CD pipeline failures and compliance audit findings"
+  tags: [Terraform, troubleshooting, combined, shift-simulation, expert]
+
+state: {}
+
+trigger: |
+  As infrastructure lead, you face three organizational challenges:
+
+  Challenge 1 — CI/CD pipeline reliability:
+  Your Atlantis-based pipeline has been flaky:
+  - 20% of plans timeout (state lock contention with 8 teams)
+  - Plans show different results on retry (eventual consistency)
+  - Apply fails intermittently (API rate limiting)
+  Teams are losing trust and starting to apply from laptops again.
+
+  Challenge 2 — Compliance audit preparation:
+  SOC2 auditor arrives in 6 weeks. They need to see:
+  - Evidence that all infrastructure changes go through code review
+  - Proof that production access is restricted
+  - Encryption enforcement across all resources
+  - Automated security scanning results
+
+  Challenge 3 — Cost optimization mandate:
+  CFO mandates 25% cost reduction ($37.5K/month savings from $150K).
+  Current waste identified:
+  - Dev environments running 24/7 ($20K/month)
+  - Oversized RDS instances ($15K/month excess)
+  - Unused EBS volumes and snapshots ($8K/month)
+  - NAT Gateway in all AZs for non-prod ($5K/month excess)
+
+  Task: Address all three challenges with actionable plans and
+  timelines.
+
+assertions:
+  - type: llm_judge
+    criteria: "CI/CD pipeline reliability is addressed — state lock contention: split monolith states into per-team states (each team's plan/apply doesn't block others). Timeout: increase lock timeout (-lock-timeout=5m), investigate which team's applies are long-running. Eventual consistency: add terraform plan -refresh-only before plan to ensure consistent state. Rate limiting: reduce parallelism (-parallelism=5), stagger team deployments. Trust recovery: show teams metrics (success rate improvement), ensure fast feedback loops. Consider: Terraform Cloud for managed execution (handles locking, retries, queueing)"
+    weight: 0.35
+    description: "Pipeline reliability"
+  - type: llm_judge
+    criteria: "Compliance preparation has a timeline — weeks 1-2: implement checkov/tfsec in all CI pipelines, generate baseline compliance reports. Weeks 2-3: remediate findings (add encryption to all S3 buckets, RDS, EBS; restrict security groups; configure CloudTrail). Weeks 3-4: implement Sentinel policies to prevent future violations. Weeks 4-5: generate audit evidence (Git logs showing all changes reviewed, CI scan reports, Terraform Cloud audit logs). Week 6: dry-run audit with compliance team. Evidence portfolio: PR review logs, automated scan reports, policy enforcement logs, access control documentation (IAM policy)"
+    weight: 0.35
+    description: "Compliance"
+  - type: llm_judge
+    criteria: "Cost optimization targets specific savings — dev environments 24/7 → schedule off-hours (Lambda + EventBridge, save $15K): terraform manages the schedule. RDS right-sizing: use Performance Insights data, downsize dev/staging instances (save $10K). EBS cleanup: terraform state list to find managed volumes, delete unattached ones, manage snapshot lifecycle (save $5K). NAT Gateway: single NAT Gateway per non-prod VPC instead of per-AZ (save $4K). Total: ~$34K savings (23%, close to 25% target). Implementation: Infracost in all PRs to prevent future waste, monthly cost review meeting, per-team cost dashboards using tags"
+    weight: 0.30
+    description: "Cost optimization"

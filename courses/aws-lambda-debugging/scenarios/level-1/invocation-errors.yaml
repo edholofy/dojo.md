@@ -1,0 +1,72 @@
+meta:
+  id: invocation-errors
+  level: 1
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda invocation errors — diagnose throttling, concurrency limits, and invocation type differences (sync vs async)"
+  tags: [AWS, Lambda, invocation, throttling, concurrency, sync-async, beginner]
+
+state: {}
+
+trigger: |
+  Your Lambda function starts returning errors during a traffic spike:
+
+  $ aws lambda invoke --function-name process-order output.json
+  {
+    "StatusCode": 429,
+    "FunctionError": "Unhandled"
+  }
+
+  $ cat output.json
+  {
+    "errorType": "TooManyRequestsException",
+    "errorMessage": "Rate exceeded"
+  }
+
+  CloudWatch metrics show:
+  - Throttles: 1,500 (these are rejected requests!)
+  - ConcurrentExecutions: 1,000 (account limit)
+  - Errors: 200 (actual function errors)
+  - Invocations: 8,300
+
+  The account has a default concurrency limit of 1,000 across ALL
+  Lambda functions. Your function is consuming 800 concurrent
+  executions, starving other functions.
+
+  Important: Throttles are NOT counted in Invocations or Errors
+  metrics! You must monitor the Throttles metric separately.
+
+  Understanding invocation types:
+
+  Synchronous (RequestResponse):
+  - API Gateway, CLI invoke, SDK invoke
+  - Caller waits for response
+  - Throttled: returns 429 immediately
+  - Errors: returned to caller
+
+  Asynchronous (Event):
+  - S3 events, SNS, EventBridge
+  - Caller gets 202 Accepted immediately
+  - Lambda retries twice on failure
+  - Throttled: Lambda retries with backoff for up to 6 hours
+  - Failed after retries: sent to DLQ or destination
+
+  Task: Explain Lambda invocation debugging. Write: synchronous vs
+  asynchronous invocation differences, throttling (what it is, how
+  to detect, how to fix), concurrency limits (account vs function
+  reserved), the retry behavior for each invocation type, and how
+  to monitor invocation health.
+
+assertions:
+  - type: llm_judge
+    criteria: "Invocation types are explained — synchronous: caller waits, gets response or error. Used by API Gateway, CLI, SDK. Asynchronous: caller gets 202 immediately, Lambda processes in background. Used by S3, SNS, EventBridge. Lambda retries async failures twice (3 total attempts). Poll-based: Lambda polls event source (SQS, Kinesis, DynamoDB Streams) — behaves differently for each. Understanding invocation type is critical because error handling, retry behavior, and throttling behavior differ for each"
+    weight: 0.35
+    description: "Invocation types"
+  - type: llm_judge
+    criteria: "Throttling and concurrency are covered — default account limit: 1,000 concurrent executions (can be increased via support). Throttling = requests rejected when concurrency limit reached. Throttles metric: must monitor separately (not counted in Invocations or Errors!). Reserved concurrency: guarantee capacity for a function (but limits it too). Provisioned concurrency: pre-warm environments for consistent latency. Fix throttling: request limit increase, use reserved concurrency to protect critical functions, implement backoff in callers, use SQS to buffer requests"
+    weight: 0.35
+    description: "Throttling and concurrency"
+  - type: llm_judge
+    criteria: "Monitoring and retry behavior are practical — monitor: Invocations, Errors, Throttles, Duration, ConcurrentExecutions. Set alarms on: Throttles > 0, Error rate > 5%, Duration approaching timeout. Retry behavior: sync — no automatic retry (caller must retry), async — 2 retries with exponential backoff, then DLQ/destination. SQS: retries based on visibility timeout, then DLQ. Kinesis/DynamoDB Streams: retries until record expires or succeeds (can block shard). Configure maxRetryAttempts and DLQ for each invocation pattern"
+    weight: 0.30
+    description: "Monitoring and retry"

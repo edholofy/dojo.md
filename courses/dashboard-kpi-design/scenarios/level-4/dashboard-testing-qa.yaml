@@ -1,0 +1,36 @@
+meta:
+  id: dashboard-testing-qa
+  level: 4
+  course: dashboard-kpi-design
+  type: output
+  description: "Implement dashboard testing and QA — establish testing frameworks for dashboards including data validation, visual regression, performance testing, and user acceptance"
+  tags: [testing, QA, validation, regression, performance, expert]
+
+state: {}
+
+trigger: |
+  The VP of Data says: "Last month we had three dashboard incidents:
+  (1) a filter broke and showed unfiltered data to a restricted user,
+  (2) a chart showed the wrong date range after a BI tool update,
+  and (3) the executive dashboard doubled revenue because a join
+  created duplicate rows. We don't test our dashboards — we just build
+  them and hope they work.
+
+  I want a testing framework for dashboards, similar to how engineering
+  tests their code."
+
+  Task: Design a comprehensive dashboard testing and QA framework.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response designs a multi-layer dashboard testing framework — framework: 'Dashboard testing framework — 4 layers: Layer 1 — Data validation tests (automated, run daily): Test the data feeding each dashboard for accuracy and completeness. Test 1 — Row count validation: compare row counts in the dashboard's source table to the source system. dashboard_revenue_table: 45,230 rows. source_salesforce_opportunities: 45,230 rows. Match: pass. If they differ: data loss or duplication during ETL. Test 2 — Aggregate validation: compare key totals to a known source of truth. Dashboard total revenue: $4,823,456.78. Stripe billing total: $4,823,456.78. Match: pass. Run this for every financial metric monthly — the dashboard must tie to the system of record. Test 3 — Duplicate detection: check for duplicate rows that inflate metrics. SELECT order_id, COUNT(*) FROM orders GROUP BY order_id HAVING COUNT(*) > 1. Any results = fail. Duplicates caused the revenue doubling incident. Test 4 — NULL and completeness checks: verify critical fields are populated. SELECT COUNT(*) FROM customers WHERE region IS NULL. If more than 1% of customers have NULL region, the regional breakdown chart will undercount. Test 5 — Freshness check: verify data was updated within the expected window. SELECT MAX(updated_at) FROM revenue_daily. If the max date is more than 26 hours ago, the data is stale. Layer 2 — Metric calculation tests (automated, run on every dbt change): Test each metric's calculation against manually verified results. Test data set: 10 known invoices with pre-calculated expected revenue. Run the revenue metric calculation on the test data set. Expected: $12,345.67. Actual: $12,345.67. Pass. Regression test: if someone changes the revenue SQL, this test catches unintended changes'"
+    weight: 0.35
+    description: "Framework"
+  - type: llm_judge
+    criteria: "Response covers visual and access control testing — visual: 'Layer 3 — Visual and functional tests (semi-automated, run weekly): Test the dashboard's user-facing behavior. Test 1 — Filter functionality: apply each filter and verify the data updates correctly. Filter by region = North America: all chart values should show only NA data. Filter by date = last 7 days: all charts should show only the last 7 days. Cross-filter: clicking a bar in one chart should filter related charts. Automate with Playwright or Selenium: script logs into the BI tool, applies filters, and captures screenshots. Compare screenshots to baseline images (visual regression). If more than 5% of pixels differ, flag for manual review. Test 2 — Drill-down paths: verify each drill-down link navigates to the correct destination with the correct context. Click Enterprise revenue bar → should navigate to Enterprise detail dashboard with the Enterprise filter pre-applied. If the drill-down loses the filter context, the destination shows all data instead of Enterprise only. Test 3 — Responsive layout: test the dashboard at desktop (1920×1080), tablet (1024×768), and mobile (375×812) viewports. Verify no content overflows, overlaps, or becomes unreadable. Test 4 — Chart accuracy: take a screenshot of each chart and compare to the expected output for the known test data. If the chart rendering changes (e.g., BI tool update changes bar widths), the visual regression test catches it. Layer 4 — Access control tests (automated, run on every permission change): The most critical tests — preventing unauthorized data access. Test: log in as a user from Company A. Attempt to access Company B's dashboard → should return access denied. Attempt to modify a filter to show company_id = B → should be blocked by row-level security. Test: log in as a Viewer role. Attempt to edit a dashboard → should be read-only. Attempt to export raw data → should be blocked (if export is restricted). Run access control tests with every new user role, every permission change, and every new dashboard. The filter-break incident (showing unfiltered data to a restricted user) would have been caught by this layer'"
+    weight: 0.35
+    description: "Visual"
+  - type: llm_judge
+    criteria: "Explanation covers performance testing and the QA workflow — workflow: 'Performance testing: Test dashboard load times under various conditions: Test 1 — Baseline load time: load the dashboard with default filters. Target: under 3 seconds for executives, under 5 seconds for detailed dashboards. Measure: time to first meaningful paint (when the first KPI card renders). Measure: time to full load (when all charts are rendered). Test 2 — Concurrent user load test: simulate 50 users loading the dashboard simultaneously. Ensure the database and BI tool handle the load without degradation. If P95 load time exceeds 10 seconds under 50 concurrent users, add caching or pre-aggregation. Test 3 — Date range stress test: load the dashboard with the maximum date range (all time). If it takes 30 seconds with all-time data but 2 seconds with last 12 months, set the default to 12 months and warn users that broader ranges may be slow. QA workflow for dashboard changes: every dashboard change goes through a review process: 1. Development: analyst builds or modifies the dashboard in a development environment (Looker dev mode or Tableau development project). 2. Data validation: automated tests run against the development version. All data tests must pass. 3. Peer review: another analyst reviews the dashboard for accuracy, usability, and adherence to the style guide. 4. User acceptance: the dashboard stakeholder (e.g., CFO for financial dashboards) reviews and approves the changes. 5. Deploy: promote the dashboard to production. 6. Post-deploy validation: automated tests run against the production version to confirm nothing broke during deployment. If any step fails, the change is blocked until the issue is resolved. This mirrors the software engineering code review process — because dashboards are code'"
+    weight: 0.30
+    description: "Workflow"

@@ -1,0 +1,38 @@
+meta:
+  id: window-functions
+  level: 3
+  course: data-analysis-python-pandas
+  type: output
+  description: "Master window functions — use rolling, expanding, and exponentially weighted windows for time series analysis and feature engineering"
+  tags: [python, pandas, rolling, expanding, ewm, window-functions, advanced]
+
+state: {}
+
+trigger: |
+  You are building a financial analytics dashboard. The data team
+  needs several derived metrics from daily stock price data (500
+  trading days, columns: date, ticker, open, high, low, close,
+  volume):
+
+  1. 20-day and 50-day moving averages (trading signals)
+  2. Bollinger Bands (mean +/- 2 standard deviations)
+  3. Cumulative return since the start of the period
+  4. 30-day volatility (rolling standard deviation of returns)
+  5. Exponentially weighted moving average (more weight to recent data)
+
+  Task: Calculate all five metrics and explain window function
+  concepts.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code correctly calculates all five window-based metrics — code: 'Window functions for financial analytics: Setup: df = df.sort_values([\"ticker\", \"date\"]).set_index(\"date\"). df[\"daily_return\"] = df.groupby(\"ticker\")[\"close\"].pct_change(). Metric 1 — Moving averages (rolling): df[\"ma_20\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(20).mean()). df[\"ma_50\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(50).mean()). Trading signal: when MA20 crosses above MA50 (golden cross) it signals a potential uptrend. When MA20 crosses below MA50 (death cross) it signals a potential downtrend. df[\"signal\"] = np.where(df[\"ma_20\"] > df[\"ma_50\"], \"bullish\", \"bearish\"). Metric 2 — Bollinger Bands: df[\"bb_middle\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(20).mean()). df[\"bb_std\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(20).std()). df[\"bb_upper\"] = df[\"bb_middle\"] + 2 * df[\"bb_std\"]. df[\"bb_lower\"] = df[\"bb_middle\"] - 2 * df[\"bb_std\"]. Interpretation: price near the upper band suggests overbought. Price near the lower band suggests oversold. Band width (upper minus lower) measures volatility. Metric 3 — Cumulative return (expanding): df[\"cumulative_return\"] = df.groupby(\"ticker\")[\"daily_return\"].transform(lambda x: (1 + x).cumprod() - 1). cumprod() calculates the cumulative product: if daily returns are +1%, -0.5%, +2%, the cumulative return is (1.01 * 0.995 * 1.02) - 1 = 2.52%. Metric 4 — 30-day volatility (rolling std of returns): df[\"volatility_30d\"] = df.groupby(\"ticker\")[\"daily_return\"].transform(lambda x: x.rolling(30).std() * np.sqrt(252)). The np.sqrt(252) annualizes the volatility (252 trading days per year). High volatility means the stock price is swinging widely. Low volatility means stable, predictable movement. Metric 5 — Exponentially weighted moving average (EWM): df[\"ewma_20\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.ewm(span=20).mean()). EWM gives more weight to recent observations. span=20 means the center of mass is equivalent to a 20-day window, but recent days count more. Comparison: SMA(20) weights all 20 days equally. EWMA(20) weights recent days more heavily — it reacts faster to price changes'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation compares rolling, expanding, and EWM window types — explanation: 'Three types of window functions: Rolling window (fixed-size sliding window): looks at the last N observations. Every new observation pushes the oldest one out. Use for: moving averages, recent volatility, any metric where old data should stop influencing the result. Parameters: window — size (number of rows or time period). min_periods — minimum observations required (default = window). center — whether to center the window (default = False, window ends at current row). Expanding window (grows from the start): looks at all observations from the first row to the current row. The window gets larger with each row. Use for: cumulative totals, running averages, year-to-date metrics. Example: df[\"running_avg\"] = df[\"revenue\"].expanding().mean(). This shows the average of all data seen so far at each point. Exponentially weighted (recent data matters more): weights decrease exponentially as observations get older. The most recent observation has the highest weight. Use for: any metric where recent data is more important than old data. Reacting quickly to changes while still smoothing noise. Parameters: span — decay in terms of span (higher span = slower decay). alpha — smoothing factor directly (0 to 1, higher = more weight to recent). halflife — decay in terms of half-life. Time-based windows: df[\"close\"].rolling(\"30D\").mean(). Instead of a fixed number of rows, the window covers a time period. This handles irregular time series (weekends, holidays, missing days) correctly. A 30-day time-based window always covers exactly 30 calendar days, regardless of how many trading days fall in that period'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers feature engineering with window functions for ML — feature engineering: 'Window functions for feature engineering: Window functions are powerful for creating features for machine learning models, especially time series models. Lag features: df[\"close_lag_1\"] = df.groupby(\"ticker\")[\"close\"].shift(1). df[\"close_lag_7\"] = df.groupby(\"ticker\")[\"close\"].shift(7). df[\"close_lag_30\"] = df.groupby(\"ticker\")[\"close\"].shift(30). Shift creates lagged versions of a column. These are the most basic time series features — what was the value yesterday, last week, last month? Rolling statistics as features: for window in [7, 14, 30]: df[f\"mean_{window}d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(window).mean()). df[f\"std_{window}d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(window).std()). df[f\"min_{window}d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(window).min()). df[f\"max_{window}d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.rolling(window).max()). This creates 12 features (4 stats x 3 windows) that capture recent behavior at different time scales. Momentum features: df[\"momentum_7d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.pct_change(7)). df[\"momentum_30d\"] = df.groupby(\"ticker\")[\"close\"].transform(lambda x: x.pct_change(30)). Momentum measures the rate of change over a period. Critical rule — avoid data leakage: window functions must only use past data when building features for prediction. Never use center=True for ML features (it uses future data). Always use shift(1) before calculating rolling stats if the rolling window includes the current row and the target is based on the current row'"
+    weight: 0.30
+    description: "Feature engineering"

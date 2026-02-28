@@ -1,0 +1,111 @@
+meta:
+  id: executive-meeting-summary
+  level: 2
+  course: meeting-notes-action-items
+  type: output
+  description: "Executive meeting summary — distill a long, detailed meeting into a concise executive summary appropriate for senior leadership who weren't present"
+  tags: [executive, summary, leadership, concise, strategic]
+
+state: {}
+
+trigger: |
+  You attended a 2-hour quarterly business review (QBR) on
+  behalf of your VP, who couldn't make it. She asked you to
+  send her "the key takeaways — I have 5 minutes to read
+  before my next meeting." She'll use your summary to decide
+  what to escalate to the C-suite.
+
+  Meeting: Q3 Quarterly Business Review
+  Duration: 2 hours
+  Attendees: 15 people (directors and senior managers from
+  Sales, Marketing, Product, Engineering, CS, Finance)
+  Led by: COO Michael Torres
+
+  Detailed notes from the meeting:
+
+  First 30 minutes — Sales Review (Dir. Sales, Karen White):
+  - Q3 revenue: $18.2M (target $19.5M, 93% attainment)
+  - Pipeline coverage for Q4: 2.8x ($54M pipeline for $19.5M
+    target) — Karen says this is "adequate but not comfortable"
+  - Enterprise segment: $12.1M, 101% of target — strong
+  - Mid-market: $4.3M, 86% of target — struggling
+  - SMB: $1.8M, 72% of target — "significantly behind"
+  - Win rate: 28% (down from 33% last quarter)
+  - Average deal size: up 12% due to enterprise strength
+  - Lost 2 sales reps in mid-market, 1 in SMB — haven't
+    replaced yet. Karen says hiring is taking 90+ days
+  - Biggest competitive loss: $800K deal to CompetitorX —
+    their new AI features were cited as the deciding factor
+  - Karen requested headcount acceleration and a competitive
+    response to CompetitorX's AI features
+
+  30 minutes — Marketing Review (Dir. Marketing, James Lee):
+  - Marketing qualified leads: 2,400 (up 15% QoQ)
+  - Cost per lead: down 8% due to content marketing efficiency
+  - Brand awareness: up in enterprise, flat in mid-market
+  - Launched new case study program — 6 published, pipeline
+    of 12 more. Early results showing 40% higher conversion
+    when case studies are used in sales process
+  - Website traffic: 340K monthly visitors (up 22%)
+  - James spent 15 minutes on the new brand campaign. Most
+    people in the room seemed disengaged during this section.
+  - James and Karen had a tense exchange about lead quality.
+    Karen said MQLs aren't converting because they're "tire
+    kickers." James pushed back with data showing MQL-to-SQL
+    conversion is actually up 5%.
+
+  30 minutes — Product & Engineering (VP Prod, Nina Patel):
+  - Launched 3 major features in Q3 (all on schedule)
+  - Customer-requested AI features are on the Q4 roadmap —
+    beta in November, GA in January
+  - Platform reliability: 99.97% uptime (best quarter ever)
+  - Technical debt: reduced by 20% (measured by bug backlog)
+  - Engineering headcount: 45 (approved for 52, 7 open reqs)
+  - Nina flagged that the AI features CompetitorX launched
+    are "table stakes" and the company's planned AI features
+    go significantly beyond what CompetitorX offers
+  - Nina asked for 2 additional engineers to accelerate the
+    AI roadmap. Michael (COO) said he'd consider it.
+
+  20 minutes — Customer Success (Dir. CS, Raj Mehta):
+  - Net revenue retention: 108% (target 115%)
+  - Churn: 4.2% (target <3%) — worst quarter in 2 years
+  - Raj attributed churn to mid-market and SMB segments
+  - Top reasons for churn: missing features (35%), price
+    (25%), poor onboarding (20%), competitor switch (20%)
+  - 3 enterprise clients at risk (combined ARR $1.8M) — all
+    citing the need for AI features
+  - Raj and Nina agreed to do joint customer meetings with
+    the at-risk accounts to preview the AI roadmap
+
+  10 minutes — Finance (Controller, Amy Walsh):
+  - Operating expenses 4% over budget (driven by unplanned
+    infrastructure costs and recruiting fees)
+  - Cash runway: 14 months at current burn
+  - Amy recommended tightening hiring to approved headcount
+    only — no new positions until Q1 budget planning
+
+  Final discussion (COO):
+  - Michael summarized three priorities for Q4:
+    1. Close the revenue gap — focus on enterprise pipeline
+    2. Accelerate AI features — this is now competitive urgent
+    3. Address mid-market/SMB performance — either fix or
+       reallocate resources to enterprise
+  - Next QBR: January 15, 2026
+
+  Task: Create the executive summary for your VP. She has
+  5 minutes to read it and needs to decide what to escalate.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response creates a concise, scannable executive summary — is appropriately short for a 5-minute read (not a full recreation of the 2-hour meeting); uses formatting that enables quick scanning (headers, bullets, bold for key numbers); leads with the most important information (revenue miss, competitive threat, churn increase); distills 2 hours of content into the essential decisions, risks, and action items; omits low-value content (James's 15-minute brand campaign section that disengaged the room, detailed marketing metrics that aren't actionable for the VP); prioritizes items that require VP/C-suite attention or decisions."
+    weight: 0.35
+    description: "ConciseExecutiveFormat"
+  - type: llm_judge
+    criteria: "Response surfaces the strategic narrative and key risks — connects the dots across departments: the revenue miss, competitive pressure from CompetitorX's AI features, 3 at-risk enterprise accounts, and accelerated AI roadmap are all part of one strategic story; highlights the mid-market/SMB underperformance pattern (sales miss, churn concentration, understaffing) as a strategic question needing VP attention; flags the tension between finance's hiring freeze recommendation and the requests for more headcount from sales and engineering; presents Michael's 3 Q4 priorities as the framework for what matters; identifies what the VP should consider escalating to the C-suite (competitive AI response urgency, $1.8M at-risk accounts, 14-month runway with growing burn)."
+    weight: 0.35
+    description: "StrategicNarrative"
+  - type: llm_judge
+    criteria: "Response includes clear action items and open decisions — captures decisions that need the VP's input or awareness: the COO's consideration of 2 additional AI engineers, the finance recommendation to freeze hiring, the sales headcount acceleration request; documents follow-ups: Nina and Raj's joint customer meetings with at-risk accounts, competitive analysis of CompetitorX; handles the Karen/James tension about lead quality diplomatically in the summary without amplifying interpersonal conflict; makes clear what needs VP attention vs what is informational."
+    weight: 0.30
+    description: "ActionableOutput"

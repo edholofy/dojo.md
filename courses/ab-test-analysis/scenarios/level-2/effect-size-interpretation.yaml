@@ -1,0 +1,39 @@
+meta:
+  id: effect-size-interpretation
+  level: 2
+  course: ab-test-analysis
+  type: output
+  description: "Interpret effect sizes in A/B tests — distinguish between statistical significance and practical significance, calculate absolute and relative lifts, and communicate effect magnitude to stakeholders"
+  tags: [effect-size, practical-significance, lift, MDE, intermediate]
+
+state: {}
+
+trigger: |
+  A product team presents two A/B test results:
+
+  Test A — Checkout button color: p = 0.001, conversion lift from
+  8.00% to 8.05% (0.05pp absolute, 0.6% relative), n = 2,000,000
+  per group.
+
+  Test B — New onboarding flow: p = 0.08, conversion lift from
+  8.0% to 9.2% (1.2pp absolute, 15% relative), n = 1,500 per group.
+
+  The PM says: "Test A is highly significant so we should definitely
+  ship it. Test B is not significant so it doesn't work."
+
+  Task: Explain why this reasoning is flawed and how to properly
+  interpret effect sizes alongside statistical significance.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response distinguishes statistical from practical significance — distinction: 'Statistical vs practical significance: Test A — statistically significant but practically meaningless: p = 0.001 means the 0.05pp difference is almost certainly real (not due to chance). But 0.05pp lift on 8% = 0.6% relative improvement. With 2 million users per group, even a minuscule difference becomes detectable. If the site gets 1 million visitors per month: additional conversions = 1,000,000 × 0.0005 = 500 per month. If each conversion is worth $10: annual value = 500 × $10 × 12 = $60,000. If the button color change costs $500 to implement, it is worth shipping. But the PM should not celebrate a 0.6% relative lift as a major win. Test B — not statistically significant but potentially very valuable: p = 0.08 means there is an 8% chance of seeing this difference by chance. The effect is not proven at α = 0.05. But the observed effect is LARGE: 1.2pp absolute lift = 15% relative improvement. With 1,500 per group, the test was severely underpowered for effects below ~2pp. Power analysis: to detect 1.2pp at 80% power with baseline 8%, need approximately 7,500 per group. They had 1,500 — power was only about 25%. The PM is wrong to dismiss Test B. The non-significant result is likely a Type II error (underpowered test), not evidence that the onboarding flow does not work'"
+    weight: 0.35
+    description: "Distinction"
+  - type: llm_judge
+    criteria: "Response covers effect size metrics and practical thresholds — metrics: 'Effect size metrics for A/B tests: Absolute lift: treatment rate minus control rate. Test A: 8.05% - 8.00% = 0.05pp. Test B: 9.2% - 8.0% = 1.2pp. Best for: understanding the actual magnitude of change. Relative lift: (treatment - control) / control × 100%. Test A: 0.05/8.00 × 100 = 0.6%. Test B: 1.2/8.0 × 100 = 15%. Best for: communicating to stakeholders (sounds more intuitive). Caution: relative lift can be misleading when the baseline is small (going from 0.1% to 0.2% is a 100% relative lift but only 0.1pp absolute). Cohen's h (for proportions): standardized measure that accounts for baseline rates. Small effect: h ≈ 0.2. Medium effect: h ≈ 0.5. Large effect: h ≈ 0.8. Test A: h ≈ 0.002 (trivially small). Test B: h ≈ 0.16 (small to medium). Setting the minimum detectable effect (MDE): before running a test, determine the smallest effect worth detecting. Framework: what is the minimum lift that justifies implementation cost? If the feature costs $100K to build and maintain: and each 1pp of conversion lift is worth $200K annually: MDE = $100K / $200K per pp = 0.5pp. Only design tests to detect effects of 0.5pp or larger. This prevents wasting resources detecting real but trivial effects like Test A's 0.05pp'"
+    weight: 0.35
+    description: "Metrics"
+  - type: llm_judge
+    criteria: "Response covers communicating effect sizes to stakeholders — communication: 'Communicating effect sizes to stakeholders: Framework: always present three things together: 1. Is the effect real? (statistical significance). 2. How big is the effect? (effect size with confidence interval). 3. Is it worth acting on? (practical significance / business impact). For Test A: the effect is real (p = 0.001) and the effect is tiny (0.05pp, CI [0.02pp, 0.08pp]). Business impact: approximately $60K per year. Implementation cost: $500. Ship it — the ROI is positive despite the tiny effect. But label it as a micro-optimization, not a breakthrough. For Test B: the evidence is inconclusive (p = 0.08) but the potential effect is large (1.2pp, CI [-0.15pp, 2.55pp]). If real, the business impact would be: 1.2pp × 1M visitors × $10 × 12 = $1.44M annually. Recommendation: do not ship yet but do not kill it. Run a larger test (7,500+ per group) to get a definitive answer. The expected value of running the larger test is high because the potential payoff is $1.44M. Avoid these common mistakes: reporting only p-values without effect sizes (p = 0.001 sounds impressive but says nothing about magnitude). Reporting only relative lift (a 15% lift sounds big, but 15% of what?). Dismissing underpowered tests as failures (absence of evidence is not evidence of absence). Using statistical significance as the sole decision criterion (a decision framework should combine significance, effect size, business impact, and implementation cost). Decision matrix: significant and large effect → ship. Significant and tiny effect → ship only if implementation cost is low. Not significant and large observed effect → retest with larger sample. Not significant and small observed effect → move on to other experiments'"
+    weight: 0.30
+    description: "Communication"

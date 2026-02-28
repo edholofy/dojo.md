@@ -1,0 +1,74 @@
+meta:
+  id: sam-local-debugging
+  level: 2
+  course: aws-lambda-debugging
+  type: output
+  description: "Debug Lambda locally with SAM CLI — use sam local invoke, start-api, and generate-event for local development and testing"
+  tags: [AWS, Lambda, SAM, local-testing, debugging, development, intermediate]
+
+state: {}
+
+trigger: |
+  Your development workflow is painful: make a change, deploy to AWS
+  (2 minutes), test, see error, repeat. You need local debugging.
+
+  Setting up SAM CLI:
+
+  $ sam init --runtime python3.12 --app-template hello-world
+  $ sam build
+  $ sam local invoke HelloWorldFunction
+  Invoking app.lambda_handler (python3.12)
+  Building image...
+  START RequestId: local-123
+  {"statusCode": 200, "body": "{\"message\": \"hello world\"}"}
+  END RequestId: local-123
+  REPORT RequestId: local-123 Duration: 5.23 ms
+
+  Works! But now testing with a real event:
+
+  $ sam local generate-event apigateway aws-proxy > event.json
+  $ sam local invoke HelloWorldFunction -e event.json
+  Error: Template file not found: template.yaml
+
+  Wrong directory — SAM needs template.yaml (infrastructure definition).
+
+  Testing API locally:
+  $ sam local start-api
+  Mounting HelloWorldFunction at http://127.0.0.1:3000/hello [GET]
+  $ curl http://localhost:3000/hello
+  {"message": "hello world"}
+
+  But environment variables are missing:
+  $ sam local invoke -n env.json HelloWorldFunction
+  # env.json: {"HelloWorldFunction": {"TABLE_NAME": "local-table"}}
+
+  Debugging with breakpoints:
+  $ sam local invoke -d 5858 HelloWorldFunction
+  Debugger listening on ws://127.0.0.1:5858
+  (attach VS Code debugger to port 5858)
+
+  Limitations:
+  - Local execution uses Docker — slightly different from actual Lambda
+  - IAM permissions not enforced locally
+  - VPC networking not simulated
+  - Event source mappings not simulated (must provide events manually)
+
+  Task: Explain SAM CLI local debugging. Write: sam local invoke
+  (function testing), sam local start-api (API testing), generating
+  test events, environment variables and configuration, debugging
+  with breakpoints (VS Code), limitations of local testing, and
+  complementary tools (LocalStack, moto for AWS mocking).
+
+assertions:
+  - type: llm_judge
+    criteria: "SAM local commands are explained — sam local invoke: runs function once with optional event file (-e event.json). sam local start-api: starts local HTTP server that routes to Lambda functions (mirrors API Gateway). sam local start-lambda: starts local Lambda endpoint for SDK testing. sam local generate-event: creates sample events for various triggers (apigateway, s3, sqs, dynamodb, etc.). sam build: compiles/packages code before local testing. All require Docker running locally"
+    weight: 0.35
+    description: "SAM commands"
+  - type: llm_judge
+    criteria: "Debugging and configuration are covered — breakpoint debugging: sam local invoke -d <port> pauses function until debugger attaches. VS Code: launch.json configuration for SAM debugging. Environment variables: -n env.json file or --parameter-overrides. Docker network: --docker-network to connect Lambda to local services (local DynamoDB, PostgreSQL). Hot reloading: --skip-pull-image for faster iteration. Layer testing: layers specified in template.yaml are automatically included in local invocations"
+    weight: 0.35
+    description: "Debugging"
+  - type: llm_judge
+    criteria: "Limitations and alternatives are practical — SAM local limitations: no IAM enforcement (permission errors won't appear), no VPC simulation, no event source mapping simulation, Docker-based execution has slight differences from real Lambda. Alternatives: LocalStack (full AWS service emulation), moto (Python AWS mocking), DynamoDB Local (official local DynamoDB). Best practice: local testing for rapid development iteration, deploy to a dev AWS account for integration testing, use CI/CD for automated testing against real services. Unit tests mock AWS SDK calls for fast feedback"
+    weight: 0.30
+    description: "Limitations"

@@ -1,0 +1,75 @@
+meta:
+  id: ma-serverless-integration
+  level: 5
+  course: aws-lambda-debugging
+  type: output
+  description: "M&A serverless integration — design the technical integration plan for merging two companies' serverless platforms during an acquisition"
+  tags: [AWS, Lambda, M&A, integration, acquisition, multi-account, master]
+
+state: {}
+
+trigger: |
+  Your company (acquirer, 200 Lambda functions on AWS) is acquiring
+  a competitor (target, 150 Lambda functions on AWS). Both companies
+  run serverless platforms but with different practices:
+
+  Acquirer (your company):
+  - AWS Organization with 5 accounts (dev, staging, prod, shared, security)
+  - CDK for IaC, standardized templates
+  - Powertools for observability
+  - SOC2 Type II compliant
+  - Monthly AWS bill: $80K
+
+  Target company:
+  - Single AWS account (everything in one account!)
+  - Serverless Framework for some, console deployments for others
+  - Mixed logging (console.log, Winston, no standard)
+  - No compliance certifications
+  - Monthly AWS bill: $45K
+  - Different AWS region (eu-west-1 vs your us-east-1)
+
+  Integration challenges:
+
+  1. Account structure: target's single-account needs separation
+     into your multi-account Organization structure.
+
+  2. IaC migration: 60% of target's functions deployed via console
+     need to be captured in CDK.
+
+  3. Observability: no structured logging means you can't monitor
+     target's services through your unified dashboard.
+
+  4. Data: target uses RDS PostgreSQL, you use DynamoDB. Customer
+     data must be merged without downtime.
+
+  5. Compliance: target must achieve SOC2 compliance within 12 months
+     of acquisition (contractual requirement).
+
+  6. Team integration: target's 30 engineers need onboarding to
+     your platform, tools, and processes.
+
+  7. Domain overlap: both companies have "user-service" and
+     "payment-service" Lambda functions that need consolidation.
+
+  Timeline: 18 months for full integration, 6 months for critical
+  path items.
+
+  Task: Design the M&A integration plan for serverless. Write:
+  account consolidation strategy, IaC migration approach, data
+  merge strategy, compliance remediation, team onboarding, service
+  consolidation (which services to keep from each company), timeline,
+  and risk mitigation.
+
+assertions:
+  - type: llm_judge
+    criteria: "Account and IaC migration are planned — phase 1 (month 1-3): invite target's account into your AWS Organization, apply SCPs for governance. Create dedicated accounts for target's workloads (dev/staging/prod). Phase 2 (month 3-6): use aws lambda get-function to export all console-deployed functions, convert to CDK constructs. Prioritize by business criticality. Use CloudFormation import to bring existing resources under IaC management. Don't migrate everything at once — target's services keep running in their original account while migration happens"
+    weight: 0.35
+    description: "Account and IaC"
+  - type: llm_judge
+    criteria: "Data merge and compliance are covered — data strategy: don't merge databases immediately. Use API layer to abstract data location. Phase 1: cross-account access (Lambda in acquirer account reads target's RDS via VPC peering). Phase 2: gradual data migration with dual-write period. Customer identity merge: create a unified identity service that maps both systems. Compliance: apply acquirer's SOC2 controls to target's infrastructure incrementally. Start with critical controls (access management, encryption, logging) in month 1-3. Full SOC2 audit readiness by month 12. Cross-region: use DynamoDB Global Tables or Aurora Global for data replication between us-east-1 and eu-west-1"
+    weight: 0.35
+    description: "Data and compliance"
+  - type: llm_judge
+    criteria: "Team and service integration are practical — team onboarding: 2-week bootcamp on acquirer's platform (CDK, Powertools, CI/CD pipeline). Pair target engineers with acquirer engineers for 3 months. Don't force immediate tool changes — let teams migrate at their pace with deadlines. Service consolidation: evaluate each overlapping service (user-service, payment-service) — keep the one with better architecture/test coverage, migrate the other's unique features. Don't rewrite — adapt and extend. Risk mitigation: keep target's original services running for 6+ months as fallback. Integration manager role: dedicated person coordinates across teams. Track: integration milestones, service migration completion %, team satisfaction"
+    weight: 0.30
+    description: "Team and service"

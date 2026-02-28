@@ -1,0 +1,42 @@
+meta:
+  id: data-cleaning-pipeline
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Build a data cleaning pipeline — chain multiple cleaning operations into a reusable, reproducible data cleaning workflow"
+  tags: [python, pandas, cleaning, pipeline, method-chaining, intermediate]
+
+state: {}
+
+trigger: |
+  You receive a messy CSV export from the CRM system with these
+  issues:
+
+  - Column names have spaces and mixed case: "Customer Name",
+    "Order Date", "TOTAL AMOUNT"
+  - Duplicate rows (exact duplicates and near-duplicates)
+  - Negative values in the amount column (should all be positive)
+  - Dates in mixed formats ("2024-01-15", "01/15/2024", "Jan 15, 2024")
+  - A "status" column with inconsistent values: "Active",
+    "active", "ACTIVE", "Actve" (typo)
+  - Outlier amounts (a few orders over $100,000 when the typical
+    range is $10-$5,000)
+
+  The data team says: "We get this file every week. Build a
+  cleaning pipeline we can reuse."
+
+  Task: Build the reusable data cleaning pipeline.
+
+assertions:
+  - type: llm_judge
+    criteria: "Pipeline addresses all data quality issues in a logical order — pipeline: 'Reusable data cleaning pipeline: def clean_crm_data(filepath): df = pd.read_csv(filepath). Step 1 — Standardize column names: df.columns = (df.columns.str.strip().str.lower().str.replace(\" \", \"_\").str.replace(r\"[^a-z0-9_]\", \"\", regex=True)). This converts Customer Name to customer_name, TOTAL AMOUNT to total_amount. Consistent, lowercase, snake_case column names make the rest of the pipeline reliable. Step 2 — Remove exact duplicates: before = len(df). df = df.drop_duplicates(). print(f\"Removed {before - len(df)} exact duplicate rows\"). Step 3 — Fix data types and parse dates: df[\"order_date\"] = pd.to_datetime(df[\"order_date\"], format=\"mixed\", dayfirst=False). format=\"mixed\" handles multiple date formats in the same column (pandas 2.0+). For older pandas: df[\"order_date\"] = pd.to_datetime(df[\"order_date\"], infer_datetime_format=True). Step 4 — Fix negative amounts: neg_count = (df[\"total_amount\"] < 0).sum(). df[\"total_amount\"] = df[\"total_amount\"].abs(). print(f\"Fixed {neg_count} negative amounts\"). Step 5 — Standardize status values: df[\"status\"] = df[\"status\"].str.strip().str.lower(). Fix common typos with a mapping: status_corrections = {\"actve\": \"active\", \"acive\": \"active\", \"inactve\": \"inactive\"}. df[\"status\"] = df[\"status\"].replace(status_corrections). Verify: print(f\"Status values: {df['status'].unique()}\"). Step 6 — Handle outliers: q99 = df[\"total_amount\"].quantile(0.99). outliers = df[df[\"total_amount\"] > q99]. print(f\"Flagged {len(outliers)} outliers (above ${q99:,.0f})\"). Option A — Flag but keep: df[\"is_outlier\"] = df[\"total_amount\"] > q99. Option B — Cap at the 99th percentile: df[\"total_amount\"] = df[\"total_amount\"].clip(upper=q99). Step 7 — Handle near-duplicates: near_dupes = df[df.duplicated(subset=[\"customer_name\", \"order_date\", \"total_amount\"], keep=False)]. print(f\"Potential near-duplicates: {len(near_dupes)} rows\"). df = df.drop_duplicates(subset=[\"customer_name\", \"order_date\", \"total_amount\"], keep=\"first\"). Step 8 — Final validation: assert df[\"total_amount\"].min() >= 0, \"Negative amounts remain\". assert df[\"order_date\"].notna().all(), \"Missing dates remain\". assert df[\"status\"].isin([\"active\", \"inactive\", \"pending\"]).all(), \"Unknown status values\". return df. Usage: df_clean = clean_crm_data(\"crm_export.csv\")'"
+    weight: 0.35
+    description: "Pipeline"
+  - type: llm_judge
+    criteria: "Explanation covers method chaining as a pipeline pattern and cleaning order — explanation: 'Method chaining — the functional pipeline pattern: the same pipeline using method chaining: df_clean = (pd.read_csv(filepath).rename(columns=lambda c: c.strip().lower().replace(\" \", \"_\")).drop_duplicates().assign(order_date=lambda df: pd.to_datetime(df[\"order_date\"], format=\"mixed\"), total_amount=lambda df: df[\"total_amount\"].abs(), status=lambda df: df[\"status\"].str.strip().str.lower().replace(status_corrections)).drop_duplicates(subset=[\"customer_name\", \"order_date\", \"total_amount\"], keep=\"first\").query(\"total_amount > 0\")). Benefits of method chaining: each step is one line — easy to add, remove, or reorder steps. No intermediate variables cluttering the namespace. The pipeline reads top-to-bottom like a recipe. pipe() for custom functions in chains: def flag_outliers(df, column, threshold_pct=0.99): threshold = df[column].quantile(threshold_pct). return df.assign(is_outlier=df[column] > threshold). df_clean = (pd.read_csv(filepath)... .pipe(flag_outliers, \"total_amount\")). pipe() passes the DataFrame to a function and returns the result — integrates custom logic into the chain. Cleaning order matters: (1) Column names first (everything after depends on consistent names). (2) Remove exact duplicates (reduces data volume for subsequent steps). (3) Data types (parsing dates and numbers must happen before date/numeric analysis). (4) Value standardization (fix typos and case issues before filtering). (5) Outlier handling (needs clean numeric data). (6) Near-duplicate removal (needs standardized values). (7) Validation (final check that everything is clean)'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response includes a cleaning report and logging for auditability — reporting: 'Cleaning report for auditability: def clean_crm_data_with_report(filepath): report = {}. df = pd.read_csv(filepath). report[\"rows_loaded\"] = len(df). dupes = df.duplicated().sum(). df = df.drop_duplicates(). report[\"exact_duplicates_removed\"] = dupes. neg = (df[\"total_amount\"] < 0).sum(). df[\"total_amount\"] = df[\"total_amount\"].abs(). report[\"negative_amounts_fixed\"] = neg. missing_dates = df[\"order_date\"].isna().sum(). report[\"missing_dates\"] = missing_dates. outlier_count = (df[\"total_amount\"] > df[\"total_amount\"].quantile(0.99)).sum(). report[\"outliers_flagged\"] = outlier_count. report[\"rows_final\"] = len(df). report[\"rows_removed_pct\"] = round((1 - report[\"rows_final\"] / report[\"rows_loaded\"]) * 100, 1). print(\"\\n--- Cleaning Report ---\"). for key, value in report.items(): print(f\"  {key}: {value}\"). return df, report. df_clean, report = clean_crm_data_with_report(\"crm_export.csv\"). Why the report matters: reproducibility — if someone questions the numbers, you can show exactly what was cleaned. Auditability — in regulated industries (finance, healthcare), data transformations must be documented. Debugging — if the analysis results look wrong, the cleaning report helps identify if too many rows were removed or too many values were modified. Over time — tracking the cleaning report week over week reveals data quality trends (is the CRM export getting messier or cleaner?)'"
+    weight: 0.30
+    description: "Reporting"

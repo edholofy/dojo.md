@@ -1,0 +1,40 @@
+meta:
+  id: pivot-tables-and-reshaping
+  level: 2
+  course: data-analysis-python-pandas
+  type: output
+  description: "Create pivot tables and reshape data — use pivot_table, melt, stack, and unstack to transform data between wide and long formats"
+  tags: [python, pandas, pivot-table, melt, reshape, wide-long, intermediate]
+
+state: {}
+
+trigger: |
+  Your manager asks for a summary table:
+
+  "I want a table showing total revenue by region (rows) and
+  category (columns), with a grand total row and column. Like
+  a pivot table in Excel."
+
+  Also, the marketing team sends you a wide-format spreadsheet:
+
+  month, email_opens, email_clicks, email_bounces, sms_opens,
+  sms_clicks, sms_bounces
+
+  They want it converted to long format for their analytics tool:
+  month, channel, metric, value
+
+  Task: Create the pivot table and reshape the marketing data.
+
+assertions:
+  - type: llm_judge
+    criteria: "Code creates a proper pivot table with margins and reshapes wide to long format — code: 'Pivot tables and reshaping: Part 1 — Pivot table with margins: pivot = pd.pivot_table(df, values=\"revenue\", index=\"region\", columns=\"category\", aggfunc=\"sum\", fill_value=0, margins=True, margins_name=\"Grand Total\"). The result is a table with: rows = regions (West, East, South, North, Grand Total). columns = categories (Electronics, Furniture, Clothing, Grand Total). values = total revenue for each region-category combination. margins=True adds the Grand Total row and column. fill_value=0 replaces NaN with 0 (for region-category combinations with no sales). Formatting: pivot_formatted = pivot.map(\"${:,.0f}\".format). Multiple aggregations: pivot_multi = pd.pivot_table(df, values=\"revenue\", index=\"region\", columns=\"category\", aggfunc=[\"sum\", \"mean\", \"count\"]). This creates a multi-level column index: sum/Electronics, sum/Furniture, mean/Electronics, mean/Furniture, etc. Part 2 — Wide to long format (melt): marketing_long = pd.melt(marketing_df, id_vars=[\"month\"], var_name=\"metric_raw\", value_name=\"value\"). This converts: month, email_opens, email_clicks, ... to: month, metric_raw, value. But we need to split metric_raw into channel and metric: marketing_long[[\"channel\", \"metric\"]] = marketing_long[\"metric_raw\"].str.split(\"_\", expand=True). marketing_long = marketing_long.drop(columns=\"metric_raw\"). Result: month=January, channel=email, metric=opens, value=1500. Alternative using wide_to_long for structured column names: marketing_df.columns = [\"month\", \"email_opens\", \"email_clicks\", \"email_bounces\", \"sms_opens\", \"sms_clicks\", \"sms_bounces\"]. result = pd.wide_to_long(marketing_df, stubnames=[\"email\", \"sms\"], i=\"month\", j=\"metric\", sep=\"_\", suffix=\"\\w+\"). This requires column names to follow a pattern (stub_suffix)'"
+    weight: 0.35
+    description: "Code quality"
+  - type: llm_judge
+    criteria: "Explanation teaches when to use wide vs long format — explanation: 'Wide vs long format — when to use each: Wide format (pivot table output): each unique value of a variable gets its own column. Good for: human reading (spreadsheet-like presentation), comparison across categories (columns are side by side), small number of categories. Example: region | Electronics | Furniture | Clothing. Long format (melted output): all variables in one column with corresponding values. Good for: plotting with seaborn (most plotting functions expect long format), statistical analysis (each observation is one row), databases (normalized form), variable numbers of categories. Example: region | category | revenue. The pivot and melt operations are inverses: melt converts wide to long. pivot (or pivot_table) converts long to wide. Rule of thumb: store data in long format (flexible, normalized), present data in wide format (readable, comparison-friendly). Key differences between pivot and pivot_table: pivot: simple reshaping, no aggregation, fails if there are duplicate index-column combinations. pivot_table: reshaping with aggregation (handles duplicates by aggregating them). Always use pivot_table unless you are certain there are no duplicates. stack and unstack: stack: pivots columns into rows (makes the DataFrame longer). unstack: pivots rows into columns (makes the DataFrame wider). These work on the DataFrame index and are useful with MultiIndex DataFrames. Example: df.groupby([\"region\", \"category\"])[\"revenue\"].sum().unstack() produces the same result as a pivot table'"
+    weight: 0.35
+    description: "Explanation"
+  - type: llm_judge
+    criteria: "Response covers cross-tabulation and practical reporting patterns — reporting: 'Cross-tabulation and reporting: crosstab — quick frequency tables: pd.crosstab(df[\"region\"], df[\"category\"]) counts how many orders in each region-category combination. pd.crosstab(df[\"region\"], df[\"category\"], normalize=\"index\") shows percentages per region (each row sums to 1.0). pd.crosstab(df[\"region\"], df[\"category\"], values=df[\"revenue\"], aggfunc=\"sum\") is equivalent to pivot_table but with a different syntax. Practical reporting pattern — multi-level summary: summary = (df.groupby([\"region\", \"category\"]).agg(revenue=(\"revenue\", \"sum\"), orders=(\"order_id\", \"count\"), avg_order=(\"revenue\", \"mean\")).round(2)). summary_wide = summary.unstack(\"category\"). This creates a hierarchical column structure: revenue/Electronics, revenue/Furniture, orders/Electronics, orders/Furniture. Flatten the column names: summary_wide.columns = [f\"{metric}_{cat}\" for metric, cat in summary_wide.columns]. Now you have: revenue_Electronics, revenue_Furniture, orders_Electronics, etc. — ready for Excel export'"
+    weight: 0.30
+    description: "Reporting"

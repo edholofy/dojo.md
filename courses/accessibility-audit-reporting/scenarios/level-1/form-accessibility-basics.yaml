@@ -1,0 +1,50 @@
+meta:
+  id: form-accessibility-basics
+  level: 1
+  course: accessibility-audit-reporting
+  type: output
+  description: "Form accessibility basics — audit and report on form label associations, error messaging, and input accessibility"
+  tags: [forms, labels, errors, inputs, beginner]
+
+state: {}
+
+trigger: |
+  A junior auditor is testing a registration form on
+  a web application. They find:
+
+  1. Several input fields have visual labels but
+     they're not programmatically associated (no
+     'for' attribute matching the input 'id')
+  2. Error messages appear in red text at the top of
+     the form but don't specify which field has the
+     error
+  3. A phone number field has no indication of the
+     expected format (is it (555) 123-4567 or
+     5551234567?)
+  4. Required fields are marked with a red asterisk
+     but there's no legend explaining what * means
+  5. After submitting with errors, focus stays on the
+     submit button instead of moving to the first
+     error
+
+  The auditor asks: "I know forms need to be
+  accessible but what specifically is wrong with each
+  of these? How do I explain the impact?"
+
+  Task: Write audit findings for each form
+  accessibility issue with user impact, WCAG
+  references, and specific fixes.
+
+assertions:
+  - type: llm_judge
+    criteria: "Response writes findings for form label and error issues — Unassociated labels (WCAG 1.3.1 Info and Relationships Level A + 4.1.2 Name Role Value Level A: visual labels exist but screen reader users hear only 'edit text' with no label — they can't tell what information to enter, Severity: Critical, Fix: add for=input-id on label element matching id on input, or wrap input inside label element, or use aria-labelledby), Vague error messages (WCAG 3.3.1 Error Identification Level A: errors must identify the field in error — 'There are errors in the form' is insufficient, must say 'Email address: Please enter a valid email address', Severity: Major, Fix: associate each error with its field using aria-describedby, display error adjacent to the field, use aria-invalid=true on the field), Focus not moving to error (WCAG 3.3.1 Level A: after submission with errors, focus should move to the first error or to an error summary that lists all errors with links to each field, Fix: on submit failure, move focus to error summary or first invalid field)"
+    weight: 0.35
+    description: "FormFindings"
+  - type: llm_judge
+    criteria: "Response covers format instructions and required field issues — Missing format hint (WCAG 3.3.2 Labels or Instructions Level A: when a specific format is required, the expected format must be communicated — users shouldn't have to guess, Severity: Major, Fix: add visible hint text below the field: 'Format: (555) 123-4567' and associate it with the input using aria-describedby so screen readers announce it), Required field indicator without explanation (WCAG 3.3.2 Level A: if symbols like * indicate required fields, there must be an explanation — either at the top of the form: 'Fields marked with * are required' or use the word 'Required' as part of the label, Severity: Minor, Fix: add legend at the form start explaining the asterisk convention and ensure aria-required=true is set on required inputs). Each finding explains the real user impact — not just 'violates WCAG' but 'a blind user filling out this form won't know the phone number format and will get rejected repeatedly'"
+    weight: 0.35
+    description: "FormatRequiredFindings"
+  - type: llm_judge
+    criteria: "Response provides form accessibility testing checklist — testing approach (for each form field check: does it have a programmatic label? is the label descriptive? does the label remain visible when the field is focused/filled? is required status communicated accessibly? are format requirements stated? does error state announce to screen readers? does error message identify the specific problem and suggest a fix?), common form patterns and expected behavior (inline validation: error appears on blur, announced by screen reader via aria-live region, multi-step forms: step indicator accessible, focus moves to new step content, auto-complete: suggestions navigable with arrow keys and selectable with Enter), and priority ranking (label association and error identification are the highest priority — without labels, the form is essentially unusable for screen reader users; format hints and required indicators are important but less severe since users can sometimes recover through trial and error)"
+    weight: 0.30
+    description: "FormChecklist"
