@@ -33,7 +33,7 @@ export async function arenaCommand(courseId: string, options: ArenaOptions): Pro
     ? options.models.split(',').map((m) => m.trim()).filter(Boolean)
     : DEFAULT_ARENA_MODELS;
 
-  const judgeModel = options.judge || 'claude-sonnet-4-6';
+  const judgeModel = options.judge || 'anthropic/claude-opus-4-6';
 
   // Validate API keys upfront for all unique providers
   const requiredKeys = new Set<string>();

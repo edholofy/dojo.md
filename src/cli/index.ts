@@ -112,7 +112,7 @@ if (userArgs.length === 0) {
     .command('arena <course>')
     .description('Benchmark multiple models on the same course (fair comparison)')
     .option('--models <models>', 'Comma-separated model list (default: 5 top models)')
-    .option('-j, --judge <model>', 'Judge model (default: claude-sonnet-4-6)')
+    .option('-j, --judge <model>', 'Judge model (default: claude-opus-4-6)')
     .option('-l, --level <number>', 'Run only a specific level', parseInt)
     .option('-o, --output <path>', 'Output JSON path (default: arena-<course>-<timestamp>.json)')
     .action(arenaCommand);

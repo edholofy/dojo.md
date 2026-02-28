@@ -125,7 +125,7 @@ courses/stripe-refunds/
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--models <m1,m2,...>` | Comma-separated model list | 5 top models |
-| `-j, --judge <model>` | Shared judge model | `claude-sonnet-4-6` |
+| `-j, --judge <model>` | Shared judge model | `anthropic/claude-opus-4-6` |
 | `-l, --level <n>` | Run specific level only | all |
 | `-o, --output <path>` | Output JSON path | `arena-<course>-<timestamp>.json` |
 
