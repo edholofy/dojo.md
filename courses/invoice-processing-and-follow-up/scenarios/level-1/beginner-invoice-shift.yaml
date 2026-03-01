@@ -1,0 +1,74 @@
+meta:
+  id: beginner-invoice-shift
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Beginner shift simulation — process a day's worth of invoices including validation, matching, data entry, and follow-up communications"
+  tags: [shift-simulation, multi-task, invoice-basics, beginner]
+
+state: {}
+
+trigger: |
+  You are an AP clerk on a busy Tuesday. Process
+  the following tasks before end of day.
+
+  TASK 1 — MORNING BATCH (due by noon)
+  Enter 5 approved invoices into the system:
+
+  INV-A: TechSupply Co., $2,340.00, Net 30,
+  dated 03/10, GL 6400, CC-100, PO-5501
+  INV-B: Office Plus, $567.80, Net 30,
+  dated 03/11, GL 6200, CC-600, no PO
+  INV-C: SafeGuard Insurance, $8,900.00, Net 60,
+  dated 03/01, GL 6800, CC-000 (Corporate)
+  INV-D: Metro Janitorial, $2,400.00, Net 15,
+  dated 03/08, GL 6700, CC-600, contract ref CON-112
+  INV-E: Premier Logistics, $6,780.00, 2/10 Net 30,
+  dated 03/10, GL 5100, CC-200, PO-5489
+
+  Create the journal entries for all 5.
+
+  TASK 2 — 3-WAY MATCH (due by 2pm)
+  Match this invoice to its PO and receiving report:
+
+  PO-5501 (for INV-A above):
+  - 20 units Keyboard Pro @ $65.00 = $1,300.00
+  - 10 units Monitor Stand @ $89.00 = $890.00
+  - 5 units USB Hub @ $30.00 = $150.00
+  Total: $2,340.00
+
+  Receiving Report RR-8901:
+  - 20 units Keyboard Pro (received 03/12)
+  - 10 units Monitor Stand (received 03/12)
+  - 4 units USB Hub (1 unit on backorder)
+  Total received: 34 of 35 items
+
+  Does the invoice match? What action is needed?
+
+  TASK 3 — PAYMENT RUN REVIEW (due by 3pm)
+  Review the following invoices scheduled for
+  today's payment run. Identify any issues:
+
+  Vendor           | Invoice   | Amount    | Due Date | Status
+  -----------------|-----------|-----------|----------|--------
+  AlphaServ        | AS-4401   | $5,000.00 | 03/15    | Approved
+  AlphaServ        | AS-4401   | $5,000.00 | 03/15    | Approved
+  BetaCorp         | BC-2200   | $12,500.00| 03/14    | Pending approval
+  GammaTech        | GT-9900   | $3,200.00 | 03/20    | Approved
+  DeltaSupply      | DL-1100   | $890.00   | 03/10    | On hold (dispute)
+
+  Which payments should proceed today?
+
+assertions:
+  - type: llm_judge
+    criteria: "Journal entries for all 5 invoices are correct — INV-A: Dr 6400 $2,340, Cr 2100 $2,340 [CC-100]; INV-B: Dr 6200 $567.80, Cr 2100 $567.80 [CC-600]; INV-C: Dr 6800 $8,900, Cr 2100 $8,900 [CC-000]; INV-D: Dr 6700 $2,400, Cr 2100 $2,400 [CC-600]; INV-E: Dr 5100 $6,780, Cr 2100 $6,780 [CC-200]; total AP credit: $20,987.80; each entry references the invoice number, vendor, and date; the early payment discount on INV-E (2/10 Net 30) is noted — discount deadline is March 20, discount amount $135.60 (2% of $6,780), net payment $6,644.40 if paid by March 20; INV-D with Net 15 terms from March 8 is due March 23 — upcoming but not urgent."
+    weight: 0.35
+    description: "BatchJournalEntries"
+  - type: llm_judge
+    criteria: "3-way match correctly identifies the quantity discrepancy — PO-5501 matches INV-A on prices and most quantities; however, the receiving report shows only 4 USB Hubs received (1 on backorder), while the PO ordered 5 and the invoice bills for 5; the invoice should only be paid for what was received: 4 USB Hubs × $30 = $120, not 5 × $30 = $150; adjusted invoice total: $2,340 - $30 = $2,310; options: (1) Hold the entire invoice until the backorder arrives, then pay full amount; (2) Pay for items received ($2,310) and request a credit memo for $30, then process a new invoice when the 5th USB Hub arrives; (3) Pay in full if company policy allows payment against PO rather than receiving report (not recommended as it bypasses controls); recommended action: partial payment of $2,310, vendor notified of the backorder hold on $30."
+    weight: 0.35
+    description: "ThreeWayMatch"
+  - type: llm_judge
+    criteria: "Payment run review catches all issues — (1) AlphaServ AS-4401 appears TWICE for $5,000 each — this is a duplicate that must be removed; only one payment of $5,000 should proceed; (2) BetaCorp BC-2200 ($12,500) status is 'Pending approval' — cannot be paid until approved; remove from today's run and escalate for approval since it's 1 day past due; (3) GammaTech GT-9900 ($3,200) is approved but not due until March 20 — no urgency, can be included in today's run or held for a payment run closer to the due date; (4) DeltaSupply DL-1100 ($890) is on hold due to dispute — do NOT pay until dispute is resolved, even though it's 5 days past due; payments to proceed today: AlphaServ (one copy only) $5,000 + optionally GammaTech $3,200; total disbursement: $5,000 (or $8,200 if GammaTech included); the duplicate detection saves $5,000 in potential overpayment."
+    weight: 0.30
+    description: "PaymentRunReview"

@@ -1,0 +1,60 @@
+meta:
+  id: variance-root-cause
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Perform root cause analysis on persistent variances — use the 5-Why framework and data analysis to identify underlying drivers behind recurring budget misses"
+  tags: [root-cause-analysis, 5-why, investigation, intermediate]
+
+state: {}
+
+trigger: |
+  The Controller has flagged that the Shipping &
+  Logistics department has been over budget for
+  5 consecutive months. Perform a root cause analysis.
+
+  MONTHLY VARIANCE HISTORY:
+  October:  Budget $340K, Actual $358K (+$18K, 5.3% U)
+  November: Budget $360K, Actual $385K (+$25K, 6.9% U)
+  December: Budget $420K, Actual $462K (+$42K, 10.0% U)
+  January:  Budget $350K, Actual $392K (+$42K, 12.0% U)
+  February: Budget $330K, Actual $378K (+$48K, 14.5% U)
+
+  CUMULATIVE OVERAGE: $175K (9.4% over 5-month budget)
+
+  DEPARTMENT COST BREAKDOWN (February — latest):
+  - Carrier costs: Budget $180K, Actual $215K (+$35K)
+  - Warehouse labor: Budget $85K, Actual $92K (+$7K)
+  - Packaging materials: Budget $30K, Actual $34K (+$4K)
+  - Fuel surcharges: Budget $20K, Actual $25K (+$5K)
+  - Equipment maintenance: Budget $15K, Actual $12K (-$3K)
+
+  OPERATIONAL DATA:
+  - Shipments: Budget 12,000/month, Actual 11,400
+  - Average weight per shipment: Budget 22 lbs,
+    Actual 28 lbs
+  - Expedited shipments: Budget 5%, Actual 14%
+  - Carrier rate per lb: Budget $0.68, Actual $0.68
+  - Returns processing: Budget 3%, Actual 5.2%
+
+  Perform:
+  1. 5-Why root cause analysis for the top variance
+  2. Data-driven analysis of the operational metrics
+  3. Separate controllable from non-controllable
+     factors
+  4. Recommend specific corrective actions
+  5. Estimate the monthly savings if corrected
+
+assertions:
+  - type: llm_judge
+    criteria: "The 5-Why analysis traces to genuine root causes — starting with the largest variance (Carrier costs +$35K): Why 1: Carrier costs are $35K over budget → Because the cost per shipment is higher than planned; Why 2: Cost per shipment is higher → Because average package weight increased from 22 to 28 lbs (+27%) AND expedited shipments tripled from 5% to 14%; Why 3: Why is average weight higher? → Likely product mix shift (heavier items selling more than forecast) or bundling changes (more items per order); Why is expedited shipping at 14%? → Because orders are being shipped late, requiring expedited to meet delivery promises; Why 4: Why are orders shipping late? → Potentially warehouse capacity or staffing issues (warehouse labor is $7K over despite fewer shipments); Why 5: Root cause(s) identified: (a) Product mix/weight was not properly reflected in the shipping budget — the budget assumed 22 lbs but actual product mix produces 28 lbs, and (b) operational issues in the warehouse are causing late shipments that require expedited carriers to compensate — the 5.2% returns rate (vs. 3% budget) adds rework that slows the warehouse; the analysis identifies at least 2 root causes: a budgeting accuracy issue (weight assumption) and an operational efficiency issue (late shipments driving expedited costs)."
+    weight: 0.35
+    description: "FiveWhyAnalysis"
+  - type: llm_judge
+    criteria: "Operational data analysis quantifies the impact of each driver — the data-driven breakdown: (1) Weight impact: actual weight 28 lbs vs. budget 22 lbs = 27% increase in weight-based shipping costs; at $0.68/lb: budget cost per shipment = 22 × $0.68 = $14.96; actual cost per shipment = 28 × $0.68 = $19.04; weight premium per shipment = $4.08; on 11,400 shipments = approximately $46,500 additional cost from weight alone; however, fewer shipments (11,400 vs. 12,000 budget) offset by about $9,000; (2) Expedited shipping impact: 14% of 11,400 = 1,596 expedited shipments vs. budget of 5% × 12,000 = 600; the additional ~1,000 expedited shipments at a premium of approximately $8-15 per shipment represent $8K-$15K in additional cost; (3) Returns processing impact: 5.2% returns vs. 3% budget on 11,400 shipments = approximately 250 additional returns to process, consuming warehouse labor and requiring re-shipment; (4) Controllable vs. non-controllable: the weight increase is partially non-controllable (product mix driven by customer demand) but the budget should have been updated when the mix shifted; the expedited shipping premium is controllable — it stems from operational delays that should be fixable; the returns rate may indicate a product quality issue (non-controllable by shipping) or a packaging issue (partially controllable)."
+    weight: 0.35
+    description: "DataDrivenAnalysis"
+  - type: llm_judge
+    criteria: "Corrective actions are specific and the savings estimate is credible — recommended actions: (1) Reforecast the shipping budget using actual average weight of 28 lbs instead of 22 lbs — this is a budget accuracy fix, not a cost reduction, but it eliminates approximately $30-35K of monthly 'variance' that is actually a budget error; (2) Address the expedited shipping root cause: investigate warehouse workflow to identify why orders ship late; reducing expedited from 14% to 7% (halfway to budget) would save approximately $5-8K per month; (3) Collaborate with Product/QA on the returns rate: the 5.2% vs. 3% return rate adds $5-7K in reprocessing and re-shipping costs monthly; (4) Negotiate weight-tiered carrier contracts: if the product mix has permanently shifted to heavier items, renegotiate carrier rates with volume commitments; estimated monthly savings if all actions implemented: $15-25K per month in actual cost reduction (expedited + returns), plus $25-30K in budget accuracy improvement (eliminating the phantom variance from incorrect weight assumptions); total: the $48K monthly variance could be reduced to $5-10K within 3 months."
+    weight: 0.30
+    description: "CorrectiveActions"

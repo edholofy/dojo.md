@@ -1,0 +1,74 @@
+meta:
+  id: government-appropriation-variance
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze government budget variances — track obligations and expenditures against appropriations, manage carry-forward, and ensure compliance with anti-deficiency requirements"
+  tags: [government, appropriation, anti-deficiency, advanced]
+
+state: {}
+
+trigger: |
+  You are the budget analyst for a federal agency.
+  Prepare the mid-year budget execution review for
+  FY2026 (October 2025 - September 2026).
+
+  AGENCY APPROPRIATION (FY2026):
+  Total: $280,000,000
+  - Personnel (Title I): $165,000,000
+  - Operations (Title II): $85,000,000
+  - Grants (Title III): $30,000,000
+
+  MID-YEAR STATUS (as of March 31, 2026 — 50%
+  through the fiscal year):
+
+  Personnel (Title I — $165M):
+  - Obligations: $84,200,000 (51.0%)
+  - Expenditures: $78,500,000 (47.6%)
+  - Open obligations: $5,700,000
+  - Unobligated balance: $80,800,000
+
+  Operations (Title II — $85M):
+  - Obligations: $52,300,000 (61.5%)
+  - Expenditures: $41,200,000 (48.5%)
+  - Open obligations: $11,100,000
+  - Unobligated balance: $32,700,000
+
+  Grants (Title III — $30M):
+  - Obligations: $22,500,000 (75.0%)
+  - Expenditures: $12,800,000 (42.7%)
+  - Open obligations: $9,700,000
+  - Unobligated balance: $7,500,000
+
+  CONCERNS FLAGGED BY THE BUDGET OFFICE:
+  1. Operations is 61.5% obligated at 50% of the year
+     — is it on pace to overspend?
+  2. Grants are 75% obligated but only 42.7% expended
+     — are grantees performing?
+  3. A new mandate from Congress requires $5M in
+     additional cybersecurity spending not in the
+     original appropriation
+  4. Three positions have been upgraded, adding $1.2M
+     in annual cost not originally budgeted
+
+  Prepare:
+  1. Obligation rate analysis by title
+  2. Expenditure rate and execution analysis
+  3. Anti-deficiency risk assessment
+  4. Options for the $5M cybersecurity mandate
+  5. Full-year projection by title
+  6. Write a 350-word budget execution report
+
+assertions:
+  - type: llm_judge
+    criteria: "Obligation and expenditure rate analysis is thorough — Personnel: obligation rate of 51% at 50% of the year is on pace; however, the $1.2M position upgrade adds to the second-half burn rate; projected full-year obligations: $84.2M + ($84.2M × remaining 6/6 months adjusted for the upgrade) = approximately $169.6M vs. $165M appropriation — potential $4.6M shortfall if upgrades are permanent; Operations: 61.5% obligated at mid-year is front-loaded — this is common if large contracts were obligated in Q1-Q2; the key question is whether the remaining $32.7M unobligated balance is sufficient for second-half needs; if the pace continues, full-year obligations would be approximately $104.6M vs. $85M appropriation — but this assumes a linear pace, which is unlikely for lumpy contract obligations; Grants: 75% obligated is normal for competitive grants (obligated upon award, expended over the grant period); the low expenditure rate (42.7%) suggests grants were recently awarded and spending has not yet ramped up — this is expected, not concerning; the analysis distinguishes between obligation pace (commitment of funds) and expenditure pace (actual spending), which are fundamentally different concepts in government budgeting."
+    weight: 0.35
+    description: "ObligationRateAnalysis"
+  - type: llm_judge
+    criteria: "Anti-deficiency risk assessment and cybersecurity funding options are sound — Anti-Deficiency Act (ADA) analysis: the ADA prohibits agencies from obligating or spending in excess of their appropriation; current risks: (1) Personnel — the $1.2M upgrade pushes projected obligations to approximately $169.6M vs. $165M; this creates a potential $4.6M ADA violation if not addressed; (2) Operations — while 61.5% obligated sounds high, if the remaining obligations are lower in H2 (seasonal pattern), this may be manageable; however, the $5M cybersecurity mandate adds to the pressure; risk mitigation: immediately freeze discretionary personnel hiring to create headroom for the $1.2M upgrade; for the $5M cybersecurity mandate, options: (a) Reprogram funds from Operations unobligated balance ($32.7M available) — requires Congressional notification if above the reprogramming threshold; (b) Request a supplemental appropriation — slow process, unlikely within the fiscal year; (c) Absorb within existing Operations budget by deferring $5M of lower-priority activities; (d) Use prior-year carryover funds if available under the appropriation's period of availability; the recommended approach: reprogram $5M from Operations (which has the largest unobligated balance relative to needs) to a new cybersecurity sub-account, with Congressional notification."
+    weight: 0.35
+    description: "AntiDeficiencyAndFunding"
+  - type: llm_judge
+    criteria: "The 350-word budget execution report is appropriate for government leadership — the report: (1) states overall execution: $159M obligated (56.8%) and $132.5M expended (47.3%) at mid-year, within acceptable parameters for the overall appropriation; (2) flags the two immediate risks: Personnel projected to exceed its $165M title by approximately $4.6M due to the position upgrades — requires either a hiring freeze offset or a reprogramming; the cybersecurity mandate adds $5M in unfunded requirements; (3) recommends the reprogramming strategy: shift $5M from Operations (where unobligated balance is sufficient) to fund cybersecurity, and offset the Personnel upgrade through attrition savings or a targeted hiring pause; (4) addresses the Grants expenditure rate: assures leadership that the low expenditure rate is expected for recently awarded grants and does not indicate performance problems — however, recommends enhanced grantee monitoring to ensure spending begins by Q3; (5) provides the full-year projection: with the recommended reprogramming and hiring adjustments, all three titles should close within their appropriation limits; (6) notes that without action on the Personnel upgrade, the agency faces a potential ADA violation by Q4 — this is the most urgent item requiring decision; the tone is appropriate for government: factual, compliance-aware, and solution-oriented."
+    weight: 0.30
+    description: "GovernmentExecutionReport"

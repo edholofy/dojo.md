@@ -1,0 +1,85 @@
+meta:
+  id: payment-terms-calculation
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Calculate payment due dates and early payment discounts — apply various payment terms, determine optimal payment timing, and manage cash flow considerations"
+  tags: [payment-terms, early-discount, due-dates, beginner]
+
+state: {}
+
+trigger: |
+  Calculate payment schedules and early payment
+  discount opportunities for the following
+  invoices. Today's date is March 10, 2025.
+
+  COMPANY CASH POSITION:
+  - Available cash: $250,000
+  - Cost of capital: 6% annually
+  - Policy: take discounts when APR equivalent
+    exceeds cost of capital
+
+  INVOICES TO SCHEDULE:
+
+  1. Vendor: Alpha Manufacturing
+     Invoice #: AM-5501
+     Invoice Date: March 1, 2025
+     Amount: $15,000.00
+     Terms: 2/10 Net 30
+
+  2. Vendor: Beta Services
+     Invoice #: BS-2234
+     Invoice Date: February 25, 2025
+     Amount: $8,500.00
+     Terms: 1/15 Net 45
+
+  3. Vendor: Gamma Electronics
+     Invoice #: GE-7890
+     Invoice Date: March 5, 2025
+     Amount: $42,000.00
+     Terms: 3/10 Net 60
+
+  4. Vendor: Delta Logistics
+     Invoice #: DL-1122
+     Invoice Date: February 20, 2025
+     Amount: $6,200.00
+     Terms: Net 30
+
+  5. Vendor: Epsilon Software
+     Invoice #: ES-4455
+     Invoice Date: March 3, 2025
+     Amount: $28,000.00
+     Terms: 2/15 Net 45
+
+  6. Vendor: Zeta Consulting
+     Invoice #: ZC-8811
+     Invoice Date: February 15, 2025
+     Amount: $12,000.00
+     Terms: Net 60 EOM
+
+  7. Vendor: Eta Supplies
+     Invoice #: ETA-3344
+     Invoice Date: March 8, 2025
+     Amount: $3,500.00
+     Terms: 1/10 Net 30 EOM
+
+  For each invoice, calculate:
+  1. Discount deadline (if applicable)
+  2. Final due date
+  3. Discount amount and net payment
+  4. Annualized discount rate (APR equivalent)
+  5. Recommendation: take discount or pay at term
+
+assertions:
+  - type: llm_judge
+    criteria: "Payment calculations are mathematically correct — Invoice 1 (2/10 Net 30): discount deadline March 11 (invoice date + 10), due date March 31 (invoice date + 30), discount $300 (2% of $15,000), net payment $14,700, APR = (2/98) × (365/20) = 37.2% — well above 6% cost of capital, TAKE DISCOUNT; Invoice 2 (1/15 Net 45): discount deadline March 12 (Feb 25 + 15), due date April 11 (Feb 25 + 45), discount $85, net payment $8,415, APR = (1/99) × (365/30) = 12.3%, TAKE DISCOUNT; Invoice 3 (3/10 Net 60): discount deadline March 15, due date May 4, discount $1,260, net payment $40,740, APR = (3/97) × (365/50) = 22.6%, TAKE DISCOUNT; Invoice 4 (Net 30): due date March 22, no discount available, pay on due date; Invoice 5 (2/15 Net 45): discount deadline March 18, due date April 17, discount $560, net payment $27,440, APR = (2/98) × (365/30) = 24.8%, TAKE DISCOUNT; each calculation shows the formula and result."
+    weight: 0.35
+    description: "PaymentCalculations"
+  - type: llm_judge
+    criteria: "EOM terms are correctly interpreted — Invoice 6 (Net 60 EOM): EOM means the term starts from the end of the invoice month; invoice dated February 15, end of February is Feb 28, so due date is Feb 28 + 60 = April 29, 2025; Invoice 7 (1/10 Net 30 EOM): invoice dated March 8, end of March is March 31; discount deadline is March 31 + 10 = April 10; due date is March 31 + 30 = April 30; discount $35 (1% of $3,500), net $3,465; APR = (1/99) × (365/20) = 18.4%, TAKE DISCOUNT; the analysis correctly explains EOM (End of Month) terms and how they differ from standard date-based terms."
+    weight: 0.35
+    description: "EOMTerms"
+  - type: llm_judge
+    criteria: "Cash flow analysis and payment schedule are practical — creates a payment calendar showing: which invoices to pay by discount deadline vs. at term; total cash required for discounts: sum of all net payments for discount-eligible invoices that should be taken; verifies the company has sufficient cash ($250,000) to take all recommended discounts; total discount savings calculated (sum of all discounts taken); the payment schedule prioritizes by: (1) discounts expiring soonest, (2) highest APR equivalent; for Invoice 4 (no discount), recommends paying exactly on the due date to maximize cash float; the analysis notes that all discount APR equivalents significantly exceed the 6% cost of capital, making every discount worth taking; a summary table shows: invoice, discount deadline, due date, discount amount, APR, recommendation, and payment date."
+    weight: 0.30
+    description: "CashFlowAnalysis"

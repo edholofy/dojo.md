@@ -1,0 +1,71 @@
+meta:
+  id: standard-cost-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Perform a comprehensive standard cost variance analysis — calculate all manufacturing variances including three-way overhead analysis and identify corrective actions"
+  tags: [standard-cost, manufacturing, overhead-analysis, intermediate]
+
+state: {}
+
+trigger: |
+  You are the cost accounting manager for a
+  consumer electronics manufacturer. Perform the
+  March 2026 standard cost variance analysis for
+  the "SmartSpeaker Pro" production line.
+
+  STANDARD COST CARD (per unit):
+  Direct Materials:
+  - Circuit board: 1 unit × $18.00 = $18.00
+  - Speaker components: 1 set × $12.50 = $12.50
+  - Housing/plastic: 0.8 kg × $6.00/kg = $4.80
+  - Packaging: 1 set × $2.20 = $2.20
+  Total DM: $37.50/unit
+
+  Direct Labor:
+  - Assembly: 0.5 hours × $24.00/hr = $12.00
+  - Testing: 0.2 hours × $26.00/hr = $5.20
+  Total DL: $17.20/unit
+
+  Variable Overhead: 0.7 DLH × $18.00/DLH = $12.60
+  Fixed Overhead: 0.7 DLH × $22.00/DLH = $15.40
+  (Based on normal capacity of 8,400 DLH/month
+   or 12,000 units)
+
+  Total standard cost: $82.70/unit
+
+  MARCH ACTUAL RESULTS:
+  Units produced: 11,200
+  
+  Direct Materials purchased and used:
+  - Circuit boards: 11,350 @ $18.40 = $208,840
+  - Speaker components: 11,200 sets @ $12.20
+    = $136,640
+  - Housing: 9,200 kg @ $6.25 = $57,500
+  - Packaging: 11,200 sets @ $2.15 = $24,080
+  Total DM: $427,060
+
+  Direct Labor:
+  - Assembly: 5,800 hours @ $24.50 = $142,100
+  - Testing: 2,350 hours @ $25.50 = $59,925
+  Total DL: $202,025
+
+  Variable Overhead: $150,200
+  Fixed Overhead: $186,500
+
+  Calculate all variances and write a 300-word
+  analysis recommending corrective actions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Material variances are correctly calculated for each component — Standard quantities allowed for 11,200 units: Circuit boards 11,200, Speaker components 11,200 sets, Housing 8,960 kg (11,200 × 0.8), Packaging 11,200 sets; Circuit Boards: Price Variance = ($18.40-$18.00) × 11,350 = $4,540 U; Usage Variance = (11,350-11,200) × $18.00 = $2,700 U; Speaker Components: Price Variance = ($12.20-$12.50) × 11,200 = $3,360 F; Usage Variance = 0 (exact usage); Housing: Price Variance = ($6.25-$6.00) × 9,200 = $2,300 U; Usage Variance = (9,200-8,960) × $6.00 = $1,440 U; Packaging: Price Variance = ($2.15-$2.20) × 11,200 = $560 F; Usage Variance = 0; Total Material Variance: Standard allowed = 11,200 × $37.50 = $420,000; Actual = $427,060; Total = $7,060 U."
+    weight: 0.35
+    description: "MaterialVariances"
+  - type: llm_judge
+    criteria: "Labor and overhead variances are correctly calculated — Standard DLH allowed: Assembly 11,200 × 0.5 = 5,600 hrs; Testing 11,200 × 0.2 = 2,240 hrs; Total 7,840 DLH; Actual DLH: 5,800 + 2,350 = 8,150; Assembly: Rate Variance = ($24.50-$24.00) × 5,800 = $2,900 U; Efficiency Variance = (5,800-5,600) × $24.00 = $4,800 U; Testing: Rate Variance = ($25.50-$26.00) × 2,350 = $1,175 F; Efficiency Variance = (2,350-2,240) × $26.00 = $2,860 U; Total Labor: Standard = 11,200 × $17.20 = $192,640; Actual = $202,025; Total = $9,385 U; Variable Overhead: Spending Variance = $150,200 - (8,150 × $18) = $150,200 - $146,700 = $3,500 U; Efficiency Variance = (8,150-7,840) × $18 = $5,580 U; Total VOH = $9,080 U; Fixed Overhead: Spending Variance = $186,500 - ($22 × 8,400 budgeted DLH) = $186,500 - $184,800 = $1,700 U; Volume Variance = (8,400-7,840) × $22 = $12,320 U (underabsorption due to producing below normal capacity); Total FOH = $14,020 U."
+    weight: 0.35
+    description: "LaborAndOverheadVariances"
+  - type: llm_judge
+    criteria: "The 300-word analysis connects variances to corrective actions — the analysis: (1) summarizes total variance: actual total cost $965,785 vs. standard $926,240 (11,200 × $82.70) = $39,545 U (4.3% over standard); (2) identifies the top concerns: circuit board costs ($7,240 U combined price and usage — price increase suggests supplier issue; 150 extra boards suggests scrap/quality problems); housing material ($3,740 U — both price and usage unfavorable suggesting waste); assembly labor efficiency ($4,800 U — 200 extra hours suggesting training or process issues); fixed overhead volume ($12,320 U — producing 800 units below normal capacity creates underabsorption); (3) recommends corrective actions: renegotiate circuit board pricing or qualify alternative supplier; investigate assembly line for efficiency bottlenecks (the 200 extra hours cost $4,800 in labor plus $3,600 in VOH efficiency variance); review housing material cutting processes for waste reduction; address the capacity utilization gap (800 units below normal capacity drives the $12,320 FOH volume variance); (4) notes the positive: speaker component pricing was $3,360 favorable — lock in this supplier with a longer-term contract; testing labor rate was favorable despite efficiency miss."
+    weight: 0.30
+    description: "CorrectiveActions"

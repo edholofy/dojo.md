@@ -1,0 +1,64 @@
+meta:
+  id: headcount-variance
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze headcount and compensation variances — compare actual staffing levels and costs to budget for a department"
+  tags: [headcount-variance, compensation, staffing, beginner]
+
+state: {}
+
+trigger: |
+  You are an FP&A analyst reviewing the Q1 2026
+  headcount and compensation variance for the
+  Engineering department.
+
+  BUDGETED (Q1 2026):
+  - Software Engineers: 45 FTEs × $42,500/quarter
+    avg comp = $1,912,500
+  - QA Engineers: 12 FTEs × $37,500/quarter
+    = $450,000
+  - Engineering Managers: 6 FTEs × $55,000/quarter
+    = $330,000
+  - DevOps: 8 FTEs × $45,000/quarter = $360,000
+  - Total: 71 FTEs, $3,052,500
+
+  ACTUAL (Q1 2026):
+  - Software Engineers: 42 FTEs × $44,200/quarter
+    avg comp = $1,856,400
+  - QA Engineers: 10 FTEs × $38,800/quarter
+    = $388,000
+  - Engineering Managers: 6 FTEs × $56,500/quarter
+    = $339,000
+  - DevOps: 9 FTEs × $46,200/quarter = $415,800
+  - Total: 67 FTEs, $2,999,200
+
+  CONTEXT:
+  - 3 Software Engineer positions open since January
+    (competitive hiring market)
+  - 2 QA Engineers left in February (attrition)
+  - 1 additional DevOps engineer hired in January
+    (unbudgeted, urgent infrastructure need)
+  - Annual merit increases were 4% vs. 3% budgeted
+
+  Calculate:
+  1. Headcount variance by role
+  2. Compensation rate variance by role
+  3. Total compensation variance decomposed into
+     headcount and rate components
+  4. Write a 200-word narrative for the VP of
+     Engineering
+
+assertions:
+  - type: llm_judge
+    criteria: "Headcount and rate variances are correctly calculated by role — Software Engineers: headcount variance = (42-45) × $42,500 = -$127,500 favorable (fewer heads = less cost), rate variance = ($44,200-$42,500) × 42 = +$71,400 unfavorable, net = -$56,100 favorable; QA Engineers: headcount variance = (10-12) × $37,500 = -$75,000 favorable, rate variance = ($38,800-$37,500) × 10 = +$13,000 unfavorable, net = -$62,000 favorable; Engineering Managers: headcount variance = 0 (6 vs. 6), rate variance = ($56,500-$55,000) × 6 = +$9,000 unfavorable, net = +$9,000 unfavorable; DevOps: headcount variance = (9-8) × $45,000 = +$45,000 unfavorable, rate variance = ($46,200-$45,000) × 9 = +$10,800 unfavorable, net = +$55,800 unfavorable; Total department: headcount component = -$157,500 favorable, rate component = +$104,200 unfavorable, net = -$53,300 favorable ($2,999,200 vs. $3,052,500)."
+    weight: 0.35
+    description: "HeadcountAndRateVariances"
+  - type: llm_judge
+    criteria: "The analysis correctly identifies the favorable variance as a potential concern, not just good news — while the department is $53,300 under budget, this is largely because the team is 4 people short of plan (3 unfilled Software Engineer roles + 2 QA attrition, partially offset by 1 unbudgeted DevOps hire); the favorable headcount variance of $157,500 masks a staffing problem — the Engineering team is operating at 94% of planned capacity, which likely affects project delivery timelines and workload on remaining team members; the rate variance of $104,200 unfavorable reflects the higher merit increases (4% vs. 3% budgeted) applied across all roles — this will be a recurring overage for the remaining quarters unless the budget is reforecast; the analysis should flag that the 'savings' from unfilled positions are temporary and misleading — when those positions are eventually filled, the department will likely exceed the remaining quarterly budgets."
+    weight: 0.35
+    description: "InsightBeyondNumbers"
+  - type: llm_judge
+    criteria: "The 200-word VP of Engineering narrative is practical and forward-looking — the narrative: (1) leads with the headline (Engineering compensation is $53K or 1.7% favorable to budget in Q1), (2) immediately explains that this is primarily driven by being 4 FTEs below plan, not cost efficiency, (3) highlights the staffing risk: 3 open Software Engineer roles since January represent a delivery capacity concern, and 2 QA departures create quality assurance coverage gaps, (4) notes the rate pressure: 4% merit increases vs. 3% budgeted will create a $100K+ annualized overage on rates alone, (5) flags the unbudgeted DevOps hire as a necessary addition driven by infrastructure needs, (6) looks forward: asks whether the unfilled positions should trigger a reforecast, and whether recruitment strategy changes are needed to fill the Software Engineer roles; the tone is appropriate for an engineering leader — practical, concerned about team capacity and delivery impact, not just the financial numbers."
+    weight: 0.30
+    description: "VPNarrative"

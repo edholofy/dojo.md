@@ -1,0 +1,68 @@
+meta:
+  id: quarterly-variance-summary
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Prepare a quarterly variance summary — aggregate monthly variances into a quarterly view with year-to-date analysis and full-year outlook"
+  tags: [quarterly-summary, ytd-analysis, outlook, beginner]
+
+state: {}
+
+trigger: |
+  Prepare the Q1 2026 variance summary for the
+  company's income statement. This is a quarterly
+  roll-up of three months of data.
+
+  Q1 2026 INCOME STATEMENT — BUDGET vs. ACTUAL:
+
+  Revenue:
+    Budget: $12,500,000    Actual: $12,180,000
+
+  Cost of Goods Sold:
+    Budget: $7,500,000     Actual: $7,450,000
+
+  Gross Profit:
+    Budget: $5,000,000     Actual: $4,730,000
+
+  Operating Expenses:
+    Sales & Marketing:
+      Budget: $1,500,000   Actual: $1,620,000
+    R&D:
+      Budget: $1,200,000   Actual: $1,150,000
+    G&A:
+      Budget: $800,000     Actual: $830,000
+
+  Total OpEx:
+    Budget: $3,500,000     Actual: $3,600,000
+
+  Operating Income:
+    Budget: $1,500,000     Actual: $1,130,000
+
+  MONTHLY TREND (Operating Income):
+  - January: Budget $500K, Actual $420K
+  - February: Budget $500K, Actual $380K
+  - March: Budget $500K, Actual $330K
+
+  FULL-YEAR BUDGET:
+  - Revenue: $54,000,000
+  - Operating Income: $6,500,000
+
+  Prepare:
+  1. Full Q1 variance analysis (all lines)
+  2. Monthly trend analysis for operating income
+  3. Full-year outlook (is the annual budget at risk?)
+  4. Write a 250-word executive summary
+
+assertions:
+  - type: llm_judge
+    criteria: "All Q1 variances are correctly calculated with dollar and percentage — Revenue: -$320,000 U (2.6%); COGS: +$50,000 F (0.7%); Gross Profit: -$270,000 U (5.4%); Gross Margin: budget 40.0%, actual 38.8% (-1.2 points); Sales & Marketing: -$120,000 U (8.0%); R&D: +$50,000 F (4.2%); G&A: -$30,000 U (3.8%); Total OpEx: -$100,000 U (2.9%); Operating Income: -$370,000 U (24.7%); the analysis correctly shows that while revenue was only 2.6% below budget, operating income was 24.7% below budget — demonstrating the 'leverage effect' where revenue misses amplify through the P&L because fixed costs don't flex down."
+    weight: 0.35
+    description: "Q1VarianceCalculations"
+  - type: llm_judge
+    criteria: "Monthly trend analysis identifies a deteriorating pattern — the operating income trend: January -$80K U, February -$120K U, March -$170K U; each month is worse than the prior, with the gap widening; this is not a one-time miss but an accelerating deterioration; the response should calculate the monthly run rate: actual Q1 operating income of $1,130K represents a $375K/month average, but the March exit rate is only $330K; if March continues as the run rate, the annualized operating income would be $330K × 12 = $3,960K vs. the $6,500K budget — a $2.54M shortfall; even at the Q1 average monthly rate ($377K), the annualized figure is $4.52M vs. $6.5M budget; the trend analysis should flag that the trajectory is worsening, not stabilizing."
+    weight: 0.35
+    description: "TrendAnalysis"
+  - type: llm_judge
+    criteria: "The 250-word executive summary synthesizes findings and raises appropriate concerns — the summary: (1) leads with the Q1 operating income miss (-$370K or 24.7% below budget), (2) identifies the primary drivers (revenue shortfall of $320K and S&M overspend of $120K, partially offset by COGS and R&D savings), (3) highlights the margin compression (gross margin at 38.8% vs. 40.0% budget — COGS savings didn't fully offset the revenue miss), (4) flags the monthly deterioration trend as the most concerning finding (Jan -$80K → Feb -$120K → Mar -$170K), (5) assesses full-year risk: at the current trajectory, the annual operating income budget of $6.5M is at significant risk — a realistic Q1-based forecast would be $4.5-5.0M depending on whether the trend stabilizes or continues, (6) recommends immediate actions: review S&M spend effectiveness (is the $120K overspend generating pipeline?), investigate the revenue shortfall (is it demand weakness, pricing pressure, or timing?), and consider whether a formal budget reforecast is needed; the tone is direct and appropriately concerned — this is not a 'watch and wait' situation given the worsening monthly trend."
+    weight: 0.30
+    description: "ExecutiveSummary"

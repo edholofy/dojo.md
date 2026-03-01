@@ -1,0 +1,51 @@
+meta:
+  id: saas-subscription-dunning
+  level: 2
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Design dunning communications for a SaaS company with failed subscription payments — balance retention with collection and manage involuntary churn"
+  tags: [saas, subscription, dunning, intermediate]
+
+state: {}
+
+trigger: |
+  You are the revenue operations manager at a B2B
+  SaaS company. Design the dunning communications
+  for failed subscription payments.
+
+  COMPANY CONTEXT:
+  - CloudSync Pro — project management SaaS
+  - 2,500 active subscribers
+  - Average MRR per customer: $450/month
+  - Payment failure rate: 8% monthly (mostly card
+    expiration and insufficient funds)
+  - Involuntary churn from failed payments: 3.2%
+    of total churn (industry avg: 5%)
+  - Payment methods: credit card (75%), ACH (20%),
+    invoice (5%)
+
+  Design the complete dunning flow:
+  1. Pre-dunning: card expiration warning (30 and 7
+     days before expiry)
+  2. Payment failure Day 0: immediate notification
+  3. Retry Day 3: second attempt + email
+  4. Retry Day 7: third attempt + escalation email
+  5. Grace period ending: Day 14 warning
+  6. Account suspension: Day 21 notification
+
+  For each step, provide the email copy, subject
+  line, and in-app notification text.
+
+assertions:
+  - type: llm_judge
+    criteria: "The pre-dunning and early failure communications focus on retention, not collection — the card expiration warnings are service-oriented: 'Your credit card ending in 4521 expires next month — update it now to avoid any interruption to your CloudSync Pro service'; Day 0 payment failure notification is empathetic and action-oriented: explains the payment failed without blame, provides a direct link to update payment method, and reassures that service continues for now; the tone throughout the early stages is 'we want to help you keep your service' not 'you owe us money'; in-app notifications are concise and include a direct CTA button ('Update Payment Method'); the communications avoid the word 'debt' or 'collection' — in SaaS, it's about service continuity, not debt recovery."
+    weight: 0.35
+    description: "RetentionFocusedTone"
+  - type: llm_judge
+    criteria: "The escalation sequence creates appropriate urgency toward account suspension — Day 3 retry email: slightly more urgent, mentions that the second attempt also failed, asks if there's an issue with the payment method; Day 7 retry email: noticeably firmer, mentions that the account may be at risk if payment isn't resolved, offers alternative payment methods (switch from card to ACH, or request an invoice); Day 14 grace period ending: clear warning that the account will be suspended in 7 days, lists what the customer will lose access to (projects, team collaboration, data — though data is preserved for 90 days after suspension); Day 21 suspension notification: account is now suspended, what that means practically, how to reactivate (update payment → all data restored immediately), and data retention timeline; each email has a clear CTA button and includes the specific dollar amount and payment details."
+    weight: 0.35
+    description: "EscalationToSuspension"
+  - type: llm_judge
+    criteria: "The in-app notifications complement emails and the overall design shows SaaS dunning expertise — in-app notifications are shorter and more action-oriented than emails: banner at top of dashboard ('Payment issue — Update your payment method to avoid interruption'), badge on account settings, and a modal on login after Day 7; the design includes automation rules: pause dunning if payment succeeds at any retry, different treatment for card failures vs. ACH failures (ACH failures often take longer to resolve), escalation to human outreach for accounts above $1,000 MRR (high-value customers warrant a personal call); the communications maintain the product's brand voice throughout — not switching to a corporate collections tone; success metrics are defined: target reduction of involuntary churn from 3.2% to under 2%, card update rate of 60%+ from pre-dunning emails."
+    weight: 0.30
+    description: "InAppAndDesignExpertise"

@@ -1,0 +1,122 @@
+meta:
+  id: basic-invoice-validation
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Validate incoming invoices for completeness and accuracy — check required fields, verify vendor information, and identify common errors before processing"
+  tags: [invoice-validation, data-entry, completeness-check, beginner]
+
+state: {}
+
+trigger: |
+  You are an accounts payable clerk processing
+  the morning batch of incoming invoices. Validate
+  each invoice for completeness and accuracy before
+  entering it into the system.
+
+  REQUIRED INVOICE FIELDS (per company policy):
+  - Vendor name and address
+  - Invoice number (unique)
+  - Invoice date
+  - Due date or payment terms
+  - Line items with descriptions
+  - Quantities and unit prices
+  - Subtotal, tax, and total
+  - PO number (if applicable)
+  - Remittance address or bank details
+
+  INCOMING INVOICES:
+
+  INVOICE 1:
+  From: Acme Office Supplies
+  123 Commerce Drive, Suite 200
+  Dallas, TX 75201
+  Invoice #: AOS-2025-0891
+  Date: March 3, 2025
+  Terms: Net 30
+  PO #: PO-4521
+  Items:
+  - 10 boxes copy paper, $42.99/box = $429.90
+  - 5 toner cartridges, $89.00/ea = $445.00
+  - 2 desk organizers, $34.50/ea = $69.00
+  Subtotal: $943.90
+  Tax (8.25%): $77.87
+  Total: $1,021.77
+  Remit to: Acme Office Supplies, same address
+
+  INVOICE 2:
+  From: TechPro Solutions
+  (no address provided)
+  Invoice #: (blank)
+  Date: March 1, 2025
+  Terms: (not specified)
+  PO #: PO-4489
+  Items:
+  - IT consulting, 40 hours @ $150/hr
+  Subtotal: $6,000.00
+  Tax: $0
+  Total: $6,000.00
+
+  INVOICE 3:
+  From: Metro Cleaning Services
+  789 Industrial Blvd
+  Houston, TX 77001
+  Invoice #: MCS-8834
+  Date: February 28, 2025
+  Terms: Net 15
+  Items:
+  - Monthly cleaning service, March 2025
+  Total: $2,400.00
+  (No line item breakdown, no PO)
+
+  INVOICE 4:
+  From: DataStream Analytics
+  456 Tech Park Way
+  Austin, TX 78701
+  Invoice #: DS-10234
+  Date: March 5, 2025
+  Terms: 2/10 Net 30
+  PO #: PO-4510
+  Items:
+  - Software license (annual), 50 users @ $24/user
+    = $1,200.00
+  - Implementation support, 20 hrs @ $175/hr
+    = $3,500.00
+  - Data migration, lump sum = $2,800.00
+  Subtotal: $7,500.00
+  Tax (8.25%): $618.75
+  Total: $8,018.75
+  Bank: Chase, Routing 021000021, Acct 4455667788
+
+  INVOICE 5:
+  From: Acme Office Supplies
+  123 Commerce Drive, Suite 200
+  Dallas, TX 75201
+  Invoice #: AOS-2025-0891
+  Date: March 3, 2025
+  Terms: Net 30
+  PO #: PO-4521
+  Items:
+  - 10 boxes copy paper, $42.99/box = $429.90
+  - 5 toner cartridges, $89.00/ea = $445.00
+  - 2 desk organizers, $34.50/ea = $69.00
+  Subtotal: $943.90
+  Tax (8.25%): $77.87
+  Total: $1,021.77
+
+  Validate each invoice and prepare a processing
+  report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Validation correctly identifies all issues — Invoice 1: passes all checks (complete information, math is correct: $429.90 + $445.00 + $69.00 = $943.90, tax $943.90 × 8.25% = $77.87, total correct); Invoice 2: FAILS — missing vendor address, missing invoice number, missing payment terms, no line item breakdown for the 40-hour consulting; Invoice 3: PARTIAL — missing PO number (may be acceptable for recurring services under a contract), missing line item breakdown (just a lump sum), no tax indicated (may be exempt for services depending on state); Invoice 4: passes all checks, math is correct ($1,200 + $3,500 + $2,800 = $7,500, tax correct, total correct), includes bank details for payment; Invoice 5: DUPLICATE of Invoice 1 — same invoice number (AOS-2025-0891), same vendor, same amounts; the report identifies the duplicate as the highest-priority issue to prevent double payment."
+    weight: 0.35
+    description: "ValidationAccuracy"
+  - type: llm_judge
+    criteria: "Processing recommendations are appropriate for each invoice — Invoice 1: approved for processing, enter into AP system with PO-4521 reference; Invoice 2: return to vendor with list of missing information (address, invoice number, terms), do NOT process until complete; Invoice 3: flag for review — determine if there's a standing PO or contract, request line item breakdown from vendor, verify tax exemption status; Invoice 4: approved for processing, note the 2/10 Net 30 early payment discount opportunity (pay by March 15 to save $160.38 = 2% of $8,018.75); Invoice 5: reject as duplicate, do not enter, flag in duplicate invoice log; each recommendation includes the next action, responsible party, and timeline."
+    weight: 0.35
+    description: "ProcessingRecommendations"
+  - type: llm_judge
+    criteria: "Mathematical verification is thorough — independently verifies all calculations on each invoice: Invoice 1 line items ($429.90 + $445.00 + $69.00 = $943.90 ✓), tax ($943.90 × 0.0825 = $77.87 ✓), total ($943.90 + $77.87 = $1,021.77 ✓); Invoice 2 ($150 × 40 = $6,000 ✓); Invoice 4 line items ($1,200 + $3,500 + $2,800 = $7,500 ✓), tax ($7,500 × 0.0825 = $618.75 ✓), total ($7,500 + $618.75 = $8,118.75 — WAIT, the invoice says $8,018.75 which is $100 less than the correct total of $8,118.75 — this is a math error on the invoice that should be flagged); the verification catches this discrepancy and recommends contacting DataStream to confirm the correct total before processing."
+    weight: 0.30
+    description: "MathVerification"

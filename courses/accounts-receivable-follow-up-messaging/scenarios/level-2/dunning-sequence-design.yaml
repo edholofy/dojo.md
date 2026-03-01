@@ -1,0 +1,50 @@
+meta:
+  id: dunning-sequence-design
+  level: 2
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Design a complete dunning email sequence from pre-due through collection referral — create a 6-step automated cadence with escalating tone and urgency"
+  tags: [dunning-sequence, automation, cadence-design, intermediate]
+
+state: {}
+
+trigger: |
+  Your company is implementing a dunning automation
+  system and needs you to design the complete email
+  sequence for B2B customers.
+
+  COMPANY CONTEXT:
+  - $50M professional services firm
+  - Average invoice: $25,000
+  - Payment terms: Net 30
+  - Current DSO: 52 days (target: 38 days)
+  - Customer base: 200 active B2B clients
+  - Late fee policy: 1.5%/month after 30 days
+
+  Design a 6-step dunning sequence:
+  1. Pre-due reminder (7 days before due)
+  2. First past-due reminder (5 days past due)
+  3. Second reminder (15 days past due)
+  4. Escalation notice (30 days past due)
+  5. Final notice (45 days past due)
+  6. Collection referral warning (60 days past due)
+
+  For each step, provide:
+  - Subject line
+  - Email body (100-150 words each)
+  - Tone description
+  - Automation triggers and exceptions
+
+assertions:
+  - type: llm_judge
+    criteria: "The 6-step sequence shows clear tone progression from helpful to firm — Step 1 (pre-due): tone is friendly/service-oriented, subject line references upcoming due date, body confirms invoice details and offers help; Step 2 (5 days past due): tone is polite/concerned, assumes the best (perhaps overlooked), asks for confirmation; Step 3 (15 days past due): tone is professional/direct, references prior reminder, requests specific response date; Step 4 (30 days past due): tone is firm/business-like, mentions late fee application, requests immediate attention; Step 5 (45 days past due): tone is serious/urgent, warns of collection referral, final deadline; Step 6 (60 days past due): tone is formal/final, states collection referral will occur in X days, last chance to resolve directly; the progression is gradual and proportional — each step is noticeably different from the previous one without jumping from friendly to threatening."
+    weight: 0.35
+    description: "ToneProgression"
+  - type: llm_judge
+    criteria: "Each email has an effective subject line and concise body appropriate to its stage — subject lines escalate: 'Upcoming Payment Reminder' → 'Friendly Reminder: Past Due' → 'Second Notice: Payment Outstanding' → 'Urgent: Account Past Due — Late Fee Applied' → 'Final Notice Before Collection Referral' → 'FINAL: Collection Referral in [X] Days'; each body is 100-150 words and includes: invoice reference, amount, days past due, specific ask, and next steps; the later emails reference prior communications ('Despite multiple reminders...'); each email makes it easy to pay (references payment methods/portal); the sequence builds a narrative — reading all 6 emails in order tells a clear story of escalating attempts to resolve."
+    weight: 0.35
+    description: "SubjectLinesAndContent"
+  - type: llm_judge
+    criteria: "Automation triggers and exceptions demonstrate practical system design thinking — each step includes: the trigger condition (e.g., 'Send when invoice is 5 days past due AND no payment received AND no active dispute'), timing rules (e.g., 'Send at 9 AM recipient's local time, Tuesday-Thursday preferred'), and exceptions: (1) Do not send if payment was received in the last 48 hours (payment in transit), (2) Do not send if there is an active dispute flag on the invoice, (3) Do not send Step 3+ if a payment plan is in place, (4) Pause the sequence if the customer has replied to any prior email (move to manual follow-up), (5) Skip to Step 4 for customers with a history of chronic late payment; the exceptions prevent embarrassing situations like sending a collection warning the day after payment was made; the design reflects understanding of real-world AR operations."
+    weight: 0.30
+    description: "AutomationAndExceptions"

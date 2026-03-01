@@ -1,0 +1,68 @@
+meta:
+  id: capex-variance
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze capital expenditure variances — compare actual capex spending to the approved capital budget by project and category"
+  tags: [capex-variance, capital-budget, project-tracking, beginner]
+
+state: {}
+
+trigger: |
+  You are the FP&A analyst responsible for tracking
+  the company's capital expenditure budget. Prepare
+  the Q1 2026 capex variance report.
+
+  APPROVED ANNUAL CAPITAL BUDGET: $4,200,000
+
+  Q1 BUDGET vs. ACTUAL BY PROJECT:
+
+  1. ERP Upgrade (Phase 2):
+     Q1 Budget: $450,000    Actual: $520,000
+     Annual Budget: $1,800,000
+     Status: Behind schedule (vendor delays)
+
+  2. Warehouse Automation:
+     Q1 Budget: $350,000    Actual: $280,000
+     Annual Budget: $900,000
+     Status: Ahead of schedule (favorable pricing)
+
+  3. Office Renovation (Floor 3):
+     Q1 Budget: $200,000    Actual: $185,000
+     Annual Budget: $400,000
+     Status: On track
+
+  4. IT Infrastructure Refresh:
+     Q1 Budget: $150,000    Actual: $165,000
+     Annual Budget: $600,000
+     Status: Accelerated (end-of-life equipment)
+
+  5. Vehicle Fleet Replacement:
+     Q1 Budget: $100,000    Actual: $0
+     Annual Budget: $300,000
+     Status: Delayed (supply chain issues)
+
+  6. Security System Upgrade:
+     Q1 Budget: $50,000     Actual: $72,000
+     Annual Budget: $200,000
+     Status: Scope increase (new compliance req.)
+
+  TOTAL Q1:
+     Budget: $1,300,000     Actual: $1,222,000
+
+  Calculate all variances and write a 200-word
+  capex variance memo for the CFO.
+
+assertions:
+  - type: llm_judge
+    criteria: "All project-level variances are correctly calculated — ERP Upgrade: +$70,000 unfavorable (15.6% over Q1 budget), 28.9% of annual budget spent in Q1 vs. 25% expected; Warehouse Automation: -$70,000 favorable (20.0% under), 31.1% of annual budget; Office Renovation: -$15,000 favorable (7.5% under), 46.3% of annual budget; IT Infrastructure: +$15,000 unfavorable (10.0% over), 27.5% of annual budget; Vehicle Fleet: -$100,000 favorable (100% under — no spend), 0% of annual budget; Security System: +$22,000 unfavorable (44.0% over), 36.0% of annual budget; Total Q1: -$78,000 favorable (6.0% under Q1 budget); the response calculates both the Q1 variance and the percentage of annual budget consumed to assess pacing."
+    weight: 0.35
+    description: "CapexCalculations"
+  - type: llm_judge
+    criteria: "The analysis distinguishes between timing variances and true budget risks — the response correctly identifies that capex variances are often timing-related (spending shifts between quarters) rather than true over/under-spends: the Vehicle Fleet delay ($100K favorable) is purely timing — the spend will likely shift to Q2-Q3 when supply chain issues resolve; the Warehouse Automation favorable variance ($70K) is genuine — favorable pricing means the full-year project may complete under budget; the ERP Upgrade unfavorable ($70K) is a risk — vendor delays may increase total project cost, not just shift timing; the Security System scope increase ($22K) represents a true budget risk — new compliance requirements have expanded the project beyond the original $200K authorization and may require a budget amendment; the analysis separates 'will this resolve itself by year-end?' from 'does this represent a real budget problem requiring action?'"
+    weight: 0.35
+    description: "TimingVsTrueBudgetRisk"
+  - type: llm_judge
+    criteria: "The CFO memo is concise and action-oriented — the 200-word memo: (1) leads with the headline (Q1 capex is $78K or 6% favorable to budget), (2) identifies the two projects requiring CFO attention: the ERP Upgrade ($70K over with vendor delays — risk of further overruns) and the Security System ($22K over with scope expansion — may need a supplemental budget request), (3) notes that the Vehicle Fleet delay will shift spend to later quarters, not create savings, (4) highlights the genuine good news: Warehouse Automation favorable pricing, (5) provides a full-year forecast perspective (is the annual $4.2M budget at risk?), and (6) recommends specific actions: request an ERP vendor status meeting to assess total cost exposure, and evaluate whether the Security System needs a formal budget amendment; the tone is appropriate for a CFO — focused on financial risk management and full-year forecast accuracy, not just Q1 results."
+    weight: 0.30
+    description: "CFOMemo"

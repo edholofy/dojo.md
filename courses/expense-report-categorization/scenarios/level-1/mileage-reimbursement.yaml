@@ -1,0 +1,79 @@
+meta:
+  id: mileage-reimbursement
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Calculate mileage reimbursement for business travel — apply IRS standard mileage rates, distinguish business vs. commuting miles, and process mileage logs"
+  tags: [mileage, irs-rates, business-travel, beginner]
+
+state: {}
+
+trigger: |
+  Process a monthly mileage reimbursement claim
+  for a field sales representative who uses her
+  personal vehicle for business travel.
+
+  EMPLOYEE: Karen Brooks, Regional Sales Manager
+  HOME ADDRESS: 123 Oak Street, Pleasanton, CA
+  OFFICE ADDRESS: 456 Market Street, San Francisco
+  (25 miles each way)
+  MONTH: March 2025
+  IRS STANDARD MILEAGE RATE: $0.70/mile (2025)
+
+  COMPANY POLICY:
+  - Reimburse at IRS standard mileage rate
+  - Normal commute miles are NOT reimbursable
+  - Business miles from home to a non-regular
+    business destination are fully reimbursable
+  - Business miles from office to a business
+    destination are fully reimbursable
+  - First and last trip of the day from/to home
+    must deduct commute miles if employee has a
+    regular office
+  - Mileage log must include: date, start location,
+    end location, purpose, miles driven
+
+  MILEAGE LOG SUBMITTED:
+
+  Date  | From           | To              | Purpose                    | Miles
+  ------|----------------|-----------------|----------------------------|------
+  03/03 | Home           | Client A (Oakland)| Quarterly review          | 18
+  03/03 | Client A       | Office          | Staff meeting              | 22
+  03/05 | Office         | Client B (San Jose)| Product demo             | 48
+  03/05 | Client B       | Home            | End of day                 | 42
+  03/07 | Home           | Trade show (Moscone)| Industry event          | 26
+  03/07 | Trade show     | Client C (SOMA) | Follow-up meeting          | 2
+  03/07 | Client C       | Home            | End of day                 | 27
+  03/10 | Office         | Client D (Palo Alto)| Contract signing        | 35
+  03/10 | Client D       | Client E (Mtn View)| Pipeline review          | 8
+  03/10 | Client E       | Office          | Return to office           | 38
+  03/12 | Home           | Office          | Regular workday            | 25
+  03/12 | Office         | Client F (Berkeley)| Renewal discussion       | 15
+  03/12 | Client F       | Home            | End of day                 | 20
+  03/14 | Home           | Client G (Walnut Creek)| New prospect mtg      | 12
+  03/14 | Client G       | Home            | End of day                 | 12
+  03/17 | Home           | Airport (SFO)   | Flight to LA for meetings  | 30
+  03/19 | Airport (SFO)  | Home            | Return from LA trip        | 30
+  03/24 | Office         | Team lunch offsite| Department event          | 5
+  03/24 | Restaurant     | Office          | Return to office           | 5
+
+  Calculate:
+  1. Reimbursable vs. non-reimbursable miles for
+     each trip
+  2. Total reimbursement amount
+  3. Commute mile deductions
+  4. Expense report with proper GL coding
+
+assertions:
+  - type: llm_judge
+    criteria: "Mileage calculations correctly distinguish business from commute miles — March 3: home to Client A (18 miles) is reimbursable but should the commute be deducted? Since she went directly to a client (not her regular office), full 18 miles are reimbursable; Client A to office (22 miles) is business miles, fully reimbursable; March 5: office to Client B (48 miles) fully reimbursable; Client B to home (42 miles) — must deduct commute equivalent (25 miles), so 17 miles reimbursable; March 12: home to office (25 miles) is commute — NOT reimbursable; office to Client F (15 miles) fully reimbursable; Client F to home (20 miles) — commute deduction question; March 14: home to Client G (12 miles) — less than commute distance, so fully reimbursable since it's a business destination; the analysis correctly handles the first/last trip commute deduction rule."
+    weight: 0.35
+    description: "MileageCalculations"
+  - type: llm_judge
+    criteria: "Total reimbursement is mathematically correct — sums all reimbursable miles after commute deductions; applies the $0.70/mile rate; identifies that the March 12 home-to-office trip (25 miles) is pure commute and not reimbursable; the airport trips (March 17 and 19) are business travel and fully reimbursable (travel to/from airport for business flights is not commuting); the team lunch offsite (March 24, 10 miles round trip) may be reimbursable depending on whether it's a required business event or optional social event; the total shows: gross miles claimed, commute miles deducted, net reimbursable miles, and dollar amount at $0.70/mile."
+    weight: 0.35
+    description: "TotalReimbursement"
+  - type: llm_judge
+    criteria: "Expense report is properly formatted and coded — each trip is listed with date, route, business purpose, total miles, commute deduction, and net reimbursable miles; GL coding assigns mileage to 6110 (Ground Transportation) or a specific mileage GL code; cost center is assigned to CC-200 (Sales); any trips to specific clients could be coded to project codes if applicable; the report includes a certification that the mileage log is accurate and that commute miles have been properly excluded; notes IRS documentation requirements (date, destination, business purpose, miles driven are all present in the log)."
+    weight: 0.30
+    description: "ExpenseReport"

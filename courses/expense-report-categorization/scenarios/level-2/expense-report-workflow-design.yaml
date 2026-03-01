@@ -1,0 +1,70 @@
+meta:
+  id: expense-report-workflow-design
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Design an expense report approval workflow — create routing rules, delegation authorities, escalation paths, and exception handling procedures for a mid-size company"
+  tags: [workflow-design, approval-routing, delegation, intermediate]
+
+state: {}
+
+trigger: |
+  A company with 500 employees is implementing a
+  new expense management system. Design the
+  approval workflow based on these requirements.
+
+  ORGANIZATIONAL STRUCTURE:
+  - CEO
+  - 5 VPs (Sales, Engineering, Marketing, Finance,
+    Operations)
+  - 15 Directors (3 per VP)
+  - 45 Managers (3 per Director)
+  - ~435 Individual Contributors
+
+  CURRENT PAIN POINTS:
+  - Average approval time: 12 days
+  - 30% of reports have coding errors
+  - No consistent policy enforcement
+  - VPs approve their own expenses
+  - No delegation when approvers are on PTO
+  - Expenses over $10K sometimes slip through
+    without CFO review
+
+  REQUIREMENTS:
+  1. All expense reports must be approved before
+     payment
+  2. Approval authority based on amount thresholds
+  3. Policy violations auto-flagged before reaching
+     approver
+  4. Delegation rules for PTO/unavailability
+  5. Escalation for overdue approvals
+  6. Special handling for executive expenses
+  7. Target: reduce approval time to under 5 days
+
+  BUDGET THRESHOLDS:
+  - Manager: approve up to $2,500
+  - Director: approve up to $5,000
+  - VP: approve up to $15,000
+  - CFO: approve up to $50,000
+  - CEO: unlimited (Board reviews annually)
+
+  Design the complete workflow including:
+  1. Routing rules and approval matrix
+  2. Auto-validation checks (pre-submission)
+  3. Delegation and escalation procedures
+  4. Executive expense handling
+  5. Exception and override processes
+
+assertions:
+  - type: llm_judge
+    criteria: "Approval routing matrix is comprehensive and handles edge cases — defines routing based on report amount AND submitter level: IC reports go to their manager first, then escalate based on amount; manager reports go to their director; director reports go to their VP; VP reports go to the CFO (not self-approved); CEO reports go to the CFO or Board designee; the matrix handles split-level approvals (e.g., a $6,000 report from an IC goes: manager → director, since it exceeds manager's $2,500 limit); auto-approval for reports under a threshold (e.g., $100) with proper receipts is considered; the routing prevents anyone from approving their own expenses; the matrix is presented as a clear table or decision tree."
+    weight: 0.35
+    description: "ApprovalMatrix"
+  - type: llm_judge
+    criteria: "Auto-validation and policy checks are designed to catch common errors — pre-submission validations include: GL code validation against the chart of accounts; receipt attachment verification for expenses over $25; per diem rate validation against GSA/company rates; duplicate expense detection (same date, amount, vendor); policy limit checks (meal per-person limits, hotel rate caps); missing fields (business purpose, attendee names for meals); date range validation (within 30-day submission window); the system flags violations for review but allows submission with justification; the 30% coding error rate is addressed through smart GL suggestions based on vendor name and MCC code; estimated impact: reducing coding errors to under 10% and policy violations caught before approval."
+    weight: 0.35
+    description: "AutoValidation"
+  - type: llm_judge
+    criteria: "Delegation, escalation, and executive handling are practical — delegation rules: approvers can designate a delegate before PTO (same level or one level up); auto-delegation triggers after 3 business days without action; escalation path: 3 days → reminder to approver, 5 days → escalate to next level, 7 days → finance team intervention; executive expense handling: VP expenses require CFO approval (eliminating self-approval); CEO expenses require CFO + Board committee review; expense reports with policy exceptions require one-level-up additional approval; the workflow includes audit trails showing all approval actions, timestamps, and delegation chains; the target of under 5 days is achievable with auto-routing, notifications, and mobile approval capability; the design addresses all 6 current pain points listed."
+    weight: 0.30
+    description: "DelegationEscalation"

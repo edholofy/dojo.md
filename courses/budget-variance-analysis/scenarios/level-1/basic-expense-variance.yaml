@@ -1,0 +1,65 @@
+meta:
+  id: basic-expense-variance
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Calculate and explain departmental expense variances — compare actual spending to budget across major cost categories and write management commentary"
+  tags: [expense-variance, departmental, budget-to-actual, beginner]
+
+state: {}
+
+trigger: |
+  You are preparing the monthly expense variance
+  report for the Marketing department.
+
+  MARCH 2026 BUDGET vs. ACTUAL:
+
+  Salaries & Benefits:
+    Budget: $420,000    Actual: $445,000
+
+  Digital Advertising:
+    Budget: $180,000    Actual: $210,000
+
+  Events & Conferences:
+    Budget: $75,000     Actual: $42,000
+
+  Content Production:
+    Budget: $55,000     Actual: $62,000
+
+  Software & Tools:
+    Budget: $35,000     Actual: $38,000
+
+  Travel:
+    Budget: $25,000     Actual: $18,000
+
+  Office & Supplies:
+    Budget: $10,000     Actual: $8,500
+
+  Total Marketing:
+    Budget: $800,000    Actual: $823,500
+
+  CONTEXT (from the Marketing VP):
+  - Hired 2 new marketing analysts mid-February
+    (not in original budget)
+  - Increased Google Ads spend to support Q1
+    product launch
+  - Cancelled the planned March trade show due
+    to speaker cancellations
+  - Agency produced extra video content for launch
+
+  Calculate all variances and write a 200-word
+  variance report for the CFO.
+
+assertions:
+  - type: llm_judge
+    criteria: "All expense variances are correctly calculated with dollar amounts and percentages — Salaries & Benefits: $25,000 unfavorable (6.0%); Digital Advertising: $30,000 unfavorable (16.7%); Events & Conferences: $33,000 favorable (44.0%); Content Production: $7,000 unfavorable (12.7%); Software & Tools: $3,000 unfavorable (8.6%); Travel: $7,000 favorable (28.0%); Office & Supplies: $1,500 favorable (15.0%); Total: $23,500 unfavorable (2.9%); each line is correctly labeled as favorable (under budget) or unfavorable (over budget); the response correctly identifies that while the department is over budget overall, the Events savings ($33K) partially offset the overages in Salaries and Digital Advertising."
+    weight: 0.35
+    description: "ExpenseCalculations"
+  - type: llm_judge
+    criteria: "Variances are linked to business drivers using the context provided — the report connects each significant variance to its business cause: Salaries +$25K tied to the 2 new analyst hires in mid-February (prorated for a partial month would be approximately $25K suggesting fully-loaded monthly cost of about $12-13K each); Digital Advertising +$30K attributed to the incremental Google Ads spend for the Q1 product launch; Events -$33K explained by the cancelled March trade show; Content Production +$7K linked to the extra video content produced by the agency for the product launch; Travel -$7K likely related to the cancelled trade show (reduced travel); the report identifies that $55K of the overspend (Salaries + Digital + Content) is directly tied to the product launch and new hires — both deliberate business decisions — while $41.5K in savings (Events + Travel + Office) partially offset; net: the $23.5K overage is driven by growth investments, not uncontrolled spending."
+    weight: 0.35
+    description: "DriverAttribution"
+  - type: llm_judge
+    criteria: "The 200-word CFO report is professional and structured — the report follows a clear structure: (1) headline summary (Marketing was $23.5K or 2.9% over budget in March), (2) key drivers organized from largest to smallest impact, (3) distinction between planned overages (new hires, launch spending) and unplanned variances, (4) offsetting savings highlighted, (5) forward-looking note (will the product launch spending continue? are the new analyst positions now fully budgeted for April forward?); the tone is appropriate for a CFO audience — concise, factual, and focused on whether the variances are concerning or acceptable; the commentary avoids simply restating the numbers and instead provides the 'so what' — the department is over budget but for strategic reasons that were approved, and the net impact is modest."
+    weight: 0.30
+    description: "CFOReport"

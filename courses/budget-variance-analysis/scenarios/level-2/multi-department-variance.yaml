@@ -1,0 +1,67 @@
+meta:
+  id: multi-department-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Consolidate and analyze variances across multiple departments — identify company-wide patterns, prioritize investigation areas, and prepare a management variance report"
+  tags: [multi-department, consolidation, management-report, intermediate]
+
+state: {}
+
+trigger: |
+  Prepare the March 2026 company-wide variance
+  report by consolidating departmental data and
+  identifying cross-cutting themes.
+
+  DEPARTMENT SUMMARIES (Budget vs. Actual):
+
+  Sales ($2.8M budget):
+  - Revenue: $2,650K vs. $2,800K budget (-$150K, 5.4% U)
+  - Commissions: $132K vs. $140K budget (-$8K F)
+  - Travel: $45K vs. $35K budget (+$10K U)
+  - Total OpEx: $485K vs. $475K budget (+$10K U)
+
+  Marketing ($420K budget):
+  - Digital Ads: $155K vs. $130K budget (+$25K U)
+  - Content: $48K vs. $55K budget (-$7K F)
+  - Events: $82K vs. $80K budget (+$2K U)
+  - Headcount: 14 vs. 15 budget (-1 open)
+  - Total: $395K vs. $420K budget (-$25K F)
+
+  Engineering ($1.1M budget):
+  - Salaries: $780K vs. $800K budget (-$20K F)
+  - Cloud/Infra: $185K vs. $160K budget (+$25K U)
+  - Contractors: $95K vs. $80K budget (+$15K U)
+  - Total: $1,120K vs. $1,100K budget (+$20K U)
+
+  Customer Success ($380K budget):
+  - Salaries: $290K vs. $280K budget (+$10K U)
+  - Tools: $42K vs. $40K budget (+$2K U)
+  - Travel: $28K vs. $35K budget (-$7K F)
+  - Total: $375K vs. $380K budget (-$5K F)
+
+  G&A ($650K budget):
+  - Salaries: $420K vs. $410K budget (+$10K U)
+  - Legal: $85K vs. $50K budget (+$35K U)
+  - Facilities: $92K vs. $95K budget (-$3K F)
+  - Total: $680K vs. $650K budget (+$30K U)
+
+  Prepare:
+  1. Company-wide variance summary
+  2. Cross-department pattern analysis
+  3. Top 5 variances requiring investigation
+  4. Write a 300-word management variance report
+
+assertions:
+  - type: llm_judge
+    criteria: "Company-wide consolidation is correct and cross-department patterns are identified — Total company OpEx: Actual $3,055K vs. Budget $3,025K = +$30K unfavorable (1.0%); combined with revenue shortfall of $150K, the operating income impact is approximately -$180K; cross-department patterns identified: (1) Technology costs are over budget across departments — Engineering Cloud/Infra +$25K and the company-wide trend toward higher cloud spending suggests a systemic underbudgeting of technology costs or unplanned infrastructure growth; (2) Headcount is below plan in multiple departments (Marketing -1, Engineering implied by $20K salary savings) — this creates favorable salary variances but may be hampering revenue growth; (3) Legal costs are significantly over budget in G&A (+$35K or 70%) — this is the largest percentage variance and warrants immediate investigation; (4) Revenue miss of $150K with lower commission ($8K F) suggests the miss is concentrated in lower-commission products or deals pushed to future quarters."
+    weight: 0.35
+    description: "ConsolidationAndPatterns"
+  - type: llm_judge
+    criteria: "Top 5 investigation priorities are correctly identified and prioritized — the top 5 variances for investigation, ranked by business impact: (1) Revenue shortfall -$150K (5.4% miss) — the single largest impact item; needs root cause analysis: is it pipeline timing, competitive losses, or pricing pressure? (2) Legal costs +$35K in G&A (70% over budget) — the largest percentage variance; is this a one-time litigation matter or ongoing? (3) Digital advertising +$25K in Marketing (19% over) — was this an approved spend increase to drive pipeline? Is it generating ROI? (4) Cloud/Infrastructure +$25K in Engineering (16% over) — is this driven by user growth (good) or inefficiency (bad)? Combined with contractor overspend (+$15K), Engineering is $40K over on non-headcount costs; (5) Engineering contractors +$15K (19% over) — are these filling the headcount gaps or addressing a specific project? The prioritization considers both the dollar amount AND the strategic implications of each variance."
+    weight: 0.35
+    description: "InvestigationPriorities"
+  - type: llm_judge
+    criteria: "The 300-word management report is well-structured and actionable — the report: (1) opens with the headline: operating income is approximately $180K below plan, driven by a $150K revenue miss and $30K net OpEx overage; (2) provides the revenue context: the revenue miss is the primary concern and needs immediate pipeline analysis; (3) identifies the expense themes: technology costs trending above budget across departments (Cloud +$25K, Contractors +$15K, Digital Ads +$25K), offset by headcount savings from open positions; the net expense picture is modestly unfavorable but not alarming; (4) calls out the G&A legal spike ($35K) as requiring immediate explanation; (5) notes the structural concern: some favorable variances (open headcount, lower commissions) are symptoms of underperformance, not cost efficiency; (6) recommends actions: revenue bridge meeting with Sales VP, legal cost explanation from GC, technology cost review with CTO to assess whether cloud/infra budget needs permanent increase; the tone is balanced — acknowledges areas of concern without alarm, and frames the variances in business context."
+    weight: 0.30
+    description: "ManagementReport"

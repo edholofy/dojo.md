@@ -1,0 +1,56 @@
+meta:
+  id: cogs-variance-basics
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Calculate basic cost of goods sold variances — analyze material cost, labor cost, and overhead variances for a manufacturing department"
+  tags: [cogs-variance, manufacturing, standard-cost, beginner]
+
+state: {}
+
+trigger: |
+  You are a cost analyst for a furniture
+  manufacturer. Calculate the March production
+  cost variances for the "Classic Oak Table" line.
+
+  STANDARD COST PER TABLE:
+  - Direct Materials: 30 board-feet × $8/board-foot
+    = $240
+  - Direct Labor: 4 hours × $28/hour = $112
+  - Variable Overhead: 4 hours × $15/hour = $60
+  - Total standard cost: $412 per table
+
+  MARCH PRODUCTION:
+  Budgeted production: 500 tables
+  Actual production: 480 tables
+
+  ACTUAL COSTS:
+  - Direct Materials: 15,200 board-feet purchased
+    and used at $8.50/board-foot = $129,200
+  - Direct Labor: 2,016 hours at $27.50/hour
+    = $55,440
+  - Variable Overhead: $30,720
+
+  Calculate:
+  1. Material price and usage variances
+  2. Labor rate and efficiency variances
+  3. Variable overhead spending and efficiency
+     variances
+  4. Total production cost variance
+  5. Write a summary explaining whether each
+     variance is favorable or unfavorable and
+     the likely causes
+
+assertions:
+  - type: llm_judge
+    criteria: "Material variances are correctly calculated — Material Price Variance = (Actual Price - Standard Price) × Actual Quantity = ($8.50 - $8.00) × 15,200 = $7,600 Unfavorable; Material Usage Variance = (Actual Quantity - Standard Quantity Allowed) × Standard Price = (15,200 - 14,400) × $8.00 = $6,400 Unfavorable (standard quantity allowed for 480 tables = 480 × 30 = 14,400 board-feet); Total Material Variance = $14,000 Unfavorable; the response correctly uses actual production (480 tables) to calculate the standard quantity allowed (flexible budget), not budgeted production of 500; Labor Rate Variance = ($27.50 - $28.00) × 2,016 = -$1,008 = $1,008 Favorable; Labor Efficiency Variance = (2,016 - 1,920) × $28.00 = $2,688 Unfavorable (standard hours allowed = 480 × 4 = 1,920); Total Labor Variance = $1,680 Unfavorable."
+    weight: 0.35
+    description: "MaterialAndLaborVariances"
+  - type: llm_judge
+    criteria: "Overhead variances and total variance are correctly calculated — Variable Overhead Spending Variance = Actual VOH - (Actual Hours × Standard VOH Rate) = $30,720 - (2,016 × $15) = $30,720 - $30,240 = $480 Unfavorable; Variable Overhead Efficiency Variance = (Actual Hours - Standard Hours Allowed) × Standard VOH Rate = (2,016 - 1,920) × $15 = $1,440 Unfavorable; Total Variable Overhead Variance = $1,920 Unfavorable; Total Production Cost Variance = Material ($14,000 U) + Labor ($1,680 U) + Overhead ($1,920 U) = $17,600 Unfavorable; alternatively, this can be verified as: Actual total cost = $129,200 + $55,440 + $30,720 = $215,360; Standard cost for 480 tables = 480 × $412 = $197,760; Total variance = $215,360 - $197,760 = $17,600 Unfavorable."
+    weight: 0.35
+    description: "OverheadAndTotalVariance"
+  - type: llm_judge
+    criteria: "Summary explains each variance with likely business causes — the summary identifies: Materials were the largest problem — both price ($7,600 U) and usage ($6,400 U) were unfavorable, suggesting both that wood costs increased (possibly due to lumber market conditions or supplier pricing) and that production used more wood per table than standard (possibly due to waste, quality issues, or less experienced workers); Labor rate was slightly favorable ($1,008 F) suggesting lower-cost workers were used, but this may have contributed to the unfavorable labor efficiency ($2,688 U) and material usage variances — less experienced workers may work slower and waste more material; Overhead variances largely follow labor efficiency since variable overhead is applied on labor hours; the summary correctly notes the trade-off: using lower-cost labor saved on rates but cost more in efficiency and material usage; the overall narrative connects the variances into a coherent story rather than treating each in isolation."
+    weight: 0.30
+    description: "VarianceSummary"

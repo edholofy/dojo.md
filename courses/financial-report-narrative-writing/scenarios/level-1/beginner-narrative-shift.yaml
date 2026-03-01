@@ -1,0 +1,73 @@
+meta:
+  id: beginner-narrative-shift
+  level: 1
+  course: financial-report-narrative-writing
+  type: output
+  description: "Beginner shift simulation — write multiple financial narratives in a single workday: variance commentary, executive summary, and a customer-facing financial update"
+  tags: [shift-simulation, multi-narrative, beginner-synthesis, beginner]
+
+state: {}
+
+trigger: |
+  You are a Financial Analyst responsible for
+  monthly reporting narratives. It's the 10th
+  business day after month-end and you need to
+  produce three deliverables today.
+
+  DELIVERABLE 1 — DEPARTMENT VARIANCE COMMENTARY
+  Write variance commentary for the IT department.
+
+  IT DEPARTMENT — MARCH RESULTS
+  Line Item          | Budget   | Actual   | Variance
+  -------------------|----------|----------|----------
+  Salaries           | $280,000 | $295,000 | $15,000 U
+  Contractors        | $120,000 |  $85,000 | ($35,000) F
+  Cloud Hosting      |  $65,000 |  $78,000 | $13,000 U
+  Software Licenses  |  $45,000 |  $44,000 |  ($1,000) F
+  Hardware           |  $30,000 |  $52,000 | $22,000 U
+  Training           |  $15,000 |   $3,000 | ($12,000) F
+  Total              | $555,000 | $557,000 |  $2,000 U
+
+  Context: One senior developer left; replaced with
+  two junior developers (higher total salary). The
+  contractor savings are from the insourcing. Cloud
+  costs up due to migration to AWS. Hardware spike:
+  new laptops for the two new hires plus server
+  replacement. Training budget unspent — planned
+  conference cancelled.
+
+  DELIVERABLE 2 — CFO EXECUTIVE SUMMARY
+  Write a 150-word executive summary of the full
+  company's March results for the CFO.
+
+  March highlights:
+  - Revenue: $4.2M (budget: $4.0M, +5% favorable)
+  - Gross margin: 42% (budget: 44%, unfavorable)
+  - Operating expenses: $1.5M (budget: $1.4M, +7%)
+  - Net income: $180K (budget: $260K, -31%)
+  - Cash: $2.1M (down $400K from February)
+  - AR increased $500K (large customer payment
+    delayed)
+  - Headcount: 82 (budget: 80, +2 in IT)
+
+  DELIVERABLE 3 — CUSTOMER-FACING FINANCIAL UPDATE
+  Write a brief (100-word) financial health update
+  for the company's largest customer who has
+  requested assurance of financial stability as
+  part of their vendor review process.
+
+  Produce all three deliverables.
+
+assertions:
+  - type: llm_judge
+    criteria: "IT variance commentary explains every line with business context — salaries unfavorable by $15K due to replacing one senior developer with two junior developers (net headcount increase, higher total cost but builds team depth); contractors favorable by $35K as work previously done by external contractors brought in-house with the new hires (net savings); cloud hosting unfavorable by $13K due to ongoing AWS migration (expected to stabilize once migration completes); hardware unfavorable by $22K driven by two new employee laptop setups plus an unplanned server replacement; training favorable by $12K due to planned industry conference cancellation (timing, may shift to later month or alternative training); the total is only $2K unfavorable — essentially on budget, with the overages and savings largely offsetting; the commentary connects related items: the salary increase and contractor decrease are two sides of the same insourcing decision."
+    weight: 0.35
+    description: "VarianceCommentary"
+  - type: llm_judge
+    criteria: "CFO executive summary is genuinely 150 words and captures the essential story — the summary should lead with the headline: revenue was 5% favorable but net income missed budget by 31% due to margin compression and higher operating expenses; key points compressed: revenue strength from volume, gross margin 2pp below target (pricing or cost pressure), OpEx 7% over budget (including IT headcount additions), cash position tightened by $400K driven by delayed customer payment ($500K AR increase) and the expense overspend; the 150-word constraint forces prioritization — only the most important facts make the cut; the customer-facing update (Deliverable 3) is approximately 100 words, emphasizes financial stability (positive revenue growth, profitable operations, strong customer base), omits internal challenges, and provides appropriate assurance without making forward-looking promises; the three deliverables demonstrate the ability to adjust tone, detail, and content for different audiences (department manager, CFO, external customer)."
+    weight: 0.35
+    description: "ExecutiveSummaryAndCustomerUpdate"
+  - type: llm_judge
+    criteria: "All three deliverables are appropriately different in tone, detail, and audience focus — the variance commentary is detailed and operational (for the IT director), the CFO summary is concise and strategic (highlighting the key story: revenue up but profitability down), and the customer update is reassuring and externally appropriate (no internal dirty laundry, focus on stability and growth); this demonstrates the fundamental skill of financial narrative writing: adapting the same underlying data to different audiences; each deliverable is the specified length and format."
+    weight: 0.30
+    description: "AudienceAdaptation"

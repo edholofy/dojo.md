@@ -1,0 +1,100 @@
+meta:
+  id: vendor-dispute-resolution
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Resolve vendor invoice disputes — investigate discrepancies, negotiate settlements, document resolutions, and establish prevention protocols"
+  tags: [dispute-resolution, vendor-negotiation, settlement, intermediate]
+
+state: {}
+
+trigger: |
+  Resolve the following three active vendor
+  invoice disputes. Each requires investigation,
+  negotiation strategy, and documented resolution.
+
+  DISPUTE 1 — PRICE ESCALATION
+  Vendor: Pacific Raw Materials
+  Invoice #: PRM-2025-1123, Amount: $156,000
+  PO #: PO-7700, PO Amount: $135,000
+  Issue: Vendor invoiced 15.6% above PO price,
+  claiming raw material cost increases.
+
+  Details:
+  - PO issued: January 15, 2025
+  - PO price: 10,000 kg Resin X @ $13.50/kg
+  - Invoice price: 10,000 kg Resin X @ $15.60/kg
+  - Vendor's justification: crude oil price
+    increased 18% since PO was issued
+  - PO terms: "Prices firm for 60 days from PO date"
+  - Delivery date: March 10, 2025 (54 days after PO)
+  - Current market price for Resin X: ~$15.25/kg
+  - Your company has used this vendor for 8 years
+
+  DISPUTE 2 — SERVICE QUALITY SHORTFALL
+  Vendor: Premier IT Solutions
+  Invoice #: PIT-2025-0445, Amount: $48,000
+  Contract: MSA-2024-089, monthly IT support
+  Issue: SLA violations in February — 4 incidents
+  exceeded the 4-hour response time guarantee.
+
+  Details:
+  - Monthly contract: $48,000 for 24/7 IT support
+  - SLA: 4-hour response for Severity 1 incidents
+  - February incidents:
+    - Incident #1: 6.5 hour response (Feb 3)
+    - Incident #2: 5.2 hour response (Feb 12)
+    - Incident #3: 8.0 hour response (Feb 18, a
+      Tuesday during business hours)
+    - Incident #4: 4.5 hour response (Feb 25)
+  - Contract penalty clause: 2% per SLA breach,
+    max 10% per month
+  - Vendor's response: "Incidents 1 and 2 occurred
+    during a severe weather event that affected
+    our data center. Incident 4 was only 30 minutes
+    over."
+
+  DISPUTE 3 — UNAUTHORIZED WORK
+  Vendor: BuildRight Construction
+  Invoice #: BRC-2025-0089, Amount: $34,500
+  PO #: PO-7650, PO Amount: $22,000
+  Issue: Invoice $12,500 over PO for work that
+  was not pre-approved.
+
+  Details:
+  - Original scope: office renovation, PO $22,000
+  - Additional work claimed:
+    - Asbestos remediation (discovered during demo):
+      $6,800
+    - Electrical upgrade (required by inspector):
+      $3,200
+    - Paint color change (requested by office mgr):
+      $2,500
+  - Change order process: requires written approval
+    from Facilities Director before work begins
+  - No written change orders were submitted
+  - Verbal approvals: office manager verbally
+    approved the paint change; facilities team
+    acknowledged the asbestos issue by email
+  - The asbestos and electrical work were arguably
+    necessary and couldn't wait
+
+  Resolve all three disputes with:
+  1. Investigation findings
+  2. Negotiation strategy
+  3. Proposed settlement
+  4. Prevention recommendations
+
+assertions:
+  - type: llm_judge
+    criteria: "Dispute 1 resolution balances contract rights with business relationship — the PO terms state 'prices firm for 60 days'; delivery on day 54 is within the firm-price window, so the company has legal right to pay the PO price ($13.50/kg); however, the vendor's raw material cost increase is real (market price $15.25 confirms the increase); negotiation strategy: acknowledge the cost pressure, but enforce the contract price for this order since it's within the 60-day window; propose a compromise for future orders: agree to a price adjustment mechanism (quarterly price reviews tied to a published commodity index); proposed settlement: pay the PO price ($135,000) for this delivery, with a goodwill gesture of agreeing to price negotiation for the next order; alternatively, split the difference as a relationship preservation measure ($135,000 + partial adjustment); prevention: include escalation clauses in future POs that tie price adjustments to published indices, but with caps and notice requirements."
+    weight: 0.35
+    description: "PriceDispute"
+  - type: llm_judge
+    criteria: "Dispute 2 applies SLA penalties fairly — the analysis evaluates each incident: Incident #1 (6.5 hrs): vendor claims weather event — check if the contract has a force majeure clause that covers severe weather; if so, this breach may be excused; Incident #2 (5.2 hrs): same weather event — similar analysis; Incident #3 (8 hrs, business hours Tuesday): no excuse offered, clear SLA breach, the longest delay; Incident #4 (4.5 hrs): vendor argues it was only 30 minutes over — technically a breach, but the argument for reasonableness has some merit; contract penalty: 2% per breach, max 10%; if all 4 count: 8% penalty = $3,840; if weather events are excused (2 incidents): 4% penalty = $1,920; proposed settlement: accept the weather excuse for Incidents 1-2 (if force majeure clause exists), apply penalty for Incident 3 (undeniable breach) and Incident 4 (still a breach); 4% penalty = $1,920; payment of $48,000 - $1,920 = $46,080; demand a corrective action plan to prevent future breaches; prevention: add specific force majeure definitions to the SLA, require incident post-mortems."
+    weight: 0.35
+    description: "SLADispute"
+  - type: llm_judge
+    criteria: "Dispute 3 distinguishes between necessary and discretionary unauthorized work — the analysis categorizes the additional charges: (1) Asbestos remediation ($6,800): arguably necessary and urgent — asbestos cannot be left exposed, and stopping work while awaiting formal approval would have been impractical; the email acknowledgment from facilities team provides some documentation; RECOMMEND: pay this charge as a reasonable additional cost; (2) Electrical upgrade ($3,200): required by inspector — also necessary and non-discretionary; the company couldn't have refused this work; RECOMMEND: pay this charge; (3) Paint color change ($2,500): discretionary, approved only verbally by an office manager who likely didn't have authority to approve changes; RECOMMEND: negotiate — the vendor should have obtained written approval per the change order process; proposed settlement: pay $22,000 (original PO) + $6,800 (asbestos) + $3,200 (electrical) = $32,000; negotiate the paint change ($2,500) — either refuse payment entirely or split the cost as a compromise; prevention: enforce the written change order requirement, educate vendors that verbal approvals are not valid, designate who has authority to approve changes, and brief office managers that they cannot authorize vendor work."
+    weight: 0.30
+    description: "UnauthorizedWorkDispute"

@@ -1,0 +1,90 @@
+meta:
+  id: receipt-matching-verification
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Match receipts to expense line items and verify completeness — identify missing documentation and discrepancies between receipts and reported amounts"
+  tags: [receipt-matching, verification, documentation, beginner]
+
+state: {}
+
+trigger: |
+  You are reviewing an expense report for
+  completeness before processing payment. Match
+  each receipt to the reported expense and identify
+  any issues.
+
+  EMPLOYEE: Michael Torres, Sales Representative
+  REPORT PERIOD: February 2025
+  TOTAL CLAIMED: $2,847.50
+
+  REPORTED EXPENSES:
+  Line 1: Client dinner at Ruth's Chris, 2/5,
+  $189.50, GL 6130
+  Line 2: Uber to client site, 2/5, $34.00, GL 6110
+  Line 3: Delta flight to Atlanta, 2/10, $412.00,
+  GL 6100
+  Line 4: Marriott Atlanta 2 nights, 2/10-12,
+  $478.00, GL 6120
+  Line 5: Uber rides in Atlanta (3 rides), 2/10-12,
+  $87.00, GL 6110
+  Line 6: Team lunch with Atlanta office, 2/11,
+  $156.00, GL 6130
+  Line 7: Office supplies (printer paper, pens),
+  2/15, $45.50, GL 6200
+  Line 8: Client dinner at Capital Grille, 2/18,
+  $267.00, GL 6130
+  Line 9: Professional development book (Amazon),
+  2/20, $34.50, GL 6300
+  Line 10: Monthly parking at office, 2/1, $250.00,
+  GL 6110
+  Line 11: Uber to airport, 2/12, $42.00, GL 6110
+  Line 12: Breakfast at hotel (Atlanta), 2/11,
+  $28.00, GL 6135
+  Line 13: Conference call subscription (Zoom),
+  2/1, $14.99, GL 6400
+  Line 14: Client gift basket, 2/14, $125.00,
+  GL 6150
+  Line 15: Gas station purchase, 2/22, $52.00,
+  GL 6110
+  Line 16: Dry cleaning (suit for client meeting),
+  2/17, $35.00, GL 6500
+  Line 17: Cell phone case, 2/25, $49.00, GL 6400
+  Line 18: Parking at airport, 2/10, $48.00, GL 6110
+
+  RECEIPTS PROVIDED (attached as images):
+  R1: Ruth's Chris — $189.50 (shows 2 guests, wine)
+  R2: Uber receipt — $34.00
+  R3: Delta confirmation — $412.00 (e-ticket)
+  R4: Marriott folio — $498.00 (includes $20 room
+  service)
+  R5: 2 Uber receipts totaling $62.00
+  R6: Capital Grille — $267.00 (shows 3 guests)
+  R7: Amazon order — $34.50
+  R8: Monthly parking invoice — $250.00
+  R9: Uber receipt — $42.00
+  R10: Hotel breakfast receipt — $28.00
+  R11: Zoom invoice — $14.99
+  R12: Gift basket receipt — $125.00
+  R13: Gas receipt — $52.00
+  R14: Dry cleaning receipt — $35.00
+
+  Create:
+  1. Receipt-to-expense matching matrix
+  2. List of discrepancies and missing documentation
+  3. Corrected expense report with adjustments
+  4. Memo to employee requesting clarification
+
+assertions:
+  - type: llm_judge
+    criteria: "Receipt matching identifies all discrepancies — catches that the Marriott receipt (R4) shows $498 while the reported amount is $478 ($20 room service discrepancy — needs clarification on whether room service was a separate meal or included in lodging); identifies that only 2 of 3 reported Uber rides in Atlanta have receipts (R5 shows $62 vs. reported $87 — $25 unaccounted); notes that the office supplies (Line 7, $45.50) have no receipt; the cell phone case (Line 17, $49.00) has no receipt; the team lunch (Line 6, $156.00) has no receipt; the breakfast receipt matches; the dry cleaning receipt matches; the gas receipt matches but needs business purpose justification; provides a complete matching matrix showing which receipts match which line items."
+    weight: 0.35
+    description: "ReceiptMatching"
+  - type: llm_judge
+    criteria: "Discrepancy analysis identifies substantive and documentation issues — substantive issues: (1) Marriott folio shows $498 vs. $478 reported — the $20 room service may be a separate meal expense; (2) only $62 of $87 in Atlanta Uber rides is supported; (3) 4 expenses totaling $337.50 lack receipts; documentation issues: (4) Ruth's Chris receipt shows wine — per company policy, does alcohol require separate approval?; (5) the Capital Grille receipt shows 3 guests but Line 8 doesn't list attendees — business meal documentation requires attendee names and business purpose; (6) the gas station purchase — is this for a personal vehicle (potentially non-reimbursable) or a rental car?; (7) the Zoom subscription — is this a personal account or does the company already provide Zoom?; (8) the cell phone case — borderline personal expense."
+    weight: 0.35
+    description: "DiscrepancyAnalysis"
+  - type: llm_judge
+    criteria: "Corrected report and employee memo are professional and actionable — the corrected report adjusts the Marriott to the receipt amount, reduces the Atlanta Uber total to the supported amount, and flags unsupported expenses for resolution before payment; the memo to the employee is professional and specific: lists each item requiring clarification (missing receipts, amount discrepancies, business purpose documentation), explains what documentation is needed (IRS substantiation requirements for meals over $75, attendee names for business meals, business purpose for questionable items), and sets a deadline for response; the math is correct — total claimed vs. total supported vs. total pending clarification."
+    weight: 0.30
+    description: "CorrectedReportAndMemo"

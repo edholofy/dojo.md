@@ -1,0 +1,91 @@
+meta:
+  id: advanced-narrative-shift
+  level: 3
+  course: financial-report-narrative-writing
+  type: output
+  description: "Advanced shift simulation — manage competing narrative demands: draft an earnings release for good results, respond to an SEC comment letter, and prepare crisis communication for a lawsuit, all in one day"
+  tags: [shift-simulation, multi-crisis, sec-response, advanced]
+
+state: {}
+
+trigger: |
+  You are the VP of Financial Reporting for a
+  public company. Three urgent narrative demands
+  landed on your desk this morning.
+
+  TASK 1 — EARNINGS RELEASE (due by 4 PM)
+  Q4 results are strong. Draft the financial
+  highlights section.
+
+  Q4 Results:
+  - Revenue: $485M (+12% YoY, beat consensus $472M)
+  - Adjusted EPS: $1.82 (beat consensus $1.68)
+  - GAAP EPS: $1.15 (includes $0.67 one-time items)
+  - Operating cash flow: $95M (record)
+  - Full-year revenue: $1.78B (+9%)
+  - FY2026 guidance: $1.92-1.98B revenue
+
+  One-time items in GAAP EPS:
+  - $42M litigation settlement
+  - $15M restructuring charge
+  - $8M acquisition costs
+
+  Write the earnings release financial highlights
+  (250 words).
+
+  TASK 2 — SEC COMMENT LETTER RESPONSE
+  The SEC has questioned your MD&A liquidity
+  discussion. Their comment:
+
+  "Your disclosure states 'the Company believes
+  its cash flow from operations and available
+  credit facilities will be sufficient to meet
+  its liquidity needs for the foreseeable future.'
+  Please revise to quantify your assessment and
+  define the period covered by 'foreseeable future.'
+  Also address the $200M term loan maturing in
+  March 2027 and your plans to address this
+  maturity."
+
+  Company facts:
+  - Cash: $180M
+  - Annual OCF: $320M
+  - Revolving facility: $500M ($150M drawn)
+  - Term loan: $200M due March 2027
+  - Total liquidity: $530M ($180M cash + $350M
+    revolver availability)
+  - No financial covenant concerns
+  - Investment grade rating (BBB+)
+
+  Draft the revised MD&A paragraph (200 words).
+
+  TASK 3 — LITIGATION COMMUNICATION
+  The company was just served with a class action
+  lawsuit alleging securities fraud related to
+  statements made about a product safety issue.
+
+  - Plaintiff claims: company knew about a
+    product defect for 6 months before disclosure
+  - Seeks $500M in damages
+  - The product was recalled 2 months ago
+  - The company's insurance covers $100M
+
+  Draft an 8-K disclosure paragraph (150 words)
+  and a brief internal talking points memo for
+  the CEO (100 words).
+
+  Handle all three tasks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Earnings release presents strong results with proper GAAP/non-GAAP balance — the 250-word financial highlights section leads with the headline (revenue beat, EPS beat, record cash flow) while presenting GAAP results with at least equal prominence to adjusted results; the one-time items ($42M litigation, $15M restructuring, $8M acquisition costs = $65M pre-tax, approximately $0.67 per share) are itemized and reconciled; the release does not bury the GAAP EPS of $1.15 below the adjusted $1.82 — both appear in the highlights per Regulation G equal prominence requirements; the FY2026 guidance is included with appropriate forward-looking language; the tone is confident and professional without being promotional — the numbers speak for themselves; the consensus beats are acknowledged without excessive celebration."
+    weight: 0.35
+    description: "EarningsRelease"
+  - type: llm_judge
+    criteria: "SEC comment response is specific, quantified, and directly addresses each element of the comment — the revised MD&A paragraph: (1) eliminates the vague 'foreseeable future' and replaces it with a specific period ('the next 12 months' and/or 'through the maturity of our term loan in March 2027'), (2) quantifies the liquidity position ($530M total: $180M cash + $350M revolving credit availability), (3) quantifies expected cash generation ($320M annual operating cash flow), (4) specifically addresses the $200M term loan maturity: management's plan to refinance (leveraging BBB+ investment grade rating) or repay from operating cash flow and revolving facility, (5) addresses covenant compliance (no concerns, adequate headroom), and (6) provides enough specificity that the SEC staff would accept the response without further follow-up; the revised paragraph avoids both over-specificity (committing to actions that may change) and under-specificity (which would generate another comment letter round)."
+    weight: 0.35
+    description: "SECCommentResponse"
+  - type: llm_judge
+    criteria: "Litigation disclosure and internal talking points are appropriately cautious — the 8-K paragraph follows standard securities litigation disclosure: states the facts (class action filed, allegations summarized, damages sought of $500M), provides the company's position ('the Company believes the lawsuit is without merit and intends to defend vigorously'), does NOT admit any wrongdoing or acknowledge the alleged timeline, discloses the insurance coverage ($100M), notes that the outcome cannot be predicted with certainty, and references the existing product recall; the language is reviewed-by-counsel appropriate — no admissions, no speculative assessments of liability, no editorial commentary; the CEO talking points (100 words) are even more careful: refer all questions to legal counsel, do not discuss the merits of the case, express concern for affected customers, reference the product recall as evidence of the company's commitment to safety, and emphasize that the legal process will determine the outcome; all three tasks demonstrate the ability to rapidly switch between narrative modes (promotional/compliant/defensive) while maintaining accuracy and legal awareness."
+    weight: 0.30
+    description: "LitigationDisclosure"

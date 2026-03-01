@@ -130,7 +130,7 @@ dojo train cold-email-b2b --model deepseek/deepseek-v3.2
 dojo train cold-email-b2b --model x-ai/grok-4.1-fast
 ```
 
-## 121 Pre-Built Courses (5,800+ Scenarios)
+## 125 Pre-Built Courses (6,250+ Scenarios)
 
 Agents graduate with domain expertise across:
 
@@ -153,7 +153,7 @@ Agents graduate with domain expertise across:
 **Healthcare** — patient appointment reminders, intake form review, medical billing inquiries, insurance pre-authorization
 
 ```bash
-dojo list                    # See all 121 courses
+dojo list                    # See all 125 courses
 dojo generate "Handle Zendesk ticket routing and priority assignment"  # Create your own
 ```
 

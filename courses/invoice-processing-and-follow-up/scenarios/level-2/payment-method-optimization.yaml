@@ -1,0 +1,68 @@
+meta:
+  id: payment-method-optimization
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Optimize payment methods — evaluate check, ACH, wire, virtual card, and other payment options to reduce costs, improve efficiency, and strengthen controls"
+  tags: [payment-methods, ach, virtual-cards, intermediate]
+
+state: {}
+
+trigger: |
+  The company currently pays 85% of invoices by
+  check and wants to modernize. Evaluate payment
+  method options and design a migration plan.
+
+  CURRENT PAYMENT MIX:
+  Method      | % of Payments | # Monthly | Avg Amount | Cost/Payment
+  ------------|--------------|-----------|------------|-------------
+  Check       | 85%          | 680       | $5,200     | $8.50
+  ACH         | 10%          | 80        | $12,000    | $0.50
+  Wire        | 5%           | 40        | $45,000    | $25.00
+  Credit Card | 0%           | 0         | N/A        | N/A
+
+  PAIN POINTS:
+  - Check printing costs ($8.50/check including
+    paper, postage, reconciliation labor)
+  - Float loss (checks clear in 3-5 days vs.
+    instant ACH)
+  - Check fraud (3 incidents in past year,
+    $12,000 in losses)
+  - Manual reconciliation of paper checks
+  - Vendors complaining about slow receipt
+  - Positive Pay service costs $200/month
+
+  AVAILABLE OPTIONS:
+  1. ACH (direct debit): $0.25-$0.50/payment
+  2. ACH Credit: $0.25-$0.75/payment
+  3. Virtual credit cards: Free + 1-1.5% rebate
+  4. Real-time payments (RTP): $0.50-$1.00/payment
+  5. Commercial cards (p-cards): Free + 1-2% rebate
+  6. Cross-border wire: $25-$45/payment
+
+  CONSTRAINTS:
+  - Some vendors won't accept ACH (estimated 10%)
+  - Virtual card acceptance: ~60% of vendor base
+  - Some vendors charge convenience fees for cards
+  - International vendors (15%) require wire
+
+  Design:
+  1. Target payment mix
+  2. Vendor adoption strategy
+  3. Cost-benefit analysis
+  4. Implementation timeline
+  5. Control framework for each method
+
+assertions:
+  - type: llm_judge
+    criteria: "Target payment mix is optimized and realistic — the recommended mix balances cost reduction, vendor acceptance, and fraud risk: Virtual cards: 40% (most cost-effective due to rebates, strong controls, but limited to vendors who accept cards); ACH: 35% (low cost, broad acceptance, good for recurring and high-value payments); Wire: 10% (reserved for international and time-sensitive payments); Check: 10% (only for vendors who won't accept electronic methods); RTP: 5% (for urgent payments requiring same-day settlement); the virtual card priority is justified by the rebate potential: 40% × 800 payments × $5,200 avg × 1.25% rebate = ~$20,800/month or $249,600/year in rebate income; the migration from 85% check to 10% check eliminates: 600 checks/month × $8.50 = $5,100/month in processing costs, reduces fraud exposure, and eliminates the $200/month Positive Pay cost for most transactions."
+    weight: 0.35
+    description: "TargetPaymentMix"
+  - type: llm_judge
+    criteria: "Cost-benefit analysis quantifies all savings — current annual payment costs: checks (680 × $8.50 × 12 = $69,360), ACH (80 × $0.50 × 12 = $480), wires (40 × $25 × 12 = $12,000), Positive Pay ($2,400), fraud losses (~$12,000/yr); total: ~$96,240; target state costs: virtual cards (320 × $0 × 12 = $0, plus rebates of ~$249,600), ACH (280 × $0.50 × 12 = $1,680), wires (80 × $25 × 12 = $24,000), checks (80 × $8.50 × 12 = $8,160), RTP (40 × $0.75 × 12 = $360); total costs: $34,200; net rebates: -$249,600; net position: -$215,400 (cash positive after rebates); compared to current $96,240 in costs, the net improvement is $311,640/year; implementation costs estimated at $25-50K (vendor onboarding, system setup, training); payback: less than 2 months."
+    weight: 0.35
+    description: "CostBenefitAnalysis"
+  - type: llm_judge
+    criteria: "Control framework addresses risks for each payment method — virtual cards: single-use card numbers prevent reuse, spending limits per transaction, merchant category restrictions, automatic reconciliation; ACH: dual authorization for new vendor bank accounts, positive pay equivalent for ACH (ACH debit blocks/filters), prenote verification before first payment; wire transfers: dual approval required for all wires, callback verification for changes to vendor bank details (to prevent business email compromise fraud), daily wire limits; remaining checks: Positive Pay maintained, check stock secured, dual signature required above $5,000; cross-cutting controls: vendor bank account verification process (to prevent fraudulent bank change requests), segregation of duties (payment setup vs. approval), regular payment method audit; the vendor adoption strategy includes: communication campaign, vendor enrollment forms, incentives for early adopters (priority payment scheduling), and a support hotline for vendors transitioning from checks."
+    weight: 0.30
+    description: "ControlFramework"

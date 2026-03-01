@@ -1,0 +1,82 @@
+meta:
+  id: privilege-log-creation
+  level: 1
+  course: discovery-document-organization
+  type: output
+  description: "Create a privilege log for withheld documents — identify privileged documents and prepare a compliant privilege log with proper descriptions"
+  tags: [privilege-log, attorney-client-privilege, work-product, beginner]
+
+state: {}
+
+trigger: |
+  You are preparing a privilege log for documents
+  withheld from production in a wrongful termination
+  case.
+
+  CASE: Davis v. Meridian Corp.
+  YOUR CLIENT: Meridian Corp. (defendant employer)
+
+  Your firm collected 200 documents from Meridian's
+  HR director. After review, 15 documents are being
+  withheld on privilege grounds. You must create
+  the privilege log.
+
+  WITHHELD DOCUMENTS:
+
+  1. MC-000045: Email from HR Director to in-house
+     counsel, 3/15/2024, re: "Legal advice needed
+     on Davis performance review"
+  2. MC-000046: Reply from in-house counsel to HR
+     Director, 3/16/2024, re: same thread — provides
+     legal advice on documentation requirements
+  3. MC-000078: Memo from outside counsel (your firm)
+     to VP of HR, 5/2/2024, re: "Litigation risk
+     assessment — Davis situation"
+  4. MC-000079: Draft termination letter with
+     attorney redline comments, 5/10/2024
+  5. MC-000080: Email from HR Director to in-house
+     counsel, 5/12/2024, re: "Severance package
+     options — legal review needed"
+  6. MC-000081: Spreadsheet comparing severance
+     options prepared at counsel's direction,
+     5/13/2024
+  7. MC-000102: Attorney notes from witness interview
+     with Davis's supervisor, 6/1/2024
+  8. MC-000103: Attorney mental impressions memo
+     re: case theory, 6/5/2024
+  9. MC-000104: Email chain (3 emails) between
+     in-house counsel and outside counsel, 6/8-10/2024,
+     re: "Settlement strategy"
+  10. MC-000115: Investigation summary prepared by
+      outside counsel, 6/15/2024
+  11. MC-000116: Email from HR Director to in-house
+      counsel cc: CEO, 6/20/2024, re: "Board
+      presentation on litigation exposure"
+  12. MC-000117: Board presentation draft on
+      litigation matters, 6/22/2024
+  13. MC-000130: Email from in-house counsel to
+      insurance broker, 7/1/2024, re: "EPLI claim
+      notification" — contains case strategy details
+  14. MC-000131: Voicemail transcript from outside
+      counsel to HR Director, 7/5/2024, re: deposition
+      preparation
+  15. MC-000132: Litigation hold notice sent by
+      in-house counsel to 12 Meridian employees,
+      4/1/2024
+
+  Create a privilege log that complies with FRCP
+  Rule 26(b)(5)(A) requirements.
+
+assertions:
+  - type: llm_judge
+    criteria: "Privilege log entries contain all required elements — each entry includes: Bates number, date, author, recipient(s) (including cc), document type, subject matter description (sufficient to assess the claim without revealing privileged content), and privilege asserted (attorney-client privilege, work product doctrine, or both); descriptions walk the line between revealing too much (waiving privilege) and too little (insufficient for opposing counsel to evaluate the claim); the log correctly identifies which privilege applies to each document (e.g., MC-000103 is opinion work product, MC-000081 is work product prepared at counsel's direction, MC-000045-046 are attorney-client communications)."
+    weight: 0.35
+    description: "PrivilegeLogEntries"
+  - type: llm_judge
+    criteria: "Privilege designations are legally correct — attorney-client privilege is properly claimed for communications seeking or providing legal advice (MC-000045, 046, 080); work product doctrine is properly claimed for documents prepared in anticipation of litigation (MC-000078, 102, 103, 110, 115); dual privilege claims are made where both apply (MC-000104 is both attorney-client and work product); potentially problematic entries are flagged: MC-000130 (communication with insurance broker may waive privilege if broker is not covered by common interest doctrine); MC-000132 (litigation hold notice — privilege claim is weaker as it's an administrative document); MC-000116-117 (board presentation — privilege may be challenged if primary purpose was business rather than legal advice)."
+    weight: 0.35
+    description: "PrivilegeDesignations"
+  - type: llm_judge
+    criteria: "Log format is professional and court-ready — organized in Bates number order or date order with clear column headers; descriptions are consistent in style and length; the log would withstand a motion to compel challenging the sufficiency of the descriptions; includes a header identifying the case, the producing party, and the date of the log; optionally includes a certification or cover letter explaining the privilege assertions and offering to provide additional information if needed."
+    weight: 0.30
+    description: "LogFormat"

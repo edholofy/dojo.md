@@ -1,0 +1,53 @@
+meta:
+  id: ar-reporting-commentary
+  level: 2
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write AR aging analysis commentary for monthly management reporting — translate AR data into narrative insights for finance leadership"
+  tags: [reporting, aging-analysis, management-commentary, intermediate]
+
+state: {}
+
+trigger: |
+  Prepare the monthly AR commentary for the CFO's
+  finance review meeting. Here is this month's data.
+
+  AR AGING SUMMARY (February 2026):
+  - Current (not yet due): $2,450,000
+  - 1-30 days past due: $680,000 (was $520,000
+    last month)
+  - 31-60 days past due: $310,000 (was $280,000)
+  - 61-90 days past due: $145,000 (was $190,000)
+  - 90+ days past due: $215,000 (was $180,000)
+  - Total AR: $3,800,000 (was $3,620,000)
+  - DSO: 48 days (was 44 days last month, target: 40)
+
+  KEY ACCOUNTS:
+  - NexGen Corp: $180,000 in 90+ bucket (dispute
+    over contract terms, legal review underway)
+  - Summit Healthcare: $95,000 moved from 31-60 to
+    current (payment plan on track)
+  - Pacific Trading: $125,000 new to 1-30 bucket
+    (large Q4 invoice, first reminder sent)
+  - Metro Services: $85,000 in 61-90 bucket
+    (collection agency referral in progress)
+
+  Write:
+  1. Executive summary paragraph (75 words)
+  2. Detailed aging commentary (200 words)
+  3. Risk assessment and recommended actions (150
+     words)
+
+assertions:
+  - type: llm_judge
+    criteria: "The executive summary captures the key message concisely — the 75-word summary highlights: total AR increased by $180,000 month-over-month, DSO deteriorated from 44 to 48 days (8 days above target), the 1-30 day bucket increased 31% driven by Pacific Trading's large invoice, and the 90+ day bucket increased due to the ongoing NexGen dispute; the summary gives the CFO the headline in one paragraph — AR is trending in the wrong direction and needs attention."
+    weight: 0.35
+    description: "ExecutiveSummary"
+  - type: llm_judge
+    criteria: "The detailed aging commentary explains the trends and key accounts — the 200-word commentary walks through each aging bucket with month-over-month comparison and explanation: the 1-30 day increase is largely attributable to Pacific Trading ($125K, first reminder sent, expected to collect within terms given it's their first late invoice); the 31-60 day slight increase is spread across several smaller accounts with active follow-up; the 61-90 day improvement ($190K to $145K) is positive — reflects successful collection activity including Summit Healthcare's payment plan progress; the 90+ day increase from $180K to $215K is concerning and is primarily driven by the NexGen dispute ($180K); each key account gets specific commentary: NexGen (legal review, timeline), Summit Healthcare (positive progress, payment plan on track), Pacific Trading (monitoring, low risk), Metro Services (collection referral in process)."
+    weight: 0.35
+    description: "DetailedCommentary"
+  - type: llm_judge
+    criteria: "The risk assessment and recommended actions are specific and prioritized — the risk assessment quantifies exposure: $215K in 90+ days (5.7% of total AR), NexGen alone represents 84% of the 90+ bucket; overall DSO trend is concerning — 3 consecutive months of deterioration; recommended actions are specific: (1) NexGen: expedite legal review and propose settlement meeting within 2 weeks; (2) Pacific Trading: escalate follow-up cadence if no payment by Day 15; (3) Metro Services: complete collection agency handoff by end of week; (4) Systemic: review new customer credit limits — the DSO increase suggests credit terms may need tightening; the commentary is data-driven and action-oriented — appropriate for a CFO audience that wants to understand the situation and know what's being done about it."
+    weight: 0.30
+    description: "RiskAndActions"

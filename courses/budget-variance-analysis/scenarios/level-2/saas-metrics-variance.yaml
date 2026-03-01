@@ -1,0 +1,69 @@
+meta:
+  id: saas-metrics-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze SaaS-specific variance metrics — decompose MRR/ARR variances into new bookings, expansion, contraction, and churn components"
+  tags: [saas-metrics, mrr-variance, churn-analysis, intermediate]
+
+state: {}
+
+trigger: |
+  You are the FP&A lead for a B2B SaaS company.
+  Analyze the March 2026 MRR variance.
+
+  MRR BRIDGE — MARCH 2026:
+
+  Beginning MRR (March 1): $2,850,000
+
+  Budget Movements:
+  - New Business MRR: +$180,000
+  - Expansion MRR: +$95,000
+  - Contraction MRR: -$35,000
+  - Churn MRR: -$65,000
+  - Budgeted Ending MRR: $3,025,000
+
+  Actual Movements:
+  - New Business MRR: +$142,000
+  - Expansion MRR: +$118,000
+  - Contraction MRR: -$48,000
+  - Churn MRR: -$82,000
+  - Actual Ending MRR: $2,980,000
+
+  ADDITIONAL CONTEXT:
+  - New business pipeline had 3 enterprise deals
+    ($15K+ MRR each) push to April
+  - Expansion driven by a large upsell to existing
+    customer ($35K MRR increase)
+  - Contraction: 2 mid-market customers downgraded
+    tiers (cost optimization)
+  - Churn: 1 enterprise customer ($22K MRR) churned
+    unexpectedly (acquired by competitor)
+
+  UNIT ECONOMICS:
+  - Average new customer MRR: Budget $3,600
+    Actual $3,550
+  - New customers signed: Budget 50, Actual 40
+  - Logo churn rate: Budget 1.8%, Actual 2.3%
+  - Net revenue retention: Budget 103%, Actual 101%
+
+  Perform:
+  1. MRR variance by movement type
+  2. New business decomposition (volume vs. ARPU)
+  3. Retention metrics analysis
+  4. Write a 250-word SaaS metrics commentary for
+     the CEO
+
+assertions:
+  - type: llm_judge
+    criteria: "MRR variances are correctly calculated by movement type — New Business: -$38,000 U ($142K vs. $180K budget); Expansion: +$23,000 F ($118K vs. $95K); Contraction: -$13,000 U ($48K vs. $35K); Churn: -$17,000 U ($82K vs. $65K); Net MRR add: Actual +$130K vs. Budget +$175K = -$45,000 U; Ending MRR: $2,980K vs. $3,025K budget = -$45K U; the new business decomposition: Volume effect = (40-50) × $3,600 = -$36,000 U (10 fewer customers); ARPU effect = ($3,550-$3,600) × 40 = -$2,000 U (slightly lower average deal); total new business variance of -$38K is 95% volume-driven; gross churn rate: ($48K + $82K) / $2,850K = 4.6% vs. budget ($35K + $65K) / $2,850K = 3.5%; net revenue retention: ($2,850K + $118K - $48K - $82K) / $2,850K = 99.6% for the month (annualized ~95%) vs. budget 101% monthly."
+    weight: 0.35
+    description: "MRRVarianceCalculations"
+  - type: llm_judge
+    criteria: "Retention metrics analysis identifies concerning trends — the analysis highlights: (1) Logo churn at 2.3% vs. 1.8% budget is a red flag — the unexpected enterprise churn ($22K MRR from acquisition) is partially non-controllable, but even excluding it, churn is above plan; (2) Net revenue retention at 101% (annualized) vs. 103% budget means the company is barely growing from its existing base — expansion is strong ($23K favorable) but contraction and churn are more than offsetting; (3) The contraction variance (-$13K U) from mid-market downgrades suggests customers are finding the product too expensive relative to perceived value — this is an early warning signal; (4) The expansion outperformance ($23K F) is concentrated in a single large upsell ($35K) — removing that one deal, expansion would have been $83K vs. $95K budget = $12K unfavorable; single-deal dependency is a risk; (5) The new business pipeline pushed 3 enterprise deals to April — if they close, the Q2 outlook improves, but pipeline push-outs often lead to further delays; the analysis correctly notes that the favorable expansion variance is masking broader retention weakness."
+    weight: 0.35
+    description: "RetentionAnalysis"
+  - type: llm_judge
+    criteria: "The 250-word CEO commentary uses SaaS language and focuses on strategic implications — the commentary: (1) leads with the ending MRR miss ($2,980K vs. $3,025K, -$45K or 1.5%); (2) frames the story in SaaS terms: new business was the primary miss (-$38K) driven by 10 fewer logos and 3 enterprise deal push-outs — if those close in April, the quarterly new business target is still achievable; (3) highlights the retention concern: gross churn at 4.6% monthly (annualized ~55%) vs. 3.5% budget, with the enterprise loss being partially non-controllable but the overall trend needs monitoring; (4) credits the expansion outperformance (+$23K) but flags the concentration risk in one large deal; (5) raises the strategic question: contraction from mid-market downgrades suggests pricing/value perception issues that could become systemic; (6) provides key forward-looking metrics: what does the April pipeline look like? Are the 3 pushed deals confirmed? What's the Q2 churn forecast?; the tone is data-driven and strategic — the CEO cares about growth trajectory and unit economics, not just the monthly MRR number."
+    weight: 0.30
+    description: "CEOCommentary"

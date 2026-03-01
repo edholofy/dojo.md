@@ -1,0 +1,64 @@
+meta:
+  id: revenue-mix-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Perform revenue mix variance analysis — decompose revenue variances into price, volume, and mix components to understand how product mix shifts affect profitability"
+  tags: [mix-variance, revenue-analysis, profitability, intermediate]
+
+state: {}
+
+trigger: |
+  The CFO wants to understand why gross margin
+  declined despite total revenue meeting budget.
+  Perform a detailed revenue mix analysis.
+
+  Q1 2026 REVENUE AND MARGIN BY PRODUCT LINE:
+
+  Enterprise Software (high margin):
+    Budget: 200 deals × $50,000 = $10,000,000
+    Actual: 170 deals × $52,000 = $8,840,000
+    Gross margin: 78%
+
+  Mid-Market SaaS (medium margin):
+    Budget: 500 subs × $12,000 = $6,000,000
+    Actual: 620 subs × $11,200 = $6,944,000
+    Gross margin: 65%
+
+  SMB Self-Serve (low margin):
+    Budget: 2,000 subs × $2,400 = $4,800,000
+    Actual: 2,300 subs × $2,350 = $5,405,000
+    Gross margin: 45%
+
+  Professional Services (break-even):
+    Budget: 15,000 hrs × $200 = $3,000,000
+    Actual: 14,500 hrs × $195 = $2,827,500
+    Gross margin: 12%
+
+  Total Revenue:
+    Budget: $23,800,000
+    Actual: $24,016,500
+
+  Total Budgeted Gross Profit: $14,186,000 (59.6%)
+  Actual Gross Profit: $13,751,025 (57.3%)
+
+  Perform:
+  1. Price, volume, and mix variance for each product
+  2. Total revenue variance decomposition
+  3. Gross profit impact analysis
+  4. Write a 300-word analysis for the CFO explaining
+     the margin compression
+
+assertions:
+  - type: llm_judge
+    criteria: "Revenue mix variance is correctly decomposed — the total revenue is $216,500 favorable (+0.9%), but the mix shift is unfavorable to margins; the mix shift: Enterprise Software's share of revenue dropped from 42.0% of budget to 36.8% of actual, while SMB Self-Serve grew from 20.2% to 22.5% and Mid-Market from 25.2% to 28.9%; since Enterprise carries 78% gross margin and SMB only 45%, this downward mix shift directly reduces blended gross margin; the price-volume-mix decomposition for each line: Enterprise: price variance +$340,000 F (($52K-$50K)×170), volume variance -$1,500,000 U ((170-200)×$50K); Mid-Market: price variance -$496,000 U (($11.2K-$12K)×620), volume variance +$1,440,000 F ((620-500)×$12K); SMB: price variance -$115,000 U (($2,350-$2,400)×2,300), volume variance +$720,000 F ((2,300-2,000)×$2,400); Professional Services: price variance -$72,500 U (($195-$200)×14,500), volume variance -$100,000 U ((14,500-15,000)×$200)."
+    weight: 0.35
+    description: "MixVarianceDecomposition"
+  - type: llm_judge
+    criteria: "Gross profit impact correctly quantifies the margin compression — Budgeted gross profit: Enterprise $7,800,000 (78%), Mid-Market $3,900,000 (65%), SMB $2,160,000 (45%), Services $360,000 (12%) = $14,220,000; the actual gross profit using actual revenue × margin rates: Enterprise $6,895,200, Mid-Market $4,513,600, SMB $2,432,250, Services $339,300 = $14,180,350 (or the stated $13,751,025 if margins also shifted — the exact number depends on whether margins held at budget rates or also varied); the key finding: total revenue exceeded budget by $216,500 but gross profit fell by approximately $435,000 to $469,000 — a margin compression of 2.3 percentage points (59.6% to 57.3%); the gross profit shortfall despite revenue favorability is entirely explained by unfavorable mix: the company sold more low-margin products (SMB, Mid-Market) and fewer high-margin products (Enterprise)."
+    weight: 0.35
+    description: "GrossProfitImpact"
+  - type: llm_judge
+    criteria: "The 300-word CFO analysis explains the margin paradox clearly — the analysis addresses the CFO's question directly: revenue beat budget by $217K but gross margin dropped 2.3 points because of an unfavorable product mix shift; the Enterprise segment (the highest-margin product at 78%) fell 30 deals short of plan, losing $1.16M in revenue; this was offset by over-performance in Mid-Market (+120 subs) and SMB (+300 subs), but these products carry 65% and 45% margins respectively; the net effect: more revenue from lower-margin products replaced less revenue from the highest-margin product; the analysis quantifies the mix impact: if the actual revenue had been earned at budget mix proportions, gross profit would have been approximately $14.3M instead of $13.75M — the mix shift alone cost approximately $500K in gross profit; the analysis also notes: Mid-Market had an $800/sub price reduction that warrants investigation (competitive pressure? promotional pricing?); Enterprise's volume miss is the strategic concern — are deals delayed or lost?; Professional Services' decline in both hours and rate may indicate customer satisfaction or engagement issues; the forward-looking recommendation: monitor Enterprise pipeline closely and assess whether Mid-Market pricing can be restored; the blended revenue growth is masking a concerning mix shift toward lower-margin products."
+    weight: 0.30
+    description: "CFOAnalysis"

@@ -1,0 +1,60 @@
+meta:
+  id: escalation-to-management
+  level: 2
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write internal escalation communications when AR follow-up has failed — prepare an escalation memo for management with recommended actions"
+  tags: [internal-escalation, management-memo, recommendation, intermediate]
+
+state: {}
+
+trigger: |
+  Three accounts have reached a point where your
+  standard follow-up process has been exhausted.
+  Your AR manager has asked you to prepare an
+  escalation memo recommending next steps.
+
+  ACCOUNT 1 — STRATEGIC CUSTOMER AT RISK
+  - Company: NexGen Pharmaceuticals ($500K annual
+    revenue to your company)
+  - Outstanding: $125,000 across 4 invoices (30-90
+    days past due)
+  - Contact: AP department says "approvals are
+    delayed due to internal reorganization"
+  - Risk: This is your 3rd largest customer
+  - Prior follow-up: 6 emails, 3 calls over 60 days
+
+  ACCOUNT 2 — SMALL CUSTOMER, TOTAL NONRESPONSE
+  - Company: Lakeside Events Co. ($15K annual)
+  - Outstanding: $8,500 (75 days past due)
+  - Contact: No response to any outreach (5 emails,
+    4 calls, 1 certified letter)
+  - Phone disconnected on last attempt
+  - Risk: Possible business closure
+
+  ACCOUNT 3 — DISPUTED INVOICE WITH LEGAL THREAT
+  - Company: Apex Construction ($80K annual)
+  - Outstanding: $32,000 (45 days past due)
+  - Contact: Their attorney sent a letter claiming
+    "defective deliverables" and demanding a full
+    credit
+  - Your delivery team confirms work was completed
+    per SOW
+  - Risk: Legal action, relationship damage
+
+  Write the escalation memo (400 words) with
+  specific recommendations for each account.
+
+assertions:
+  - type: llm_judge
+    criteria: "The memo addresses the strategic customer with appropriate sensitivity to the revenue relationship — for NexGen Pharmaceuticals, the recommendation balances collection urgency with relationship preservation: suggests escalating the contact from AP to CFO or VP Finance level (AP may not have authority to expedite during a reorg); recommends the AR manager or sales VP make a direct call to their finance leadership; proposes offering a structured payment schedule to clear the 4 invoices while the reorg settles; notes the revenue risk — losing a $500K customer over a $125K collection issue would be disproportionate; may recommend pausing further automated dunning and shifting to a personal, high-touch approach; the recommendation acknowledges that 'approvals delayed due to reorg' may be genuine or may be a stalling tactic, and the escalated call will help determine which."
+    weight: 0.35
+    description: "StrategicCustomerEscalation"
+  - type: llm_judge
+    criteria: "The memo handles the nonresponsive small customer and the legal dispute with distinct strategies — for Lakeside Events: recommends skip tracing to verify current contact information; suggests checking for business closure (state filings, social media, physical location drive-by if local); if the business appears closed, recommends immediate referral to collection agency while there may still be assets; if the business appears open, recommends certified letter to registered agent address; notes the small balance ($8,500) and recommends a cost-benefit assessment of further collection efforts; for Apex Construction: recommends immediately involving your company's legal counsel before any further communication; suggests placing a litigation hold on the account; recommends gathering all documentation (SOW, deliverables, sign-offs, correspondence) to support the position that work was completed satisfactorily; recommends a meeting between your legal counsel and theirs to attempt resolution before formal legal proceedings; notes that $32,000 is worth defending but litigation costs could exceed the balance."
+    weight: 0.35
+    description: "NonresponseAndLegalStrategies"
+  - type: llm_judge
+    criteria: "The memo is structured for management decision-making — the memo has a clear format: executive summary, then each account with current status, recommended action, risk assessment, and financial impact; it includes a summary table showing the three accounts, balances, days past due, and recommended next steps; the tone is factual and recommendation-oriented — presenting options with pros/cons rather than just describing problems; the memo includes estimated timelines for resolution: NexGen (2-4 weeks with executive contact), Lakeside (1-2 weeks for skip trace, then decision), Apex (4-8 weeks depending on legal process); total at-risk AR: $165,500; the memo is approximately 400 words and formatted for easy scanning by a busy manager."
+    weight: 0.30
+    description: "StructureAndActionability"

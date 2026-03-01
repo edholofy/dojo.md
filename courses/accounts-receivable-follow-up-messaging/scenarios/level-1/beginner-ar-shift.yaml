@@ -1,0 +1,56 @@
+meta:
+  id: beginner-ar-shift
+  level: 1
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Beginner shift simulation — handle a morning of AR follow-up tasks: write a first reminder, respond to a payment promise, and draft a past-due summary for your manager"
+  tags: [shift-simulation, multi-task, daily-work, beginner]
+
+state: {}
+
+trigger: |
+  It's Monday morning and you have three AR tasks
+  to complete before your 11 AM team meeting.
+
+  TASK 1 — FIRST REMINDER
+  Invoice #8001 for $7,500 from Oakwood Consulting
+  is 7 days past due (Net 30). Contact: Helen Park,
+  Office Manager. Good customer, first time late.
+  Write the reminder email (150 words).
+
+  TASK 2 — PAYMENT PROMISE FOLLOW-UP
+  Last Thursday, you called David Chen at Riverside
+  Manufacturing about Invoice #7855 ($28,000, 25
+  days past due). David said: "I'll process the
+  payment today, you should see it by Monday."
+  It's now Monday and no payment has arrived.
+  Write a brief follow-up email (100 words).
+
+  TASK 3 — MANAGER SUMMARY
+  Your manager wants a quick summary of your top 5
+  past-due accounts for the team meeting. Write the
+  summary (150 words) covering:
+  - Oakwood Consulting: $7,500, 7 days past due
+  - Riverside Mfg: $28,000, 25 days past due
+  - Summit Health: $42,000, 50 days past due (in
+    dispute — billing error on their end)
+  - Metro Electric: $11,200, 35 days past due
+    (payment plan in place, on track)
+  - Golden State Foods: $65,000, 60 days past due
+    (no response to 4 outreach attempts)
+
+  Handle all three tasks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Task 1 first reminder is appropriately friendly for a good customer only 7 days late — the email to Helen Park is warm, brief (approximately 150 words), references Invoice #8001 for $7,500, notes it's past the Net 30 due date, assumes positive intent (perhaps it was overlooked), and asks for a quick update; the tone matches the situation — a good customer who is barely late deserves a gentle nudge, not a formal collection letter."
+    weight: 0.35
+    description: "FirstReminderEmail"
+  - type: llm_judge
+    criteria: "Task 2 follow-up on broken payment promise is professionally direct — the email to David Chen is brief (approximately 100 words), references the Thursday phone conversation specifically, notes that he committed to processing payment that day with arrival by Monday, confirms no payment has been received, and asks for an update; the tone is more direct than a first reminder — a broken promise warrants a firmer approach, but remains professional; the email does not lecture or express disappointment — it simply states facts and requests action."
+    weight: 0.35
+    description: "BrokenPromiseFollowUp"
+  - type: llm_judge
+    criteria: "Task 3 manager summary is concise, prioritized, and actionable — the summary (approximately 150 words) presents the 5 accounts in a clear format showing company name, amount, days past due, and current status/next action for each; accounts are prioritized by risk or urgency — Golden State Foods ($65,000, 60 days, no contact) is the highest priority; the summary distinguishes between accounts that need action (Golden State, Riverside) and those under control (Metro Electric on payment plan, Summit Health in dispute resolution); each account has a clear next step: 'Will send first reminder today,' 'Following up on broken payment promise,' 'Awaiting dispute resolution,' 'Payment plan on track — next installment due March 5,' 'Recommend escalation to collections — all contact attempts exhausted'; the summary gives the manager everything needed in a quick scan."
+    weight: 0.30
+    description: "ManagerSummary"

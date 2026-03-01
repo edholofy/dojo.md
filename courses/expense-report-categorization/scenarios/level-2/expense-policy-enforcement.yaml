@@ -1,0 +1,77 @@
+meta:
+  id: expense-policy-enforcement
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Enforce corporate expense policies — identify policy violations, calculate over-limit amounts, determine exception eligibility, and process compliant vs. non-compliant expenses"
+  tags: [policy-enforcement, compliance, violations, intermediate]
+
+state: {}
+
+trigger: |
+  As the expense compliance analyst, review this
+  expense report against the company's T&E policy
+  and determine which expenses are approvable,
+  which need exceptions, and which must be rejected.
+
+  COMPANY T&E POLICY (key provisions):
+  - Airfare: Economy class required for flights
+    under 6 hours; premium economy allowed for 6+
+    hours; business class requires VP+ pre-approval
+  - Lodging: Up to $250/night domestic, $350/night
+    international; government rate preferred
+  - Meals — Client: $75/person limit; alcohol max
+    30% of total bill; requires client names
+  - Meals — Employee: $25 breakfast, $30 lunch,
+    $50 dinner; no alcohol on employee-only meals
+  - Ground transport: Uber/Lyft/taxi encouraged;
+    rental car requires justification; no luxury
+    vehicles
+  - Tips: Max 20% for meals, 15% for other services
+  - Receipts: Required for all expenses $25+
+  - Approval: Manager for <$5,000; VP for $5,000-
+    $10,000; CFO for $10,000+
+  - Submission deadline: Within 30 days of expense
+
+  EXPENSE REPORT:
+  Employee: Mark Stevens, Director of Partnerships
+  Manager: VP of Business Development
+  Report Date: March 15, 2025
+  Trip: New York City, February 17-20, 2025
+
+  Line | Date  | Description              | Amount   | GL   | Notes
+  -----|-------|--------------------------|----------|------|------
+  1    | 02/17 | SFO-JFK first class      | $2,450.00| 6100 | "Upgraded using miles + $950 copay"
+  2    | 02/17 | Black car service (airport)| $185.00 | 6110 | Receipt attached
+  3    | 02/17 | Hotel — The Plaza (3 nts) | $1,275.00| 6120 | $425/night
+  4    | 02/17 | Room service dinner       | $87.00   | 6135 | Solo meal
+  5    | 02/18 | Uber (2 rides)            | $48.00   | 6110 | Receipts attached
+  6    | 02/18 | Client lunch — 4 people   | $380.00  | 6130 | "Smith, Jones from Apex"
+  7    | 02/18 | Client dinner — 6 people  | $1,240.00| 6130 | "Apex team celebration"
+  8    | 02/19 | Uber (3 rides)            | $72.00   | 6110 | Receipts attached
+  9    | 02/19 | Broadway tickets (2)      | $450.00  | 6150 | "Client entertainment"
+  10   | 02/19 | Post-show drinks          | $165.00  | 6150 | "With Apex client"
+  11   | 02/20 | Hotel minibar             | $45.00   | 6120 | No receipt
+  12   | 02/20 | JFK-SFO economy           | $389.00  | 6100 | Receipt attached
+  13   | 02/20 | Airport parking (4 days)  | $180.00  | 6110 | Receipt attached
+  14   | 02/20 | Checked bag (2 bags)      | $70.00   | 6100 | Receipt attached
+  15   | 02/22 | Thank-you gift basket     | $125.00  | 6150 | Sent to Apex
+
+  TOTAL SUBMITTED: $7,161.00
+
+  Review each line item against policy and prepare
+  a compliance report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Policy violations are correctly identified — Line 1: first class airfare is a violation (SFO-JFK is ~5.5 hours, under 6-hour threshold for premium economy; first class requires higher approval and is generally not permitted); Line 2: black car service is questionable (policy says Uber/Lyft/taxi encouraged — is a black car a luxury vehicle?); Line 3: hotel at $425/night exceeds $250/night domestic limit by $175/night ($525 total overage for 3 nights); Line 4: room service dinner at $87 exceeds $50 dinner limit by $37; Line 6: client lunch at $380/4 people = $95/person exceeds $75/person limit; Line 7: client dinner at $1,240/6 people = $206.67/person exceeds $75/person limit significantly — also need to check alcohol percentage; Line 9: Broadway tickets may be acceptable as client entertainment but need pre-approval verification; Line 11: minibar $45 has no receipt (required for $25+); each violation includes the policy reference and overage amount."
+    weight: 0.35
+    description: "PolicyViolations"
+  - type: llm_judge
+    criteria: "Exception eligibility and recommendations are practical — categorizes each line as: (A) Approved as-is, (B) Approved with exception (requires VP/CFO sign-off), (C) Partially approved (reimburse up to policy limit), or (D) Rejected; the first class upgrade is partially complex — if he used miles for part of it, the $950 copay may be treated differently; the hotel overage should be partially approved at $250/night ($750) with the $525 excess requiring exception or rejection; client meal overages may warrant exception if the business purpose justifies it (partnership celebration); Broadway tickets need client entertainment pre-approval documentation; the total approved amount, total requiring exception, and total rejected are calculated; the report includes recommendations for each flagged item."
+    weight: 0.35
+    description: "ExceptionRecommendations"
+  - type: llm_judge
+    criteria: "Compliance report is comprehensive and actionable — includes: a summary table showing each line item with status (approved/exception/partial/rejected); the total report of $7,161 exceeds $5,000 manager limit, requiring VP approval minimum; calculates the compliant amount vs. total submitted; identifies process issues: the 'Apex team celebration' dinner description is vague and needs more business justification; client names are incomplete on the dinner (only says 'Apex team'); the report was submitted within the 30-day window (expense dates Feb 17-20, submitted March 15 = 23 days); the minibar needs receipt or must be reduced below $25; the compliance report provides a clear decision trail for the approver."
+    weight: 0.30
+    description: "ComplianceReport"

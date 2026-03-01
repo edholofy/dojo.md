@@ -1,0 +1,70 @@
+meta:
+  id: beginner-expense-shift
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Beginner shift simulation — process multiple expense reports in a single day including categorization, compliance review, and reconciliation"
+  tags: [shift-simulation, multi-task, expense-basics, beginner]
+
+state: {}
+
+trigger: |
+  You are an accounts payable clerk on a busy
+  Monday. Three expense-related tasks need your
+  attention before end of day.
+
+  TASK 1 — URGENT REIMBURSEMENT (due today)
+  A VP is demanding immediate reimbursement for a
+  client entertainment expense. Process this
+  single-item expense report:
+  - Employee: VP of Sales, Patricia Morgan
+  - Expense: Client dinner at STK, February 28
+  - Amount: $892.50 (6 people: 3 employees + 3
+    clients from Apex Corp.)
+  - Receipt shows: food $620, alcohol $180, tax $62.50,
+    tip $30 (18% auto-gratuity was $111.60 but she
+    wrote in $30 manually — receipt shows $30 tip)
+  - Business purpose: "Contract renewal discussion"
+  - GL code submitted: 6130 (Business Meals)
+  - Approval: Self-approved (VP level)
+
+  Issues to evaluate: Is the tip calculation correct?
+  Should alcohol be separated? Is self-approval
+  acceptable for this amount? What's the per-person
+  cost and is it within policy ($150/person limit)?
+
+  TASK 2 — BATCH PROCESSING (due today)
+  Process 5 straightforward expense reports that
+  have already been approved:
+  - ER-001: Travel reimbursement, $1,245.00, 8 items
+  - ER-002: Office supplies, $167.50, 3 items
+  - ER-003: Monthly parking, $200.00, 1 item
+  - ER-004: Professional development, $899.00, 2 items
+  - ER-005: Client meals (3 occasions), $456.00
+
+  Create the journal entries for all 5 reports.
+
+  TASK 3 — MONTH-END RECONCILIATION (due tomorrow
+  morning)
+  Reconcile the February corporate card statement
+  for the marketing department (CC-300). Total
+  card charges: $4,567.89. Total submitted on
+  expense reports: $4,234.50. Difference: $333.39
+  unaccounted for.
+
+  Investigate the $333.39 gap and prepare a
+  reconciliation memo.
+
+assertions:
+  - type: llm_judge
+    criteria: "VP expense report analysis is thorough — identifies the tip discrepancy (auto-gratuity was $111.60 but VP wrote in $30 — the actual tip paid needs clarification); calculates per-person cost ($892.50 ÷ 6 = $148.75 — just under the $150 limit, but if the tip should be $111.60 instead of $30, the total increases and may exceed per-person limits); evaluates whether self-approval is appropriate per company policy (most companies require one-level-up approval — a VP self-approving is a policy question); recommends separating alcohol ($180) for proper accounting (some companies track alcohol separately; post-TCJA entertainment rules may apply depending on the nature of the dinner); identifies that the tax + food + alcohol + tip doesn't add up to $892.50 ($620 + $180 + $62.50 + $30 = $892.50 — mathematically correct if the tip is $30, not the auto-gratuity)."
+    weight: 0.35
+    description: "VPExpenseAnalysis"
+  - type: llm_judge
+    criteria: "Batch journal entries are technically correct — creates proper journal entries for all 5 reports with: debit to appropriate GL accounts (6100/6110/6120 for travel, 6200 for supplies, 6110 for parking, 6300 for professional development, 6130 for client meals), credit to Accounts Payable or Employee Reimbursement; each entry references the ER number, employee name, and department cost center; the entries balance (total debits = total credits); GL assignments follow the company's chart of accounts; the total across all 5 reports is $2,967.50."
+    weight: 0.35
+    description: "BatchJournalEntries"
+  - type: llm_judge
+    criteria: "Reconciliation memo identifies the $333.39 gap — investigates possible causes: (1) expenses charged to the card but not yet submitted on expense reports (most common cause — employees haven't submitted reports for some charges), (2) personal charges on the corporate card requiring employee reimbursement, (3) timing differences (charges posted in February but reports submitted in March), (4) declined or disputed transactions; the memo proposes specific next steps: contact employees in CC-300 (Marketing) to identify unreported card charges, check if any February reports are still pending approval, verify no personal charges are on the statement; the memo is formatted for the finance manager and includes a reconciliation table showing: total card charges, total reported expenses, difference, and proposed resolution for each unreconciled item."
+    weight: 0.30
+    description: "ReconciliationMemo"

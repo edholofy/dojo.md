@@ -1,0 +1,72 @@
+meta:
+  id: database-document-production
+  level: 2
+  course: discovery-document-organization
+  type: output
+  description: "Handle structured database production requests — respond to discovery requests for database records, design export specifications, and address format disputes"
+  tags: [database-production, structured-data, esi-format, intermediate]
+
+state: {}
+
+trigger: |
+  Opposing counsel has served a Request for Production
+  demanding production of your client's customer
+  database in native format. Your client, a financial
+  services company, objects to producing the entire
+  database but must produce relevant records.
+
+  CASE: In re DataServe Financial Practices Litigation
+  YOUR CLIENT: DataServe Financial (defendant)
+  CLAIM: Unfair lending practices against minority
+  borrowers
+
+  OPPOSING COUNSEL'S REQUEST:
+  "Produce a complete copy of Defendant's Customer
+  Relationship Management database, including all
+  fields, for the period January 2019 through
+  December 2024, in native format (SQL database
+  export)."
+
+  YOUR CLIENT'S DATABASE:
+  - CRM: Salesforce with 2.3 million customer records
+  - Fields include: name, address, race/ethnicity
+    (collected for HMDA compliance), income, credit
+    score, loan amount, interest rate, approval/
+    denial decision, denial reason, loan officer ID,
+    branch location, and 150+ additional fields
+  - Database contains proprietary risk scoring
+    algorithms embedded as calculated fields
+  - Contains records for ALL customers, not just
+    those in the relevant class
+  - Contains PII including SSNs and financial data
+  - Export would be approximately 50 GB in native
+    format
+
+  ISSUES TO ADDRESS:
+  - Scope: full database vs. relevant subset
+  - Format: native SQL vs. structured CSV/Excel
+  - PII protection: redaction or anonymization
+  - Proprietary algorithms: trade secret protection
+  - Volume: proportionality concerns
+  - Cost: export, processing, and hosting expenses
+
+  Create:
+  1. Written response and objections to the RFP
+  2. Counter-proposal for structured data production
+  3. Data anonymization plan
+  4. ESI protocol specific to database productions
+  5. Cost estimate and potential cost-shifting motion
+
+assertions:
+  - type: llm_judge
+    criteria: "Response and objections are legally sound and strategically effective — objects to the request as overbroad (all 2.3M records when class is limited), unduly burdensome (50 GB native export), and disproportionate under Rule 26(b)(1); objects to native format production of proprietary risk scoring algorithms as trade secrets; objects to production of PII without protective measures; asserts proportionality argument with specifics (cost of export, processing, hosting vs. likely benefit); despite objections, offers to produce relevant data in a reasonable format — the response is not purely obstructionist but demonstrates good faith willingness to provide relevant information."
+    weight: 0.35
+    description: "ResponseAndObjections"
+  - type: llm_judge
+    criteria: "Counter-proposal for structured data production is reasonable and defensible — proposes producing a subset of records (class members and comparable non-class borrowers for statistical comparison) in structured format (CSV or Excel with agreed field definitions); identifies the specific fields relevant to the lending discrimination claim (loan application data, decision outcome, demographic data, interest rate, loan terms) while excluding irrelevant fields (150+ operational fields); proposes anonymization of PII (replace names with unique IDs, mask SSNs, anonymize addresses to zip code level); protects proprietary algorithms by producing the output values rather than the formulas; includes a data dictionary explaining each produced field; estimates reasonable production volume (100,000-200,000 records vs. 2.3M)."
+    weight: 0.35
+    description: "CounterProposal"
+  - type: llm_judge
+    criteria: "Data anonymization plan and cost analysis are thorough — the anonymization plan uses pseudonymization (unique IDs replacing names), data masking (partial SSNs), generalization (age ranges instead of birthdates, zip codes instead of full addresses), and suppression (removing fields with no relevance); addresses re-identification risk (small cell sizes where demographic intersections could identify individuals); the cost estimate itemizes: database export and processing ($15K-25K), data anonymization ($10K-15K), quality assurance ($5K-10K), hosting and production ($5K-10K), total $35K-60K; the cost-shifting motion argument notes that plaintiff seeks an expensive, custom database export benefiting only plaintiff's statistical analysis, warranting at least partial cost-shifting under Rule 26(c)."
+    weight: 0.30
+    description: "AnonymizationAndCost"

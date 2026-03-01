@@ -1,0 +1,52 @@
+meta:
+  id: disputed-invoice-response
+  level: 1
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write a response to a customer who disputes an invoice amount — acknowledge the dispute, gather information, and maintain the collection process"
+  tags: [dispute, response, acknowledgment, beginner]
+
+state: {}
+
+trigger: |
+  You sent a payment reminder for Invoice #3780
+  ($15,000) and received this reply from the customer:
+
+  "Hi, I received your reminder but we are not paying
+  this invoice as-is. The agreed rate was $125/hour,
+  not $150/hour as shown on the invoice. Also, we
+  only approved 80 hours of work, but the invoice
+  shows 100 hours. Please send a corrected invoice."
+
+  FACTS:
+  - Customer: DataStream Analytics
+  - Contact: Lisa Wong, VP of Operations
+  - Invoice: $15,000 (100 hours × $150/hour)
+  - Contract rate: $125/hour (Lisa is correct about
+    the rate)
+  - Hours: Your project manager confirmed 100 hours
+    were worked, but only 80 were pre-approved (the
+    additional 20 hours were authorized verbally by
+    Lisa's team lead, David Kim)
+  - The invoice is 15 days past due
+
+  Write a response email that:
+  1. Acknowledges the dispute professionally
+  2. Addresses the rate discrepancy (you're wrong)
+  3. Addresses the hours discrepancy (partially right)
+  4. Proposes a resolution
+  5. Keeps the relationship intact
+
+assertions:
+  - type: llm_judge
+    criteria: "The email acknowledges the dispute professionally and takes responsibility for the rate error — the response thanks Lisa for bringing the discrepancies to attention; it acknowledges the rate error clearly and without excuse: 'You are correct that the contracted rate is $125/hour — I apologize for the billing error and we will issue a corrected invoice'; the email does NOT make excuses, blame systems, or minimize the error; taking ownership of the mistake builds trust and credibility; the tone is appreciative rather than defensive — the customer caught an error and the response should treat that as helpful, not adversarial."
+    weight: 0.35
+    description: "DisputeAcknowledgment"
+  - type: llm_judge
+    criteria: "The email addresses the hours discrepancy with specific facts and a proposed resolution — on the hours question, the email explains that 80 hours were pre-approved and an additional 20 hours were authorized verbally by David Kim during the project; the email provides enough context for Lisa to verify this with David; the proposed resolution might be: 'For the 80 pre-approved hours at the correct rate of $125/hour, the amount would be $10,000. For the additional 20 hours, I'd suggest we connect with David to confirm the verbal authorization — if confirmed, the total corrected invoice would be $12,500 (100 hours × $125/hour). If you'd prefer, we can issue the corrected invoice for $10,000 immediately and handle the remaining 20 hours separately once confirmed'; this shows flexibility while not simply writing off legitimate work."
+    weight: 0.35
+    description: "HoursResolution"
+  - type: llm_judge
+    criteria: "The email maintains the relationship and moves toward payment — the email does not treat this as an adversarial situation; it positions the resolution as collaborative ('Let's work together to get this sorted out'); the email provides a clear next step and timeline ('I'll have the corrected invoice to you within 2 business days'); it gently keeps the payment process moving — once the corrected invoice is issued, it establishes a new expected payment date; the email is professional and empathetic — understanding that a billing error erodes customer trust and that the response is an opportunity to rebuild it; the email should make Lisa feel heard and respected, not like she's being pushed through a collections process."
+    weight: 0.30
+    description: "RelationshipAndProgress"

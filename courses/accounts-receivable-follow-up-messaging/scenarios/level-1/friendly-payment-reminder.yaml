@@ -1,0 +1,48 @@
+meta:
+  id: friendly-payment-reminder
+  level: 1
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write a friendly first payment reminder email for an invoice that is 5 days past due — maintain the customer relationship while prompting payment"
+  tags: [first-reminder, friendly-tone, email, beginner]
+
+state: {}
+
+trigger: |
+  You are an accounts receivable specialist at a
+  mid-size marketing agency. Invoice #2847 for
+  $12,500 is now 5 days past due.
+
+  CUSTOMER DETAILS:
+  - Company: Brightline Retail Inc.
+  - Contact: Sarah Chen, Accounts Payable Manager
+  - Relationship: 2-year client, generally pays on time
+  - Payment terms: Net 30
+  - Invoice date: January 15, 2026
+  - Due date: February 14, 2026
+  - Services: January social media management and
+    content creation
+
+  This is the first follow-up. No prior reminders
+  have been sent.
+
+  Write a payment reminder email that:
+  1. Has an effective subject line
+  2. Maintains a friendly, professional tone
+  3. References the specific invoice details
+  4. Makes it easy for the customer to pay
+  5. Offers to help if there are any issues
+
+assertions:
+  - type: llm_judge
+    criteria: "The email has an effective subject line and opens with the right tone — the subject line references the invoice without being aggressive (e.g., 'Friendly Reminder: Invoice #2847 Due February 14' or 'Following Up on Invoice #2847 — $12,500' — NOT 'PAST DUE NOTICE' or 'PAYMENT OVERDUE'); the opening acknowledges the relationship before mentioning the past-due status — something like 'I hope this message finds you well' or 'Thank you for your continued partnership' before transitioning to 'I wanted to reach out regarding Invoice #2847'; the email does NOT open with the past-due fact — that would set a confrontational tone inappropriate for a first reminder to a good customer who is only 5 days late."
+    weight: 0.35
+    description: "SubjectLineAndTone"
+  - type: llm_judge
+    criteria: "The email includes all necessary invoice details and makes payment easy — the body clearly states: invoice number (#2847), amount ($12,500), original due date (February 14, 2026), services covered (January social media management and content creation), and how many days past due (5 days); the email provides payment options or references how to pay — 'You can remit payment via ACH, wire transfer, or check. Our payment details are included on the invoice, and I'm happy to resend it if needed'; the email offers to resolve any issues — 'If there are any questions about the invoice or if you need any supporting documentation, please don't hesitate to reach out'; the email assumes positive intent — perhaps the invoice was overlooked, perhaps it's in their payment queue, perhaps there's a process delay — NOT that the customer is avoiding payment."
+    weight: 0.35
+    description: "InvoiceDetailsAndPaymentPath"
+  - type: llm_judge
+    criteria: "The email is appropriately brief, professional, and closes with a clear next step — the email is concise (150-250 words, not a lengthy letter); it closes with a soft call to action such as 'Could you let me know the expected payment date?' or 'If you could confirm this is in your payment queue, that would be helpful'; the sign-off is warm and professional; the email does NOT threaten consequences, mention late fees, or reference escalation — those are inappropriate for a first reminder 5 days past due to an established client; the overall effect should be that Sarah Chen reads this email and thinks 'Oh, I should take care of that' rather than 'How dare they send me a threatening email.'"
+    weight: 0.30
+    description: "BrevityAndNextStep"

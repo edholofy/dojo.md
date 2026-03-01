@@ -1,0 +1,80 @@
+meta:
+  id: rolling-forecast-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Implement rolling forecast variance analysis — compare actuals to both the original annual budget and the latest rolling forecast to provide multiple variance perspectives"
+  tags: [rolling-forecast, reforecast, dual-variance, intermediate]
+
+state: {}
+
+trigger: |
+  Your company has implemented a rolling forecast
+  process. You now need to report variances against
+  both the original annual budget AND the latest
+  forecast.
+
+  MARCH 2026 — THREE-WAY COMPARISON:
+
+  Revenue:
+    Original Budget: $4,500,000
+    Latest Forecast (updated Feb 15): $4,350,000
+    Actual: $4,280,000
+
+  COGS:
+    Original Budget: $2,700,000
+    Latest Forecast: $2,650,000
+    Actual: $2,610,000
+
+  Gross Profit:
+    Original Budget: $1,800,000
+    Latest Forecast: $1,700,000
+    Actual: $1,670,000
+
+  S&M:
+    Original Budget: $600,000
+    Latest Forecast: $580,000
+    Actual: $595,000
+
+  R&D:
+    Original Budget: $450,000
+    Latest Forecast: $460,000
+    Actual: $475,000
+
+  G&A:
+    Original Budget: $300,000
+    Latest Forecast: $310,000
+    Actual: $305,000
+
+  Operating Income:
+    Original Budget: $450,000
+    Latest Forecast: $350,000
+    Actual: $295,000
+
+  FORECAST REVISION CONTEXT (from Feb 15 update):
+  - Revenue forecast lowered due to delayed product
+    launch
+  - COGS reduced proportionally
+  - R&D increased for acceleration of next release
+  - G&A increased for legal costs
+
+  Prepare:
+  1. Budget variance (Actual vs. Original Budget)
+  2. Forecast variance (Actual vs. Latest Forecast)
+  3. Forecast accuracy assessment
+  4. Write a 250-word narrative explaining what each
+     variance perspective reveals
+
+assertions:
+  - type: llm_judge
+    criteria: "Both variance perspectives are correctly calculated — Budget Variance (Actual vs. Original): Revenue -$220K U (4.9%), COGS +$90K F (3.3%), Gross Profit -$130K U (7.2%), S&M -$5K U (0.8%), R&D -$25K U (5.6%), G&A -$5K U (1.7%), Operating Income -$155K U (34.4%); Forecast Variance (Actual vs. Latest Forecast): Revenue -$70K U (1.6%), COGS +$40K F (1.5%), Gross Profit -$30K U (1.8%), S&M -$15K U (2.6%), R&D -$15K U (3.3%), G&A +$5K F (1.6%), Operating Income -$55K U (15.7%); the budget variance shows a larger miss (-$155K OI or 34.4%) because the original budget didn't account for the delayed product launch and other changes; the forecast variance shows a smaller but still meaningful miss (-$55K or 15.7%)."
+    weight: 0.35
+    description: "DualVarianceCalculations"
+  - type: llm_judge
+    criteria: "Forecast accuracy assessment evaluates the quality of the rolling forecast — the forecast accuracy analysis: the February forecast reduced the revenue target by $150K (from $4.5M to $4.35M) and operating income by $100K (from $450K to $350K); actual came in $70K below the revised forecast on revenue and $55K below on operating income; the forecast improved accuracy significantly: the budget variance was -34.4% on OI but the forecast variance was -15.7% — a substantial improvement but still a meaningful miss; forecast accuracy by line: Revenue forecast was 98.4% accurate (vs. 95.1% budget accuracy), COGS 98.5%, Gross Profit 98.2%, but OpEx forecast was less accurate — S&M was forecast to be $580K but came in at $595K (the forecast may have assumed marketing would be cut in response to the delayed launch, but it wasn't); the assessment should note: the rolling forecast added value by narrowing the variance from -$155K to -$55K, but there's still room for improvement — the remaining $55K miss in OI warrants investigation into forecast assumptions."
+    weight: 0.35
+    description: "ForecastAccuracy"
+  - type: llm_judge
+    criteria: "The 250-word narrative explains what each variance perspective reveals — the narrative makes the case for dual-variance reporting: the budget variance (-$155K OI) answers 'how are we performing vs. the plan we committed to at the beginning of the year?' — this is the accountability perspective and what the board cares about; the forecast variance (-$55K OI) answers 'how are we performing vs. what we most recently expected?' — this is the operational performance perspective and what management should use for current decision-making; together they tell the full story: (1) the business is $155K below the original plan, largely driven by the known product launch delay that was factored into the February forecast revision, (2) beyond the known issues, there's an additional $55K operational miss that requires attention — this is the 'surprise' element, (3) the narrative identifies what's driving the remaining $55K miss: S&M spent $15K above forecast (campaigns not adjusted for the launch delay?) and R&D spent $15K above forecast (acceleration costs higher than estimated); the narrative recommends: use the budget variance for board reporting (full accountability), use the forecast variance for management action (what's new that we didn't expect?), and continuously improve forecast accuracy to narrow the gap between forecast and actual."
+    weight: 0.30
+    description: "DualVarianceNarrative"

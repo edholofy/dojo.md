@@ -1,0 +1,63 @@
+meta:
+  id: currency-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze foreign currency variances — separate FX impact from operational performance for a multinational company's regional results"
+  tags: [currency-variance, fx-impact, constant-currency, intermediate]
+
+state: {}
+
+trigger: |
+  You are the FP&A manager for a US-based company
+  with significant international operations.
+  Separate the FX impact from operational performance
+  for Q1 2026.
+
+  Q1 2026 RESULTS BY REGION (in USD):
+
+  US (no FX impact):
+    Budget: $8,000,000    Actual: $8,250,000
+
+  Europe (EUR-denominated):
+    Budget: $4,200,000 (at budget rate €1 = $1.12)
+    Actual: $3,780,000 (at actual rate €1 = $1.05)
+    Local currency actual: €3,600,000
+    Local currency budget: €3,750,000
+
+  UK (GBP-denominated):
+    Budget: $2,500,000 (at budget rate £1 = $1.30)
+    Actual: $2,340,000 (at actual rate £1 = $1.26)
+    Local currency actual: £1,857,143
+    Local currency budget: £1,923,077
+
+  Asia-Pacific (JPY-denominated):
+    Budget: $1,800,000 (at budget rate ¥1 = $0.0072)
+    Actual: $1,680,000 (at actual rate ¥1 = $0.0067)
+    Local currency actual: ¥250,746,269
+    Local currency budget: ¥250,000,000
+
+  Total Company:
+    Budget: $16,500,000   Actual: $16,050,000
+
+  Calculate:
+  1. Total variance by region
+  2. Constant currency variance (operational
+     performance at budget FX rates)
+  3. FX variance by region
+  4. Write a 250-word analysis showing both reported
+     and constant currency performance
+
+assertions:
+  - type: llm_judge
+    criteria: "FX and operational variances are correctly separated for each region — US: no FX impact, total variance = +$250K F (operational); Europe: Total variance = -$420K U; Constant currency revenue = €3,600,000 × $1.12 (budget rate) = $4,032,000; Operational variance = $4,032,000 - $4,200,000 = -$168K U; FX variance = $3,780,000 - $4,032,000 = -$252K U; UK: Total variance = -$160K U; Constant currency = £1,857,143 × $1.30 = $2,414,286; Operational variance = $2,414,286 - $2,500,000 = -$85,714 U; FX variance = $2,340,000 - $2,414,286 = -$74,286 U; Asia-Pacific: Total variance = -$120K U; Constant currency = ¥250,746,269 × $0.0072 = $1,805,373; Operational variance = $1,805,373 - $1,800,000 = +$5,373 F; FX variance = $1,680,000 - $1,805,373 = -$125,373 U; Total Company: Reported variance = -$450K U; Constant currency variance = +$250K + (-$168K) + (-$86K) + $5K = approximately +$1K to -$3K (essentially flat operationally); FX variance = approximately -$452K U."
+    weight: 0.35
+    description: "FXVarianceSeparation"
+  - type: llm_judge
+    criteria: "The analysis demonstrates that FX masks operational performance — the key insight: on a reported basis, the company missed budget by $450K (2.7% unfavorable); however, on a constant currency basis, the company is essentially flat to budget (within $5K); the entire miss is attributable to FX headwinds: EUR weakened from $1.12 to $1.05 (6.3% decline), GBP from $1.30 to $1.26 (3.1% decline), and JPY from $0.0072 to $0.0067 (6.9% decline); without these FX movements, the US outperformance (+$250K) would have nearly offset the operational shortfalls in Europe (-$168K) and UK (-$86K); the constant currency analysis reveals that: the US business is the strongest performer (+3.1% above budget operationally), Europe's operational miss (-4.0% in euros) needs investigation, and Asia-Pacific is essentially on plan in local currency despite the reported miss."
+    weight: 0.35
+    description: "FXInsight"
+  - type: llm_judge
+    criteria: "The 250-word analysis presents both reported and constant currency views — the analysis: (1) leads with the reported headline ($16.05M vs. $16.5M budget, -$450K or 2.7% unfavorable); (2) immediately pivots to constant currency: at budget exchange rates, revenue would have been approximately $16.50M — essentially on plan; (3) quantifies the FX headwind: approximately $452K unfavorable from EUR (-$252K), GBP (-$74K), and JPY (-$125K) weakness; (4) highlights operational performance by region in local currency: US strong (+3.1%), Europe operationally weak (-4.0% in EUR), UK modestly below (-3.4% in GBP), APAC on plan (+0.3% in JPY); (5) recommends that management discussion distinguish between FX impact and operational performance when communicating with the board; (6) flags whether the FX headwinds are expected to continue — if the dollar remains strong, the remaining quarters will face the same pressure, and the full-year revenue target needs to be reforecast in constant currency; the tone recognizes that FX is largely non-controllable but operational performance is — the Europe miss in local currency is the actionable concern."
+    weight: 0.30
+    description: "DualViewAnalysis"

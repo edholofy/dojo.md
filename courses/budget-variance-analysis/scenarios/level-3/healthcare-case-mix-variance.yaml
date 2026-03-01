@@ -1,0 +1,77 @@
+meta:
+  id: healthcare-case-mix-variance
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze healthcare-specific variances — perform case mix variance analysis for a hospital system, separating volume, acuity, payer mix, and reimbursement rate variances"
+  tags: [healthcare, case-mix, payer-mix, advanced]
+
+state: {}
+
+trigger: |
+  You are the CFO's analyst for a 3-hospital health
+  system. Analyze the Q1 2026 revenue variance
+  which is showing a significant shortfall despite
+  higher patient volumes.
+
+  Q1 2026 — INPATIENT REVENUE:
+
+  Budget:
+  - Discharges: 8,000
+  - Average Case Mix Index (CMI): 1.45
+  - Average reimbursement per CMI-adjusted discharge:
+    $12,800
+  - Budgeted revenue: $148,480,000
+    (8,000 × 1.45 × $12,800)
+
+  Actual:
+  - Discharges: 8,400
+  - Average CMI: 1.32
+  - Average reimbursement per CMI-adjusted discharge:
+    $12,500
+  - Actual revenue: $138,600,000
+    (8,400 × 1.32 × $12,500 ≈ $138,600,000)
+
+  PAYER MIX:
+  Budget: Medicare 45%, Commercial 30%, Medicaid 15%,
+    Self-pay 10%
+  Actual: Medicare 48%, Commercial 25%, Medicaid 18%,
+    Self-pay 9%
+
+  AVERAGE REIMBURSEMENT BY PAYER:
+                    Budget    Actual
+  Medicare:         $11,000   $10,800
+  Commercial:       $16,500   $16,200
+  Medicaid:         $8,500    $8,400
+  Self-pay:         $5,000    $4,800
+
+  SERVICE LINE VOLUMES:
+                    Budget    Actual
+  Cardiac:          1,200     1,050  (high CMI ~2.1)
+  Orthopedics:      1,500     1,350  (mid CMI ~1.6)
+  General Surgery:  2,000     2,200  (mid CMI ~1.4)
+  General Medicine: 2,500     3,000  (low CMI ~1.0)
+  OB/GYN:           800       800   (low CMI ~1.1)
+
+  Calculate:
+  1. Total revenue variance
+  2. Volume variance
+  3. Case mix (acuity) variance
+  4. Reimbursement rate variance
+  5. Payer mix impact analysis
+  6. Write a 350-word analysis for the hospital
+     system board
+
+assertions:
+  - type: llm_judge
+    criteria: "Revenue variance is correctly decomposed into volume, case mix, and rate components — Total variance: $138,600,000 - $148,480,000 = -$9,880,000 U (6.7%); Volume Variance: additional 400 discharges × budget CMI 1.45 × budget rate $12,800 = +$7,424,000 F (more patients); Case Mix Variance: CMI dropped from 1.45 to 1.32 = -0.13; at actual volume 8,400 × (-0.13) × budget rate $12,800 = -$13,977,600 U (lower acuity patients); Rate Variance: reimbursement dropped from $12,800 to $12,500 = -$300; at actual volume × actual CMI = 8,400 × 1.32 × (-$300) = -$3,326,400 U (lower reimbursement per unit); Total check: +$7,424,000 + (-$13,977,600) + (-$3,326,400) = approximately -$9,880,000 (the exact numbers may vary slightly depending on interaction effects, but the decomposition should approximately reconcile); the key insight: more patients came in (+5% volume) but they were significantly less sick (CMI dropped 9%) and paid less per unit of acuity (-2.3%)."
+    weight: 0.35
+    description: "RevenueDecomposition"
+  - type: llm_judge
+    criteria: "Payer mix and service line analysis explain the CMI and rate declines — the payer mix shift: Commercial dropped from 30% to 25% of discharges while Medicare increased from 45% to 48% and Medicaid from 15% to 18%; since Commercial pays the highest rates ($16,200), losing 5 points of Commercial mix has a significant revenue impact; the weighted average reimbursement effect of the payer mix shift alone accounts for a portion of the rate decline; the service line analysis explains the CMI decline: high-acuity service lines (Cardiac and Orthopedics) LOST volume (1,050 vs. 1,200 and 1,350 vs. 1,500), while low-acuity lines (General Medicine) GAINED significantly (3,000 vs. 2,500); this service line mix shift directly drives the CMI from 1.45 to 1.32; the two effects are related: the growth in General Medicine and decline in Cardiac/Ortho may reflect: (1) a shift in referring physician patterns, (2) competition from a new cardiac center, (3) seasonal flu/respiratory surge filling medical beds with lower-acuity patients, or (4) surgical scheduling delays pushing cardiac and ortho cases into Q2."
+    weight: 0.35
+    description: "PayerAndServiceLineAnalysis"
+  - type: llm_judge
+    criteria: "The 350-word board analysis translates healthcare-specific variances into strategic implications — the analysis: (1) opens with the paradox: patient volumes are UP 5% but revenue is DOWN $9.9M (6.7%) — this is a classic case mix problem; (2) explains in plain language: the hospital treated 400 more patients but the additional patients were lower-acuity (less complex, generating less revenue per case); meanwhile, the highest-revenue service lines (Cardiac and Orthopedics) saw volume declines; (3) quantifies the mix effect: the CMI decline from 1.45 to 1.32 alone cost approximately $14M in revenue — this is the single largest variance driver; (4) identifies the payer mix concern: the shift from Commercial to Medicare/Medicaid further compressed revenue per case; (5) raises strategic questions: is the Cardiac volume decline competitive (are patients going to the new competing center?) or temporary?; is the General Medicine surge a seasonal pattern or an indication that the ER is admitting more low-acuity patients?; (6) recommends actions: physician outreach strategy for cardiac referrals, utilization review for General Medicine admissions (are these appropriate inpatient admissions or could they be observation/outpatient?), payer contracting review for commercial rates, and a service line profitability analysis to assess whether the volume growth is generating adequate margin despite lower revenue per case."
+    weight: 0.30
+    description: "BoardAnalysis"

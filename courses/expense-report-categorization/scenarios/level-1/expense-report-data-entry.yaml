@@ -1,0 +1,68 @@
+meta:
+  id: expense-report-data-entry
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Process expense report data entry — enter expenses into the accounting system with proper coding, dates, and supporting documentation references"
+  tags: [data-entry, accounting-system, processing, beginner]
+
+state: {}
+
+trigger: |
+  Process the following approved expense report
+  into the accounting system. Create the proper
+  journal entries and ensure all coding is correct.
+
+  APPROVED EXPENSE REPORT:
+  Employee: Lisa Park, Product Manager
+  Employee ID: EMP-0456
+  Department: Product (CC-350)
+  Report #: ER-2025-0234
+  Period: January 2025
+  Approved by: James Wilson, VP Product
+
+  APPROVED EXPENSES:
+
+  Date     | Description              | Amount   | GL    | Receipt
+  ---------|--------------------------|----------|-------|--------
+  01/06    | Uber to customer site    | $34.50   | 6110  | Yes
+  01/06    | Customer lunch (3 ppl)   | $127.00  | 6130  | Yes
+  01/08    | Adobe Creative Cloud     | $54.99   | 6400  | Yes
+  01/12    | Southwest SJC-LAX        | $198.00  | 6100  | Yes
+  01/12    | Uber to LAX hotel        | $45.00   | 6110  | Yes
+  01/12-13 | Marriott LAX (1 night)   | $189.00  | 6120  | Yes
+  01/13    | Breakfast (solo)         | $18.50   | 6135  | No*
+  01/13    | Uber to customer office  | $22.00   | 6110  | Yes
+  01/13    | Uber to airport          | $38.00   | 6110  | Yes
+  01/15    | Office supplies          | $67.80   | 6200  | Yes
+  01/20    | Team lunch (8 ppl)       | $245.00  | 6135  | Yes
+  01/22    | Professional book        | $42.99   | 6300  | Yes
+  01/25    | Parking (customer mtg)   | $15.00   | 6110  | No*
+  01/28    | SaaS subscription        | $29.99   | 6400  | Yes
+
+  *Under $25 threshold, receipt not required
+
+  TOTAL APPROVED: $1,127.77
+
+  PAYMENT METHOD: Direct deposit to employee
+  account on file
+
+  Create:
+  1. Journal entries for the accounting system
+  2. Accounts payable voucher
+  3. Data entry verification checklist
+  4. Filing and documentation plan
+
+assertions:
+  - type: llm_judge
+    criteria: "Journal entries are technically correct — debit entries to each GL account with the correct amounts: 6100 (Airfare) $198.00, 6110 (Ground Transportation) $154.50, 6120 (Lodging) $189.00, 6130 (Business Meals) $127.00, 6135 (Employee Meals) $263.50, 6200 (Office Supplies) $67.80, 6300 (Professional Development) $42.99, 6400 (Technology) $84.98; credit entry to Accounts Payable (or Employee Reimbursement Payable) for $1,127.77; each line item references the cost center (CC-350), report number (ER-2025-0234), and date; the debits and credits balance; the entries are posted to the correct accounting period (January 2025)."
+    weight: 0.35
+    description: "JournalEntries"
+  - type: llm_judge
+    criteria: "Accounts payable voucher is complete and auditable — includes: voucher number, employee name and ID, report number, approval reference, payment date, payment method, total amount, GL distribution summary, and approver's name; the voucher references all supporting documentation (receipt images, approval email/signature); the filing plan specifies: physical or digital storage location, retention period (typically 7 years per IRS requirements), indexing method (by employee, date, or report number), and audit trail requirements; the data entry verification checklist includes: mathematical verification (sum of line items equals total), GL code validation, cost center verification, receipt count confirmation, approval documentation, and duplicate check (no prior submission of same expenses)."
+    weight: 0.35
+    description: "APVoucherAndFiling"
+  - type: llm_judge
+    criteria: "Data entry demonstrates attention to common errors — verifies the total ($1,127.77) by independently summing all line items; checks for potential duplicate entries (multiple Uber rides on the same date — are they actually separate rides?); verifies that the breakfast and parking under $25 are noted as receipt-exempt per policy; confirms that the SaaS subscription is a one-time charge vs. recurring (affects accrual treatment); notes that the Adobe Creative Cloud may be a recurring monthly subscription that should be set up as an automatic entry; identifies that the team lunch ($245 for 8 people = $30.63/person) is within reasonable limits; the checklist would catch common data entry errors (transposed numbers, wrong GL code, wrong period)."
+    weight: 0.30
+    description: "DataEntryVerification"

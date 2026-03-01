@@ -1,0 +1,49 @@
+meta:
+  id: multiple-invoice-reminder
+  level: 1
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write a reminder email for a customer with multiple outstanding invoices — consolidate the message while being clear about each balance"
+  tags: [multiple-invoices, consolidated-reminder, email, beginner]
+
+state: {}
+
+trigger: |
+  A customer has three outstanding invoices at
+  different stages of aging.
+
+  CUSTOMER DETAILS:
+  - Company: TechVenture Partners
+  - Contact: Robert Kim, Controller
+  - Relationship: 18-month client
+
+  OUTSTANDING INVOICES:
+  1. Invoice #4401 — $18,500 — 45 days past due
+     (Q3 2025 consulting, reminded twice)
+  2. Invoice #4520 — $12,300 — 15 days past due
+     (October 2025 consulting, not yet reminded)
+  3. Invoice #4678 — $22,000 — 2 days past due
+     (November 2025 consulting, not yet reminded)
+
+  Total outstanding: $52,800
+
+  Write a single consolidated reminder email that:
+  1. Addresses all three invoices
+  2. Presents the information clearly (table format)
+  3. Prioritizes the oldest invoice
+  4. Does not overwhelm with three separate demands
+  5. Requests a single response
+
+assertions:
+  - type: llm_judge
+    criteria: "The email consolidates three invoices into a clear, organized message — the email presents the outstanding balances in a table or structured list format showing: invoice number, amount, service description, due date, and days past due for each of the three invoices; the total outstanding balance of $52,800 is clearly stated; the presentation makes it easy for Robert to scan and understand the full picture at a glance; the email does NOT treat this as three separate collection letters merged into one — it's a single communication about the overall account status."
+    weight: 0.35
+    description: "ConsolidatedPresentation"
+  - type: llm_judge
+    criteria: "The email appropriately differentiates urgency across the three invoices — Invoice #4401 (45 days past due, reminded twice) receives the most attention and urgency — this one needs immediate action; Invoice #4520 (15 days past due, first reminder) gets moderate attention; Invoice #4678 (2 days past due) is mentioned as a courtesy but without urgency; the email might say something like: 'Invoice #4401 is particularly concerning as it's now 45 days past due despite two prior reminders — I'd appreciate if we could prioritize this one'; the email does not apply equal pressure to all three — that would be inappropriate and unhelpful."
+    weight: 0.35
+    description: "DifferentiatedUrgency"
+  - type: llm_judge
+    criteria: "The email requests a single response and makes it easy for the customer to act — rather than asking Robert to respond three times about three invoices, the email asks for a single response: 'Could you provide an update on the status of these invoices and expected payment dates?'; it offers to schedule a quick call to discuss all three if that's easier; the email suggests that there might be a systemic issue worth discussing — three outstanding invoices from an 18-month client could indicate a process problem, approval bottleneck, or cash flow issue; the tone is professional and concerned (not aggressive) — the pattern of multiple outstanding invoices is worrying but the email addresses it constructively."
+    weight: 0.30
+    description: "SingleResponseRequest"

@@ -1,0 +1,56 @@
+meta:
+  id: variance-analytics-dashboard
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Design a variance analytics dashboard — specify KPIs, visualizations, drill-down capabilities, and alerting for an automated variance monitoring system"
+  tags: [analytics-dashboard, bi-tools, automation, advanced]
+
+state: {}
+
+trigger: |
+  The CFO wants to replace the monthly Excel-based
+  variance report with a real-time analytics
+  dashboard. Design the dashboard specification.
+
+  COMPANY PROFILE:
+  - $800M revenue, 4 business units
+  - SAP ERP (finance data), Salesforce (revenue
+    pipeline), Workday (HR/headcount)
+  - Current reporting: monthly Excel package,
+    20 pages, delivered Day 10 of close
+  - Power BI enterprise license available
+  - 50 users need access (CFO, controllers, FP&A
+    analysts, BU heads)
+
+  CFO REQUIREMENTS:
+  - "I want to see material variances the moment
+    they happen, not 10 days later"
+  - "I need to drill from the top-level number to
+    the transaction in 3 clicks"
+  - "Give me alerts when something goes off-track,
+    don't make me hunt for it"
+  - "The dashboard should tell me WHY, not just
+    WHAT"
+
+  Design:
+  1. Dashboard architecture (pages, hierarchy)
+  2. KPI definitions and variance calculations
+  3. Visualization specifications
+  4. Drill-down paths (3-click principle)
+  5. Alerting and anomaly detection rules
+  6. Data architecture and refresh frequency
+
+assertions:
+  - type: llm_judge
+    criteria: "Dashboard architecture provides a logical hierarchy from executive overview to transaction detail — the dashboard has 4 tiers: Tier 1 — Executive Dashboard (1 page): company-wide P&L with budget, actual, variance ($ and %), trailing 12-month trend, full-year forecast vs. budget; traffic light indicators for each P&L line; one-click to any BU; viewable in 60 seconds; Tier 2 — Business Unit Dashboard (4 pages, one per BU): BU-level P&L with same structure plus BU-specific KPIs (revenue by product, headcount, operational metrics); top 5 material variances with auto-generated commentary; Tier 3 — Functional Deep-Dive (variable pages): drill into any P&L line (revenue by customer/product/channel, OpEx by department/vendor/category, COGS by cost element); variance waterfall charts showing the buildup of each variance; Tier 4 — Transaction Detail: the actual GL transactions behind any variance number; accessible from any chart element via click-through; this implements the CFO's '3-click' requirement: Click 1 (Executive → BU), Click 2 (BU → Line Item), Click 3 (Line Item → Transaction)."
+    weight: 0.35
+    description: "DashboardArchitecture"
+  - type: llm_judge
+    criteria: "Alerting and anomaly detection address the 'tell me why, not just what' requirement — the alerting system operates at 3 levels: (1) Threshold Alerts: triggered when any P&L line exceeds its materiality threshold (e.g., revenue >$500K or >3% below MTD budget pace); sent via email and Teams notification to the BU controller and FP&A analyst; (2) Trend Alerts: triggered when a variance trend is worsening for 3+ consecutive months or when the cumulative YTD variance exceeds the annual threshold; these catch the 'slowly getting worse' patterns that monthly snapshots miss; (3) Anomaly Detection: ML-based detection using historical patterns (Isolation Forest or similar algorithm) that flags unusual spending patterns even if below threshold — e.g., 'G&A spending in BU3 is 2.5 standard deviations above its historical pattern for this month, despite being below the dollar threshold'; the 'tell me why' capability: the dashboard auto-generates variance explanations using rules-based logic: if revenue is down and headcount is down → 'Revenue variance may be capacity-constrained'; if COGS is up and volume is up → 'COGS increase is volume-driven, check margin per unit'; these auto-generated explanations are starting points, not replacements for analyst judgment; data refresh: SAP financial data refreshes nightly (T+1 for actual postings), Salesforce pipeline data refreshes every 4 hours, Workday headcount refreshes daily; this gives the CFO near-real-time visibility into the MTD pace."
+    weight: 0.35
+    description: "AlertingAndAnomalyDetection"
+  - type: llm_judge
+    criteria: "Visualization specifications and data architecture are technically sound — visualizations specified for each dashboard tier: Executive: waterfall chart for P&L walk (Budget → Volume → Price → Mix → Cost → Actual), sparklines for 12-month trends on each metric, bullet charts comparing actual to budget with ranges; BU-level: stacked bar charts for revenue composition, scatter plots for variance by category (size = dollar impact, color = favorable/unfavorable), heatmaps for monthly variance by cost center; Deep-dive: Pareto charts for variance concentration (which 20% of items drive 80% of variance), time-series charts with budget and forecast overlays; data architecture: SAP → Azure Data Lake (raw data) → Power BI Dataflows (transformation, business logic, variance calculations) → Power BI Datasets (optimized for dashboard consumption) → Power BI Reports (visualization); the architecture includes: a semantic model layer where variance calculations are defined once (not in each visual), row-level security so BU heads see only their BUs, and incremental refresh to handle large SAP datasets; the budget data is loaded annually with amendments tracked, and the rolling forecast is loaded monthly; the design acknowledges latency: while data refreshes daily, some GL postings (accruals, allocations) are only completed during the monthly close, so the dashboard includes a 'data completeness' indicator showing what percentage of expected postings have been made."
+    weight: 0.30
+    description: "VisualizationAndDataArchitecture"

@@ -1,0 +1,64 @@
+meta:
+  id: non-gaap-reconciliation-narrative
+  level: 2
+  course: financial-report-narrative-writing
+  type: output
+  description: "Write non-GAAP reconciliation narratives — prepare compliant non-GAAP measure disclosures with proper reconciliation, justification, and equal prominence"
+  tags: [non-gaap, reconciliation, sec-compliance, intermediate]
+
+state: {}
+
+trigger: |
+  The company reports both GAAP and non-GAAP
+  results in its earnings release. Write the
+  non-GAAP disclosure section with proper
+  reconciliation narrative.
+
+  GAAP RESULTS — Q4 2025:
+  Revenue: $320M
+  GAAP Operating Income: $28M (8.8% margin)
+  GAAP Net Income: $18M ($0.72 EPS)
+
+  NON-GAAP ADJUSTMENTS:
+  1. Restructuring charges: $12M (facility closures)
+  2. Stock-based compensation: $8M
+  3. Acquisition-related costs: $5M (legal, advisory)
+  4. Amortization of acquired intangibles: $6M
+  5. Litigation settlement: $3M
+  6. Tax effect of adjustments: ($8.5M)
+
+  NON-GAAP RESULTS:
+  Adjusted Operating Income: $62M (19.4% margin)
+  Adjusted Net Income: $43.5M ($1.74 EPS)
+  Adjusted EBITDA: $78M (24.4% margin)
+
+  REGULATORY REQUIREMENTS:
+  - Regulation G: reconciliation to most directly
+    comparable GAAP measure required
+  - Item 10(e) of Reg S-K: equal or greater
+    prominence to GAAP measures
+  - SEC C&DI guidance: must explain why each
+    adjustment is useful to investors
+  - Cannot exclude recurring charges without
+    strong justification
+
+  Write:
+  1. Introductory paragraph explaining why non-GAAP
+     measures are presented
+  2. Reconciliation table with narrative
+  3. Description of each adjustment
+  4. Cautionary language
+
+assertions:
+  - type: llm_judge
+    criteria: "Non-GAAP disclosure meets Regulation G and Item 10(e) requirements — the introductory paragraph explains: management presents non-GAAP measures to provide investors with additional insight into operational performance excluding items management believes are not indicative of core operating results; the reconciliation is clearly presented starting from the most directly comparable GAAP measure (GAAP operating income of $28M) and adding back each adjustment with clear labels to arrive at non-GAAP operating income of $62M; GAAP measures are presented with at least equal prominence (GAAP EPS appears before or alongside adjusted EPS, not subordinated); each non-GAAP measure is clearly labeled as 'Adjusted' or 'Non-GAAP' to distinguish from GAAP; the disclosure includes a statement that non-GAAP measures should not be considered as alternatives to GAAP measures."
+    weight: 0.35
+    description: "RegulatoryCompliance"
+  - type: llm_judge
+    criteria: "Each adjustment is individually justified with investor relevance — for each of the 6 adjustments: (1) Restructuring ($12M): excluded because these are costs associated with discrete facility closures not expected to recur at this level, and excluding them provides clearer view of ongoing operational performance; (2) Stock-based compensation ($8M): excluded to enable comparability with companies that use different compensation structures — this is a common but increasingly scrutinized adjustment (the narrative should acknowledge that SBC is a real economic cost); (3) Acquisition-related costs ($5M): excluded as these are transaction costs not related to ongoing operations; (4) Amortization of acquired intangibles ($6M): excluded to reflect operational performance independent of acquisition accounting (purchase price allocation); (5) Litigation settlement ($3M): excluded as a non-recurring legal resolution; (6) Tax effect ($8.5M): applies the company's estimated non-GAAP tax rate to pre-tax adjustments; the narrative should note which adjustments are truly non-recurring vs. potentially recurring — SEC has challenged companies that exclude 'restructuring' year after year."
+    weight: 0.35
+    description: "AdjustmentJustification"
+  - type: llm_judge
+    criteria: "Cautionary language and overall presentation follow SEC best practices — includes mandatory statements: non-GAAP measures have limitations, should be considered supplemental (not as alternatives to GAAP), may not be comparable to similarly titled measures used by other companies; the presentation follows the equal prominence rule: GAAP results appear first or alongside non-GAAP results, non-GAAP figures are not presented in headlines without GAAP equivalents; the tone is informative, not promotional — the non-GAAP results ($1.74 EPS vs. $0.72 GAAP EPS) present a dramatically different picture, and the narrative should be transparent about this significant divergence rather than using non-GAAP to obscure poor GAAP results; the disclosure would withstand SEC staff review and would not generate a comment letter for insufficient justification, missing reconciliation items, or unequal prominence."
+    weight: 0.30
+    description: "CautionaryAndPresentation"

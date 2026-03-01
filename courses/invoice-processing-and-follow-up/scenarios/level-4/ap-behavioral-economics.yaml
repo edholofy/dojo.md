@@ -1,0 +1,69 @@
+meta:
+  id: ap-behavioral-economics
+  level: 4
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Apply behavioral economics to AP operations — use nudge theory, incentive design, and cognitive bias mitigation to improve payment behaviors, reduce errors, and optimize vendor relationships"
+  tags: [behavioral-economics, nudge-theory, incentive-design, expert]
+
+state: {}
+
+trigger: |
+  A behavioral economics research team wants to
+  apply behavioral science principles to improve
+  AP operations. Design interventions addressing
+  three key behavioral challenges.
+
+  CHALLENGE 1 — APPROVAL BOTTLENECKS
+  Invoice approvals are consistently delayed.
+  Average approval time is 8.5 days, but policy
+  requires 3-day turnaround. Analysis shows:
+  - 45% of approvers wait until the deadline
+    reminder to act (procrastination bias)
+  - 22% of invoices are approved in the last
+    hour before deadline
+  - Approvers with 10+ pending items approve
+    faster but with less accuracy
+  - Monday and Friday have lowest approval rates
+  - Approvers don't see the downstream cost of
+    their delays
+
+  CHALLENGE 2 — VENDOR PAYMENT BEHAVIOR
+  The company wants to optimize payment timing
+  (extend DPO) while maintaining vendor satisfaction.
+  Current behavior:
+  - AP staff default to earliest payment date
+    (loss aversion — fear of late payment penalties)
+  - Vendors who call get paid faster than quiet
+    vendors (squeaky wheel effect)
+  - Discount terms are missed because they require
+    active decision-making (status quo bias)
+
+  CHALLENGE 3 — ERROR PREVENTION
+  GL coding errors occur on 8% of invoices,
+  requiring rework. Analysis shows:
+  - Most errors happen between 2-4 PM (decision
+    fatigue)
+  - AP staff with 5+ years experience make fewer
+    errors but resist new coding structures
+  - Copy-paste from previous invoices is the
+    primary error vector
+  - Staff treat GL coding as low-importance task
+    (undervaluation)
+
+  Design behavioral interventions for each challenge
+  with expected impact and measurement methodology.
+
+assertions:
+  - type: llm_judge
+    criteria: "Approval bottleneck interventions use proven behavioral science — procrastination countermeasures: (1) Default to approval — present invoices with a pre-populated 'approve' action that the approver must actively change to 'reject' (leveraging default effect — 70-80% of PO-matched invoices need no changes, so the default aligns with likely action); (2) Salience and visibility — show the financial cost of delay on each pending approval ('this invoice has a 2/10 Net 30 discount — each day of delay costs $X' or 'this vendor charges $Y late fee if not paid by Z'); (3) Social proof — 'your peers in similar roles approve within 2.1 days on average' or leaderboard showing approval speed by department (not punitive — framed as recognition); (4) Implementation intentions — prompt approvers to schedule specific review times ('when will you review these 5 invoices?') rather than leaving it open-ended; (5) Chunking — break large approval queues into small batches ('approve these 3 invoices' rather than showing 25 pending items); (6) Loss framing — 'you have $X in discounts expiring today' rather than 'you could save $X by approving today'; expected impact: reduce average approval time from 8.5 to 3.5 days (60% improvement) based on comparable nudge studies in approval workflows."
+    weight: 0.35
+    description: "ApprovalBehavior"
+  - type: llm_judge
+    criteria: "Payment timing interventions optimize working capital without harming vendors — addressing loss aversion in AP staff: (1) Reframe the default — change the system default from 'earliest payment date' to 'optimal payment date' (which considers: discount economics — pay early only when discount APR exceeds WACC, vendor relationship tier, cash position); the AP clerk doesn't choose when to pay — the system calculates optimal date and the clerk would need to override (requiring justification); (2) Discount decision architecture — present discount opportunities as gains/losses: 'paying this invoice 20 days early captures $2,000 in discounts (11.1% annualized return)' vs. 'paying on terms saves your cash flow for 20 additional days'; automate the decision for clear cases (APR > WACC + 3% = always take, APR < WACC = never take, between = flag for review); (3) Squeaky wheel correction — implement blind payment scheduling (vendor name hidden during payment run prioritization, payments scheduled purely on terms and economics); (4) Vendor satisfaction management — proactive payment status notifications reduce inbound calls by 40-60% (vendors call because of uncertainty, not because they want early payment); expected impact: extend effective DPO by 8-12 days while improving vendor satisfaction scores."
+    weight: 0.35
+    description: "PaymentBehavior"
+  - type: llm_judge
+    criteria: "Error prevention interventions address cognitive biases with measurable outcomes — decision fatigue countermeasures: (1) Schedule GL coding tasks in the morning (9-11 AM, when cognitive resources are highest), reserve afternoon for less error-prone tasks (data entry, filing, vendor communications); (2) Implement forced breaks — after 20 consecutive coding decisions, system requires a 5-minute pause (based on ego depletion research); (3) Choice architecture for GL codes — instead of free-text entry from 500+ codes, use progressive filtering (expense type → department → specific code), reducing choices at each step to 5-7 options (Miller's Law); (4) Smart defaults with ML — pre-populate GL code based on vendor, invoice description, and historical patterns (AP staff confirms rather than selects — confirmation is cognitively easier and more accurate than selection); (5) Copy-paste intervention — when system detects copy-paste of GL coding from a previous invoice, display a confirmation prompt highlighting what's different about this invoice (vendor, amount, description) to trigger conscious review; (6) Feedback loops — show AP staff their personal coding accuracy score weekly with trend (people improve when they see their own data); measurement methodology: A/B test each intervention with control group, track error rate (currently 8%), rework time, and staff satisfaction; expected combined impact: reduce coding errors from 8% to 2-3% (60-75% reduction) based on similar nudge study results in data entry environments."
+    weight: 0.30
+    description: "ErrorPrevention"

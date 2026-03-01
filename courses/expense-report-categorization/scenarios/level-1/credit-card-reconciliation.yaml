@@ -1,0 +1,83 @@
+meta:
+  id: credit-card-reconciliation
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Reconcile corporate credit card transactions with expense reports — match card statements to submitted reports and identify unreconciled transactions"
+  tags: [credit-card, reconciliation, corporate-card, beginner]
+
+state: {}
+
+trigger: |
+  You are reconciling corporate credit card
+  statements with employee expense reports for
+  February 2025. Identify discrepancies and
+  unreconciled items.
+
+  EMPLOYEE: James Rivera, Business Development Manager
+  CORPORATE CARD: Amex ending 4521
+  STATEMENT PERIOD: February 1-28, 2025
+
+  CREDIT CARD STATEMENT:
+  Date    | Merchant                | Amount   | MCC
+  --------|-------------------------|----------|-----
+  02/03   | United Airlines         | $387.00  | 4511
+  02/03   | Uber Technologies       | $34.50   | 4121
+  02/04   | Hilton Hotels           | $215.00  | 7011
+  02/04   | Hilton Hotels           | $215.00  | 7011
+  02/05   | Hilton Hotels           | $42.00   | 5812
+  02/05   | Ruth's Chris            | $267.50  | 5812
+  02/05   | Uber Technologies       | $28.00   | 4121
+  02/10   | Amazon.com              | $89.99   | 5942
+  02/12   | Starbucks               | $8.50    | 5814
+  02/14   | 1-800-Flowers           | $75.00   | 5992
+  02/15   | Netflix                 | $15.99   | 4899
+  02/18   | Delta Air Lines         | $412.00  | 4511
+  02/18   | Lyft                    | $42.00   | 4121
+  02/20   | Marriott Hotels         | $189.00  | 7011
+  02/21   | Capital Grille          | $345.00  | 5812
+  02/22   | Uber Technologies       | $55.00   | 4121
+  02/25   | Best Buy                | $149.99  | 5732
+  02/28   | Parking Solutions       | $250.00  | 7523
+
+  SUBMITTED EXPENSE REPORT (ER-2025-0198):
+  Line 1: United flight to Denver, 02/03, $387.00
+  Line 2: Uber to Denver hotel, 02/03, $34.50
+  Line 3: Hilton Denver 2 nights, 02/04-05, $430.00
+  Line 4: Room service breakfast, 02/05, $42.00
+  Line 5: Client dinner (Ruth's Chris, 4 ppl), 02/05,
+  $267.50
+  Line 6: Uber to airport, 02/05, $28.00
+  Line 7: Office supplies (Amazon), 02/10, $89.99
+  Line 8: Delta flight to Atlanta, 02/18, $412.00
+  Line 9: Lyft to Atlanta hotel, 02/18, $42.00
+  Line 10: Marriott Atlanta 1 night, 02/20, $189.00
+  Line 11: Client dinner (Capital Grille, 3 ppl),
+  02/21, $345.00
+  Line 12: Uber to airport, 02/22, $55.00
+  Line 13: External monitor (Best Buy), 02/25, $149.99
+  Line 14: Monthly office parking, 02/28, $250.00
+
+  Reconcile the card statement with the expense
+  report.
+
+  Create:
+  1. Reconciliation worksheet matching each
+     transaction
+  2. List of discrepancies and unreconciled items
+  3. Action items for resolution
+  4. Reconciliation summary
+
+assertions:
+  - type: llm_judge
+    criteria: "Reconciliation correctly matches transactions — identifies 14 expense report lines and 18 card transactions; matches Line 3 ($430) to two separate Hilton charges ($215 + $215 = $430); identifies 4 card transactions NOT on the expense report: (1) Starbucks $8.50 on 02/12, (2) 1-800-Flowers $75.00 on 02/14 (Valentine's Day — likely personal), (3) Netflix $15.99 on 02/15 (personal subscription), and (4) the reconciliation accounts for all 18 card charges; all expense report lines match to a card transaction; the total card spend and total claimed on the expense report are calculated and the difference identified."
+    weight: 0.35
+    description: "ReconciliationMatching"
+  - type: llm_judge
+    criteria: "Discrepancies and personal charges are properly flagged — 1-800-Flowers on Valentine's Day is almost certainly personal and should not be reimbursed; Netflix is a personal subscription charged to the corporate card; Starbucks $8.50 is a small business expense not included on the report (either forgotten or intentionally excluded because it's under a threshold); each discrepancy includes: the card transaction details, whether it appears on the expense report, the likely explanation, and the recommended action (reimburse, flag as personal, request explanation); the total unreconciled amount is calculated; MCC codes are referenced to help identify transaction types."
+    weight: 0.35
+    description: "DiscrepancyIdentification"
+  - type: llm_judge
+    criteria: "Action items are specific and prioritized — action items include: (1) Employee must reimburse the company for personal charges (Netflix, 1-800-Flowers = $90.99); (2) Employee should submit the Starbucks receipt or acknowledge it was personal; (3) The Hilton split charge should be documented as a single hotel stay across two card transactions; (4) The Amazon purchase should be verified as legitimate office supplies vs. personal items (MCC 5942 is bookstores); (5) The Best Buy monitor should have IT approval documentation; the reconciliation summary shows: total card charges, total approved expenses, total personal charges requiring reimbursement, and net position."
+    weight: 0.30
+    description: "ActionItems"

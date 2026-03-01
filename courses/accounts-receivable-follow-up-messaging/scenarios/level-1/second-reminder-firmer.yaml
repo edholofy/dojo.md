@@ -1,0 +1,47 @@
+meta:
+  id: second-reminder-firmer
+  level: 1
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Write a second payment reminder email for an invoice that is 20 days past due — escalate the tone slightly while remaining professional"
+  tags: [second-reminder, firmer-tone, email, beginner]
+
+state: {}
+
+trigger: |
+  Invoice #3102 for $8,750 is now 20 days past due.
+  You sent a friendly first reminder 10 days ago but
+  received no response.
+
+  CUSTOMER DETAILS:
+  - Company: Meridian Software Solutions
+  - Contact: James Park, AP Coordinator
+  - Relationship: 1-year client, has been late twice
+    before (paid after second reminder both times)
+  - Payment terms: Net 30
+  - Invoice date: January 5, 2026
+  - Due date: February 4, 2026
+  - Services: Q4 2025 IT consulting (40 hours)
+  - First reminder sent: February 14, 2026 — no
+    response
+
+  Write a second reminder email that:
+  1. Acknowledges the previous reminder
+  2. Escalates the tone slightly (still professional)
+  3. Creates appropriate urgency
+  4. Requests a specific response by a specific date
+  5. Mentions your payment terms clearly
+
+assertions:
+  - type: llm_judge
+    criteria: "The email appropriately escalates tone from the first reminder — the subject line is more direct (e.g., 'Second Notice: Invoice #3102 — 20 Days Past Due' or 'Action Required: Outstanding Invoice #3102'); the email references the prior reminder without being accusatory — 'I reached out on February 14 regarding this invoice but haven't heard back' or 'Following up on my previous email regarding Invoice #3102'; the tone shifts from friendly reminder to professional concern — language like 'I want to ensure this doesn't fall through the cracks' or 'I'd appreciate your attention to this matter'; the email is noticeably firmer than a first reminder but NOT aggressive, threatening, or rude."
+    weight: 0.35
+    description: "ToneEscalation"
+  - type: llm_judge
+    criteria: "The email requests a specific action by a specific date — rather than an open-ended 'please pay when you can,' the email asks for something concrete: 'Could you please confirm the expected payment date by [specific date, e.g., February 28]?' or 'I'd appreciate if you could arrange payment or let me know the status by end of this week'; the email includes all invoice details (number, amount, due date, days past due, services); it references the payment terms (Net 30) and notes that the invoice is now significantly past those terms; the email may mention that the account will need to be reviewed or escalated if payment is not received — a gentle preview of consequences without making threats."
+    weight: 0.35
+    description: "SpecificRequestAndDetails"
+  - type: llm_judge
+    criteria: "The email maintains professionalism while creating urgency — the email offers an alternative explanation (perhaps the first email went to spam, perhaps James is out of office) rather than assuming deliberate nonpayment; it still offers to help with any issues ('If there is a dispute or concern with the invoice, I'd be happy to discuss'); the closing is professional but expectant — making clear that a response is needed, not optional; the email is appropriately lengthened from a first reminder (200-300 words) to accommodate the additional context of a second notice; the overall tone reflects that this customer has been late before and responded to second reminders — the email should be effective for this specific pattern."
+    weight: 0.30
+    description: "ProfessionalismAndUrgency"

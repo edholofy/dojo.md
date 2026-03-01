@@ -1,0 +1,82 @@
+meta:
+  id: construction-earned-value
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Apply earned value management to a large construction project — track cost and schedule performance, forecast completion costs, and recommend corrective actions"
+  tags: [construction, earned-value, evm, advanced]
+
+state: {}
+
+trigger: |
+  You are the project controls manager for a $45M
+  commercial building construction project. The
+  project is at Month 10 of a planned 18-month
+  schedule. Prepare the monthly EVM status report.
+
+  PROJECT OVERVIEW:
+  - Budget at Completion (BAC): $45,000,000
+  - Planned Duration: 18 months
+  - Contract Type: Guaranteed Maximum Price (GMP)
+  - Status Date: Month 10
+
+  WORK BREAKDOWN STRUCTURE (WBS):
+
+  1. Site Preparation (Months 1-3):
+     Budget: $4,500,000
+     Planned % at Month 10: 100%
+     Actual % Complete: 100%
+     Actual Cost: $4,800,000
+
+  2. Foundation & Structure (Months 2-8):
+     Budget: $12,000,000
+     Planned % at Month 10: 100%
+     Actual % Complete: 95%
+     Actual Cost: $12,900,000
+
+  3. Mechanical/Electrical/Plumbing (Months 5-14):
+     Budget: $10,500,000
+     Planned % at Month 10: 60%
+     Actual % Complete: 45%
+     Actual Cost: $5,400,000
+
+  4. Interior Finishes (Months 8-16):
+     Budget: $9,000,000
+     Planned % at Month 10: 25%
+     Actual % Complete: 15%
+     Actual Cost: $1,800,000
+
+  5. Exterior & Landscaping (Months 10-17):
+     Budget: $5,000,000
+     Planned % at Month 10: 10%
+     Actual % Complete: 5%
+     Actual Cost: $350,000
+
+  6. Commissioning & Closeout (Months 16-18):
+     Budget: $4,000,000
+     Planned % at Month 10: 0%
+     Actual % Complete: 0%
+     Actual Cost: $0
+
+  Calculate:
+  1. EV, PV, AC for each WBS element and total
+  2. All EVM performance metrics
+  3. EAC using multiple methods
+  4. Estimate to Complete (ETC)
+  5. Critical path impact assessment
+  6. Write a 400-word project status report for the
+     owner
+
+assertions:
+  - type: llm_judge
+    criteria: "EVM calculations are correct for each WBS element and total — WBS calculations: (1) Site Prep: PV=$4,500K (100%), EV=$4,500K (100%), AC=$4,800K; CV=-$300K, SV=$0; (2) Foundation: PV=$12,000K (100%), EV=$11,400K (95%), AC=$12,900K; CV=-$1,500K, SV=-$600K; (3) MEP: PV=$6,300K (60%), EV=$4,725K (45%), AC=$5,400K; CV=-$675K, SV=-$1,575K; (4) Interior: PV=$2,250K (25%), EV=$1,350K (15%), AC=$1,800K; CV=-$450K, SV=-$900K; (5) Exterior: PV=$500K (10%), EV=$250K (5%), AC=$350K; CV=-$100K, SV=-$250K; (6) Commissioning: PV=$0, EV=$0, AC=$0; Total: PV=$25,550K, EV=$22,225K, AC=$25,250K; CV = EV-AC = -$3,025K (over budget); SV = EV-PV = -$3,325K (behind schedule); CPI = 22,225/25,250 = 0.880; SPI = 22,225/25,550 = 0.870; both below 1.0: the project is 12% over budget and 13% behind schedule."
+    weight: 0.35
+    description: "EVMCalculations"
+  - type: llm_judge
+    criteria: "EAC forecasts and ETC are calculated using appropriate methods — EAC Method 1 (CPI trend continues): EAC = BAC/CPI = $45M/0.880 = $51.14M (project will cost $6.14M or 13.6% over GMP); EAC Method 2 (remaining work at budget): EAC = AC + (BAC-EV) = $25.25M + $22.775M = $48.025M (assumes problems are corrected, remaining work is on budget); EAC Method 3 (CPI×SPI): EAC = AC + (BAC-EV)/(CPI×SPI) = $25.25M + $22.775M/0.766 = $25.25M + $29.73M = $54.98M (pessimistic, accounting for both cost and schedule degradation); ETC = EAC - AC; for the base case (Method 1): ETC = $51.14M - $25.25M = $25.89M needed to complete; TCPI = (BAC-EV)/(BAC-AC) = $22,775K/$19,750K = 1.153 — to finish on budget, remaining work must achieve $1.15 of earned value per $1 spent, which requires significant improvement from the current 0.88 CPI; the GMP contract means the contractor bears the overrun risk — but the owner should assess whether the contractor can absorb the potential $6-10M overrun."
+    weight: 0.35
+    description: "EACForecasting"
+  - type: llm_judge
+    criteria: "The 400-word project status report is appropriate for the building owner — the report: (1) opens with the headline: the project is 13% behind schedule and 12% over budget at Month 10, with a projected completion cost of $48-55M against a $45M GMP; (2) identifies the critical issues by WBS: Foundation is 95% complete but $1.5M over budget (unforeseen soil conditions required additional piling); MEP is the schedule-critical concern — only 45% complete vs. 60% planned, driven by delayed equipment deliveries and coordination issues with the structure phase; Interior finishes are 15% vs. 25% planned, cascading from the MEP delay; (3) schedule impact: the MEP delay pushes mechanical rough-in completion from Month 14 to approximately Month 16, which compresses interior finishes and commissioning; the 18-month planned completion is at risk — realistic completion is Month 20-21 without acceleration; (4) cost impact under GMP: the contractor is responsible for the cost overrun above $45M; however, the owner should assess change order exposure (are the soil conditions and equipment delays valid owner-responsibility changes?) and the contractor's financial capacity to absorb a $6M+ overrun; (5) recommends: weekly progress meetings with the contractor, an independent schedule assessment by a third-party consultant, evaluation of acceleration options (overtime, additional crews) and their cost implications, and a meeting with the contractor's bonding company to confirm financial capacity; the report maintains appropriate owner-contractor relationship tone — concerned but not adversarial."
+    weight: 0.30
+    description: "OwnerStatusReport"

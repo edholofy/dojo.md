@@ -1,0 +1,83 @@
+meta:
+  id: document-date-extraction
+  level: 1
+  course: case-timeline-documentation
+  type: output
+  description: "Extract dates and events from legal documents — review contracts, correspondence, and filings to identify timeline-relevant dates, deadlines, and milestones"
+  tags: [document-review, date-extraction, deadline-tracking, beginner]
+
+state: {}
+
+trigger: |
+  Extract all timeline-relevant dates and events
+  from the following documents in a personal
+  injury case.
+
+  DOCUMENT 1 — Police Report:
+  "On November 15, 2024, at approximately 3:45 PM,
+  a two-vehicle collision occurred at the
+  intersection of Oak Street and Main Avenue.
+  Vehicle 1 (2022 Toyota Camry) driven by James
+  Wilson was traveling northbound on Main Avenue.
+  Vehicle 2 (2021 Ford F-150) driven by Robert
+  Smith was traveling westbound on Oak Street.
+  According to witnesses, Vehicle 2 ran a red
+  light. EMS arrived at 3:52 PM. Mr. Wilson was
+  transported to Memorial Hospital at 4:10 PM.
+  Mr. Smith refused medical treatment at the
+  scene. Report filed by Officer K. Martinez,
+  Badge #4527."
+
+  DOCUMENT 2 — Medical Records Summary:
+  "Patient: James Wilson, DOB: 05/12/1985
+  Nov 15, 2024 — Emergency visit, Memorial Hospital.
+  Diagnosed: cervical strain, lumbar sprain, left
+  knee contusion. Discharged same day.
+  Nov 22, 2024 — Follow-up with Dr. Patel.
+  Persistent neck pain. MRI ordered.
+  Dec 5, 2024 — MRI results: C5-C6 disc herniation.
+  Dec 12, 2024 — Orthopedic consult with Dr. Kim.
+  Recommended physical therapy 3x/week for 12 weeks.
+  Jan 6, 2025 — Physical therapy begins.
+  Mar 28, 2025 — Physical therapy complete. Ongoing
+  pain reported. Dr. Kim recommends epidural
+  injection.
+  Apr 15, 2025 — Epidural steroid injection.
+  May 1, 2025 — Follow-up. Partial improvement.
+  Dr. Kim notes 'patient has reached maximum
+  medical improvement (MMI).'"
+
+  DOCUMENT 3 — Insurance Correspondence:
+  "Nov 20, 2024 — Wilson's attorney sends demand
+  letter to Smith's insurer (State Farm).
+  Dec 1, 2024 — State Farm acknowledges receipt.
+  Jan 15, 2025 — State Farm requests medical
+  records and police report.
+  Feb 10, 2025 — Wilson's attorney provides records.
+  Apr 1, 2025 — State Farm makes offer: $35,000.
+  Apr 10, 2025 — Wilson's attorney rejects offer.
+  May 15, 2025 — Statute of limitations discussion.
+  Florida SOL for personal injury: 2 years from
+  date of accident (Nov 15, 2026)."
+
+  Create:
+  1. Comprehensive chronological timeline from all
+     documents
+  2. Date-source cross-reference table
+  3. Critical deadline tracking (SOL, deadlines)
+  4. Medical treatment timeline
+  5. Gaps requiring additional documentation
+
+assertions:
+  - type: llm_judge
+    criteria: "All dates from all three documents are extracted and organized chronologically — the timeline integrates police report times (3:45 PM collision, 3:52 PM EMS, 4:10 PM transport), medical records (7 treatment dates from Nov 15 to May 1), and insurance correspondence (6 dates from Nov 20 to May 15) into a single comprehensive timeline; no dates are missed; each entry cites its source document."
+    weight: 0.35
+    description: "ComprehensiveDateExtraction"
+  - type: llm_judge
+    criteria: "Critical deadlines are flagged prominently — the statute of limitations (November 15, 2026) is highlighted as the most important deadline; the timeline tracks MMI date (May 1, 2025) as significant for damages calculation; the 12-week physical therapy prescription creates a treatment completion target; each deadline is annotated with its legal significance and remaining time."
+    weight: 0.35
+    description: "CriticalDeadlineTracking"
+  - type: llm_judge
+    criteria: "Gaps requiring additional documentation are identified — the timeline should note: no documentation of Wilson's lost wages or employment impact; no documentation of Smith's driving record or prior incidents; the gap between the accident (Nov 15) and demand letter (Nov 20) — when was attorney retained?; no documentation of vehicle damage estimates; no witness statements beyond the police report; each gap is actionable for further discovery."
+    weight: 0.30
+    description: "DocumentationGaps"

@@ -1,0 +1,111 @@
+meta:
+  id: project-based-allocation
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Allocate expenses across multiple projects and cost centers — split shared costs, apply allocation methodologies, and create proper journal entries for project accounting"
+  tags: [project-allocation, cost-centers, split-coding, intermediate]
+
+state: {}
+
+trigger: |
+  A consulting firm requires expense allocation
+  across multiple client projects. Process this
+  expense report with proper project coding.
+
+  EMPLOYEE: Rachel Torres, Senior Consultant
+  DEPARTMENT: Advisory Services (CC-400)
+  REPORT #: ER-2025-0312
+  PERIOD: February 2025
+
+  ACTIVE PROJECTS:
+  - PRJ-101: TechCorp ERP Implementation (billable)
+  - PRJ-102: RetailMax Supply Chain (billable)
+  - PRJ-103: Internal process improvement (non-billable)
+  - PRJ-104: MedDevice regulatory audit (billable)
+  - ADMIN: Non-project administrative time
+
+  COMPANY ALLOCATION RULES:
+  - Expenses directly tied to one project: 100%
+    to that project
+  - Travel serving multiple clients: allocate by
+    hours spent per client during the trip
+  - Shared tools/subscriptions: allocate by
+    project FTE percentage
+  - Client entertainment: 100% to that client's
+    project
+  - Training: 100% to ADMIN unless project-specific
+  - Non-billable project costs tracked separately
+    for internal reporting
+
+  EXPENSES:
+
+  1. Flight SFO-Chicago, 02/03, $456.00
+     Purpose: TechCorp meetings (Mon-Tue),
+     RetailMax workshop (Wed-Thu)
+     Hours: TechCorp 16h, RetailMax 16h
+
+  2. Hotel Chicago (4 nights), 02/03-06, $780.00
+     Same trip as above
+
+  3. Uber rides Chicago (6 rides), 02/03-06, $142.00
+     3 rides to TechCorp ($68), 3 rides to RetailMax ($74)
+
+  4. Client dinner — TechCorp team (5 ppl), 02/04,
+     $345.00
+
+  5. Client lunch — RetailMax (3 ppl), 02/05,
+     $127.00
+
+  6. Jira subscription (monthly), 02/01, $150.00
+     Used across: PRJ-101 (40%), PRJ-102 (30%),
+     PRJ-103 (20%), PRJ-104 (10%)
+
+  7. Flight SFO-Boston, 02/10, $389.00
+     Purpose: MedDevice audit only
+
+  8. Hotel Boston (2 nights), 02/10-11, $420.00
+     MedDevice audit only
+
+  9. Uber rides Boston (4 rides), 02/10-12, $95.00
+     MedDevice audit only
+
+  10. Regulatory compliance training, 02/15, $299.00
+      Required for PRJ-104 MedDevice audit
+
+  11. Team lunch (internal, 6 employees), 02/18,
+      $186.00
+      Process improvement brainstorm for PRJ-103
+
+  12. Figma license (monthly), 02/01, $45.00
+      Used across: PRJ-101 (60%), PRJ-102 (40%)
+
+  13. Conference registration, 02/22, $895.00
+      Industry conference — general professional
+      development
+
+  14. Client gift — RetailMax project milestone,
+      02/25, $75.00
+
+  15. Office supplies for home office, 02/28, $67.50
+      General use, no specific project
+
+  Allocate all expenses and create:
+  1. Project-level expense summaries
+  2. Billable vs. non-billable breakdown
+  3. Journal entries with project codes
+  4. Client billing worksheet
+
+assertions:
+  - type: llm_judge
+    criteria: "Project allocation follows the rules correctly — the Chicago flight ($456) and hotel ($780) are split 50/50 between PRJ-101 and PRJ-102 (equal hours: 16h each); Chicago Uber rides are allocated by actual cost ($68 to PRJ-101, $74 to PRJ-102); TechCorp dinner ($345) is 100% to PRJ-101; RetailMax lunch ($127) is 100% to PRJ-102; Jira is split 40/30/20/10 across four projects; Boston trip is 100% PRJ-104; the regulatory training ($299) is allocated to PRJ-104 since it's project-specific (not ADMIN); the team lunch ($186) goes to PRJ-103; Figma split 60/40; conference ($895) to ADMIN; RetailMax gift to PRJ-102; home office supplies to ADMIN; each allocation is traceable and defensible."
+    weight: 0.35
+    description: "ProjectAllocation"
+  - type: llm_judge
+    criteria: "Billable vs. non-billable breakdown is accurate — billable projects: PRJ-101 (TechCorp), PRJ-102 (RetailMax), PRJ-104 (MedDevice); non-billable: PRJ-103 (internal), ADMIN; the total billable amount is calculated by summing all costs allocated to PRJ-101, PRJ-102, and PRJ-104; the client billing worksheet shows costs by project that can be passed through to clients (per engagement terms); distinguishes between reimbursable expenses (travel, meals with clients) and non-reimbursable (internal subscriptions allocated to client projects); the billable ratio (billable / total) is calculated as a KPI; each project's total includes its share of split expenses."
+    weight: 0.35
+    description: "BillableBreakdown"
+  - type: llm_judge
+    criteria: "Journal entries are technically correct with project dimensions — each entry includes: debit to the appropriate GL code (6100 airfare, 6110 ground transport, 6120 lodging, 6130 client meals, 6135 employee meals, 6140 conference, 6150 client gifts, 6200 supplies, 6300 professional development, 6400 technology), the project code (PRJ-101/102/103/104/ADMIN), the cost center (CC-400), and the amount; split expenses generate multiple debit lines (e.g., flight has two debits: $228 to PRJ-101 and $228 to PRJ-102); credit to Accounts Payable for the total; all entries balance; the total across all projects equals the report total."
+    weight: 0.30
+    description: "JournalEntriesWithProjects"

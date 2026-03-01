@@ -1,0 +1,92 @@
+meta:
+  id: credit-memo-processing
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Process credit memos and debit memos — apply credits to outstanding invoices, handle returns and allowances, and maintain accurate vendor balances"
+  tags: [credit-memo, debit-memo, returns, beginner]
+
+state: {}
+
+trigger: |
+  Process the following credit and debit memos,
+  apply them to the correct invoices, and update
+  vendor balances.
+
+  CREDIT MEMO 1:
+  From: Superior Components Inc.
+  CM #: CM-2025-0134
+  Date: March 12, 2025
+  Reference: INV-SC-7701 (original invoice $8,500)
+  Reason: Defective parts returned
+  Items returned:
+  - 25 units Part A @ $45.00/ea = $1,125.00
+  - 10 units Part B @ $22.50/ea = $225.00
+  Credit amount: $1,350.00
+  Tax credit (7%): $94.50
+  Total credit: $1,444.50
+  Apply to: Outstanding balance
+
+  CREDIT MEMO 2:
+  From: Pinnacle Office Solutions
+  CM #: CM-POS-889
+  Date: March 10, 2025
+  Reference: INV-POS-5500 (original invoice
+  $3,200.00, already paid on 02/28)
+  Reason: Price adjustment per new contract
+  Adjustment: 10% discount on all items
+  Credit amount: $320.00
+  Apply to: Next invoice or refund
+
+  CREDIT MEMO 3:
+  From: National Logistics Corp
+  CM #: CM-NLC-221
+  Date: March 8, 2025
+  Reference: INV-NLC-4400 ($5,600) and
+  INV-NLC-4401 ($3,200)
+  Reason: Service level agreement penalty —
+  3 late deliveries in February
+  SLA penalty: 5% of affected invoices
+  Credit: 5% × ($5,600 + $3,200) = $440.00
+  Apply to: INV-NLC-4401 first
+
+  DEBIT MEMO 1:
+  From: Precision Engineering
+  DM #: DM-PE-556
+  Date: March 11, 2025
+  Reference: INV-PE-9900 (original invoice $12,000)
+  Reason: Additional machining work required
+  per change order CO-225
+  Additional charges:
+  - 8 hours precision machining @ $125/hr = $1,000
+  - Materials surcharge = $350.00
+  Debit amount: $1,350.00
+  Tax (7%): $94.50
+  Total debit: $1,444.50
+
+  AP LEDGER (current balances before adjustments):
+  Vendor                  | Open Balance
+  ------------------------|------------
+  Superior Components     | $8,500.00 (INV-SC-7701)
+  Pinnacle Office         | $0.00 (all paid)
+  National Logistics      | $8,800.00 (INV-4400 $5,600 + INV-4401 $3,200)
+  Precision Engineering   | $12,000.00 (INV-PE-9900)
+
+  Process all adjustments and provide:
+  1. Journal entries for each memo
+  2. Updated vendor balances
+  3. Handling of the overpayment (CM-2)
+
+assertions:
+  - type: llm_judge
+    criteria: "Journal entries are technically correct — CM-1: Debit AP (Superior Components) $1,444.50, Credit Inventory/Returns $1,350.00, Credit Sales Tax Payable $94.50 (or debit tax receivable); CM-2: since the original invoice was already paid, this creates a vendor credit/overpayment: Debit AP or Vendor Advance $320.00, Credit the original expense GL code $320.00; the company can request a refund check or apply to the next invoice; CM-3: Debit AP (National Logistics) $440.00, Credit an appropriate expense or penalty income account $440.00; applied to INV-NLC-4401 first ($3,200 reduced to $2,760), remaining $0 to INV-NLC-4400; DM-1: Debit the appropriate expense/COGS account $1,350.00, Debit Sales Tax Receivable $94.50, Credit AP (Precision Engineering) $1,444.50; all entries include the memo reference numbers and dates."
+    weight: 0.35
+    description: "JournalEntries"
+  - type: llm_judge
+    criteria: "Updated vendor balances are mathematically correct — Superior Components: $8,500.00 - $1,444.50 = $7,055.50; Pinnacle Office: $0.00 with a $320.00 credit balance (vendor owes the company); National Logistics: $8,800.00 - $440.00 = $8,360.00 (INV-4401 reduced from $3,200 to $2,760, INV-4400 remains $5,600); Precision Engineering: $12,000.00 + $1,444.50 = $13,444.50; the total AP balance change is calculated: before adjustments $29,300.00, after adjustments: $7,055.50 + (-$320.00) + $8,360.00 + $13,444.50 = $28,540.00; net reduction of $760.00."
+    weight: 0.35
+    description: "UpdatedBalances"
+  - type: llm_judge
+    criteria: "Overpayment handling for CM-2 is properly addressed — since Pinnacle Office's original invoice was already paid, the $320 credit creates an overpayment situation; options presented: (1) Request refund check from Pinnacle Office (appropriate if no future purchases expected or if the amount is significant), (2) Apply as credit to the next Pinnacle Office invoice (appropriate if there's an ongoing relationship and the next invoice is expected soon), (3) Leave as a vendor credit on the account; the recommendation considers the vendor relationship and expected future transactions; the accounting treatment properly records the vendor credit (either as a receivable or a credit balance in AP); for each option, the journal entry is shown; the debit memo from Precision Engineering is verified against the referenced change order CO-225 before processing, confirming the additional work was authorized."
+    weight: 0.30
+    description: "OverpaymentHandling"

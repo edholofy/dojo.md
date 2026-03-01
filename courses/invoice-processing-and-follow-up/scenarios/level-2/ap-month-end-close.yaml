@@ -1,0 +1,77 @@
+meta:
+  id: ap-month-end-close
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Execute AP month-end close procedures — process accruals, reconcile AP subledger to GL, prepare aging reports, and ensure completeness of period-end liabilities"
+  tags: [month-end-close, ap-reconciliation, accruals, intermediate]
+
+state: {}
+
+trigger: |
+  It's March 31, 2025, 4pm. Complete the AP
+  month-end close procedures. The close deadline
+  is tomorrow at noon.
+
+  AP SUBLEDGER BALANCE: $2,345,678.90
+  GL ACCOUNT 2100 (AP) BALANCE: $2,312,456.00
+  DIFFERENCE: $33,222.90
+
+  RECONCILIATION ITEMS TO INVESTIGATE:
+
+  1. Invoice INV-XY-4401 ($18,500.00) was entered
+     in AP on March 28 but the GL interface batch
+     failed due to a system error. The batch was
+     re-run today but posted with a date of March 31.
+
+  2. A manual journal entry was posted directly to
+     GL 2100 for $8,400.00 (Debit AP, Credit
+     Expense) by the controller on March 25 to
+     reverse an accrual from February. This entry
+     doesn't have a corresponding AP subledger
+     entry.
+
+  3. Three invoices totaling $6,322.90 were voided
+     in the AP subledger on March 30 (duplicate
+     entries found) but the GL void transactions
+     are pending the nightly batch.
+
+  ADDITIONAL CLOSE ITEMS:
+
+  4. GOODS RECEIVED / INVOICE NOT RECEIVED (GR/IR):
+     - 12 POs with goods received in March but no
+       invoice yet
+     - Total goods received value: $89,450.00
+     - Need to accrue for uninvoiced receipts
+
+  5. OUTSTANDING CHECKS:
+     - 8 checks totaling $45,200 were mailed on
+       March 28 but haven't cleared the bank yet
+     - These are recorded in the AP system as paid
+
+  6. RECURRING INVOICES:
+     - Monthly rent ($35,000) — invoice not yet
+       received but always charged on the 1st
+     - Monthly IT support ($12,000) — invoice
+       received and entered
+     - Monthly cleaning ($4,800) — invoice pending
+
+  Complete:
+  1. AP subledger to GL reconciliation
+  2. Accrual journal entries
+  3. Month-end close checklist verification
+  4. Close memo for the controller
+
+assertions:
+  - type: llm_judge
+    criteria: "Reconciliation correctly explains the $33,222.90 difference — the difference between AP subledger ($2,345,678.90) and GL ($2,312,456.00) is $33,222.90; this should be explained by the three identified items: (1) INV-XY-4401 ($18,500): this is a timing issue — the invoice is in both AP subledger and GL (re-posted March 31), so it shouldn't cause a difference unless there's a date discrepancy; (2) Manual JE ($8,400): the GL was debited $8,400 (reducing AP in GL) but the AP subledger was not adjusted — this causes GL to be $8,400 less than AP subledger; (3) Voided invoices ($6,322.90): removed from AP subledger but GL void pending nightly batch — AP subledger is $6,322.90 less than GL; net reconciling items: -$8,400 + $6,322.90 = -$2,077.10 (these two items explain $2,077.10 of the difference); the remaining $31,145.80 needs further investigation — possibly the INV-XY-4401 batch failure created a double posting or the reconciliation has other items not yet identified."
+    weight: 0.35
+    description: "APReconciliation"
+  - type: llm_judge
+    criteria: "Accrual entries are complete and properly coded — GR/IR accrual: Debit various expense/inventory accounts $89,450, Credit Accrued Liabilities (or GR/IR clearing account) $89,450; each PO's goods are accrued at the PO price; the entry reverses in April when invoices are received and matched; Rent accrual: Debit Rent Expense (6700) $35,000, Credit Accrued Liabilities $35,000; Cleaning accrual: Debit Facilities Expense (6700) $4,800, Credit Accrued Liabilities $4,800; the IT support invoice ($12,000) is already entered and doesn't need an accrual; total accruals: $89,450 + $35,000 + $4,800 = $129,250; outstanding checks ($45,200): these do NOT affect the AP reconciliation since they're already recorded as paid in AP and the cash reduction is on the bank side — they're a bank reconciliation item, not an AP reconciliation item."
+    weight: 0.35
+    description: "AccrualEntries"
+  - type: llm_judge
+    criteria: "Close memo and checklist are professional and complete — the close memo addresses: (1) AP subledger to GL reconciliation status (reconciled with identified items, or outstanding items requiring resolution before sign-off); (2) all accruals booked with supporting detail; (3) aging report summary (total AP by bucket: current, 31-60, 61-90, 90+) with explanation of significant aged items; (4) the manual JE by the controller needs a corresponding AP subledger adjustment to keep systems in sync; (5) the three voided duplicates will clear with the nightly batch — verify tomorrow morning; (6) the GR/IR accrual is the largest estimate ($89,450) and the methodology is documented (PO prices for unreceived invoices); the checklist includes: all invoices entered (confirmed), duplicate check completed, accruals posted, reconciliation completed, aging report reviewed, outstanding checks listed, and controller sign-off obtained; the memo is formatted for the controller's review and signature."
+    weight: 0.30
+    description: "CloseMemo"

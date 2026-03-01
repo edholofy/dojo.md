@@ -1,0 +1,88 @@
+meta:
+  id: tax-deductibility-classification
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Classify expenses by tax deductibility — apply IRS rules for meals, entertainment, travel, and business expenses to determine proper tax treatment and reporting"
+  tags: [tax-deductibility, irs-rules, section-274, intermediate]
+
+state: {}
+
+trigger: |
+  As part of year-end tax preparation, classify
+  the following business expenses by their tax
+  deductibility status under current IRS rules
+  (post-TCJA, 2025 rules).
+
+  COMPANY: TechVenture Inc.
+  TAX YEAR: 2024
+  FILING STATUS: C-Corporation
+
+  EXPENSE ITEMS TO CLASSIFY:
+
+  MEALS & ENTERTAINMENT:
+  1. Client business lunch at restaurant, $450
+     (6 people, business discussed)
+  2. Company holiday party for all employees, $8,500
+     (open to all, held at office)
+  3. Tickets to baseball game with client, $600
+     (no business discussed at game)
+  4. Team lunch during mandatory all-day training,
+     $320 (provided by employer for convenience)
+  5. Snacks and coffee in office break room, $1,200
+     (monthly, available to all employees)
+  6. CEO dinner with personal friends, $380
+     (no business purpose)
+  7. Client appreciation dinner, $1,200
+     (8 people, contract negotiation)
+  8. Food at company board meeting, $450
+     (provided during meeting)
+  9. Employee meals during overtime work, $890
+     (working past 10pm, employer convenience)
+  10. Golf outing with clients, $2,400
+      (includes greens fees + lunch at clubhouse)
+
+  TRAVEL:
+  11. Employee flight for business conference, $650
+  12. Hotel for 3-night business trip, $720
+  13. Extended stay — 5 business days + 2 personal
+      weekend days, hotel $1,050 total
+  14. Spouse travel to conference (not business
+      purpose), $800
+  15. Per diem meals during business travel, $375
+      (using federal per diem rate)
+
+  OTHER BUSINESS EXPENSES:
+  16. Professional dues (industry association), $500
+  17. Business liability insurance, $3,400
+  18. Home office deduction (employee), $1,500
+  19. Client gifts, $1,250 (50 clients × $25 each)
+  20. Charitable donations (corporate), $5,000
+  21. Lobbying expenses, $15,000
+  22. Penalties and fines (OSHA violation), $2,500
+  23. Employee education assistance, $5,250 per
+      employee (3 employees)
+  24. Moving expenses paid for new hire, $8,000
+  25. Country club membership dues, $12,000
+      (used 40% for business entertaining)
+
+  For each item, determine:
+  1. Deductibility percentage (100%, 50%, 0%, or
+     partial with calculation)
+  2. The IRS code section or rule that applies
+  3. Any special conditions or documentation needed
+  4. The deductible dollar amount
+
+assertions:
+  - type: llm_judge
+    criteria: "Meal and entertainment deductibility is correctly classified — (1) Client business lunch: 50% deductible under Section 274(n), $225 deductible; (2) Holiday party: 100% deductible as recreational expense for all employees under Section 274(e)(4); (3) Baseball tickets: 0% deductible — entertainment is non-deductible post-TCJA (Section 274(a)(1)), and no business was discussed; (4) Training lunch: 50% deductible (meals provided for employer convenience during training); (5) Office break room: 50% deductible as de minimis fringe under Section 132(e) (was 100% before 2026 sunset provisions — check current year rules); (6) CEO personal dinner: 0% — no business purpose; (7) Client appreciation dinner: 50% deductible if business is discussed; (8) Board meeting meals: 50% deductible; (9) Overtime meals: 50% deductible (employer convenience); (10) Golf outing: greens fees 0% (entertainment), lunch portion may be 50% if separately invoiced."
+    weight: 0.35
+    description: "MealEntertainmentClassification"
+  - type: llm_judge
+    criteria: "Travel and other expenses are correctly classified — (11) Business flight: 100% deductible; (12) Hotel: 100% deductible; (13) Extended stay: business portion (5/7 of hotel = $750) is 100% deductible if primary purpose is business, weekend portion $300 is not deductible unless extending the stay saved on airfare; (14) Spouse travel: 0% deductible under Section 274(m)(3) unless spouse has bona fide business purpose; (15) Per diem meals: 50% deductible; (16) Professional dues: 100% deductible for employer; (17) Insurance: 100% deductible; (18) Home office for W-2 employee: 0% deductible post-TCJA (eliminated for employees under Section 67); (19) Client gifts: deductible up to $25 per recipient per year, so $1,250 is fully deductible ($25 × 50); (20) Charitable: deductible up to 10% of taxable income for C-corp; (21) Lobbying: 0% deductible under Section 162(e); (22) Fines: 0% deductible under Section 162(f); (23) Education assistance: $5,250 is tax-free to employee under Section 127, 100% deductible to employer; (24) Moving: deductible to employer but taxable to employee post-TCJA; (25) Club dues: 0% deductible under Section 274(a)(3)."
+    weight: 0.35
+    description: "TravelOtherClassification"
+  - type: llm_judge
+    criteria: "Summary includes total deductible amounts and documentation requirements — calculates total deductible amount across all 25 items; provides a deductibility summary table showing: item, total amount, deductible %, deductible amount, IRC section; notes documentation requirements: contemporaneous records for meals (amount, date, place, business purpose, attendees), receipts for amounts over $75 (was $75 threshold), adequate accounting for travel expenses, written records for gifts showing recipient and business purpose; identifies items that need additional substantiation before claiming the deduction; the total tax impact is estimated (deductible amount × estimated corporate tax rate); flags items where the classification could be challenged on audit and recommends conservative treatment."
+    weight: 0.30
+    description: "DeductibilitySummary"

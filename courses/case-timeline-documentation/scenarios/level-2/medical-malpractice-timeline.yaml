@@ -1,0 +1,91 @@
+meta:
+  id: medical-malpractice-timeline
+  level: 2
+  course: case-timeline-documentation
+  type: output
+  description: "Build a medical malpractice timeline — extract and organize medical records chronologically, track standard of care deviations, and document causation between provider actions and patient harm"
+  tags: [medical-malpractice, medical-records, standard-of-care, intermediate]
+
+state: {}
+
+trigger: |
+  Create a medical malpractice timeline from medical
+  records in a delayed cancer diagnosis case.
+
+  PATIENT: Linda Park, age 52
+  DEFENDANTS: Dr. James Miller (primary care),
+  Westside Medical Group (employer), City Hospital
+  Radiology Department
+
+  MEDICAL RECORDS CHRONOLOGY:
+
+  Visit 1 — Mar 10, 2023:
+  Provider: Dr. Miller
+  Chief complaint: Persistent cough (6 weeks)
+  Assessment: Upper respiratory infection
+  Plan: Antibiotics, follow up if not improved in
+  2 weeks
+  Note: Patient mentions mother died of lung cancer
+
+  Visit 2 — Apr 5, 2023:
+  Provider: Dr. Miller
+  Chief complaint: Cough persists, mild hemoptysis
+  (coughing up blood)
+  Assessment: Bronchitis
+  Plan: Stronger antibiotics, chest X-ray ordered
+  Note: Family history of lung cancer documented
+
+  Radiology — Apr 8, 2023:
+  Chest X-ray performed at City Hospital
+  Radiologist report: "Linear opacity in right lower
+  lobe. Recommend CT scan for further evaluation."
+  Report faxed to Dr. Miller's office Apr 9
+
+  Visit 3 — May 15, 2023:
+  Provider: Dr. Miller
+  Note: No mention of X-ray results or CT follow-up
+  Chief complaint: Fatigue, weight loss (8 lbs)
+  Assessment: Stress, diet changes recommended
+  NO CT SCAN ORDERED
+
+  Visit 4 — Aug 20, 2023:
+  Provider: Dr. Miller
+  Chief complaint: Worsening cough, chest pain,
+  15 lb weight loss
+  Assessment: Orders CT scan "to rule out pathology"
+
+  Radiology — Aug 25, 2023:
+  CT scan at City Hospital
+  Report: "4.5 cm mass in right lower lobe, highly
+  suspicious for malignancy. Multiple mediastinal
+  lymph nodes enlarged."
+
+  Aug 28, 2023: Biopsy confirms Stage IIIB non-small
+  cell lung cancer
+
+  Expert opinion: If CT had been performed in April
+  2023 when recommended by radiologist, cancer likely
+  would have been Stage I or II, with 5-year survival
+  rate of 60-80% vs. current Stage IIIB survival
+  rate of approximately 10%
+
+  Create:
+  1. Complete medical records timeline
+  2. Standard of care deviation analysis
+  3. Causation timeline (delay → staging → prognosis)
+  4. Lost chance of survival calculation timeline
+  5. Key records for expert review
+
+assertions:
+  - type: llm_judge
+    criteria: "Standard of care deviation analysis identifies the critical failure — Dr. Miller failed to follow up on the April 8 radiology report recommending a CT scan; the X-ray results were faxed to his office on April 9 but the May 15 visit makes no mention of the results; this is the central deviation from standard of care; additional deviations include failing to consider lung cancer given the family history, persistent cough, and hemoptysis (coughing blood); the timeline makes the failure to act unmistakable."
+    weight: 0.35
+    description: "StandardOfCareDeviation"
+  - type: llm_judge
+    criteria: "Causation timeline connects the 4.5-month delay to worsened prognosis — maps the period from when the CT should have been ordered (April 2023) to when it was actually performed (August 2023); during this window, the cancer progressed from what was likely Stage I/II to Stage IIIB; the timeline quantifies the lost chance of survival (60-80% down to ~10%); this demonstrates proximate causation — but for the delayed diagnosis, the patient would have had significantly better outcomes."
+    weight: 0.35
+    description: "CausationTimeline"
+  - type: llm_judge
+    criteria: "Key records for expert review are identified with specificity — the April 8 X-ray report with CT recommendation, the April 9 fax confirmation to Dr. Miller's office, the May 15 visit note showing no follow-up, the office's record management system for tracking radiology results, any office protocols for flagging abnormal results, and the August CT showing advanced disease; each record is mapped to a specific element of the malpractice claim (duty, breach, causation, damages)."
+    weight: 0.30
+    description: "KeyRecordsIdentification"

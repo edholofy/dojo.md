@@ -1,0 +1,52 @@
+meta:
+  id: basic-revenue-variance
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Calculate and explain a basic revenue variance — compare actual revenue to budget, identify the dollar and percentage variance, and write a clear explanation of the drivers"
+  tags: [revenue-variance, budget-to-actual, basics, beginner]
+
+state: {}
+
+trigger: |
+  You are a financial analyst preparing the monthly
+  variance report for the Sales department.
+
+  MONTHLY REVENUE DATA (March 2026):
+  Budget:  $2,450,000
+  Actual:  $2,312,000
+
+  PRODUCT BREAKDOWN:
+  Product A:
+    Budget: $1,200,000 (12,000 units × $100)
+    Actual: $1,155,000 (11,000 units × $105)
+
+  Product B:
+    Budget: $750,000 (5,000 units × $150)
+    Actual: $697,000 (4,500 units × $154.89)
+
+  Product C:
+    Budget: $500,000 (2,500 units × $200)
+    Actual: $460,000 (2,300 units × $200)
+
+  Calculate:
+  1. Total revenue variance (dollar and percentage)
+  2. Product-level variances
+  3. For each product, identify whether the variance
+     is due to price, volume, or both
+  4. Write a 150-word variance commentary explaining
+     the results to the VP of Sales
+
+assertions:
+  - type: llm_judge
+    criteria: "Variance calculations are accurate — total variance: $2,312,000 - $2,450,000 = -$138,000 unfavorable (5.6% unfavorable); Product A: -$45,000 unfavorable total, composed of price variance of +$55,000 favorable (($105-$100) × 11,000 units sold) and volume variance of -$100,000 unfavorable ((11,000-12,000) × $100 budget price); Product B: -$53,000 unfavorable total, composed of price variance of approximately +$22,000 favorable (($154.89-$150) × 4,500) and volume variance of -$75,000 unfavorable ((4,500-5,000) × $150); Product C: -$40,000 unfavorable total, entirely volume-driven (price was on budget at $200, volume was 200 units short: (2,300-2,500) × $200); the analysis correctly identifies that all three products missed volume targets but Products A and B partially offset with higher pricing."
+    weight: 0.35
+    description: "VarianceCalculations"
+  - type: llm_judge
+    criteria: "Price-volume decomposition is correctly performed — for each product, the response separates the total variance into a price component and a volume component using the standard formula: Price Variance = (Actual Price - Budget Price) × Actual Volume; Volume Variance = (Actual Volume - Budget Volume) × Budget Price; the response correctly identifies that Product A had favorable pricing (+$5/unit) but unfavorable volume (-1,000 units), Product B had favorable pricing (+$4.89/unit) but unfavorable volume (-500 units), and Product C had zero price variance but unfavorable volume (-200 units); the net message is clear: the revenue shortfall of $138,000 is primarily a volume problem ($215,000 unfavorable volume) partially offset by stronger pricing ($77,000 favorable price)."
+    weight: 0.35
+    description: "PriceVolumeDecomposition"
+  - type: llm_judge
+    criteria: "Variance commentary is clear and actionable — the 150-word commentary for the VP of Sales: opens with the headline (revenue was $138K or 5.6% below budget), identifies the primary driver (unit volumes fell short across all three products — 1,000 units for A, 500 for B, 200 for C), acknowledges the positive (pricing strength partially offset volume weakness, with Products A and B achieving higher average selling prices), quantifies the net impact (volume shortfall of $215K offset by $77K pricing benefit), and suggests next steps or questions (are the volume misses related to market conditions, pipeline timing, or forecast accuracy? Should April targets be adjusted?); the tone is professional, factual, and forward-looking — it explains 'what happened' and 'why' without assigning blame; the commentary uses the 'headline-driver-context-outlook' structure appropriate for management reporting."
+    weight: 0.30
+    description: "VarianceCommentary"

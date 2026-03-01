@@ -1,0 +1,89 @@
+meta:
+  id: insurance-coverage-timeline
+  level: 2
+  course: case-timeline-documentation
+  type: output
+  description: "Build an insurance coverage timeline — track policy periods, notice requirements, claim submissions, coverage determinations, and reservation of rights in a complex insurance coverage dispute"
+  tags: [insurance-coverage, policy-periods, notice-requirements, intermediate]
+
+state: {}
+
+trigger: |
+  Create an insurance coverage timeline for a
+  commercial property damage claim with multiple
+  policy years and carriers involved.
+
+  INSURED: Pacific Coast Manufacturing Inc.
+  PROPERTY: Manufacturing facility, 50,000 sq ft
+
+  INSURANCE HISTORY:
+  - Policy Year 2021-2022: CarrierA Insurance
+    (property + business interruption, $5M limit,
+    $50K deductible)
+  - Policy Year 2022-2023: CarrierA Insurance
+    (same terms, renewed)
+  - Policy Year 2023-2024: CarrierB Insurance
+    (switched carriers; property + BI, $10M limit,
+    $100K deductible; includes "known loss"
+    exclusion)
+
+  LOSS EVENTS:
+  - Nov 2021: Facility manager notices minor roof
+    leak in warehouse section; patches internally
+  - Mar 2022: Heavy rains cause additional leaking;
+    manager notes in maintenance log but does not
+    report to insurance
+  - Aug 2022: Annual inspection finds "signs of
+    water damage in ceiling tiles — recommend
+    professional assessment"; management defers
+  - Jan 2023: Major storm causes significant water
+    intrusion; production line damaged; facility
+    shuts down 2 weeks for repairs
+  - Jan 20, 2023: Pacific Coast reports claim to
+    CarrierA — first notice of loss
+  - Feb 2023: CarrierA adjuster inspects; estimates
+    $1.2M in property damage, $400K business
+    interruption
+  - Mar 2023: CarrierA issues Reservation of Rights
+    letter citing: (a) late notice, (b) failure to
+    mitigate, (c) pre-existing damage exclusion
+  - May 2023: Independent engineer's report finds
+    water damage developed progressively since at
+    least Nov 2021
+  - Jul 2023: CarrierA denies claim — "loss commenced
+    prior to first notice; insured failed to mitigate
+    by not addressing known leaks"
+  - Sep 2023: Pacific Coast's broker switches coverage
+    to CarrierB; does NOT disclose pending claim or
+    known water issues
+  - Dec 2023: Continued water intrusion causes
+    additional $800K damage
+  - Jan 2024: Pacific Coast reports new claim to
+    CarrierB
+  - Feb 2024: CarrierB investigates; discovers prior
+    claim history with CarrierA
+  - Mar 2024: CarrierB denies claim — "known loss
+    exclusion; material misrepresentation on
+    application"
+
+  Create:
+  1. Policy period and loss event timeline
+  2. Notice compliance analysis
+  3. Coverage trigger analysis (occurrence vs.
+     manifestation vs. continuous trigger)
+  4. Reservation of rights and denial timeline
+  5. Bad faith analysis for both carriers
+
+assertions:
+  - type: llm_judge
+    criteria: "Coverage trigger analysis maps the progressive loss across policy periods — the water damage that started in Nov 2021 and continued through Dec 2023 spans three policy years with two carriers; under an occurrence theory, the loss triggers the 2021-2022 policy when damage first occurred; under manifestation, it triggers when damage became apparent; under a continuous trigger theory, all policies from 2021-2024 are triggered pro rata; the timeline supports analysis of which trigger theory benefits the insured and which benefits each carrier."
+    weight: 0.35
+    description: "CoverageTriggerAnalysis"
+  - type: llm_judge
+    criteria: "Notice compliance analysis documents the insured's failures and their impact — the Nov 2021 and Mar 2022 leaks were known but unreported; the Aug 2022 inspection recommended professional assessment that was deferred; first notice to CarrierA was not until Jan 2023, 14 months after the first known leak; the timeline assesses whether late notice is a valid coverage defense in the applicable jurisdiction (some require prejudice, others don't); the failure to disclose to CarrierB in Sep 2023 raises material misrepresentation issues."
+    weight: 0.35
+    description: "NoticeComplianceAnalysis"
+  - type: llm_judge
+    criteria: "Bad faith analysis evaluates both carriers' conduct — CarrierA's reservation of rights (Mar 2023) and subsequent denial (Jul 2023) should be assessed for timeliness and good faith investigation; CarrierB's known-loss exclusion denial (Mar 2024) raises questions about whether the loss was truly 'known' at policy inception or whether continued water intrusion constitutes a new occurrence; the timeline examines whether either carrier conducted a reasonable investigation before denying coverage and whether the insured's own conduct contributed to the coverage disputes."
+    weight: 0.30
+    description: "BadFaithAnalysis"

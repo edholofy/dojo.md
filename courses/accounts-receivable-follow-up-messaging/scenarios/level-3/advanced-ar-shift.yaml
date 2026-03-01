@@ -1,0 +1,57 @@
+meta:
+  id: advanced-ar-shift
+  level: 3
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Advanced shift simulation — navigate a week of complex AR challenges: a customer bankruptcy filing, a VP-level escalation, and an international collection with currency complications"
+  tags: [shift-simulation, complex, multi-challenge, advanced]
+
+state: {}
+
+trigger: |
+  Three complex situations hit your desk this week.
+
+  SITUATION 1 — BANKRUPTCY NOTIFICATION (Monday)
+  Your 5th largest customer, Consolidated Industries
+  ($450K outstanding, 35 days past due), has just
+  filed Chapter 11. You need to immediately:
+  (a) Write a 150-word internal alert to AR team,
+      sales team, and legal
+  (b) Determine what to do about the $180K in goods
+      currently being shipped to them
+
+  SITUATION 2 — VP SALES INTERVENTION (Wednesday)
+  The VP of Sales calls you: "I just met with the
+  CEO of Delta Corp at a conference. They owe us
+  $92K (55 days past due). The CEO said your
+  collection emails are 'aggressive and
+  threatening' and he's considering taking his
+  business elsewhere ($1.2M annual). Fix this."
+
+  Write a 200-word plan to resolve this situation
+  (address both the relationship and the collection).
+
+  SITUATION 3 — INTERNATIONAL COMPLICATION (Friday)
+  Your UK subsidiary invoiced a German customer
+  €125,000. The customer paid £108,000 (GBP instead
+  of EUR). Due to exchange rate differences, this
+  underpays the invoice by approximately €3,800.
+  The customer insists they paid the correct amount.
+
+  Write a 150-word resolution email to the customer.
+
+  Handle all three situations.
+
+assertions:
+  - type: llm_judge
+    criteria: "The bankruptcy response is immediate, correct, and addresses the in-transit goods — the 150-word internal alert: immediately stops all collection activity (automatic stay), stops all shipments to Consolidated, alerts legal to file a proof of claim, and flags the $180K in transit; the in-transit goods analysis: goods shipped before the filing petition date may be subject to reclamation rights under UCC § 2-702 (seller can reclaim goods received by an insolvent buyer within 10 days of receipt); recommends immediately contacting the freight carrier to attempt a stop-shipment, and if goods have been delivered, sending a reclamation demand within the 10-day window; the alert is urgent but not panicked — it provides clear instructions and next steps for each audience (AR: stop collecting, Sales: stop selling, Legal: file claim and advise on reclamation)."
+    weight: 0.35
+    description: "BankruptcyResponse"
+  - type: llm_judge
+    criteria: "The VP Sales intervention plan balances relationship repair with collection — the 200-word plan: first, reviews the actual emails sent to Delta Corp to assess whether they were genuinely aggressive or the CEO is exaggerating to gain leverage; second, proposes that the billing partner or AR manager calls the Delta CEO directly to apologize for any communication that felt inappropriate and to discuss the outstanding balance personally; third, adjusts Delta Corp's dunning treatment going forward (personal outreach rather than automated emails for a $1.2M customer); fourth, firmly notes that $92K at 55 days past due still needs to be collected — the relationship conversation should include a payment commitment; the plan does NOT simply waive the debt or stop collection because a CEO complained — that sets a dangerous precedent; it addresses both the VP Sales's concern (fix the relationship) and the AR team's obligation (collect the money)."
+    weight: 0.35
+    description: "VPSalesIntervention"
+  - type: llm_judge
+    criteria: "The currency resolution email is professional and educational — the 150-word email to the German customer: explains that the invoice was denominated in EUR (€125,000) and payment was received in GBP (£108,000); explains the exchange rate difference that results in approximately €3,800 underpayment; notes that the customer may have used a different exchange rate or converted internally; provides the correct amount still owed (€3,800 or equivalent in GBP at current rate); offers to discuss the appropriate exchange rate reference (ECB rate on payment date is standard); the tone is patient and educational — currency mismatches in international AR are common and the email treats it as a process issue, not a payment avoidance issue; all three situations demonstrate the ability to handle complex AR scenarios that go beyond standard dunning."
+    weight: 0.30
+    description: "CurrencyResolution"

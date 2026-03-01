@@ -1302,3 +1302,83 @@ Tracks all auto-generated courses for dojo.md.
 - **Generated**: 2026-02-27
 - **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
 - **Status**: Complete
+
+---
+
+## Course 117: legal-research-memo-writing
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+---
+
+## Course 118: case-timeline-documentation
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+---
+
+## Course 119: client-communication-drafting
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+---
+
+## Course 120: discovery-document-organization
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+---
+
+## Course 121: expense-report-categorization
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 122: invoice-processing-and-follow-up
+- **Generated**: 2026-03-01
+- **Scenarios**: 50/50 (L1: 10, L2: 10, L3: 10, L4: 10, L5: 10)
+- **Status**: Complete
+
+## Course 123: financial-report-narrative-writing
+- **Generated**: 2026-02-27
+- **Scenarios**: 50/50 (10 per level × 5 levels)
+- **Level 1** (Beginner): basic-variance-commentary, income-statement-summary, balance-sheet-highlights, cash-flow-narrative, kpi-dashboard-narrative, segment-performance-summary, earnings-release-draft, ratio-interpretation, year-over-year-comparison, beginner-narrative-shift
+- **Level 2** (Intermediate): mda-results-of-operations, non-gaap-reconciliation-narrative, forward-looking-statements, risk-factor-writing, investor-letter-drafting, board-financial-report, earnings-call-script, restructuring-narrative, plain-english-rewrite, intermediate-narrative-shift
+- **Level 3** (Advanced): full-mda-section, esg-integrated-narrative, crisis-financial-communication, acquisition-financial-narrative, multi-segment-mda, ipo-prospectus-narrative, nlg-financial-reporting, cross-border-financial-narrative, audit-committee-narrative, advanced-narrative-shift
+- **Level 4** (Expert): narrative-consulting-practice, narrative-style-guide, narrative-governance-framework, narrative-behavioral-science, narrative-technology-strategy, narrative-training-program, narrative-quality-benchmarking, narrative-regulatory-response, narrative-crisis-playbook, expert-narrative-shift
+- **Level 5** (Master): narrative-thought-leadership, global-narrative-standards, narrative-graduate-program, narrative-social-enterprise, narrative-existential-questions, narrative-memoir, narrative-technology-startup, narrative-regulatory-policy, narrative-research-handbook, master-narrative-shift
+- **Research**: SEC Regulation S-K/G, PSLRA safe harbor, MD&A best practices, non-GAAP disclosure, plain English, NLG/AI, ESG integration, behavioral finance in narrative
+
+---
+
+## Budget Variance Analysis
+- **Course ID**: budget-variance-analysis
+- **Generated**: 2026-02-27
+- **Topics researched**: Variance types (price/volume/mix, favorable/unfavorable), flexible budgeting, standard costing, ZBB, ABB, rolling forecasts, earned value management (CPI/SPI/EAC/TCPI), SaaS metrics (MRR/ARR/churn), healthcare case mix, retail same-store analysis, construction EVM, government appropriation tracking, transfer pricing, multi-currency/constant currency, EPM tools (Anaplan/Adaptive/Oracle/SAC/OneStream), AI/ML anomaly detection, APQC/IMA/CIMA best practices
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Level 1** (Beginner): basic-revenue-variance, basic-expense-variance, cogs-variance-basics, headcount-variance, flexible-budget-intro, capex-variance, variance-threshold-setting, quarterly-variance-summary, favorable-unfavorable-classification, beginner-variance-shift
+- **Level 2** (Intermediate): revenue-mix-variance, rolling-forecast-variance, multi-department-variance, standard-cost-variance, saas-metrics-variance, variance-root-cause, budget-reforecast, project-cost-variance, currency-variance, intermediate-variance-shift
+- **Level 3** (Advanced): enterprise-variance-framework, zero-based-budget-variance, acquisition-variance-integration, variance-analytics-dashboard, multi-entity-consolidation-variance, healthcare-case-mix-variance, construction-earned-value, government-appropriation-variance, retail-same-store-variance, advanced-variance-shift
+- **Level 4** (Expert): variance-consulting-practice, variance-behavioral-science, variance-technology-evaluation, variance-governance-framework, variance-training-certification, variance-transformation-case-study, variance-ai-strategy, variance-outsourcing-evaluation, variance-knowledge-management, expert-variance-shift
+- **Level 5** (Master): variance-thought-leadership, global-budgeting-standards, variance-graduate-program, variance-social-enterprise, variance-existential-questions, variance-memoir, variance-technology-startup, variance-regulatory-policy, variance-research-handbook, master-variance-shift
+- **Research**: Variance decomposition methods, standard costing history, flexible budgeting theory, beyond budgeting movement, behavioral dimensions (gaming/sandbagging), EPM systems landscape, AI/ML in FP&A, industry-specific variance practices
+
+---
+
+## Accounts Receivable Follow-Up Messaging
+- **Course ID**: accounts-receivable-follow-up-messaging
+- **Generated**: 2026-02-27
+- **Topics researched**: AR collection lifecycle stages, communication channels (email/phone/SMS/letter/portal), tone progression, FDCPA/TCPA/UCC legal requirements, industry-specific AR (healthcare, construction, SaaS, government, professional services), dispute resolution, payment plan negotiation, escalation frameworks, AR automation (dunning, payment portals, AI), metrics/KPIs (DSO, CEI, aging), cultural/international considerations, NACM best practices, skip tracing, effective subject lines/opening lines, common debtor objections and rebuttals
+- **Scenarios**: 50 (10 per level × 5 levels)
+- **Type**: output
+- **Level 1** (Beginner): friendly-payment-reminder, second-reminder-firmer, phone-call-script, pre-due-reminder, final-notice-email, disputed-invoice-response, payment-plan-offer, multiple-invoice-reminder, late-fee-notification, beginner-ar-shift
+- **Level 2** (Intermediate): dunning-sequence-design, industry-specific-healthcare, escalation-to-management, construction-retainage, saas-subscription-dunning, international-collection-email, objection-handling-responses, collection-agency-referral-letter, ar-reporting-commentary, intermediate-ar-shift
+- **Level 3** (Advanced): enterprise-ar-playbook, legal-compliance-framework, ar-automation-implementation, bankruptcy-and-insolvency, multi-subsidiary-ar, government-ar-management, ar-analytics-dashboard, professional-services-ar, credit-risk-integration, advanced-ar-shift
+- **Level 4** (Expert): ar-transformation-consulting, ar-behavioral-science, ar-technology-evaluation, ar-governance-framework, ar-training-certification, ar-outsourcing-strategy, ar-ai-strategy, ar-cross-functional-alignment, ar-knowledge-management, expert-ar-shift
+- **Level 5** (Master): ar-thought-leadership, global-ar-standards, ar-graduate-program, ar-social-enterprise, ar-existential-questions, ar-memoir, ar-technology-startup, ar-regulatory-policy, ar-research-handbook, master-ar-shift
+- **Research**: FDCPA/Regulation F compliance, NACM collection standards, behavioral science in collections (nudge theory, social proof, loss aversion), AI/NLG in AR, multi-channel dunning optimization, international/cultural collection practices, bankruptcy/insolvency handling, skip tracing techniques

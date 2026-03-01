@@ -1,0 +1,75 @@
+meta:
+  id: project-cost-variance
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze project cost variances using earned value management — calculate CPI, SPI, and estimate at completion for a capital project"
+  tags: [earned-value, project-cost, evm, intermediate]
+
+state: {}
+
+trigger: |
+  The PMO director needs a variance analysis on the
+  company's ERP implementation project, which is
+  showing signs of cost overrun.
+
+  PROJECT: ERP Implementation (18-month project)
+  Start Date: July 2025
+  Planned End Date: December 2026
+  Status Date: March 1, 2026 (Month 8 of 18)
+
+  BUDGET:
+  Total Budget at Completion (BAC): $3,600,000
+  
+  PLANNED VALUE (cumulative through Month 8):
+  Month 1-2: Discovery & Design = $400,000
+  Month 3-4: Development Phase 1 = $600,000
+  Month 5-6: Development Phase 2 = $700,000
+  Month 7-8: Testing & Integration = $500,000
+  Cumulative PV through Month 8: $2,200,000
+
+  ACTUAL RESULTS:
+  Actual Cost (AC) through Month 8: $2,450,000
+  
+  Work completed:
+  - Discovery & Design: 100% complete
+  - Development Phase 1: 100% complete
+  - Development Phase 2: 85% complete (delayed by
+    data migration issues)
+  - Testing & Integration: 40% complete (started
+    early on completed Phase 1 modules)
+
+  EARNED VALUE CALCULATION:
+  - Discovery & Design: 100% × $400K = $400,000
+  - Dev Phase 1: 100% × $600K = $600,000
+  - Dev Phase 2: 85% × $700K = $595,000
+  - Testing: 40% × $500K = $200,000
+  Cumulative EV: $1,795,000
+
+  COST BREAKDOWN OF OVERRUN:
+  - Consulting rates 12% above contracted rate
+  - Additional data migration specialist hired
+    ($45K for 3 months)
+  - Server infrastructure costs $80K above estimate
+  - Travel costs for remote team: $35K unbudgeted
+
+  Calculate:
+  1. All EVM metrics (CV, SV, CPI, SPI)
+  2. Estimate at Completion (EAC) — multiple methods
+  3. Variance at Completion (VAC)
+  4. To-Complete Performance Index (TCPI)
+  5. Write a 300-word project status report
+
+assertions:
+  - type: llm_judge
+    criteria: "EVM metrics are correctly calculated — Cost Variance (CV) = EV - AC = $1,795,000 - $2,450,000 = -$655,000 (over budget); Schedule Variance (SV) = EV - PV = $1,795,000 - $2,200,000 = -$405,000 (behind schedule); Cost Performance Index (CPI) = EV / AC = $1,795,000 / $2,450,000 = 0.733 (for every dollar spent, only $0.73 of planned work is completed); Schedule Performance Index (SPI) = EV / PV = $1,795,000 / $2,200,000 = 0.816 (only 82% of planned work has been completed by this point); both indices below 1.0 indicate the project is over budget AND behind schedule — a concerning combination."
+    weight: 0.35
+    description: "EVMMetrics"
+  - type: llm_judge
+    criteria: "EAC calculations use multiple methods and the TCPI provides recovery context — EAC Method 1 (current CPI continues): EAC = BAC / CPI = $3,600,000 / 0.733 = $4,911,000 (worst case — assumes current inefficiency continues); EAC Method 2 (remaining work at budget): EAC = AC + (BAC - EV) = $2,450,000 + ($3,600,000 - $1,795,000) = $4,255,000 (assumes future work returns to budget efficiency); EAC Method 3 (CPI × SPI factor): EAC = AC + (BAC - EV) / (CPI × SPI) = $2,450,000 + $1,805,000 / (0.733 × 0.816) = $2,450,000 + $1,805,000 / 0.598 = approximately $5,468,000 (worst case considering both cost and schedule performance); VAC = BAC - EAC = ranges from -$655K to -$1,868K depending on method; TCPI = (BAC - EV) / (BAC - AC) = $1,805,000 / $1,150,000 = 1.57 — this means the project would need to achieve $1.57 of earned value for every $1.00 spent going forward to finish on budget, which is essentially impossible given the current CPI of 0.73."
+    weight: 0.35
+    description: "EACAndTCPI"
+  - type: llm_judge
+    criteria: "The project status report is actionable and appropriately escalates — the 300-word report: (1) states the project is both over budget (CPI 0.73, -$655K CV) and behind schedule (SPI 0.82, -$405K SV); (2) translates into business terms: at the current rate, the project will cost $4.3-4.9M vs. the $3.6M budget (a $700K-$1.3M overrun or 19-36%); (3) identifies the root causes of the cost overrun: consulting rate escalation (12% above contract — was this properly negotiated?), unplanned data migration complexity ($45K specialist), infrastructure costs ($80K above estimate — scope creep or estimating error?), and unbudgeted travel ($35K); (4) identifies the schedule concern: Dev Phase 2 is only 85% complete when it should be 100% — the data migration issues are the bottleneck; (5) recommends immediate actions: freeze scope (no additional requirements), renegotiate consulting rates (or replace with lower-cost resources), escalate the data migration issues to the ERP vendor, and present the revised EAC to the steering committee for budget increase approval; (6) the report honestly states that the TCPI of 1.57 makes an on-budget completion impossible — the question is how much over budget, not whether; the project needs a formal budget revision."
+    weight: 0.30
+    description: "ProjectStatusReport"

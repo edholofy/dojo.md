@@ -1,0 +1,80 @@
+meta:
+  id: intermediate-invoice-shift
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Intermediate shift simulation — handle complex matching, fraud investigation, and vendor dispute resolution in a single workday"
+  tags: [shift-simulation, multi-task, intermediate-synthesis, intermediate]
+
+state: {}
+
+trigger: |
+  You are the AP Supervisor handling three
+  escalated situations on a Thursday afternoon.
+
+  CASE 1 — URGENT PAYMENT REQUEST
+  A critical vendor (sole source for a key
+  component) is threatening to halt shipments if
+  their past-due invoice isn't paid by end of day.
+
+  Invoice: VS-2025-0445
+  Amount: $87,500
+  Due Date: March 1, 2025 (14 days past due)
+  Status: On hold — 3-way match exception
+
+  The exception: PO-7890 was for $82,000.
+  The invoice is $87,500 — $5,500 over PO.
+  Vendor claims a $5,500 freight surcharge was
+  added due to expedited shipping requested by
+  your purchasing team.
+
+  The purchasing manager is on vacation. No change
+  order was issued. The goods were received and
+  are in production.
+
+  Resolve this today.
+
+  CASE 2 — BANK DETAIL CHANGE REQUEST
+  A regular vendor (MetroTech Solutions, $15,000/
+  month for IT services) sent an email requesting
+  their bank details be changed for future payments.
+
+  Email says: "Due to a banking transition, please
+  update our payment information to: First National
+  Bank, Routing: 091000019, Account: 7744332211.
+  Please process this change immediately as our
+  old account will be closed."
+
+  The email came from accounting@metrotech-solutions.com
+  (note: your records show the vendor's domain is
+  metrotech.com, not metrotech-solutions.com).
+
+  Handle this request.
+
+  CASE 3 — PAYMENT RUN ERROR
+  The weekly payment run processed this morning
+  and included a payment of $125,000 to vendor
+  "Global Enterprises" for invoice GE-2025-1001.
+  However, the AP clerk now realizes this invoice
+  was already paid on March 3 via wire transfer.
+  The duplicate payment was sent via ACH and will
+  hit the vendor's bank tomorrow morning.
+
+  Stop or recover this payment.
+
+  Handle all three cases with documented
+  actions and decisions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Case 1 resolution balances urgency with controls — acknowledges the business criticality (sole-source vendor, goods already in production) while maintaining appropriate controls; the solution should NOT be to simply override the match exception and pay the full amount without documentation; recommended approach: (1) Contact the buyer's backup or purchasing director to verify the expedited shipping request; (2) Check email or communication records for the expedited shipping authorization; (3) If the shipping request is confirmed: process an emergency change order for $5,500, get the purchasing director's approval (or their VP's in the buyer's absence), then release the payment; (4) If the shipping request cannot be verified today: pay the original PO amount ($82,000) to prevent the shipment halt, and hold the $5,500 difference pending verification; (5) Communicate to the vendor that $82,000 is being released immediately with the $5,500 freight under review; the resolution preserves the vendor relationship while maintaining audit trail and authorization documentation."
+    weight: 0.35
+    description: "UrgentPaymentResolution"
+  - type: llm_judge
+    criteria: "Case 2 correctly identifies a potential BEC (Business Email Compromise) fraud attempt — the critical red flag: the email domain is metrotech-solutions.com but the vendor on file uses metrotech.com; this is a classic business email compromise/vendor impersonation attack; the recommended actions: (1) DO NOT change the bank details based on this email; (2) Contact MetroTech using the phone number on file (NOT any phone number in the suspicious email) to verify the request; (3) If the vendor confirms the change is legitimate, request a signed letter on company letterhead with the new bank details, along with a voided check or bank letter; (4) If the vendor says they didn't send the request, flag as a fraud attempt and notify IT security; (5) Implement a mandatory callback verification procedure for ALL vendor bank changes going forward; (6) Alert the AP team about this specific attempt and the general BEC threat; the response protects the company from a potential $15,000+/month loss."
+    weight: 0.35
+    description: "BECFraudPrevention"
+  - type: llm_judge
+    criteria: "Case 3 duplicate payment recovery is handled with appropriate urgency — immediate actions: (1) Contact the bank immediately to request an ACH recall/reversal (ACH payments can typically be recalled within 24 hours through the ODFI); (2) Contact Global Enterprises directly to notify them of the duplicate payment and request voluntary return; (3) Document the timeline: original wire payment March 3, duplicate ACH processed today, ACH settlement date tomorrow; the ACH recall process: file a return request with your bank using return reason code R11 (customer advises entry not authorized) or coordinate a reversal through the ACH network; if the bank can stop the payment before settlement, the $125,000 is recovered automatically; if the payment settles, request a voluntary refund from the vendor with a formal letter documenting the duplicate; preventive measures: implement duplicate payment detection that checks across payment methods (the system should have flagged that GE-2025-1001 was already paid by wire), add a pre-payment verification step that shows prior payment history for each vendor/invoice combination; the documentation includes: incident report, timeline of actions, parties contacted, and outcome."
+    weight: 0.30
+    description: "DuplicatePaymentRecovery"

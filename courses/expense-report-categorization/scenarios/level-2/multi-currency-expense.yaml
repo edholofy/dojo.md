@@ -1,0 +1,92 @@
+meta:
+  id: multi-currency-expense
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Process multi-currency expense reports — convert foreign expenses using proper exchange rates, handle conversion fees, and reconcile against corporate card foreign transaction charges"
+  tags: [multi-currency, fx-rates, international-travel, intermediate]
+
+state: {}
+
+trigger: |
+  Process a multi-currency expense report for an
+  employee who traveled to three countries in one
+  business trip.
+
+  EMPLOYEE: David Chen, Global Account Manager
+  TRIP: European client visits, March 10-21, 2025
+  CORPORATE CARD: Visa ending 8834
+  HOME CURRENCY: USD
+
+  COMPANY POLICY:
+  - Convert at the rate on the transaction date
+  - Use OANDA mid-market rate as reference
+  - Corporate card FX fee: 2.5% (Visa adds this)
+  - Cash advances converted at withdrawal date rate
+  - Per diem applies for meals when no receipts
+  - Lodging must have receipts regardless of amount
+
+  EXPENSES SUBMITTED:
+
+  LONDON (March 10-14):
+  Date  | Description          | Local Amt | Currency | Card Charge (USD)
+  ------|----------------------|-----------|----------|------------------
+  03/10 | Heathrow Express     | £35.00    | GBP      | $44.63
+  03/10 | Hotel (4 nights)     | £840.00   | GBP      | $1,071.00
+  03/11 | Client lunch (4 ppl) | £127.50   | GBP      | $162.56
+  03/12 | Uber (3 rides)       | £42.00    | GBP      | $53.55
+  03/13 | Office supplies      | £18.00    | GBP      | $22.95
+  03/14 | Eurostar to Paris    | £189.00   | GBP      | $241.01
+
+  PARIS (March 14-17):
+  Date  | Description          | Local Amt | Currency | Card Charge (USD)
+  ------|----------------------|-----------|----------|------------------
+  03/14 | Taxi to hotel        | €38.00    | EUR      | $41.61
+  03/14 | Hotel (3 nights)     | €690.00   | EUR      | $755.55
+  03/15 | Client dinner (6 ppl)| €312.00   | EUR      | $341.64
+  03/16 | Metro passes         | €16.40    | EUR      | $17.96
+  03/16 | Cash advance (ATM)   | €200.00   | EUR      | $225.00
+  03/17 | TGV to Frankfurt     | €95.00    | EUR      | $104.03
+
+  FRANKFURT (March 17-21):
+  Date  | Description          | Local Amt | Currency | Card Charge (USD)
+  ------|----------------------|-----------|----------|------------------
+  03/17 | Taxi to hotel        | €28.00    | EUR      | $30.66
+  03/17 | Hotel (4 nights)     | €720.00   | EUR      | $788.40
+  03/18 | Client lunch (3 ppl) | €89.00    | EUR      | $97.46
+  03/19 | Conference fee       | €450.00   | EUR      | $492.75
+  03/20 | Business dinner      | €156.00   | EUR      | $170.82
+  03/21 | Taxi to airport      | €32.00    | EUR      | $35.04
+
+  FLIGHTS (booked in USD):
+  03/10 | SFO-LHR United       | $1,245.00 | USD      | $1,245.00
+  03/21 | FRA-SFO Lufthansa    | $1,187.00 | USD      | $1,187.00
+
+  REFERENCE EXCHANGE RATES (OANDA mid-market):
+  GBP/USD: 1.2450 (avg for March 10-14)
+  EUR/USD: 1.0750 (avg for March 14-17)
+  EUR/USD: 1.0820 (avg for March 17-21)
+
+  Process this report:
+  1. Verify card charges against expected FX
+     conversions (rate + 2.5% fee)
+  2. Identify any FX discrepancies
+  3. Calculate per diem eligibility for cash
+     advance meals
+  4. Create the GL-coded expense summary in USD
+  5. Reconcile total card charges vs. total
+     reimbursable amount
+
+assertions:
+  - type: llm_judge
+    criteria: "FX conversion verification is thorough — for each GBP transaction, calculates expected USD as (GBP amount × 1.2450 × 1.025) and compares to the actual card charge; for EUR transactions March 14-17, uses rate 1.0750, and for March 17-21 uses rate 1.0820; identifies any charges that deviate significantly from expected conversion (more than 1% variance could indicate the card used a different rate); the cash advance of €200 at $225.00 implies a rate of 1.125 which is higher than mid-market + fee — this should be flagged as ATM advances often have worse rates and additional ATM fees; the analysis accounts for the 2.5% FX fee on each transaction."
+    weight: 0.35
+    description: "FXVerification"
+  - type: llm_judge
+    criteria: "GL coding and expense categorization is correct across currencies — all amounts are converted to USD for GL posting; airfare ($2,432.00) to GL 6100; ground transportation (Heathrow Express, Uber, taxis, Metro, Eurostar, TGV) properly coded to GL 6110; lodging to GL 6120; client meals (with attendee counts) to GL 6130; solo meals/per diem to GL 6135; conference fee to GL 6140; office supplies to GL 6200; the cash advance is reconciled — €200 for meals should be applied against per diem rates for Paris (GSA rate or company international per diem); any unspent cash advance must be returned; the total by GL code is calculated correctly."
+    weight: 0.35
+    description: "GLCodingMultiCurrency"
+  - type: llm_judge
+    criteria: "Reconciliation is complete and identifies all issues — total card charges are summed and compared to total reimbursable expenses; the per diem calculation for cash advance meals uses appropriate international rates (US State Department or company rates for Paris); the Eurostar and TGV are correctly categorized as ground transportation (rail), not airfare; any personal expenses or policy violations are flagged; the reconciliation memo shows: total by currency, total in USD, FX fees paid, variance from mid-market rates, and net reimbursement amount; the report is ready for finance manager approval."
+    weight: 0.30
+    description: "ReconciliationSummary"

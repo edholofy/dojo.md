@@ -1,0 +1,88 @@
+meta:
+  id: expense-accrual-adjustments
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Process month-end expense accruals and adjustments — estimate unreported expenses, create accrual entries, and reverse prior-period accruals for accurate period-end reporting"
+  tags: [accruals, month-end, adjustments, intermediate]
+
+state: {}
+
+trigger: |
+  It's March 31, 2025, and you're closing the
+  books for Q1. Process the following expense
+  accrual situations.
+
+  SITUATION 1 — UNREPORTED TRAVEL EXPENSES
+  Three employees traveled in March but haven't
+  submitted expense reports yet (typical submission
+  lag is 2-3 weeks):
+
+  Employee A (Sales): NYC trip March 24-27
+  - Estimated based on historical: $2,800
+  - Company average NYC trip: $2,500-$3,200
+  - Flight booked through corporate travel:
+    $485.00 (known cost)
+  - Hotel booked through portal: $267/night × 3
+    = $801.00 (known cost)
+  - Estimated meals/ground transport: $1,500
+
+  Employee B (Engineering): SF-Seattle March 18-19
+  - Estimated based on historical: $1,200
+  - Flight: $312.00 (known)
+  - Hotel: $225/night × 1 = $225.00 (known)
+  - Estimated other: $650
+
+  Employee C (Marketing): Chicago conference
+  March 25-28
+  - Conference fee: $895.00 (known, paid by card)
+  - Flight: $378.00 (known)
+  - Hotel: $289/night × 3 = $867.00 (known)
+  - Estimated meals/transport: $800
+
+  SITUATION 2 — FEBRUARY ACCRUAL REVERSALS
+  The following accruals were booked on Feb 28 and
+  need to be reversed, then replaced with actuals:
+
+  Feb accrual for Employee D's London trip:
+  - Accrued amount: $5,200.00
+  - Actual report submitted March 5: $4,875.50
+  - GL codes: 6100 ($1,200), 6110 ($340),
+    6120 ($2,100), 6130 ($890), 6135 ($345.50)
+
+  Feb accrual for corporate card unbilled items:
+  - Accrued amount: $3,400.00
+  - Actual card statement received March 10:
+    $3,678.22
+
+  SITUATION 3 — RECURRING EXPENSE ACCRUALS
+  Monthly expenses where invoices haven't arrived:
+
+  - AWS hosting (typically $4,200 ± $300): no
+    March invoice yet
+  - Cleaning service ($2,400/month): March invoice
+    pending
+  - Security service ($1,800/month): March invoice
+    pending
+  - Copier lease ($450/month): March invoice pending
+
+  Create all necessary journal entries for:
+  1. March expense accruals (new)
+  2. February accrual reversals
+  3. Actual expense entries (replacing Feb accruals)
+  4. Recurring service accruals
+  5. A reconciliation of accrued vs. actual variances
+
+assertions:
+  - type: llm_judge
+    criteria: "Travel expense accruals use a defensible methodology — for each employee, the accrual separates known costs (booked flights, hotels, conference fees) from estimated costs (meals, ground transport); known costs are accrued at exact amounts; estimated costs use historical averages or company benchmarks; Employee A accrual: $485 (flight) + $801 (hotel) + $1,500 (estimated) = $2,786; Employee B: $312 + $225 + $650 = $1,187; Employee C: $895 + $378 + $867 + $800 = $2,940; total travel accrual is calculated; the journal entries debit the appropriate GL codes (6100 airfare, 6120 lodging, 6130/6135 meals, 6140 conference) and credit Accrued Liabilities; each accrual references the employee and trip for tracking."
+    weight: 0.35
+    description: "TravelAccruals"
+  - type: llm_judge
+    criteria: "February accrual reversals and actual entries are correct — Employee D's February accrual ($5,200) is fully reversed: credit GL codes, debit Accrued Liabilities; then the actual ($4,875.50) is booked with the correct GL breakdown: debit 6100 $1,200, 6110 $340, 6120 $2,100, 6130 $890, 6135 $345.50, credit Accounts Payable $4,875.50; the variance ($324.50 favorable) is noted; the corporate card accrual ($3,400) is reversed and the actual ($3,678.22) is booked, with the unfavorable variance of $278.22 identified; the net impact on the P&L from the accrual-to-actual adjustment is calculated; the entries are dated correctly (reversals on March 1 or March 31 depending on company policy)."
+    weight: 0.35
+    description: "AccrualReversals"
+  - type: llm_judge
+    criteria: "Recurring accruals and variance analysis are complete — AWS is accrued at $4,200 (mid-range estimate) or at the most recent month's actual; cleaning, security, and copier are accrued at their fixed monthly amounts ($2,400, $1,800, $450); total recurring accrual calculated; the entries debit the appropriate GL codes and credit Accrued Liabilities; the reconciliation summary shows: each accrual category, accrued amount, actual amount (where known), variance, and variance percentage; identifies trends (e.g., are actuals consistently higher or lower than accruals, suggesting the accrual methodology needs adjustment); the total Q1 accrual impact is summarized showing how much of Q1 expenses are based on accruals vs. actuals."
+    weight: 0.30
+    description: "RecurringAccruals"

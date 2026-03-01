@@ -1,0 +1,76 @@
+meta:
+  id: per-diem-calculation
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Calculate per diem allowances for business travel — apply GSA per diem rates and determine meal and incidental expense reimbursements"
+  tags: [per-diem, gsa-rates, travel-reimbursement, beginner]
+
+state: {}
+
+trigger: |
+  Your company uses the federal per diem system
+  for travel reimbursement. Calculate the per diem
+  allowances for three employees' upcoming trips.
+
+  COMPANY POLICY:
+  - Uses GSA per diem rates for domestic travel
+  - Lodging: actual cost up to GSA maximum
+  - M&IE (Meals & Incidental Expenses): flat per
+    diem rate
+  - First and last day of travel: 75% of M&IE rate
+  - Meals provided by conference/client: deducted
+    from per diem
+  - Incidental expenses: included in M&IE rate
+    (tips, laundry, etc.)
+
+  TRIP 1 — JENNIFER WONG
+  Destination: Washington, DC
+  Dates: April 7-10, 2025 (4 days, 3 nights)
+  GSA rates for DC (April): Lodging $258/night,
+  M&IE $79/day
+  Hotel booked: $245/night
+  Conference provides: lunch on April 8 and 9
+  M&IE breakdown for DC: Breakfast $18, Lunch $20,
+  Dinner $36, Incidentals $5
+
+  TRIP 2 — DAVID PARK
+  Destination: Multiple cities
+  Day 1 (April 14): San Francisco
+  Days 2-3 (April 15-16): Los Angeles
+  Day 4 (April 17): Return home
+  GSA rates: SF — Lodging $311/night, M&IE $79/day;
+  LA — Lodging $209/night, M&IE $74/day
+  Hotels booked: SF $295/night (1 night),
+  LA $195/night (2 nights)
+  No meals provided
+
+  TRIP 3 — ANNA MARTINEZ
+  Destination: Rural Kansas (county not listed in
+  GSA tables)
+  Dates: April 21-23, 2025 (3 days, 2 nights)
+  Standard CONUS rate: Lodging $107/night,
+  M&IE $59/day
+  Hotel booked: $89/night
+  Client provides: dinner on April 21
+
+  Calculate:
+  1. Per diem allowance for each trip
+  2. Lodging reimbursement for each trip
+  3. Meal deductions for provided meals
+  4. Total reimbursement per employee
+  5. Expense report coding for each component
+
+assertions:
+  - type: llm_judge
+    criteria: "Per diem calculations are mathematically correct — Trip 1: first day (April 7) at 75% M&IE = $59.25, middle days (April 8-9) at full $79 minus lunch deduction ($20 each day) = $59 × 2 = $118, last day (April 10) at 75% = $59.25; total M&IE = $236.50; lodging = $245 × 3 = $735 (under GSA max); Trip 2: first day (April 14, SF) at 75% of $79 = $59.25, full day (April 15, LA transition day — uses rate for location where overnight) at $74, full day (April 16, LA) at $74, last day (April 17) at 75% of $74 = $55.50; lodging = $295 + $195 × 2 = $685; Trip 3: first day at 75% of $59 = $44.25, middle day at $59, last day at 75% minus dinner deduction; the calculations correctly handle the first/last day 75% rule and meal deductions."
+    weight: 0.35
+    description: "PerDiemCalculations"
+  - type: llm_judge
+    criteria: "Multi-city and standard rate handling are correct — Trip 2 correctly applies different per diem rates for each city; the rate for each day is determined by the overnight lodging location (Day 1 uses SF rate because overnight is in SF, Day 2 uses LA rate because overnight is in LA); Trip 3 correctly identifies that rural Kansas falls under the standard CONUS rate when the county is not specifically listed in GSA tables; the analysis explains how to determine which GSA rate applies when a county or city is not specifically listed; the transition between cities is handled correctly with clear documentation of which rate applies to each day."
+    weight: 0.35
+    description: "MultiCityHandling"
+  - type: llm_judge
+    criteria: "Expense coding and total calculations are complete — each component is coded to the appropriate GL account: lodging to 6120, M&IE to 6135 (employee meals), any client meals would be separately coded to 6130; total reimbursement for each employee is clearly stated with a breakdown of lodging + M&IE; the report format is suitable for submission to accounts payable; notes on documentation requirements are included (travel itinerary, hotel folios, explanation of provided meals); the analysis addresses common per diem questions (Is the employee required to stay at a hotel within the GSA rate? What happens if the hotel exceeds the rate? Can the employee keep unused M&IE per diem?)."
+    weight: 0.30
+    description: "CodingAndTotals"

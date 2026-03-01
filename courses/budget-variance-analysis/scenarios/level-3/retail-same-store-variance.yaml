@@ -1,0 +1,72 @@
+meta:
+  id: retail-same-store-variance
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze retail-specific variances — decompose same-store sales variance into traffic, conversion, basket size, and shrinkage components for a multi-location retailer"
+  tags: [retail, same-store-sales, traffic-conversion, advanced]
+
+state: {}
+
+trigger: |
+  You are the VP of Finance for a 150-store
+  specialty retailer. Analyze the March 2026
+  same-store sales variance.
+
+  COMPANY-WIDE MARCH 2026:
+  Total Stores: 150 (135 same-store, 15 new in
+    last 12 months)
+  Total Revenue: Budget $42M, Actual $40.2M
+
+  SAME-STORE METRICS (135 stores):
+                        Budget      Actual
+  Revenue:              $38,000,000 $35,800,000
+  Foot Traffic:         1,350,000   1,280,000
+  Conversion Rate:      32%         30%
+  Avg Transaction Value: $88.00      $93.00
+  Transactions:         432,000     384,000
+  Shrinkage:            1.5%        2.1%
+  Gross Margin:         58%         56.5%
+
+  NEW STORE METRICS (15 stores):
+                        Budget      Actual
+  Revenue:              $4,000,000  $4,400,000
+
+  SAME-STORE BY REGION (135 stores):
+  Northeast (40 stores):
+    Budget: $12M    Actual: $11.8M    Traffic: -3%
+  Southeast (35 stores):
+    Budget: $10M    Actual: $8.9M     Traffic: -12%
+  Midwest (30 stores):
+    Budget: $8.5M   Actual: $8.2M     Traffic: -2%
+  West (30 stores):
+    Budget: $7.5M   Actual: $6.9M     Traffic: -8%
+
+  CONTEXT:
+  - A major competitor opened 8 new stores in the
+    Southeast during Q1
+  - Weather in the West was unusually severe in March
+  - The company launched a loyalty program in January
+  - E-commerce grew 22% but is not included in
+    same-store metrics
+
+  Calculate:
+  1. Same-store sales variance decomposition
+  2. Traffic-conversion-basket analysis
+  3. Shrinkage impact
+  4. Regional performance analysis
+  5. Write a 350-word retail variance analysis
+
+assertions:
+  - type: llm_judge
+    criteria: "Same-store variance is correctly decomposed into traffic, conversion, and basket size — Total same-store variance: $35.8M - $38.0M = -$2.2M (5.8% U); decomposition: (1) Traffic variance: 1,280,000 vs. 1,350,000 = -70,000 visitors (5.2% decline); if conversion and basket had held at budget, lost revenue from traffic alone = 70,000 × 32% conversion × $88 ATV = $1,971,200; (2) Conversion variance: 30% vs. 32% = -2 percentage points; at actual traffic: 1,280,000 × (30%-32%) × $88 = -$2,252,800; (but we need to use actual ATV for proper isolation or manage the interaction effects); (3) Basket size variance: $93 vs. $88 = +$5 per transaction; at actual transactions of 384,000: 384,000 × $5 = +$1,920,000 F; the key insight: traffic (-5.2%) and conversion (-2 points) drove the miss, but higher average transaction value (+5.7%) partially offset; the customers who came in bought more, but fewer customers came in and fewer of those who came converted to purchases."
+    weight: 0.35
+    description: "SameStoreDecomposition"
+  - type: llm_judge
+    criteria: "Regional analysis identifies the Southeast as the primary problem and explains shrinkage impact — Regional breakdown: Northeast -$200K (1.7% U, traffic -3%: modest softness); Southeast -$1,100K (11.0% U, traffic -12%: severe miss, clearly driven by competitor openings); Midwest -$300K (3.5% U, traffic -2%: modest); West -$600K (8.0% U, traffic -8%: weather impact); the Southeast accounts for 50% of the total same-store miss ($1.1M of $2.2M) despite being 26% of stores — this is the battleground; Shrinkage impact: actual 2.1% vs. budget 1.5% = 0.6 percentage point increase; on $35.8M revenue, this is approximately $215K in additional shrinkage loss; combined with gross margin compression (56.5% vs. 58%), the margin impact on same-store profitability is significant: ($38M × 58%) - ($35.8M × 56.5%) = $22.04M - $20.23M = -$1.81M in gross profit vs. budget; the shrinkage increase may be related to new store openings (distracted management attention), the loyalty program (organized retail theft targeting high-value loyalty items), or the competitive pressure causing reduced staffing hours."
+    weight: 0.35
+    description: "RegionalAndShrinkage"
+  - type: llm_judge
+    criteria: "The 350-word retail analysis provides actionable insight — the analysis: (1) opens with the headline: same-store sales declined 5.8% ($2.2M), driven primarily by traffic (-5.2%) and conversion (-2 points), partially offset by stronger basket size (+5.7%); (2) identifies the geographic concentration: the Southeast accounts for half the miss, directly correlated with 8 competitor store openings — this is a competitive response situation; (3) separates controllable from non-controllable: West weather impact (-$600K) is non-controllable and should normalize; Southeast competitive pressure (-$1.1M) is partially controllable through marketing response and store experience improvements; shrinkage increase (+$215K) is controllable and requires immediate loss prevention review; (4) highlights the positive signals: basket size increase suggests the loyalty program may be working (customers are buying more per visit), new stores are outperforming budget by 10%, and e-commerce growth of 22% indicates the brand is healthy — customers may be shifting channel, not leaving; (5) recommends: immediate competitive response plan for the 35 Southeast stores (targeted promotions, local marketing, staff training), shrinkage audit across all regions, and an evaluation of whether the same-store metric should be supplemented with an 'omnichannel' metric that includes e-commerce from the same-store trade areas to provide a complete picture of customer behavior."
+    weight: 0.30
+    description: "RetailVarianceAnalysis"

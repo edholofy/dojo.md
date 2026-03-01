@@ -1,0 +1,78 @@
+meta:
+  id: recurring-subscription-management
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Manage recurring subscription expenses — identify, categorize, and track SaaS and service subscriptions charged to corporate cards, determine proper accounting treatment, and prevent duplicate payments"
+  tags: [subscriptions, saas, recurring-charges, intermediate]
+
+state: {}
+
+trigger: |
+  The finance team has asked you to audit and
+  categorize all recurring subscription charges
+  on corporate credit cards for Q1 2025. Several
+  departments have been independently purchasing
+  SaaS tools, leading to duplicate subscriptions
+  and unclear ownership.
+
+  CORPORATE CARD RECURRING CHARGES (Q1 2025):
+
+  Card ending 1001 (Engineering — CC-100):
+  Monthly | Vendor           | Amount    | Description
+  --------|------------------|-----------|------------
+  Jan-Mar | GitHub Enterprise | $231.00   | 33 seats
+  Jan-Mar | AWS              | ~$4,200   | Cloud hosting (varies)
+  Jan-Mar | Slack Business+  | $375.00   | 50 seats
+  Jan-Mar | Jira Cloud       | $385.00   | 55 seats
+  Jan-Mar | Figma            | $135.00   | 9 seats (designers embedded)
+  Feb-Mar | Copilot Business | $247.00   | 13 seats (started Feb)
+  Jan     | DataDog          | $890.00   | Monitoring (cancelled Feb)
+
+  Card ending 2002 (Marketing — CC-200):
+  Monthly | Vendor           | Amount    | Description
+  --------|------------------|-----------|------------
+  Jan-Mar | Slack Business+  | $120.00   | 16 seats
+  Jan-Mar | HubSpot          | $800.00   | Marketing Hub Pro
+  Jan-Mar | Canva Enterprise | $150.00   | 10 seats
+  Jan-Mar | Zoom Business    | $250.00   | 10 licenses
+  Jan-Mar | Figma            | $75.00    | 5 seats
+  Jan-Mar | Adobe Creative   | $599.94   | 6 licenses
+
+  Card ending 3003 (Sales — CC-300):
+  Monthly | Vendor           | Amount    | Description
+  --------|------------------|-----------|------------
+  Jan-Mar | Salesforce       | $1,500.00 | 20 licenses
+  Jan-Mar | Zoom Business    | $125.00   | 5 licenses
+  Jan-Mar | Slack Business+  | $97.50    | 13 seats
+  Jan-Mar | LinkedIn Sales Nav| $799.00  | 5 seats
+  Jan-Mar | Gong.io          | $600.00   | 10 seats
+
+  Card ending 4004 (HR — CC-400):
+  Monthly | Vendor           | Amount    | Description
+  --------|------------------|-----------|------------
+  Jan-Mar | Slack Business+  | $52.50    | 7 seats
+  Jan-Mar | Zoom Business    | $100.00   | 4 licenses
+  Jan-Mar | BambooHR         | $450.00   | Company-wide
+  Jan-Mar | LinkedIn Recruiter| $833.00  | 1 seat
+
+  Create:
+  1. Complete subscription inventory with GL coding
+  2. Duplicate/overlap analysis
+  3. Consolidation recommendations
+  4. Quarterly cost summary by GL code and dept
+  5. Accrual entries for month-end
+
+assertions:
+  - type: llm_judge
+    criteria: "Subscription inventory is complete and correctly coded — each subscription is assigned a GL code: Slack, Jira, GitHub, Copilot to GL 6400 (Technology & Software); Figma, Canva, Adobe to GL 6400 or a design tools sub-code; HubSpot to GL 6600 (Marketing) or GL 6400; Salesforce, LinkedIn Sales Navigator, Gong to GL 6400 or sales tools; BambooHR to GL 6400; LinkedIn Recruiter to GL 6800 (Recruiting); AWS to GL 6400 (hosting); DataDog to GL 6400; Zoom to GL 6400; the inventory includes: vendor name, monthly cost, annual projected cost, number of seats/licenses, owning department, GL code, and whether the subscription is active or cancelled; the total monthly recurring spend is calculated."
+    weight: 0.35
+    description: "SubscriptionInventory"
+  - type: llm_judge
+    criteria: "Duplicate and overlap analysis identifies consolidation opportunities — Slack Business+ is purchased by 4 departments separately (50+16+13+7 = 86 seats across 4 cards) and should be consolidated into a single enterprise agreement; Zoom Business is purchased by 3 departments (10+5+4 = 19 licenses) and should be consolidated; Figma is on 2 cards (9+5 = 14 seats) and should be consolidated; the analysis calculates potential savings from volume discounts with consolidated purchasing; identifies that LinkedIn has two different products (Sales Navigator on Sales card, Recruiter on HR card) — these are different products but should be managed under one vendor relationship; flags the DataDog cancellation and confirms no charges after January; recommends a centralized IT procurement process."
+    weight: 0.35
+    description: "DuplicateAnalysis"
+  - type: llm_judge
+    criteria: "Quarterly cost summary and accrual entries are correct — the quarterly summary totals all charges by GL code across departments; the monthly accrual entries for each subscription show: debit to the appropriate GL code with department cost center, credit to Accrued Liabilities (or Prepaid if paid annually); for AWS with variable charges (~$4,200/month), an accrual estimate methodology is described; the DataDog charge appears only in January; Copilot appears only in February and March; the Q1 total is calculated correctly accounting for partial-quarter subscriptions; the accrual journal entries include reversals at month-end if using the reversing method; the total Q1 subscription spend is broken down by department for budget analysis."
+    weight: 0.30
+    description: "QuarterlySummary"

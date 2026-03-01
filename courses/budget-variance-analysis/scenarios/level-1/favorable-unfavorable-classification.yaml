@@ -1,0 +1,66 @@
+meta:
+  id: favorable-unfavorable-classification
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Correctly classify variances as favorable or unfavorable — handle the common confusion between revenue and expense variances and understand that favorable doesn't always mean good"
+  tags: [classification, favorable-unfavorable, fundamentals, beginner]
+
+state: {}
+
+trigger: |
+  A new FP&A analyst has prepared a variance
+  report, but several items are classified
+  incorrectly. Review the report, correct any
+  errors, and explain the classification rules.
+
+  ANALYST'S DRAFT REPORT (March 2026):
+
+  1. Revenue: Budget $1.2M, Actual $1.15M
+     Analyst wrote: "$50K Favorable — we spent less"
+     
+  2. COGS: Budget $720K, Actual $690K
+     Analyst wrote: "$30K Unfavorable — we're off
+     budget"
+     
+  3. Salaries: Budget $200K, Actual $215K
+     Analyst wrote: "$15K Unfavorable" ✓
+     
+  4. Marketing: Budget $80K, Actual $60K
+     Analyst wrote: "$20K Favorable"
+     
+  5. Depreciation: Budget $45K, Actual $45K
+     Analyst wrote: "No variance" ✓
+     
+  6. Interest Expense: Budget $12K, Actual $14K
+     Analyst wrote: "$2K Favorable — we earned more
+     interest"
+     
+  7. Tax Provision: Budget $35K, Actual $28K
+     Analyst wrote: "$7K Favorable"
+     
+  8. Returns & Allowances: Budget $15K, Actual $22K
+     Analyst wrote: "$7K Favorable — higher returns
+     means more customer activity"
+
+  Tasks:
+  1. Correct each classification error with
+     explanation
+  2. Write a clear set of classification rules
+  3. Explain when "favorable" variances can actually
+     be bad news
+  4. Write a corrected version of the full report
+
+assertions:
+  - type: llm_judge
+    criteria: "All classification errors are correctly identified and explained — Item 1: INCORRECT — Revenue of $1.15M vs. budget $1.2M is $50K UNFAVORABLE (less revenue is bad, not good — the analyst confused revenue with expense); Item 2: INCORRECT — COGS of $690K vs. budget $720K is $30K FAVORABLE (lower costs increase profit — the analyst thought any deviation from budget is unfavorable); Item 3: Correct — $15K unfavorable (higher salary expense reduces profit); Item 4: Correctly classified as favorable (lower marketing spend) but needs context (see next assertion); Item 5: Correct — no variance; Item 6: INCORRECT — Interest Expense of $14K vs. budget $12K is $2K UNFAVORABLE (higher interest expense is bad — the analyst confused interest expense with interest income); Item 7: Correctly classified as favorable (lower tax is favorable to net income), though this may be driven by lower pre-tax income; Item 8: INCORRECT — Returns & Allowances of $22K vs. budget $15K is $7K UNFAVORABLE (returns reduce revenue — higher returns are bad news, and the analyst's reasoning about 'more customer activity' is wrong)."
+    weight: 0.35
+    description: "ClassificationCorrections"
+  - type: llm_judge
+    criteria: "Classification rules are clearly articulated — the rules: (1) For REVENUE line items: Actual > Budget = Favorable (more revenue is good); Actual < Budget = Unfavorable; (2) For EXPENSE line items: Actual > Budget = Unfavorable (more cost is bad); Actual < Budget = Favorable; (3) For CONTRA-REVENUE items (returns, allowances, discounts): Actual > Budget = Unfavorable (they reduce revenue); Actual < Budget = Favorable; (4) Simple test: does this variance increase or decrease operating income/net income? If it increases income = Favorable; if it decreases income = Unfavorable; (5) The term 'favorable' means 'favorable to the bottom line (profit)' — it does NOT mean 'good for the business' (these are different concepts, as explained below)."
+    weight: 0.35
+    description: "ClassificationRules"
+  - type: llm_judge
+    criteria: "The explanation of when favorable variances can be bad news demonstrates analytical maturity — examples: (1) Marketing $20K favorable — spending less on marketing sounds good for the bottom line, but if the underspend means campaigns weren't executed, it could lead to future revenue shortfalls; (2) R&D underspend — favorable to this quarter's income but potentially harmful to future product pipeline; (3) COGS $30K favorable — if it's because we bought cheaper materials, quality may suffer; if it's because we produced fewer units (lower volume), it reflects weak demand; (4) Salaries favorable due to open positions — saves money short-term but means the team is understaffed; (5) Tax provision favorable — may simply reflect lower pre-tax income (the 'favorable' tax variance is driven by the 'unfavorable' revenue miss); the key insight: variance classification tells you the direction of impact on profit, NOT whether the variance is good or bad for the business; understanding the business driver behind the variance is essential."
+    weight: 0.30
+    description: "FavorableCanBeBad"

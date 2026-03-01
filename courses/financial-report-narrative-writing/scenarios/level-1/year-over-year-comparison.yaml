@@ -1,0 +1,63 @@
+meta:
+  id: year-over-year-comparison
+  level: 1
+  course: financial-report-narrative-writing
+  type: output
+  description: "Write a year-over-year financial comparison — create narrative comparing current year to prior year results with meaningful analysis"
+  tags: [yoy-comparison, trend-analysis, annual-reporting, beginner]
+
+state: {}
+
+trigger: |
+  Write a year-over-year comparison narrative for
+  the company's annual results. Focus on the key
+  trends and their drivers.
+
+  ANNUAL RESULTS COMPARISON (in millions)
+                          2025      2024     Change
+  Revenue                $248.0    $232.0    +6.9%
+  COGS                   $152.0    $137.0   +10.9%
+  Gross Profit            $96.0     $95.0    +1.1%
+  Gross Margin            38.7%     40.9%   -2.2pp
+
+  S&M                     $38.0     $35.0    +8.6%
+  R&D                     $22.0     $18.0   +22.2%
+  G&A                     $18.0     $17.0    +5.9%
+  Total OpEx              $78.0     $70.0   +11.4%
+
+  Operating Income        $18.0     $25.0   -28.0%
+  Operating Margin          7.3%     10.8%   -3.5pp
+
+  Interest Expense         $4.0      $2.5   +60.0%
+  Tax Expense              $3.5      $5.6   -37.5%
+  Net Income              $10.5     $16.9   -37.9%
+  EPS                      $1.05     $1.69  -37.9%
+
+  CONTEXT:
+  - Revenue growth driven by 12% volume increase
+    partially offset by 4.5% average price decline
+    (competitive pressure)
+  - COGS increase driven by raw material inflation
+    (8%) and new facility ramp costs
+  - R&D increase: new AI product initiative ($3M
+    incremental)
+  - Interest expense up: new $50M term loan for
+    facility expansion
+  - Tax rate lower due to R&D tax credits
+  - Company guidance was for $1.40-$1.60 EPS
+
+  Write a 500-600 word annual comparison narrative.
+
+assertions:
+  - type: llm_judge
+    criteria: "Narrative identifies the key story: revenue growth but margin compression — the opening should frame the year honestly: revenue grew 6.9% to $248M driven by strong 12% volume growth, but profitability declined significantly with EPS of $1.05 missing the $1.40-$1.60 guidance range by 25-34%; the narrative explains the margin squeeze: revenue grew 6.9% but COGS grew 10.9%, creating a gross margin compression of 2.2 percentage points; this was driven by the double impact of lower pricing (4.5% average price decline from competitive pressure reducing revenue per unit) and higher costs (8% raw material inflation plus new facility ramp costs); operating expenses grew 11.4% (outpacing revenue growth), driven primarily by the strategic R&D investment in AI ($3M incremental spend) plus normal business growth; the net effect: operating margin compressed from 10.8% to 7.3%, a meaningful deterioration; interest expense increased 60% due to the $50M facility loan, further impacting the bottom line."
+    weight: 0.35
+    description: "KeyStoryIdentification"
+  - type: llm_judge
+    criteria: "Narrative distinguishes between strategic investments and operational challenges — the analysis separates: (1) external/competitive challenges: pricing pressure (4.5% decline), raw material inflation (8%) — these are concerning and need to be addressed; (2) strategic investments: R&D increase for AI initiative ($3M), facility expansion (driving both depreciation and interest expense) — these are intentional decisions expected to drive future returns; (3) operational execution: the new facility ramp costs are temporary and should diminish as the facility reaches efficiency; the narrative notes the missed guidance ($1.05 actual vs. $1.40-$1.60 guidance) and should acknowledge this explicitly — analysts and investors will focus on this miss; the narrative should quantify: if you strip out the incremental R&D investment ($3M pre-tax) and normalize for facility ramp costs, the underlying profitability story is less dire but still shows margin pressure from pricing/cost dynamics."
+    weight: 0.35
+    description: "InvestmentVsChallenge"
+  - type: llm_judge
+    criteria: "Writing is comprehensive, properly structured, and at 500-600 words — the narrative covers all major P&L lines with year-over-year context, uses percentages and dollar amounts to support analysis, is organized logically (revenue → margins → expenses → bottom line → outlook), addresses the guidance miss honestly, and provides a balanced forward-looking assessment; the tone acknowledges the challenges without being defeatist, and frames the strategic investments as intentional."
+    weight: 0.30
+    description: "ComprehensiveWriting"

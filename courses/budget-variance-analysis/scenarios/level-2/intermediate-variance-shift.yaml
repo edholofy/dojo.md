@@ -1,0 +1,65 @@
+meta:
+  id: intermediate-variance-shift
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Intermediate shift simulation — prepare a board-level variance presentation, respond to a budget holder's challenge of their variance, and produce an urgent reforecast for the CEO"
+  tags: [shift-simulation, board-presentation, reforecast, intermediate]
+
+state: {}
+
+trigger: |
+  Three variance-related tasks arrive on the same
+  day during close week.
+
+  TASK 1 — BOARD VARIANCE SUMMARY (due by noon)
+  Prepare a 1-slide board summary for Q1 2026.
+
+  Q1 Summary:
+  - Revenue: $25.2M vs. $27.0M budget (-$1.8M, 6.7% U)
+  - Gross Margin: 41.2% vs. 44.0% budget (-2.8 pts)
+  - OpEx: $8.1M vs. $8.5M budget (+$0.4M F)
+  - EBITDA: $2.3M vs. $3.4M budget (-$1.1M, 32.4% U)
+  - Cash: $12.5M (comfortable, no liquidity concern)
+  - Headcount: 245 vs. 260 budget (15 below plan)
+
+  Write the narrative for the board slide (150 words)
+  with key messages and a "traffic light" assessment.
+
+  TASK 2 — BUDGET HOLDER CHALLENGE (urgent email)
+  The VP of Sales is pushing back on the variance
+  report: "Your numbers show my team is $1.8M below
+  revenue budget, but that's misleading. Two of our
+  biggest deals ($600K each) closed on April 1 and
+  April 2 — literally 1-2 days after quarter end.
+  Plus, our pipeline is 20% larger than this time
+  last year. Adjust the report to show what the
+  revenue would have been with those deals."
+
+  Write a 150-word response to the VP.
+
+  TASK 3 — CEO REFORECAST (urgent, meeting at 3 PM)
+  The CEO asks: "Given Q1 results, what's our
+  realistic full-year EBITDA? Give me three scenarios
+  — optimistic, base, and pessimistic."
+
+  Annual EBITDA budget: $14.0M
+  Q1 actual EBITDA: $2.3M (vs. $3.4M quarterly budget)
+
+  Provide the three scenarios (100 words each).
+
+  Handle all three tasks.
+
+assertions:
+  - type: llm_judge
+    criteria: "Board summary is concise and uses traffic light format — the 150-word board narrative: provides a headline (Q1 EBITDA of $2.3M was $1.1M or 32% below budget, primarily driven by revenue shortfall), uses traffic lights: Revenue = RED (6.7% miss is material), Gross Margin = RED (2.8 point compression), OpEx = GREEN (favorable to budget), Cash = GREEN (comfortable position), Headcount = AMBER (15 below plan — saves OpEx short-term but constrains capacity); the key messages are: (1) the revenue miss is the primary concern — gross margin compression amplified the bottom-line impact; (2) OpEx favorability is partially driven by unfilled positions, not operational efficiency; (3) cash position is comfortable but EBITDA trend needs to reverse to maintain the runway; the narrative is board-appropriate: no jargon, clear priorities, and a forward-looking statement about what management is doing about it."
+    weight: 0.35
+    description: "BoardSummary"
+  - type: llm_judge
+    criteria: "VP of Sales response is professional but maintains reporting integrity — the 150-word response: (1) acknowledges the VP's point — the two deals closing April 1-2 are real revenue that Q1 narrowly missed, and the strong pipeline is a positive signal; (2) explains why the report cannot be adjusted: financial reporting follows the accounting period — Q1 ends March 31, and deals closing April 1-2 are Q2 revenue regardless of how close they were; adjusting the report would set a precedent and undermine reporting integrity; (3) offers a constructive compromise: the variance commentary will note that '$1.2M in pipeline deals closed within 2 business days of quarter end, suggesting timing rather than demand weakness,' and the Q2 forecast will be updated to reflect the strong pipeline and early April closings; (4) the tone is respectful and collaborative — the analyst is not dismissing the VP's concern but maintaining the integrity of the financial reporting process."
+    weight: 0.35
+    description: "SalesVPResponse"
+  - type: llm_judge
+    criteria: "Three scenarios are realistic and differentiated — Optimistic: assumes the Q1 revenue miss was largely timing (supported by April deal closings), Q2-Q4 revenue recovers to budget levels with pipeline support, gross margin partially recovers (1 point improvement), EBITDA run rate returns to approximately $3.4M/quarter; Full-year EBITDA approximately $12.5M (89% of budget); Base: assumes revenue remains 4-5% below budget for remainder of year (the structural component of the miss persists), gross margin stays compressed, OpEx savings from open headcount partially offset; EBITDA approximately $10-11M (71-79% of budget); Pessimistic: assumes the revenue and margin pressure accelerates (competitive dynamics worsening), Q2-Q4 revenue 8-10% below budget, margin compression deepens; EBITDA approximately $7.5-8.5M (54-61% of budget); all three tasks demonstrate the ability to adapt variance analysis to different audiences (board, department head, CEO) and formats (summary, response, scenario) under time pressure."
+    weight: 0.30
+    description: "ThreeScenarios"

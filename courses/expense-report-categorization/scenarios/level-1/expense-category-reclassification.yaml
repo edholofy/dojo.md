@@ -1,0 +1,85 @@
+meta:
+  id: expense-category-reclassification
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Reclassify miscategorized expenses — identify and correct GL coding errors in a batch of expense reports before month-end closing"
+  tags: [reclassification, gl-correction, month-end, beginner]
+
+state: {}
+
+trigger: |
+  It's month-end and the finance team has flagged
+  15 expense report line items with suspected
+  miscategorization. Review each and determine the
+  correct GL code.
+
+  COMPANY GL STRUCTURE:
+  - 6100: Airfare
+  - 6110: Ground Transportation
+  - 6120: Lodging
+  - 6130: Meals — Client/Business
+  - 6135: Meals — Employee Only
+  - 6140: Conference & Events
+  - 6150: Client Entertainment
+  - 6200: Office Supplies
+  - 6300: Professional Development
+  - 6400: Technology & Software
+  - 6500: Miscellaneous
+  - 6600: Marketing & Advertising
+  - 6700: Professional Services
+  - 6800: Recruiting
+
+  FLAGGED ITEMS:
+
+  1. "LinkedIn Premium subscription" — coded as
+     6800 (Recruiting) by HR recruiter, $59.99
+  2. "Uber to dinner" — coded as 6130 (Client Meals)
+     by sales rep, $24.00
+  3. "Hotel minibar — water and snacks" — coded as
+     6120 (Lodging) by consultant, $18.00
+  4. "Coursera course on Python" — coded as 6400
+     (Technology) by data analyst, $49.00
+  5. "Client appreciation gift basket" — coded as
+     6130 (Client Meals) by account manager, $125.00
+  6. "Checked baggage fee" — coded as 6500
+     (Miscellaneous) by engineer, $35.00
+  7. "Coworking space day pass" — coded as 6120
+     (Lodging) by remote employee, $35.00
+  8. "Google Workspace monthly" — coded as 6200
+     (Office Supplies) by office manager, $12.00/user
+  9. "Industry conference dinner ticket" — coded as
+     6130 (Client Meals) by marketing manager, $150.00
+  10. "Resume review service" — coded as 6700
+      (Professional Services) by HR, $500.00
+  11. "Standing desk converter" — coded as 6200
+      (Office Supplies) by developer, $349.00
+  12. "Airport lounge pass" — coded as 6100 (Airfare)
+      by executive, $59.00
+  13. "Team happy hour (all employees)" — coded as
+      6150 (Client Entertainment) by team lead, $320.00
+  14. "Business cards printing" — coded as 6200
+      (Office Supplies) by new hire, $45.00
+  15. "Webinar platform annual license" — coded as
+      6300 (Professional Development) by trainer,
+      $1,200.00
+
+  For each item:
+  1. Determine if the current coding is correct
+  2. If incorrect, assign the correct GL code
+  3. Explain the reasoning
+  4. Note any tax implications of the reclassification
+
+assertions:
+  - type: llm_judge
+    criteria: "Reclassification decisions are defensible and well-reasoned — correctly identifies items that need reclassification: LinkedIn Premium for a recruiter is arguably correct at 6800 (Recruiting tool), but could also be 6400 (Technology/Software); Uber to dinner should be 6110 (Ground Transportation), not 6130 (meals); minibar snacks could stay at 6120 (incidental to lodging) or move to 6135 (employee meals); Coursera course should be 6300 (Professional Development), not 6400; gift basket should be 6150 (Client Entertainment/Gifts), not 6130; checked bag should be 6100 (Airfare/Travel), not 6500; coworking space is arguably 6500 or a dedicated code, not 6120; Google Workspace should be 6400 (Technology), not 6200; conference dinner ticket should be 6140 (Conference), not 6130; each reclassification includes clear reasoning."
+    weight: 0.35
+    description: "ReclassificationDecisions"
+  - type: llm_judge
+    criteria: "Tax implications are correctly identified — the gift basket reclassification from meals (50% deductible) to client gifts (deductible up to $25/recipient) significantly changes the tax treatment; the team happy hour: if coded as client entertainment (0% deductible post-TCJA) vs. employee recreation (potentially 100% deductible if it benefits all employees), the tax treatment differs dramatically; the conference dinner ticket as part of conference fees (100% deductible) vs. standalone meal (50% deductible) matters for tax; the Coursera course as professional development is 100% deductible; each item where the GL reclassification changes the tax deductibility is flagged with the dollar impact."
+    weight: 0.35
+    description: "TaxImplications"
+  - type: llm_judge
+    criteria: "Analysis provides clear guidance for preventing future miscategorization — identifies the most common miscategorization patterns: (1) transportation to meals coded as meals, (2) technology subscriptions coded as office supplies, (3) conference-related meals coded as standalone meals, (4) employee events coded as client entertainment, (5) professional development coded as technology; proposes specific guidance for employees: a quick-reference chart mapping common expenses to correct GL codes, updated descriptions in the expense system dropdowns, and auto-suggestion rules for the expense management software; the standing desk converter classification is discussed (office supplies vs. technology vs. furniture — may depend on company capitalization threshold for equipment)."
+    weight: 0.30
+    description: "PreventionGuidance"

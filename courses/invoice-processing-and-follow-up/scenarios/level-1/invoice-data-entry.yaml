@@ -1,0 +1,107 @@
+meta:
+  id: invoice-data-entry
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Enter invoices into the accounting system — create AP vouchers, assign GL codes, verify tax calculations, and ensure proper period assignment"
+  tags: [data-entry, ap-voucher, gl-coding, beginner]
+
+state: {}
+
+trigger: |
+  Enter the following approved invoices into the
+  AP system. Create the journal entries and AP
+  vouchers for each.
+
+  COMPANY CHART OF ACCOUNTS (relevant):
+  - 2100: Accounts Payable
+  - 5100: Cost of Goods Sold — Materials
+  - 5200: Cost of Goods Sold — Labor
+  - 6100: Travel
+  - 6200: Office Supplies
+  - 6300: Professional Services
+  - 6400: Technology & Software
+  - 6500: Utilities
+  - 6600: Marketing
+  - 6700: Rent & Facilities
+  - 6800: Insurance
+
+  INVOICES TO ENTER:
+
+  INVOICE 1:
+  Vendor: CloudTech Solutions (Vendor #V-1045)
+  Invoice #: CTS-2025-0456
+  Date: March 1, 2025
+  Due: April 1, 2025 (Net 30)
+  Department: Engineering (CC-100)
+  Items:
+  - AWS hosting, March 2025: $4,200.00
+  - Datadog monitoring: $890.00
+  - GitHub Enterprise (33 seats): $231.00
+  Total: $5,321.00
+  GL: 6400 (Technology)
+  Approved by: VP Engineering
+
+  INVOICE 2:
+  Vendor: Martinez & Associates (Vendor #V-2089)
+  Invoice #: MA-11234
+  Date: February 28, 2025
+  Due: March 30, 2025 (Net 30)
+  Department: Legal (CC-500)
+  Items:
+  - Legal review of vendor contracts, 15 hrs @ $350
+    = $5,250.00
+  - Patent filing fees: $1,800.00
+  - Courier and filing costs: $125.00
+  Total: $7,175.00
+  GL: 6300 (Professional Services)
+  Approved by: General Counsel
+
+  INVOICE 3:
+  Vendor: Premium Raw Materials (Vendor #V-3001)
+  Invoice #: PRM-88901
+  Date: March 5, 2025
+  Due: April 19, 2025 (Net 45)
+  Department: Manufacturing (CC-200)
+  PO #: PO-6789
+  Items:
+  - 500 kg Steel Alloy X @ $12.50/kg = $6,250.00
+  - 200 kg Copper Wire @ $18.00/kg = $3,600.00
+  - 100 kg Aluminum Sheet @ $8.75/kg = $875.00
+  Subtotal: $10,725.00
+  Freight: $450.00
+  Tax (6%): $670.50
+  Total: $11,845.50
+  GL: 5100 (COGS — Materials)
+  Approved by: Plant Manager
+  3-way match: Complete ✓
+
+  INVOICE 4:
+  Vendor: City Electric Company (Vendor #V-0012)
+  Invoice #: CE-2025-03
+  Date: March 1, 2025
+  Due: March 21, 2025 (Net 20)
+  Department: Facilities (CC-600)
+  Items:
+  - Electricity, February usage: $3,450.00
+  - Demand charge: $890.00
+  - Fuel surcharge: $112.00
+  Total: $4,452.00
+  GL: 6500 (Utilities)
+  Approved by: Facilities Manager
+
+  Create all journal entries and AP vouchers.
+
+assertions:
+  - type: llm_judge
+    criteria: "Journal entries are correctly formatted with proper GL coding — Invoice 1: Debit 6400 (Technology) $5,321.00 [CC-100], Credit 2100 (AP) $5,321.00; Invoice 2: Debit 6300 (Professional Services) $7,175.00 [CC-500], Credit 2100 (AP) $7,175.00; the date should be February 28 (invoice date) — this may need to be recorded in the February period if it's the close period, or March if February is closed; Invoice 3: Debit 5100 (COGS-Materials) $10,725.00 [CC-200], Debit 5100 or 6100 (Freight-in) $450.00, Debit Tax Receivable or 5100 $670.50, Credit 2100 (AP) $11,845.50; Invoice 4: Debit 6500 (Utilities) $4,452.00 [CC-600], Credit 2100 (AP) $4,452.00; all entries balance (total debits = total credits); total AP credit: $5,321 + $7,175 + $11,845.50 + $4,452 = $28,793.50."
+    weight: 0.35
+    description: "JournalEntryAccuracy"
+  - type: llm_judge
+    criteria: "AP vouchers contain all required information — each voucher includes: voucher number (sequentially assigned), vendor number and name, invoice number, invoice date, due date, payment terms, GL account(s), cost center, line item details, total amount, PO reference (if applicable), approval reference, and 3-way match status (for Invoice 3); the vouchers reference the supporting documentation (invoice image, PO, receiving report for Invoice 3); period assignment is addressed: Invoice 2 (dated Feb 28) may need accrual treatment if entered in March after February close; Invoice 1 and 3 are March period; Invoice 4 is for February usage but dated March 1 — determine correct period based on company policy (expense period vs. invoice date)."
+    weight: 0.35
+    description: "APVoucherCompleteness"
+  - type: llm_judge
+    criteria: "Data entry verification catches potential issues — verifies mathematical accuracy: Invoice 3 line items ($6,250 + $3,600 + $875 = $10,725 ✓), freight separate, tax ($10,725 + $450) × 6% = $670.50 ✓, total $11,845.50 ✓; checks for tax applicability: Invoice 1 has no tax (SaaS services may or may not be taxable depending on state — flags for review); Invoice 2 has no tax (professional services may be tax-exempt depending on state); notes that Invoice 3 has freight as a separate line — determines whether to capitalize into inventory cost (debit 5100) or expense separately; the verification checklist confirms: vendor exists in master file, invoice number doesn't duplicate existing entries, GL codes match the chart of accounts, cost centers are valid, and approval documentation is attached."
+    weight: 0.30
+    description: "DataEntryVerification"

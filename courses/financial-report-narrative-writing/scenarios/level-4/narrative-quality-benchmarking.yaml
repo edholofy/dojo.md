@@ -1,0 +1,64 @@
+meta:
+  id: narrative-quality-benchmarking
+  level: 4
+  course: financial-report-narrative-writing
+  type: output
+  description: "Design a financial narrative quality benchmarking study — develop methodology to assess and compare narrative quality across companies, industries, and time periods"
+  tags: [benchmarking, quality-assessment, research, expert]
+
+state: {}
+
+trigger: |
+  An investor advocacy organization has commissioned
+  you to design and conduct the first comprehensive
+  Financial Narrative Quality Benchmarking Study
+  across the S&P 500.
+
+  STUDY OBJECTIVES:
+  - Create a replicable methodology for scoring
+    financial narrative quality
+  - Benchmark narrative quality across 11 GICS
+    sectors
+  - Identify best-in-class narratives and common
+    deficiencies
+  - Measure year-over-year quality trends
+  - Correlate narrative quality with investor
+    outcomes (analyst coverage, bid-ask spreads,
+    forecast dispersion)
+
+  SCOPE:
+  - 500 companies' 10-K filings (latest fiscal year)
+  - Focus on MD&A section (Item 7)
+  - Secondary analysis: earnings releases, investor
+    letters
+  - 3-year trend analysis for top and bottom quintile
+
+  AVAILABLE RESOURCES:
+  - Research team of 8 (mix of finance PhDs and
+    NLP engineers)
+  - Access to EDGAR XBRL filings
+  - NLP tools (Python, spaCy, transformers)
+  - Budget: $400K over 12 months
+  - Advisory board: 3 former SEC staff members
+
+  Design:
+  1. Quality scoring methodology (the scorecard)
+  2. Data collection and NLP pipeline
+  3. Sector and trend analysis framework
+  4. Correlation analysis with market outcomes
+  5. Report structure and dissemination
+  6. Limitations and future research
+
+assertions:
+  - type: llm_judge
+    criteria: "Quality scoring methodology combines quantitative NLP metrics with qualitative assessment — the scorecard has 10 dimensions scored on a 1-5 scale: Quantitative (NLP-automated): (1) Readability — Flesch-Kincaid grade level, Gunning Fog index, average sentence length, (2) Specificity — ratio of named entities and numbers to total words, company-specific vs. generic sentence classifier, (3) Causal Density — frequency of causal language ('because,' 'driven by,' 'resulted from') relative to descriptive language, (4) Forward-Looking Content — proportion of forward-looking statements (identified via SEC safe harbor language patterns and future tense markers), (5) Sentiment Balance — ratio of positive to negative tone words using Loughran-McDonald financial sentiment dictionary, absence of unjustified optimism; Qualitative (human-scored on stratified sample): (6) Driver Attribution Quality — does the MD&A explain the business 'why' behind each material change?, (7) Trend Discussion — are known trends and uncertainties identified and discussed with appropriate specificity?, (8) Risk-Return Linkage — does the narrative connect risk factors to financial results and outlook?, (9) Competitive Context — does the MD&A help readers understand the company's position relative to industry dynamics?, (10) Investor Utility — would an investor make better decisions after reading this MD&A?; inter-rater reliability for qualitative dimensions ensured through: detailed scoring rubric, calibration sessions, dual-scoring of 20% sample, and Cohen's kappa targets of 0.70+."
+    weight: 0.35
+    description: "ScoringMethodology"
+  - type: llm_judge
+    criteria: "NLP pipeline and analysis framework are technically feasible — the data pipeline: (1) Extraction: automated 10-K download from EDGAR (SEC full-text search API), MD&A section isolation using XBRL tags or regex-based section identification (Item 7 boundaries), text cleaning (tables, headers, page numbers removed), (2) NLP Processing: sentence tokenization, POS tagging, named entity recognition via spaCy, Loughran-McDonald sentiment scoring, readability metric calculation, forward-looking statement classification using fine-tuned BERT model trained on SEC comment letter data, (3) Scoring: automated scores for dimensions 1-5, human scoring for dimensions 6-10 on a stratified random sample (50 companies: 5 per sector, stratified by market cap), full NLP scoring for all 500; sector analysis compares dimension scores across 11 GICS sectors, identifying sectors with systematically better or worse narrative quality (hypothesis: technology and healthcare have lower readability but higher specificity; utilities and consumer staples have better readability but more boilerplate); trend analysis tracks the top and bottom quintile over 3 years to identify convergence/divergence."
+    weight: 0.35
+    description: "NLPPipelineAndAnalysis"
+  - type: llm_judge
+    criteria: "Correlation analysis and dissemination plan create real-world impact — the correlation study tests whether narrative quality predicts investor outcomes: hypotheses: (1) Higher narrative quality scores correlate with lower bid-ask spreads (information asymmetry proxy), (2) Higher specificity scores correlate with lower analyst forecast dispersion, (3) Higher readability scores correlate with broader analyst coverage, (4) Companies with improving narrative quality scores experience reducing cost of equity capital over the 3-year period; methodology: OLS regression controlling for company size, profitability, industry, volatility, and analyst following; the study acknowledges causality limitations (better companies may write better narratives AND have better market outcomes — narrative quality may be a symptom, not a cause); the dissemination plan: annual report published with sector rankings (companies ranked within their sector, not across sectors, to account for industry differences), press release highlighting key findings, presentation at investor conferences (CFA Institute, NIRI), academic paper submitted to The Accounting Review or Journal of Accounting Research, free online tool allowing companies to self-assess their MD&A against the benchmark; the study establishes a repeatable annual benchmark that creates pressure for improvement — companies in the bottom quintile will face questions from investors and analysts; limitations acknowledged: the scoring methodology has inherent subjectivity in qualitative dimensions, NLP tools may misclassify complex financial language, and correlation with market outcomes does not establish causation."
+    weight: 0.30
+    description: "CorrelationAndDissemination"

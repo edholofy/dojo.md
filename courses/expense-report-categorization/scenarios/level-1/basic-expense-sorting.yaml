@@ -1,0 +1,77 @@
+meta:
+  id: basic-expense-sorting
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Sort basic business expenses into standard categories — classify receipts from a business trip into appropriate expense categories with proper GL codes"
+  tags: [expense-sorting, basic-categorization, gl-codes, beginner]
+
+state: {}
+
+trigger: |
+  You are a new accounts payable clerk. An employee
+  has submitted an expense report from a 3-day
+  business trip to Chicago. Categorize each expense.
+
+  EMPLOYEE: Sarah Chen, Marketing Manager
+  TRIP: Client meeting and industry conference,
+  March 10-12, 2025, Chicago, IL
+  COMPANY EXPENSE CATEGORIES & GL CODES:
+  - 6100: Airfare
+  - 6110: Ground Transportation (taxi, rideshare,
+    rental car, parking)
+  - 6120: Lodging
+  - 6130: Meals — Business (with clients/prospects)
+  - 6135: Meals — Employee Only
+  - 6140: Conference & Registration Fees
+  - 6150: Client Entertainment
+  - 6200: Office Supplies
+  - 6300: Professional Development
+  - 6400: Technology & Equipment
+  - 6500: Miscellaneous
+
+  SUBMITTED EXPENSES:
+  1. United Airlines round-trip ORD flight — $487.00
+  2. Uber from home to airport — $32.50
+  3. Uber from O'Hare to hotel — $45.00
+  4. Hilton Chicago 2 nights — $538.00
+  5. Dinner with client (ABC Corp) at Gibson's
+     Steakhouse, 4 attendees — $312.00
+  6. Breakfast at hotel restaurant (alone) — $24.50
+  7. Marketing Conference registration — $450.00
+  8. Lunch at conference (included in registration
+     but bought extra items) — $18.00
+  9. Uber from hotel to client office — $22.00
+  10. Coffee meeting with prospect at Starbucks,
+      2 attendees — $12.50
+  11. Uber from client office to conference — $18.00
+  12. Dinner alone at hotel restaurant — $42.00
+  13. Hotel parking for rental car — $0 (no car)
+  14. Airport Wi-Fi subscription — $7.99
+  15. Uber to O'Hare for return flight — $45.00
+  16. Checked bag fee — $35.00
+  17. Lunch with conference speaker to discuss
+      potential partnership — $65.00
+  18. Phone charger purchased at airport — $29.99
+  19. Tip for hotel bellman — $10.00
+  20. Mini bar charges at hotel — $18.00
+
+  Categorize each expense with:
+  1. GL code assignment
+  2. Business justification
+  3. Tax deductibility notes
+  4. Any policy concerns or flags
+
+assertions:
+  - type: llm_judge
+    criteria: "GL code assignments are accurate — airfare and checked bag correctly coded to 6100; Uber rides coded to 6110; hotel to 6120; client dinner and prospect coffee to 6130 (business meals with external parties); solo meals to 6135; conference registration to 6140; the phone charger could be 6400 (Technology) or 6500 (Miscellaneous); the Wi-Fi could be 6400 or 6100 (travel-related); each assignment includes a brief justification explaining why that category was chosen; for ambiguous items (mini bar, bellman tip), the analysis discusses which category best fits and whether the expense is reimbursable under typical corporate policies."
+    weight: 0.35
+    description: "GLCodeAssignment"
+  - type: llm_judge
+    criteria: "Tax deductibility analysis is correct per current IRS rules — business meals with clients/prospects are 50% deductible (post-2025 return to 50% after the temporary 100% restaurant deduction expired); employee-only meals are 50% deductible; airfare and ground transportation are 100% deductible; lodging is 100% deductible; conference fees are 100% deductible; mini bar charges are a gray area (personal entertainment vs. incidental travel expense); the charger is 100% deductible as a business supply; the analysis correctly identifies that entertainment expenses (if any were classified as entertainment rather than meals) are 0% deductible post-TCJA; notes proper documentation requirements (receipts required for expenses over $75, business purpose and attendees documented for meals)."
+    weight: 0.35
+    description: "TaxDeductibilityAnalysis"
+  - type: llm_judge
+    criteria: "Policy concerns and flags are identified — flags the mini bar charges as potentially personal (many companies exclude alcohol from reimbursement or require separate approval); flags the client dinner amount ($312 for 4 = $78/person) as potentially above per-person meal limits; notes that the prospect coffee meeting needs documented business purpose; flags the phone charger as a borderline personal/business expense (did the employee have a company charger?); notes that bellman tips should be documented with a receipt or notation; identifies any missing documentation (receipt requirements for each expense); the analysis demonstrates the judgment needed to identify policy-sensitive items without being overly restrictive."
+    weight: 0.30
+    description: "PolicyConcerns"

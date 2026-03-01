@@ -1,0 +1,67 @@
+meta:
+  id: multi-entity-consolidation-variance
+  level: 3
+  course: budget-variance-analysis
+  type: output
+  description: "Analyze variances in a multi-entity consolidation — handle intercompany eliminations, transfer pricing, and minority interest to produce accurate consolidated variance analysis"
+  tags: [consolidation, intercompany, transfer-pricing, advanced]
+
+state: {}
+
+trigger: |
+  You are the corporate FP&A director for a holding
+  company with 4 subsidiaries. Prepare the Q1 2026
+  consolidated variance analysis.
+
+  SUBSIDIARY RESULTS (Q1 2026):
+
+  ManufactureCo (100% owned):
+    Revenue: Budget $120M, Actual $115M
+    EBITDA: Budget $18M, Actual $15.5M
+    Sells components to AssemblyCo at transfer price
+
+  AssemblyCo (100% owned):
+    Revenue: Budget $180M, Actual $185M
+    EBITDA: Budget $22M, Actual $24M
+    Buys from ManufactureCo, sells to DistributeCo
+
+  DistributeCo (100% owned):
+    Revenue: Budget $250M, Actual $242M
+    EBITDA: Budget $20M, Actual $18M
+    Buys from AssemblyCo, sells to external customers
+
+  ServiceCo (75% owned, 25% minority):
+    Revenue: Budget $60M, Actual $62M
+    EBITDA: Budget $9M, Actual $10M
+
+  INTERCOMPANY TRANSACTIONS (Q1):
+  ManufactureCo → AssemblyCo: Budget $45M, Actual $42M
+  AssemblyCo → DistributeCo: Budget $90M, Actual $95M
+
+  TRANSFER PRICING:
+  - ManufactureCo to AssemblyCo: cost + 15% margin
+  - AssemblyCo to DistributeCo: cost + 20% margin
+  - Transfer prices were set at budget; actual costs
+    changed but transfer prices were not adjusted
+
+  Prepare:
+  1. Standalone subsidiary variance analysis
+  2. Intercompany elimination adjustments
+  3. Consolidated variance analysis
+  4. Transfer pricing impact analysis
+  5. Minority interest adjustment
+  6. Write a 350-word consolidated variance report
+
+assertions:
+  - type: llm_judge
+    criteria: "Intercompany eliminations are correctly applied and the consolidated variance is accurate — the consolidation process: Step 1 — Sum standalone revenues: $115M + $185M + $242M + $62M = $604M; Step 2 — Eliminate intercompany revenue: ManufactureCo → AssemblyCo ($42M actual), AssemblyCo → DistributeCo ($95M actual); total eliminations = $137M; Consolidated external revenue = $604M - $137M = $467M; Budget: ($120M + $180M + $250M + $60M) - ($45M + $90M) = $610M - $135M = $475M; Revenue variance: -$8M (1.7% U); EBITDA standalone sum: $15.5M + $24M + $18M + $10M = $67.5M; EBITDA eliminations: intercompany profit on inventory held by downstream entities at quarter-end; the consolidated EBITDA variance must also reflect the unrealized intercompany profit adjustments — if DistributeCo holds more AssemblyCo inventory than budgeted ($95M vs. $90M in purchases), there's more unrealized profit to eliminate; minority interest: 25% of ServiceCo's $10M EBITDA = $2.5M attributable to minority; consolidated EBITDA attributable to parent = consolidated EBITDA - $2.5M."
+    weight: 0.35
+    description: "ConsolidationAndEliminations"
+  - type: llm_judge
+    criteria: "Transfer pricing impact analysis reveals how intercompany pricing distorts subsidiary performance — the analysis demonstrates: ManufactureCo's EBITDA miss ($15.5M vs. $18M = -$2.5M U) is partially because its costs increased but the transfer price to AssemblyCo remained at budget rates — ManufactureCo absorbs the cost increase without passing it through; conversely, AssemblyCo's EBITDA beat ($24M vs. $22M = +$2M F) is partially inflated because it's buying from ManufactureCo at the budgeted transfer price while the true cost of those components has increased; at the consolidated level, these effects wash out — the combined manufacturing + assembly profit is ($15.5 + $24) = $39.5M vs. ($18 + $22) = $40M budget = $0.5M U, which is a more accurate picture of actual operational performance; the analysis recommends: (1) recalibrating transfer prices quarterly based on actual costs to give subsidiary managers accurate performance signals, (2) reporting subsidiary performance on both a 'before transfer pricing' and 'after transfer pricing' basis so the board can assess true operational performance, (3) evaluating whether the current cost-plus methodology creates the right incentives (ManufactureCo has no incentive to reduce costs since the margin is a percentage of cost)."
+    weight: 0.35
+    description: "TransferPricingAnalysis"
+  - type: llm_judge
+    criteria: "The 350-word consolidated report tells the complete story — the report: (1) presents the consolidated headline: external revenue $467M vs. $475M budget (-$8M or 1.7% U); consolidated EBITDA attributable to parent approximately $65M vs. budget approximately $68M (-$3M or 4.4% U); (2) explains the distortion: standalone subsidiary performance is misleading due to transfer pricing effects — ManufactureCo appears $2.5M behind but part of this is unrecovered cost increases; AssemblyCo appears $2M ahead but part of this is benefiting from below-market transfer prices; (3) identifies the true operational drivers: DistributeCo's revenue miss ($242M vs. $250M = -$8M) is the primary external revenue shortfall — this reflects end-market demand weakness; ServiceCo outperformed by $2M on both revenue and EBITDA — strong underlying demand; (4) addresses minority interest: ServiceCo's $10M EBITDA includes $2.5M attributable to minority shareholders; the parent's share is $7.5M; (5) recommends: the board should evaluate subsidiary performance on a consolidated basis for the manufacturing-assembly-distribution chain (ManufactureCo + AssemblyCo + DistributeCo combined) and separately for ServiceCo, rather than looking at standalone subsidiary results that are distorted by transfer pricing."
+    weight: 0.30
+    description: "ConsolidatedReport"

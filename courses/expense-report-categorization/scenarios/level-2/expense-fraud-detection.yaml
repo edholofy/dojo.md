@@ -1,0 +1,90 @@
+meta:
+  id: expense-fraud-detection
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Detect potential expense fraud patterns — identify suspicious transactions, duplicate submissions, fictitious vendors, and inflated claims through data analysis"
+  tags: [fraud-detection, suspicious-activity, audit, intermediate]
+
+state: {}
+
+trigger: |
+  As the internal audit analyst, you've been asked
+  to review expense reports flagged by the automated
+  monitoring system. Analyze the following patterns
+  and determine which warrant investigation.
+
+  FLAGGED EMPLOYEE: Tom Bradley, Regional Manager
+  REVIEW PERIOD: January-March 2025
+  FLAG REASON: Multiple anomalies detected
+
+  EXPENSE HISTORY (3 months):
+
+  JANUARY 2025 (ER-2025-0045):
+  Date  | Description              | Amount  | Vendor              | Receipt
+  ------|--------------------------|---------|---------------------|--------
+  01/06 | Client lunch             | $74.99  | Tony's Italian      | Yes
+  01/08 | Office supplies          | $89.50  | Staples             | Yes
+  01/13 | Client dinner            | $149.95 | Capital Grille      | Yes
+  01/15 | Uber rides (4)           | $112.00 | Uber                | Yes
+  01/20 | Client lunch             | $74.50  | Tony's Italian      | Yes
+  01/22 | Team building supplies   | $234.00 | Amazon              | Yes
+  01/27 | Client dinner            | $149.00 | Ruth's Chris        | Yes
+  01/29 | Parking                  | $24.99  | City Parking        | No*
+
+  FEBRUARY 2025 (ER-2025-0112):
+  Date  | Description              | Amount  | Vendor              | Receipt
+  ------|--------------------------|---------|---------------------|--------
+  02/03 | Client lunch             | $74.95  | Tony's Italian      | Yes
+  02/05 | Office supplies          | $92.00  | Office Depot        | Yes
+  02/10 | Client dinner            | $148.50 | Morton's            | Yes
+  02/12 | Uber rides (5)           | $118.00 | Uber                | Yes
+  02/17 | Client lunch             | $73.99  | Tony's Italian      | Yes
+  02/19 | Team event supplies      | $245.00 | Amazon              | Yes
+  02/24 | Client dinner            | $149.50 | STK                 | Yes
+  02/26 | Parking                  | $24.95  | City Parking        | No*
+
+  MARCH 2025 (ER-2025-0189):
+  Date  | Description              | Amount  | Vendor              | Receipt
+  ------|--------------------------|---------|---------------------|--------
+  03/03 | Client lunch             | $74.80  | Tony's Italian      | Yes
+  03/05 | Office supplies          | $88.00  | Staples             | Yes
+  03/10 | Client dinner            | $149.99 | The Capital Grille  | Yes
+  03/12 | Uber rides (4)           | $115.00 | Uber                | Yes
+  03/17 | Client lunch             | $74.50  | Tony's Italian      | Yes
+  03/19 | Team supplies            | $228.00 | Amazon              | Yes
+  03/24 | Client dinner            | $148.75 | Del Frisco's        | Yes
+  03/26 | Parking                  | $24.90  | City Parking        | No*
+
+  *Under $25 receipt threshold
+
+  ADDITIONAL DATA:
+  - Client meal policy limit: $75/person (lunch),
+    $150/person (dinner)
+  - Tom's CRM shows 6 unique client meetings per
+    month on average
+  - His direct reports confirm only 2 team events
+    in Q1 (not monthly)
+  - "Tony's Italian" does not appear in Google Maps
+    or Yelp for his territory
+  - Office supply purchases have no asset tags or
+    inventory records
+  - Parking receipts are always $24.90-$24.99
+    (just under $25 threshold)
+
+  Analyze the patterns and prepare a fraud
+  assessment report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Fraud patterns are correctly identified — (1) Client lunches at 'Tony's Italian' are suspiciously frequent (6 times in 3 months) and always just under the $75 limit ($73.99-$74.99) — combined with the fact that the restaurant doesn't appear on Google Maps/Yelp, this suggests fictitious receipts; (2) Client dinners are always just under $150 ($148.50-$149.99), suggesting amounts are being set to just under the policy limit; (3) Parking charges are always $24.90-$24.99, just under the $25 receipt threshold — this is a classic fraud pattern to avoid receipt requirements; (4) 'Team building/event supplies' from Amazon appear monthly ($228-$245) but direct reports confirm only 2 team events in Q1; (5) Office supplies show no asset tags or inventory records; the pattern of consistently hitting just below thresholds (meals, receipts) is a strong indicator of intentional manipulation."
+    weight: 0.35
+    description: "FraudPatternIdentification"
+  - type: llm_judge
+    criteria: "Risk assessment quantifies the potential fraud exposure — calculates the total potentially fraudulent amount: Tony's Italian lunches (~$448 across 6 visits), suspicious team supplies (~$707 for 3 monthly purchases when only 2 events occurred), parking charges (~$75 total), and potentially inflated dinner amounts; the assessment rates each pattern by risk level (high/medium/low); the fictitious vendor pattern (Tony's Italian) is rated as highest risk because it suggests deliberate fraud rather than policy gaming; the 'just under limit' pattern across multiple categories suggests systematic manipulation rather than coincidence; the total Q1 expense amount is calculated and compared to peers in similar roles; the assessment notes that individual transactions pass automated checks but the pattern across months reveals the scheme."
+    weight: 0.35
+    description: "RiskAssessment"
+  - type: llm_judge
+    criteria: "Investigation recommendations are specific and actionable — recommends: (1) Verify Tony's Italian existence by searching business registrations, calling the phone number on receipts, and checking credit card MCC codes; (2) Cross-reference client dinner attendees with CRM records (6 unique meetings vs. the number of dinner/lunch claims); (3) Request Amazon order details for 'team supplies' — match to delivery addresses and item descriptions; (4) Compare office supply purchases to IT asset records; (5) Interview direct reports about team events; (6) Review parking location and cross-reference with calendar entries; (7) Compare Tom's expense patterns to other Regional Managers; the report recommends involving HR and legal before confronting the employee; preserves evidence by documenting findings before any employee notification."
+    weight: 0.30
+    description: "InvestigationRecommendations"

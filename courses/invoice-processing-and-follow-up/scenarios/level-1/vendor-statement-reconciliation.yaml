@@ -1,0 +1,66 @@
+meta:
+  id: vendor-statement-reconciliation
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Reconcile vendor statements with AP records — match invoices, payments, and credits to identify discrepancies and resolve outstanding balances"
+  tags: [vendor-reconciliation, statement-matching, ap-records, beginner]
+
+state: {}
+
+trigger: |
+  Reconcile the following vendor statement against
+  your AP records. Identify all discrepancies and
+  determine the correct balance.
+
+  VENDOR: Pacific Industrial Supply
+  STATEMENT DATE: March 15, 2025
+  ACCOUNT #: CUST-4420
+
+  VENDOR'S STATEMENT:
+  Date    | Reference    | Description          | Debit    | Credit   | Balance
+  --------|-------------|----------------------|----------|----------|--------
+  02/01   | INV-8801    | January supplies     | $4,200.00|          | $4,200.00
+  02/05   | INV-8834    | Emergency order      | $1,150.00|          | $5,350.00
+  02/10   | PMT-2201    | Payment received     |          | $4,200.00| $1,150.00
+  02/15   | INV-8867    | February supplies    | $4,450.00|          | $5,600.00
+  02/20   | CM-445      | Return credit        |          | $350.00  | $5,250.00
+  02/28   | INV-8901    | Maintenance parts    | $2,100.00|          | $7,350.00
+  03/01   | INV-8923    | March supplies       | $4,600.00|          | $11,950.00
+  03/05   | PMT-2245    | Payment received     |          | $1,150.00| $10,800.00
+  03/10   | INV-8945    | Rush delivery        | $890.00  |          | $11,690.00
+
+  YOUR AP RECORDS:
+  Date    | Reference    | Description          | Amount   | Status
+  --------|-------------|----------------------|----------|--------
+  02/01   | INV-8801    | January supplies     | $4,200.00| Paid 02/08
+  02/05   | INV-8834    | Emergency order      | $1,150.00| Paid 03/03
+  02/15   | INV-8867    | February supplies    | $4,450.00| Open
+  02/18   | INV-8870    | Warranty replacement | $780.00  | Open
+  02/20   | CM-445      | Return credit        | ($350.00)| Applied
+  02/28   | INV-8901    | Maintenance parts    | $2,100.00| Open
+  03/01   | INV-8923    | March supplies       | $4,600.00| Open
+  03/05   | Check #5501 | Payment for INV-8834 | $1,150.00| Cleared
+  03/10   | INV-8945    | Rush delivery        | $890.00  | Open
+
+  Reconcile the statement and prepare a
+  reconciliation report showing:
+  1. Items that match
+  2. Items on the statement but not in your records
+  3. Items in your records but not on the statement
+  4. Timing differences
+  5. True outstanding balance
+
+assertions:
+  - type: llm_judge
+    criteria: "Reconciliation correctly identifies all matching and non-matching items — matching items: INV-8801 ($4,200), INV-8834 ($1,150), INV-8867 ($4,450), CM-445 ($350 credit), INV-8901 ($2,100), INV-8923 ($4,600), INV-8945 ($890), PMT-2201 ($4,200 payment matching your 02/08 payment), PMT-2245 ($1,150 payment matching your Check #5501); items in AP records but NOT on vendor statement: INV-8870 ($780 warranty replacement) — this invoice exists in your records but the vendor doesn't show it on their statement — could be: vendor hasn't processed it yet, invoice was sent to wrong vendor, or it's under a different account; items on vendor statement but NOT in AP records: none (all statement items appear in AP records); the vendor's statement balance is $11,690.00; your AP records show open items totaling: INV-8867 $4,450 + INV-8870 $780 + CM-445 applied (-$350 already applied) + INV-8901 $2,100 + INV-8923 $4,600 + INV-8945 $890 = $12,470 (but CM-445 was already applied, and payments cleared)."
+    weight: 0.35
+    description: "ReconciliationAccuracy"
+  - type: llm_judge
+    criteria: "Timing differences are correctly identified — PMT-2201 (vendor shows received 02/10, your records show paid 02/08) — 2-day mail/processing float, normal; PMT-2245 (vendor shows received 03/05, your records show Check #5501 cleared 03/05) — matches; the key discrepancy is INV-8870 ($780) which appears in your records but not on the vendor's statement; possible explanations: (1) vendor hasn't processed the invoice yet, (2) it was issued by a different division or under a different account number, (3) it was cancelled by the vendor and you need to reverse it; the reconciliation adjusts for the $780 difference: vendor says you owe $11,690, your records suggest you owe $12,470 if INV-8870 is valid, or $11,690 if it should be removed."
+    weight: 0.35
+    description: "TimingDifferences"
+  - type: llm_judge
+    criteria: "Action items resolve discrepancies — specific actions include: (1) Contact Pacific Industrial Supply to inquire about INV-8870 ($780 warranty replacement) — does it exist in their system? Was it issued under a different account?; (2) Verify that the credit memo CM-445 ($350) was properly applied against open invoices in your system; (3) Confirm that payment PMT-2201 cleared your bank for exactly $4,200; (4) Verify that the $780 invoice was received from this vendor and not a different vendor; (5) Once INV-8870 is resolved, confirm the agreed outstanding balance; the reconciliation report is formatted as a standard vendor reconciliation with: beginning balance, new invoices, payments, credits, adjustments, ending balance (per vendor), ending balance (per your records), and the reconciling difference with explanation."
+    weight: 0.30
+    description: "ActionItems"

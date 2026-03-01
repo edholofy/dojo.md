@@ -1,0 +1,84 @@
+meta:
+  id: department-budget-coding
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Assign expenses to department budgets and cost centers — allocate expenses across multiple departments and projects using proper cost center codes"
+  tags: [cost-center, department-coding, budget-allocation, beginner]
+
+state: {}
+
+trigger: |
+  You are processing expense reports for a mid-size
+  company with 5 departments. Each expense must be
+  coded to the correct department cost center and
+  GL account.
+
+  COMPANY: TechVenture Solutions (200 employees)
+
+  COST CENTERS:
+  - CC-100: Engineering
+  - CC-200: Sales
+  - CC-300: Marketing
+  - CC-400: Human Resources
+  - CC-500: Finance & Administration
+
+  PROJECT CODES (for billable work):
+  - PRJ-2025-001: Acme Corp implementation
+  - PRJ-2025-002: Beta Co. consulting
+  - PRJ-2025-003: Internal platform upgrade
+
+  EXPENSES TO CATEGORIZE:
+
+  1. Engineering team offsite dinner, 15 attendees —
+     $875.00 (submitted by Engineering VP)
+  2. Sales demo equipment (tablet + case) — $549.99
+     (submitted by Sales Director)
+  3. Job posting on LinkedIn for engineering role —
+     $495.00 (submitted by HR Manager)
+  4. Client lunch with Acme Corp stakeholders,
+     discussing project requirements — $156.00
+     (submitted by Project Manager)
+  5. AWS hosting costs for internal platform — $2,340.00
+     (submitted by CTO)
+  6. Trade show booth rental — $3,500.00 (submitted
+     by Marketing VP)
+  7. Team building event supplies — $234.00 (submitted
+     by HR Coordinator)
+  8. CPA exam prep course for finance associate —
+     $1,200.00 (submitted by Finance Director)
+  9. Client travel to Beta Co. site — $890.00
+     (submitted by Senior Consultant)
+  10. Office printer toner and paper — $178.50
+      (submitted by Office Manager)
+  11. Sales team quarterly celebration dinner —
+      $1,450.00 (submitted by Sales VP)
+  12. Marketing analytics software subscription —
+      $299/month (submitted by Marketing Manager)
+  13. Conference attendance for 2 engineers —
+      $1,800.00 (submitted by Engineering Manager)
+  14. Recruiting agency fee for sales hire — $15,000
+      (submitted by HR Director)
+  15. Legal review of vendor contract — $2,500.00
+      (submitted by CFO)
+
+  Create:
+  1. Complete coding for each expense (GL code +
+     cost center + project code if applicable)
+  2. Department budget impact summary
+  3. Billable vs. non-billable classification
+  4. Month-end journal entry suggestions
+
+assertions:
+  - type: llm_judge
+    criteria: "Expense coding is accurate and complete — each of the 15 expenses has: GL account code (from the standard chart), cost center assignment (CC-100 through CC-500), and project code where applicable; the Acme Corp client lunch is coded to the project (PRJ-2025-001) and potentially split between CC-200 (Sales) or the project cost center; the Beta Co. travel is coded to PRJ-2025-002; the internal platform AWS costs are coded to PRJ-2025-003 and CC-100; non-project expenses are coded to the appropriate department; the analysis explains reasoning for ambiguous assignments (e.g., recruiting fee for a sales hire — is it CC-200 because it's a sales role, or CC-400 because HR manages recruiting?)."
+    weight: 0.35
+    description: "ExpenseCoding"
+  - type: llm_judge
+    criteria: "Department budget summary and billable classification are useful — the budget summary shows total expenses by cost center, allowing department heads to see their spending; billable classification identifies: clearly billable (Acme Corp lunch, Beta Co. travel), potentially billable (AWS costs if allocated to client projects), and non-billable (all other internal expenses); the analysis notes expenses that could be partially allocated across departments (office supplies benefiting all departments, team building events that include cross-functional teams); the summary format would be useful for monthly budget review meetings."
+    weight: 0.35
+    description: "BudgetSummaryAndBillable"
+  - type: llm_judge
+    criteria: "Journal entry suggestions follow proper accounting treatment — identifies expenses that require special treatment: the recruiting agency fee ($15,000) may need to be amortized or capitalized depending on company policy; the marketing software subscription is a recurring monthly expense that should be accrued; the trade show booth rental may need to be prepaid if the event is in a future period; the CPA exam prep may qualify as a professional development benefit requiring HR tracking; the legal review is a professional services expense that may require 1099 reporting; journal entries include appropriate debits (expense accounts) and credits (accounts payable or cash); the analysis demonstrates understanding of accrual vs. cash basis treatment."
+    weight: 0.30
+    description: "JournalEntries"

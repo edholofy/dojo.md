@@ -1,0 +1,86 @@
+meta:
+  id: invoice-fraud-investigation
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Investigate suspected invoice fraud — identify ghost vendors, duplicate payment schemes, and billing fraud through data analysis and forensic procedures"
+  tags: [fraud-investigation, ghost-vendors, forensic-analysis, intermediate]
+
+state: {}
+
+trigger: |
+  Internal audit has flagged suspicious invoice
+  patterns during a routine review. Investigate
+  the following alerts and determine if fraud is
+  occurring.
+
+  ALERT 1 — POTENTIAL GHOST VENDOR
+  Vendor: Summit Professional Services (V-9045)
+  Created: 6 months ago by AP Clerk Janet Miller
+  Observations:
+  - 12 invoices totaling $67,800 over 6 months
+  - All invoices for "consulting services" — no
+    specific deliverables described
+  - All invoices are just under the $6,000 approval
+    threshold (range: $5,200-$5,950)
+  - No W-9 on file
+  - Vendor address: 142 Elm Street, Suite B,
+    Portland, OR
+  - Remittance address: PO Box 4401, Portland, OR
+  - Janet Miller's home address (from HR records):
+    140 Elm Street, Portland, OR
+  - No other employee has interacted with this
+    vendor
+  - All invoices approved by Janet's supervisor,
+    who rubber-stamps without review
+
+  ALERT 2 — DUPLICATE PAYMENT PATTERN
+  Vendor: Atlas Office Supply (V-2034)
+  Observations:
+  - 6 payments in Q1 2025 totaling $34,200
+  - 3 of the 6 appear to be duplicates:
+    - INV-AT-890 paid on 01/15 ($4,500) AND
+      INV-AT-890 paid on 02/03 ($4,500)
+    - INV-AT-912 paid on 02/10 ($6,200) AND
+      INV-AT-912R paid on 02/28 ($6,200) — note
+      the "R" suffix
+    - INV-AT-934 paid on 03/05 ($5,700) AND a
+      check request form for $5,700 to "Atlas
+      Office" on 03/12
+  - The check request was submitted by Tom Bradley
+    in Purchasing
+  - Atlas Office Supply confirmed they received
+    only 3 payments (the originals)
+
+  ALERT 3 — VENDOR BILLING INFLATION
+  Vendor: ProTech Maintenance (V-3078)
+  Observations:
+  - Monthly maintenance contract: $8,500/month
+  - Last 4 invoices:
+    - November: $8,500 (normal)
+    - December: $12,800 ("holiday overtime")
+    - January: $14,200 ("weather emergency")
+    - February: $11,500 ("equipment repair")
+  - No work orders or timesheets supporting the
+    additional charges
+  - The ProTech account manager is the brother-in-
+    law of your facilities director
+  - No competitive bids were obtained for the
+    maintenance contract
+
+  Investigate all three alerts and prepare a
+  fraud assessment report.
+
+assertions:
+  - type: llm_judge
+    criteria: "Alert 1 ghost vendor investigation is thorough — the evidence strongly suggests a ghost vendor scheme: (1) Vendor address (142 Elm St) is 2 doors from Janet Miller's home (140 Elm St) — this is a major red flag; (2) Janet both created the vendor record AND enters the invoices — violation of segregation of duties; (3) All invoices are just under the $6,000 threshold — classic structuring to avoid additional scrutiny; (4) No W-9 on file — vendor wasn't properly onboarded; (5) No other employee has interacted with the vendor — there's no evidence the vendor provides any actual services; (6) Supervisor rubber-stamps approvals — weak control environment; investigation steps: verify if Summit Professional Services is a registered business in Oregon (Secretary of State database), check if the PO Box 4401 is registered to Janet or a family member, review Janet's bank records (if legally permissible) for deposits matching the payment amounts, cross-reference the vendor's bank account with employee records; estimated exposure: $67,800 confirmed, plus any amounts not yet identified."
+    weight: 0.35
+    description: "GhostVendorInvestigation"
+  - type: llm_judge
+    criteria: "Alert 2 duplicate payment scheme analysis is correct — three distinct duplicate payment methods identified: (1) Same invoice number paid twice (INV-AT-890: $4,500 × 2) — the simplest duplicate, system should have caught this; (2) Invoice number with suffix (INV-AT-912 vs. INV-AT-912R) — the 'R' was added to bypass duplicate detection; this is intentional manipulation; (3) Check request bypassing the normal AP process — Tom Bradley submitted a check request for the same amount as a legitimate invoice, routing around the AP system's duplicate controls; total potential duplicate payments: $16,400 ($4,500 + $6,200 + $5,700); Atlas confirmed receiving only 3 original payments — so where did the duplicate payments go? The investigation should trace: who endorsed/deposited the duplicate checks, were they sent to the same address or a different one, is Tom Bradley colluding with someone at Atlas or diverting payments independently; Tom Bradley's involvement in both the 'R' suffix invoice and the check request is highly suspicious."
+    weight: 0.35
+    description: "DuplicatePaymentScheme"
+  - type: llm_judge
+    criteria: "Alert 3 billing inflation assessment addresses the conflict of interest — the family relationship between the ProTech account manager and the facilities director creates a significant conflict of interest that should have been disclosed; the investigation examines: (1) Are the additional charges ($4,300 Dec + $5,700 Jan + $3,000 Feb = $13,000 in overcharges above the base contract) supported by work orders, timesheets, or other documentation? If not, they may be fabricated; (2) Was the facilities director involved in approving the inflated invoices? If so, this could be collusion; (3) Was the original contract competitively bid? If not, even the base rate may be inflated; (4) Compare ProTech's rates to market rates for similar maintenance services; the fraud assessment report includes: a risk rating for each alert (Alert 1: High — probable ghost vendor fraud; Alert 2: High — confirmed duplicate payments with intentional system bypass; Alert 3: Medium — potential billing fraud complicated by conflict of interest); total estimated exposure across all three alerts; recommendations for immediate actions: place holds on all three vendor accounts, preserve all documentation, involve HR and legal counsel, consider law enforcement referral for Alert 1 and 2."
+    weight: 0.30
+    description: "BillingInflationAssessment"

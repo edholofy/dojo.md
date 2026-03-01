@@ -1,0 +1,100 @@
+meta:
+  id: three-way-matching
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Perform 3-way matching — compare purchase orders, receiving reports, and invoices to verify quantities, prices, and terms before approving payment"
+  tags: [three-way-match, po-matching, receiving, beginner]
+
+state: {}
+
+trigger: |
+  Perform 3-way matching for the following
+  invoices by comparing them against purchase
+  orders and receiving reports. Identify any
+  discrepancies.
+
+  COMPANY TOLERANCE LEVELS:
+  - Price variance: ±2% or $50 (whichever is less)
+  - Quantity variance: exact match required
+  - Tax: must match applicable rate
+
+  MATCH SET 1:
+  Purchase Order PO-4501:
+  - Vendor: Industrial Parts Co.
+  - 200 units Widget A @ $12.50/ea = $2,500.00
+  - 100 units Widget B @ $8.75/ea = $875.00
+  - Total: $3,375.00
+  - Terms: Net 30, FOB Destination
+
+  Receiving Report RR-7801:
+  - Received: March 5, 2025
+  - 200 units Widget A (all in good condition)
+  - 95 units Widget B (5 units damaged, rejected)
+  - Signed by: Warehouse Mgr Tom Davis
+
+  Invoice INV-IP-3344:
+  - 200 units Widget A @ $12.50/ea = $2,500.00
+  - 100 units Widget B @ $8.75/ea = $875.00
+  - Tax (7%): $236.25
+  - Total: $3,611.25
+
+  MATCH SET 2:
+  Purchase Order PO-4515:
+  - Vendor: Apex Chemical Supply
+  - 50 gallons Solvent X @ $45.00/gal = $2,250.00
+  - 25 gallons Solvent Y @ $62.00/gal = $1,550.00
+  - Freight: $150.00
+  - Total: $3,950.00
+  - Terms: 2/10 Net 30
+
+  Receiving Report RR-7812:
+  - Received: March 8, 2025
+  - 50 gallons Solvent X (verified)
+  - 25 gallons Solvent Y (verified)
+  - Freight bill attached: $150.00
+  - Signed by: Lab Mgr Sarah Chen
+
+  Invoice INV-ACS-9921:
+  - 50 gallons Solvent X @ $46.50/gal = $2,325.00
+  - 25 gallons Solvent Y @ $62.00/gal = $1,550.00
+  - Freight: $175.00
+  - Tax (7%): $271.25
+  - Total: $4,321.25
+
+  MATCH SET 3:
+  Purchase Order PO-4520:
+  - Vendor: Office Furniture Direct
+  - 10 ergonomic chairs @ $450.00/ea = $4,500.00
+  - 5 standing desks @ $680.00/ea = $3,400.00
+  - Total: $7,900.00
+  - Terms: Net 45
+
+  Receiving Report RR-7820:
+  - Received: March 10, 2025
+  - 10 ergonomic chairs (verified, all assembled)
+  - 5 standing desks (verified)
+  - Signed by: Facilities Mgr Mike Johnson
+
+  Invoice INV-OFD-5567:
+  - 10 ergonomic chairs @ $450.00/ea = $4,500.00
+  - 5 standing desks @ $680.00/ea = $3,400.00
+  - Delivery/setup fee: $250.00
+  - Tax (7%): $570.50
+  - Total: $8,720.50
+
+  Perform the 3-way match for all three sets.
+
+assertions:
+  - type: llm_judge
+    criteria: "Match Set 1 discrepancies correctly identified — PO vs. Receiving: Widget B quantity mismatch — PO says 100, only 95 received (5 damaged/rejected); Receiving vs. Invoice: Invoice bills for 100 Widget B but only 95 were accepted — should only pay for 95 units ($831.25, not $875.00); the corrected invoice amount: Widget A $2,500 + Widget B 95 × $8.75 = $831.25 = $3,331.25 before tax; tax on $3,331.25 at 7% = $233.19; corrected total: $3,564.44; action: contact vendor to issue a credit memo for 5 units of Widget B ($43.75 + applicable tax), or request a corrected invoice; do not pay the original $3,611.25."
+    weight: 0.35
+    description: "MatchSet1Analysis"
+  - type: llm_judge
+    criteria: "Match Set 2 discrepancies correctly identified — price variance on Solvent X: PO says $45.00/gal, invoice says $46.50/gal — that's a $1.50/gal increase (3.3%), which exceeds the 2% tolerance; total price variance: $75.00 (50 × $1.50), which also exceeds the $50 absolute tolerance; freight variance: PO says $150.00, invoice says $175.00 — $25.00 overage; Solvent Y matches perfectly; the quantities all match between PO, receiving, and invoice; action: hold payment, contact Apex Chemical to clarify the Solvent X price increase (was there a price change notification? is the PO price binding?), and dispute the freight overage ($175 vs. $150 agreed); if the price increase is legitimate, request an amended PO before paying; note the 2/10 Net 30 discount — resolve quickly to avoid losing the discount window."
+    weight: 0.35
+    description: "MatchSet2Analysis"
+  - type: llm_judge
+    criteria: "Match Set 3 discrepancies correctly identified — quantities and prices match between PO, receiving, and invoice for both chairs and desks; however, the invoice includes a $250.00 delivery/setup fee that was NOT on the original PO; this is an unauthorized charge — the PO total was $7,900.00 and didn't include delivery/setup; action: verify whether delivery/setup was discussed and agreed upon (check email correspondence, vendor quotes); if it was agreed but omitted from the PO, process an amended PO; if it was not agreed, dispute the charge; the tax calculation should also be verified: if the $250 is removed, tax on $7,900 at 7% = $553.00, total = $8,453.00; with the $250, tax on $8,150 at 7% = $570.50, total = $8,720.50 (invoice math is correct if the fee is included); a summary table shows all three match sets with status (Match 1: quantity discrepancy, Match 2: price + freight discrepancy, Match 3: unauthorized charge)."
+    weight: 0.30
+    description: "MatchSet3Analysis"

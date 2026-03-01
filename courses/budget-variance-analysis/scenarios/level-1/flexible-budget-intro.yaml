@@ -1,0 +1,56 @@
+meta:
+  id: flexible-budget-intro
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Create a flexible budget and compare it to actual results — understand the difference between static budget variance and flexible budget variance"
+  tags: [flexible-budget, static-vs-flexible, volume-variance, beginner]
+
+state: {}
+
+trigger: |
+  You are helping the operations manager understand
+  why the static budget comparison is misleading.
+
+  STATIC BUDGET (based on 10,000 units):
+  - Revenue: $500,000 (10,000 × $50)
+  - Variable costs: $300,000 (10,000 × $30)
+  - Fixed costs: $120,000
+  - Operating income: $80,000
+
+  ACTUAL RESULTS (8,500 units produced and sold):
+  - Revenue: $433,500
+  - Variable costs: $263,500
+  - Fixed costs: $125,000
+  - Operating income: $45,000
+
+  STATIC BUDGET VARIANCE:
+  Operating income: $45,000 - $80,000 = -$35,000 U
+
+  The operations manager says: "We're $35,000 below
+  budget. That's terrible. What went wrong?"
+
+  Tasks:
+  1. Create a flexible budget for 8,500 units
+  2. Calculate the volume variance (static budget
+     vs. flexible budget)
+  3. Calculate the flexible budget variance (flexible
+     budget vs. actual)
+  4. Break the flexible budget variance into revenue
+     and cost components
+  5. Write a 200-word explanation for the operations
+     manager about what the flexible budget reveals
+
+assertions:
+  - type: llm_judge
+    criteria: "Flexible budget is correctly constructed for 8,500 units — Flexible Budget: Revenue = 8,500 × $50 = $425,000; Variable Costs = 8,500 × $30 = $255,000; Fixed Costs = $120,000 (unchanged — they're fixed); Operating Income = $425,000 - $255,000 - $120,000 = $50,000; the Volume Variance = Flexible Budget OI - Static Budget OI = $50,000 - $80,000 = -$30,000 Unfavorable (entirely due to producing/selling 1,500 fewer units than planned); the Flexible Budget Variance = Actual OI - Flexible Budget OI = $45,000 - $50,000 = -$5,000 Unfavorable; the total static budget variance of -$35,000 correctly decomposes into: Volume Variance -$30,000 U + Flexible Budget Variance -$5,000 U = -$35,000 U."
+    weight: 0.35
+    description: "FlexibleBudgetConstruction"
+  - type: llm_judge
+    criteria: "Flexible budget variance is correctly decomposed into revenue and cost components — Revenue Flexible Budget Variance: Actual Revenue $433,500 - Flexible Budget Revenue $425,000 = +$8,500 Favorable (the company achieved a higher average selling price: $433,500 / 8,500 = $51.00 vs. budget $50.00); Variable Cost Flexible Budget Variance: Actual Variable Costs $263,500 - Flexible Budget Variable Costs $255,000 = -$8,500 Unfavorable (actual variable cost per unit: $263,500 / 8,500 = $31.00 vs. standard $30.00); Fixed Cost Variance: Actual $125,000 - Budget $120,000 = -$5,000 Unfavorable; Net Flexible Budget Variance: +$8,500 (revenue) - $8,500 (variable cost) - $5,000 (fixed cost) = -$5,000 Unfavorable; the analysis shows that the pricing improvement exactly offset the variable cost increase, and the only true operational overspend was $5,000 in fixed costs."
+    weight: 0.35
+    description: "VarianceDecomposition"
+  - type: llm_judge
+    criteria: "The explanation helps the operations manager understand the difference between volume and operational performance — the 200-word explanation conveys the key insight: the $35,000 shortfall is mostly NOT an operational failure — $30,000 of it (86%) is because the company produced and sold 1,500 fewer units than planned; this is a volume problem, not a cost control problem; when you adjust the budget for the actual volume (the flexible budget), the operational performance variance is only $5,000 unfavorable; in fact, the operations team achieved a higher selling price ($51 vs. $50) and the variable cost increase per unit was modest ($31 vs. $30); the real question is: why did volume fall 15% below plan? That's a sales/demand question, not an operations question; the $5,000 fixed cost overage is the only item fully within operations' control; the explanation uses the flexible budget as a teaching tool — it separates 'how much did we sell?' from 'how well did we perform on what we sold?'; the tone is educational and reassuring — the operations manager should focus on the $5,000 operational variance, not the misleading $35,000 static budget variance."
+    weight: 0.30
+    description: "ManagerExplanation"

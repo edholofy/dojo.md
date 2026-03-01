@@ -1,0 +1,64 @@
+meta:
+  id: ap-compliance-audit
+  level: 3
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Design and execute an AP compliance audit — plan audit procedures, test internal controls, evaluate SOX compliance, and deliver actionable findings for a procure-to-pay cycle"
+  tags: [audit, sox-compliance, internal-controls, advanced]
+
+state: {}
+
+trigger: |
+  You are the internal audit manager tasked with
+  performing a comprehensive audit of the AP
+  function. The last AP audit was 2 years ago and
+  found 6 control deficiencies. Design and execute
+  the audit.
+
+  COMPANY CONTEXT:
+  - SOX-reporting company (public, NYSE listed)
+  - $1.5B annual AP disbursements
+  - 95,000 invoices/year
+  - AP team: 22 FTEs across 2 locations
+  - ERP: Oracle EBS
+  - Prior audit findings (2 years ago):
+    1. Segregation of duties violation (2 users
+       could create vendors AND process payments)
+    2. 3-way match bypass rate of 18% without
+       proper documentation
+    3. No formal policy for non-PO invoices
+    4. Stale vendor records (800 vendors with no
+       activity in 3+ years)
+    5. Incomplete 1099 reporting (15 vendors
+       misclassified)
+    6. Check stock not adequately secured
+
+  AUDIT SCOPE:
+  - Vendor master management
+  - Invoice processing and matching
+  - Payment processing and controls
+  - Period-end AP procedures
+  - Regulatory compliance (1099, unclaimed property)
+  - IT general controls over AP systems
+
+  Design:
+  1. Audit plan and risk assessment
+  2. Control testing procedures
+  3. Substantive testing approach
+  4. Data analytics tests
+  5. Findings evaluation criteria
+  6. Reporting and remediation tracking
+
+assertions:
+  - type: llm_judge
+    criteria: "Audit plan is risk-based and covers the full procure-to-pay cycle — risk assessment: inherent risk rated by process area (vendor master: high risk due to fraud potential, payment processing: high risk due to disbursement errors, invoice matching: medium risk, period-end: medium risk, compliance: high risk due to regulatory penalties); the plan addresses prior findings follow-up (verify remediation of all 6 prior deficiencies); control testing procedures include: vendor master — test SoD by reviewing user access matrices (verify no user has both vendor create and payment approve access), test new vendor setup process (sample 25 new vendors, verify approval documentation, TIN validation, address verification); invoice processing — test 3-way match controls (sample 40 invoices, verify PO-receipt-invoice match), test match exception/bypass procedures (sample all bypasses in test period, verify documented authorization), test non-PO invoice policy compliance (if policy now exists); payment processing — test approval authorities against delegation matrix, verify dual signatures above threshold, test positive pay implementation, verify check stock physical security; IT general controls — user access reviews, password policies, change management for Oracle EBS AP module."
+    weight: 0.35
+    description: "AuditPlan"
+  - type: llm_judge
+    criteria: "Data analytics tests are sophisticated and detect real risks — analytics tests include: (1) Benford's Law analysis on invoice amounts to identify potential fabricated invoices (flag first-digit distributions that deviate significantly from expected); (2) Duplicate payment detection: match on vendor + amount (exact), vendor + amount (within 1%), invoice number fuzzy match, same amount to same vendor within 30 days; (3) Vendor master analytics: vendors sharing addresses or bank accounts with employees, vendors with PO Box only addresses, vendors with no TIN or duplicate TINs, dormant vendors (no activity 2+ years) still in active status; (4) Payment pattern analysis: invoices clustering just below approval thresholds, payments to vendors not on approved vendor list, rush/emergency payment frequency, weekend or holiday payment processing; (5) Matching analysis: match exception rates by vendor, by buyer, by commodity — identify outliers suggesting control override patterns; (6) 1099 analysis: payment amounts to non-exempt vendors vs. 1099 filings, identify vendors exceeding $600 threshold without 1099 classification; sample sizes follow AICPA guidance based on control frequency (daily controls: 25 samples for a 1-year period, weekly: 5, monthly: 2-3)."
+    weight: 0.35
+    description: "DataAnalytics"
+  - type: llm_judge
+    criteria: "Findings evaluation and reporting follow SOX audit standards — findings are classified using SOX framework: material weakness (reasonable possibility a material misstatement would not be prevented or detected), significant deficiency (less severe but important enough to merit attention), control deficiency (minor deviation); each finding documented with: condition (what was found), criteria (what should be — policy, regulation, best practice), cause (root cause analysis), effect (actual or potential impact quantified where possible), recommendation (specific, actionable remediation), management response (action plan, responsible party, target date); the audit report includes: executive summary with overall AP control environment assessment, detailed findings with risk ratings, prior findings status (remediated, partially remediated, not remediated, new finding), benchmarking of AP metrics against industry, and remediation tracking mechanism; follow-up procedures: 90-day management action plan verification, quarterly progress reporting to audit committee, re-testing of material findings within 6 months; the report addresses IT controls: Oracle EBS user access appropriateness, SoD conflicts in system roles, change management controls for AP module configuration."
+    weight: 0.30
+    description: "FindingsAndReporting"

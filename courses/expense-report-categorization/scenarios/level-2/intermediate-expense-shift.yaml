@@ -1,0 +1,74 @@
+meta:
+  id: intermediate-expense-shift
+  level: 2
+  course: expense-report-categorization
+  type: output
+  description: "Intermediate shift simulation — handle multi-currency processing, policy enforcement, and fraud investigation in a single workday"
+  tags: [shift-simulation, multi-task, intermediate-synthesis, intermediate]
+
+state: {}
+
+trigger: |
+  You are the senior expense analyst handling
+  three escalated cases on a Wednesday afternoon.
+
+  CASE 1 — INTERNATIONAL EXPENSE DISPUTE
+  An employee is contesting the FX rate applied to
+  his expenses from a Japan business trip. His
+  corporate card charged $4,234.50 for expenses
+  totaling ¥580,000. He claims the rate should
+  have been ¥140/USD (which would be $4,142.86),
+  not the ¥137/USD rate that was applied.
+
+  Card details:
+  - Transaction dates: March 3-7, 2025
+  - Card FX fee: 3%
+  - Actual BOJ mid-rate March 3-7: ¥138.5/USD
+  - Employee's claimed rate: ¥140/USD
+  - Card charge calculation: ¥580,000 ÷ 137 × 1.03
+    = $4,356.20 (but card shows $4,234.50)
+
+  Investigate the discrepancy and prepare a
+  resolution memo.
+
+  CASE 2 — POLICY EXCEPTION REQUEST
+  A Director is requesting an exception for a
+  $3,200 client dinner for 4 people ($800/person
+  vs. $150/person policy limit). The business
+  justification states: "Closing dinner for $2.4M
+  annual contract with Meridian Corp. CEO and CFO
+  of Meridian attended. Wine pairing dinner at a
+  Michelin-starred restaurant was necessary to
+  match client expectations."
+
+  Determine whether to approve the exception and
+  draft the recommendation memo.
+
+  CASE 3 — SUSPICIOUS PATTERN ALERT
+  The automated system flagged an employee who
+  submitted 14 expense reports in the past 6
+  months with these patterns:
+  - 100% of client meal receipts end in .99 or .95
+  - Average meal amount: $74.50 (policy limit: $75)
+  - 3 receipts from "Bella Cucina" — a restaurant
+    that closed 8 months ago
+  - All parking charges are exactly $24.95 (under
+    $25 receipt threshold)
+  - Receipt images show inconsistent fonts and
+    formatting
+
+  Assess the risk level and recommend next steps.
+
+assertions:
+  - type: llm_judge
+    criteria: "FX dispute investigation is thorough — recalculates the expected card charge using BOJ mid-rate (¥138.5/USD): ¥580,000 ÷ 138.5 = $4,187.73 before fees, × 1.03 = $4,313.36 with 3% fee; compares to the actual card charge of $4,234.50 — which is lower than expected at mid-rate + fee, suggesting the card may have used a slightly better rate on some transaction dates; the employee's claimed rate of ¥140/USD would yield ¥580,000 ÷ 140 = $4,142.86 — this is the rate without the FX fee, so his claim ignores the 3% card fee; explains that daily rates fluctuate and individual transactions may have used different rates on different days; the resolution memo explains the rate methodology to the employee and whether any adjustment is warranted."
+    weight: 0.35
+    description: "FXDisputeResolution"
+  - type: llm_judge
+    criteria: "Policy exception recommendation is balanced and well-reasoned — acknowledges that $800/person vastly exceeds the $150 limit (433% over); weighs the business context: $2.4M contract value vs. $3,200 dinner cost (0.13% of contract value); considers whether the dinner was genuinely necessary for the deal; the recommendation either approves with conditions (e.g., pre-approval required for future similar events, CEO-level entertainment budget established) or partially approves (cap at a reasonable amount like $300/person); the memo is addressed to the VP for sign-off and includes: the policy provision, the exception amount, business justification, recommendation, and conditions; notes that Michelin-starred restaurant expectations is a reasonable argument for high-value client entertainment but should not set unlimited precedent."
+    weight: 0.35
+    description: "PolicyExceptionMemo"
+  - type: llm_judge
+    criteria: "Fraud assessment correctly rates risk as high — the closed restaurant receipts are the strongest indicator of fraud (submitting receipts from a business that no longer exists strongly suggests fabricated receipts); the consistent .99/.95 endings and proximity to policy limits suggest manufactured amounts; parking charges at exactly $24.95 (under $25 receipt threshold) are a classic avoidance pattern; inconsistent receipt fonts suggest altered or fabricated documents; the combined pattern across 14 reports indicates systematic fraud, not occasional mistakes; recommends: immediate escalation to HR and legal, forensic review of all 14 reports, verification of restaurant existence for all receipt vendors, comparison of receipt images against known receipt formats, and employee interview conducted by HR with legal present; quantifies total potential exposure across all 14 reports."
+    weight: 0.30
+    description: "FraudAssessment"

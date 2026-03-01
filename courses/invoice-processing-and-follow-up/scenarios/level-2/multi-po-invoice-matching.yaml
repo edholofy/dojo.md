@@ -1,0 +1,79 @@
+meta:
+  id: multi-po-invoice-matching
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Match complex invoices against multiple purchase orders — handle partial shipments, blanket POs, consolidated invoices, and multi-line matching with price and quantity tolerances"
+  tags: [multi-po-matching, blanket-po, partial-shipment, intermediate]
+
+state: {}
+
+trigger: |
+  Process complex invoice matching scenarios
+  involving multiple POs, partial shipments, and
+  blanket purchase orders.
+
+  COMPANY MATCHING RULES:
+  - Price tolerance: ±3% or $100 (whichever less)
+  - Quantity tolerance: ±5% for bulk items, exact
+    for serialized items
+  - Blanket PO: can receive multiple invoices up
+    to the PO total
+  - Consolidated invoices: one invoice can reference
+    multiple POs
+  - Partial receipts: pay only for received goods
+
+  SCENARIO 1 — CONSOLIDATED INVOICE
+  Vendor: Industrial Supply Corp
+  Invoice #: ISC-2025-3344
+  Amount: $28,450.00
+
+  Line items on invoice:
+  - PO-6001: 500 lbs Steel Rod @ $8.50/lb = $4,250
+  - PO-6001: 200 lbs Copper Wire @ $15.00/lb = $3,000
+  - PO-6023: 1,000 units Fastener Kit @ $4.50 = $4,500
+  - PO-6023: 500 units Seal Ring @ $3.80 = $1,900
+  - PO-6045: Equipment rental, March = $14,800
+
+  PO details:
+  PO-6001: Steel Rod 500 lbs @ $8.25/lb, Copper
+  Wire 200 lbs @ $15.00/lb. Total: $7,125
+  PO-6023: Fastener Kit 1,000 @ $4.50, Seal Ring
+  500 @ $3.80. Total: $6,400
+  PO-6045: Equipment rental $14,800/month. Total
+  (12-month blanket): $177,600
+
+  Receiving reports:
+  RR-9001: 500 lbs Steel Rod received, 200 lbs
+  Copper Wire received (complete for PO-6001)
+  RR-9015: 1,000 Fastener Kits received, 480 Seal
+  Rings received (20 short for PO-6023)
+  RR-9020: Equipment on-site for March (confirmed)
+
+  SCENARIO 2 — BLANKET PO WITH MULTIPLE RELEASES
+  Vendor: CleanTech Supplies
+  Blanket PO: BPO-500 (annual cleaning supplies)
+  Total PO value: $60,000 (Jan-Dec 2025)
+  Consumed to date (Jan-Feb): $9,800
+
+  March invoices received:
+  INV-CT-301: $4,200 (cleaning chemicals)
+  INV-CT-302: $1,800 (paper products)
+  INV-CT-303: $850 (equipment maintenance)
+
+  Process both scenarios with matching results
+  and recommended actions.
+
+assertions:
+  - type: llm_judge
+    criteria: "Scenario 1 matching identifies all discrepancies — PO-6001 Steel Rod: invoice price $8.50/lb vs. PO price $8.25/lb — variance of $0.25/lb (3.03%), slightly over 3% tolerance; total variance: 500 × $0.25 = $125, which exceeds $100 absolute tolerance; this must be flagged and resolved before payment; PO-6001 Copper Wire: matches at $15.00/lb; PO-6023 Fastener Kit: matches at $4.50; PO-6023 Seal Ring: price matches at $3.80, but only 480 received vs. 500 invoiced — 20 unit shortfall; should only pay for 480 × $3.80 = $1,824, not $1,900; PO-6045: equipment rental matches at $14,800; corrected invoice total: $4,250 (pending price resolution) + $3,000 + $4,500 + $1,824 + $14,800 = $28,374 (or $28,249 if Steel Rod is corrected to $8.25); the analysis shows the net adjustment needed."
+    weight: 0.35
+    description: "ConsolidatedInvoiceMatching"
+  - type: llm_judge
+    criteria: "Scenario 2 blanket PO management is correct — BPO-500 total: $60,000; consumed Jan-Feb: $9,800; March invoices: $4,200 + $1,800 + $850 = $6,850; cumulative after March: $16,650; remaining on BPO: $43,350; monthly average: $5,550 (after 3 months); projected annual: $66,600 — exceeds the $60,000 blanket PO by $6,600; the analysis flags that the current consumption rate will exhaust the BPO by approximately October/November, requiring either: (1) a PO amendment to increase the blanket amount, (2) a new PO for the overage, or (3) reduced consumption in later months; all three March invoices should be approved for payment as they're within the BPO remaining balance; the equipment maintenance invoice ($850) should be verified as within the BPO scope (cleaning supplies vs. equipment maintenance may be different categories)."
+    weight: 0.35
+    description: "BlanketPOManagement"
+  - type: llm_judge
+    criteria: "Recommended actions are specific for each discrepancy — for the Steel Rod price variance: contact Industrial Supply Corp to clarify — was there a price increase notification? Check the PO terms for price escalation clauses; if no valid price increase, request a credit memo for $125; for the Seal Ring quantity shortfall: (1) pay for 480 units received ($1,824), (2) request credit memo for 20 units ($76), or (3) hold partial payment pending delivery of remaining 20 units; for the blanket PO projection: notify the procurement team that BPO-500 is tracking 11% over annual budget, recommend mid-year review; the matching results are documented in a structured format showing: PO line, PO price, PO qty, received qty, invoice price, invoice qty, variance, and status (matched/exception/held)."
+    weight: 0.30
+    description: "RecommendedActions"

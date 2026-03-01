@@ -1,0 +1,70 @@
+meta:
+  id: sox-expense-controls
+  level: 3
+  course: expense-report-categorization
+  type: output
+  description: "Design SOX-compliant expense controls — create control matrices, test procedures, documentation requirements, and remediation plans for expense-related internal controls"
+  tags: [sox-compliance, internal-controls, coso, advanced]
+
+state: {}
+
+trigger: |
+  The company's external auditors have identified
+  three material weaknesses in expense-related
+  internal controls during the SOX 404 assessment.
+  Design remediation plans and strengthened controls.
+
+  MATERIAL WEAKNESSES IDENTIFIED:
+
+  MW-1: SEGREGATION OF DUTIES
+  Finding: The AP manager can create vendors,
+  approve expense reports, and process payments
+  without independent review. In 3 instances,
+  the AP manager approved their own team members'
+  expense reports that included charges to vendors
+  the AP manager also created.
+
+  MW-2: APPROVAL AUTHORITY OVERRIDE
+  Finding: 47 expense reports totaling $234,000
+  were paid without required VP approval (reports
+  exceeded $5,000 threshold). The system allows
+  managers to mark reports as "VP pre-approved"
+  without documentation.
+
+  MW-3: PERIOD-END EXPENSE ACCRUAL
+  Finding: Q3 expense accruals were understated by
+  $890,000 (material to the financial statements).
+  The accrual process relies on manual estimation
+  with no reconciliation to known outstanding
+  expenses (booked travel, corporate card
+  unbilled charges).
+
+  COMPANY CONTEXT:
+  - Public company (SOX Section 404 applicable)
+  - Annual T&E: $52M
+  - Expense system: SAP Concur
+  - ERP: SAP S/4HANA
+  - Fiscal year end: December 31
+  - External auditor: Big 4 firm
+  - Audit committee meets quarterly
+
+  For each material weakness, create:
+  1. Root cause analysis
+  2. Remediated control design
+  3. Control testing procedures
+  4. Implementation timeline
+  5. Monitoring and reporting framework
+
+assertions:
+  - type: llm_judge
+    criteria: "MW-1 remediation properly addresses segregation of duties — root cause analysis identifies that system roles were configured without SoD checks; the remediated controls include: (1) Separate roles for vendor creation (AP clerk), expense approval (AP manager), and payment processing (AP senior/controller); (2) System-enforced prevention — Concur configured so no user can approve expenses from vendors they created in SAP; (3) Compensating controls: monthly SoD conflict report reviewed by Controller; (4) Vendor creation requires dual approval (AP manager + procurement); the control testing procedures include: quarterly access review of Concur/SAP roles, SoD matrix testing against actual user roles, sample testing of vendor-created vs. expense-approved linkages; the remediation timeline targets completion within 60 days with interim compensating controls immediately."
+    weight: 0.35
+    description: "MW1Remediation"
+  - type: llm_judge
+    criteria: "MW-2 remediation eliminates approval bypass — root cause: system design flaw allowing 'pre-approved' flag without documentation; remediated controls: (1) Remove the 'pre-approved' bypass option from Concur; (2) System-enforced approval routing based on amount thresholds — reports >$5,000 MUST route to VP level (no override possible by manager); (3) If VP is unavailable, auto-escalation to the next-level executive after 3 business days; (4) Emergency processing requires CFO or Controller manual release with documented justification; (5) Monthly exception report of any system-level overrides reviewed by Internal Audit; control testing: quarterly sample of reports >$5,000 to verify VP approval documentation; retroactive review of the 47 unapproved reports to determine if any were improper; the implementation includes system reconfiguration, user training, and communication to all VPs about their approval responsibility."
+    weight: 0.35
+    description: "MW2Remediation"
+  - type: llm_judge
+    criteria: "MW-3 remediation creates a reliable accrual process — root cause: manual estimation process without data-driven inputs; remediated controls: (1) Automated accrual calculation using: known outstanding travel (from booking system), unbilled corporate card charges (from card provider feed), historical submission patterns (average 14-day lag), and open POs for T&E services; (2) Monthly reconciliation of accrual to supporting data sources; (3) Controller sign-off on accrual calculation with documented methodology; (4) Quarterly true-up analysis comparing accrual to actual (if variance >5%, methodology is adjusted); control testing: monthly comparison of accrual estimate to subsequent actual expenses; quarterly review of accrual methodology by external auditors; the implementation timeline targets the next quarter-end close; the monitoring framework reports accrual accuracy to the audit committee quarterly; all three remediation plans include COSO framework alignment (Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring)."
+    weight: 0.30
+    description: "MW3Remediation"

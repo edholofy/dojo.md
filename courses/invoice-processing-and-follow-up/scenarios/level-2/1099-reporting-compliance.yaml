@@ -1,0 +1,70 @@
+meta:
+  id: 1099-reporting-compliance
+  level: 2
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Manage 1099 reporting compliance — classify vendors, verify tax information, prepare 1099 forms, and resolve reporting discrepancies"
+  tags: [1099-reporting, tax-compliance, vendor-classification, intermediate]
+
+state: {}
+
+trigger: |
+  Prepare the annual 1099 reporting for your
+  company. The deadline is January 31, 2026
+  (for tax year 2025). Today is January 5, 2026.
+
+  COMPANY DATA:
+  - 450 active vendors
+  - Total vendor payments in 2025: $38.5M
+  - EIN: 12-3456789
+  - Using electronic filing (mandatory for 10+
+    returns)
+
+  VENDOR CLASSIFICATION ISSUES:
+
+  Category A — Clear 1099-NEC candidates (services):
+  Vendor            | Total Paid | W-9 Status | Entity Type
+  ------------------|-----------|------------|------------
+  Smith Consulting   | $45,000   | On file    | Sole Prop
+  Jones Legal LLC    | $28,500   | On file    | Partnership
+  Davis Design       | $8,200    | On file    | Sole Prop
+  Rivera IT Services | $650      | On file    | Sole Prop
+  Park Marketing     | $12,400   | Missing    | Unknown
+
+  Category B — Unclear classification:
+  Vendor            | Total Paid | W-9 Status | Notes
+  ------------------|-----------|------------|------
+  TechCorp Inc.      | $156,000  | On file    | Software licensing
+  Amazon.com         | $23,400   | N/A        | Product purchases
+  DocuSign Corp      | $4,800    | On file    | SaaS subscription
+  MedPay Insurance   | $89,000   | On file    | Health insurance premiums
+  FirstBank Trust    | $340,000  | On file    | Mortgage interest paid
+
+  Category C — Problem vendors:
+  Vendor            | Total Paid | Issue
+  ------------------|-----------|------
+  Williams Electric  | $15,600   | TIN doesn't match IRS records
+  Garcia Plumbing    | $7,800    | W-9 has SSN, vendor is an LLC
+  Chen Interpreting  | $3,200    | W-9 expired (signed 2019)
+  Taylor Temp Staff  | $52,000   | Vendor says they're an S-Corp
+                     |           | but W-9 says LLC
+
+  Process the 1099 preparation:
+  1. Classify all vendors for 1099 reporting
+  2. Resolve the problem vendor issues
+  3. Prepare the filing summary
+  4. Address the missing W-9 situation
+
+assertions:
+  - type: llm_judge
+    criteria: "Vendor classifications are correct — Category A: Smith Consulting ($45,000, sole prop) — 1099-NEC required (services >$600); Jones Legal LLC ($28,500, partnership) — 1099-NEC required (legal services are always reportable regardless of entity type per Section 6045(f)); Davis Design ($8,200, sole prop) — 1099-NEC required; Rivera IT ($650, sole prop) — NOT required (under $600 threshold); Park Marketing ($12,400, missing W-9) — 1099-NEC required IF services, must obtain W-9 immediately; Category B: TechCorp Inc. ($156,000, corporation) — generally NOT 1099 reportable (corporation for product/software); Amazon — NOT reportable (product purchases from a corporation via credit card — already reported by payment processor); DocuSign Corp — NOT reportable (corporation); MedPay Insurance — MAY require 1099 depending on payment type; FirstBank Trust ($340,000, mortgage interest) — report on 1098, not 1099; each classification references the applicable IRS rule."
+    weight: 0.35
+    description: "VendorClassification"
+  - type: llm_judge
+    criteria: "Problem vendor resolutions are correct — Williams Electric (TIN mismatch): must send a B-notice (first B-notice if first-time mismatch) requesting corrected TIN; begin backup withholding at 24% if not resolved within 30 days of B-notice; file 1099 with the TIN on file and let IRS process the mismatch; Garcia Plumbing (SSN on W-9 but LLC): an LLC can use the owner's SSN for tax purposes if it's a single-member LLC (disregarded entity); verify the LLC classification — if single-member, SSN is acceptable; if multi-member, needs EIN; request an updated W-9 clarifying the entity type; Chen Interpreting (expired W-9): W-9s don't technically expire, but best practice is to refresh every 3-4 years; the 2019 W-9 is still valid unless the vendor's information has changed; request an updated W-9 for your records but can file with existing information; Taylor Temp Staff (W-9 says LLC, claims S-Corp): if they're actually an S-Corp, they may be exempt from 1099 reporting; however, the W-9 on file says LLC which IS reportable; request a corrected W-9 showing S-Corp election; if they cannot provide proof of S-Corp election, file 1099 based on the LLC classification."
+    weight: 0.35
+    description: "ProblemVendorResolution"
+  - type: llm_judge
+    criteria: "Filing summary and missing W-9 handling are complete — the filing summary lists: total 1099-NEC forms to file (count), total reportable amount, filing method (electronic), deadline (January 31), and state filing requirements (if applicable — check state-by-state copy requirements); the missing W-9 for Park Marketing ($12,400) requires immediate action: (1) Send W-9 request with 30-day deadline, (2) If not received, begin backup withholding at 24% on future payments, (3) File 1099 with available information and note the missing TIN, (4) May face IRS penalty for filing without TIN ($280/form for intentional disregard); the timeline to January 31 is tight (26 days): Week 1 — send all B-notices and W-9 requests; Week 2 — follow up on outstanding responses; Week 3 — prepare and validate 1099 forms; Week 4 — file electronically via IRS IRIS; the summary includes a checklist of all required steps and responsible parties."
+    weight: 0.30
+    description: "FilingSummary"

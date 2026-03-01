@@ -1,0 +1,61 @@
+meta:
+  id: intermediate-ar-shift
+  level: 2
+  course: accounts-receivable-follow-up-messaging
+  type: output
+  description: "Intermediate shift simulation — handle escalated collection scenarios: negotiate with a hostile customer, write a demand letter, and brief the CFO on a major account at risk"
+  tags: [shift-simulation, escalation, negotiation, intermediate]
+
+state: {}
+
+trigger: |
+  Three escalated situations require your attention
+  today.
+
+  SITUATION 1 — HOSTILE CUSTOMER RESPONSE
+  You sent a standard 30-day reminder to Apex Corp
+  ($35,000 past due). Their CEO replied:
+
+  "Your billing department is incompetent. We've told
+  you three times that the work was never completed
+  to our satisfaction and you keep sending bills. If
+  I get one more email from your company, I'm calling
+  my lawyer."
+
+  Your delivery team confirms the work WAS completed
+  per the statement of work and signed off by Apex's
+  project manager (not the CEO).
+
+  Write a 200-word response that de-escalates while
+  protecting your position.
+
+  SITUATION 2 — FORMAL DEMAND LETTER
+  Gateway Systems owes $62,000 across 3 invoices
+  (45, 60, and 75 days past due). Zero response to
+  all outreach. Your attorney has asked you to draft
+  a pre-litigation demand letter for their review.
+
+  Write the 200-word demand letter.
+
+  SITUATION 3 — CFO BRIEFING
+  Your largest customer, National Retail Group
+  ($2.5M annual revenue to your company), has $340K
+  outstanding (60 days past due). Their AP team says
+  they're "restructuring payment processes." Your
+  CFO needs a 150-word briefing before a board call.
+
+  Write the briefing.
+
+assertions:
+  - type: llm_judge
+    criteria: "The hostile customer response de-escalates while firmly protecting the company's position — the response to the Apex CEO: does NOT match the hostile tone (no defensiveness, no counter-accusations); acknowledges the CEO's frustration and takes the concern seriously; references the project sign-off by their project manager as documentation that the work was completed; offers to schedule a meeting to review the deliverables against the SOW together; separates the quality concern from the payment obligation — if there is a genuine quality issue, it should be formally documented and reviewed, but the invoice remains due; the response is firm on the facts while being empathetic on the emotions; it subtly addresses the legal threat by noting that the company prefers to resolve matters collaboratively but will defend its position if necessary."
+    weight: 0.35
+    description: "HostileCustomerResponse"
+  - type: llm_judge
+    criteria: "The demand letter is formal, legally sound, and appropriate for attorney review — the letter to Gateway Systems: is formatted as a formal legal demand; states the total amount owed ($62,000), lists the specific invoices with amounts and dates, notes the payment terms and breach thereof; documents the complete follow-up history (all outreach attempts with no response); demands payment in full within a specific timeframe (typically 10-15 business days); states that failure to pay will result in legal proceedings (filing a lawsuit to recover the amounts plus interest, attorneys' fees, and court costs); the tone is formal and legal — this is not a collection email, it's a pre-litigation demand; it's written for the attorney to review and send on their letterhead."
+    weight: 0.35
+    description: "DemandLetter"
+  - type: llm_judge
+    criteria: "The CFO briefing is concise, strategic, and appropriate for a board-level discussion — the 150-word briefing to the CFO covers: the amount at risk ($340K, 60 days past due), the customer's significance ($2.5M annual revenue — this is the company's largest customer), what AP is saying ('restructuring payment processes' — which could be legitimate or a delay tactic), the risk assessment (losing this customer over a $340K collection issue would be catastrophic; however, $340K outstanding is a material credit risk), and the recommended approach (CFO-to-CFO conversation to understand the restructuring timeline and secure a payment commitment); the briefing is written for someone who has 2 minutes before a board call — no unnecessary detail, just the facts, the risk, and the recommendation."
+    weight: 0.30
+    description: "CFOBriefing"

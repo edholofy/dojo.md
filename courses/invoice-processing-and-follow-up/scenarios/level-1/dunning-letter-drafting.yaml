@@ -1,0 +1,90 @@
+meta:
+  id: dunning-letter-drafting
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Draft dunning letters for overdue accounts — create professionally worded collection notices appropriate to each aging stage while maintaining vendor relationships"
+  tags: [dunning-letters, collections, ar-follow-up, beginner]
+
+state: {}
+
+trigger: |
+  Draft collection communications for the
+  following overdue accounts receivable. Use the
+  appropriate tone and urgency level for each
+  aging stage.
+
+  COMPANY: Meridian Technologies
+  YOUR ROLE: Accounts Receivable Specialist
+
+  COMPANY DUNNING POLICY:
+  - Stage 1 (1-15 days past due): Friendly reminder
+  - Stage 2 (16-30 days past due): Firm follow-up
+  - Stage 3 (31-60 days past due): Escalation notice
+  - Stage 4 (61-90 days past due): Final demand
+  - Stage 5 (90+ days past due): Collection agency
+    referral notice
+
+  OVERDUE ACCOUNTS:
+
+  ACCOUNT 1 — Stage 1 Reminder
+  Customer: Brightpath Solutions
+  Contact: Jennifer Walsh, AP Manager
+  Invoice #: MER-2025-0567
+  Amount: $12,500.00
+  Invoice Date: February 10, 2025
+  Terms: Net 30
+  Due Date: March 12, 2025
+  Days Past Due: 3 (today is March 15)
+  History: First-time customer, excellent credit
+  Notes: Large potential for repeat business
+
+  ACCOUNT 2 — Stage 3 Escalation
+  Customer: Granite Industries
+  Contact: Mike Torres, CFO
+  Invoice #: MER-2024-1245
+  Amount: $34,800.00
+  Invoice Date: December 15, 2024
+  Terms: Net 30
+  Due Date: January 14, 2025
+  Days Past Due: 60
+  History: 5-year customer, usually pays on time
+  Notes: Two prior reminders sent (Jan 20, Feb 10)
+  with no response. Also has a current invoice
+  MER-2025-0234 for $8,200 due March 20.
+
+  ACCOUNT 3 — Stage 4 Final Demand
+  Customer: Apex Digital Services
+  Contact: Sarah Kim, Controller
+  Invoice #: MER-2024-0998
+  Amount: $22,000.00
+  Invoice Date: November 1, 2024
+  Terms: Net 30
+  Due Date: December 1, 2024
+  Days Past Due: 104
+  History: Sporadic payment history, has disputed
+  amounts in the past
+  Notes: Three prior notices sent. Phone call on
+  Feb 15 — Sarah said "payment is in process."
+  No payment received.
+
+  Draft appropriate communications for all three
+  accounts including:
+  1. The letter/email text
+  2. Subject line
+  3. Recommended delivery method
+  4. Internal notes and next steps
+
+assertions:
+  - type: llm_judge
+    criteria: "Tone progression is appropriate across stages — Account 1 (Stage 1): warm and professional, assumes the best (oversight, not intentional), provides invoice details as a courtesy, offers to help if there's an issue, expresses appreciation for the business relationship; no mention of penalties or consequences; Account 2 (Stage 3): firm but professional, references the two prior unanswered communications, escalates the contact level (addresses CFO directly), mentions the impact on the business relationship and the current open invoice, requests specific action (payment by date or contact to discuss); Account 3 (Stage 4): direct and formal, references all prior collection attempts including the verbal promise, states clear consequences (collection agency referral, credit hold, potential legal action), provides a final deadline (typically 10-15 business days), offers one last opportunity to resolve or establish a payment plan."
+    weight: 0.35
+    description: "ToneProgression"
+  - type: llm_judge
+    criteria: "Each communication includes all required elements — all three include: invoice number, amount, original due date, days past due, and how to make payment; Account 1 includes: a statement that 'our records indicate this invoice is past due' (not accusatory), contact information for questions, and payment remittance instructions; Account 2 includes: timeline of prior collection attempts, the amount at risk (total exposure including the new invoice = $43,000), a request for the CFO to personally respond by a specific date, and an offer to discuss payment arrangements; Account 3 includes: formal language appropriate for a final demand, reference to all prior contacts (dates and methods), the verbal commitment from Feb 15 that wasn't fulfilled, legal rights reservation language, and a hard deadline after which the account will be referred to collections; recommended delivery methods: Account 1 — email; Account 2 — email + certified mail; Account 3 — certified mail with return receipt."
+    weight: 0.35
+    description: "CommunicationElements"
+  - type: llm_judge
+    criteria: "Internal notes and next steps are actionable — Account 1: note that this is a high-potential customer, monitor for payment within 7 days, if not received by March 22 escalate to Stage 2; consider a phone call first given the relationship potential; Account 2: note the risk that the current invoice (MER-2025-0234, $8,200) is approaching its due date — consider putting this customer on credit hold until the overdue amount is resolved; escalate to VP of Sales if Granite is a strategic account; request a formal payment plan if they're experiencing cash flow issues; Account 3: set a firm deadline (e.g., March 28) after which the account will be referred to the collection agency; notify the sales team that this account may be suspended; review the dispute history to determine if there's a legitimate unresolved issue; calculate the bad debt provision needed (104 days overdue = high probability of write-off); the internal notes distinguish between 'customer won't pay' and 'customer can't pay' scenarios with different strategies for each."
+    weight: 0.30
+    description: "InternalNotes"

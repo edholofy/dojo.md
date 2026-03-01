@@ -1,0 +1,72 @@
+meta:
+  id: beginner-variance-shift
+  level: 1
+  course: budget-variance-analysis
+  type: output
+  description: "Beginner shift simulation — handle three variance analysis requests in sequence: a departmental expense variance, a revenue variance with a reforecast request, and a quick variance check for the CFO before a meeting"
+  tags: [shift-simulation, multi-task, time-pressure, beginner]
+
+state: {}
+
+trigger: |
+  You're an FP&A analyst on a busy Monday morning.
+  Three requests arrive within an hour.
+
+  REQUEST 1 — DEPARTMENT EXPENSE VARIANCE (9:00 AM)
+  The IT Director needs the March expense variance
+  for her budget review at 10 AM.
+
+  IT Department — March 2026:
+  Cloud Hosting:    Budget $85,000   Actual $102,000
+  Software Licenses: Budget $45,000  Actual $43,000
+  Contractors:      Budget $60,000   Actual $78,000
+  Hardware:         Budget $30,000   Actual $12,000
+  Training:         Budget $15,000   Actual $8,000
+  Total:            Budget $235,000  Actual $243,000
+
+  Context: Cloud costs spiked due to a data migration
+  project. Two additional contractors were brought on
+  for a security remediation.
+
+  Prepare a quick variance table with commentary
+  (100 words).
+
+  REQUEST 2 — REVENUE REFORECAST (9:20 AM)
+  The VP of Sales asks: "We're $200K behind on Q1
+  revenue. Can you project what we need in Q2 to
+  get back on track for the half-year target?"
+
+  Half-year revenue target: $28,000,000
+  Q1 Actual revenue: $13,200,000
+  Q1 Budget: $13,400,000
+  Q2 Budget: $14,600,000
+
+  Provide the calculation and a 75-word summary.
+
+  REQUEST 3 — CFO QUICK CHECK (9:45 AM)
+  The CFO is heading into a board meeting and asks:
+  "Give me the three biggest variances this month
+  across the whole company, in two sentences."
+
+  Company-wide March data (top variances):
+  - Revenue: -$180K (lost a key contract renewal)
+  - Cloud Hosting: -$17K (data migration project)
+  - Contractor spend: -$18K (security remediation)
+  - Salaries: +$25K (2 open positions)
+  - Travel: +$15K (cancelled conference)
+
+  Handle all three requests.
+
+assertions:
+  - type: llm_judge
+    criteria: "IT expense variance is correct and the commentary is useful — the variance table shows: Cloud Hosting +$17,000 U (20.0%), Software Licenses -$2,000 F (4.4%), Contractors +$18,000 U (30.0%), Hardware -$18,000 F (60.0%), Training -$7,000 F (46.7%), Total +$8,000 U (3.4%); the 100-word commentary identifies the two main drivers: Cloud Hosting overage ($17K) is directly tied to the data migration project (one-time, should not recur), and the Contractor overage ($18K) reflects the two additional resources for security remediation (question: how long will they be needed?); the Hardware and Training savings partially offset but may represent timing delays rather than true savings; the overall $8K overage (3.4%) is modest but concentrated in two areas with known causes."
+    weight: 0.35
+    description: "ITExpenseVariance"
+  - type: llm_judge
+    criteria: "Revenue reforecast calculation is correct and the summary is clear — the calculation: Half-year target is $28,000,000; Q1 actual was $13,200,000; therefore Q2 needs $28,000,000 - $13,200,000 = $14,800,000 to hit the half-year target; Q2 budget is $14,600,000, so Q2 needs to deliver $200K above the original Q2 budget (or 1.4% above Q2 plan) to make up the Q1 shortfall; the 75-word summary conveys: Q2 needs $14.8M vs. the original $14.6M budget — an incremental $200K (1.4%) above plan; this is achievable if the pipeline is strong, but the team should identify specific opportunities to close the gap; alternatively, if Q2 is also likely to miss, the half-year target may need to be revised — better to reforecast now than surprise later."
+    weight: 0.35
+    description: "RevenueReforecast"
+  - type: llm_judge
+    criteria: "CFO quick check is concise and immediately useful — the response provides exactly what the CFO needs in two sentences: the three biggest variances are the $180K revenue miss from the lost contract renewal (unfavorable), $25K salary savings from two open positions (favorable), and $18K contractor overspend for security remediation (unfavorable); the revenue miss is the headline story for the board, while the other variances are operational and manageable; the response is crisp, prioritized, and delivered in the format requested — no extra detail that would slow down a CFO heading into a meeting; all three requests demonstrate the ability to adjust detail level and format to the audience and time constraint."
+    weight: 0.30
+    description: "CFOQuickCheck"

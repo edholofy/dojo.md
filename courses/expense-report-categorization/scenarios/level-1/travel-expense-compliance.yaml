@@ -1,0 +1,88 @@
+meta:
+  id: travel-expense-compliance
+  level: 1
+  course: expense-report-categorization
+  type: output
+  description: "Review travel expenses for policy compliance — check a business trip expense report against company travel policy and flag violations"
+  tags: [travel-policy, compliance-review, policy-violations, beginner]
+
+state: {}
+
+trigger: |
+  Review the following expense report against the
+  company travel policy and identify all violations.
+
+  COMPANY TRAVEL POLICY (key provisions):
+  - Airfare: Economy class required for flights
+    under 5 hours. Business class requires VP
+    approval for flights 5+ hours.
+  - Hotels: Maximum $200/night for Tier 2 cities.
+    Maximum $300/night for Tier 1 cities (NYC, SF,
+    DC, Chicago, Boston, LA).
+  - Meals: $75/day maximum for employee-only meals.
+    Client meals up to $100/person with manager
+    approval.
+  - Ground transportation: Uber/Lyft preferred over
+    taxis. Rental cars require pre-approval.
+  - Alcohol: Not reimbursable as a standalone
+    expense. With client meals, maximum $30/person
+    for alcohol.
+  - Personal expenses: Never reimbursable (gym, spa,
+    movies, personal calls).
+  - Receipts: Required for all expenses over $25.
+  - Advance booking: Flights must be booked 14+ days
+    in advance unless emergency travel.
+  - Companion travel: Expenses for spouses/companions
+    are never reimbursable.
+
+  EXPENSE REPORT:
+  Employee: Robert Kim, Senior Account Executive
+  Trip: Client meetings in New York City
+  Dates: March 3-6, 2025 (4 days, 3 nights)
+  Manager: Lisa Chen (VP of Sales)
+
+  Line 1: Delta First Class LAX-JFK, booked 3/1
+  (2 days before travel), $1,245.00
+  Line 2: Uber Black from JFK to Manhattan hotel,
+  $125.00
+  Line 3: The Plaza Hotel, 3 nights, $389/night,
+  $1,167.00
+  Line 4: Client dinner at Nobu with 3 clients and
+  wife, $680.00 (5 people total, wine included)
+  Line 5: Breakfast at hotel (solo), $32.00
+  Line 6: Uber to client office, $28.00
+  Line 7: Lunch solo at deli, $22.00
+  Line 8: Uber from client to hotel, $24.00
+  Line 9: Hotel gym day pass, $25.00
+  Line 10: Client lunch at Le Bernardin with 2
+  clients, $345.00 (3 people)
+  Line 11: Uber to evening event, $18.00
+  Line 12: Hotel minibar, $45.00
+  Line 13: Breakfast at hotel (solo), $28.00
+  Line 14: Room service dinner (solo), $85.00
+  Line 15: Uber to airport, $65.00
+  Line 16: In-flight Wi-Fi, $19.99
+  Line 17: Hotel spa treatment, $150.00
+  Line 18: Dry cleaning, $42.00
+  Line 19: Souvenir purchase at airport, $35.00
+  Line 20: Checked bag fee, $35.00
+
+  Create:
+  1. Line-by-line compliance review
+  2. Summary of all policy violations
+  3. Recommended adjustments (approved vs. denied)
+  4. Memo to employee explaining denied items
+
+assertions:
+  - type: llm_judge
+    criteria: "Compliance review catches all policy violations — identifies at least 8 violations: (1) First Class flight on a ~5.5 hour flight without documented VP approval and booked 2 days in advance (violates 14-day advance booking); (2) Uber Black is a premium service — policy prefers standard Uber/Lyft; (3) Hotel at $389/night exceeds NYC Tier 1 max of $300/night ($89/night over × 3 = $267 overage); (4) Client dinner includes wife's portion (companion expenses not reimbursable) — must deduct 1/5 of the total; (5) Wine at dinner — need to verify alcohol doesn't exceed $30/person; (6) Hotel gym ($25) is a personal expense; (7) Room service dinner ($85) may exceed the $75/day solo meal limit when combined with breakfast ($28) and lunch ($22) = $135 total for the day; (8) Spa treatment ($150) is a personal expense; (9) Souvenir ($35) is a personal expense; (10) Minibar ($45) — may be personal."
+    weight: 0.35
+    description: "ComplianceReview"
+  - type: llm_judge
+    criteria: "Recommended adjustments correctly calculate approved amounts — approves expenses that comply with policy at their full amounts; reduces the hotel to $300/night ($900 total vs. $1,167 claimed); deducts the wife's portion from the Nobu dinner (1/5 = $136, so approved $544); denies gym, spa, souvenir, and minibar entirely; adjusts the flight cost (if economy fare for the same flight was available at $400-500, reimburse at economy rate); flags the Uber Black for adjustment to standard rate; calculates the daily meal limit compliance ($75/day for solo meals — checks March 5 total of $28 + $22 + $85 = $135, which exceeds $75); the total approved amount is significantly less than the $4,421 claimed; the math is correct throughout."
+    weight: 0.35
+    description: "RecommendedAdjustments"
+  - type: llm_judge
+    criteria: "Employee memo is professional, specific, and educational — explains each denied or adjusted item with reference to the specific policy provision violated; distinguishes between items that are completely denied (personal expenses), items that are reduced (hotel rate, companion's meal), and items that need additional documentation (VP approval for first class, advance booking justification); the tone is professional and helpful, not punitive; suggests how to avoid violations in the future (book flights 14+ days in advance, check hotel rate limits before booking, don't include companion expenses); provides the total approved amount and the process for disputing any denials."
+    weight: 0.30
+    description: "EmployeeMemo"

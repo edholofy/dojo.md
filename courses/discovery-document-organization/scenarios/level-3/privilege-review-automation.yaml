@@ -1,0 +1,73 @@
+meta:
+  id: privilege-review-automation
+  level: 3
+  course: discovery-document-organization
+  type: output
+  description: "Automate privilege review processes — design a technology-assisted privilege review system combining rule-based filters, machine learning, and attorney oversight"
+  tags: [privilege-automation, technology-assisted, review-efficiency, advanced]
+
+state: {}
+
+trigger: |
+  Your firm's largest client is frustrated with
+  privilege review costs. In their last case, privilege
+  review consumed 40% of the total document review
+  budget ($2.4M out of $6M). Design an automated
+  privilege review system.
+
+  CLIENT CONTEXT:
+  - Fortune 100 technology company
+  - 15-20 active litigation matters at any time
+  - Average 500,000 documents per matter
+  - In-house legal department of 80 attorneys
+  - 5 outside law firms regularly engaged
+  - Privilege review costs averaging $150K-300K
+    per matter
+
+  CURRENT PRIVILEGE REVIEW PROCESS (manual):
+  1. First-pass reviewers flag "potentially
+     privileged" (20-30% of all documents flagged)
+  2. Senior associate reviews all flagged documents
+  3. Partner makes final determination on close calls
+  4. Privilege log prepared manually
+  Total privilege review time: 3-6 weeks per matter
+
+  AUTOMATION GOALS:
+  - Reduce privilege review costs by 50%+
+  - Maintain accuracy (false negative rate < 0.5% —
+    fewer than 1 in 200 privileged documents missed)
+  - Improve privilege log quality and consistency
+  - Reduce privilege review timeline to 1-2 weeks
+  - Create a defensible, auditable process
+
+  PRIVILEGE CATEGORIES TO DETECT:
+  - Attorney-client communications (in-house and
+    outside counsel)
+  - Attorney work product (opinion and fact)
+  - Joint defense/common interest communications
+  - Draft communications prepared at attorney
+    direction
+  - Non-privileged communications cc'ing attorneys
+    (the "cc trap" — not all cc'd attorney emails
+    are privileged)
+
+  Create:
+  1. Automated privilege detection system design
+  2. Rule-based filtering layer
+  3. Machine learning classification layer
+  4. Human review workflow for edge cases
+  5. Automated privilege log generation
+
+assertions:
+  - type: llm_judge
+    criteria: "System design uses a multi-layer approach with appropriate technology for each layer — Layer 1 (rule-based filtering): identifies all communications to/from/cc attorney email addresses and domains using a maintained attorney directory; flags all documents containing privilege-indicating terms ('privileged,' 'attorney-client,' 'work product,' 'legal advice'); categorizes documents into: definitely privileged (attorney-to-attorney communications within the firm), definitely not privileged (no attorney involvement, no privilege indicators), and uncertain (requires further analysis); Layer 2 (ML classification): trained model analyzes uncertain documents using features beyond simple keyword matching (communication context, document role in email thread, language patterns indicating legal advice vs. business discussion); Layer 3 (human review): senior attorney reviews only the edge cases identified by Layers 1 and 2 (estimated 5-10% of total collection vs. the current 20-30%)."
+    weight: 0.35
+    description: "SystemDesign"
+  - type: llm_judge
+    criteria: "The 'cc trap' and false negative challenges are specifically addressed — the system distinguishes between emails where an attorney is a substantive participant (potentially privileged) vs. emails where an attorney is copied as an FYI (likely not privileged) using: positional analysis (To/CC/BCC field), thread analysis (does the attorney respond?), content analysis (does the email seek or provide legal advice?), and contextual analysis (is the attorney's involvement related to legal work?); false negative prevention includes: conservative thresholds (err on the side of flagging as potentially privileged), specific quality control sampling of documents classified as 'not privileged' to catch missed privilege, mandatory human review of documents near the classification boundary; the system produces a confidence score for each document, routing low-confidence documents to human review."
+    weight: 0.35
+    description: "CCTrapAndFalseNegatives"
+  - type: llm_judge
+    criteria: "Automated privilege log generation and defensibility are addressed — the system auto-generates privilege log entries from document metadata and classification results: populates date, author, recipient, cc, document type, and privilege category automatically; generates description text using template-based language customized by privilege category and document type; human reviewer edits and approves auto-generated entries (reducing drafting time by 70-80%); the log maintains consistency across entries (same privilege type described the same way); defensibility documentation includes: system methodology description suitable for court submissions, validation statistics (false positive and false negative rates), human oversight documentation, audit trail of all classification decisions; the system's performance metrics (50%+ cost reduction, <0.5% false negative rate, 1-2 week timeline) are achievable with the proposed architecture."
+    weight: 0.30
+    description: "AutoLogAndDefensibility"

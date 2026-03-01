@@ -443,8 +443,8 @@ export function HumanView({ isTouch }) {
           style={{ maxWidth: 'var(--max-w)', margin: '0 auto' }}
         >
           {[
-            { num: '121', label: 'Courses' },
-            { num: '5,800+', label: 'Scenarios' },
+            { num: '125', label: 'Courses' },
+            { num: '6,250+', label: 'Scenarios' },
             { num: '5', label: 'Difficulty Levels' },
             { num: '\u221E', label: 'Models via OpenRouter' },
           ].map(({ num, label }) => (

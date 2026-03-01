@@ -1,0 +1,95 @@
+meta:
+  id: duplicate-invoice-detection
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Detect and prevent duplicate invoice payments — identify potential duplicates through matching algorithms, investigate suspicious patterns, and implement prevention controls"
+  tags: [duplicate-detection, fraud-prevention, payment-controls, beginner]
+
+state: {}
+
+trigger: |
+  The AP system has flagged 8 potential duplicate
+  invoices during the weekly batch processing.
+  Investigate each flag and determine which are
+  true duplicates vs. legitimate separate charges.
+
+  FLAGGED PAIRS:
+
+  PAIR 1:
+  A) INV-3301 from TechWorld Inc., $4,500.00,
+     dated 02/15, "IT Support - February"
+  B) INV-3301 from TechWorld Inc., $4,500.00,
+     dated 02/15, "IT Support - February"
+  Note: Exact match on all fields
+
+  PAIR 2:
+  A) INV-7821 from Metro Office, $1,234.56,
+     dated 03/01, "Office Supplies Q1"
+  B) INV-7822 from Metro Office, $1,234.56,
+     dated 03/01, "Office Supplies Q1"
+  Note: Different invoice numbers, same everything else
+
+  PAIR 3:
+  A) INV-5500 from DataCorp, $15,000.00,
+     dated 02/28, "Consulting - Feb", PO-4401
+  B) INV-5501 from DataCorp, $15,000.00,
+     dated 03/01, "Consulting - March", PO-4401
+  Note: Same vendor, amount, and PO, different
+  months
+
+  PAIR 4:
+  A) INV-2200 from Apex Janitorial, $2,800.00,
+     dated 03/01, "Monthly Cleaning - March"
+  B) INV-2200 from Apex Janitorial Services LLC,
+     $2,800.00, dated 03/01, "Monthly Cleaning"
+  Note: Slightly different vendor name
+
+  PAIR 5:
+  A) INV-9910 from Global Freight, $890.50,
+     dated 02/20, "Shipment #44521"
+  B) INV-9910 from Global Freight, $890.50,
+     dated 02/20, "Shipment #44521"
+  Note: Identical, but submitted by two different
+  employees (John in Receiving, Sarah in AP)
+
+  PAIR 6:
+  A) INV-4400 from Sunrise Catering, $3,200.00,
+     dated 02/15, "Company Event 2/14"
+  B) INV-4401 from Sunrise Catering, $1,600.00,
+     dated 02/28, "Company Event 2/14 - REVISED"
+  Note: Different amounts, says "REVISED"
+
+  PAIR 7:
+  A) INV-6600 from Quick Print, $445.00,
+     dated 03/05, "Print job #3344"
+  B) INV-6601 from Quick Print, $445.00,
+     dated 03/08, "Print job #3345"
+  Note: Different print job numbers, 3 days apart
+
+  PAIR 8:
+  A) INV-8800 from ABC Consulting, $12,500.00,
+     dated 01/31, "January consulting"
+  B) INV-8800 from ABC Consulting Group, $12,500.00,
+     dated 01/31, "Jan consulting services"
+  Note: Similar vendor name, same invoice number
+
+  For each pair, determine:
+  1. True duplicate, possible duplicate, or
+     legitimate separate charges
+  2. Resolution action
+  3. Root cause of the flag
+
+assertions:
+  - type: llm_judge
+    criteria: "Duplicate classifications are correct — Pair 1: TRUE DUPLICATE (exact match on all fields — the same invoice was entered twice); Pair 2: POSSIBLE DUPLICATE (same vendor, amount, date, description but different invoice numbers — vendor may have reissued with a new number, or these are genuinely two separate orders for the same amount — contact vendor to verify); Pair 3: LEGITIMATE SEPARATE (different months of consulting service, different invoice numbers — the same PO can cover multiple months, but verify the PO covers multi-month engagement); Pair 4: TRUE DUPLICATE (same invoice number, same amount, same date — the vendor name difference is just the full legal name vs. abbreviated name — likely same entity in the vendor master with a data quality issue); Pair 5: TRUE DUPLICATE (exact same invoice submitted by two different employees — classic internal duplicate from different departments); Pair 6: NOT A DUPLICATE — the second invoice is a revision/correction of the first (lower amount, says 'REVISED'); need to cancel the original INV-4400 and process only INV-4401; Pair 7: LEGITIMATE SEPARATE (different print job numbers, different dates — two separate print jobs that happened to be the same amount); Pair 8: TRUE DUPLICATE (same invoice number, same amount, same date — vendor name variation suggests duplicate vendor records in the master file)."
+    weight: 0.35
+    description: "DuplicateClassification"
+  - type: llm_judge
+    criteria: "Resolution actions are specific and appropriate — Pair 1: delete the duplicate entry, process only one copy; Pair 2: hold both, contact Metro Office to confirm whether two separate orders exist; Pair 3: process both after verifying the PO covers February and March; Pair 4: delete one, merge vendor records in the master file ('Apex Janitorial' and 'Apex Janitorial Services LLC' should be one vendor); Pair 5: delete the entry submitted by John (Receiving shouldn't be entering invoices — this indicates a process gap where both Receiving and AP are entering the same invoices); Pair 6: void/cancel INV-4400 ($3,200), process INV-4401 ($1,600) as the corrected amount, verify with Sunrise Catering that 4401 supersedes 4400; Pair 7: process both — legitimate separate jobs; Pair 8: delete one, clean up vendor master (merge 'ABC Consulting' and 'ABC Consulting Group'); each resolution includes who is responsible and the timeline."
+    weight: 0.35
+    description: "ResolutionActions"
+  - type: llm_judge
+    criteria: "Root cause analysis identifies systemic issues — the 8 flagged pairs reveal several systemic problems: (1) Duplicate vendor records in the master file (Pairs 4, 8) — recommends vendor master cleanup and deduplication project; (2) Multiple entry points for invoices (Pair 5) — recommends single point of entry (AP only, not Receiving); (3) No invoice number uniqueness constraint in the system (Pairs 1, 5 — same invoice number entered twice); (4) Lack of automated duplicate checking at entry time (currently only caught in weekly batch); recommendations include: real-time duplicate detection at invoice entry, vendor master deduplication, policy clarification that only AP enters invoices, automated matching of invoice numbers within vendor to prevent same-number entry, and periodic duplicate payment audits on historical data."
+    weight: 0.30
+    description: "RootCauseAnalysis"

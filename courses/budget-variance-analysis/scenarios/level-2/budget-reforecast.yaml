@@ -1,0 +1,64 @@
+meta:
+  id: budget-reforecast
+  level: 2
+  course: budget-variance-analysis
+  type: output
+  description: "Prepare a mid-year budget reforecast — use Q1 actuals and variance trends to update the full-year forecast with appropriate assumptions"
+  tags: [reforecast, full-year-outlook, assumption-setting, intermediate]
+
+state: {}
+
+trigger: |
+  Based on Q1 results, prepare a mid-year reforecast
+  for the full year 2026.
+
+  ORIGINAL ANNUAL BUDGET:
+  Revenue: $48,000,000
+  COGS: $28,800,000 (60%)
+  Gross Profit: $19,200,000 (40%)
+  OpEx: $14,400,000
+  Operating Income: $4,800,000 (10%)
+
+  Q1 ACTUAL:
+  Revenue: $11,200,000 (vs. budget $12,000,000)
+  COGS: $6,944,000 (62% of revenue)
+  Gross Profit: $4,256,000 (38%)
+  OpEx: $3,520,000 (vs. budget $3,600,000)
+  Operating Income: $736,000 (vs. budget $1,200,000)
+
+  VARIANCE DRIVERS (from Q1 analysis):
+  1. Revenue: lost 2 key customers in January
+     ($200K/month each = $400K/month ongoing impact)
+  2. COGS: commodity prices increased 3% above plan
+     (expected to persist)
+  3. OpEx: $80K favorable from 2 open headcount
+     positions expected to fill in April
+
+  MANAGEMENT ASSUMPTIONS FOR REFORECAST:
+  - Revenue: new customer pipeline should add $150K/
+    month starting June
+  - COGS: commodity increase of 3% is permanent
+  - OpEx: 2 positions filled in April (add $40K/month)
+  - No further customer losses expected
+  - Q4 seasonality: revenue typically 15% higher
+    than Q2/Q3
+
+  Prepare:
+  1. Quarterly reforecast (Q2, Q3, Q4)
+  2. Full-year reforecast vs. original budget
+  3. Key assumption documentation
+  4. Write a 300-word reforecast memo to the CFO
+
+assertions:
+  - type: llm_judge
+    criteria: "Quarterly reforecasts correctly incorporate all variance drivers — Q2 reforecast: Revenue = the original Q2 budget minus the ongoing customer loss impact ($400K/month × 3 months = $1,200K reduction) plus new pipeline starting June ($150K × 1 month = $150K); approximately $12,000K budget - $1,200K + $150K = $10,950K (or similar calculation based on the original quarterly budget); COGS at 62% of revenue (the Q1 run rate, reflecting the 3% commodity increase) = approximately $6,789K; OpEx: Q2 budget + $120K for filled positions (3 months × $40K) = approximately $3,720K; Q3: similar logic with full $450K new pipeline contribution (3 months × $150K); Q4: apply 15% seasonality uplift; the total reforecast should show full-year revenue of approximately $43-45M (vs. $48M budget), with gross margin compressed to ~38% from 40%, and operating income significantly below the $4.8M budget — likely in the $1.5-2.5M range; the reforecast is built bottom-up from identified drivers, not simply straight-lining Q1."
+    weight: 0.35
+    description: "QuarterlyReforecast"
+  - type: llm_judge
+    criteria: "Assumption documentation is clear and creates accountability — the reforecast assumptions are explicitly stated and categorized: (1) Revenue assumptions: lost customers are permanent ($400K/month = $4.8M annualized impact, $3.6M remaining year impact); new pipeline adds $150K/month starting June (total $1.05M from June-December); no further customer losses (a key risk assumption); Q4 seasonality of 15% above Q2/Q3 baseline is maintained from original budget; (2) Cost assumptions: COGS margin reset to 62% of revenue (2 points above budget due to commodity prices); commodity increase is permanent for the remainder of 2026; (3) OpEx assumptions: 2 positions filled April 1 at $40K/month fully loaded ($480K annualized, $360K remaining year); all other OpEx lines maintained at budget; (4) Risk factors flagged: the $150K/month new pipeline is management's estimate and should be probability-weighted; commodity prices could move further; if another key customer is lost, the impact is compounding; the assumptions create a trail — if the reforecast is off by Q3, you can trace back to which assumption was wrong."
+    weight: 0.35
+    description: "AssumptionDocumentation"
+  - type: llm_judge
+    criteria: "The CFO memo communicates the reforecast impact and recommends actions — the 300-word memo: (1) states the revised full-year outlook: revenue approximately $43-45M (down $3-5M or 6-10% from $48M budget), operating income approximately $1.5-2.5M (down $2.3-3.3M or 48-69% from $4.8M budget); (2) explains why the impact is disproportionate: the lost customers reduce revenue by $3.6M but the operating income impact is amplified because fixed costs don't flex down — each dollar of lost revenue drops approximately $0.38 straight to the bottom line (at 38% gross margin); (3) identifies the biggest assumption risk: the $150K/month new pipeline starting June — if this doesn't materialize, the full-year revenue drops another $1M+; (4) recommends actions: consider OpEx reductions to partially offset the revenue loss (hiring freeze beyond the 2 committed positions?), accelerate the sales pipeline (can June start earlier?), evaluate pricing to offset commodity costs, and establish a monthly reforecast cadence to track against the revised outlook; (5) recommends the board be briefed on the revised outlook before Q2 earnings; the tone is direct and honest — the year is significantly off-plan and management needs to act."
+    weight: 0.30
+    description: "CFOMemo"

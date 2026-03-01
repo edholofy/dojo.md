@@ -1,0 +1,78 @@
+meta:
+  id: aging-report-analysis
+  level: 1
+  course: invoice-processing-and-follow-up
+  type: output
+  description: "Analyze accounts payable aging reports — identify overdue invoices, prioritize payments, and prepare collection action plans"
+  tags: [aging-report, overdue-invoices, payment-priority, beginner]
+
+state: {}
+
+trigger: |
+  Review the AP aging report and prepare a payment
+  prioritization plan. Today's date is March 15,
+  2025.
+
+  ACCOUNTS PAYABLE AGING REPORT:
+
+  CURRENT (0-30 days):
+  Vendor              | Invoice    | Date    | Amount    | Terms    | Due Date
+  --------------------|-----------|---------|-----------|----------|--------
+  Alpha Mfg           | AM-5501   | 03/01   | $15,000   | 2/10 N30 | 03/31
+  Beta Services       | BS-2234   | 03/05   | $8,500    | Net 30   | 04/04
+  Gamma Electronics   | GE-7890   | 03/10   | $42,000   | Net 60   | 05/09
+  Delta Supplies      | DS-1122   | 02/28   | $3,200    | Net 30   | 03/30
+
+  31-60 DAYS:
+  Vendor              | Invoice    | Date    | Amount    | Terms    | Due Date
+  --------------------|-----------|---------|-----------|----------|--------
+  Epsilon Corp        | EC-4455   | 02/01   | $28,000   | Net 30   | 03/03
+  Zeta Logistics      | ZL-8811   | 01/28   | $12,000   | Net 45   | 03/14
+  Eta Consulting      | ETA-3344  | 02/10   | $18,500   | Net 30   | 03/12
+
+  61-90 DAYS:
+  Vendor              | Invoice    | Date    | Amount    | Terms    | Due Date
+  --------------------|-----------|---------|-----------|----------|--------
+  Theta Packaging     | TP-6677   | 12/20   | $7,800    | Net 30   | 01/19
+  Iota Services       | IS-9900   | 12/28   | $4,500    | Net 45   | 02/11
+
+  90+ DAYS:
+  Vendor              | Invoice    | Date    | Amount    | Terms    | Due Date
+  --------------------|-----------|---------|-----------|----------|--------
+  Kappa Solutions     | KS-1234   | 11/15   | $22,000   | Net 30   | 12/15
+  Lambda Group        | LG-5678   | 10/30   | $5,600    | Net 30   | 11/29
+
+  AVAILABLE CASH: $85,000
+  EXPECTED RECEIPTS THIS WEEK: $45,000
+
+  VENDOR RELATIONSHIP NOTES:
+  - Kappa Solutions: critical vendor, sole source
+    for component XYZ. Has sent 3 collection
+    notices and threatens to suspend supply.
+  - Lambda Group: small vendor, dispute over
+    service quality. $2,800 of the $5,600 is
+    contested.
+  - Theta Packaging: good relationship, will wait
+    if contacted
+  - Epsilon Corp: large vendor, has offered 1%
+    prompt payment discount if paid this week
+
+  Prepare:
+  1. Payment priority ranking with justification
+  2. Cash allocation plan
+  3. Vendor communication plan
+  4. Aging summary with metrics
+
+assertions:
+  - type: llm_judge
+    criteria: "Payment priority ranking is logical and considers all factors — Priority 1: Kappa Solutions ($22,000, 90+ days) — critical sole-source vendor threatening supply suspension, business continuity risk; Priority 2: Epsilon Corp ($28,000, 12 days past due) — offered 1% discount for prompt payment ($280 savings), also past due which could damage the relationship; Priority 3: Zeta Logistics ($12,000, 1 day past due as of March 15) — just past due, pay to maintain terms; Priority 4: Eta Consulting ($18,500, 3 days past due) — recently past due, standard follow-up; Priority 5: Theta Packaging ($7,800, 55 days past due) — will wait if contacted, but still needs attention; remaining items: Lambda Group dispute needs resolution before payment; Iota Services (61-90 days) needs investigation; current items can wait for their due dates; the ranking considers: business impact, relationship risk, available discounts, and days past due."
+    weight: 0.35
+    description: "PaymentPriority"
+  - type: llm_judge
+    criteria: "Cash allocation plan is realistic within constraints — available cash: $85,000 now + $45,000 expected = $130,000 total; total AP: $167,100; cannot pay everything — must prioritize; recommended allocation: Kappa Solutions $22,000 (Priority 1, pay immediately to prevent supply disruption) + Epsilon Corp $28,000 (pay this week for 1% discount = $27,720 net) + Zeta Logistics $12,000 + Eta Consulting $18,500 = $80,500 from current cash; after expected receipts: Theta Packaging $7,800 + Alpha Mfg $15,000 (take the 2/10 discount if still within window, saving $300); Lambda Group: pay the undisputed portion ($2,800) and withhold the contested $2,800 pending resolution; Iota Services $4,500 deferred until next cash cycle; remaining current invoices paid on their due dates; the plan ensures critical vendors are paid first while maximizing discount capture."
+    weight: 0.35
+    description: "CashAllocation"
+  - type: llm_judge
+    criteria: "Vendor communication plan and aging metrics are comprehensive — communication plan: Kappa Solutions — call today, confirm payment is being processed, apologize for delay, request written confirmation that supply will continue; Lambda Group — schedule meeting to resolve the $2,800 dispute, propose a compromise or request supporting documentation; Theta Packaging — call to acknowledge the delay, provide expected payment date, maintain relationship; Epsilon Corp — confirm the 1% discount offer and submit payment within the discount window; aging metrics include: total AP ($167,100), current ($68,700 = 41.1%), 31-60 days ($58,500 = 35.0%), 61-90 days ($12,300 = 7.4%), 90+ days ($27,600 = 16.5%); DPO (Days Payable Outstanding) is calculated; the 90+ bucket at 16.5% is flagged as concerning — target should be under 5%; a trend comparison to prior months would identify whether aging is improving or deteriorating."
+    weight: 0.30
+    description: "CommunicationAndMetrics"
