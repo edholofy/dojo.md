@@ -88,7 +88,7 @@ export async function startMcpServer(): Promise<void> {
   // ─── dojo_train ───────────────────────────────────────────────
   server.tool(
     'dojo_train',
-    'Start a training session. In interactive mode (default), returns the first scenario for you to solve. In headless mode, runs all scenarios internally and returns a summary.',
+    'Start a training session. In interactive mode (default), returns the first scenario for you to solve — zero API cost, you act as both agent and judge. In headless mode, runs all scenarios internally using API calls and returns a summary.',
     {
       course_id: z.string().describe('Course ID to train on'),
       level: z.number().optional().describe('Specific level to train on'),
@@ -161,7 +161,7 @@ export async function startMcpServer(): Promise<void> {
   // ─── dojo_submit ───────────────────────────────────────────────
   server.tool(
     'dojo_submit',
-    'Submit your response for the current scenario. In autopilot mode, returns deterministic results + pending judgments for you to evaluate. In interactive mode, returns score and feedback directly.',
+    'Submit your response for the current scenario. Returns deterministic results + pending judgments for you to self-evaluate via dojo_judge. Zero API cost — you are the judge.',
     {
       session_id: z.string().describe('Session ID from dojo_train or dojo_autopilot'),
       response: z.string().describe('Your response/answer for the current scenario'),
@@ -324,7 +324,7 @@ export async function startMcpServer(): Promise<void> {
     'dojo_judge',
     'Submit your judgments for pending LLM assertions after dojo_submit returns pending_judgments. You evaluate your own performance honestly.',
     {
-      session_id: z.string().describe('Session ID from dojo_autopilot'),
+      session_id: z.string().describe('Session ID from dojo_train or dojo_autopilot'),
       judgments: z.array(z.object({
         assertion_index: z.number().describe('Index from pending_judgments'),
         passed: z.boolean().describe('Whether the assertion passed'),

@@ -124,6 +124,7 @@ export class SessionManager {
       mockSessions,
       results: [],
       status: 'active',
+      autopilot: true, // Always use zero-API self-judging — the calling agent IS the judge
     };
 
     this.sessions.set(sessionId, session);
