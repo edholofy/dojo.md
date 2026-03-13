@@ -469,6 +469,7 @@ export function HumanView({ isTouch }) {
               MIT &middot; Open Source
             </a>
           </div>
+          <PromptBlock isTouch={isTouch} />
         </div>
       </section>
 
@@ -909,7 +910,6 @@ export function HumanView({ isTouch }) {
             uses API credits (~$0.50–5/run). Autopilot mode uses zero.
           </p>
         </div>
-        <PromptBlock isTouch={isTouch} />
       </section>
 
       {/* ── Footer ── */}
