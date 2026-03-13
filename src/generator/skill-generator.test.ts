@@ -62,6 +62,16 @@ describe('SkillGenerator.readSkillFile', () => {
     expect(gen.readSkillFile('nonexistent')).toBeNull();
   });
 
+  it('works with null client for read-only operations', () => {
+    const genericDir = join(tempDir, '.claude/skills/null-test');
+    mkdirSync(genericDir, { recursive: true });
+    writeFileSync(join(genericDir, 'SKILL.md'), 'null client content');
+
+    const gen = new SkillGenerator(null);
+    expect(gen.readSkillFile('null-test')).toBe('null client content');
+    expect(gen.getSkillPath('null-test')).toContain('null-test/SKILL.md');
+  });
+
   it('reads model-specific skill file first', () => {
     const modelDir = join(tempDir, '.claude/skills/test-course/openai--gpt-4o');
     mkdirSync(modelDir, { recursive: true });
@@ -117,6 +127,11 @@ describe('SkillGenerator.generate', () => {
     // Verify file was written
     const expectedPath = join(tempDir, '.claude/skills/test-course/test--model/SKILL.md');
     expect(existsSync(expectedPath)).toBe(true);
+  });
+
+  it('throws when called with null client', async () => {
+    const gen = new SkillGenerator(null);
+    await expect(gen.generate('test-course', [], 100)).rejects.toThrow('requires a ModelClient');
   });
 
   it('uses fallback template when LLM client throws', async () => {

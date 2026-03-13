@@ -14,7 +14,7 @@ export const assertionSchema = z.object({
 
 export const scenarioMetaSchema = z.object({
   id: z.string(),
-  level: z.number().int().min(1).max(5),
+  level: z.number().int().min(1).max(10),
   course: z.string(),
   description: z.string(),
   tags: z.array(z.string()).default([]),

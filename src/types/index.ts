@@ -264,6 +264,27 @@ export interface DojoSession {
   mockSessions: Map<string, import('../mocks/session.js').MockSession>;
   results: ScenarioResult[];
   status: 'active' | 'completed';
+  /** Autopilot mode — zero API calls, agent judges LLM assertions */
+  autopilot?: boolean;
+  /** Iteration number for autopilot training loops */
+  iteration?: number;
+  /** Pending LLM judgments for current scenario (autopilot only) */
+  pendingJudgments?: PendingJudgment[];
+  /** Deterministic results for current scenario awaiting judgment merge (autopilot only) */
+  pendingDeterministic?: AssertionResult[];
+  /** Stored agent response for the current pending scenario (autopilot only) */
+  pendingAgentResponse?: string;
+  /** Frozen action trace for the current pending scenario (autopilot only) */
+  pendingActionTrace?: ActionRecord[];
+  /** Guard against double-finalization from concurrent requests */
+  finalizing?: boolean;
+}
+
+/** Tool definition included in scenario prompts */
+export interface PromptToolDef {
+  name: string;
+  description: string;
+  parameters: Record<string, { type: string; description: string; required?: boolean }>;
 }
 
 /** What dojo_train returns in interactive mode */
@@ -275,6 +296,8 @@ export interface ScenarioPrompt {
   type: 'tool' | 'output';
   trigger: string;
   available_tools?: string[];
+  /** Full tool definitions with parameter schemas (for autopilot/research-generated courses) */
+  tool_definitions?: PromptToolDef[];
 }
 
 /** What dojo_submit returns */
@@ -336,4 +359,101 @@ export interface FinalResults {
   total: number;
   failure_patterns: FailurePattern[];
   skill_generated: boolean;
+}
+
+// ─── Autopilot Types ──────────────────────────────────────────
+
+/** A pending LLM assertion that the calling agent must judge */
+export interface PendingJudgment {
+  assertion_index: number;
+  assertion: Assertion;
+  prompt: string;
+}
+
+/** What dojo_submit returns in autopilot mode */
+export interface AutopilotSubmitResult {
+  scenario_id: string;
+  deterministic_results: AssertionResult[];
+  pending_judgments: PendingJudgment[];
+  /** Set after dojo_judge is called */
+  passed?: boolean;
+  score?: number;
+  feedback?: string;
+  next?: ScenarioPrompt | null;
+}
+
+/** Agent's judgment for a pending LLM assertion */
+export interface JudgmentEntry {
+  assertion_index: number;
+  passed: boolean;
+  reasoning: string;
+  score?: number;
+}
+
+/** What dojo_judge returns */
+export interface JudgeResult {
+  scenario_id: string;
+  passed: boolean;
+  score: number;
+  feedback: string;
+  next?: ScenarioPrompt | null;
+}
+
+/** What dojo_autopilot returns */
+export interface AutopilotProgram {
+  session_id: string;
+  course_id: string;
+  course_name: string;
+  total_scenarios: number;
+  iteration: number;
+  skill_context: string | null;
+  first_scenario: ScenarioPrompt;
+  program: string;
+}
+
+/** What dojo_save_skill accepts and returns */
+export interface SaveSkillResult {
+  course_id: string;
+  skill_path: string;
+  saved: boolean;
+}
+
+// ─── Research / Course Generation Types ───────────────────────
+
+/** Tool schema for dynamically generated mock APIs */
+export interface MockToolSchema {
+  name: string;
+  description: string;
+  parameters: Record<string, { type: string; description: string; required?: boolean }>;
+}
+
+/** What dojo_research returns */
+export interface ResearchProgram {
+  program: string;
+  guidelines: {
+    course_yaml_template: string;
+    scenario_yaml_template: string;
+    mock_tool_naming: string;
+    assertion_types: string;
+  };
+}
+
+/** What dojo_save_course accepts */
+export interface SaveCourseInput {
+  course_id: string;
+  course_yaml: string;
+  scenarios: Array<{
+    level: number;
+    filename: string;
+    content: string;
+  }>;
+  tool_schemas?: MockToolSchema[];
+}
+
+/** What dojo_save_course returns */
+export interface SaveCourseResult {
+  course_id: string;
+  course_path: string;
+  scenarios_saved: number;
+  tool_schemas_saved: number;
 }

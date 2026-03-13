@@ -74,6 +74,21 @@ describe('completeRun / failRun', () => {
     expect(row.completed_at).toBeTruthy();
   });
 
+  it('is idempotent — second call does not overwrite timestamp', () => {
+    const id = createRun(db, 'test');
+    completeRun(db, id, 85);
+
+    const row1 = db.prepare('SELECT completed_at FROM training_runs WHERE id = ?').get(id) as { completed_at: string };
+    const firstTimestamp = row1.completed_at;
+
+    // Call again — should be a no-op
+    completeRun(db, id, 99);
+
+    const row2 = db.prepare('SELECT completed_at, score FROM training_runs WHERE id = ?').get(id) as { completed_at: string; score: number };
+    expect(row2.completed_at).toBe(firstTimestamp);
+    expect(row2.score).toBe(85); // Original score preserved
+  });
+
   it('marks a run as failed', () => {
     const id = createRun(db, 'test');
     failRun(db, id, 'API timeout');

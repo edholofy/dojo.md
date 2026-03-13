@@ -167,6 +167,10 @@ export function completeRun(
   score: number,
   results?: TrainingRun,
 ): void {
+  // Guard against double-finalization corrupting the original completion timestamp
+  const existing = db.prepare('SELECT status FROM training_runs WHERE id = ?').get(runId) as { status: string } | undefined;
+  if (existing?.status === 'completed') return;
+
   const stmt = db.prepare('UPDATE training_runs SET completed_at = ?, score = ?, status = ?, results_json = ? WHERE id = ?');
   stmt.run(new Date().toISOString(), score, 'completed', results ? JSON.stringify(results) : null, runId);
 }
@@ -217,7 +221,7 @@ export function getRunResults(db: Database.Database, runId: string): TrainingRun
  */
 export function getLatestRun(db: Database.Database, courseId: string): TrainingRun | null {
   const row = db.prepare(
-    'SELECT id FROM training_runs WHERE course_id = ? ORDER BY started_at DESC LIMIT 1',
+    'SELECT id FROM training_runs WHERE course_id = ? ORDER BY started_at DESC, id DESC LIMIT 1',
   ).get(courseId) as Record<string, unknown> | undefined;
   if (!row) return null;
   return getRunResults(db, row.id as string);

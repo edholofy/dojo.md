@@ -86,4 +86,19 @@ describe('MockSession', () => {
     const s2 = new MockSession(makeScenario());
     expect(s1.id).not.toBe(s2.id);
   });
+
+  it('action log params are immutable after recording', () => {
+    const session = new MockSession(makeScenario());
+    const params = { charge_id: 'ch_001', extra: { nested: true } };
+    session.handleToolCall('stripe_charges_retrieve', params);
+
+    // Mutate the original params AFTER the call
+    params.charge_id = 'MUTATED';
+    (params.extra as any).nested = false;
+
+    // Action log should have the original values (deep cloned)
+    const log = session.getActionLog();
+    expect(log[0].params.charge_id).toBe('ch_001');
+    expect((log[0].params.extra as any).nested).toBe(true);
+  });
 });

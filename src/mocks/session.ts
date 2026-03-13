@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Scenario, ScenarioState, MockResponse, ActionRecord } from '../types/index.js';
 import { getMockHandler } from './registry.js';
+import { getGenericHandler } from './generic.js';
 
 /**
  * MockSession manages the mutable state for a single scenario execution.
@@ -25,7 +26,7 @@ export class MockSession {
   handleToolCall(tool: string, params: Record<string, unknown>): MockResponse {
     const start = performance.now();
 
-    const handler = getMockHandler(tool);
+    const handler = getMockHandler(tool) ?? getGenericHandler(tool);
     if (!handler) {
       const response: MockResponse = {
         success: false,
@@ -71,8 +72,8 @@ export class MockSession {
     this.actionLog.push({
       timestamp: new Date().toISOString(),
       tool,
-      params,
-      response,
+      params: structuredClone(params),
+      response: structuredClone(response),
       duration_ms: Math.round(performance.now() - startTime),
     });
   }

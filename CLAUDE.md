@@ -173,6 +173,43 @@ courses/stripe-refunds/
 | `meta-llama/llama-3.3-70b-instruct` | Llama 3.3 70B |
 | `xiaomi/mimo-v2-flash` | MiMo V2 Flash |
 
+## Autopilot Mode (Zero API Cost)
+
+Autopilot mode lets Claude Code (or Codex) act as both the agent AND the judge — no OpenRouter/Anthropic API calls needed. Inspired by Karpathy's autoresearch `program.md` pattern.
+
+### How it works
+
+```
+Claude Code → dojo_autopilot → get program + first scenario
+           → dojo_tool        → interact with mock services
+           → dojo_submit      → get deterministic results + LLM judgment prompts
+           → dojo_judge       → submit self-evaluations
+           → dojo_results     → get final score + failure patterns
+           → dojo_save_skill  → save generated SKILL.md
+           → dojo_autopilot   → next iteration (with SKILL.md context)
+```
+
+### MCP Tools (Autopilot)
+
+| Tool | Purpose |
+|------|---------|
+| `dojo_autopilot` | Start autonomous training — returns program + first scenario |
+| `dojo_tool` | Call mock services during scenarios |
+| `dojo_submit` | Submit response — returns deterministic evals + LLM judgment prompts |
+| `dojo_judge` | Submit self-judgments for LLM assertions |
+| `dojo_results` | Finalize session — get score + failure patterns |
+| `dojo_save_skill` | Save agent-generated SKILL.md |
+
+### Key Differences from Headless Mode
+
+| Aspect | Headless (`dojo train`) | Autopilot (`dojo_autopilot`) |
+|--------|------------------------|------------------------------|
+| Agent | Internal ModelClient (API $$) | Claude Code / Codex (subscription) |
+| Judge | Internal ModelClient (API $$) | The agent self-judges (free) |
+| SKILL.md gen | Internal LLM call (API $$) | Agent generates directly (free) |
+| Cost | ~$0.50-5 per course run | $0 additional |
+| Loop driver | `training-loop.ts` | Agent follows program autonomously |
+
 ## MCP Integration
 
 Add to Claude Code config (`~/.claude.json`):
@@ -189,3 +226,46 @@ Add to Claude Code config (`~/.claude.json`):
   }
 }
 ```
+
+> **Note**: `ANTHROPIC_API_KEY` is only needed for headless/interactive mode. Autopilot mode requires NO API keys — Claude Code handles everything.
+
+## Research Mode (Auto-Generate Courses)
+
+Claude Code can research any API/product and auto-generate a complete training course — mock APIs, scenarios, assertions — then immediately train on it.
+
+### Flow
+
+```
+dojo_research("Twilio SMS API")     → Get research program
+  → Claude Code researches API docs, endpoints, error codes
+  → Claude Code generates course.yaml + scenario YAMLs
+dojo_save_course(...)               → Save course files
+dojo_autopilot(course_id)           → Start training immediately
+```
+
+### Generic Mock Handler
+
+Research-generated courses don't need TypeScript mock handlers. The **generic mock** auto-handles any API tool based on naming convention:
+
+```
+{service}_{entity}_{action}
+```
+
+| Action | Behavior | Example |
+|--------|----------|---------|
+| list | Filter/paginate state records | `twilio_messages_list` |
+| retrieve/get | Get by ID | `github_issues_retrieve` |
+| create/add/send | Add record to state | `twilio_messages_send` |
+| update/modify | Modify record fields | `shopify_orders_update` |
+| delete/remove | Remove from state | `github_issues_delete` |
+| cancel/close | Set status field | `stripe_subscriptions_cancel` |
+| search/find | Full-text search | `zendesk_tickets_search` |
+
+State keys in YAML map to entities: `messages_send` → `state.messages`. Every record must have an `id` field.
+
+### MCP Tools (Research)
+
+| Tool | Purpose |
+|------|---------|
+| `dojo_research` | Get research program for a topic/API |
+| `dojo_save_course` | Save generated course.yaml + scenarios |

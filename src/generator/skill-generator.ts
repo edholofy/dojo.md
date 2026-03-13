@@ -22,10 +22,15 @@ interface CategorizedPattern extends FailurePattern {
  * a model slug is provided, or `.claude/skills/<course-id>/SKILL.md` for generic skills.
  */
 export class SkillGenerator {
-  private client: ModelClient;
+  private client: ModelClient | null;
   private modelSlug: string | undefined;
 
-  constructor(client: ModelClient, modelSlug?: string) {
+  /**
+   * Create a SkillGenerator.
+   * @param client ModelClient for LLM-powered generation. Pass null for read-only / autopilot use.
+   * @param modelSlug Optional model slug for per-model skill paths.
+   */
+  constructor(client: ModelClient | null, modelSlug?: string) {
     this.client = client;
     this.modelSlug = modelSlug;
   }
@@ -42,6 +47,10 @@ export class SkillGenerator {
     score: number,
     scenarios?: Scenario[],
   ): Promise<string> {
+    if (!this.client) {
+      throw new Error('SkillGenerator requires a ModelClient for generate(). Use writeSkillFileDirect() in autopilot mode.');
+    }
+
     const severityWeight: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
     const sorted = [...patterns].sort((a, b) => {
       const weightA = (severityWeight[a.severity] || 1) * a.frequency;
@@ -126,6 +135,10 @@ export class SkillGenerator {
     newPatterns: FailurePattern[],
     resolvedPatternDescriptions: string[],
   ): Promise<string> {
+    if (!this.client) {
+      throw new Error('SkillGenerator requires a ModelClient for patch(). Use writeSkillFileDirect() in autopilot mode.');
+    }
+
     const categorized = this.categorizeByFreedom(newPatterns);
 
     const prompt = `You are updating a SKILL.md document for an AI agent training course.
@@ -406,6 +419,13 @@ Do NOT wrap the output in markdown code fences (\`\`\`). Return raw markdown dir
   }
 
   // ─── File I/O ─────────────────────────────────────────────────
+
+  /**
+   * Write SKILL.md content directly (for autopilot mode where the agent generates it).
+   */
+  writeSkillFileDirect(courseId: string, content: string): void {
+    this.writeSkillFile(courseId, content);
+  }
 
   private writeSkillFile(courseId: string, content: string): void {
     const skillPath = this.getSkillPath(courseId);
