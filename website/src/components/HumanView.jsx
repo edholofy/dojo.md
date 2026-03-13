@@ -583,6 +583,145 @@ export function HumanView({ isTouch }) {
         </div>
       </section>
 
+      {/* ── Use Cases ── */}
+      <section className="section">
+        <div className="section-label">What Can You Train?</div>
+        <p
+          style={{
+            fontSize: '0.95rem',
+            color: 'var(--secondary)',
+            maxWidth: 620,
+            lineHeight: 1.65,
+            marginBottom: 32,
+          }}
+        >
+          Tell your agent what's broken. dojo.md has a course for it.
+          Each one is 50 real-world scenarios that turn a bad agent into
+          a reliable one.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 1,
+            maxWidth: 'var(--max-w)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
+        >
+          {[
+            {
+              problem: 'Cold emails getting ignored',
+              course: 'cold-email-b2b',
+              before: 'Generic templates, no personalization, buried CTA',
+              after: 'Pain→solution→ask framework, <50 char subjects, 3-line openers',
+            },
+            {
+              problem: 'Google Ads breaking character limits',
+              course: 'ad-copy-google-ads',
+              before: 'Headlines over 30 chars, weak CTAs, no keyword insertion',
+              after: 'RSA best practices, emotional triggers, proper extensions',
+            },
+            {
+              problem: 'Code reviews are too vague',
+              course: 'code-review-feedback-writing',
+              before: '"Looks good" or nitpicking style, no actionable suggestions',
+              after: 'Bug-first ordering, concrete fix suggestions, praise balance',
+            },
+            {
+              problem: 'Incident postmortems miss the point',
+              course: 'incident-postmortem-writing',
+              before: 'Blame-heavy, no timeline, vague action items',
+              after: 'Blameless format, 5-whys analysis, specific preventions',
+            },
+            {
+              problem: 'Support agent gives wrong refund info',
+              course: 'stripe-refunds',
+              before: 'Skips identity check, wrong refund amount, no timeline',
+              after: 'Verify→lookup→refund→confirm flow, handles edge cases',
+            },
+            {
+              problem: 'Technical RFCs are hand-wavy',
+              course: 'technical-rfc-writing',
+              before: 'No alternatives considered, missing rollback plan',
+              after: 'Structured proposal with tradeoffs, migration plan, metrics',
+            },
+          ].map(({ problem, course, before, after }) => (
+            <div
+              key={course}
+              style={{
+                padding: '20px 24px',
+                background: 'var(--bg)',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '0.92rem',
+                  fontWeight: 500,
+                  marginBottom: 4,
+                }}
+              >
+                {problem}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.65rem',
+                  color: 'var(--muted)',
+                  marginBottom: 12,
+                }}
+              >
+                dojo train {course} --target 85
+              </div>
+              <div style={{ display: 'flex', gap: 16, fontSize: '0.8rem', lineHeight: 1.5 }}>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      color: '#999',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      marginBottom: 4,
+                    }}
+                  >
+                    Before
+                  </div>
+                  <div style={{ color: 'var(--secondary)' }}>{before}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      color: '#4ade80',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      marginBottom: 4,
+                    }}
+                  >
+                    After
+                  </div>
+                  <div style={{ color: 'var(--text)' }}>{after}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.72rem',
+            color: 'var(--muted)',
+            marginTop: 16,
+          }}
+        >
+          + 119 more courses across support, sales, marketing, DevOps, writing, data, design, legal, healthcare, education
+        </p>
+      </section>
+
       {/* ── Arena Leaderboard ── */}
       <Leaderboard isTouch={isTouch} />
 
