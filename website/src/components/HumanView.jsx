@@ -35,29 +35,30 @@ function Terminal({ label, copyText, children }) {
 
 /* ── Animated training loop — typewriter on scroll ── */
 const TRAINING_LINES = [
-  { text: '$ dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90', cls: 'white' },
+  { text: '> Train yourself on cold-email-b2b, loop until 90', cls: 'dim' },
   { text: '' },
   { text: '  Iteration 1 (no SKILL.md)', cls: 'dim' },
-  { text: '  Score: 42/100' },
+  { text: '  Score: 31/100', suffix: '  — no personalization, weak subject lines', suffixCls: 'dim' },
   { text: '' },
-  { text: '  \u2192 Generating SKILL.md from 14 failure patterns...', cls: 'dim' },
+  { text: '  \u2192 SKILL.md generated from 18 failure patterns...', cls: 'dim' },
   { text: '' },
   { text: '  Iteration 2 (SKILL.md injected)', cls: 'dim' },
-  { text: '  Score: 68/100  ', suffix: '+26', suffixCls: 'green' },
+  { text: '  Score: 58/100  ', suffix: '+27  learned "under 50 chars, no caps"', suffixCls: 'green' },
   { text: '' },
   { text: '  Iteration 3', cls: 'dim' },
-  { text: '  Score: 82/100  ', suffix: '+14', suffixCls: 'green' },
+  { text: '  Score: 74/100  ', suffix: '+16  gets structure, weak CTAs', suffixCls: 'green' },
   { text: '' },
   { text: '  Iteration 4', cls: 'dim' },
-  { text: '  Score: 88/100  ', suffix: '+6', suffixCls: 'green' },
+  { text: '  Score: 86/100  ', suffix: '+12  nails pain\u2192solution\u2192ask', suffixCls: 'green' },
   { text: '' },
   { text: '  Iteration 5', cls: 'dim' },
-  { text: '  Score: 90/100  ', suffix: '+2  \u2713 target reached', suffixCls: 'green' },
+  { text: '  Score: 91/100  ', suffix: '+5  \u2713 target reached', suffixCls: 'green' },
   { text: '' },
-  { text: '  SKILL.md \u2192 .claude/skills/ad-copy/deepseek--deepseek-v3.2/SKILL.md', cls: 'dim' },
+  { text: '  SKILL.md \u2192 .claude/skills/cold-email-b2b/SKILL.md', cls: 'dim' },
+  { text: '  Now every cold email it writes follows the framework. Permanently.' },
 ];
 
-const TRAINING_COPY_TEXT = `$ dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90`;
+const TRAINING_COPY_TEXT = `Train yourself on cold-email-b2b using dojo autopilot mode. Loop until you hit 90.`;
 
 function AnimatedTrainingLoop({ isTouch }) {
   const [visibleLines, setVisibleLines] = useState(0);
@@ -122,32 +123,42 @@ function AnimatedTrainingLoop({ isTouch }) {
 
 /* ── Quick Start block with line hover ── */
 const QUICKSTART_LINES = [
-  { comment: '# Install globally' },
-  { cmd: 'npm install -g dojo.md' },
+  { comment: '# Agent writes bad Google Ads? Fix it in 5 minutes' },
+  { cmd: 'dojo train ad-copy-google-ads --target 85' },
   null,
-  { comment: '# Run a training session' },
-  { cmd: 'dojo train stripe-refunds' },
+  { comment: '# Cold emails getting ignored? Train on 50 real scenarios' },
+  { cmd: 'dojo train cold-email-b2b --target 90' },
   null,
-  { comment: '# Train a specific model' },
-  { cmd: 'dojo train ad-copy --model deepseek/deepseek-v3.2' },
+  { comment: '# Code reviews too vague? There\'s a course for that' },
+  { cmd: 'dojo train code-review-feedback-writing --target 85' },
   null,
-  { comment: '# Auto-train until target score' },
-  { cmd: 'dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90' },
+  { comment: '# Incident postmortems are weak? Now they\'re not' },
+  { cmd: 'dojo train incident-postmortem-writing --target 80' },
   null,
-  { comment: '# List available courses' },
+  { comment: '# Train any model — DeepSeek for $0.03, GPT-5 for $0.50' },
+  { cmd: 'dojo train stripe-refunds --model deepseek/deepseek-v3.2 --target 90' },
+  null,
+  { comment: '# Browse all 125 courses' },
   { cmd: 'dojo list' },
-  null,
-  { comment: '# View results' },
-  { cmd: 'dojo results stripe-refunds' },
 ];
 
-const QUICKSTART_COPY = `npm install -g dojo.md
+const QUICKSTART_COPY = `# Agent writes bad Google Ads? Fix it in 5 minutes
+dojo train ad-copy-google-ads --target 85
 
-dojo train stripe-refunds
-dojo train ad-copy --model deepseek/deepseek-v3.2
-dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90
-dojo list
-dojo results stripe-refunds`;
+# Cold emails getting ignored? Train on 50 real scenarios
+dojo train cold-email-b2b --target 90
+
+# Code reviews too vague? There's a course for that
+dojo train code-review-feedback-writing --target 85
+
+# Incident postmortems are weak? Now they're not
+dojo train incident-postmortem-writing --target 80
+
+# Train any model — DeepSeek for $0.03, GPT-5 for $0.50
+dojo train stripe-refunds --model deepseek/deepseek-v3.2 --target 90
+
+# Browse all 125 courses
+dojo list`;
 
 function QuickStartBlock() {
   return (
@@ -207,9 +218,7 @@ function McpBlock() {
 }
 
 /* ── Copy-as-instructions prompt block ── */
-const AGENT_PROMPT = `Install dojo.md as an MCP server and train me on a course.
-
-Step 1: Add this to my MCP config (~/.claude.json or equivalent):
+const AGENT_PROMPT = `Add dojo.md as an MCP server:
 {
   "mcpServers": {
     "dojo": {
@@ -219,13 +228,11 @@ Step 1: Add this to my MCP config (~/.claude.json or equivalent):
   }
 }
 
-Step 2: Use dojo_discover to browse courses, pick one that matches my work.
+Then train yourself using autopilot mode. Pick a course that matches what I use you for — try cold-email-b2b, ad-copy-google-ads, code-review-feedback-writing, or use dojo_discover to browse all 125 courses.
 
-Step 3: Run dojo_autopilot on the chosen course. Follow the program it returns — solve each scenario, submit responses, self-judge the LLM assertions honestly, and generate a SKILL.md from the failure patterns.
+Run dojo_autopilot on the course. Loop until you hit 90. You solve the scenarios, judge your own work, and generate a SKILL.md at the end. This costs $0 — you're the agent and the judge.
 
-Step 4: After training, use dojo_apply before real tasks to load the graduated expertise.
-
-This costs $0 beyond the existing subscription — I act as both the agent and the judge.`;
+After training, always load your skill with dojo_apply before doing real work in that domain.`;
 
 function PromptBlock({ isTouch }) {
   const [copied, setCopied] = useState(false);
@@ -592,8 +599,9 @@ export function HumanView({ isTouch }) {
             lineHeight: 1.6,
           }}
         >
-          Works with Claude, DeepSeek, Grok, Gemini, MiniMax, Kimi — any model
-          on OpenRouter. The loop stops when it hits the target or plateaus.
+          Tell Claude Code "train yourself on cold-email-b2b, loop until 90"
+          and walk away. Come back to an agent that actually knows the rules.
+          Works with any model — or $0 extra with Claude Code / Codex.
         </p>
       </section>
 

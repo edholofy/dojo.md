@@ -13,100 +13,110 @@ Train any model through scenario-based courses. Graduate with a [SKILL.md](https
 > *Works with Claude Code, Codex, OpenClaw, Cursor, Windsurf, and any MCP-compatible agent.*
 
 ```
-dojo train stripe-refunds --model openai/gpt-4o --target 85
+"Hey Claude, train yourself on cold-email-b2b and loop until you hit 90"
 
-Level 1: ████████████ 3/3 (100%)
-Level 2: ████████░░░░ 2/3 (67%)
-Score: 83/100
+  Iteration 1: 31/100 — doesn't know subject line rules, no personalization
+  Iteration 2: 58/100 — SKILL.md injected, learns "under 50 chars, no caps"
+  Iteration 3: 74/100 — gets structure right, still weak on CTAs
+  Iteration 4: 86/100 — nails the pain→solution→ask framework
+  Iteration 5: 91/100 — ✓ target reached
 
-Domain knowledge distilled:
-  → "Verify customer identity before ANY charge lookup"
-  → "Duplicate charges within 5 min window = single refund"
-  → "Always explain refund timeline (5-10 business days)"
+  SKILL.md → .claude/skills/cold-email-b2b/SKILL.md
 
-SKILL.md written → .claude/skills/stripe-refunds/openai--gpt-4o/SKILL.md
+Now every cold email it writes follows the framework. Permanently.
 ```
 
-## How It Works
+## What Just Happened
+
+You told Claude Code to train itself. It ran through 50 scenarios of progressively harder cold emails — bad subject lines, wrong tone, missing personalization, weak CTAs. An LLM judge scored every attempt. After 5 iterations, it extracted everything it learned into a SKILL.md that lives in your project forever.
+
+Next time you say "write a cold email to this VP of Engineering", it loads the SKILL.md automatically. It knows the rules now.
+
+**This works for anything:**
+
+```bash
+# Your agent writes terrible Google Ads? Fix it in 5 minutes
+dojo train ad-copy-google-ads --target 85
+
+# Support agent keeps giving wrong refund info? Train it
+dojo train stripe-refunds --target 90
+
+# Code reviews are too vague? There's a course for that
+dojo train code-review-feedback-writing --target 85
+
+# Incident postmortems are weak? Train on 50 real scenarios
+dojo train incident-postmortem-writing --target 80
+
+# Your agent can't write a proper RFC? Now it can
+dojo train technical-rfc-writing --target 85
+```
+
+### How the loop works
 
 ```
-Scenario YAML → Mock Services → LLM Judge → Failure Patterns → SKILL.md → Inject & Repeat
+Scenarios → Mock Services → LLM Judge → Failure Patterns → SKILL.md → Re-inject → Repeat
 ```
 
-1. Agent runs through progressively harder scenarios against mock services
-2. A hybrid evaluator (deterministic checks + LLM judge) scores every response
-3. Failure patterns AND curriculum knowledge get extracted
-4. Everything distills into a SKILL.md — injected into the agent's context
-5. The loop repeats until the target score is reached or the agent plateaus
-
-The SKILL.md is a **knowledge graduation document**, not just corrections. Even an agent scoring 100% graduates with one — the domain expertise embedded in the course has standalone value.
+Each iteration: the agent gets smarter. The SKILL.md compounds. It stops when it hits the target or plateaus.
 
 ### Per-model skills
 
-Different models fail differently. Claude misses edge cases. GPT-4o picks wrong tools. Llama hallucinates parameters. Each gets its own SKILL.md:
+Claude, GPT, DeepSeek — they all fail differently. Each gets its own SKILL.md:
 
 ```
-.claude/skills/stripe-refunds/
-├── anthropic--claude-sonnet-4-6/SKILL.md
-├── openai--gpt-4o/SKILL.md
-└── meta-llama--llama-3.1-70b/SKILL.md
-```
-
-### Auto-training loop
-
-Set a target. Dojo loops until it converges:
-
-```bash
-dojo train stripe-refunds --model openai/gpt-4o --target 85 --max-retrain 5
-```
-
-```
-Iteration 1: 25/100
-Iteration 2: 50/100 (+25) — SKILL.md injected
-Iteration 3: 68/100 (+18)
-Iteration 4: 72/100 (+4) — plateau detected, stopping
+.claude/skills/cold-email-b2b/
+├── anthropic--claude-sonnet-4-6/SKILL.md    # Was too formal, learned casual tone
+├── openai--gpt-4o/SKILL.md                  # Was too long, learned brevity
+└── deepseek--deepseek-v3.2/SKILL.md         # Missed personalization hooks
 ```
 
 ## Quick Start
 
+### Option 1: Zero-cost with Claude Code or Codex (recommended)
+
+Already paying for Claude Code or Codex? **Training costs $0 extra.** The agent trains AND judges itself — no API keys needed.
+
+Just paste this into Claude Code:
+
+```
+Install dojo.md as an MCP server, then train yourself on cold-email-b2b
+using autopilot mode. Loop until you hit 90.
+```
+
+Or add dojo as an MCP server manually:
+
+```json
+{
+  "mcpServers": {
+    "dojo": { "command": "npx", "args": ["dojo.md", "mcp"] }
+  }
+}
+```
+
+Then tell your agent what to train on. It handles the rest.
+
+| | CLI (`dojo train`) | Autopilot (Claude Code / Codex) |
+|--|-------------------|-------------------------------|
+| **Cost** | ~$0.50–5 per run | $0 extra |
+| **Agent** | API calls | Your subscription |
+| **Judge** | API calls | Agent self-judges |
+| **Setup** | API keys required | Just MCP config |
+
+### Option 2: CLI with any model via OpenRouter
+
 ```bash
 npm install -g dojo.md
+export OPENROUTER_API_KEY=sk-or-...
 
-export ANTHROPIC_API_KEY=sk-ant-...    # For Claude models
-export OPENROUTER_API_KEY=sk-or-...    # For OpenRouter models
+# Train DeepSeek on Google Ads copy for $0.03
+dojo train ad-copy-google-ads --model deepseek/deepseek-v3.2 --target 85
 
-# Train Claude on customer support
-dojo train stripe-refunds
+# Train GPT-5 on incident response, judged by Claude
+dojo train incident-response --model openai/gpt-5.2 --judge claude-sonnet-4-6 --target 90
 
-# Train GPT-4o, judged by Claude
-dojo train stripe-refunds --model openai/gpt-4o --judge claude-sonnet-4-6
-
-# Auto-loop until 90% or plateau
-dojo train stripe-refunds --model openai/gpt-4o --target 90
+# Train Gemini on customer support escalation
+dojo train customer-support-escalation --model google/gemini-3-flash-preview --target 80
 ```
-
-## Zero-Cost Training with Claude Code or Codex
-
-The headless CLI uses API calls ($0.50–5 per run). **Autopilot mode uses none.** Claude Code or Codex acts as both the agent AND the judge — on your existing subscription.
-
-```
-Claude Code / Codex → dojo_autopilot → get program + first scenario
-                    → dojo_tool      → interact with mock services
-                    → dojo_submit    → get deterministic results + judgment prompts
-                    → dojo_judge     → submit self-evaluations
-                    → dojo_results   → get final score
-                    → dojo_save_skill → save SKILL.md
-                    → dojo_autopilot → next iteration (with SKILL.md)
-```
-
-| | Headless (`dojo train`) | Autopilot (`dojo_autopilot`) |
-|--|------------------------|------------------------------|
-| **Agent** | ModelClient API calls ($$) | Claude Code / Codex (subscription) |
-| **Judge** | ModelClient API calls ($$) | Agent self-judges (free) |
-| **SKILL.md** | LLM generates ($$) | Agent generates directly (free) |
-| **Cost** | ~$0.50–5 per run | $0 additional |
-
-Inspired by Karpathy's `program.md` autoresearch pattern. The agent follows a program autonomously — solving scenarios, self-evaluating, generating its own SKILL.md, and looping until convergence.
 
 ## Arena — Model Benchmarking
 
