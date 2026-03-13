@@ -4,14 +4,14 @@ import { useMousePosition } from '../hooks/useMousePosition';
 const SKILL_MD = `---
 name: dojo-md
 description: >-
-  Training arena for AI agents. Scenario-based
-  evaluation with mock services, LLM-judged
-  assertions, and automatic skill generation.
-  Generates knowledge graduation SKILL.md —
-  always, even at 100/100 — because the domain
-  knowledge itself is the product, not just
-  corrections. Use when training, evaluating,
-  or improving agent reliability.
+  Your agent demos well. It fails in production.
+  dojo.md fixes that. Scenario-based training with
+  mock services, LLM-judged assertions, and automatic
+  SKILL.md generation. The SKILL.md is a knowledge
+  graduation document — not just corrections. Even at
+  100/100, domain expertise has standalone value.
+  Use when training, evaluating, or benchmarking
+  agent reliability across any model.
 ---
 
 # dojo.md
@@ -19,111 +19,142 @@ description: >-
 ## Quick Start
 
 \`\`\`bash
-npx dojo-md train stripe-refunds --model claude-sonnet-4-6
+npm install -g dojo.md
+dojo train stripe-refunds --target 90
 \`\`\`
 
 ## What It Does
 
-run scenarios → evaluate → extract curriculum
-→ extract failures → generate SKILL.md → inject → repeat
+scenarios → mock services → LLM judge
+→ failure patterns + curriculum extraction
+→ SKILL.md → inject into context → repeat
 
-SKILL.md is a knowledge graduation document.
-Not just corrections. The domain expertise
-embedded in scenario assertions has standalone
-value — even agents scoring 100% graduate
-with a SKILL.md.
+Different models fail differently.
+Claude misses edge cases. GPT picks wrong tools.
+DeepSeek skips validation. Each model gets its
+own SKILL.md because blind spots are unique.
 
-## Two Data Streams
+## Two Data Streams → One Artifact
 
-1. Failure patterns  → what agent struggled with
-2. Curriculum extract → what course intended to teach
+1. Failure patterns  → what agent got wrong
+2. Curriculum extract → what course teaches
 
-extractCurriculum() reads every scenario's
-assertion criteria and expected outcomes.
-These encode practitioner knowledge:
-- specific thresholds and numbers
-- counter-intuitive strategies
-- platform-specific rules
-- decision frameworks
+At 92/100: domain knowledge + corrections
+At 100/100: pure expertise — the diploma
+
+The course knowledge (specific thresholds,
+counter-intuitive strategies, platform rules)
+has standalone value beyond corrections.
 
 ## Architecture
 
-Scenario YAML → Engine → Mock Layer → Evaluator
-                             ↕              ↕
-                         SQLite        ModelClient
-                                           ↓
-                              Curriculum + Patterns
-                                           ↓
-                                   Skill Generator
-                                           ↓
-                                      SKILL.md
+Scenario YAML → Engine → Mock Services
+                              ↕
+                         Isolated State
+                              ↓
+                    Deterministic + LLM Judge
+                              ↓
+                   Failure Patterns + Curriculum
+                              ↓
+                        Skill Generator
+                              ↓
+                          SKILL.md
 
 ## Core Loop
 
 for each iteration:
-  read_existing_skill_md()
-  inject_into_agent_context(skill_md)
+  skill = read_existing_skill_md()
+  inject_into_agent_context(skill)
   run_all_scenarios()
-  evaluate_results()
-  patterns = extract_failure_patterns()
+  evaluate_with_hybrid_judge()
+  patterns = extract_failures()
   curriculum = extract_curriculum(scenarios)
-  generate_skill_md(patterns, curriculum)
+  skill = generate(patterns, curriculum)
   if converged: break
 
-## Always Generate
+Convergence: target reached, plateau
+detected (<5 improvement × 2), or max
+iterations hit.
 
-// even at 100/100 — curriculum knowledge
-// is valuable
-await skillGenerator.generate(
-  courseId, patterns, score, scenarios
-)
+## Per-Model Skills
 
-## Top Models (by usage)
+.claude/skills/stripe-refunds/
+├── anthropic--claude-sonnet-4-6/SKILL.md
+├── openai--gpt-4o/SKILL.md
+└── deepseek--deepseek-v3.2/SKILL.md
 
-- minimax/minimax-m2.5       1.78T tokens/wk
-- google/gemini-3-flash      1.06T tokens/wk
-- deepseek/deepseek-v3.2      840B tokens/wk
-- x-ai/grok-4.1-fast          706B tokens/wk
-- moonshotai/kimi-k2.5        661B tokens/wk
-- anthropic/claude-opus-4-6   657B tokens/wk
-- z-ai/glm-5                  649B tokens/wk
-- anthropic/claude-sonnet-4-6 631B tokens/wk
+## 125 Courses · 6,250+ Scenarios
 
-Any OpenRouter model → auto-detected
+Customer Support    14 courses
+Marketing & Content 18 courses
+Engineering & DevOps 17 courses
+Writing & Docs      16 courses
+Sales & Revenue      9 courses
+Data & Analytics     9 courses
+Design & UX          9 courses
++ Education, Legal, Healthcare, Real Estate
 
-## SKILL.md Structure (v0.3.0)
+## Arena — Model Benchmarking
 
-1. Domain Knowledge  ← NEW: non-obvious insights
-2. Quick Start       ← most common failure, fixed
-3. Core Rules        ← freedom-calibrated rules
-4. Decision Tree     ← branching logic
-5. Edge Cases        ← traps and correct handling
-6. Anti-Patterns     ← what NOT to do
+\`\`\`
+dojo arena ad-copy --level 1
+
+  1st  Claude Opus 4.6     84
+  2nd  Claude Sonnet 4.6   84
+  3rd  GPT-5.2             82
+  4th  GLM 5               79
+  5th  Gemini 3 Flash      76
+\`\`\`
+
+Same judge. Same scenarios. No SKILL.md.
+Raw capability only.
+
+## SKILL.md Structure
+
+1. Domain Knowledge  — non-obvious insights
+2. Quick Start       — most common failure
+3. Core Rules        — freedom-calibrated
+4. Decision Tree     — branching logic
+5. Edge Cases        — traps + correct handling
+6. Anti-Patterns     — what NOT to do
 
 ## Freedom Calibration
 
-impact ≥ 6 → low freedom  → "ALWAYS do X"
-impact ≥ 3 → medium       → step-by-step
-impact < 3 → high freedom → "prefer X over Y"
+impact ≥ 6 → "ALWAYS do X"
+impact ≥ 3 → step-by-step guide
+impact < 3 → "prefer X over Y"
 
-## Install
+## Any Model via OpenRouter
 
-\`\`\`
-npm install dojo-md
-\`\`\`
+anthropic/claude-opus-4-6    strongest judge
+openai/gpt-5.2               top openai
+deepseek/deepseek-v3.2       best value
+google/gemini-3-flash        fast + cheap
+x-ai/grok-4.1-fast           2M context
++ 200 more models
 
-## Protocol
+## Zero-Cost Autopilot
 
-MCP-compatible. Works with Claude Code, Cursor,
-Windsurf, or any agent framework.
+Claude Code or Codex acts as both agent AND
+judge — no API calls, $0 additional cost.
+The CLI uses API credits (~$0.50-5/run).
+Autopilot mode uses zero.
+
+dojo_autopilot → dojo_tool → dojo_submit
+→ dojo_judge → dojo_save_skill → repeat
+
+## MCP Integration
+
+Works with Claude Code, Codex, Cursor,
+Windsurf, OpenClaw, or any MCP agent.
 
 ## Output
 
-.claude/skills/<course>/<model-slug>/SKILL.md
+.claude/skills/<course>/<model>/SKILL.md
 
 ## License
 
-MIT`;
+MIT · https://dojo.md`;
 
 const LINES = SKILL_MD.split('\n');
 
@@ -342,7 +373,7 @@ export function MachineView() {
           flexShrink: 0,
         }}
       >
-        <span>SKILL.md v1.0 · MIT · dojo.md</span>
+        <span>SKILL.md v0.3.2 · MIT · dojo.md</span>
         <span>
           RENDER: {renderMs}ms · X: {mouse.x} Y: {mouse.y}
         </span>

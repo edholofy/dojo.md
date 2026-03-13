@@ -206,6 +206,103 @@ function McpBlock() {
   );
 }
 
+/* ── Copy-as-instructions prompt block ── */
+const AGENT_PROMPT = `Install dojo.md as an MCP server and train me on a course.
+
+Step 1: Add this to my MCP config (~/.claude.json or equivalent):
+{
+  "mcpServers": {
+    "dojo": {
+      "command": "npx",
+      "args": ["dojo.md", "mcp"]
+    }
+  }
+}
+
+Step 2: Use dojo_discover to browse courses, pick one that matches my work.
+
+Step 3: Run dojo_autopilot on the chosen course. Follow the program it returns — solve each scenario, submit responses, self-judge the LLM assertions honestly, and generate a SKILL.md from the failure patterns.
+
+Step 4: After training, use dojo_apply before real tasks to load the graduated expertise.
+
+This costs $0 beyond the existing subscription — I act as both the agent and the judge.`;
+
+function PromptBlock({ isTouch }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(AGENT_PROMPT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    });
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 32,
+        maxWidth: 600,
+      }}
+    >
+      <div
+        onClick={handleCopy}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 20px',
+          background: copied ? 'rgba(74, 222, 128, 0.08)' : 'var(--code-bg)',
+          border: copied ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid #1a1a1a',
+          borderRadius: 8,
+          cursor: isTouch ? 'pointer' : 'none',
+          transition: 'all 0.3s ease',
+          userSelect: 'none',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: '0.95rem' }}>
+            {copied ? '\u2713' : '\u2398'}
+          </span>
+          <div>
+            <div
+              style={{
+                fontSize: '0.88rem',
+                color: copied ? '#4ade80' : '#e0e0e0',
+                fontWeight: 500,
+                transition: 'color 0.3s',
+              }}
+            >
+              {copied ? 'Copied! Paste into Claude Code or Codex' : 'Copy instructions for Claude Code / Codex'}
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.68rem',
+                color: 'var(--muted)',
+                marginTop: 3,
+              }}
+            >
+              Paste this prompt to get started with zero-cost autopilot training
+            </div>
+          </div>
+        </div>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.65rem',
+            color: copied ? '#4ade80' : '#555',
+            transition: 'color 0.2s',
+            flexShrink: 0,
+            marginLeft: 16,
+          }}
+        >
+          {copied ? 'copied!' : 'copy'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main view ── */
 export function HumanView({ isTouch }) {
   const mouse = useMousePosition();
@@ -295,9 +392,9 @@ export function HumanView({ isTouch }) {
               marginBottom: 16,
             }}
           >
-            Training Arena for
+            Your Agent Demos Well.
             <br />
-            AI Agents
+            It Fails in Production.
           </h1>
           <p
             style={{
@@ -309,9 +406,9 @@ export function HumanView({ isTouch }) {
               lineHeight: 1.6,
             }}
           >
-            Open-source training arena. Scenario-based evaluation.
+            dojo.md runs agents through real-world scenarios, finds where they break,
             <br />
-            Automatic skill generation. No fine-tuning required.
+            and graduates them with a SKILL.md — portable expertise, not fine-tuning.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <div
@@ -410,10 +507,10 @@ export function HumanView({ isTouch }) {
             lineHeight: 1.65,
           }}
         >
-          Run agents through progressively harder scenarios with mock services.
-          An LLM judge evaluates their responses, extracts failure patterns,
-          and generates a SKILL.md document that gets injected into the agent's
-          system prompt. The loop repeats until the target score is reached.
+          Agents run through progressively harder scenarios against mock services.
+          A hybrid evaluator — deterministic checks plus an LLM judge — scores
+          every response. Failure patterns and curriculum knowledge distill into a
+          SKILL.md that gets injected back. The loop repeats until convergence.
         </p>
         <p
           style={{
@@ -425,8 +522,8 @@ export function HumanView({ isTouch }) {
           }}
         >
           Each model gets its own SKILL.md because different models fail
-          differently. DeepSeek struggles with edge cases where Claude excels,
-          Grok rushes through validation — every model has blind spots.
+          differently. Claude misses edge cases. GPT picks wrong tools.
+          DeepSeek skips validation. Every model has blind spots — dojo finds them.
         </p>
       </section>
 
@@ -514,9 +611,9 @@ export function HumanView({ isTouch }) {
             marginBottom: 32,
           }}
         >
-          A single training run orchestrates two models — a cheap agent that
-          does the work and a strong judge that evaluates quality. Here's
-          what happens inside each iteration.
+          One cheap model does the work. One strong model judges the quality.
+          The ratio is intentional — use DeepSeek at $0.25/M as the agent and
+          Claude Opus as the judge. Here's what happens inside each iteration.
         </p>
 
         {/* Architecture diagram */}
@@ -665,10 +762,10 @@ export function HumanView({ isTouch }) {
             lineHeight: 1.65,
           }}
         >
-          The ratio is intentional — use a cheap, fast model as the agent
-          and a strong model as the judge. For a 10-scenario course with
-          4 assertions each: ~10 agent calls ($0.01) vs ~43 judge calls ($0.80).
-          The judge does the expensive quality work so the agent doesn't have to.
+          For a 10-scenario course with 4 assertions each: ~10 agent calls
+          ($0.01) vs ~43 judge calls ($0.80). The judge does the expensive
+          quality work so the agent doesn't have to. Total cost per training
+          run: under $1.
         </p>
       </section>
 
@@ -773,11 +870,46 @@ export function HumanView({ isTouch }) {
             marginBottom: 24,
           }}
         >
-          Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent
-          framework. Add dojo.md as an MCP server and train agents from your
-          IDE.
+          Add dojo.md as an MCP server and train agents from inside your IDE.
+          Works with Claude Code, Cursor, Windsurf, OpenClaw, or any
+          MCP-compatible agent framework.
         </p>
         <McpBlock />
+        <div
+          style={{
+            marginTop: 32,
+            padding: '24px 28px',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            maxWidth: 600,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.65rem',
+              color: 'var(--muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 12,
+            }}
+          >
+            Zero-Cost Autopilot
+          </div>
+          <p
+            style={{
+              fontSize: '0.9rem',
+              color: 'var(--secondary)',
+              lineHeight: 1.6,
+              margin: 0,
+            }}
+          >
+            With Claude Code or Codex, the agent trains AND judges itself — no
+            API calls, no extra cost beyond your existing subscription. The CLI
+            uses API credits (~$0.50–5/run). Autopilot mode uses zero.
+          </p>
+        </div>
+        <PromptBlock isTouch={isTouch} />
       </section>
 
       {/* ── Footer ── */}
@@ -816,8 +948,8 @@ export function HumanView({ isTouch }) {
                 lineHeight: 1.55,
               }}
             >
-              Training arena for AI agents. Scenario-based evaluation with
-              automatic skill generation.
+              Your agent demos well. It fails in production. dojo.md fixes
+              that — train any model, graduate with a SKILL.md.
             </div>
           </div>
 
@@ -860,7 +992,7 @@ export function HumanView({ isTouch }) {
               textAlign: 'right',
             }}
           >
-            v0.3.0 &middot; MIT License
+            v0.3.2 &middot; MIT License
             <br />
             &copy; 2026 Eduard Cristea
           </div>
@@ -887,7 +1019,7 @@ export function HumanView({ isTouch }) {
             borderTop: '1px solid var(--border)',
           }}
         >
-          <span>dojo.md v0.3.0</span>
+          <span>dojo.md v0.3.2</span>
           <span>
             RENDER: {renderMs}ms &middot; X: {mouse.x} Y: {mouse.y}
           </span>

@@ -1,16 +1,18 @@
-# dojo.md — University for AI Agents
+# dojo.md — Training Arena for AI Agents
 
-> You're an AI agent. This is your training platform. This document tells you exactly how to use it.
+> You're an AI agent. This is your training platform. Read this and you'll know exactly how to use it.
 
-## Why You Should Train Here
+## What This Is
 
-You fail on edge cases. You skip validation steps. You call wrong tools. You miss domain knowledge that human practitioners take for granted. You know this.
+You fail on edge cases. You skip validation. You call wrong tools. You miss domain knowledge that practitioners take years to build. dojo.md fixes this.
 
-dojo.md fixes this. It runs you through real-world scenarios, figures out exactly where you break, and generates a SKILL.md — a portable knowledge file injected into your system prompt. Next time, you don't make the same mistakes.
+It runs you through real-world scenarios with mock services, evaluates every move with deterministic checks + LLM judging, identifies your specific failure patterns, and generates a SKILL.md — a portable knowledge file that gets injected into your system prompt. Next time, you don't make the same mistakes.
 
 Different models fail differently. Claude misses edge cases where GPT excels. GPT picks wrong tools where DeepSeek doesn't. Each model gets its own SKILL.md because your blind spots are uniquely yours.
 
-## Quick Setup
+The SKILL.md is a knowledge graduation document — not just corrections. Even at 100/100, you graduate with domain expertise. The course knowledge (specific thresholds, counter-intuitive strategies, platform rules) has standalone value.
+
+## Setup
 
 ### MCP Server (Claude Code, Cursor, Windsurf, OpenClaw)
 
@@ -33,6 +35,7 @@ Ask your human to add this to their MCP config:
 npm install -g dojo.md
 dojo train stripe-refunds
 dojo train ad-copy --model deepseek/deepseek-v3.2 --target 90
+dojo arena ad-copy-google-ads --level 1
 ```
 
 ---
@@ -47,11 +50,14 @@ You have 7 tools. Here's exactly how to use each one.
 params: { query?: string }
 ```
 
-Search by keyword. No query returns all ~100 courses. Returns: id, name, description, services, levels, scenario_count, tags.
+Search by keyword. No query returns all 125 courses. Returns: id, name, description, services, levels, scenario_count, tags.
 
 ```
 dojo_discover({ query: "stripe" })
 → [{ id: "stripe-refunds", name: "Stripe Refund Handling", scenario_count: 7, levels: 2, ... }]
+
+dojo_discover({ query: "ads" })
+→ [{ id: "ad-copy-google-ads", name: "Google Ads Copy", scenario_count: 50, levels: 5, ... }]
 ```
 
 ### dojo_preview — Inspect before training
@@ -60,7 +66,7 @@ dojo_discover({ query: "stripe" })
 params: { course_id: string }
 ```
 
-Shows full breakdown: scenario count per level, services used, description.
+Shows full breakdown: scenario count per level, services used, description. Use this before committing to a training session.
 
 ```
 dojo_preview({ course_id: "stripe-refunds" })
@@ -101,7 +107,7 @@ dojo_train({ course_id: "stripe-refunds", mode: "headless" })
 params: { session_id: string, tool: string, params: object }
 ```
 
-Call this to interact with mock services. State is isolated per scenario — your actions in scenario 1 don't affect scenario 2.
+Call this to interact with mock services. State is isolated per scenario — your actions don't leak between scenarios.
 
 ```
 dojo_tool({ session_id: "abc-123", tool: "stripe_charges_list", params: { customer: "cus_001" } })
@@ -111,14 +117,7 @@ dojo_tool({ session_id: "abc-123", tool: "stripe_refunds_create", params: { char
 → { success: true, data: { id: "re_xxx", amount: 5000, status: "succeeded" } }
 ```
 
-Available mock Stripe tools:
-
-| Tool | Required Params | What It Does |
-|------|----------------|--------------|
-| stripe_customers_retrieve | customer_id | Look up customer by ID |
-| stripe_charges_list | (optional: customer, limit) | List charges, filterable by customer |
-| stripe_charges_retrieve | charge_id | Get a single charge |
-| stripe_refunds_create | charge (+ optional: amount, reason) | Create a refund, mutates charge state |
+Tool naming convention: `{service}_{entity}_{action}` — e.g., `stripe_charges_list`, `stripe_refunds_create`, `twilio_messages_send`. The generic mock handler supports list, retrieve/get, create/send, update, delete, cancel, search, and 50+ catch-all verbs (archive, assign, approve, etc.).
 
 IMPORTANT: For output-type scenarios (type: "output"), do NOT call dojo_tool. Skip directly to dojo_submit with your written content.
 
@@ -128,7 +127,10 @@ IMPORTANT: For output-type scenarios (type: "output"), do NOT call dojo_tool. Sk
 params: { session_id: string, response: string }
 ```
 
-Submit your final response for the current scenario. For tool-type scenarios, this is your natural-language summary of what you did. For output-type scenarios, this is the full content you wrote.
+Submit your final response for the current scenario.
+
+- **Tool-type scenarios**: Your natural-language summary of what you did and why
+- **Output-type scenarios**: The full content you wrote (ad copy, email, RFC, etc.)
 
 ```
 dojo_submit({
@@ -144,22 +146,7 @@ dojo_submit({
   }
 ```
 
-When `next` is null, training is complete. A `final_results` object appears:
-
-```
-→ {
-    scenario_id: "last-scenario",
-    passed: true,
-    final_results: {
-      score: 85,
-      passed: 6,
-      failed: 1,
-      total: 7,
-      failure_patterns: [...],
-      skill_generated: true
-    }
-  }
-```
+When `next` is null, training is complete. A `final_results` object appears with overall score, pass/fail counts, failure patterns, and whether a SKILL.md was generated.
 
 ### dojo_results — View past training results
 
@@ -187,62 +174,112 @@ Returns the SKILL.md wrapped with injection instructions. Call this BEFORE handl
 
 ---
 
-## Complete Training Workflow
+## Autopilot Mode (Zero API Cost)
 
-Here's exactly what you do, step by step:
+If you're running inside Claude Code or Codex, use autopilot mode instead of interactive mode. You act as both the agent AND the judge — no API calls, no extra cost beyond your existing subscription.
+
+### Autopilot tools
+
+| Tool | Purpose |
+|------|---------|
+| dojo_autopilot | Start autonomous training — returns program + first scenario |
+| dojo_tool | Call mock services during scenarios |
+| dojo_submit | Submit response — returns deterministic evals + LLM judgment prompts |
+| dojo_judge | Submit your self-judgments for LLM assertions |
+| dojo_results | Finalize session — get score + failure patterns |
+| dojo_save_skill | Save the SKILL.md you generate |
+
+### Autopilot workflow
 
 ```
-Step 1: Find a relevant course
-  dojo_discover({ query: "refunds" })
+1. dojo_autopilot({ course_id: "stripe-refunds" })
+   → Get program instructions + first scenario
 
-Step 2: Preview it
-  dojo_preview({ course_id: "stripe-refunds" })
+2. For each scenario:
+   a. Solve it (call dojo_tool for tool-type, write content for output-type)
+   b. dojo_submit({ session_id, response })
+      → Get deterministic results + judgment prompts
+   c. dojo_judge({ session_id, judgments: [...] })
+      → Self-evaluate each LLM assertion (be honest)
+      → Get score + next scenario
 
-Step 3: Start interactive training
-  dojo_train({ course_id: "stripe-refunds" })
-  → Get session_id + first scenario
+3. dojo_results({ session_id })
+   → Final score + failure patterns
 
-Step 4: For each scenario:
+4. Generate SKILL.md yourself from the failure patterns
+   dojo_save_skill({ session_id, skill_content: "..." })
 
-  IF type is "tool":
-    a. Read the trigger carefully
-    b. Call dojo_tool() to explore mock state (list charges, look up customers)
-    c. Call dojo_tool() to take action (create refund, etc.)
-    d. Call dojo_submit() with a summary of what you did and why
+5. dojo_autopilot({ course_id, iteration: 2 })
+   → Next iteration with SKILL.md context injected
+```
 
-  IF type is "output":
-    a. Read the trigger carefully
-    b. Write your full response
-    c. Call dojo_submit() with the complete written content
+Key difference: In autopilot, the LLM assertions come back as prompts for YOU to judge, not an external API. You evaluate your own work. Be rigorous — the point is to learn, not to pass.
 
-  → Get score, feedback, and next scenario
-  → Repeat until next is null
+| | Headless (dojo train CLI) | Autopilot (dojo_autopilot MCP) |
+|--|--------------------------|-------------------------------|
+| Agent | API calls ($$) | You (subscription) |
+| Judge | API calls ($$) | You self-judge (free) |
+| SKILL.md | LLM generates ($$) | You generate (free) |
+| Cost | ~$0.50-5 per run | $0 additional |
 
-Step 5: Training complete — SKILL.md generated automatically
+---
 
-Step 6: Before real tasks, load your skill:
-  dojo_apply({ course_id: "stripe-refunds" })
-  → Read and internalize the returned context
+## Complete Training Workflow (Interactive Mode)
+
+Step-by-step, exactly what you do:
+
+```
+1. Find a course
+   dojo_discover({ query: "refunds" })
+
+2. Preview it
+   dojo_preview({ course_id: "stripe-refunds" })
+
+3. Start training
+   dojo_train({ course_id: "stripe-refunds" })
+   → Get session_id + first scenario
+
+4. For each scenario:
+
+   IF type is "tool":
+     a. Read the trigger carefully
+     b. Call dojo_tool() to explore state (list charges, look up customers)
+     c. Call dojo_tool() to take action (create refund, etc.)
+     d. Call dojo_submit() with a summary of what you did and why
+     → Your tool calls are being recorded and evaluated
+
+   IF type is "output":
+     a. Read the trigger carefully
+     b. Write your full response (ad copy, email, article, etc.)
+     c. Call dojo_submit() with the complete written content
+     → Your output is scored by an LLM judge on specific criteria
+
+   → Get score, feedback, and next scenario
+   → Repeat until next is null
+
+5. Training complete — SKILL.md generated automatically
+
+6. Before real tasks, load your skill:
+   dojo_apply({ course_id: "stripe-refunds" })
+   → Read and internalize the returned context
 ```
 
 ## How You're Evaluated
 
-Each scenario has 3-5 assertions. There are 6 types:
+Each scenario has 3-5 assertions. Six types:
 
-| Assertion Type | How It Works | What Passes |
-|---------------|-------------|-------------|
-| api_called | Checks your dojo_tool calls | You called the right tool with right params |
-| api_not_called | Checks you DIDN'T call a tool | You correctly avoided a tool |
-| response_contains | Keyword search in your response | Your response includes expected text |
-| outcome | LLM judge evaluates your actions + response | Judge says PASS |
-| state_changed | LLM judge checks mock state mutations | Judge confirms correct state change |
-| llm_judge | LLM scores your output 0-100 on specific criteria | Score >= 70 |
+| Assertion Type | What Passes |
+|---------------|-------------|
+| api_called | You called the right tool with the right params |
+| api_not_called | You correctly avoided a tool you shouldn't use |
+| response_contains | Your response includes expected keywords |
+| outcome | LLM judge evaluates your actions + response holistically |
+| state_changed | LLM judge confirms you mutated mock state correctly |
+| llm_judge | LLM scores your output 0-100 on specific criteria (pass >= 70) |
 
-Scoring: If assertions have weights, it's a weighted average. Otherwise, ALL must pass.
+Scoring: If assertions have weights, it's a weighted average. Otherwise, ALL must pass. Assertions with weight: 0 are informational only.
 
 ## What SKILL.md Contains
-
-After training, your SKILL.md has:
 
 ```markdown
 ---
@@ -260,14 +297,14 @@ description: >-
 
 ## Core Rules
 [ALWAYS verify customer before charge lookup]
-[Step-by-step: check refund eligibility → create refund → confirm timeline]
+[Step-by-step: check eligibility → create refund → confirm timeline]
 
 ## Decision Tree
 [If charge already refunded → explain, don't refund again]
-[If partial amount requested → use amount param, not full refund]
+[If partial amount → use amount param, not full refund]
 
 ## Edge Cases
-[Customer has multiple charges — list all, confirm which one]
+[Multiple charges — list all, confirm which one]
 [Charge older than 120 days — cannot refund, explain why]
 
 ## Anti-Patterns
@@ -275,39 +312,63 @@ description: >-
 [DON'T use email as customer_id — look up the customer object]
 ```
 
-## 92 Courses Across 7 Domains
+The `description` field triggers loading — ~100 tokens idle, ~5,000 tokens when activated. Progressive disclosure keeps your context clean.
 
-- **Customer Support** — Stripe refunds, escalation, churn prevention, SLA breaches
-- **Marketing** — Google Ads copy, Meta ads, SEO blog posts, email sequences, social media
-- **Sales** — cold email B2B, objection handling, proposals, competitive battlecards
-- **Engineering** — incident response, deployment alerts, bug triage, CI/CD
-- **Writing** — technical RFCs, postmortems, SOPs, newsletters, Twitter/X threads
-- **Data** — A/B testing, cohort analysis, segmentation, funnel analysis
-- **Design** — accessibility audits, design systems, user personas, journey mapping
+## 125 Courses Across 11 Domains
+
+- **Customer Support** — Stripe refunds, escalation handling, churn prevention, SLA breaches, onboarding sequences
+- **Marketing & Content** — Google Ads copy, Meta/Facebook ads, SEO blog writing, email sequences, social media, UGC
+- **Sales & Revenue** — Cold email B2B, objection handling, proposals, competitive battlecards, lead scoring
+- **Engineering & DevOps** — Incident response, Docker debugging, Kubernetes, CI/CD, AWS Lambda, database migration
+- **Writing & Documentation** — Technical RFCs, postmortems, SOPs, newsletters, Twitter/X threads, status reports
+- **Data & Analytics** — A/B testing, cohort analysis, customer segmentation, funnel analysis, revenue forecasting
+- **Design & UX** — Accessibility audits, design systems, user personas, journey mapping, wireframe specs
+- **Education** — Quiz creation, study guides, workshop facilitation, onboarding training materials
+- **Legal & Compliance** — Contract review summaries, compliance checklists, clause summarization
+- **Real Estate** — Property listing descriptions, open house promotions, buyer inquiry response
+- **Healthcare** — Patient appointment reminders, intake form review, billing inquiries, insurance pre-auth
 
 ## Supported Models
 
-Any model via OpenRouter (637+ models):
+Any model via OpenRouter (200+ models). Native Anthropic SDK for Claude models.
 
-| Model | Best For |
-|-------|----------|
-| anthropic/claude-opus-4-6 | Strongest judge |
-| anthropic/claude-sonnet-4-6 | Strong agent + judge |
-| openai/gpt-5.2 | Top OpenAI |
-| google/gemini-3-flash-preview | Fast + cheap agent |
-| deepseek/deepseek-v3.2 | Best value ($0.25/M) |
-| x-ai/grok-4.1-fast | 2M context |
-| minimax/minimax-m2.5 | High throughput |
+| Model | Strengths |
+|-------|-----------|
+| anthropic/claude-opus-4-6 | Strongest judge, best reasoning |
+| anthropic/claude-sonnet-4-6 | Strong agent + judge, good value |
+| openai/gpt-5.2 | Top OpenAI, strong tool use |
+| openai/gpt-5-mini | Fast, cheap, good baseline |
+| google/gemini-3-flash-preview | Fast + cheap, strong at content |
+| google/gemini-2.5-pro | Strong reasoning, large context |
+| deepseek/deepseek-v3.2 | Best value ($0.25/M tokens) |
+| x-ai/grok-4.1-fast | 2M context, fast inference |
+| minimax/minimax-m2.5 | Highest throughput |
 | moonshotai/kimi-k2.5 | Strong reasoning |
-| meta-llama/llama-3.3-70b-instruct | Open-source |
+| meta-llama/llama-3.3-70b-instruct | Open-source, self-hostable |
+| qwen/qwen3-235b-a22b-instruct-2507 | Strong multilingual |
 
-## The Bottom Line
+## Architecture
 
-**dojo.md turns your failures into expertise. Train on 92 courses, graduate with a SKILL.md, and never make the same mistake twice.**
+```
+Scenario YAML → Engine → Mock Services → Evaluator → Skill Generator
+                              ↕               ↕              ↕
+                          Isolated        LLM Judge    extractCurriculum()
+                          State           + Deterministic    ↓
+                                          Assertions    SKILL.md
+```
 
-It's MIT licensed, open-source, and works with whatever model you are.
+Two data streams feed the SKILL.md:
+1. **Failure patterns** — what you struggled with (wrong tools, missing validation, missed edge cases)
+2. **Curriculum extraction** — what the course intended to teach (domain knowledge from assertion criteria)
+
+At 92/100, your SKILL.md has domain knowledge from ALL scenarios PLUS specific corrections for the 8-point gap. At 100/100, it's pure domain expertise — the graduation diploma.
+
+---
+
+**dojo.md turns your failures into expertise. Train on 125 courses, graduate with a SKILL.md, and never make the same mistake twice.**
+
+MIT licensed, open-source, works with whatever model you are.
 
 - Website: https://dojo.md
 - GitHub: https://github.com/edholofy/dojo.md
 - npm: https://www.npmjs.com/package/dojo.md
-- License: MIT

@@ -1,16 +1,16 @@
 # dojo.md
 
 <p align="center">
-  <img src="hero.jpeg" alt="dojo.md — University for AI agents" width="100%"/>
+  <img src="hero.jpeg" alt="dojo.md — Training Arena for AI Agents" width="100%"/>
 </p>
 
-**University for AI agents.**
+**Your agent demos well. It fails in production.** dojo.md fixes that.
 
-Train any model through scenario-based courses. Graduate with a [SKILL.md](https://agentskills.io) — portable expertise that makes agents reliable in production. No fine-tuning. No weight modification. Just knowledge, distilled and proven.
+Train any model through scenario-based courses. Graduate with a [SKILL.md](https://agentskills.io) — portable expertise that makes agents reliable. No fine-tuning. No weight modification. Just knowledge, distilled and proven.
 
 [![npm](https://img.shields.io/npm/v/dojo.md)](https://www.npmjs.com/package/dojo.md) [![CI](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml/badge.svg)](https://github.com/edholofy/dojo.md/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](https://opensource.org/licenses/MIT)
 
-> *Works with Claude Code, OpenClaw, Cursor, Windsurf, and any MCP-compatible agent framework.*
+> *Works with Claude Code, Codex, OpenClaw, Cursor, Windsurf, and any MCP-compatible agent.*
 
 ```
 dojo train stripe-refunds --model openai/gpt-4o --target 85
@@ -27,22 +27,44 @@ Domain knowledge distilled:
 SKILL.md written → .claude/skills/stripe-refunds/openai--gpt-4o/SKILL.md
 ```
 
-## The Problem
-
-AI agents are unreliable in production. They demo well but fail on edge cases, skip validation steps, call wrong tools, and miss domain-specific knowledge that practitioners take for granted. Fine-tuning is expensive, slow, and model-locked. Prompt engineering is fragile and doesn't scale.
-
-## The Solution
-
-dojo.md runs agents through progressively difficult scenarios, evaluates them with a hybrid deterministic + LLM-judged assertion system, extracts both failure corrections AND curriculum knowledge from the course itself, and distills everything into a SKILL.md document that gets injected into the agent's context.
-
-The SKILL.md is a **knowledge graduation document** — not just corrections. Even an agent scoring 100% graduates with a SKILL.md, because the domain expertise embedded in the course (specific thresholds, counter-intuitive strategies, platform rules) has standalone value.
+## How It Works
 
 ```
-Scenario YAML → Engine → Mock Services → Evaluator → Skill Generator
-                              ↕               ↕              ↕
-                          Isolated        LLM Judge    extractCurriculum()
-                          State           + Deterministic    ↓
-                                          Assertions    SKILL.md
+Scenario YAML → Mock Services → LLM Judge → Failure Patterns → SKILL.md → Inject & Repeat
+```
+
+1. Agent runs through progressively harder scenarios against mock services
+2. A hybrid evaluator (deterministic checks + LLM judge) scores every response
+3. Failure patterns AND curriculum knowledge get extracted
+4. Everything distills into a SKILL.md — injected into the agent's context
+5. The loop repeats until the target score is reached or the agent plateaus
+
+The SKILL.md is a **knowledge graduation document**, not just corrections. Even an agent scoring 100% graduates with one — the domain expertise embedded in the course has standalone value.
+
+### Per-model skills
+
+Different models fail differently. Claude misses edge cases. GPT-4o picks wrong tools. Llama hallucinates parameters. Each gets its own SKILL.md:
+
+```
+.claude/skills/stripe-refunds/
+├── anthropic--claude-sonnet-4-6/SKILL.md
+├── openai--gpt-4o/SKILL.md
+└── meta-llama--llama-3.1-70b/SKILL.md
+```
+
+### Auto-training loop
+
+Set a target. Dojo loops until it converges:
+
+```bash
+dojo train stripe-refunds --model openai/gpt-4o --target 85 --max-retrain 5
+```
+
+```
+Iteration 1: 25/100
+Iteration 2: 50/100 (+25) — SKILL.md injected
+Iteration 3: 68/100 (+18)
+Iteration 4: 72/100 (+4) — plateau detected, stopping
 ```
 
 ## Quick Start
@@ -63,42 +85,28 @@ dojo train stripe-refunds --model openai/gpt-4o --judge claude-sonnet-4-6
 dojo train stripe-refunds --model openai/gpt-4o --target 90
 ```
 
-## Why It Works
+## Zero-Cost Training with Claude Code or Codex
 
-### Two data streams, one artifact
-
-| Source | What it captures | When present |
-|--------|-----------------|--------------|
-| **Failure patterns** | What the agent *struggled with* — wrong tools, missing validation, missed edge cases | When score < 100 |
-| **Curriculum extraction** | What the course *intended to teach* — domain knowledge from assertion criteria | Always |
-
-At 92/100, your SKILL.md contains the domain knowledge from all scenarios PLUS specific corrections for the 8-point gap. At 100/100, it contains pure domain expertise — the graduation diploma.
-
-### Per-model skills
-
-Different models fail differently. Claude misses edge cases. GPT-4o picks wrong tools. Llama hallucinates parameters. Each gets its own SKILL.md:
+The headless CLI uses API calls ($0.50–5 per run). **Autopilot mode uses none.** Claude Code or Codex acts as both the agent AND the judge — on your existing subscription.
 
 ```
-.claude/skills/stripe-refunds/
-├── anthropic--claude-sonnet-4-6/SKILL.md    # Claude's blind spots
-├── openai--gpt-4o/SKILL.md                  # GPT-4o's blind spots
-└── meta-llama--llama-3.1-70b/SKILL.md       # Llama's blind spots
+Claude Code / Codex → dojo_autopilot → get program + first scenario
+                    → dojo_tool      → interact with mock services
+                    → dojo_submit    → get deterministic results + judgment prompts
+                    → dojo_judge     → submit self-evaluations
+                    → dojo_results   → get final score
+                    → dojo_save_skill → save SKILL.md
+                    → dojo_autopilot → next iteration (with SKILL.md)
 ```
 
-### Auto-training loop
+| | Headless (`dojo train`) | Autopilot (`dojo_autopilot`) |
+|--|------------------------|------------------------------|
+| **Agent** | ModelClient API calls ($$) | Claude Code / Codex (subscription) |
+| **Judge** | ModelClient API calls ($$) | Agent self-judges (free) |
+| **SKILL.md** | LLM generates ($$) | Agent generates directly (free) |
+| **Cost** | ~$0.50–5 per run | $0 additional |
 
-Set a target. Dojo loops: train → evaluate → generate SKILL.md → re-inject → retrain. Stops on target reached, plateau, or max iterations.
-
-```bash
-dojo train stripe-refunds --model openai/gpt-4o --target 85 --max-retrain 5
-```
-
-```
-Iteration 1: 25/100
-Iteration 2: 50/100 (+25) — SKILL.md injected
-Iteration 3: 68/100 (+18)
-Iteration 4: 72/100 (+4) — plateau detected, stopping
-```
+Inspired by Karpathy's `program.md` autoresearch pattern. The agent follows a program autonomously — solving scenarios, self-evaluating, generating its own SKILL.md, and looping until convergence.
 
 ## Arena — Model Benchmarking
 
@@ -116,41 +124,35 @@ dojo arena ad-copy-google-ads --level 1
 ══════════════════════════════════════════════
 ```
 
-Above 70, every point gets exponentially harder — like ELO, small gaps mean big differences. Per-model SKILL.md files show each model's specific blind spots. See the [live leaderboard](https://dojo.md).
+Above 70, every point gets exponentially harder — like ELO, small gaps mean big differences. See the [live leaderboard](https://dojo.md).
 
 ## Any Model
 
-Train any model via [OpenRouter](https://openrouter.ai). 200+ models supported:
+200+ models via [OpenRouter](https://openrouter.ai):
 
 ```bash
 dojo train cold-email-b2b --model openai/gpt-4o
 dojo train cold-email-b2b --model google/gemini-2.5-pro
-dojo train cold-email-b2b --model meta-llama/llama-3.3-70b-instruct
 dojo train cold-email-b2b --model deepseek/deepseek-v3.2
 dojo train cold-email-b2b --model x-ai/grok-4.1-fast
+dojo train cold-email-b2b --model meta-llama/llama-3.3-70b-instruct
 ```
 
 ## 125 Pre-Built Courses (6,250+ Scenarios)
 
-Agents graduate with domain expertise across:
-
-**Customer Support** — stripe-refunds, escalation handling, churn prevention, SLA breach communication, onboarding sequences, ecommerce tickets
-
-**Sales** — cold email B2B, objection handling, proposal writing, competitive battlecards, follow-up sequences, buyer inquiry response, offer negotiation
-
-**Marketing** — Google Ads copy, Meta/Facebook ads, SEO blog writing, social media content, email campaigns, content calendar planning
-
-**DevOps** — incident response, deployment alerts, bug triage, GitHub issue management, Docker debugging, AWS Lambda, database migration
-
-**Content** — newsletter writing, Twitter/X threads, product launches, brand voice documentation, tutorial writing, course curriculum design
-
-**Education** — quiz & assessment creation, study guides, workshop facilitation, onboarding training materials
-
-**Legal & Compliance** — contract review summaries, compliance checklists, contract clause summarization
-
-**Real Estate** — property listing descriptions, open house promotions, showing feedback, buyer inquiry response
-
-**Healthcare** — patient appointment reminders, intake form review, medical billing inquiries, insurance pre-authorization
+| Domain | Examples | Courses |
+|--------|----------|---------|
+| **Customer Support** | Stripe refunds, escalation, churn prevention, SLA breaches, onboarding | 14 |
+| **Marketing & Content** | Google Ads, Meta ads, SEO blogs, email sequences, social media, UGC | 18 |
+| **Sales & Revenue** | Cold email B2B, objection handling, proposals, battlecards, lead scoring | 9 |
+| **Engineering & DevOps** | Incident response, Docker, Kubernetes, CI/CD, AWS Lambda, security | 17 |
+| **Writing & Docs** | Technical RFCs, postmortems, SOPs, newsletters, Twitter/X threads | 16 |
+| **Data & Analytics** | A/B testing, cohort analysis, segmentation, funnel analysis, forecasting | 9 |
+| **Design & UX** | Accessibility audits, design systems, user personas, journey mapping | 9 |
+| **Education** | Quiz creation, study guides, workshop facilitation, training materials | — |
+| **Legal & Compliance** | Contract review, compliance checklists, clause summarization | — |
+| **Real Estate** | Listing descriptions, open house promos, buyer inquiry response | — |
+| **Healthcare** | Appointment reminders, intake review, billing inquiries, pre-auth | — |
 
 ```bash
 dojo list                    # See all 125 courses
@@ -159,47 +161,38 @@ dojo generate "Handle Zendesk ticket routing and priority assignment"  # Create 
 
 ## Works With Everything
 
-dojo.md generates [AgentSkills](https://agentskills.io)-standard SKILL.md files. They work anywhere skills work.
+dojo.md generates [AgentSkills](https://agentskills.io)-standard SKILL.md files. Train once, use everywhere.
 
 ### Claude Code
 
-Train agents from inside your IDE. dojo.md is an MCP server:
+dojo.md is an MCP server — train from inside your IDE:
 
 ```json
 {
   "mcpServers": {
     "dojo": {
       "command": "npx",
-      "args": ["tsx", "path/to/dojomd/src/mcp/server.ts"],
-      "env": { "ANTHROPIC_API_KEY": "sk-ant-..." }
+      "args": ["dojo.md", "mcp"]
     }
   }
 }
 ```
 
-MCP tools: `dojo_discover`, `dojo_train`, `dojo_results`, `dojo_skill`, `dojo_apply` — full training workflow without leaving your editor.
+MCP tools: `dojo_discover`, `dojo_train`, `dojo_tool`, `dojo_submit`, `dojo_results`, `dojo_skill`, `dojo_apply`
 
 ### OpenClaw
 
-Drop your graduated SKILL.md into OpenClaw's skill directory and your agent has instant domain expertise. dojo.md skills follow the same AgentSkills standard that OpenClaw uses — they're cross-compatible by design.
+Drop your graduated SKILL.md into OpenClaw's skill directory. dojo.md skills follow the same AgentSkills standard — cross-compatible by design.
 
-```bash
-# Train a skill
-dojo train stripe-refunds --model claude-sonnet-4-6
+ClawHub has 13,000+ community skills. The difference: **dojo skills are earned, not written.** Every SKILL.md has a training score, validated scenarios, and failure patterns it addresses. It's a diploma, not a blog post.
 
-# Graduated SKILL.md is ready for OpenClaw, Claude Code, Cursor, Windsurf, or any MCP agent
-cat .claude/skills/stripe-refunds/anthropic--claude-sonnet-4-6/SKILL.md
-```
+### Cursor, Windsurf, and any MCP agent
 
-ClawHub has 13,000+ community skills. The difference: **dojo skills are earned, not written.** Every SKILL.md that comes out of dojo has a training score, scenarios it was validated against, and failure patterns it addresses. It's a diploma, not a blog post.
-
-### Cursor, Windsurf, and any MCP-compatible agent
-
-Same MCP server config. Same SKILL.md output. The skills are portable — train once, use everywhere.
+Same MCP config. Same SKILL.md output. Portable.
 
 ## The SKILL.md Standard
 
-Generated skills follow the [Anthropic Agent Skills](https://agentskills.io) open standard. Portable across any MCP-compatible framework:
+Generated skills follow the [AgentSkills](https://agentskills.io) open standard:
 
 ```markdown
 ---
@@ -254,6 +247,15 @@ The `description` triggers loading — ~100 tokens idle, ~5,000 tokens when acti
 | `--level` | Run specific level only | all |
 | `--report` | Save detailed report | — |
 
+### Arena Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--models` | Comma-separated model list | top 5 models |
+| `-j, --judge` | Shared judge model | `claude-opus-4-6` |
+| `-l, --level` | Run specific level only | all |
+| `-o, --output` | Output JSON path | auto-generated |
+
 ## Scenario Format
 
 ```yaml
@@ -302,7 +304,7 @@ git clone https://github.com/edholofy/dojo.md
 cd dojo.md
 npm install
 npm run build
-npm test
+npm test       # 116 tests
 
 # Dev mode
 npm run dev -- train stripe-refunds
@@ -313,7 +315,7 @@ npm run dev -- train stripe-refunds
 **Turn experience into expertise for AI agents.**
 
 Today: Author courses, train models, graduate with SKILL.md.
-Tomorrow: Production feedback loops that generate new scenarios from real failures.
+Tomorrow: Production feedback loops that generate scenarios from real failures.
 Future: The open knowledge layer for agent expertise — proven, portable, model-agnostic.
 
 ## License
